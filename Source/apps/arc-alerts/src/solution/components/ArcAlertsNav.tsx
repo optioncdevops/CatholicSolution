@@ -1,21 +1,17 @@
 import {
   BellIcon,
-  BuildingIcon,
   FileTextIcon,
   HelpCircleIcon,
   MessageIcon,
   ShieldCheckIcon,
   StarIcon,
   UserIcon,
-  UsersIcon,
 } from '@shared/app/components/UiIcons';
 
 export type ArcAlertsView =
   | 'home'
   | 'new-alert'
   | 'alerts'
-  | 'members'
-  | 'groups'
   | 'about'
   | 'settings'
   | 'preferences'
@@ -37,15 +33,13 @@ const sections: NavSection[] = [
   {
     label: 'Directory',
     items: [
-      { id: 'members', label: 'Members', icon: UsersIcon },
-      { id: 'groups', label: 'Groups', icon: BuildingIcon },
+      { id: 'preferences', label: 'User Preferences', icon: UserIcon },
     ],
   },
   {
     label: 'Administration',
     items: [
       { id: 'settings', label: 'Settings', icon: ShieldCheckIcon },
-      { id: 'preferences', label: 'User Preferences', icon: UserIcon },
       { id: 'best-practices', label: 'Best Practices', icon: StarIcon },
     ],
   },

@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import {
@@ -10,17 +11,20 @@ import {
   ShieldCheckIcon,
   UserIcon,
 } from '@shared/app/components/UiIcons';
-import { launchableApps } from '@shared/app/config/appCatalog';
+import { APP_CATALOG } from '@shared/app/config/appCatalog';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 
-const requestableApps = launchableApps.filter((app) => app.id !== 'support-center');
+const requestableApps = APP_CATALOG.filter((app) => app.status !== 'coming-soon');
 
 const organizationTypes = ['Catholic School', 'Parish', 'Diocese / Archdiocese', 'Ministry / Nonprofit', 'Other'] as const;
 
 export function RequestAccessPage() {
+  const [searchParams] = useSearchParams();
+  const requestedProduct = searchParams.get('product');
+  const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : 'optionc-school';
   const [submitted, setSubmitted] = useState(false);
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(['optionc-school']);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([initialInterest]);
   const reference = useMemo(() => `CS-${new Date().getFullYear()}-REQ`, []);
 
   const toggleInterest = (id: string) => setSelectedInterests((current) => (
@@ -56,7 +60,7 @@ export function RequestAccessPage() {
                 <div className="request-access-fields-grid">
                   <Field icon={<UserIcon size={16} />} label="Full name" name="fullName" placeholder="Carl Lapp" autoComplete="name" required />
                   <Field icon={<MailIcon size={16} />} label="Work email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required />
-                  <Field icon={<BuildingIcon size={16} />} label="Organization name" name="organization" placeholder="St. Mary's Catholic School" autoComplete="organization" required />
+                  <Field icon={<BuildingIcon size={16} />} label="Organization name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required />
                   <SelectField label="Organization type" name="organizationType" options={organizationTypes} required />
                   <Field icon={<UserIcon size={16} />} label="Role / title" name="role" placeholder="Administrator" autoComplete="organization-title" required />
                   <Field label="Phone number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" />

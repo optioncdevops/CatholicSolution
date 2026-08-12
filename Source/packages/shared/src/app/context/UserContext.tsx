@@ -4,7 +4,6 @@ export interface CurrentUser {
   name: string;
   email: string;
   phone: string;
-  role: string;
 }
 
 interface UserContextValue {
@@ -18,7 +17,6 @@ const DEFAULT_USER: CurrentUser = {
   name: 'Carl Lapp',
   email: 'carl.lapp@optionc.com',
   phone: '(555) 214-7788',
-  role: "Administrator, St. Mary's Catholic School",
 };
 
 const UserContext = createContext<UserContextValue | null>(null);

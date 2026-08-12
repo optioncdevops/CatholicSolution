@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getAppById } from '@shared/app/config/appCatalog';
 import { AppLayout } from '@shared/app/layouts/AppLayout';
@@ -8,8 +8,6 @@ import { ArcAlertsHome } from '@/solution/components/ArcAlertsHome';
 import { ArcAlertsAbout } from '@/solution/components/ArcAlertsAbout';
 import { ArcAlertsNewAlert } from '@/solution/components/ArcAlertsNewAlert';
 import { ArcAlertsList } from '@/solution/components/ArcAlertsList';
-import { ArcAlertsMembers } from '@/solution/components/ArcAlertsMembers';
-import { ArcAlertsGroups } from '@/solution/components/ArcAlertsGroups';
 import { ArcAlertsSettings } from '@/solution/components/ArcAlertsSettings';
 import { ArcAlertsPreferences } from '@/solution/components/ArcAlertsPreferences';
 import { ArcAlertsBestPractices } from '@/solution/components/ArcAlertsBestPractices';
@@ -19,29 +17,28 @@ const pathByView: Record<ArcAlertsView, string> = {
   home: '',
   'new-alert': 'new-alert',
   alerts: 'alerts',
-  members: 'members',
-  groups: 'groups',
   about: 'about',
   settings: 'settings',
   preferences: 'preferences',
   'best-practices': 'best-practices',
 };
 const viewByPath = Object.fromEntries(Object.entries(pathByView).map(([view, path]) => [path, view])) as Record<string, ArcAlertsView>;
+const legacyDirectoryPaths = new Set(['members', 'groups']);
 
 export function ArcAlertsPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const active = useMemo<ArcAlertsView>(() => {
-    const suffix = location.pathname.replace(/^\//, '').split('/')[0] ?? '';
-    return viewByPath[suffix] ?? 'home';
-  }, [location.pathname]);
+  const suffix = useMemo(() => location.pathname.replace(/^\//, '').split('/')[0] ?? '', [location.pathname]);
+  const active = useMemo<ArcAlertsView>(() => legacyDirectoryPaths.has(suffix) ? 'preferences' : (viewByPath[suffix] ?? 'home'), [suffix]);
+
+  useEffect(() => {
+    if (legacyDirectoryPaths.has(suffix)) navigate('/preferences', { replace: true });
+  }, [navigate, suffix]);
 
   const content = {
     home: <ArcAlertsHome />,
     'new-alert': <ArcAlertsNewAlert />,
     alerts: <ArcAlertsList />,
-    members: <ArcAlertsMembers />,
-    groups: <ArcAlertsGroups />,
     about: <ArcAlertsAbout />,
     settings: <ArcAlertsSettings />,
     preferences: <ArcAlertsPreferences />,
@@ -51,10 +48,7 @@ export function ArcAlertsPage() {
   return (
     <AppLayout app={app} className="bg-[#f5f7fb] text-[#1b2a4a]">
       <main className="dashboard-content arc-workspace-shell">
-        <ArcAlertsNav
-          active={active}
-          onChange={(view) => navigate(pathByView[view] ? `/${pathByView[view]}` : '/')}
-        />
+        <ArcAlertsNav active={active} onChange={(view) => navigate(pathByView[view] ? `/${pathByView[view]}` : '/')} />
         <section className="arc-workspace-content" aria-live="polite">{content[active]}</section>
       </main>
     </AppLayout>

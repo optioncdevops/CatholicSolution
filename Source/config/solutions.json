@@ -1,5 +1,5 @@
 {
-  "version": "1.3.9",
+  "version": "1.4.4",
   "architecture": "multi-app-saas-central-login-independent-deployments",
   "domainConfiguration": "packages/shared/src/auth/appAuthConfig.ts",
   "environmentFiles": [
@@ -73,5 +73,5 @@
     }
   ],
   "sharedPackage": "packages/shared",
-  "authenticationModel": "central-login-domain-with-preview-staging-and-fail-closed-production-sso"
+  "authenticationModel": "central-login-domain-with-shared-preview-auth-and-centralized-hosted-origins"
 }

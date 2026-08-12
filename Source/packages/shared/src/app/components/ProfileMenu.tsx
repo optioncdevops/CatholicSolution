@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import { AccountModals, type AccountModal } from './AccountModals';
 import { ChevronDownIcon, LockIcon, LogOutIcon, UserIcon } from './UiIcons';
@@ -59,21 +59,21 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
           <span className="profile-menu__avatar" style={gradient ? { background: gradient } : undefined}>{initials}</span>
           <span className="profile-menu__trigger-copy">
             <span>{user.name}</span>
-            <small>Administrator</small>
+            <small>Account</small>
           </span>
           <ChevronDownIcon size={14} className={`profile-menu__chevron ${open ? 'profile-menu__chevron--open' : ''}`} />
         </button>
 
         {open ? (
           <div id={menuId} role="menu" className="profile-menu__panel">
-            <div className="profile-menu__summary">
+            <div className="profile-menu__summary" style={gradient ? { '--profile-accent': gradient } as CSSProperties : undefined}>
               <span className="profile-menu__summary-avatar" style={gradient ? { background: gradient } : undefined}>{initials}</span>
               <div>
+                <span className="profile-menu__eyebrow">Signed in as</span>
                 <p>{user.name}</p>
-                <span>{user.email}</span>
+                <span className="profile-menu__email">{user.email}</span>
               </div>
             </div>
-            <div className="profile-menu__role">{user.role}</div>
 
             <div className="profile-menu__actions">
               <button type="button" role="menuitem" onClick={() => openModal('profile')}><span><UserIcon size={17} /></span><div><strong>Profile</strong><small>Personal and contact details</small></div></button>

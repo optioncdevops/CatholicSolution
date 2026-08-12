@@ -1,5 +1,6 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
+import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { resolveAppUrl } from '@shared/platform/navigation/solutionNavigation';
 
 interface AppCardProps {
@@ -7,11 +8,6 @@ interface AppCardProps {
   onDetails: (app: CatalogApp) => void;
 }
 
-/**
- * App Hub cards deliberately keep the surface light and let each product's catalog
- * gradient carry the identity through the accent rule and icon. This keeps `Your Apps`
- * aligned with the rest of the Hub while avoiding a wall of saturated color.
- */
 type CardMode = 'launchable' | 'external' | 'unavailable' | 'catalog';
 
 function resolveMode(app: CatalogApp): CardMode {
@@ -25,13 +21,11 @@ export function AppCard({ app, onDetails }: AppCardProps) {
   const activatable = mode === 'launchable' || mode === 'external';
   const workspaceCard = mode !== 'catalog';
   const target = mode === 'launchable' ? resolveAppUrl(app) : app.externalUrl;
-  const linkRelationship = mode === 'launchable' ? 'noopener' : 'noopener noreferrer';
-  const windowFeatures = mode === 'launchable' ? 'noopener' : 'noopener,noreferrer';
   const actionVerb = mode === 'launchable' ? 'Launch' : 'Open';
   const themedActionStyle = { '--hub-action-theme': app.gradient } as CSSProperties;
 
   const activate = () => {
-    if (target) window.open(target, '_blank', windowFeatures);
+    if (target) window.location.assign(target);
   };
 
   const openDetails = (event: MouseEvent<HTMLButtonElement>) => {
@@ -64,7 +58,7 @@ export function AppCard({ app, onDetails }: AppCardProps) {
       onKeyDown={activatable ? onKeyDown : undefined}
       tabIndex={activatable ? 0 : undefined}
       role={activatable ? 'link' : undefined}
-      aria-label={activatable ? `${actionVerb} ${app.name} in a new tab` : undefined}
+      aria-label={activatable ? `${actionVerb} ${app.name}` : undefined}
     >
       <span className="hub-module-card__accent" style={{ background: app.gradient }} aria-hidden="true" />
       <span className="hub-module-card__wash" style={{ background: app.gradient }} aria-hidden="true" />
@@ -84,14 +78,23 @@ export function AppCard({ app, onDetails }: AppCardProps) {
         {activatable ? (
           <a
             href={target}
-            target="_blank"
-            rel={linkRelationship}
             onClick={(event) => event.stopPropagation()}
             className="hub-card-action hub-card-action--primary"
             style={themedActionStyle}
           >
-            <span>{actionVerb}</span><span aria-hidden="true">↗</span>
+            <span>{actionVerb}</span><span aria-hidden="true">→</span>
           </a>
+        ) : null}
+
+        {mode === 'catalog' ? (
+          <PlatformLink
+            to={`/request-access?product=${encodeURIComponent(app.id)}`}
+            onClick={(event) => event.stopPropagation()}
+            className="hub-card-action hub-card-action--primary"
+            style={themedActionStyle}
+          >
+            <span>Request app</span><span aria-hidden="true">→</span>
+          </PlatformLink>
         ) : null}
 
         {mode === 'unavailable' ? <span className="hub-card-action hub-card-action--muted">Coming soon</span> : null}
@@ -101,7 +104,7 @@ export function AppCard({ app, onDetails }: AppCardProps) {
           onClick={openDetails}
           className="hub-card-action hub-card-action--secondary-on-light"
         >
-          {workspaceCard ? <><span aria-hidden="true">ⓘ</span><span>Details</span></> : <><span>Learn More</span><span aria-hidden="true">→</span></>}
+          <span aria-hidden="true">ⓘ</span><span>Details</span>
         </button>
       </div>
     </article>

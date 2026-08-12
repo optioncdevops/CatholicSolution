@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DashboardHeader } from '@shared/app/components/DashboardHeader';
-import { DownloadIcon, EyeIcon, FileTextIcon, SearchIcon, SparklesIcon } from '@shared/app/components/UiIcons';
+import { ArrowRightIcon, DownloadIcon, EyeIcon, FileTextIcon, SearchIcon, SparklesIcon } from '@shared/app/components/UiIcons';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { getAppById } from '@shared/app/config/appCatalog';
 import { AppLayout } from '@shared/app/layouts/AppLayout';
+import { SOLUTION_REGISTRY } from '@shared/platform/config/solutionRegistry';
+import { resolveSolutionUrl } from '@shared/platform/navigation/solutionNavigation';
 import { categories, contentResources, months } from '@/solution/components/contentData';
 
 const app = getAppById('catholic-content')!;
+const supportCenterUrl = resolveSolutionUrl(SOLUTION_REGISTRY['support-center']);
+const memberServicesUrl = resolveSolutionUrl(SOLUTION_REGISTRY['support-center'], '/?view=new&contact=Member%20Services&product=catholic-content');
 
 export function CatholicContentPage() {
   const { showToast } = useToast();
@@ -15,11 +19,18 @@ export function CatholicContentPage() {
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState('aug-06-color');
   const selected = contentResources.find((resource) => resource.id === selectedId) ?? contentResources.at(-1)!;
+  const filteredResources = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return normalized ? contentResources.filter((resource) => `${resource.title} ${resource.displayTitle} ${resource.subtitle}`.toLowerCase().includes(normalized)) : contentResources;
+  }, [query]);
 
-  const search = () => showToast(query.trim() ? `Searching Catholic Content for “${query.trim()}”…` : 'Type a topic to search');
+  const search = () => {
+    if (!query.trim()) { showToast(`${contentResources.length} resources available in this preview`); return; }
+    showToast(`${filteredResources.length} resource${filteredResources.length === 1 ? '' : 's'} found for ${query.trim()}`);
+    if (filteredResources.length && !filteredResources.some((resource) => resource.id === selectedId)) setSelectedId(filteredResources[0].id);
+  };
   const selectMonth = (value: string) => { setMonth(value); showToast(`Saints of the Day for ${value} would load here`); };
   const selectCategory = (value: string) => { setCategory(value); showToast(`${value} resources would load here`); };
-  const memberServices = () => showToast('Member Services contact form would open here');
 
   return (
     <AppLayout app={app} className="cc-premium-page">
@@ -28,39 +39,33 @@ export function CatholicContentPage() {
           eyebrow="Faith resource library"
           title="Catholic Content"
           status={<span className="cc-resource-count">1,200+ resources</span>}
-          actions={<button type="button" onClick={memberServices} className="action-secondary cc-request-button">Request content</button>}
         />
 
         <section className="cc-context-strip" aria-label="Catholic Content overview">
           <span className="cc-context-icon" aria-hidden="true">✦</span>
           <p><strong>OptionC Catholic Content</strong> provides more than 1,200 high-quality faith-based resources for Catholic schools and religious education programs, with regular additions based on current events in the Church.</p>
-          <button type="button" onClick={memberServices}>Contact Member Services</button>
+          <div className="cc-context-actions">
+            <a href={memberServicesUrl} className="cc-context-link cc-context-link--primary">Contact Member Services <ArrowRightIcon size={13}/></a>
+            <a href={supportCenterUrl} className="cc-context-link">Support Center <ArrowRightIcon size={13}/></a>
+          </div>
         </section>
 
-        <section className="cc-discovery-card" aria-label="Resource discovery">
-          <div className="cc-discovery-row">
-            <div className="cc-discovery-label"><span>Saints of the Day</span><strong>{month}</strong></div>
-            <div className="cc-chip-scroll" role="group" aria-label="Saints of the Day month">
-              {months.map((item) => (
-                <button key={item} type="button" onClick={() => selectMonth(item)} aria-pressed={month === item} className={`cc-filter-chip ${month === item ? 'is-active' : ''}`}>{item.slice(0, 3)}</button>
-              ))}
-            </div>
-          </div>
-          <div className="cc-discovery-row cc-discovery-row--categories">
-            <div className="cc-discovery-label"><span>Categories</span>{category ? <button type="button" onClick={() => setCategory(null)}>Clear</button> : <strong>All</strong>}</div>
-            <div className="cc-chip-scroll" role="group" aria-label="Catholic Content categories">
-              {categories.map((item) => (
-                <button key={item} type="button" onClick={() => selectCategory(item)} aria-pressed={category === item} className={`cc-filter-chip cc-filter-chip--wide ${category === item ? 'is-active' : ''}`}>{item}</button>
-              ))}
-            </div>
-          </div>
-          <div className="cc-search-row">
-            <div className="cc-search-copy"><strong>Search library</strong><span>Saint · Grade · Subject · Patronage · Century · Content Type</span></div>
-            <div className="cc-search-control">
-              <SearchIcon size={16}/>
-              <input id="content-search" aria-label="Search Catholic Content" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') search(); }} placeholder="Search saints, subjects, grades, and resource types" />
+        <section className="cc-discovery-card cc-discovery-card--compact" aria-label="Resource discovery">
+          <div className="cc-search-primary-row">
+            <div className="cc-search-copy cc-search-copy--primary"><strong>Find a resource</strong><span>Search by saint, subject, grade, patronage, century, or resource type.</span></div>
+            <div className="cc-search-control cc-search-control--primary">
+              <SearchIcon size={17}/>
+              <input id="content-search" aria-label="Search Catholic Content" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') search(); }} placeholder="Search the Catholic Content library" />
+              {query ? <button type="button" className="cc-search-clear" onClick={() => setQuery('')} aria-label="Clear search">x</button> : null}
             </div>
             <button type="button" onClick={search} className="cc-search-button">Search</button>
+          </div>
+
+          <div className="cc-browse-row">
+            <div className="cc-browse-heading"><strong>Browse library</strong><span>Use focused filters instead of scrolling through long chip lists.</span></div>
+            <label className="cc-compact-select"><span>Saints of the Day</span><select value={month} onChange={(event) => selectMonth(event.target.value)}>{months.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+            <label className="cc-compact-select cc-compact-select--category"><span>Category</span><select value={category ?? ''} onChange={(event) => event.target.value ? selectCategory(event.target.value) : setCategory(null)}><option value="">All categories</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+            <div className="cc-active-filter-summary"><span>{filteredResources.length} resources</span>{category ? <button type="button" onClick={() => setCategory(null)}>Clear category</button> : null}</div>
           </div>
         </section>
 
@@ -68,13 +73,13 @@ export function CatholicContentPage() {
           <section className="cc-resource-panel" aria-label="Saints of the Day resources">
             <header className="cc-panel-header">
               <div><span>Resource list</span><h2>Saints of the Day · {month}</h2></div>
-              <span className="cc-panel-count">{contentResources.length}</span>
+              <span className="cc-panel-count">{filteredResources.length}</span>
             </header>
             <div className="cc-table-wrap">
               <table className="cc-resource-table">
                 <thead><tr><th>Posted Date</th><th>Title</th><th><span className="sr-only">Preview</span></th></tr></thead>
                 <tbody>
-                  {contentResources.map((resource) => {
+                  {filteredResources.map((resource) => {
                     const active = resource.id === selectedId;
                     return (
                       <tr key={resource.id} className={active ? 'is-selected' : ''}>
@@ -84,6 +89,7 @@ export function CatholicContentPage() {
                       </tr>
                     );
                   })}
+                  {!filteredResources.length ? <tr className="cc-empty-result-row"><td colSpan={3}><strong>No resources found</strong><span>Try a broader saint, subject, grade, or resource-type search.</span><button type="button" onClick={() => setQuery('')}>Clear search</button></td></tr> : null}
                 </tbody>
               </table>
             </div>

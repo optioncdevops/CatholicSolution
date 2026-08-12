@@ -5,7 +5,7 @@ import { Footer } from '@shared/app/components/Footer';
 import { ProfileMenu } from '@shared/app/components/ProfileMenu';
 import { SectionHeading } from '@shared/app/components/SectionHeading';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { aiApps, discoverApps, launchableApps, yourApps } from '@shared/app/config/appCatalog';
+import { aiApps, discoverApps, yourApps } from '@shared/app/config/appCatalog';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import type { CatalogApp } from '@shared/app/types/app';
 import { AppCard } from './AppCard';
@@ -46,16 +46,10 @@ export function AppHubPage() {
       <section className="hub-premium-hero">
         <div className="hub-premium-hero__glow" aria-hidden="true" />
         <span className="hub-premium-hero__cross" aria-hidden="true">✝</span>
-        <div className="hub-premium-hero__content">
+        <div className="hub-premium-hero__content hub-premium-hero__content--compact">
           <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-brand-gold">Connected workspace</p>
-            <h1 className="mt-2 font-serif text-3xl font-bold sm:text-[2.15rem]">{greeting(firstName)}</h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/72">Everything your organization uses, organized in one secure workspace.</p>
-          </div>
-          <div className="hub-premium-hero__summary" aria-label="Workspace summary">
-            <div><strong>{launchableApps.length}</strong><span>Apps ready</span></div>
-            <div><strong>8</strong><span>Approvals</span></div>
-            <div><strong>All clear</strong><span>System status</span></div>
+            <h1 className="font-serif text-3xl font-bold sm:text-[2.15rem]">{greeting(firstName)}</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-white/72">Everything your organization uses, organized in one secure workspace.</p>
           </div>
         </div>
       </section>

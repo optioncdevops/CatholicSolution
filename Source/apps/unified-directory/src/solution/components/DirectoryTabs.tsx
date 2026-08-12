@@ -1,11 +1,18 @@
 import { UsersIcon } from '@shared/app/components/UiIcons';
 
-export type DirectoryTab = 'Users' | 'Groups';
+export type DirectoryTab = 'Active User' | 'Inactive Users' | 'Groups';
 
-export function DirectoryTabs({ tab, onChange, users, groups }: { tab: DirectoryTab; onChange: (tab: DirectoryTab) => void; users: number; groups: number }) {
+export function DirectoryTabs({ tab, onChange, activeUsers, inactiveUsers, groups }: {
+  tab: DirectoryTab;
+  onChange: (tab: DirectoryTab) => void;
+  activeUsers: number;
+  inactiveUsers: number;
+  groups: number;
+}) {
   return (
     <div className="directory-tabs" role="tablist" aria-label="Directory sections">
-      <TabButton active={tab === 'Users'} label="Users" count={users} onClick={() => onChange('Users')} />
+      <TabButton active={tab === 'Active User'} label="Active User" count={activeUsers} onClick={() => onChange('Active User')} />
+      <TabButton active={tab === 'Inactive Users'} label="Inactive Users" count={inactiveUsers} onClick={() => onChange('Inactive Users')} />
       <TabButton active={tab === 'Groups'} label="Groups" count={groups} onClick={() => onChange('Groups')} />
     </div>
   );

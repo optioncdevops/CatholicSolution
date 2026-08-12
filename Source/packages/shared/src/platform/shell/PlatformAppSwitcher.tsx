@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { availableSwitcherApps } from '@shared/app/config/appCatalog';
 import type { CatalogApp } from '@shared/app/types/app';
-import { AppsIcon, ArrowUpRightIcon, ChevronDownIcon } from '@shared/app/components/UiIcons';
+import { AppsIcon, ChevronDownIcon, ChevronRightIcon } from '@shared/app/components/UiIcons';
 import { resolveAppUrl, resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
 
 interface PlatformAppSwitcherProps {
@@ -73,11 +73,9 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
     return (
       <a
         href={target}
-        target="_blank"
-        rel={app.kind === 'external' ? 'noopener noreferrer' : 'noopener'}
         onClick={() => setOpen(false)}
         className="app-switcher__tile"
-        aria-label={`Open ${app.name} in a new tab`}
+        aria-label={`Open ${app.name}`}
       >
         {content}
       </a>
@@ -115,15 +113,13 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
           <div className="app-switcher__footer">
             <a
               href={resolvePlatformUrl('/apps')}
-              target="_blank"
-              rel="noopener"
               onClick={() => setOpen(false)}
               className="app-switcher__all-apps"
-              aria-label="Open all apps in the App Hub in a new tab"
+              aria-label="Open all apps in the App Hub"
             >
               <AppsIcon size={15} />
               <span>All apps</span>
-              <ArrowUpRightIcon size={14} />
+              <ChevronRightIcon size={14} />
             </a>
           </div>
         </div>

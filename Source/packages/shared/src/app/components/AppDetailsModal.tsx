@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
-import { useToast } from './ToastProvider';
-import { resolveAppUrl } from '@shared/platform/navigation/solutionNavigation';
+import { resolveAppUrl, resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
 
 interface AppDetailsModalProps {
   app: CatalogApp | null;
@@ -9,7 +8,6 @@ interface AppDetailsModalProps {
 }
 
 export function AppDetailsModal({ app, onClose }: AppDetailsModalProps) {
-  const { showToast } = useToast();
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -42,19 +40,12 @@ export function AppDetailsModal({ app, onClose }: AppDetailsModalProps) {
   const isExternal = app.kind === 'external';
   const unpublished = isExternal && !app.externalUrl;
 
-  /*
-   * Launching a solution and visiting a partner site both open in a new tab, matching the
-   * App Hub cards. Both are rendered as an anchor so the destination is exposed to
-   * assistive technology and the browser's own new-tab affordances keep working; only the
-   * non-navigating "Request this app" case stays a button.
-   *
-   * `noopener` blocks window.opener access in both cases. Third-party partner sites also
-   * get `noreferrer`; first-party solutions are our own origins and do not need it.
-   */
+  // App Hub navigation intentionally stays in the current tab. Users can still use the
+  // browser's native context-menu / modifier-key behavior when they want another tab.
   const target = app.route ? resolveAppUrl(app) : app.externalUrl;
-  const linkRelationship = app.route ? 'noopener' : 'noopener noreferrer';
-  const primaryLabel = app.route ? 'Launch ↗' : isExternal ? (unpublished ? 'Coming soon' : 'Visit site ↗') : 'Request this app';
-  const primaryClass = `action-primary ${app.route ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 shadow-sm' : 'border border-brand-navy bg-white text-brand-navy hover:bg-brand-navy hover:text-white'}`;
+  const requestTarget = !target && !unpublished ? resolvePlatformUrl(`/request-access?product=${encodeURIComponent(app.id)}`) : '';
+  const primaryLabel = app.route ? 'Launch →' : isExternal ? (unpublished ? 'Coming soon' : 'Visit site →') : 'Request this app →';
+  const primaryClass = `action-primary ${app.route || app.externalUrl ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 shadow-sm' : 'border border-brand-navy bg-white text-brand-navy hover:bg-brand-navy hover:text-white'}`;
   const details = app.details;
   const statusClass = app.route ? 'bg-emerald-50 text-emerald-700' : isExternal ? 'bg-slate-100 text-slate-700' : app.kind === 'ai' ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-700';
 
@@ -93,13 +84,14 @@ export function AppDetailsModal({ app, onClose }: AppDetailsModalProps) {
         <footer className="flex flex-wrap items-center gap-3 border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-6">
           <span className={`mr-auto rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide ${statusClass}`}>{app.statusDetail ?? app.statusLabel}</span>
           {target ? (
-            <a href={target} target="_blank" rel={linkRelationship} onClick={onClose} className={primaryClass}>{primaryLabel}</a>
+            <a href={target} onClick={onClose} className={primaryClass}>{primaryLabel}</a>
+          ) : requestTarget ? (
+            <a href={requestTarget} onClick={onClose} className={primaryClass}>{primaryLabel}</a>
           ) : (
             <button
               type="button"
-              onClick={() => { showToast('Request sent to your OptionC administrator ✓'); onClose(); }}
-              disabled={unpublished}
-              className={`${primaryClass} disabled:cursor-default disabled:border-slate-300 disabled:bg-slate-100 disabled:text-slate-500 disabled:hover:bg-slate-100 disabled:hover:text-slate-500`}
+              disabled
+              className={`${primaryClass} cursor-default border-slate-300 bg-slate-100 text-slate-500`}
             >
               {primaryLabel}
             </button>

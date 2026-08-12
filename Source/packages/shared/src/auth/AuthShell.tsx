@@ -60,7 +60,10 @@ export function AuthShell({
                   <div key={app.id} className="auth-platform-app" role="listitem">
                     <span className="auth-platform-app__accent" style={{ background: app.gradient }} aria-hidden="true" />
                     <span className="auth-platform-app__icon" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
-                    <strong>{app.name}</strong>
+                    <span className="auth-platform-app__copy">
+                      <strong>{app.name}</strong>
+                      <small>{app.category}</small>
+                    </span>
                     {app.status === 'coming-soon' ? <small className="auth-platform-app__status">Soon</small> : null}
                   </div>
                 ))}

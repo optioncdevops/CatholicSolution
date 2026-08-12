@@ -89,7 +89,7 @@ export function CentralLoginPage() {
             <div>
               <div className="auth-label-row">
                 <label className="auth-label" htmlFor="password">Password</label>
-                <button type="button" className="auth-text-link" onClick={() => showToast('Password reset flow will be handled by the configured identity service')}>Forgot password?</button>
+                <PlatformLink to={`/forgot-password${location.search}`} className="auth-text-link">Forgot password?</PlatformLink>
               </div>
               <div className="auth-input-wrap mt-2">
                 <span className="auth-input-icon"><LockIcon size={17} /></span>

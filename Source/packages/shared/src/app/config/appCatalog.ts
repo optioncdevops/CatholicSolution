@@ -92,30 +92,30 @@ export const APP_CATALOG: CatalogApp[] = [
     icon: "👥", gradient: "linear-gradient(135deg,#075985,#0EA5E9)",
     route: "/",
     keywords: ["directory", "users", "groups", "identity", "access", "people"],
-    features: ["👤 User management", "👥 Groups", "✉️ Invitations", "🔐 Access foundation"],
-    stats: [{ value: "4", label: "Users in prototype" }, { value: "4", label: "Groups configured" }, { value: "1", label: "Invitation pending" }, { value: "Ready", label: "Future access controls" }],
+    features: ["👤 Active / inactive users", "🧩 SaaS app access", "👥 Groups", "🔐 Membership management"],
+    stats: [{ value: "132", label: "Directory users" }, { value: "116", label: "Active users" }, { value: "12", label: "Groups configured" }, { value: "13", label: "Apps available" }],
     kind: "launchable", status: "active", statusLabel: "Active",
     statusDetail: "● Active · Organization directory",
     details: {
-      longDescription: "Unified Directory is the shared people and group layer for Catholic Solutions. Administrators can add organization users, maintain group membership, and prepare a consistent identity foundation for future roles, permissions, and automated provisioning.",
-      included: ["Central user directory across connected applications", "Organization and security group management", "Invitation and activation status tracking", "Search by user, role, group, or email", "Extensible foundation for future roles, permissions, and lifecycle automation"],
+      longDescription: "Unified Directory is the shared people, SaaS-access, and group layer for Catholic Solutions. Administrators can manage active and inactive users, assign application access, maintain group membership, and review each identity from one scalable directory workspace.",
+      included: ["Active and inactive user workspaces with 100+ directory identities", "SaaS application access captured when a user is added", "Reusable groups with direct member management", "Search by user, email, application, or group", "Scrollable grids and a dedicated detail panel for large directories"],
       integrations: ["🎓 OptionC School", "✝️ OptionC Parish", "🤝 Vincent Volunteer", "🔔 ArcAlerts"],
-      activity: [{ title: "Volunteer Coordinators group updated", meta: "Today" }, { title: "Anna Rodrigues invited", meta: "Yesterday" }, { title: "Faculty membership synchronized", meta: "Aug 6" }],
+      activity: [{ title: "Volunteer Coordinators group updated", meta: "Today" }, { title: "Anna Rodrigues added", meta: "Yesterday" }, { title: "Faculty membership synchronized", meta: "Aug 6" }],
     },
   },
   {
     id: "support-center", name: "Support Center", shortName: "Support", category: "Member Services",
-    description: "Find product help, submit support tickets, attach details, and track requests across your Catholic Solutions workspace.",
+    description: "Submit support tickets and keep the complete conversation history for every Catholic Solutions request in one workspace.",
     icon: "🛟", gradient: "linear-gradient(135deg,#164E63,#0E7490)",
     route: "/",
     keywords: ["support", "help", "ticket", "resources", "member services", "contact"],
-    features: ["🔎 Help resources", "🎫 Support tickets", "📎 Attachments", "🧭 Product routing"],
-    stats: [{ value: "12", label: "Help articles" }, { value: "2", label: "Active tickets" }, { value: "1 day", label: "Typical response" }, { value: "6", label: "Products supported" }],
+    features: ["🎫 Ticket inbox", "💬 Conversation history", "📎 Attachments", "🧭 Product routing"],
+    stats: [{ value: "3", label: "Sample tickets" }, { value: "9", label: "Conversation entries" }, { value: "1 day", label: "Typical response" }, { value: "12", label: "Products supported" }],
     kind: "launchable", status: "active", statusLabel: "Active",
     statusDetail: "● Active · Member Services available",
     details: {
-      longDescription: "Support Center brings Catholic Solutions help into one shared workspace. Staff can search product-specific resources, route a question to the correct support team, attach supporting information, and follow current or resolved tickets without switching between individual product support pages.",
-      included: ["Searchable help resources by Catholic Solutions product", "Support-ticket form with product and contact-team routing", "Attachment entry point for screenshots or supporting files", "Unified ticket history with open, waiting, and resolved states", "Member Services route for organization-wide or account questions"],
+      longDescription: "Support Center brings Catholic Solutions ticket management into one shared workspace. Staff can create a product-routed request, select any existing ticket to read the complete support conversation, reply in context, and return to a fresh ticket form without leaving the page.",
+      included: ["Full-width ticket inbox and conversation workspace", "Complete per-ticket conversation history", "Support-ticket form with product and contact-team routing", "Attachment entry point for screenshots or supporting files", "Member Services route for organization-wide or account questions"],
       integrations: ["🎓 OptionC School", "💰 Matt Money", "🔔 ArcAlerts", "✝️ OptionC Parish", "📚 Catholic Content", "👥 Unified Directory", "🤝 Vincent Volunteer"],
       activity: [{ title: "My Classes support ticket opened", meta: "Today" }, { title: "ArcAlerts delivery question awaiting reply", meta: "Yesterday" }, { title: "Directory export request resolved", meta: "Aug 5" }],
     },
@@ -140,11 +140,12 @@ export const APP_CATALOG: CatalogApp[] = [
     id: "ai-lesson-plan", name: "AI Lesson Plan Generator", shortName: "Lesson Plans", category: "AI · Teaching",
     description: "Reduce lesson plan production from hours to seconds with AI — standards-aligned plans you can edit, save and reuse each term.",
     icon: "📝", gradient: "linear-gradient(135deg,#D97706,#FBBF24)",
-    keywords: ["ai", "lesson plan", "teacher"],
+    externalUrl: "https://demo.optionc.com/XtraCoach",
+    keywords: ["ai", "lesson plan", "teacher", "xtracoach"],
     features: ["📚 Standards-aligned", "✏️ Fully editable", "🗂️ Reusable library"],
     stats: [{ value: "Hours → sec", label: "Production time" }, { value: "1–12", label: "Grade coverage" }, { value: "Editable", label: "Every output" }, { value: "Free", label: "Trial available" }],
-    kind: "ai", status: "ai-powered", statusLabel: "AI powered",
-    statusDetail: "✦ AI powered · Free trial",
+    kind: "external", status: "available", statusLabel: "Available",
+    statusDetail: "Available at demo.optionc.com/XtraCoach",
     details: {
       longDescription: "Give it a topic and grade level and get a complete, standards-aligned lesson plan back — objectives, activities and assessment included — ready to teach or refine further. Save your favorites to a reusable library for next term.",
       included: ["Standards-aligned plans for any subject and grade", "Objectives, activities and assessment included automatically", "Fully editable before saving or printing", "Reusable personal lesson-plan library", "Grades 1 through 12 supported"],
@@ -201,10 +202,10 @@ export const APP_CATALOG: CatalogApp[] = [
     },
   },
 
-  // Partner products hosted outside the Catholic Solutions SSO boundary. These open in a new
-  // tab at their own domain and deliberately carry no fabricated usage metrics or feature
-  // detail — only what the owning product publishes. An entry without `externalUrl` is not
-  // published yet and renders as a non-interactive "Coming soon" card.
+  // Partner products hosted outside the Catholic Solutions SSO boundary. Published links use
+  // normal same-tab navigation so development and hosted behavior stay predictable. Entries
+  // deliberately carry no fabricated usage metrics or feature detail. An entry without
+  // `externalUrl` is not published yet and renders as a non-interactive "Coming soon" card.
   {
     id: "ferrerworks", name: "FerrerWorks", shortName: "FerrerWorks", category: "Facility Management",
     description: "Facility management for school, hall and parish grounds. Opens on the FerrerWorks site.",
@@ -214,7 +215,7 @@ export const APP_CATALOG: CatalogApp[] = [
     features: ["🏢 Facility management"],
     stats: [],
     kind: "external", status: "available", statusLabel: "Open site",
-    statusDetail: "↗ Opens at ferrerworks.com",
+    statusDetail: "Opens at ferrerworks.com",
   },
   {
     id: "mass-card-requests", name: "Mass Card Requests", shortName: "Mass Cards", category: "Liturgy & Offerings",
@@ -225,7 +226,7 @@ export const APP_CATALOG: CatalogApp[] = [
     features: ["💌 Mass card requests"],
     stats: [],
     kind: "external", status: "available", statusLabel: "Open site",
-    statusDetail: "↗ Opens at masscardrequests.com",
+    statusDetail: "Opens at masscardrequests.com",
   },
   {
     id: "vincent-volunteer", name: "Vincent Volunteer", shortName: "Vincent Volunteer", category: "Service & Community",
@@ -236,7 +237,7 @@ export const APP_CATALOG: CatalogApp[] = [
     features: ["🤝 Volunteer coordination"],
     stats: [],
     kind: "external", status: "available", statusLabel: "Open site",
-    statusDetail: "↗ Opens at vincentvolunteer.com",
+    statusDetail: "Opens at vincentvolunteer.com",
   },
   {
     id: "berchmans", name: "Berchmans", shortName: "Berchmans", category: "Liturgy",
@@ -247,7 +248,7 @@ export const APP_CATALOG: CatalogApp[] = [
     features: ["🗓️ Altar server scheduling"],
     stats: [],
     kind: "external", status: "available", statusLabel: "Open site",
-    statusDetail: "↗ Opens at berchmans.app",
+    statusDetail: "Opens at berchmans.app",
   },
   {
     id: "alive-date", name: "Alive Date", shortName: "Alive Date", category: "Records & Directory",
@@ -258,7 +259,7 @@ export const APP_CATALOG: CatalogApp[] = [
     features: ["📅 Alive-date lookup"],
     stats: [],
     kind: "external", status: "available", statusLabel: "Open site",
-    statusDetail: "↗ Opens at alivedate.com",
+    statusDetail: "Opens at alivedate.com",
   },
   {
     id: "friar-friend", name: "Friar Friend", shortName: "Friar Friend", category: "AI · Teaching",
