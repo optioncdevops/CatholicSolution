@@ -1,9 +1,16 @@
-# Catholic Solutions Workspace — v1.4.4
+# Catholic Solutions Workspace — v1.4.5
 
-**Release:** v1.4.4  
+**Release:** v1.4.5  
 **Architecture:** independent-domain multi-app SaaS monorepo with centralized login
 
 This repository contains one independently deployable React/Vite application per Catholic Solutions product. Product applications are deployment-independent, while authentication entry is centralized on one Catholic Solutions Login domain. Shared platform source is maintained once under `packages/shared`.
+
+### v1.4.5 Support Center in-place upgrade build repair
+
+- Keeps the Resource Library retired while adding a zero-render compatibility shim for the legacy `SupportResourcePanel.tsx` path.
+- The shim exists only so extracting a newer source bundle over an older working folder overwrites the stale pre-v1.4.1 component instead of leaving TypeScript to compile an obsolete import of `supportResources`.
+- `SupportCenterPage` continues to use only the full-width ticket inbox, conversation pane, and new-ticket form.
+- Fresh clones and clean extractions behave identically; no Resource Library UI or dataset is restored.
 
 ### v1.4.4 Login catalog and profile identity repair
 

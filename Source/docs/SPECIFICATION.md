@@ -1,6 +1,6 @@
-# Catholic Solutions — Living Specification v1.4.4
+# Catholic Solutions — Living Specification v1.4.5
 
-> **Canonical release baseline:** v1.0.0. **Current release:** v1.4.4. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
+> **Canonical release baseline:** v1.0.0. **Current release:** v1.4.5. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
 
 ## v1.0 Repository and Solution Architecture
 
@@ -16,7 +16,7 @@
 - `config/solutions.json` is the machine-readable solution/build manifest; runtime domains are centralized in `packages/shared/src/auth/appAuthConfig.ts`.
 
 **Development model:** Spec-driven development  
-**Current version:** 1.4.4  
+**Current version:** 1.4.5  
 **Last updated:** August 12, 2026  
 **Status:** Active source of truth
 
@@ -1766,3 +1766,20 @@ This release is a focused visual repair. It does not change authentication behav
 - QA validates the topbar profile trigger and open profile menu in every product shell: initials are centered, avatar circles are not oversized, and identity text aligns vertically.
 - Shared design-system CSS must remain structurally balanced and standalone exports must be regenerated because the shared CSS changed.
 
+
+
+## 35. v1.4.5 — Support Center stale-source upgrade compatibility
+
+### Upgrade/build contract
+
+- The Support Center Resource Library remains retired. `SupportCenterPage` MUST NOT render or import `SupportResourcePanel`, and `supportData.ts` MUST NOT reintroduce a `supportResources` dataset.
+- Source bundles may be extracted over an existing developer checkout. Because archive extraction does not delete files removed in later releases, the canonical source MUST include a compile-safe compatibility file at `apps/support-center/src/solution/components/SupportResourcePanel.tsx` until the migration window is closed.
+- The compatibility component MUST render `null`, MUST NOT import legacy resource data, and MUST be marked deprecated. It exists solely to overwrite stale pre-v1.4.1 copies during in-place upgrades.
+- Fresh/clean installations and in-place upgrades MUST produce the same Support Center behavior: ticket inbox + conversation detail + new-ticket form only.
+
+### v1.4.5 validation contract
+
+- `SupportResourcePanel.tsx` contains no `supportResources` import.
+- `SupportCenterPage.tsx` contains no `SupportResourcePanel` reference.
+- The Support Center solution contains no exported `supportResources` dataset.
+- The compatibility component is compile-safe under strict TypeScript and has no UI output.
