@@ -1,0 +1,105 @@
+{
+  "version": "1.2.0",
+  "architecture": "multi-app-saas-central-login-independent-deployments",
+  "solutions": [
+    {
+      "folder": "apps/app-hub",
+      "package": "@catholic-solutions/app-hub",
+      "appId": "platform",
+      "purpose": "Catholic Solutions login, request access, and App Hub",
+      "devOrigin": "http://localhost:4001",
+      "originEnvKey": "VITE_PLATFORM_ORIGIN",
+      "stagingOriginPlaceholder": "https://hub.staging.catholicsolutions.example",
+      "productionOriginPlaceholder": "https://hub.catholicsolutions.example",
+      "deploymentBoundary": "apps/app-hub",
+      "standaloneExport": ".artifacts/standalone/app-hub"
+    },
+    {
+      "folder": "apps/optionc-school",
+      "package": "@catholic-solutions/optionc-school",
+      "appId": "optionc-school",
+      "purpose": "OptionC School",
+      "devOrigin": "http://localhost:4002",
+      "originEnvKey": "VITE_OPTIONC_SCHOOL_ORIGIN",
+      "stagingOriginPlaceholder": "https://school.staging.catholicsolutions.example",
+      "productionOriginPlaceholder": "https://school.catholicsolutions.example",
+      "deploymentBoundary": "apps/optionc-school",
+      "standaloneExport": ".artifacts/standalone/optionc-school"
+    },
+    {
+      "folder": "apps/matt-money",
+      "package": "@catholic-solutions/matt-money",
+      "appId": "matt-money",
+      "purpose": "Matt Money",
+      "devOrigin": "http://localhost:4003",
+      "originEnvKey": "VITE_MATT_MONEY_ORIGIN",
+      "stagingOriginPlaceholder": "https://money.staging.catholicsolutions.example",
+      "productionOriginPlaceholder": "https://money.catholicsolutions.example",
+      "deploymentBoundary": "apps/matt-money",
+      "standaloneExport": ".artifacts/standalone/matt-money"
+    },
+    {
+      "folder": "apps/arc-alerts",
+      "package": "@catholic-solutions/arc-alerts",
+      "appId": "arc-alerts",
+      "purpose": "ArcAlerts",
+      "devOrigin": "http://localhost:4004",
+      "originEnvKey": "VITE_ARC_ALERTS_ORIGIN",
+      "stagingOriginPlaceholder": "https://alerts.staging.catholicsolutions.example",
+      "productionOriginPlaceholder": "https://alerts.catholicsolutions.example",
+      "deploymentBoundary": "apps/arc-alerts",
+      "standaloneExport": ".artifacts/standalone/arc-alerts"
+    },
+    {
+      "folder": "apps/optionc-parish",
+      "package": "@catholic-solutions/optionc-parish",
+      "appId": "optionc-parish",
+      "purpose": "OptionC Parish",
+      "devOrigin": "http://localhost:4005",
+      "originEnvKey": "VITE_OPTIONC_PARISH_ORIGIN",
+      "stagingOriginPlaceholder": "https://parish.staging.catholicsolutions.example",
+      "productionOriginPlaceholder": "https://parish.catholicsolutions.example",
+      "deploymentBoundary": "apps/optionc-parish",
+      "standaloneExport": ".artifacts/standalone/optionc-parish"
+    },
+    {
+      "folder": "apps/catholic-content",
+      "package": "@catholic-solutions/catholic-content",
+      "appId": "catholic-content",
+      "purpose": "Catholic Content",
+      "devOrigin": "http://localhost:4006",
+      "originEnvKey": "VITE_CATHOLIC_CONTENT_ORIGIN",
+      "stagingOriginPlaceholder": "https://content.staging.catholicsolutions.example",
+      "productionOriginPlaceholder": "https://content.catholicsolutions.example",
+      "deploymentBoundary": "apps/catholic-content",
+      "standaloneExport": ".artifacts/standalone/catholic-content"
+    },
+    {
+      "folder": "apps/unified-directory",
+      "package": "@catholic-solutions/unified-directory",
+      "appId": "unified-directory",
+      "purpose": "Unified Directory",
+      "devOrigin": "http://localhost:4007",
+      "originEnvKey": "VITE_UNIFIED_DIRECTORY_ORIGIN",
+      "stagingOriginPlaceholder": "https://directory.staging.catholicsolutions.example",
+      "productionOriginPlaceholder": "https://directory.catholicsolutions.example",
+      "deploymentBoundary": "apps/unified-directory",
+      "standaloneExport": ".artifacts/standalone/unified-directory"
+    },
+    {
+      "folder": "apps/support-center",
+      "package": "@catholic-solutions/support-center",
+      "appId": "support-center",
+      "purpose": "Support Center",
+      "devOrigin": "http://localhost:4009",
+      "originEnvKey": "VITE_SUPPORT_CENTER_ORIGIN",
+      "stagingOriginPlaceholder": "https://support.staging.catholicsolutions.example",
+      "productionOriginPlaceholder": "https://support.catholicsolutions.example",
+      "deploymentBoundary": "apps/support-center",
+      "standaloneExport": ".artifacts/standalone/support-center"
+    }
+  ],
+  "sharedPackage": "packages/shared",
+  "loginOriginEnvKey": "VITE_LOGIN_ORIGIN",
+  "authenticationModel": "central-login-domain-with-return-url"
+}

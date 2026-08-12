@@ -1,0 +1,1 @@
+export { ArcAlertsPage } from './ArcAlertsPage';

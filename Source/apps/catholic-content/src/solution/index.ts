@@ -1,0 +1,1 @@
+export { CatholicContentPage } from './CatholicContentPage';

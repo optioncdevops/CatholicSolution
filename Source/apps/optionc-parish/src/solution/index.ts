@@ -1,0 +1,1 @@
+export { OptionCParishPage } from './OptionCParishPage';
