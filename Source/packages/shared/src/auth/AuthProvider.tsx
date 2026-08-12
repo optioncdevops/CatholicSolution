@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 import { environment } from '@shared/platform/config/environment';
-import { consumeDevelopmentAuthCallback } from './centralAuth';
+import { canRedirectToExternalIdentityProvider, clearPreviewSession, createPreviewSession, hasPreviewSession } from './centralAuth';
 
 export interface SignInRequest {
   email: string;
@@ -17,27 +17,8 @@ interface AuthContextValue {
   signOut: () => void;
 }
 
-interface StoredSession {
-  appId: string;
-  email: string;
-  authenticatedAt: string;
-}
-
 const AuthContext = createContext<AuthContextValue | null>(null);
-const sessionKey = `catholic-solutions.auth.${environment.appId}.v1`;
-
-/**
- * Same-origin session synchronisation channel.
- *
- * Launching apps into new tabs means several tabs of one solution can share a session, so
- * signing out in one has to end it in the others. A tab that keeps stale `isAuthenticated`
- * state would carry on rendering protected content until it happened to reload.
- *
- * This covers tabs of the *same* origin only. Propagating sign-out to other solution
- * domains is cross-origin and cannot be done from client script; it requires the identity
- * provider's front-channel or back-channel logout (see specification §20).
- */
-const sessionChannelName = `${sessionKey}.sync`;
+const sessionChannelName = `catholic-solutions.auth.${environment.appId}.sync`;
 type SessionSignal = 'signed-in' | 'signed-out';
 let sessionChannel: BroadcastChannel | null = null;
 
@@ -47,44 +28,8 @@ function sessionSync() {
   return sessionChannel;
 }
 
-function broadcastSession(signal: SessionSignal) {
-  sessionSync()?.postMessage(signal);
-}
-
-function hasStoredSession() {
-  if (typeof window === 'undefined') return false;
-  return Boolean(window.localStorage.getItem(sessionKey) || window.sessionStorage.getItem(sessionKey));
-}
-
-function storeSession(email: string, remember: boolean) {
-  const session: StoredSession = {
-    appId: environment.appId,
-    email,
-    authenticatedAt: new Date().toISOString(),
-  };
-  const serialized = JSON.stringify(session);
-  const primary = remember ? window.localStorage : window.sessionStorage;
-  const secondary = remember ? window.sessionStorage : window.localStorage;
-  secondary.removeItem(sessionKey);
-  primary.setItem(sessionKey, serialized);
-}
-
-function clearSession() {
-  if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(sessionKey);
-  window.sessionStorage.removeItem(sessionKey);
-}
-
-function bootstrapAuthentication() {
-  if (hasStoredSession()) return true;
-  const callbackMode = consumeDevelopmentAuthCallback();
-  if (!callbackMode) return false;
-  storeSession('carl.lapp@optionc.com', callbackMode === 'local');
-  return true;
-}
-
 function redirectToIdentityProvider(request: SignInRequest) {
-  if (!environment.authOrigin || typeof window === 'undefined') return false;
+  if (!canRedirectToExternalIdentityProvider() || typeof window === 'undefined') return false;
   const authUrl = new URL('/login', environment.authOrigin);
   authUrl.searchParams.set('client_id', request.clientId || environment.appId);
   authUrl.searchParams.set('returnUrl', request.returnUrl || window.location.href);
@@ -94,29 +39,26 @@ function redirectToIdentityProvider(request: SignInRequest) {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [isAuthenticated, setAuthenticated] = useState(bootstrapAuthentication);
+  const [isAuthenticated, setAuthenticated] = useState(hasPreviewSession);
 
   useEffect(() => {
     const channel = sessionSync();
+    const refreshSession = () => {
+      if (environment.authMode !== 'sso') setAuthenticated(hasPreviewSession());
+    };
     const onSignal = (event: MessageEvent<SessionSignal>) => {
       if (event.data === 'signed-out') setAuthenticated(false);
       else if (event.data === 'signed-in') setAuthenticated(true);
     };
-
-    // Covers browsers without BroadcastChannel, and tabs that were already open. Fires
-    // only for localStorage; a `null` key means the whole store was cleared.
-    const onStorage = (event: StorageEvent) => {
-      if (event.key !== null && event.key !== sessionKey) return;
-      setAuthenticated(hasStoredSession());
-    };
+    const onVisibility = () => { if (!document.hidden) refreshSession(); };
 
     channel?.addEventListener('message', onSignal);
-    window.addEventListener('storage', onStorage);
+    window.addEventListener('focus', refreshSession);
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      // The channel is a module-level singleton shared by the whole app, so remove the
-      // listener but leave it open.
       channel?.removeEventListener('message', onSignal);
-      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('focus', refreshSession);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, []);
 
@@ -126,15 +68,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (environment.authMode === 'sso') {
         return redirectToIdentityProvider(request) ? 'redirected' : 'unavailable';
       }
-      storeSession(request.email || 'demo@catholicsolutions.local', Boolean(request.remember));
+      createPreviewSession(Boolean(request.remember));
       setAuthenticated(true);
-      broadcastSession('signed-in');
+      sessionSync()?.postMessage('signed-in');
       return 'authenticated';
     },
     signOut() {
-      clearSession();
+      clearPreviewSession();
       setAuthenticated(false);
-      broadcastSession('signed-out');
+      sessionSync()?.postMessage('signed-out');
     },
   }), [isAuthenticated]);
 

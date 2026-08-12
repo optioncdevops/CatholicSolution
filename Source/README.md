@@ -1,6 +1,6 @@
-# Catholic Solutions Workspace
+# Catholic Solutions Workspace — v1.3.3
 
-**Release:** v1.3.2  
+**Release:** v1.3.3  
 **Architecture:** independent-domain multi-app SaaS monorepo with centralized login
 
 This repository contains one independently deployable React/Vite application per Catholic Solutions product. Product applications are deployment-independent, while authentication entry is centralized on one Catholic Solutions Login domain. Shared platform source is maintained once under `packages/shared`.
@@ -29,7 +29,7 @@ docs/
 
 ## Local port plan
 
-Port `4000` remains reserved for a future/local identity provider. The user-facing centralized Login and App Hub run on `4001`; product applications use `4002`-`4009`.
+The user-facing centralized Login and App Hub run on `4001`; product applications use `4002`-`4009`. Port `4000` remains unassigned for future platform infrastructure and is not part of the current Login flow.
 
 | Application | Workspace | Development URL |
 |---|---|---|
@@ -100,36 +100,38 @@ http://localhost:4004/members
 
 ArcAlerts is still built and deployed independently; the centralized Login domain is a runtime authentication dependency, not a deployment coupling to the App Hub product bundle.
 
-## Authentication configuration
+## Authentication and domain configuration
 
-Every application declares both:
+Domain routing is intentionally **not duplicated in Vite environment files**. The one common source of truth is:
 
-```env
-VITE_LOGIN_ORIGIN=http://localhost:4001
-VITE_AUTH_ORIGIN=http://localhost:4000
+```text
+packages/shared/src/auth/appAuthConfig.ts
 ```
 
-`VITE_LOGIN_ORIGIN` is the user-facing Catholic Solutions Login application. `VITE_AUTH_ORIGIN` is reserved for the real identity/SSO service. Keeping them separate allows the Login UI and the underlying identity provider to evolve independently.
+It contains the local development origins and the approved hosted origins (`cfr.optioncapp.com`, OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, and Support Center). App Hub launch cards, the shared switcher, central Login redirects, return-URL allowlisting, and logout all consume that same configuration.
 
-### Development
+Each application has only `.env.development` and `.env.production`. Those files contain per-application metadata such as `VITE_APP_ID`, title, base path, domain-routing flag, and development port; they do not repeat the solution-domain matrix.
 
-```env
-VITE_AUTH_MODE=mock
-VITE_LOGIN_ORIGIN=http://localhost:4001
-VITE_AUTH_ORIGIN=http://localhost:4000
+### Authentication modes
+
+- Development uses the frontend-only central preview session for local UI testing.
+- `build:staging` uses `.env.production` plus a build-time `VITE_DEPLOYMENT_TARGET=staging` flag. It enables a shared preview-session cookie across `*.optioncapp.com`, so the hosted staging Login, App Hub, switcher, and product handoff work without the not-yet-integrated identity backend.
+- Production `npm run build` is fail-closed SSO. Because no separate identity provider endpoint is implemented in this frontend repository, production sign-in does not mint a browser-only session or redirect back to the same `/login` route.
+
+The staging preview cookie is intentionally not presented as production authentication: it is JavaScript-managed and therefore cannot replace a server-issued `HttpOnly`, `Secure` session or an OIDC/OAuth authorization-code + PKCE integration.
+
+### Approved hosted origins
+
+```text
+https://cfr.optioncapp.com
+https://optionc-sms.optioncapp.com
+https://matt-money.optioncapp.com
+https://arc-alerts.optioncapp.com
+https://optionc-parish.optioncapp.com
+https://catholic-content.optioncapp.com
+https://directory.optioncapp.com
+https://support-center.optioncapp.com
 ```
-
-Mock mode simulates the central sign-in handoff for frontend development. Port `4000` does not need to run in mock mode.
-
-### Staging / production
-
-```env
-VITE_AUTH_MODE=sso
-VITE_LOGIN_ORIGIN=https://cfr.optionc.com/
-VITE_AUTH_ORIGIN=https://cfr.optionc.com/
-```
-
-The checked-in `.env.staging` and `.env.production` files carry the approved Catholic Solutions domain allocation. `.env.example` remains a template with placeholder hostnames. `VITE_*` variables are public browser configuration and must never contain secrets.
 
 ## Direct solution build
 
@@ -160,7 +162,7 @@ npm install
 npm run dev
 ```
 
-The exported product contains its required shared platform code but intentionally does not include the Central Login application. Configure `VITE_LOGIN_ORIGIN` to a running central-login environment.
+The exported product contains its required shared platform code but intentionally does not include the Central Login application. The Central Login origin is resolved from the copied common `src/shared/auth/appAuthConfig.ts` configuration.
 
 Generate all standalone deliverables with:
 
@@ -178,16 +180,14 @@ Product business logic must remain under its owning `apps/<solution>/src` bounda
 
 ## Environment files
 
-Every application owns:
+Every application owns exactly:
 
 ```text
 .env.development
-.env.staging
 .env.production
-.env.example
 ```
 
-Machine-specific overrides should use ignored `.env.local` or `.env.<mode>.local` files.
+There is no `.env.staging` or `.env.example`. Staging intentionally consumes `.env.production`; the staging build helper injects only the non-secret deployment target used to select preview authentication.
 
 ## Useful commands
 
@@ -204,8 +204,11 @@ npm run dev:support
 npm run typecheck
 npm run lint
 npm run build
-# Build every application with .env.staging
-npm run build:staging --workspaces --if-present
+# Hosted staging build: .env.production + staging preview-auth target
+npm run build:staging
+
+# Production build: .env.production + fail-closed SSO
+npm run build:production
 ```
 
 The single maintained product/architecture source of truth is [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md).

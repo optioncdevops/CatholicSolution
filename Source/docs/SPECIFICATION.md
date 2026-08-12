@@ -1,6 +1,6 @@
-# Catholic Solutions — Living Specification v1.3.2
+# Catholic Solutions — Living Specification v1.3.3
 
-> **Canonical release baseline:** v1.0.0. **Current release:** v1.3.2. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
+> **Canonical release baseline:** v1.0.0. **Current release:** v1.3.3. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
 
 ## v1.0 Repository and Solution Architecture
 
@@ -10,13 +10,13 @@
 - Workspace package names use the `@catholic-solutions/*` scope.
 - `packages/shared` is restricted to genuine cross-product concerns: common authentication guard/login shell, common shell, 9-dot switcher, account/profile UI, footer, catalog, environment/domain navigation, browser branding, user context, notifications/toasts, shared types, and design-system primitives.
 - Product-specific business logic MUST remain under its owning `apps/<product>/src` boundary.
-- Each app maintains `.env.development`, `.env.staging`, `.env.production`, and `.env.example`. `VITE_*` values are public client configuration only and MUST NOT contain secrets.
+- Each app maintains only `.env.development` and `.env.production`. Domain/auth routing is centralized in `packages/shared/src/auth/appAuthConfig.ts`; `VITE_*` values are public client build metadata only and MUST NOT contain secrets.
 - Cross-solution navigation resolves configured origins and performs full-domain navigation; React Router is responsible only for routes within the current solution.
 - Each app maintains its own favicon and SPA refresh fallback configuration.
-- `config/solutions.json` is the machine-readable solution/domain manifest.
+- `config/solutions.json` is the machine-readable solution/build manifest; runtime domains are centralized in `packages/shared/src/auth/appAuthConfig.ts`.
 
 **Development model:** Spec-driven development  
-**Current version:** 1.3.2  
+**Current version:** 1.3.3  
 **Last updated:** August 12, 2026  
 **Status:** Active source of truth
 
@@ -1087,9 +1087,9 @@ Staging and production share the same approved origins:
 
 | Environment variable | Origin |
 |---|---|
-| `VITE_AUTH_ORIGIN` | `https://cfr.optionc.com/` |
-| `VITE_LOGIN_ORIGIN` | `https://cfr.optionc.com/` |
-| `VITE_PLATFORM_ORIGIN` | `https://cfr.optionc.com/` |
+| `VITE_AUTH_ORIGIN` | `https://cfr.optioncapp.com/` |
+| `VITE_LOGIN_ORIGIN` | `https://cfr.optioncapp.com/` |
+| `VITE_PLATFORM_ORIGIN` | `https://cfr.optioncapp.com/` |
 | `VITE_OPTIONC_SCHOOL_ORIGIN` | `https://optionc-sms.optioncapp.com` |
 | `VITE_MATT_MONEY_ORIGIN` | `https://matt-money.optioncapp.com` |
 | `VITE_ARC_ALERTS_ORIGIN` | `https://arc-alerts.optioncapp.com` |
@@ -1144,7 +1144,7 @@ At `min-width:1024px` and `min-height:720px` the Login resolves inside `100dvh`.
 - `npm run lint` — 0 errors. 3 pre-existing `react-refresh/only-export-components` warnings remain on `ToastProvider`, `UserContext`, and `AuthProvider`, which colocate a provider with its hook.
 - `npm run build` — **all 8 applications produce a production bundle.** This is the first dependency-backed Vite build recorded for this project; v1.0.0 through v1.2.0 could only claim source-level validation because their environments could not install dependencies.
 - `npm run export:solution -- arc-alerts` — regenerates a self-contained standalone export with no `packages/shared` path references and no sibling product source.
-- Built App Hub bundle contains the approved `cfr.optionc.com` and `optioncapp.com` origins, all five published partner URLs, and no `catholicsolutions.example` placeholder or `volunteer-manager` reference in any application bundle.
+- Built App Hub bundle contains the approved `cfr.optioncapp.com` and sibling `optioncapp.com` origins, all five published partner URLs, and no `catholicsolutions.example` placeholder or `volunteer-manager` reference in any application bundle.
 - Return-URL allowlist verified against 10 cases covering same-origin paths, allowlisted absolute URLs, protocol-relative input, backslash authority smuggling, non-allowlisted origins, suffix-confusion hosts, and `javascript:`. All pass; the superseded implementation demonstrably admitted the backslash vectors.
 
 ### v1.3.1 — Compact recognition-first App Switcher
@@ -1257,3 +1257,47 @@ Run in a dependency-installed environment on Node 24.11.0 / npm 11.17.0:
 ### Follow-up
 
 The absence of an automated test suite (§21) is more costly after a nine-package major upgrade than before it. The verification above proves the toolchain works and the code compiles, but nothing asserts runtime behaviour. The three `setState`-in-effect corrections changed render timing in shared components used by every application, and no test covers them.
+
+
+## 23. v1.3.3 — Central auth configuration, two-mode env files, staging login, and global logout
+
+**Date:** August 12, 2026.
+
+### Superseding environment/domain decision
+
+- Every application owns only `.env.development` and `.env.production`. `.env.staging` and `.env.example` are removed.
+- Solution URLs are no longer repeated across every application environment file. `packages/shared/src/auth/appAuthConfig.ts` is the single common domain/auth-routing source consumed by Login, return-URL allowlisting, App Hub navigation, and the shared switcher.
+- Hosted origins are locked to `https://cfr.optioncapp.com`, `https://optionc-sms.optioncapp.com`, `https://matt-money.optioncapp.com`, `https://arc-alerts.optioncapp.com`, `https://optionc-parish.optioncapp.com`, `https://catholic-content.optioncapp.com`, `https://directory.optioncapp.com`, and `https://support-center.optioncapp.com`.
+- Staging is a deployment target, not a third Vite environment file. `npm run build:staging` compiles with Vite `production` mode and `.env.production`, while injecting `VITE_DEPLOYMENT_TARGET=staging`.
+
+### Staging authentication repair
+
+The previous staging configuration set both Auth and Login origin to the same `/login` application while `sso` mode redirected Sign In to `${AUTH_ORIGIN}/login`. This recreated the page instead of authenticating, producing the observed no-op.
+
+Staging now uses a centralized preview-session adapter. The Login domain creates a short-lived/session browser cookie shared across the approved `*.optioncapp.com` product subdomains, and product guards re-check that session on focus/visibility. This restores central Login → returnUrl → product behavior for the frontend-only staging prototype without reintroducing product-local login pages.
+
+This preview adapter is **not production authentication**. Production builds remain fail-closed and require a real server-issued `HttpOnly`, `Secure` session or OIDC/OAuth authorization-code + PKCE integration. The frontend must never treat the staging preview cookie as a production security boundary.
+
+### Logout contract
+
+- Sign out from every solution performs a full-page `window.location.replace` to the central `/logout` route and carries the current solution/client and safe return URL.
+- Central Logout clears the current preview session, then replaces history with Central Login. Back navigation must not resurrect a signed-in protected page.
+- Same-origin tabs receive immediate BroadcastChannel logout; cross-origin product tabs revalidate the common preview session when focused or made visible.
+- In the future production identity integration, the same central route is the frontend entry for server/IdP logout and must clear the server session before redirecting back to Login.
+
+### Ownership
+
+- **Senior Solution Architect / Senior Full Stack Developer:** auth contract and central domain registry.
+- **Frontend Developer:** guards, login handoff, switcher/App Hub navigation, and logout UX.
+- **DevOps:** staging build target and eventual production IdP/session integration.
+- **QA:** central Login, return URLs, cross-domain launch, refresh, new-tab switcher, sign-out, back-button behavior, and session revalidation across product tabs.
+
+### v1.3.3 validation record
+
+- Canonical source contains 98 TS/TSX implementation files and parses with 0 TypeScript syntax diagnostics using the available compiler parser.
+- Internal relative, `@/`, and `@shared/` import resolution checks report 0 unresolved canonical imports.
+- The canonical workspace contains exactly 16 application environment files: 8 `.env.development` plus 8 `.env.production`; no `.env.staging` or `.env.example` files remain.
+- Runtime origin configuration is centralized in `packages/shared/src/auth/appAuthConfig.ts`; canonical application environment files contain no `VITE_*_ORIGIN`, `VITE_AUTH_ORIGIN`, `VITE_LOGIN_ORIGIN`, or `VITE_AUTH_MODE` duplication.
+- The ArcAlerts standalone release artifact was regenerated from the current shared auth/domain source and carries only the two approved environment files plus the staging-build helper.
+- A dependency-backed workspace typecheck/build is not claimed for this delivery. `npm ci` could not complete inside the execution environment, leaving required React/Node/ESTree type packages unavailable; the subsequent App Hub typecheck stopped at missing type-definition packages before application semantic checking.
+- In a normal dependency-installed environment, use `npm run build:staging` for the hosted staging build and `npm run build:production` for the fail-closed production build.

@@ -7,7 +7,7 @@ import { environment } from '@shared/platform/config/environment';
 import { SOLUTION_REGISTRY } from '@shared/platform/config/solutionRegistry';
 import { AuthShell } from './AuthShell';
 import { useAuth } from './AuthProvider';
-import { addDevelopmentAuthCallback, getRequestedClientId, getSafeReturnUrl, toAbsoluteReturnUrl } from './centralAuth';
+import { getRequestedClientId, getSafeReturnUrl, toAbsoluteReturnUrl } from './centralAuth';
 
 function isAbsolute(value: string) {
   return /^https?:\/\//i.test(value);
@@ -36,9 +36,8 @@ export function CentralLoginPage() {
       navigate(destination, { replace: true });
       return;
     }
-    const target = environment.authMode === 'mock' ? addDevelopmentAuthCallback(destination, remember) : destination;
-    window.location.replace(target);
-  }, [destination, navigate, remember]);
+    window.location.replace(destination);
+  }, [destination, navigate]);
 
   useEffect(() => {
     if (isAuthenticated && (!requiresInteractiveSignIn || interactiveSignInCompleted)) {
@@ -59,7 +58,7 @@ export function CentralLoginPage() {
       setInteractiveSignInCompleted(true);
       showToast(clientId === 'platform' ? 'Signed in to Catholic Solutions' : `Signed in. Returning to ${client.name}`);
     } else if (result === 'unavailable') {
-      showToast('The configured identity service is unavailable. Check VITE_AUTH_ORIGIN.');
+      showToast('Production SSO is not connected yet. Staging uses the central preview session; production stays fail-closed.');
     }
   };
 
@@ -78,7 +77,7 @@ export function CentralLoginPage() {
             <p>{clientId === 'platform' ? 'Sign in to continue to your Catholic Solutions workspace.' : `Sign in once to continue securely to ${client.name}.`}</p>
           </div>
 
-          <form onSubmit={submit} className="auth-form" noValidate>
+          <form onSubmit={submit} className="auth-form">
             <div>
               <label className="auth-label" htmlFor="email">Email address</label>
               <div className="auth-input-wrap mt-2">
@@ -116,7 +115,7 @@ export function CentralLoginPage() {
           <PlatformLink to="/request-access" className="auth-access-callout__action">Request access <ArrowRightIcon size={15} /></PlatformLink>
         </section>
 
-        {environment.authMode === 'mock' ? <p className="auth-prototype-note">Development authentication · Central login simulation is enabled.</p> : null}
+        {environment.authMode !== 'sso' ? <p className="auth-prototype-note">{environment.authMode === 'mock' ? 'Development authentication' : 'Staging authentication'} · Central preview session is enabled.</p> : null}
       </div>
     </AuthShell>
   );

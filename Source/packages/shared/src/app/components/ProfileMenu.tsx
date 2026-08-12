@@ -1,18 +1,15 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import { AccountModals, type AccountModal } from './AccountModals';
 import { ChevronDownIcon, LockIcon, LogOutIcon, UserIcon } from './UiIcons';
 import { useAuth } from '@shared/auth/AuthProvider';
 import { buildCentralLogoutUrl } from '@shared/auth/centralAuth';
-import { environment } from '@shared/platform/config/environment';
 
 interface ProfileMenuProps {
   gradient?: string;
 }
 
 export function ProfileMenu({ gradient }: ProfileMenuProps) {
-  const navigate = useNavigate();
   const { signOut } = useAuth();
   const { user, initials } = useCurrentUser();
   const [open, setOpen] = useState(false);
@@ -43,14 +40,8 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
   const handleSignOut = () => {
     setOpen(false);
     signOut();
-
-    if (environment.appId === 'platform') {
-      navigate('/login', { replace: true });
-      return;
-    }
-
     const target = buildCentralLogoutUrl(window.location.href);
-    if (target) window.location.assign(target);
+    if (target) window.location.replace(target);
   };
 
   return (
