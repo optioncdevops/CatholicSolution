@@ -58,7 +58,7 @@ export function CentralLoginPage() {
       setInteractiveSignInCompleted(true);
       showToast(clientId === 'platform' ? 'Signed in to Catholic Solutions' : `Signed in. Returning to ${client.name}`);
     } else if (result === 'unavailable') {
-      showToast('Production SSO is not connected yet. Staging uses the central preview session; production stays fail-closed.');
+      showToast('The configured identity service is unavailable. Please contact your administrator.');
     }
   };
 
@@ -115,7 +115,7 @@ export function CentralLoginPage() {
           <PlatformLink to="/request-access" className="auth-access-callout__action">Request access <ArrowRightIcon size={15} /></PlatformLink>
         </section>
 
-        {environment.authMode !== 'sso' ? <p className="auth-prototype-note">{environment.authMode === 'mock' ? 'Development authentication' : 'Staging authentication'} · Central preview session is enabled.</p> : null}
+        {environment.authMode === 'mock' ? <p className="auth-prototype-note">Development authentication · Central preview session is enabled.</p> : null}
       </div>
     </AuthShell>
   );

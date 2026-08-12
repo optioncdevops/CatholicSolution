@@ -1,33 +1,17 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { launchableApps } from '@shared/app/config/appCatalog';
+import { availableSwitcherApps } from '@shared/app/config/appCatalog';
 import type { CatalogApp } from '@shared/app/types/app';
-import { AppsIcon, ArrowUpRightIcon, CheckIcon, ChevronDownIcon } from '@shared/app/components/UiIcons';
+import { AppsIcon, ArrowUpRightIcon, ChevronDownIcon } from '@shared/app/components/UiIcons';
 import { resolveAppUrl, resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
 
 interface PlatformAppSwitcherProps {
   currentApp: CatalogApp;
 }
 
-const SUPPORT_CENTER_ID = 'support-center';
-const PRIMARY_APP_ORDER = [
-  'optionc-school',
-  'optionc-parish',
-  'arc-alerts',
-  'matt-money',
-  'catholic-content',
-  'unified-directory',
-] as const;
-
-const primaryAppIds = new Set<string>(PRIMARY_APP_ORDER);
-const primaryApps = [
-  ...PRIMARY_APP_ORDER.flatMap((id) => {
-    const app = launchableApps.find((candidate) => candidate.id === id);
-    return app ? [app] : [];
-  }),
-  ...launchableApps.filter((app) => app.id !== SUPPORT_CENTER_ID && !primaryAppIds.has(app.id)),
-];
-const supportCenter = launchableApps.find((app) => app.id === SUPPORT_CENTER_ID);
+function switcherTarget(app: CatalogApp) {
+  return app.kind === 'external' ? app.externalUrl : resolveAppUrl(app);
+}
 
 export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
   const [open, setOpen] = useState(false);
@@ -59,26 +43,38 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
     };
   }, []);
 
-  const renderPrimaryApp = (app: CatalogApp) => {
+  const renderApp = (app: CatalogApp) => {
     const current = app.id === currentApp.id;
+    const target = switcherTarget(app);
     const content = (
       <>
         <span className="app-switcher__app-icon" style={{ background: app.gradient }}>{app.icon}</span>
         <span className="app-switcher__item-title">{app.name}</span>
-        {current ? (
-          <span className="app-switcher__current-mark" title="Current app"><CheckIcon size={11} /></span>
-        ) : null}
         {current ? <span className="sr-only">— current app</span> : null}
       </>
     );
 
-    return current ? (
-      <div className="app-switcher__tile app-switcher__tile--current" aria-current="true">{content}</div>
-    ) : (
+    if (current) {
+      return (
+        <div className="app-switcher__tile app-switcher__tile--current" aria-current="page">
+          {content}
+        </div>
+      );
+    }
+
+    if (!target) {
+      return (
+        <div className="app-switcher__tile app-switcher__tile--disabled" aria-disabled="true">
+          {content}
+        </div>
+      );
+    }
+
+    return (
       <a
-        href={resolveAppUrl(app)}
+        href={target}
         target="_blank"
-        rel="noopener noreferrer"
+        rel={app.kind === 'external' ? 'noopener noreferrer' : 'noopener'}
         onClick={() => setOpen(false)}
         className="app-switcher__tile"
         aria-label={`Open ${app.name} in a new tab`}
@@ -88,39 +84,9 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
     );
   };
 
-  const renderSupportCenter = (app: CatalogApp) => {
-    const current = app.id === currentApp.id;
-    const content = (
-      <>
-        <span className="app-switcher__support-icon" style={{ background: app.gradient }}>{app.icon}</span>
-        <span className="app-switcher__support-copy">
-          <strong>{app.name}</strong>
-          <small>Help, tickets &amp; resources</small>
-        </span>
-        {current ? (
-          <span className="app-switcher__current-mark" title="Current app"><CheckIcon size={11} /></span>
-        ) : (
-          <ArrowUpRightIcon size={14} className="app-switcher__support-arrow" />
-        )}
-        {current ? <span className="sr-only">— current app</span> : null}
-      </>
-    );
-
-    return current ? (
-      <div className="app-switcher__support app-switcher__support--current" aria-current="true">{content}</div>
-    ) : (
-      <a
-        href={resolveAppUrl(app)}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => setOpen(false)}
-        className="app-switcher__support"
-        aria-label={`Open ${app.name} in a new tab`}
-      >
-        {content}
-      </a>
-    );
-  };
+  const gridClass = availableSwitcherApps.length > 6
+    ? 'app-switcher__grid app-switcher__grid--three'
+    : 'app-switcher__grid app-switcher__grid--two';
 
   return (
     <div className="app-switcher" ref={wrapperRef}>
@@ -142,17 +108,15 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
             <h2 id={headingId}>Jump to</h2>
           </div>
 
-          <ul className="app-switcher__grid">
-            {primaryApps.map((app) => <li key={app.id}>{renderPrimaryApp(app)}</li>)}
+          <ul className={gridClass}>
+            {availableSwitcherApps.map((app) => <li key={app.id}>{renderApp(app)}</li>)}
           </ul>
-
-          {supportCenter ? <div className="app-switcher__support-wrap">{renderSupportCenter(supportCenter)}</div> : null}
 
           <div className="app-switcher__footer">
             <a
               href={resolvePlatformUrl('/apps')}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noopener"
               onClick={() => setOpen(false)}
               className="app-switcher__all-apps"
               aria-label="Open all apps in the App Hub in a new tab"

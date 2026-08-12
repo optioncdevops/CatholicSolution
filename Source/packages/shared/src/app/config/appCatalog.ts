@@ -48,7 +48,7 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "ArcAlerts is your emergency notification system — send one message and reach every parent, staff member and parishioner across text, email, voicemail and push in under a minute. Built for weather closures, safety incidents, and everyday schedule notices alike.",
       included: ["Multi-channel delivery — text, email, voicemail and push, simultaneously", "Pre-built templates for weather, safety and schedule alerts", "Live delivery tracking with per-channel success rates", "Group targeting — by campus, grade, class or role", "Scheduled drills and delivery-rate reporting"],
-      integrations: ["🎓 OptionC School", "✝️ OptionC Parish", "🤝 VincentVolunteer"],
+      integrations: ["🎓 OptionC School", "✝️ OptionC Parish", "🤝 Vincent Volunteer"],
       activity: [{ title: "Storm alert sent — early dismissal", meta: "Aug 1, 2:12 PM · 2,310 delivered" }, { title: "Feast day schedule notice sent", meta: "Jul 28, 9:00 AM · 2,150 delivered" }, { title: "Monthly safety drill scheduled", meta: "Aug 15, 10:00 AM" }],
     },
   },
@@ -82,7 +82,7 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "Catholic Content is a searchable library of faith-based curriculum resources — coloring pages, word searches, workbooks and more — with a new Saint of the Day resource added automatically. Everything is organized by grade, saint, season and content type so teachers can find what they need in seconds.",
       included: ["1,200+ resources with new additions tied to current Church events", "Saints of the Day, organized by month", "Nine searchable categories including Prayers, Workbooks and Feasts", "Built-in document viewer with zoom, print and download", "Rights-managed content licensed for classroom and homework use"],
-      integrations: ["🎓 OptionC School", "🧠 FriarFriend"],
+      integrations: ["🎓 OptionC School", "🧠 Friar Friend"],
       activity: [{ title: "Saint Hormisdas, Pope resource added", meta: "Today" }, { title: "Saint Afra resources added", meta: "Aug 5" }, { title: "New feast-day collection published", meta: "Aug 1" }],
     },
   },
@@ -99,7 +99,7 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "Unified Directory is the shared people and group layer for Catholic Solutions. Administrators can add organization users, maintain group membership, and prepare a consistent identity foundation for future roles, permissions, and automated provisioning.",
       included: ["Central user directory across connected applications", "Organization and security group management", "Invitation and activation status tracking", "Search by user, role, group, or email", "Extensible foundation for future roles, permissions, and lifecycle automation"],
-      integrations: ["🎓 OptionC School", "✝️ OptionC Parish", "🤝 VincentVolunteer", "🔔 ArcAlerts"],
+      integrations: ["🎓 OptionC School", "✝️ OptionC Parish", "🤝 Vincent Volunteer", "🔔 ArcAlerts"],
       activity: [{ title: "Volunteer Coordinators group updated", meta: "Today" }, { title: "Anna Rodrigues invited", meta: "Yesterday" }, { title: "Faculty membership synchronized", meta: "Aug 6" }],
     },
   },
@@ -116,7 +116,7 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "Support Center brings Catholic Solutions help into one shared workspace. Staff can search product-specific resources, route a question to the correct support team, attach supporting information, and follow current or resolved tickets without switching between individual product support pages.",
       included: ["Searchable help resources by Catholic Solutions product", "Support-ticket form with product and contact-team routing", "Attachment entry point for screenshots or supporting files", "Unified ticket history with open, waiting, and resolved states", "Member Services route for organization-wide or account questions"],
-      integrations: ["🎓 OptionC School", "💰 Matt Money", "🔔 ArcAlerts", "✝️ OptionC Parish", "📚 Catholic Content", "👥 Unified Directory", "🤝 VincentVolunteer"],
+      integrations: ["🎓 OptionC School", "💰 Matt Money", "🔔 ArcAlerts", "✝️ OptionC Parish", "📚 Catholic Content", "👥 Unified Directory", "🤝 Vincent Volunteer"],
       activity: [{ title: "My Classes support ticket opened", meta: "Today" }, { title: "ArcAlerts delivery question awaiting reply", meta: "Yesterday" }, { title: "Directory export request resolved", meta: "Aug 5" }],
     },
   },
@@ -228,8 +228,8 @@ export const APP_CATALOG: CatalogApp[] = [
     statusDetail: "↗ Opens at masscardrequests.com",
   },
   {
-    id: "vincent-volunteer", name: "VincentVolunteer", shortName: "Vincent", category: "Service & Community",
-    description: "Volunteer coordination for your parish and school community. Opens on the VincentVolunteer site.",
+    id: "vincent-volunteer", name: "Vincent Volunteer", shortName: "Vincent Volunteer", category: "Service & Community",
+    description: "Volunteer coordination for your parish and school community. Opens on the Vincent Volunteer site.",
     icon: "🤝", gradient: "linear-gradient(115deg,#1E2340,#7C2D4B)",
     externalUrl: "https://vincentvolunteer.com",
     keywords: ["volunteer", "service", "community", "sign-up", "hours", "vincent"],
@@ -250,8 +250,8 @@ export const APP_CATALOG: CatalogApp[] = [
     statusDetail: "↗ Opens at berchmans.app",
   },
   {
-    id: "alive-date", name: "AliveDate", shortName: "AliveDate", category: "Records & Directory",
-    description: "Check each person's alive date for directory and register upkeep. Opens on the AliveDate site.",
+    id: "alive-date", name: "Alive Date", shortName: "Alive Date", category: "Records & Directory",
+    description: "Check each person's alive date for directory and register upkeep. Opens on the Alive Date site.",
     icon: "📅", gradient: "linear-gradient(135deg,#92400E,#F59E0B)",
     externalUrl: "https://alivedate.com",
     keywords: ["alive", "date", "records", "register", "directory", "alivedate"],
@@ -261,7 +261,7 @@ export const APP_CATALOG: CatalogApp[] = [
     statusDetail: "↗ Opens at alivedate.com",
   },
   {
-    id: "friar-friend", name: "FriarFriend", shortName: "FriarFriend", category: "AI · Teaching",
+    id: "friar-friend", name: "Friar Friend", shortName: "Friar Friend", category: "AI · Teaching",
     description: "AI quiz maker for faith-based teaching. Not published yet — a link will be added once it goes live.",
     icon: "🧠", gradient: "linear-gradient(135deg,#EA580C,#FB923C)",
     keywords: ["ai", "quiz", "maker", "teaching", "friarfriend"],
@@ -275,6 +275,10 @@ export const APP_CATALOG: CatalogApp[] = [
 export const launchableApps = APP_CATALOG.filter((app) => app.kind === 'launchable');
 /** Partner products opened at their own domain, outside the central-login boundary. */
 export const externalApps = APP_CATALOG.filter((app) => app.kind === 'external');
+/** The App Hub `Your Apps` collection, kept in catalog order. */
+export const yourApps = [...launchableApps, ...externalApps];
+/** Published `Your Apps` destinations that can be opened immediately from the shared switcher. */
+export const availableSwitcherApps = yourApps.filter((app) => app.kind === 'launchable' || Boolean(app.externalUrl));
 export const aiApps = APP_CATALOG.filter((app) => app.kind === 'ai');
 export const discoverApps = APP_CATALOG.filter((app) => app.kind === 'discover');
 export const getAppById = (id: string) => APP_CATALOG.find((app) => app.id === id);

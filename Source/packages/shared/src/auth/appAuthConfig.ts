@@ -1,4 +1,5 @@
 export type RuntimeEnvironment = 'development' | 'production';
+export type ConfiguredAuthMode = 'mock' | 'preview' | 'sso';
 
 export interface SolutionOrigins {
   platform: string;
@@ -12,6 +13,7 @@ export interface SolutionOrigins {
 }
 
 interface AppAuthConfig {
+  authMode: ConfiguredAuthMode;
   loginOrigin: string;
   authOrigin: string;
   sessionCookieDomain?: string;
@@ -42,11 +44,15 @@ const productionOrigins: SolutionOrigins = {
 
 const configs: Record<RuntimeEnvironment, AppAuthConfig> = {
   development: {
+    authMode: 'mock',
     loginOrigin: developmentOrigins.platform,
     authOrigin: developmentOrigins.platform,
     origins: developmentOrigins,
   },
   production: {
+    // Hosted builds use the shared central-session adapter until the real IdP is connected.
+    // Future SSO cutover is intentionally a one-file change in this configuration.
+    authMode: 'preview',
     loginOrigin: productionOrigins.platform,
     authOrigin: productionOrigins.platform,
     sessionCookieDomain: '.optioncapp.com',

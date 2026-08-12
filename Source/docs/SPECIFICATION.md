@@ -1,6 +1,6 @@
-# Catholic Solutions — Living Specification v1.3.3
+# Catholic Solutions — Living Specification v1.3.9
 
-> **Canonical release baseline:** v1.0.0. **Current release:** v1.3.3. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
+> **Canonical release baseline:** v1.0.0. **Current release:** v1.3.9. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
 
 ## v1.0 Repository and Solution Architecture
 
@@ -16,7 +16,7 @@
 - `config/solutions.json` is the machine-readable solution/build manifest; runtime domains are centralized in `packages/shared/src/auth/appAuthConfig.ts`.
 
 **Development model:** Spec-driven development  
-**Current version:** 1.3.3  
+**Current version:** 1.3.9  
 **Last updated:** August 12, 2026  
 **Status:** Active source of truth
 
@@ -104,20 +104,19 @@ Staging and production use separate configured origins for the same applications
 
 ### Environment configuration
 
-Every application contains:
+Every application contains only:
 
 - `.env.development`
-- `.env.staging`
 - `.env.production`
-- `.env.example`
 
-Each file defines the current app ID, public app title, base path, local development port, central auth origin, and all solution origins. `VITE_*` values are public browser configuration only and must never contain passwords, private API keys, signing keys, database credentials, or confidential tokens. Machine-specific overrides belong in ignored `.env.local` / `.env.<mode>.local` files.
+These files contain per-application public build metadata only: app ID, title, base path, domain-routing flag, and local development port. Authentication strategy and the complete local/hosted solution-origin matrix are centralized in `packages/shared/src/auth/appAuthConfig.ts`; product environment files must not duplicate those domains. `VITE_*` values remain public browser configuration only and must never contain passwords, private API keys, signing keys, database credentials, or confidential tokens. Machine-specific overrides belong in ignored `.env.local` / `.env.<mode>.local` files.
 
 ### Authentication boundary
 
-- The current implementation remains a frontend prototype and uses the existing local user context per application.
-- A real separate-domain deployment requires centralized SSO / identity-provider integration. React Context or `localStorage` must not be treated as cross-domain authentication.
-- `VITE_AUTH_ORIGIN` identifies the centralized authentication entry point and currently resolves to the Platform application.
+- Central Login is owned by the Platform origin. Product applications do not own Login routes.
+- All Catholic Solutions product origins and the active auth strategy are defined in `packages/shared/src/auth/appAuthConfig.ts`.
+- Development uses the local mock/preview adapter. Hosted builds currently use the shared central-session adapter across approved `*.optioncapp.com` subdomains so Login and cross-product handoff remain functional until the backend IdP/session integration is connected.
+- The hosted adapter is an interim integration mechanism, not a production security boundary. A security-sensitive production release ultimately requires a server-issued `HttpOnly`, `Secure` session or OIDC/OAuth Authorization Code + PKCE.
 
 ### Solution browser branding
 
@@ -190,18 +189,19 @@ Products hosted on their own domains, outside the Catholic Solutions SSO boundar
 |---|---|---|
 | FerrerWorks | Facility management | `https://ferrerworks.com` |
 | Mass Card Requests | Mass card requests | `https://masscardrequests.com` |
-| VincentVolunteer | Volunteer coordination | `https://vincentvolunteer.com` |
+| Vincent Volunteer | Volunteer coordination | `https://vincentvolunteer.com` |
 | Berchmans | Altar server scheduling | `https://berchmans.app` |
-| AliveDate | Alive-date lookup for records upkeep | `https://alivedate.com` |
-| FriarFriend | AI quiz maker | Not published yet |
+| Alive Date | Alive-date lookup for records upkeep | `https://alivedate.com` |
+| Friar Friend | AI quiz maker | Not published yet |
 
 Rules:
 
 - External apps appear as cards in the App Hub **Your Apps** section alongside the launchable solutions.
-- They open in a new tab with `rel="noopener noreferrer"`, so a partner site can never reach an authenticated Catholic Solutions session through `window.opener`.
-- They are **not** in `SOLUTION_REGISTRY`, the App Switcher, the connected-workspace preview, or Request Access product selection, because they are not covered by the central login or by a Catholic Solutions deployment boundary.
+- Published external apps may also appear in the shared App Switcher as direct new-tab shortcuts. Their presence in the switcher does **not** imply Catholic Solutions SSO coverage or ownership; they remain outside `SOLUTION_REGISTRY` and the central-session boundary.
+- External destinations open in a new tab with `rel="noopener noreferrer"`, so a partner site can never reach an authenticated Catholic Solutions session through `window.opener`.
+- Unpublished external apps remain excluded from the switcher until a real destination exists. They continue to render in App Hub as non-interactive **Coming soon** cards.
+- External apps remain excluded from the connected-workspace preview and Request Access product selection because they are not Catholic Solutions deployments.
 - They carry no fabricated usage metrics or feature detail. Only what the owning product publishes is shown, so the Details modal omits empty At-a-glance and Key-features sections rather than inventing them.
-- An external app with no published URL renders as a non-interactive **Coming soon** card, communicated by label and cursor rather than color alone.
 
 ### AI Tools — 3
 
@@ -214,7 +214,7 @@ Rules:
 1. Financial Needs Assessment
 2. Catholic Camp Finder
 
-Facility Manager, Altar Server Scheduler, and AI Study Guide & Quiz Maker were placeholder catalog entries for products that now exist at real domains. They are promoted into the External partner apps group as FerrerWorks, Berchmans, and FriarFriend rather than being duplicated across two sections of the same page.
+Facility Manager, Altar Server Scheduler, and AI Study Guide & Quiz Maker were placeholder catalog entries for products that now exist at real domains. They are promoted into the External partner apps group as FerrerWorks, Berchmans, and Friar Friend rather than being duplicated across two sections of the same page.
 
 The App Hub, App Details modal, and Switch App control must use the centralized typed catalog rather than duplicate application metadata.
 
@@ -226,7 +226,7 @@ The approved Catholic Solutions Login color identity is locked. Do not change th
 
 ### 5.2 App Hub / Landing
 
-The approved Catholic Solutions App Hub color identity is locked. Do not change the established navy/gold hero identity or existing per-app launch-card gradients unless explicitly requested.
+The approved Catholic Solutions App Hub navy/gold hero identity is locked. App cards use premium light surfaces with dark text; each product retains its unique catalog gradient as a restrained accent/icon treatment rather than a full-card background.
 
 The Catholic Content launch-card gradient remains `#5B21B6 → #8B5CF6`, matching the approved landing reference even where catalog-detail source data contains a different purple pair.
 
@@ -305,7 +305,7 @@ Required composition:
 
 - Desktop uses a balanced two-pane authentication shell: Catholic Solutions brand/value context at left, focused account access at right.
 - Left brand panel uses the locked navy gradient, gold accents, restrained ambient depth, a large brand message, a connected-workspace preview, three concise proof metrics, and trust indicators.
-- Connected-workspace preview shows the eight launchable applications with application name/category without recreating the older crowded 4×2 tile matrix.
+- Connected-workspace preview shows the seven launchable applications with application name/category in a compact three-column desktop grid. When the final row contains only Support Center it spans the row, keeping the preview balanced and fully readable.
 - Right authentication panel uses a centered premium sign-in card with a restrained gold/navy top accent, Catholic cross mark, clear headline, and supporting copy.
 - Email and password controls use persistent labels, recognizable line icons, approximately 50px control height, visible focus treatment, autocomplete metadata, and password visibility control.
 - Remember Me and secure-session status are visually secondary to credential entry.
@@ -325,6 +325,7 @@ UI/UX acceptance criteria:
 5. Desktop composition must not exhibit the excessive blank-space imbalance or dense miniature tile treatment from the superseded login reference.
 6. The brand panel supports the task rather than competing with the sign-in form.
 7. No Choose Workspace control is introduced unless explicitly requested.
+8. At supported desktop sizes (1024px wide and approximately 640px high or taller), Login remains within `100dvh` without page scrolling, and the Connected Workspace preview is fully visible rather than clipped below the fold.
 
 ### 7.2 Request Access
 
@@ -376,7 +377,7 @@ Acceptance criteria:
 Landing card actions are deliberately compact but must share one visual hierarchy:
 
 - Launchable cards expose `Launch ↗` as the compact primary action and `ⓘ Details` as the compact secondary action.
-- External partner cards use the same colored surface and the same two-column action row, exposing `Open ↗` as the primary action and `ⓘ Details` as the secondary action.
+- Launchable and external partner cards use the same premium white surface and two-column action row. Product identity is carried by the catalog-gradient top accent, gradient icon tile, subtle corner wash, and status tone; launchable cards expose `Launch ↗` and external cards expose `Open ↗`.
 - **Both primary actions open the destination in a new browser tab**, so the App Hub is never replaced by the application it just launched and remains available as a launcher. The `↗` glyph rather than `→` communicates this; a card whose action leaves the current tab must not use `↗`.
 - Both are real anchors, not buttons, so the destination is exposed to assistive technology and the browser's own ctrl-click, middle-click, and open-in-new-window affordances continue to work.
 - Every new-tab target carries `rel="noopener"` so the opened page cannot reach back through `window.opener`. Third-party partner destinations additionally carry `noreferrer`; first-party solution origins do not require it.
@@ -385,10 +386,11 @@ Landing card actions are deliberately compact but must share one visual hierarch
 - All landing card actions are single-line controls. Labels and icons/arrows must never wrap onto a second line.
 - Launchable cards use an equal two-column action row so Launch and Details have matching width and vertical alignment.
 - AI/Discover Learn More uses the same 36px action height and pill radius while remaining right-aligned on white cards.
-- Surface treatment may adapt for contrast: Details is translucent on colored launch cards; Learn More is outlined on white catalog cards.
+- All App Hub cards use readable dark text on light surfaces. Details and Learn More use the shared light secondary treatment; Launch/Open remains the stronger primary action.
 - Button geometry is enforced by the shared `.hub-card-action` design-system primitive rather than relying only on per-card utility composition.
 - Hidden live-stat rows from the newest HTML must not reserve empty card space.
 - Card hover must not use translate/scale/rotate motion.
+- Desktop density prioritizes readability over maximum columns: four cards per row from 1280px and five from 1536px; smaller breakpoints progressively collapse.
 
 **Acceptance criteria:** at supported widths, `Launch ↗`, `ⓘ Details`, and `Learn More` remain vertically centered, single-line, visually balanced, and free of label/icon wrapping. Launching from a card leaves the App Hub open in the originating tab.
 
@@ -444,23 +446,24 @@ Do not restore duplicate breadcrumb or direct App Hub actions in the top bar. A 
 
 ### 10.2 Premium App Switcher
 
-The App Switcher is a compact recognition-first launcher inspired by the latest approved launcher reference. It supersedes the earlier single-line row / adaptive three-column treatment.
+The App Switcher is a compact recognition-first launcher synchronized with the published destinations in App Hub **Your Apps**. It is intentionally denser than the earlier seven-app layout so the launcher remains useful as the catalog grows without becoming a second landing page.
 
 Required behavior and appearance:
 
 - Use the established 3×3 nine-dot application launcher SVG icon rather than a decorative Unicode glyph.
 - Trigger uses a 44px+ target, compact icon container, `Switch app` label on supported widths, and chevron state.
-- Dropdown is a compact elevated launcher approximately **380px wide** on desktop, capped by the viewport with `calc(100vw - 24px)`-style behavior. It uses a restrained `JUMP TO` eyebrow and does not show an app count or explanatory paragraph.
-- The six primary destinations render as a **two-column visual card grid** in this order: OptionC School, OptionC Parish, ArcAlerts, Matt Money, Catholic Content, Unified Directory.
-- Primary cards are recognition-first: existing catalog gradient/icon plus the full application name only. Category subtitles, descriptions, badges, and persistent external-link arrows are deliberately omitted from these cards.
-- Support Center is the seventh launchable destination and is presented below the primary grid as a **full-width workspace utility card** with the concise supporting line `Help, tickets & resources`. This deliberately solves the odd seventh-card layout while giving support an appropriate secondary hierarchy.
-- The current application remains non-navigating, carries `aria-current`, an explicit check indicator, and a restrained Catholic Solutions gold/cream selected treatment. Current state is never communicated by color alone.
-- Non-current destinations remain real anchor links and open in a **new tab** (§3) with `rel="noopener noreferrer"`, preserving browser ctrl-click, middle-click, and open-in-new-window behavior.
-- External partner/discovery applications remain excluded. The switcher is the movement contract between solutions that share the central session; external products remain discoverable from App Hub only.
+- Dropdown is a compact elevated launcher approximately **448px wide** on desktop, capped by the viewport with `calc(100vw - 24px)`-style behavior. It uses a restrained `JUMP TO` eyebrow and does not show an app count or explanatory paragraph.
+- The switcher source is the centralized typed App Hub **Your Apps** collection, filtered to destinations that are immediately openable. The current catalog therefore exposes **12 destinations**: seven launchable Catholic Solutions apps plus FerrerWorks, Mass Card Requests, Vincent Volunteer, Berchmans, and Alive Date.
+- `Friar Friend` remains excluded while its App Hub card is `Coming soon` and has no published URL. It becomes switcher-eligible automatically when a real destination is supplied.
+- When the switcher contains **more than six destinations it renders three cards per row**. Six or fewer destinations render two per row. At very narrow mobile widths the three-column layout may reduce to two columns to preserve usable touch targets and readable names.
+- Every destination uses the same compact recognition card: existing catalog gradient/icon plus the full application name only. Category subtitles, descriptions, status badges, and persistent external-link arrows are omitted. Support Center no longer receives a separate full-width treatment.
+- The current Catholic Solutions application remains non-navigating and carries `aria-current`. Its visible state is communicated with a restrained warm active background; the previous check badge is removed. Screen-reader-only current-state text remains so the state is not dependent on visual color for assistive technology.
+- Non-current destinations remain real anchor links and open in a **new tab** (§3). First-party links use `rel="noopener"`; external partner links use `rel="noopener noreferrer"`. Browser ctrl-click, middle-click, and open-in-new-window behavior remain available.
 - The footer contains one full-width `All apps` action back to `/apps`, also opening in a new tab. It uses the shared launcher icon and a restrained warm brand surface rather than promotional copy.
-- The menu closes on navigation, outside click, and Escape.
-- Hover/focus treatment may strengthen border, surface, shadow, and focus ring only. Do not use translate, bounce, zoom, or scale hover motion.
-- At narrow widths the launcher keeps the two-column recognition layout while shrinking spacing/icon dimensions enough to remain usable without internal scrolling at the current seven-app catalog size. Full names may wrap naturally rather than being truncated.
+- Hover feedback uses border/background/shadow only. No tile translates, scales, rotates, or bounces.
+- The menu may use bounded vertical overflow only when viewport height is too small to display the complete grid safely. At normal desktop/mobile portrait heights the 12-destination grid is expected to fit without scrolling.
+
+**Acceptance criteria:** the current 12 published `Your Apps` destinations render as four rows of three cards on supported desktop widths; no active check badge is visible; the current app uses only the approved active surface; external partner links are safe new-tab anchors; `All apps` remains visually separate; and the launcher remains usable from 320px upward.
 
 ### 10.3 Premium account menu
 
@@ -803,7 +806,7 @@ Verify at 320px, 375px, 768px, 1024px, 1440px, and wide desktop:
 - Request Access compact hero, absence of step cards/hero description/top back link, two-column organization fields, product selection, context guidance, footer-level Back to sign in + Submit request actions, confirmation state, and responsive density.
 - App Hub footer and profile menu.
 - Every launchable dashboard footer placement after content.
-- App Switcher trigger, selected/current app, seven-app launcher, All apps action, Escape/outside-click closing, and narrow-screen dropdown behavior.
+- App Switcher trigger, active/current app surface, all 12 published `Your Apps` destinations, three-column desktop density, All apps action, Escape/outside-click closing, and narrow-screen dropdown behavior.
 - Profile/Security/Sign out menu behavior.
 - Existing App Hub card action consistency, details modal, dashboard responsiveness, and horizontal table scrolling.
 
@@ -811,14 +814,17 @@ Verify at 320px, 375px, 768px, 1024px, 1440px, and wide desktop:
 ### App Switcher launcher standard
 
 - The Switch App trigger uses the shared true 3×3 nine-dot application-launcher icon.
-- Launcher width is approximately 380px on desktop and never exceeds the available viewport width.
+- Launcher width is approximately 448px on desktop and never exceeds the available viewport width.
 - The launcher heading is a compact uppercase `JUMP TO` eyebrow rather than a large title/count pair.
-- Six primary launchable apps use a fixed two-column recognition grid with centered icon + full app name.
-- Support Center is separated as a full-width utility row below the six primary cards.
+- The launcher mirrors the published/openable destinations from App Hub **Your Apps** rather than maintaining a separate product list.
+- More than six destinations use a three-column recognition grid; six or fewer use two columns. Very narrow screens may reduce three columns to two to protect touch targets.
+- All destination cards use centered catalog icon + full app name. Support Center uses the same card geometry as the other entries.
 - App Hub is a separated full-width footer action labelled `All apps`.
-- Current-workspace emphasis, new-tab route behavior, outside-click close, Escape close, and accessible focus states remain mandatory.
-- The launcher must not introduce an internal scrollbar for the current seven-app catalog.
-- No category subtitle or description is rendered on primary launcher cards.
+- The current workspace is non-navigating and uses a restrained active background with `aria-current`; no extra visible check badge is shown.
+- First-party and published external destinations open in new tabs with the appropriate `rel` protections. Unpublished external products are excluded until a URL exists.
+- Outside-click close, Escape close, route-change close, and accessible focus states remain mandatory.
+- Bounded overflow is permitted only when viewport height is too small for the complete launcher.
+- No category subtitle or description is rendered on launcher cards.
 - No translate/scale hover motion is permitted.
 
 ### v1.0 architecture validation
@@ -1104,7 +1110,7 @@ Development origins remain the 4001-series localhost allocation. `.env.example` 
 
 ### Volunteer Manager retirement
 
-The `apps/volunteer-manager` workspace, its catalog entry, registry entry, solution manifest entry, environment key, and root npm scripts are removed. Volunteer coordination is served by the external VincentVolunteer product. Port `4008` is left unassigned rather than reallocated so the remaining solutions keep their established ports.
+The `apps/volunteer-manager` workspace, its catalog entry, registry entry, solution manifest entry, environment key, and root npm scripts are removed. Volunteer coordination is served by the external Vincent Volunteer product. Port `4008` is left unassigned rather than reallocated so the remaining solutions keep their established ports.
 
 ### Unauthenticated-redirect hardening
 
@@ -1276,7 +1282,7 @@ The previous staging configuration set both Auth and Login origin to the same `/
 
 Staging now uses a centralized preview-session adapter. The Login domain creates a short-lived/session browser cookie shared across the approved `*.optioncapp.com` product subdomains, and product guards re-check that session on focus/visibility. This restores central Login → returnUrl → product behavior for the frontend-only staging prototype without reintroducing product-local login pages.
 
-This preview adapter is **not production authentication**. Production builds remain fail-closed and require a real server-issued `HttpOnly`, `Secure` session or OIDC/OAuth authorization-code + PKCE integration. The frontend must never treat the staging preview cookie as a production security boundary.
+This v1.3.3 rule is superseded by §29 (v1.3.9): hosted production-mode builds temporarily use the same centralized shared-session adapter so the deployed domain set remains testable while the real IdP is pending. The adapter is still not a production security boundary; a security-sensitive production release requires a server-issued `HttpOnly`, `Secure` session or OIDC/OAuth Authorization Code + PKCE integration.
 
 ### Logout contract
 
@@ -1300,4 +1306,201 @@ This preview adapter is **not production authentication**. Production builds rem
 - Runtime origin configuration is centralized in `packages/shared/src/auth/appAuthConfig.ts`; canonical application environment files contain no `VITE_*_ORIGIN`, `VITE_AUTH_ORIGIN`, `VITE_LOGIN_ORIGIN`, or `VITE_AUTH_MODE` duplication.
 - The ArcAlerts standalone release artifact was regenerated from the current shared auth/domain source and carries only the two approved environment files plus the staging-build helper.
 - A dependency-backed workspace typecheck/build is not claimed for this delivery. `npm ci` could not complete inside the execution environment, leaving required React/Node/ESTree type packages unavailable; the subsequent App Hub typecheck stopped at missing type-definition packages before application semantic checking.
-- In a normal dependency-installed environment, use `npm run build:staging` for the hosted staging build and `npm run build:production` for the fail-closed production build.
+- In a normal dependency-installed environment, use `npm run build:staging` for the hosted staging build and `npm run build:production` for the hosted production-mode build. Both consume the centralized auth/domain policy from `appAuthConfig.ts`; §29 supersedes the former fail-closed frontend-only production behavior.
+
+
+## 24. v1.3.4 — Explicit per-workspace production build contract
+
+**Date:** August 12, 2026.
+
+### Requirement
+
+Production builds must be runnable both for the complete workspace and for any individual application using standard npm workspace targeting. `npm run build:production --workspace <workspace-name>` is therefore a supported release command and every application workspace must expose that script.
+
+### Implementation
+
+- Every application workspace defines `build:production` as `tsc -b && vite build --mode production`.
+- Root `npm run build:production` delegates to the application-level `build:production` scripts with `--workspaces --if-present`.
+- The generic application `build` command remains available and continues to produce a production-mode bundle for backward compatibility.
+- `build:staging` remains unchanged and continues to use `.env.production` plus the staging deployment-target injection. No `.env.staging` is introduced.
+- Standalone exports retain both explicit `build:staging` and `build:production` commands.
+
+### Supported commands
+
+```bash
+# All applications, production
+npm run build:production
+
+# App Hub only, production
+npm run build:production --workspace @catholic-solutions/app-hub
+
+# All applications, hosted staging
+npm run build:staging
+
+# App Hub only, hosted staging
+npm run build:staging --workspace @catholic-solutions/app-hub
+```
+
+### Ownership
+
+- **Senior Full Stack Developer:** workspace script consistency and release-command contract.
+- **DevOps:** CI/CD use of the explicit staging and production commands.
+- **QA:** verify all eight targeted workspace commands resolve the requested script before release.
+
+### v1.3.4 validation record
+
+- All eight canonical application `package.json` files expose both `build:staging` and `build:production`.
+- Root `build:production` dispatches to the explicit per-workspace production scripts.
+- Root package, lockfile, solution catalog, README, and living specification release metadata are synchronized to v1.3.4.
+- npm workspace script discovery confirms the App Hub exposes `build:production`; dependency-backed TypeScript/Vite compilation requires dependencies installed with `npm ci` in the normal build environment.
+
+## 25. v1.3.5 — Catalog-synchronized dense App Switcher
+
+**Date:** August 12, 2026.
+
+### Requirement
+
+The shared switcher must make better use of its available space and expose the published destinations already available in App Hub **Your Apps**. When more than six switcher destinations exist, desktop uses three cards per row. The current-app check badge is removed because the active background is sufficient visually.
+
+### Implementation
+
+- Added centralized `yourApps` and `availableSwitcherApps` catalog derivatives so App Hub and the switcher cannot drift into separately maintained app lists.
+- `availableSwitcherApps` includes all seven launchable solutions and published external partners, while automatically excluding unpublished partner entries such as the current `Friar Friend` card.
+- `PlatformAppSwitcher` renders one uniform adaptive grid instead of a six-card grid plus a special Support Center row.
+- The current-app check glyph was removed. `aria-current` and screen-reader current-state text remain, with a restrained warm background as the visible state.
+- The grid switches to three columns whenever its data set exceeds six entries and falls back to two columns on very narrow screens.
+- Published external products open directly from the switcher in a new tab with `noopener noreferrer`; this does not add them to `SOLUTION_REGISTRY` or imply SSO coverage.
+- The App Hub `Your Apps` section now consumes the same centralized `yourApps` collection rather than rebuilding the list locally.
+
+### Ownership
+
+- **Senior UI/UX Engineer:** launcher density, hierarchy, active-state simplification, and responsive card geometry.
+- **Senior Frontend Developer:** catalog derivation, new-tab behavior, accessibility, and shared-shell implementation.
+- **QA:** verify all 12 published destinations, three-column desktop layout, active state, external-link safety, responsive fallback, Escape/outside-click behavior, and `All apps`.
+
+### v1.3.5 validation record
+
+- Catalog derivation reports 13 App Hub `Your Apps` entries, 12 immediately available switcher destinations, and one unpublished external entry excluded from the switcher.
+- The switcher has no `CheckIcon` import or current-mark element.
+- Desktop grid class selection is data-driven from the destination count rather than hard-coded to a particular product list.
+- External partner switcher destinations use their published absolute URLs and `rel="noopener noreferrer"`.
+- Root package, lockfile, solution manifest, README, and living specification release metadata are synchronized to v1.3.5.
+
+
+## 26. v1.3.6 — Product naming, viewport-fit Login, and premium light Your Apps cards
+
+**Date:** August 12, 2026.
+
+### Product display-name contract
+
+User-facing product labels are **Vincent Volunteer**, **Alive Date**, and **Friar Friend** everywhere in UI copy, catalog metadata, integration labels, documentation, and supporting prototype data. Stable technical identifiers and published destinations do not change: `vincent-volunteer`, `alive-date`, `friar-friend`, `vincentvolunteer.com`, and `alivedate.com` remain unchanged.
+
+### Login composition
+
+- Desktop Login is a fixed `100dvh` composition and must not introduce page scrolling in the supported desktop viewport range.
+- The Connected Workspace preview is promoted visually with stronger glass contrast, tighter but readable application rows, and a consistent three-column grid.
+- With the current seven launchable applications, the final Support Center item spans the full preview row instead of appearing as an isolated one-third tile.
+- At shorter desktop heights, nonessential proof/trust copy is progressively reduced before the Connected Workspace preview or credential controls are allowed to clip.
+- Tablet/mobile retains natural document scrolling; the no-scroll rule is a desktop composition requirement, not a mobile overflow hack.
+
+### App Hub / Your Apps treatment
+
+- `Your Apps` no longer uses full-card product gradients. Launchable and external products use the same premium white surface language as the other App Hub groups.
+- Product identity remains strong through the existing catalog gradient on the top accent and icon tile, plus a restrained low-opacity corner wash.
+- Card headings/body copy are dark for maximum readability. Category text becomes a compact eyebrow and status chips use semantic soft tones.
+- Launch/Open remains the primary action; Details is a light secondary control. New-tab behavior and partner-link safety are unchanged.
+- Desktop App Hub density uses four cards per row from 1280px and five from 1536px rather than forcing six narrow cards into a row.
+- Section panels are opaque white with restrained neutral borders/shadows to improve hierarchy against the light workspace background.
+
+### Ownership
+
+- **Senior UI/UX Engineer:** Login viewport composition, card hierarchy, density, and per-product visual identity.
+- **Senior Frontend Developer:** catalog naming, card rendering, responsive behavior, and accessibility-preserving interaction.
+- **QA:** verify product display names, unchanged URLs/IDs, 1024×640 and 1366×768 Login fit, mobile scrolling, Your Apps card readability, new-tab launch behavior, and responsive App Hub grids.
+
+## 27. v1.3.7 — Premium full-ecosystem Login showcase
+
+**Date:** August 12, 2026.
+
+### Requirement
+
+The Central Login brand panel must communicate the breadth of Catholic Solutions immediately, using the approved navy/gold identity and the clarity of the user-provided reference without copying its flat prototype treatment. The showcase must represent the complete shared catalog, remain readable, and preserve the desktop no-scroll Login contract.
+
+### Implementation
+
+- Replaced the dark nested **Connected Workspace** preview with a lighter, recognition-first **Connected Catholic ecosystem** showcase directly on the navy brand field.
+- The showcase is driven from the canonical `APP_CATALOG`; it renders every catalog entry, including the seven owned applications, partner products, AI tools, discovery products, and the unpublished Friar Friend entry with a compact **Soon** indicator.
+- Product names, icons, and gradients come directly from catalog metadata. No duplicate Login-only app list is maintained.
+- Tiles use premium light surfaces with a subtle product-gradient accent and icon, dark high-contrast labels, restrained shadow depth, and no decorative movement that could imply they are launch controls.
+- Login showcase tiles are intentionally informational and non-interactive. Authentication remains the first action; authenticated launching continues through App Hub and the shared App Switcher.
+- The brand headline is simplified to **Welcome back to your Catholic community platform.** The supporting line explains the single-sign-in relationship without implying that external partner products share the Catholic Solutions authentication boundary.
+- Desktop density is adaptive: three columns from 1024px, four from 1280px, and five from 1536px. Shorter desktop viewports reduce tile height and supporting copy before anything is clipped.
+- The existing desktop `100dvh` no-page-scroll requirement remains. Mobile/tablet behavior remains naturally scrollable because the brand showcase is hidden in the current compact Login layout.
+
+### UI/UX standard
+
+- The Login hero should feel premium, confident, and mission-focused rather than resembling a basic dashboard widget.
+- Product identity comes from each catalog gradient; the surrounding structure stays visually calm and consistent.
+- Tile labels may wrap to two lines rather than being truncated when a product has a long approved display name.
+- Nonessential proof metrics are removed from the Login brand panel so the full catalog and credential form have clear hierarchy.
+- No translate, scale, bounce, or other motion-based hover treatment is introduced.
+
+### Ownership
+
+- **Senior UI/UX Engineer:** visual hierarchy, premium tile treatment, density, viewport composition, and brand-panel balance.
+- **Senior Frontend Developer:** catalog-driven rendering, responsive implementation, semantic list structure, and preservation of authentication behavior.
+- **QA:** verify all catalog labels are represented, `Vincent Volunteer` / `Alive Date` / `Friar Friend` spelling, desktop fit at 1024×720 and 1366×768, no Login-page scrolling at supported desktop sizes, and unchanged authentication/return behavior.
+
+## 28. v1.3.8 — Product-themed App Hub primary actions
+
+**Date:** August 12, 2026.
+
+### Requirement
+
+The App Hub `Your Apps` cards must preserve the premium light-card system while giving each application a stronger, instantly recognizable product identity. The primary **Launch/Open** control uses the same canonical product theme already defined in `APP_CATALOG`; secondary actions remain neutral.
+
+### Implementation
+
+- `AppCard` passes the catalog `gradient` through a local CSS custom property to its primary Launch/Open action; no second button-color catalog is maintained.
+- Each product therefore receives a unique theme-aligned action automatically, including future published catalog additions.
+- A shared navy contrast scrim is applied over the product gradient so white action text remains visually strong even when a theme contains a bright endpoint.
+- Hover uses only brightness/saturation and shadow refinement. No translate, scale, bounce, or layout-shifting motion is introduced.
+- Keyboard focus receives an explicit Catholic Solutions gold focus ring.
+- `Details` remains a white/neutral outlined button, preserving clear primary/secondary hierarchy and preventing excessive color density.
+- Coming-soon entries remain muted/non-launchable and do not receive a fabricated themed primary action.
+
+### Ownership
+
+- **Senior UI/UX Engineer:** product-color balance, action hierarchy, contrast, and hover/focus treatment.
+- **Senior Frontend Developer:** catalog-driven CSS variable binding and behavior preservation.
+- **QA:** verify every launchable/external `Your Apps` card uses its own product theme, Details remains neutral, Coming Soon remains non-launchable, and new-tab behavior is unchanged.
+
+## 29. v1.3.9 — Centralized hosted authentication strategy and all-domain build contract
+
+**Date:** August 12, 2026.
+
+### Requirement
+
+Hosted Sign In must not dead-end with the message that production SSO is unavailable when the backend identity provider has not yet been connected. Application-specific environment files must not duplicate auth or domain settings. The entire Catholic Solutions domain/auth policy must be controlled centrally so all product builds behave consistently.
+
+### Implementation
+
+- `packages/shared/src/auth/appAuthConfig.ts` is the single source for both the approved local/hosted origin matrix and the configured authentication strategy.
+- Hosted origins are `https://cfr.optioncapp.com`, `https://optionc-sms.optioncapp.com`, `https://matt-money.optioncapp.com`, `https://arc-alerts.optioncapp.com`, `https://optionc-parish.optioncapp.com`, `https://catholic-content.optioncapp.com`, `https://directory.optioncapp.com`, and `https://support-center.optioncapp.com`.
+- Development is configured as `mock`; hosted production-mode builds are currently configured as `preview`, using the shared `Secure; SameSite=Lax; Domain=.optioncapp.com` central-session cookie.
+- `environment.ts` consumes `authConfig.authMode`; it no longer decides that every production build must be `sso`. This makes a future IdP cutover a single shared configuration change rather than a change in every application.
+- Login no longer reports the obsolete production fail-closed warning during the current hosted flow. If a future `sso` configuration is selected and its identity service is unavailable, the user receives a generic administrator-facing availability message.
+- Product `.env.development` / `.env.production` files remain metadata-only and contain no auth/domain URL matrix.
+- `npm run build:production` is the canonical all-domain build and builds all eight Catholic Solutions application workspaces from the same centralized auth/domain policy. Targeted `--workspace` production builds remain supported.
+
+### Security boundary
+
+The shared hosted session restores the required frontend integration flow but is not equivalent to production-grade identity. It is JavaScript-managed and therefore cannot provide the protections of an `HttpOnly` server session. Before a security-sensitive public production launch, replace the production `authMode`/`authOrigin` in `appAuthConfig.ts` with the real server/IdP integration and use a server-issued `HttpOnly; Secure` session or OIDC/OAuth Authorization Code + PKCE.
+
+### Ownership
+
+- **Senior Solution Architect / Senior Full Stack Developer:** centralized auth/domain contract and future IdP cutover.
+- **Frontend Developer:** Login handoff, guards, session revalidation, and logout behavior.
+- **DevOps:** build/deployment of all eight hosted domains from the common production configuration.
+- **QA:** Login on the platform domain, safe return to every product domain, refresh/session continuity, cross-app switcher launch, logout, back-button behavior, and rejection of unknown return origins.
+

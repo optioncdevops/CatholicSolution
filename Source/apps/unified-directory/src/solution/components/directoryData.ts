@@ -33,7 +33,7 @@ export const initialGroups: DirectoryGroup[] = [
   { id: 'g1', name: 'School Admins', type: 'Security group', members: 8, owner: 'Carl Lapp', apps: ['OptionC School', 'Unified Directory'], description: 'Administrative access for school leadership and office operations.' },
   { id: 'g2', name: 'Faculty', type: 'Organization group', members: 46, owner: 'Academic Office', apps: ['OptionC School', 'Catholic Content'], description: 'Teaching staff and academic support users.' },
   { id: 'g3', name: 'Parish Team', type: 'Organization group', members: 14, owner: 'Parish Office', apps: ['OptionC Parish', 'ArcAlerts'], description: 'Parish office staff and ministry coordinators.' },
-  { id: 'g4', name: 'Volunteers', type: 'Program group', members: 24, owner: 'Anna Rodrigues', apps: ['VincentVolunteer'], description: 'Active volunteers available for service opportunities.' },
+  { id: 'g4', name: 'Volunteers', type: 'Program group', members: 24, owner: 'Anna Rodrigues', apps: ['Vincent Volunteer'], description: 'Active volunteers available for service opportunities.' },
   { id: 'g5', name: 'Finance', type: 'Security group', members: 5, owner: 'Business Office', apps: ['Matt Money'], description: 'Restricted financial operations and reporting access.' },
 ];
 

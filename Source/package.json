@@ -1,7 +1,7 @@
 {
   "name": "catholic-solutions-workspace",
   "private": true,
-  "version": "1.3.3",
+  "version": "1.3.9",
   "type": "module",
   "workspaces": [
     "apps/*",
@@ -30,7 +30,7 @@
     "build:directory": "npm run build --workspace @catholic-solutions/unified-directory",
     "build:support": "npm run build --workspace @catholic-solutions/support-center",
     "build:staging": "npm run build:staging --workspaces --if-present",
-    "build:production": "npm run build --workspaces --if-present"
+    "build:production": "npm run build:production --workspaces --if-present"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

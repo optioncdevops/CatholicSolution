@@ -1,4 +1,4 @@
-import type { KeyboardEvent, MouseEvent } from 'react';
+import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
 import { resolveAppUrl } from '@shared/platform/navigation/solutionNavigation';
 
@@ -8,12 +8,9 @@ interface AppCardProps {
 }
 
 /**
- * How a catalog entry presents on the App Hub grid.
- *
- * - `launchable` — a Catholic Solutions solution behind the central login.
- * - `external`   — a partner product on its own domain.
- * - `unavailable`— an external product that is not published yet; non-interactive.
- * - `catalog`    — an AI/Discover entry; white surface with a Learn More affordance.
+ * App Hub cards deliberately keep the surface light and let each product's catalog
+ * gradient carry the identity through the accent rule and icon. This keeps `Your Apps`
+ * aligned with the rest of the Hub while avoiding a wall of saturated color.
  */
 type CardMode = 'launchable' | 'external' | 'unavailable' | 'catalog';
 
@@ -25,91 +22,86 @@ function resolveMode(app: CatalogApp): CardMode {
 
 export function AppCard({ app, onDetails }: AppCardProps) {
   const mode = resolveMode(app);
-  const onColor = mode !== 'catalog';
   const activatable = mode === 'launchable' || mode === 'external';
-
-  /*
-   * Launching opens the destination in its own tab so the App Hub stays available as a
-   * launcher rather than being replaced by the app the user just opened.
-   *
-   * `noopener` is applied in both cases so the opened page cannot reach back through
-   * `window.opener`. Third-party partner sites additionally get `noreferrer`, which
-   * first-party solutions do not need — they are our own origins.
-   */
+  const workspaceCard = mode !== 'catalog';
   const target = mode === 'launchable' ? resolveAppUrl(app) : app.externalUrl;
   const linkRelationship = mode === 'launchable' ? 'noopener' : 'noopener noreferrer';
   const windowFeatures = mode === 'launchable' ? 'noopener' : 'noopener,noreferrer';
   const actionVerb = mode === 'launchable' ? 'Launch' : 'Open';
+  const themedActionStyle = { '--hub-action-theme': app.gradient } as CSSProperties;
 
   const activate = () => {
     if (target) window.open(target, '_blank', windowFeatures);
   };
 
-  const openDetails = (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); onDetails(app); };
+  const openDetails = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onDetails(app);
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.target !== event.currentTarget) return;
-    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      activate();
+    }
   };
+
+  const statusClass = mode === 'launchable'
+    ? 'hub-module-card__status--ready'
+    : mode === 'external'
+      ? 'hub-module-card__status--external'
+      : mode === 'unavailable'
+        ? 'hub-module-card__status--coming-soon'
+        : app.kind === 'ai'
+          ? 'hub-module-card__status--ai'
+          : 'hub-module-card__status--available';
 
   return (
     <article
-      className={`hub-module-card group ${onColor ? 'hub-module-card--launchable' : 'hub-module-card--catalog'}`}
-      style={onColor ? { background: app.gradient } : undefined}
+      className={`hub-module-card group ${workspaceCard ? 'hub-module-card--workspace' : 'hub-module-card--catalog'}`}
       onClick={activatable ? activate : undefined}
       onKeyDown={activatable ? onKeyDown : undefined}
       tabIndex={activatable ? 0 : undefined}
       role={activatable ? 'link' : undefined}
       aria-label={activatable ? `${actionVerb} ${app.name} in a new tab` : undefined}
     >
-      {onColor ? (
-        <span className="hub-module-card__glow" aria-hidden="true" />
-      ) : (
-        <span className="hub-module-card__accent" style={{ background: app.gradient }} aria-hidden="true" />
-      )}
+      <span className="hub-module-card__accent" style={{ background: app.gradient }} aria-hidden="true" />
+      <span className="hub-module-card__wash" style={{ background: app.gradient }} aria-hidden="true" />
 
       <div className="hub-module-card__top">
-        <span
-          className={`hub-module-card__icon ${onColor ? 'hub-module-card__icon--on-color' : ''}`}
-          style={!onColor ? { background: app.gradient } : undefined}
-        >
-          {app.icon}
-        </span>
-        <span className={`hub-module-card__status ${mode === 'unavailable' ? 'hub-module-card__status--coming-soon' : onColor ? 'hub-module-card__status--on-color' : app.kind === 'ai' ? 'hub-module-card__status--ai' : 'hub-module-card__status--available'}`}>
-          {app.statusLabel}
-        </span>
+        <span className="hub-module-card__icon" style={{ background: app.gradient }}>{app.icon}</span>
+        <span className={`hub-module-card__status ${statusClass}`}>{app.statusLabel}</span>
       </div>
 
       <div className="hub-module-card__content">
+        <span className="hub-module-card__category">{app.category}</span>
         <h3>{app.name}</h3>
         <p>{app.description}</p>
       </div>
 
-      <div className={`hub-card-actions ${onColor ? 'hub-card-actions--launchable' : 'hub-card-actions--catalog'}`}>
+      <div className={`hub-card-actions ${workspaceCard ? 'hub-card-actions--launchable' : 'hub-card-actions--catalog'}`}>
         {activatable ? (
-          // A real anchor rather than a button: it exposes the destination to assistive
-          // technology and preserves the browser's own ctrl/middle-click and
-          // open-in-new-window affordances, which window.open alone would discard.
           <a
             href={target}
             target="_blank"
             rel={linkRelationship}
             onClick={(event) => event.stopPropagation()}
             className="hub-card-action hub-card-action--primary"
+            style={themedActionStyle}
           >
             <span>{actionVerb}</span><span aria-hidden="true">↗</span>
           </a>
         ) : null}
 
-        {mode === 'unavailable' ? (
-          <span className="hub-card-action hub-card-action--muted">Coming soon</span>
-        ) : null}
+        {mode === 'unavailable' ? <span className="hub-card-action hub-card-action--muted">Coming soon</span> : null}
 
         <button
           type="button"
           onClick={openDetails}
-          className={`hub-card-action ${onColor ? 'hub-card-action--secondary-on-color' : 'hub-card-action--secondary-on-light'}`}
+          className="hub-card-action hub-card-action--secondary-on-light"
         >
-          {onColor ? <><span aria-hidden="true">ⓘ</span><span>Details</span></> : <><span>Learn More</span><span aria-hidden="true">→</span></>}
+          {workspaceCard ? <><span aria-hidden="true">ⓘ</span><span>Details</span></> : <><span>Learn More</span><span aria-hidden="true">→</span></>}
         </button>
       </div>
     </article>

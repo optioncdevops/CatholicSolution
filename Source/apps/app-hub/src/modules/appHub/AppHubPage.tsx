@@ -5,18 +5,11 @@ import { Footer } from '@shared/app/components/Footer';
 import { ProfileMenu } from '@shared/app/components/ProfileMenu';
 import { SectionHeading } from '@shared/app/components/SectionHeading';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { aiApps, discoverApps, externalApps, launchableApps } from '@shared/app/config/appCatalog';
+import { aiApps, discoverApps, launchableApps, yourApps } from '@shared/app/config/appCatalog';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import type { CatalogApp } from '@shared/app/types/app';
 import { AppCard } from './AppCard';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
-
-/**
- * "Your Apps" spans both the Catholic Solutions solutions reachable through the central
- * login and the partner products that open at their own domain. Derived once at module
- * scope because the catalog is static configuration.
- */
-const YOUR_APPS = [...launchableApps, ...externalApps];
 
 function greeting(firstName: string) {
   const hour = new Date().getHours();
@@ -33,7 +26,7 @@ export function AppHubPage() {
   const normalized = query.trim().toLowerCase();
   const filter = (apps: CatalogApp[]) => normalized ? apps.filter((app) => [app.name, app.description, app.category, ...app.keywords].join(' ').toLowerCase().includes(normalized)) : apps;
   const groups = [
-    { title: 'Your Apps', apps: filter(YOUR_APPS), count: `${YOUR_APPS.length} apps` },
+    { title: 'Your Apps', apps: filter(yourApps), count: `${yourApps.length} apps` },
     { title: 'AI Tools', apps: filter(aiApps), count: `${aiApps.length} apps` },
     { title: 'Discover More Apps', apps: filter(discoverApps), count: `${discoverApps.length} apps` },
   ];

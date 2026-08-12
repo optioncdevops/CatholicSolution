@@ -1,7 +1,7 @@
-import { getAppAuthConfig, type RuntimeEnvironment } from '@shared/auth/appAuthConfig';
+import { getAppAuthConfig, type ConfiguredAuthMode, type RuntimeEnvironment } from '@shared/auth/appAuthConfig';
 
 export type AppEnvironment = RuntimeEnvironment;
-export type AuthMode = 'mock' | 'preview' | 'sso';
+export type AuthMode = ConfiguredAuthMode;
 
 const mode: AppEnvironment = import.meta.env.MODE === 'development' ? 'development' : 'production';
 const deploymentTarget = mode === 'development'
@@ -10,11 +10,11 @@ const deploymentTarget = mode === 'development'
 const authConfig = getAppAuthConfig(mode);
 
 /**
- * Development and staging builds use the frontend-only central-session adapter so the
- * multi-domain prototype can be exercised without an identity backend. Production is
- * fail-closed and must use a real identity provider before credentials are accepted.
+ * Authentication strategy is centralized with the domain matrix in appAuthConfig.
+ * Product env files never carry auth/domain routing switches, so every hosted build
+ * follows the same contract and a future IdP cutover remains a one-file change.
  */
-const authMode: AuthMode = mode === 'development' ? 'mock' : deploymentTarget === 'staging' ? 'preview' : 'sso';
+const authMode: AuthMode = authConfig.authMode;
 
 export const environment = {
   mode,

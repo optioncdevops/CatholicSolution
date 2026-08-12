@@ -1,9 +1,24 @@
-# Catholic Solutions Workspace — v1.3.3
+# Catholic Solutions Workspace — v1.3.9
 
-**Release:** v1.3.3  
+**Release:** v1.3.9  
 **Architecture:** independent-domain multi-app SaaS monorepo with centralized login
 
 This repository contains one independently deployable React/Vite application per Catholic Solutions product. Product applications are deployment-independent, while authentication entry is centralized on one Catholic Solutions Login domain. Shared platform source is maintained once under `packages/shared`.
+
+### v1.3.9 Central hosted sign-in repair
+
+- The complete authentication strategy and all Catholic Solutions hosted origins are centralized in `packages/shared/src/auth/appAuthConfig.ts`.
+- Development uses local mock authentication. Hosted production-mode builds currently use the common central-session adapter across the approved `*.optioncapp.com` domains, so Sign In on `cfr.optioncapp.com` can hand off to every Catholic Solutions product without the previous production SSO dead-end.
+- No application `.env` file contains auth or solution-domain URLs; changing the hosted domain matrix or switching to a real IdP is a shared-auth configuration change rather than an eight-application env change.
+- The shared hosted session is an interim frontend integration adapter, not a substitute for a server-issued `HttpOnly` session or OIDC/OAuth Authorization Code + PKCE for a security-sensitive production launch.
+
+### v1.3.8 App Hub themed actions
+
+The primary **Launch/Open** action in `Your Apps` now inherits each product's canonical catalog gradient, with a shared dark contrast scrim, restrained shadow, and accessible focus treatment. `Details` remains neutral so every card keeps a clear primary/secondary hierarchy without turning the section into a wall of saturated controls.
+
+### v1.3.7 Login experience
+
+The Central Login brand panel now uses the canonical shared app catalog to present the complete Catholic Solutions ecosystem in a compact premium light-card showcase. The desktop composition remains viewport-fitted without page scrolling; authentication and launch behavior are unchanged.
 
 ## Repository structure
 
@@ -115,10 +130,11 @@ Each application has only `.env.development` and `.env.production`. Those files 
 ### Authentication modes
 
 - Development uses the frontend-only central preview session for local UI testing.
-- `build:staging` uses `.env.production` plus a build-time `VITE_DEPLOYMENT_TARGET=staging` flag. It enables a shared preview-session cookie across `*.optioncapp.com`, so the hosted staging Login, App Hub, switcher, and product handoff work without the not-yet-integrated identity backend.
-- Production `npm run build` is fail-closed SSO. Because no separate identity provider endpoint is implemented in this frontend repository, production sign-in does not mint a browser-only session or redirect back to the same `/login` route.
+- Hosted staging and production-mode builds resolve their authentication strategy from `packages/shared/src/auth/appAuthConfig.ts`. The current hosted strategy is the shared central-session adapter across the approved `*.optioncapp.com` domains, keeping Login, App Hub, switcher, product handoff, and logout functional while the backend IdP integration is pending.
+- `build:staging` still uses `.env.production` plus the build-time `VITE_DEPLOYMENT_TARGET=staging` marker for deployment labeling; it does not require a third environment file.
+- A future real production IdP rollout is centralized: change the production auth strategy/origin in `appAuthConfig.ts` and keep every product application on the same contract.
 
-The staging preview cookie is intentionally not presented as production authentication: it is JavaScript-managed and therefore cannot replace a server-issued `HttpOnly`, `Secure` session or an OIDC/OAuth authorization-code + PKCE integration.
+The current hosted session cookie is JavaScript-managed and therefore is not a replacement for a server-issued `HttpOnly`, `Secure` session or an OIDC/OAuth Authorization Code + PKCE integration.
 
 ### Approved hosted origins
 
@@ -176,6 +192,10 @@ Generated `.artifacts/` content is release output, not development source of tru
 
 `packages/shared` contains only cross-solution concerns: centralized-auth redirect/return handling, authentication guard/shell, common topbar, 9-dot app switcher, profile/account UI, footer, catalog, environment/domain resolver, browser branding, user context, toasts, common UI primitives, and design-system styles.
 
+The shared switcher is catalog-synchronized with the published destinations in App Hub **Your Apps**. It currently exposes the seven Catholic Solutions applications plus the five published partner products; unpublished `Friar Friend` remains App Hub-only until it has a destination. The launcher uses three columns whenever more than six destinations are available and falls back to two columns on very narrow screens.
+
+User-facing partner names are standardized as **Vincent Volunteer**, **Alive Date**, and **Friar Friend**; stable product IDs and public URLs remain unchanged. The desktop Login is tuned as a `100dvh` composition so the Connected Workspace preview and credential area remain visible without page scrolling at supported desktop sizes. App Hub **Your Apps** cards use premium white surfaces with dark text and retain each product's unique gradient through its accent/icon treatment.
+
 Product business logic must remain under its owning `apps/<solution>/src` boundary. A product must never import another product's business source.
 
 ## Environment files
@@ -207,8 +227,11 @@ npm run build
 # Hosted staging build: .env.production + staging preview-auth target
 npm run build:staging
 
-# Production build: .env.production + fail-closed SSO
+# Production build: .env.production + centralized hosted auth configuration
 npm run build:production
+
+# Target App Hub only in production mode
+npm run build:production --workspace @catholic-solutions/app-hub
 ```
 
 The single maintained product/architecture source of truth is [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md).

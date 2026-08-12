@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { ShieldCheckIcon, SparklesIcon } from '@shared/app/components/UiIcons';
-import { launchableApps } from '@shared/app/config/appCatalog';
+import { APP_CATALOG } from '@shared/app/config/appCatalog';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { SOLUTION_REGISTRY, type SolutionId } from '@shared/platform/config/solutionRegistry';
 
@@ -14,18 +14,12 @@ interface AuthShellProps {
   description?: string;
 }
 
-const proofPoints = [
-  [String(launchableApps.length), 'Connected apps'],
-  ['1,200+', 'Faith resources'],
-  ['99.9%', 'Platform uptime'],
-] as const;
-
 export function AuthShell({
   children,
   solutionId = 'platform',
   eyebrow = 'One platform. Every mission.',
-  title = <>One secure workspace for your Catholic <span className="text-brand-gold-light">community.</span></>,
-  description = 'School, parish, finance, communications, content, directory, and support tools—connected in one place.',
+  title = <>Welcome back to your Catholic community <span className="text-brand-gold-light">platform.</span></>,
+  description = 'One secure sign-in for the school, parish, finance, communications, content, and ministry tools your organization uses every day.',
 }: AuthShellProps) {
   const solution = SOLUTION_REGISTRY[solutionId];
 
@@ -46,30 +40,32 @@ export function AuthShell({
               <p>{description}</p>
               {solutionId !== 'platform' ? (
                 <div className="auth-solution-context">
-                  <span className="auth-solution-context__icon">{launchableApps.find((app) => app.id === solutionId)?.icon ?? '✦'}</span>
+                  <span className="auth-solution-context__icon">{APP_CATALOG.find((app) => app.id === solutionId)?.icon ?? '✦'}</span>
                   <span><strong>{solution.name}</strong><small>{solution.category}</small></span>
                 </div>
               ) : null}
             </div>
 
-            <div className="auth-workspace-preview">
-              <div className="auth-workspace-preview__head">
-                <div><span>Connected workspace</span><strong>{launchableApps.length} applications ready</strong></div>
-                <span className="auth-workspace-preview__live"><i /> Ready</span>
+            <section className="auth-platform-showcase" aria-labelledby="auth-platform-showcase-title">
+              <div className="auth-platform-showcase__head">
+                <div>
+                  <span>Connected Catholic ecosystem</span>
+                  <strong id="auth-platform-showcase-title">Your all-in-one Catholic platform</strong>
+                </div>
+                <span className="auth-platform-showcase__count">{APP_CATALOG.length} solutions</span>
               </div>
-              <div className="auth-workspace-preview__apps">
-                {launchableApps.map((app) => (
-                  <div key={app.id} className="auth-workspace-app">
-                    <span style={{ background: app.gradient }}>{app.icon}</span>
-                    <div><strong>{app.name}</strong><small>{app.category}</small></div>
+
+              <div className="auth-platform-showcase__grid" role="list" aria-label="Catholic Solutions applications and tools">
+                {APP_CATALOG.map((app) => (
+                  <div key={app.id} className="auth-platform-app" role="listitem">
+                    <span className="auth-platform-app__accent" style={{ background: app.gradient }} aria-hidden="true" />
+                    <span className="auth-platform-app__icon" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
+                    <strong>{app.name}</strong>
+                    {app.status === 'coming-soon' ? <small className="auth-platform-app__status">Soon</small> : null}
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div className="auth-proof-grid">
-              {proofPoints.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}
-            </div>
+            </section>
 
             <div className="auth-brand-panel__trust">
               <span><ShieldCheckIcon size={16} /> Enterprise security</span>
