@@ -1,7 +1,7 @@
 {
   "name": "catholic-solutions-workspace",
   "private": true,
-  "version": "1.4.5",
+  "version": "1.5.2",
   "type": "module",
   "workspaces": [
     "apps/*",
@@ -30,7 +30,9 @@
     "build:directory": "npm run build --workspace @catholic-solutions/unified-directory",
     "build:support": "npm run build --workspace @catholic-solutions/support-center",
     "build:staging": "npm run build:staging --workspaces --if-present",
-    "build:production": "npm run build:production --workspaces --if-present"
+    "build:production": "npm run build:production --workspaces --if-present",
+    "dev:lesson-plan": "npm run dev --workspace @catholic-solutions/ai-lesson-plan",
+    "build:lesson-plan": "npm run build --workspace @catholic-solutions/ai-lesson-plan"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

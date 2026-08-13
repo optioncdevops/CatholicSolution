@@ -10,6 +10,7 @@ export interface SolutionOrigins {
   catholicContent: string;
   unifiedDirectory: string;
   supportCenter: string;
+  aiLessonPlan: string;
 }
 
 interface AppAuthConfig {
@@ -29,6 +30,7 @@ const developmentOrigins: SolutionOrigins = {
   catholicContent: 'http://localhost:4006',
   unifiedDirectory: 'http://localhost:4007',
   supportCenter: 'http://localhost:4009',
+  aiLessonPlan: 'http://localhost:4010',
 };
 
 const productionOrigins: SolutionOrigins = {
@@ -40,6 +42,7 @@ const productionOrigins: SolutionOrigins = {
   catholicContent: 'https://catholic-content.optioncapp.com',
   unifiedDirectory: 'https://directory.optioncapp.com',
   supportCenter: 'https://support-center.optioncapp.com',
+  aiLessonPlan: '', // Configure the approved hosted domain before production launch.
 };
 
 const configs: Record<RuntimeEnvironment, AppAuthConfig> = {

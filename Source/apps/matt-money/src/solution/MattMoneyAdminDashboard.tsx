@@ -1,4 +1,3 @@
-import { DashboardHeader } from '@shared/app/components/DashboardHeader';
 import { KpiCard } from '@shared/app/components/KpiCard';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -30,13 +29,6 @@ export function MattMoneyAdminDashboard() {
   const { showToast } = useToast();
   return (
     <>
-      <DashboardHeader
-        eyebrow="Billing & finance · Administrator"
-        title="Administrator dashboard"
-        status={<span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wide text-emerald-700">Account available</span>}
-        actions={<button type="button" onClick={() => showToast('Financial report would open here')} className="action-secondary border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50">Export report</button>}
-      />
-
       <section aria-label="Account and collection summary" className="grid gap-4 xl:grid-cols-4">
         <article className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-teal-700 to-emerald-500 p-5 text-white shadow-[0_18px_40px_rgba(5,150,105,.16)] sm:p-6 xl:col-span-2">
           <span className="pointer-events-none absolute -bottom-20 -right-16 size-56 rounded-full bg-white/10" />
@@ -50,7 +42,7 @@ export function MattMoneyAdminDashboard() {
       <div className="grid gap-5 xl:grid-cols-[1.55fr_1fr]">
         <section className="surface-card overflow-hidden">
           <div className="p-5 pb-3 sm:p-6 sm:pb-3"><PanelHeader title="Recent transactions" action={<button type="button" onClick={() => showToast('Full ledger would open here')} className="text-xs font-extrabold text-emerald-700 hover:underline hover:underline-offset-4">View ledger →</button>} /></div>
-          <div className="overflow-x-auto"><table className="w-full min-w-[720px] border-collapse text-left text-sm"><thead><tr className="border-y border-slate-100 bg-slate-50/80 text-[10px] uppercase tracking-[0.12em] text-slate-400"><th className="px-5 py-3 sm:px-6">Payee / Payer</th><th className="px-3 py-3">Category</th><th className="px-3 py-3">Amount</th><th className="px-5 py-3 sm:px-6">Status</th></tr></thead><tbody>{transactions.map(([icon, name, category, amount, status, positive]) => <tr key={name} className="border-b border-slate-100 last:border-0 hover:bg-emerald-50/40"><td className="px-5 py-3.5 font-bold text-slate-800 sm:px-6"><span className="mr-3 inline-grid size-9 place-items-center rounded-xl border border-emerald-100 bg-emerald-50">{icon}</span>{name}</td><td className="px-3 py-3.5 text-slate-500">{category}</td><td className={`px-3 py-3.5 font-extrabold ${positive ? 'text-emerald-600' : 'text-rose-600'}`}>{amount}</td><td className="px-5 py-3.5 sm:px-6"><span className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${status === 'Received' || status === 'Paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{status}</span></td></tr>)}</tbody></table></div>
+          <div className="overflow-x-auto"><table className="cs-enterprise-table w-full min-w-[720px] border-collapse text-left text-sm"><thead><tr className="border-y border-slate-100 bg-slate-50/80 text-[10px] uppercase tracking-[0.12em] text-slate-400"><th className="px-5 py-3 sm:px-6">Payee / Payer</th><th className="px-3 py-3">Category</th><th className="px-3 py-3">Amount</th><th className="px-5 py-3 sm:px-6">Status</th></tr></thead><tbody>{transactions.map(([icon, name, category, amount, status, positive]) => <tr key={name} className="border-b border-slate-100 last:border-0 hover:bg-emerald-50/40"><td className="px-5 py-3.5 font-bold text-slate-800 sm:px-6"><span className="mr-3 inline-grid size-9 place-items-center rounded-xl border border-emerald-100 bg-emerald-50">{icon}</span>{name}</td><td className="px-3 py-3.5 text-slate-500">{category}</td><td className={`px-3 py-3.5 font-extrabold ${positive ? 'text-emerald-600' : 'text-rose-600'}`}>{amount}</td><td className="px-5 py-3.5 sm:px-6"><span className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${status === 'Received' || status === 'Paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>{status}</span></td></tr>)}</tbody></table></div>
         </section>
 
         <div className="grid gap-5">

@@ -8,7 +8,8 @@ function normalizedOrigin(origin: string) {
 }
 
 export function resolveSolutionUrl(solution: SolutionConfig, route = solution.route) {
-  if (!environment.domainRouting || !isConfiguredOrigin(solution.origin)) return route;
+  if (!environment.domainRouting) return route;
+  if (!isConfiguredOrigin(solution.origin)) return '';
   const path = route.startsWith('/') ? route : `/${route}`;
   return `${normalizedOrigin(solution.origin)}${path === '/' ? '/' : path}`;
 }

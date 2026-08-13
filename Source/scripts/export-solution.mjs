@@ -16,6 +16,7 @@ const solutions = [
   'catholic-content',
   'unified-directory',
   'support-center',
+  'ai-lesson-plan',
 ];
 
 function usage() {

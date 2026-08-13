@@ -16,7 +16,7 @@ const statusStyle: Record<SupportTicket['status'], string> = {
 };
 
 export function SupportTicketList({ tickets, selectedId, onOpen, onNew }: SupportTicketListProps) {
-  const [hideResolved, setHideResolved] = useState(false);
+  const [hideResolved, setHideResolved] = useState(true);
   const visible = useMemo(() => tickets.filter((ticket) => !hideResolved || ticket.status !== 'Resolved'), [hideResolved, tickets]);
   return (
     <section className="support-panel support-ticket-inbox min-h-0">

@@ -2,11 +2,11 @@ import { useMemo, useState } from 'react';
 import { BuildingIcon, SearchIcon } from '@shared/app/components/UiIcons';
 
 const groups = [
-  { name: 'All School Contacts', type: 'System', members: 2340, source: 'OptionC School', channels: ['Text', 'Email', 'Voicemail', 'Push'], lastUsed: 'Today, 10:42 AM' },
+  { name: 'All School Contacts', type: 'System', members: 2340, source: 'OptionC School', channels: ['Text', 'Email', 'Voicemail'], lastUsed: 'Today, 10:42 AM' },
   { name: 'Students’ Parents & Staff', type: 'System', members: 2018, source: 'OptionC School', channels: ['Text', 'Email', 'Voicemail'], lastUsed: 'Yesterday' },
   { name: 'Students’ Parents Only', type: 'System', members: 1842, source: 'OptionC School', channels: ['Text', 'Email'], lastUsed: 'Aug 5' },
   { name: 'Staff Only', type: 'System', members: 176, source: 'OptionC School', channels: ['Text', 'Email', 'Voicemail'], lastUsed: 'Today, 8:14 AM' },
-  { name: 'Transport Group', type: 'Custom', members: 318, source: 'ArcAlerts', channels: ['Text', 'Push'], lastUsed: 'Today, 8:14 AM' },
+  { name: 'Transport Group', type: 'Custom', members: 318, source: 'ArcAlerts', channels: ['Text', 'Voicemail'], lastUsed: 'Today, 8:14 AM' },
   { name: 'Grade 9 Families', type: 'Custom', members: 184, source: 'ArcAlerts', channels: ['Text', 'Email'], lastUsed: 'Aug 4' },
   { name: 'Parish Families', type: 'Integrated', members: 486, source: 'OptionC Parish', channels: ['Text', 'Email'], lastUsed: 'Yesterday' },
 ] as const;

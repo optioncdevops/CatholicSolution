@@ -1,16 +1,21 @@
-import { useState } from 'react';
 import { useToast } from '@shared/app/components/ToastProvider';
 
 export function ArcAlertsSettings() {
   const { showToast } = useToast();
-  const [emergencyMode, setEmergencyMode] = useState(true);
   return (
     <div className="grid gap-4">
       <div><p className="text-[10px] font-black uppercase tracking-[.16em] text-orange-600">Administration</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">Settings</h1></div>
-      <form className="grid gap-4 xl:grid-cols-2" onSubmit={(event) => { event.preventDefault(); showToast('ArcAlerts prototype settings saved ✓'); }}>
-        <section className="surface-card p-5 sm:p-6"><h2 className="text-base font-extrabold text-slate-900">Organization</h2><div className="mt-4 grid gap-4"><label className="grid gap-1.5 text-xs font-extrabold text-slate-700">Organization name<input defaultValue="Catholic Solutions Organization" className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-orange-300 focus:bg-white focus:ring-3 focus:ring-orange-100" /></label><div className="grid gap-4 sm:grid-cols-2"><label className="grid gap-1.5 text-xs font-extrabold text-slate-700">Organization ID<input defaultValue="19997" className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm" /></label><label className="grid gap-1.5 text-xs font-extrabold text-slate-700">Voice PIN<input defaultValue="1910" className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm" /></label></div><label className="grid gap-1.5 text-xs font-extrabold text-slate-700">Default sender name<input defaultValue="Organization Alerts" className="min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm" /></label></div></section>
-        <section className="surface-card p-5 sm:p-6"><h2 className="text-base font-extrabold text-slate-900">Delivery defaults</h2><div className="mt-4 grid gap-4"><label className="grid gap-1.5 text-xs font-extrabold text-slate-700">Time zone<select className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold"><option>Eastern Time (ET)</option><option>Central Time (CT)</option><option>Mountain Time (MT)</option><option>Pacific Time (PT)</option></select></label><label className="grid gap-1.5 text-xs font-extrabold text-slate-700">Alert retention<select className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold"><option>24 months</option><option>12 months</option><option>36 months</option></select></label><button type="button" onClick={() => setEmergencyMode((value) => !value)} aria-pressed={emergencyMode} className="flex min-h-12 items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 text-left"><span><strong className="block text-xs text-slate-800">Emergency confirmation</strong><span className="mt-1 block text-[10px] text-slate-400">Require an additional confirmation before sending emergency-priority alerts.</span></span><span className={`relative h-6 w-11 rounded-full ${emergencyMode ? 'bg-orange-500' : 'bg-slate-300'}`}><i className={`absolute top-1 size-4 rounded-full bg-white transition-all ${emergencyMode ? 'left-6' : 'left-1'}`} /></span></button></div></section>
-        <div className="xl:col-span-2 flex justify-end"><button type="submit" className="action-primary bg-slate-900 px-5 text-white">Save settings</button></div>
+      <form className="surface-card arc-settings-card" onSubmit={(event) => { event.preventDefault(); showToast('ArcAlerts settings saved ✓'); }}>
+        <div className="arc-settings-note">All settings are used as default values when creating a new alert. They can still be adjusted while composing an individual alert.</div>
+        <div className="arc-settings-grid">
+          <label className="arc-settings-field"><span className="arc-settings-field__label">Reply-To Email <b>*</b></span><input type="email" required defaultValue="noreply@optionc.net"/></label>
+          <label className="arc-settings-field"><span className="arc-settings-field__label">Phone Caller ID</span><input defaultValue="(585) 555-5555"/></label>
+          <label className="arc-settings-field"><span className="arc-settings-field__label">Phone To Call For Recording Voice Message</span><input defaultValue="(208) 301-7525"/></label>
+          <label className="arc-settings-field"><span className="arc-settings-field__label">Timezone</span><select defaultValue="Eastern Time"><option>Eastern Time</option><option>Central Time</option><option>Mountain Time</option><option>Pacific Time</option></select></label>
+          <div className="arc-settings-field arc-settings-field--info"><span>Failed Alerts Notified To (Email)</span><p>An email will be sent to the alert creator’s work email if an alert does not process successfully.</p></div>
+          <label className="arc-settings-field"><span className="arc-settings-field__label">ArcAlerts Name <b>*</b></span><input required defaultValue="St. Gobnait of Ballyvourney Demo School"/></label>
+        </div>
+        <div className="arc-settings-actions"><button type="submit" className="action-primary bg-emerald-600 px-5 text-white hover:bg-emerald-700">Save settings</button></div>
       </form>
     </div>
   );

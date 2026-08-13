@@ -1,14 +1,31 @@
 import { availableSwitcherApps } from '@shared/app/config/appCatalog';
+import { DIRECTORY_RECIPIENTS } from '@shared/app/data/directoryRecipients';
+
+export type DirectoryPhone = {
+  type: 'Home' | 'Work' | 'Mobile';
+  number: string;
+  extension?: string;
+  unlisted: boolean;
+  primary: boolean;
+};
+
+export type DirectoryEmail = {
+  type: 'Home' | 'Work' | 'Organization';
+  address: string;
+  primary: boolean;
+};
 
 export type DirectoryUser = {
   id: string;
   name: string;
   email: string;
   phone: string;
+  phones: DirectoryPhone[];
+  emails: DirectoryEmail[];
   applications: string[];
   groups: string[];
   active: boolean;
-  lastActive: string;
+  lastAccessed: string;
   source: string;
 };
 
@@ -17,7 +34,6 @@ export type DirectoryGroup = {
   name: string;
   memberIds: string[];
   owner: string;
-  apps: string[];
   description: string;
 };
 
@@ -34,7 +50,6 @@ function appsFor(index: number) {
   const secondary = directoryApplications[(index + 3) % directoryApplications.length];
   return index % 4 === 0 && secondary !== primary ? [primary, secondary] : [primary];
 }
-
 function groupsFor(index: number) {
   const primary = groupNames[index % groupNames.length];
   const secondary = groupNames[(index + 3) % groupNames.length];
@@ -42,42 +57,81 @@ function groupsFor(index: number) {
 }
 
 function buildUsers(): DirectoryUser[] {
-  return Array.from({ length: 132 }, (_, index) => {
+  const projectedUsers: DirectoryUser[] = DIRECTORY_RECIPIENTS.map((member, index) => {
+    const primaryApp = index % 2 === 0 ? 'ArcAlerts' : 'Matt Money';
+    return {
+      id: member.id,
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+      phones: [
+        { type: 'Home', number: member.phone, unlisted: false, primary: index % 3 === 0 },
+        { type: 'Work', number: `(585) 555-${String(6100 + index).slice(-4)}`, extension: index % 4 === 0 ? String(110 + index) : undefined, unlisted: index % 7 === 0, primary: index % 3 === 1 },
+        { type: 'Mobile', number: `(585) 555-${String(7100 + index).slice(-4)}`, unlisted: false, primary: index % 3 === 2 },
+      ],
+      emails: [
+        { type: 'Home', address: member.email, primary: index % 3 === 0 },
+        { type: 'Work', address: member.email, primary: index % 3 === 1 },
+        { type: 'Organization', address: member.email, primary: index % 3 === 2 },
+      ],
+      applications: [primaryApp],
+      groups: [...member.groups],
+      active: true,
+      lastAccessed: index < 6 ? 'Today' : `${1 + (index % 5)} days ago`,
+      source: primaryApp,
+    };
+  });
+
+  const generatedUsers = Array.from({ length: 132 - projectedUsers.length }, (_, offset) => {
+    const index = offset + projectedUsers.length;
     const first = firstNames[index % firstNames.length];
     const last = lastNames[Math.floor(index / firstNames.length) % lastNames.length];
     const suffix = index >= firstNames.length * lastNames.length ? `${index + 1}` : '';
     const name = `${first} ${last}${suffix ? ` ${suffix}` : ''}`;
     const applications = appsFor(index);
     const active = index % 8 !== 7;
+    const email = `${first}.${last}${suffix}`.toLowerCase().replace(/\s+/g, '') + `@${domains[index % domains.length]}`;
+    const phone = `+1 (215) 555-${String(1000 + index).slice(-4)}`;
     return {
       id: `u${index + 1}`,
       name,
-      email: `${first}.${last}${suffix}`.toLowerCase().replace(/\s+/g, '') + `@${domains[index % domains.length]}`,
-      phone: `+1 (215) 555-${String(1000 + index).slice(-4)}`,
+      email,
+      phone,
+      phones: [
+        { type: 'Home' as const, number: phone, unlisted: false, primary: index % 3 === 0 },
+        { type: 'Work' as const, number: `+1 (267) 555-${String(2000 + index).slice(-4)}`, extension: index % 4 === 0 ? String(100 + index) : undefined, unlisted: index % 11 === 0, primary: index % 3 === 1 },
+        { type: 'Mobile' as const, number: `+1 (484) 555-${String(3000 + index).slice(-4)}`, unlisted: false, primary: index % 3 === 2 },
+      ],
+      emails: [
+        { type: 'Home' as const, address: email, primary: index % 3 === 0 },
+        { type: 'Work' as const, address: `${first}.${last}@optionc.com`.toLowerCase(), primary: index % 3 === 1 },
+        { type: 'Organization' as const, address: `${first[0]}${last}@${domains[(index + 1) % domains.length]}`.toLowerCase(), primary: index % 3 === 2 },
+      ],
       applications,
       groups: groupsFor(index),
       active,
-      lastActive: active ? (index < 12 ? 'Today' : `${1 + (index % 11)} days ago`) : `${12 + (index % 45)} days ago`,
+      lastAccessed: active ? (index < 20 ? 'Today' : `${1 + (index % 11)} days ago`) : `${12 + (index % 45)} days ago`,
       source: applications[0] ?? 'Unified Directory',
-    };
+    } satisfies DirectoryUser;
   });
-}
 
+  return [...projectedUsers, ...generatedUsers];
+}
 export const initialUsers = buildUsers();
 
 const groupDefinitions = [
-  { id: 'g1', name: 'School Admins', owner: 'Carl Lapp', apps: ['OptionC School', 'Unified Directory'], description: 'Administrative access for school leadership and office operations.' },
-  { id: 'g2', name: 'Faculty', owner: 'Academic Office', apps: ['OptionC School', 'Catholic Content'], description: 'Teaching staff and academic support users.' },
-  { id: 'g3', name: 'Parish Team', owner: 'Parish Office', apps: ['OptionC Parish', 'ArcAlerts'], description: 'Parish office staff and ministry coordinators.' },
-  { id: 'g4', name: 'Volunteers', owner: 'Community Office', apps: ['Vincent Volunteer'], description: 'Active volunteers available for service opportunities.' },
-  { id: 'g5', name: 'Finance', owner: 'Business Office', apps: ['Matt Money'], description: 'Financial operations and reporting access.' },
-  { id: 'g6', name: 'Faith Formation', owner: 'Religious Education', apps: ['Catholic Content', 'OptionC Parish'], description: 'Catechists and faith-formation coordinators.' },
-  { id: 'g7', name: 'Family Communications', owner: 'School Office', apps: ['ArcAlerts', 'OptionC School'], description: 'Contacts approved for school and family communications.' },
-  { id: 'g8', name: 'Member Services', owner: 'Catholic Solutions', apps: ['Support Center', 'Unified Directory'], description: 'Member-services and organization support contacts.' },
-  { id: 'g9', name: 'Grade 7 Families', owner: 'School Office', apps: ['OptionC School', 'ArcAlerts'], description: 'Grade 7 family contacts used for school services and communications.' },
-  { id: 'g10', name: 'Liturgy Team', owner: 'Parish Office', apps: ['OptionC Parish', 'Berchmans'], description: 'Liturgical ministers, schedulers, and parish service coordinators.' },
-  { id: 'g11', name: 'Donor Relations', owner: 'Development Office', apps: ['Matt Money', 'OptionC Parish'], description: 'Staff coordinating giving, acknowledgements, and donor follow-up.' },
-  { id: 'g12', name: 'Event Volunteers', owner: 'Community Office', apps: ['Vincent Volunteer', 'ArcAlerts'], description: 'Volunteers assigned to current school and parish events.' },
+  { id: 'g1', name: 'School Admins', owner: 'Carl Lapp', description: 'Administrative users for school leadership and office operations.' },
+  { id: 'g2', name: 'Faculty', owner: 'Academic Office', description: 'Teaching staff and academic support users.' },
+  { id: 'g3', name: 'Parish Team', owner: 'Parish Office', description: 'Parish office staff and ministry coordinators.' },
+  { id: 'g4', name: 'Volunteers', owner: 'Community Office', description: 'Active volunteers available for service opportunities.' },
+  { id: 'g5', name: 'Finance', owner: 'Business Office', description: 'Financial operations and reporting users.' },
+  { id: 'g6', name: 'Faith Formation', owner: 'Religious Education', description: 'Catechists and faith-formation coordinators.' },
+  { id: 'g7', name: 'Family Communications', owner: 'School Office', description: 'Contacts approved for school and family communications.' },
+  { id: 'g8', name: 'Member Services', owner: 'Catholic Solutions', description: 'Member-services and organization support contacts.' },
+  { id: 'g9', name: 'Grade 7 Families', owner: 'School Office', description: 'Grade 7 family contacts used for school services and communications.' },
+  { id: 'g10', name: 'Liturgy Team', owner: 'Parish Office', description: 'Liturgical ministers, schedulers, and parish service coordinators.' },
+  { id: 'g11', name: 'Donor Relations', owner: 'Development Office', description: 'Staff coordinating giving, acknowledgements, and donor follow-up.' },
+  { id: 'g12', name: 'Event Volunteers', owner: 'Community Office', description: 'Volunteers assigned to current school and parish events.' },
 ];
 
 export const initialGroups: DirectoryGroup[] = groupDefinitions.map((group) => ({

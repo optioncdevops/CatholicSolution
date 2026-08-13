@@ -1,12 +1,12 @@
-# Catholic Solutions — Living Specification v1.4.5
+# Catholic Solutions — Living Specification v1.5.2
 
-> **Canonical release baseline:** v1.0.0. **Current release:** v1.4.5. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
+> **Canonical release baseline:** v1.0.0. **Current release:** v1.5.2. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
 
 ## v1.0 Repository and Solution Architecture
 
 - Use an npm-workspaces monorepo with `apps/*` for independently deployable applications and `packages/*` for reusable cross-application code.
 - Each Catholic Solutions product is independently deployable to its own domain and owns its application entry point, routes, feature source, public assets, favicon, environment files, build configuration, SPA fallback, and `dist` output.
-- Canonical application folders are `apps/app-hub`, `apps/optionc-school`, `apps/matt-money`, `apps/arc-alerts`, `apps/optionc-parish`, `apps/catholic-content`, `apps/unified-directory`, and `apps/support-center`.
+- Canonical application folders are `apps/app-hub`, `apps/optionc-school`, `apps/matt-money`, `apps/arc-alerts`, `apps/optionc-parish`, `apps/catholic-content`, `apps/unified-directory`, `apps/support-center`, and `apps/ai-lesson-plan`.
 - Workspace package names use the `@catholic-solutions/*` scope.
 - `packages/shared` is restricted to genuine cross-product concerns: common authentication guard/login shell, common shell, 9-dot switcher, account/profile UI, footer, catalog, environment/domain navigation, browser branding, user context, notifications/toasts, shared types, and design-system primitives.
 - Product-specific business logic MUST remain under its owning `apps/<product>/src` boundary.
@@ -16,8 +16,8 @@
 - `config/solutions.json` is the machine-readable solution/build manifest; runtime domains are centralized in `packages/shared/src/auth/appAuthConfig.ts`.
 
 **Development model:** Spec-driven development  
-**Current version:** 1.4.5  
-**Last updated:** August 12, 2026  
+**Current version:** 1.5.2  
+**Last updated:** August 13, 2026  
 **Status:** Active source of truth
 
 This is the only maintained specification document for the React implementation. Every behavior, visual-standard, architecture, data, validation, or scope change must update this file in the same delivery as the code.
@@ -35,7 +35,7 @@ Precedence is newest explicit user direction first. A newer direction may delibe
 
 ## 2. Product purpose and flow
 
-Catholic Solutions is a front-end App Hub prototype for Catholic schools, parishes, ministries, and families. It demonstrates login, application discovery, application launching, account/profile interactions, application switching, and eight launchable application modules using static prototype data.
+Catholic Solutions is a front-end App Hub prototype for Catholic schools, parishes, ministries, and families. It demonstrates login, application discovery, application launching, account/profile interactions, application switching, and eight launchable product modules across nine application workspaces using static prototype data.
 
 Primary flow:
 
@@ -193,7 +193,7 @@ Products hosted on their own domains, outside the Catholic Solutions SSO boundar
 | Vincent Volunteer | Volunteer coordination | `https://vincentvolunteer.com` |
 | Berchmans | Altar server scheduling | `https://berchmans.app` |
 | Alive Date | Alive-date lookup for records upkeep | `https://alivedate.com` |
-| AI Lesson Plan Generator | AI lesson-plan workspace | `https://demo.optionc.com/XtraCoach` |
+| AI Lesson Plan Generator | First-party lesson-plan workspace | `apps/ai-lesson-plan` / centralized hosted origin |
 | Friar Friend | AI quiz maker | Not published yet |
 
 Rules:
@@ -372,7 +372,7 @@ Acceptance criteria:
 - Time-aware greeting driven by current user first name.
 - Compact two-line hero consisting only of the time-aware greeting and one supporting workspace sentence. The previous app-count / approvals / system-status panel is removed.
 - Live search across every catalog group, including external partner apps.
-- A **Your Apps** section containing the seven launchable solutions plus the directly openable/external products in catalog order, including **AI Lesson Plan Generator** at `https://demo.optionc.com/XtraCoach`; Friar Friend remains visible as Coming soon.
+- A **Your Apps** section containing the eight launchable first-party solutions plus directly openable/external products in catalog order; **AI Lesson Plan Generator** is first-party under `apps/ai-lesson-plan`, and Friar Friend remains visible as Coming soon.
 - Two AI tools: AI Website Builder and AI Attendance Taker.
 - Two Discover More apps.
 - Responsive app-grid behavior appropriate to the current fourteen-card Your Apps section.
@@ -457,7 +457,7 @@ Required behavior and appearance:
 - Use the established 3×3 nine-dot application launcher SVG icon rather than a decorative Unicode glyph.
 - Trigger uses a 44px+ target, compact icon container, `Switch app` label on supported widths, and chevron state.
 - Dropdown is a compact elevated launcher approximately **448px wide** on desktop, capped by the viewport with `calc(100vw - 24px)`-style behavior. It uses a restrained `JUMP TO` eyebrow and does not show an app count or explanatory paragraph.
-- The switcher source is the centralized typed App Hub **Your Apps** collection, filtered to destinations that are immediately openable. The current catalog exposes **13 destinations**: seven launchable Catholic Solutions apps, five published partner products, and AI Lesson Plan Generator / XtraCoach.
+- The switcher source is the centralized typed App Hub **Your Apps** collection, filtered to destinations that are immediately openable. The current catalog exposes **13 destinations**: eight launchable Catholic Solutions apps, including AI Lesson Plan Generator, plus five published partner products.
 - `Friar Friend` remains excluded while its App Hub card is `Coming soon` and has no published URL. It becomes switcher-eligible automatically when a real destination is supplied.
 - When the switcher contains **more than six destinations it renders three cards per row**. Six or fewer destinations render two per row. At very narrow mobile widths the three-column layout may reduce to two columns to preserve usable touch targets and readable names.
 - Every destination uses the same compact recognition card: existing catalog gradient/icon plus the full application name only. Category subtitles, descriptions, status badges, and persistent external-link arrows are omitted. Support Center no longer receives a separate full-width treatment.
@@ -1150,7 +1150,7 @@ At `min-width:1024px` and `min-height:720px` the Login resolves inside `100dvh`.
 2. Direct entry to any product URL while unauthenticated redirects to the central Login and returns to the exact requested URL after sign-in.
 3. `getSafeReturnUrl` rejects `//host`, `/\host`, `/\/host`, absolute non-allowlisted origins, and non-HTTP schemes, while preserving same-origin paths with query and hash.
 4. A non-development build cannot resolve to `mock` authentication.
-5. Staging and production environment files for all eight applications carry the approved origins, and no `catholicsolutions.example` placeholder remains in any build output.
+5. Staging and production environment files for all nine applications carry the approved origins, and no `catholicsolutions.example` placeholder remains in any build output.
 6. The App Hub Your Apps section shows seven launchable solutions followed by six external partner apps.
 7. External cards open in a new tab with `rel="noopener noreferrer"`; the unpublished card is non-interactive and labelled Coming soon.
 8. External apps do not appear in the App Switcher, connected-workspace preview, or Request Access product selection.
@@ -1535,7 +1535,7 @@ This release is the governing specification for the August 12 review batch and s
 4. **Password recovery:** `Forgot password?` routes to `/forgot-password`, retains login query context, accepts email, and returns a non-enumerating recovery confirmation. Backend delivery remains an identity-service integration point.
 5. **Navigation:** all App Hub, App Switcher, Details-modal, Support, and All-apps destinations use current-tab navigation by default while keeping native browser alternate-tab affordances.
 6. **App Hub hero:** remove the right-side apps/approvals/system-status summary and reduce the hero to greeting + one supporting line.
-7. **AI Lesson Plan Generator:** classify it in **Your Apps** as a direct-open destination at `https://demo.optionc.com/XtraCoach`.
+7. **AI Lesson Plan Generator:** superseded by §33.3; it is now a first-party launchable workspace under `apps/ai-lesson-plan` and no longer uses the XtraCoach external destination.
 8. **AI Tools / Discover More:** each requestable card includes a consistent in-card **Request app →** primary action and Details secondary action.
 9. **Matt Money:** provide URL-addressable Administrator and Member dashboard perspectives using one shared shell and a clear segmented selector.
 10. **ArcAlerts:** Directory exposes only User Preferences; Members/Groups are removed from active navigation and legacy URLs redirect. Preferences provide searchable/filterable per-contact Voice, Email, and Text enable/disable controls with a master state and local save feedback.
@@ -1544,7 +1544,7 @@ This release is the governing specification for the August 12 review batch and s
 
 - **Senior UI/UX Engineer:** Login density, roleless account surface, two-line Hub hero, Request action hierarchy, Matt Money view selector, and ArcAlerts grid usability.
 - **Senior Frontend / Full Stack Developer:** catalog derivation, same-tab navigation contract, password-recovery route, query-preselected Request Access, Matt Money view state, legacy ArcAlerts route redirects, and shared-component integration.
-- **QA:** verify 1024×620 / 1366×768 Login fit, all currently available Request Access products, no organization-role text in shared profile UI, recovery route context, current-tab launches, two-line hero, XtraCoach destination, Request app preselection, both Matt Money views, ArcAlerts legacy redirects, preference filters/toggles, responsive tables, keyboard focus, and no regression in auth/permissions.
+- **QA:** verify 1024×620 / 1366×768 Login fit, all currently available Request Access products, no organization-role text in shared profile UI, recovery route context, current-tab launches, two-line hero, first-party Lesson Plan destination, Request app preselection, both Matt Money views, ArcAlerts legacy redirects, preference filters/toggles, responsive tables, keyboard focus, and no regression in auth/permissions.
 
 ### Release validation contract
 
@@ -1558,7 +1558,7 @@ Before release, validate TypeScript/TSX syntax, internal import resolution, CSS 
 - Canonical application/shared source contains no forced `target="_blank"` or `window.open(...)` application-launch behavior.
 - Hard-coded `St. Mary's` dashboard/profile text is absent from canonical application/shared source.
 - Catalog derivation validates 18 total products: 7 launchable, 7 external/direct-open, 14 Your Apps cards, 13 immediately switcher-openable destinations, 2 AI Tools, 2 Discover More items, and 17 Request Access selections.
-- AI Lesson Plan Generator is in Your Apps and resolves to `https://demo.optionc.com/XtraCoach`.
+- AI Lesson Plan Generator is in Your Apps as a first-party workspace; the former XtraCoach external destination is superseded by §33.3.
 - ArcAlerts active navigation contains no Members/Groups entries; the compatibility paths are handled only as redirects to `/preferences`.
 - Root package, lockfile root package, solution manifest, README, and living specification are synchronized to v1.4.0.
 - ArcAlerts standalone output is regenerated from canonical source after the shared-shell and ArcAlerts changes.
@@ -1783,3 +1783,123 @@ This release is a focused visual repair. It does not change authentication behav
 - `SupportCenterPage.tsx` contains no `SupportResourcePanel` reference.
 - The Support Center solution contains no exported `supportResources` dataset.
 - The compatibility component is compile-safe under strict TypeScript and has no UI output.
+
+## 36. v1.5.0 — Directory-driven communication and workspace refinement
+
+This release supersedes earlier review-batch UI contracts where they conflict with the requirements below.
+
+### 36.1 Authenticated App Hub request actions
+- App Hub **Request app** actions MUST remain on the authenticated landing page rather than navigating signed-in users to `/request-access`.
+- The confirmation dialog MUST use the current user identity already available in shared user context, provide a single clear Close action, and state that Member Services will contact the member within 24 hours.
+- `/request-access` remains the unauthenticated/new-organization access workflow from Login.
+
+### 36.2 Matt Money portal navigation
+- Matt Money MUST expose professional role-aware module navigation in addition to Administrator/Member selection.
+- Administrator modules: Overview, Billing, Payments, Reconciliation, Reports. Member modules: Overview, Payments, Payment methods, Statements.
+- View/module state MUST remain URL-addressable through query parameters so developers can link and test individual portal states without duplicating shells.
+
+### 36.3 ArcAlerts
+- Push is not an active ArcAlerts delivery channel in this prototype; user-facing channel surfaces use Text, Email, and Voicemail only.
+- New Alert MUST source recipients from the shared Unified Directory recipient projection. Users choose either Members or Groups before selecting recipients. Members support multiple selection; Groups support multiple selection plus an explicit All Groups option.
+- User Preferences MUST keep the first identity column to two visible text lines: member name, then family/relationship. Channel cells MUST display typed directory destinations (Home, Work, Mobile, Organization) with clear On/Off controls.
+- ArcAlerts Settings MUST provide Reply-To Email, Phone Caller ID, Phone To Call For Recording Voice Message, Timezone, failed-alert email guidance, and ArcAlerts Name in a compact two-column settings card.
+
+### 36.4 Catholic Content
+- Catholic Content discovery MUST use one primary library card for overview/help, filters, result list, preview, and rights notice.
+- Month and Search share the first discovery row. Search keeps its label/help above the input/button controls.
+- Months and Categories MUST use visible wrapped buttons/links, not select dropdowns and not horizontally scrolling chip tracks. Categories occupy the second discovery row and wrap to available width.
+
+### 36.5 Unified Directory
+- Active and Inactive user workspaces MUST support Search plus SaaS application and Group filters.
+- User lists MUST provide Print and CSV export controls using the current filtered result set.
+- The user-grid timestamp column is **Last accessed**.
+- The Groups grid MUST show Group, Members, Owner, and Description; Connected apps is removed from group display.
+- Create Group MUST NOT ask for SaaS applications. It still supports searchable member assignment during creation and later membership management.
+- Add User contact capture includes Home/Work/Mobile telephone entries, Work extension, per-number Unlisted, one Primary telephone, Home/Work/Organization email addresses, and one Primary email.
+- New-user and edit-access SaaS assignments are intentionally limited to **Matt Money** and **ArcAlerts** until additional products are approved.
+
+### 36.6 Support Center
+- The Support Center MUST use one primary workspace card; previous three promotional summary cards and the **Not sure which support area to choose?** card are removed.
+- **Hide resolved tickets** is enabled by default. Resolved tickets remain viewable when the filter is cleared.
+- New Ticket uses a three-control first row (Product, Support area, Subject), a full-width larger Message field, attachment control, and **Start ticket** primary action.
+- Open-ticket reply UI MUST include the approved closure guidance and Cancel, Close ticket, Send reply actions in the same footer region. Cancel opens New Ticket. Close ticket marks the ticket resolved and opens New Ticket.
+
+### 36.7 Ownership and validation
+- **Senior UI/UX Engineer:** information hierarchy, density, responsive behavior, state clarity, and visual consistency.
+- **Senior Frontend Developer:** catalog/request modal state, query-addressable Matt Money navigation, recipient selection state, directory contact/access data contracts, export/print behavior, and support-ticket state transitions.
+- **QA:** verify same-tab request behavior, modal focus/close, all Matt Money module URLs, ArcAlerts recipient/channel rules, wrapped Catholic Content filters at desktop/mobile widths, Directory filters/exports/add/edit/group creation, resolved-ticket filtering, reply/cancel/close transitions, and production TypeScript builds.
+
+## 37. v1.5.1 — Navigation, table and communication-form refinement
+
+**Date:** August 13, 2026. This release refines existing v1.5.0 behaviors without changing authentication, domain routing, SaaS IDs, recipient data ownership, or existing module URLs.
+
+### 37.1 Matt Money navigation
+- **Owner:** Senior UI/UX Engineer + Senior Frontend Developer.
+- Matt Money role selection MUST be compact and live in the page-header action region rather than consuming a large standalone workspace card.
+- The role-aware module menu MUST be a full-width horizontal navigation bar immediately below the page header on desktop. Administrator modules remain Overview, Billing, Payments, Reconciliation, Reports; Member modules remain Overview, Payments, Payment methods, Statements.
+- At desktop widths the available modules SHOULD distribute across the full navigation width. At smaller widths the bar MAY scroll horizontally rather than wrapping into ambiguous rows.
+- Existing query-addressable view/module URLs remain authoritative.
+
+### 37.2 Shared enterprise table treatment
+- **Owner:** Senior UI/UX Engineer + Frontend Developer.
+- Shared application tables use a professional neutral header surface, clear column labels, subtle alternating body-row surfaces, and a restrained hover state.
+- Zebra/hover styling MUST NOT override explicit selected-row states, status semantics, or product-specific positive/negative text colors.
+- Directory, Catholic Content, ArcAlerts directory/preferences, and opt-in Matt Money/ArcAlerts list tables MUST follow the same visual language.
+
+### 37.3 Profile password terminology
+- The common profile popover action previously labeled **Security** is renamed **Change password** with password-specific supporting text.
+- The action continues to open the existing password/account modal and preserves Forgot/Reset Password linking.
+
+### 37.4 Authenticated Request App confirmation
+- The confirmation state uses the status label **Request received** and title **Thank you for your interest!**.
+- Copy MUST identify the requested SaaS application by name, confirm successful receipt, and state that Member Services will review the request and contact the member within 24 hours to discuss access, subscription options, and next steps.
+- The What happens next section states that the team will use the registered email address for follow-up. Current signed-in member and contact-email context may remain visible.
+- Close remains the only primary completion action.
+
+### 37.5 ArcAlerts recipient density
+- The Recipients fieldset remains backed by Unified Directory data, but redundant explanatory heading/copy inside the fieldset is removed.
+- Members/Groups selection and current selected-count are presented in one compact toolbar before the search/list or group choices.
+- Existing multi-member, multi-group and All Groups behavior is unchanged.
+
+### 37.6 ArcAlerts Settings alignment
+- Settings field labels and required markers MUST share the same inline baseline. Required markers MUST NOT render as a separate grid row.
+- Paired two-column fields maintain equal label/control rhythm; the failed-alert informational field aligns with the ArcAlerts Name row without introducing an artificial input.
+- Existing settings fields and Save Settings behavior remain unchanged.
+
+### v1.5.1 validation contract
+- QA verifies Matt Money Administrator/Member role switching and every module URL at desktop and mobile widths.
+- QA verifies enterprise table zebra/hover behavior without selected-state regressions in Directory and Catholic Content.
+- QA verifies the common profile popover displays **Change password** and still opens the password flow.
+- QA verifies Request App confirmation substitutes the selected application name and preserves modal Escape/outside/Close behavior.
+- QA verifies ArcAlerts recipient selection count, member/group switching, multiple selection, and settings label alignment.
+- Shared CSS remains structurally balanced; all standalone exports are regenerated after shared-source changes.
+
+
+
+## 33. v1.5.2 — Directory export, Support defaults, first-party Lesson Plan
+
+### 33.1 Unified Directory
+- **Owner:** Senior Frontend Developer + QA.
+- Telephone and email capture grids must align labels, fields and Primary/Unlisted controls without uneven row gaps.
+- **Print** must print only the currently filtered member-detail dataset, never the application shell, detail panel, toolbar, or unrelated page content.
+- CSV export remains member-detail only and follows the same current filters.
+
+### 33.2 Support Center
+- **Owner:** Senior Frontend Developer.
+- New tickets default **Support area** to **Member Services** unless a contextual deep link provides another supported area.
+- In open conversations, **Cancel** and **Close ticket** are an adjacent action pair; **Send reply** remains the primary continuation action.
+
+### 33.3 AI Lesson Plan Generator
+- **Owner:** Senior Full Stack Developer + Senior UI/UX Engineer.
+- The former external XtraCoach URL is removed from the catalog. AI Lesson Plan Generator becomes a first-party Catholic Solutions workspace at `apps/ai-lesson-plan`.
+- It uses the shared `AppLayout`, central authentication, switcher, profile, design system and workspace build contract.
+- Development port: `4010`; hosted origin is centralized in `packages/shared/src/auth/appAuthConfig.ts` and remains intentionally blank until an approved production domain is supplied.
+- Default View presents populated Week, Day and List modes modeled on the supplied lesson-plan reference, with Term, Week starting, Grade, Course, Teacher and Search filters.
+- No new third-party dependency is introduced.
+
+### 33.4 QA
+- Verify Directory print preview contains member rows only.
+- Verify Directory email/phone grid controls align at desktop and mobile overflow remains usable.
+- Verify Support area defaults to Member Services and contextual deep links still override it.
+- Verify Cancel sits next to Close ticket and both return to New Ticket as specified.
+- Verify `npm run dev:lesson-plan`, targeted production build, and populated lesson-plan filters/views. After an approved hosted origin is configured, also verify App Hub launch, App Switcher destination, and authentication return flow.

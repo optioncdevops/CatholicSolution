@@ -1,60 +1,91 @@
 import { useSearchParams } from 'react-router-dom';
 import { getAppById } from '@shared/app/config/appCatalog';
+import { DashboardHeader } from '@shared/app/components/DashboardHeader';
 import { AppLayout } from '@shared/app/layouts/AppLayout';
+import { useToast } from '@shared/app/components/ToastProvider';
 import { MattMoneyAdminDashboard } from './MattMoneyAdminDashboard';
 import { MattMoneyMemberDashboard } from './MattMoneyMemberDashboard';
 
 const app = getAppById('matt-money')!;
 type DashboardView = 'admin' | 'member';
+type SectionId = 'overview' | 'billing' | 'payments' | 'reconciliation' | 'reports' | 'methods' | 'statements';
 
-const views: Array<{ id: DashboardView; icon: string; title: string; description: string }> = [
-  { id: 'admin', icon: '🏢', title: 'Administrator', description: 'Organization finance, collections, budgets and approvals' },
-  { id: 'member', icon: '👤', title: 'Member', description: 'Household balance, scheduled charges and payment history' },
+const adminSections: Array<{ id: SectionId; label: string; icon: string }> = [
+  { id: 'overview', label: 'Overview', icon: '▦' },
+  { id: 'billing', label: 'Billing', icon: '🧾' },
+  { id: 'payments', label: 'Payments', icon: '💳' },
+  { id: 'reconciliation', label: 'Reconciliation', icon: '↔' },
+  { id: 'reports', label: 'Reports', icon: '📊' },
+];
+const memberSections: Array<{ id: SectionId; label: string; icon: string }> = [
+  { id: 'overview', label: 'Overview', icon: '▦' },
+  { id: 'payments', label: 'Payments', icon: '💳' },
+  { id: 'methods', label: 'Payment methods', icon: '▤' },
+  { id: 'statements', label: 'Statements', icon: '📄' },
 ];
 
-function DashboardSwitcher({ value, onChange }: { value: DashboardView; onChange: (view: DashboardView) => void }) {
+function RoleSelector({ value, onChange }: { value: DashboardView; onChange: (view: DashboardView) => void }) {
   return (
-    <nav className="matt-workspace-switcher" aria-label="Matt Money dashboard view">
-      <div className="matt-workspace-switcher__label">
-        <span>Dashboard view</span>
-        <strong>Choose your workspace</strong>
-      </div>
-      <div className="matt-workspace-switcher__options">
-        {views.map((view) => {
-          const selected = value === view.id;
-          return (
-            <button
-              key={view.id}
-              type="button"
-              className={`matt-workspace-option ${selected ? 'is-active' : ''}`}
-              aria-pressed={selected}
-              onClick={() => onChange(view.id)}
-            >
-              <span className="matt-workspace-option__icon" aria-hidden="true">{view.icon}</span>
-              <span className="matt-workspace-option__copy"><strong>{view.title}</strong><small>{view.description}</small></span>
-              <span className="matt-workspace-option__state">{selected ? 'Current' : 'Switch'}</span>
-            </button>
-          );
-        })}
-      </div>
+    <div className="matt-role-selector" role="group" aria-label="Matt Money portal view">
+      <button type="button" className={value === 'admin' ? 'is-active' : ''} aria-pressed={value === 'admin'} onClick={() => onChange('admin')}>Administrator</button>
+      <button type="button" className={value === 'member' ? 'is-active' : ''} aria-pressed={value === 'member'} onClick={() => onChange('member')}>Member</button>
+    </div>
+  );
+}
+
+function ModuleNav({ view, section, onChange }: { view: DashboardView; section: SectionId; onChange: (section: SectionId) => void }) {
+  const sections = view === 'admin' ? adminSections : memberSections;
+  return (
+    <nav className="matt-module-nav matt-module-nav--full" aria-label={`${view} finance modules`}>
+      {sections.map((item) => (
+        <button key={item.id} type="button" className={section === item.id ? 'is-active' : ''} onClick={() => onChange(item.id)} aria-current={section === item.id ? 'page' : undefined}>
+          <span aria-hidden="true">{item.icon}</span>{item.label}
+        </button>
+      ))}
     </nav>
   );
 }
 
+const sectionContent: Record<Exclude<SectionId, 'overview'>, { eyebrow: string; title: string; description: string; metrics: Array<[string,string]>; rows: Array<[string,string,string]> }> = {
+  billing: { eyebrow: 'Administrator · Billing', title: 'Billing workspace', description: 'Create, review, and follow up on organization charges from one place.', metrics: [['63','Open charges'],['$840K','Outstanding'],['18','Due this week']], rows: [['Term 1 tuition','63 accounts','$840,000'],['Student activity fees','42 accounts','$31,500'],['Transportation','18 accounts','$12,600']] },
+  payments: { eyebrow: 'Payments', title: 'Payment activity', description: 'Review recent payment activity and payment processing status.', metrics: [['128','This month'],['$1.21M','Collected'],['99.2%','Successful']], rows: [['Tuition batch','Received','$450,000'],['Sunday offertory','Received','$86,500'],['Card settlement','Processing','$42,780']] },
+  reconciliation: { eyebrow: 'Administrator · Reconciliation', title: 'Reconciliation', description: 'Match deposits, settlements, and ledger activity before monthly close.', metrics: [['24','Matched today'],['3','Needs review'],['Aug 31','Next close']], rows: [['Bank deposit 8241','Matched','$186,400'],['Card settlement 778','Matched','$42,780'],['Manual adjustment','Review','$1,250']] },
+  reports: { eyebrow: 'Administrator · Reports', title: 'Finance reports', description: 'Standard operational and accounting reports for your organization.', metrics: [['12','Saved reports'],['4','Scheduled'],['Today','Last refresh']], rows: [['A/R aging','Ready','PDF / CSV'],['Collections summary','Ready','PDF / CSV'],['Monthly reconciliation','Ready','PDF / CSV']] },
+  methods: { eyebrow: 'Member · Payment methods', title: 'Payment methods', description: 'Manage the payment methods available for your household account.', metrics: [['2','Saved methods'],['1','Primary'],['Active','Auto-pay']], rows: [['Visa •••• 2481','Primary','Expires 08/29'],['Bank •••• 7342','Backup','Verified']] },
+  statements: { eyebrow: 'Member · Statements', title: 'Statements', description: 'Review and download household statements and annual payment history.', metrics: [['8','Statements'],['$7,480','Paid this year'],['Aug 2026','Latest']], rows: [['August 2026','Ready','$1,050.00'],['July 2026','Ready','$1,230.00'],['June 2026','Ready','$1,050.00']] },
+};
+
+function SectionWorkspace({ section }: { section: Exclude<SectionId, 'overview'> }) {
+  const { showToast } = useToast();
+  const content = sectionContent[section];
+  return <section className="matt-module-workspace"><header><div><span>{content.eyebrow}</span><h2>{content.title}</h2><p>{content.description}</p></div><button type="button" onClick={() => showToast(`${content.title} export prepared`)}>Export</button></header><div className="matt-module-metrics">{content.metrics.map(([value,label]) => <article key={label}><strong>{value}</strong><span>{label}</span></article>)}</div><div className="matt-module-table"><div className="matt-module-table__head"><span>Item</span><span>Status</span><span>Amount / detail</span></div>{content.rows.map((row) => <div key={row[0]}><strong>{row[0]}</strong><span>{row[1]}</span><b>{row[2]}</b></div>)}</div></section>;
+}
+
 export function MattMoneyPage() {
+  const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const view: DashboardView = searchParams.get('view') === 'member' ? 'member' : 'admin';
-  const setView = (next: DashboardView) => {
-    const updated = new URLSearchParams(searchParams);
-    updated.set('view', next);
-    setSearchParams(updated, { replace: true });
-  };
+  const allowedSections = view === 'admin' ? adminSections : memberSections;
+  const requestedSection = searchParams.get('section') as SectionId | null;
+  const section: SectionId = allowedSections.some((item) => item.id === requestedSection) ? requestedSection! : 'overview';
+  const updateParams = (nextView: DashboardView, nextSection: SectionId) => { const updated = new URLSearchParams(searchParams); updated.set('view', nextView); updated.set('section', nextSection); setSearchParams(updated, { replace: true }); };
+  const setView = (next: DashboardView) => updateParams(next, 'overview');
+  const setSection = (next: SectionId) => updateParams(view, next);
+  const currentLabel = allowedSections.find((item) => item.id === section)?.label ?? 'Overview';
+  const roleLabel = view === 'admin' ? 'Administrator' : 'Member';
+  const pageTitle = section === 'overview' ? `${roleLabel} dashboard` : currentLabel;
 
   return (
     <AppLayout app={app} className="bg-[#f4f6fa]">
-      <main className="dashboard-content dashboard-stack">
-        <DashboardSwitcher value={view} onChange={setView} />
-        {view === 'admin' ? <MattMoneyAdminDashboard /> : <MattMoneyMemberDashboard />}
+      <main className="dashboard-content dashboard-stack matt-money-shell">
+        <DashboardHeader
+          eyebrow={`Billing & finance · ${roleLabel}`}
+          title={pageTitle}
+          status={<span className="matt-account-status">{view === 'admin' ? 'Organization account' : 'Household account'}</span>}
+          actions={<div className="matt-header-actions"><RoleSelector value={view} onChange={setView}/><button type="button" className="action-secondary matt-header-export" onClick={() => showToast(view === 'admin' ? 'Financial report export prepared' : 'Statement download prepared')}>{view === 'admin' ? 'Export report' : 'Download statement'}</button></div>}
+        />
+        <ModuleNav view={view} section={section} onChange={setSection}/>
+        {section === 'overview' ? (view === 'admin' ? <MattMoneyAdminDashboard/> : <MattMoneyMemberDashboard/>) : <SectionWorkspace section={section as Exclude<SectionId,'overview'>}/>} 
       </main>
     </AppLayout>
   );

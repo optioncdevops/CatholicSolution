@@ -1,11 +1,11 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
-import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { resolveAppUrl } from '@shared/platform/navigation/solutionNavigation';
 
 interface AppCardProps {
   app: CatalogApp;
   onDetails: (app: CatalogApp) => void;
+  onRequest: (app: CatalogApp) => void;
 }
 
 type CardMode = 'launchable' | 'external' | 'unavailable' | 'catalog';
@@ -16,33 +16,27 @@ function resolveMode(app: CatalogApp): CardMode {
   return app.externalUrl ? 'external' : 'unavailable';
 }
 
-export function AppCard({ app, onDetails }: AppCardProps) {
+export function AppCard({ app, onDetails, onRequest }: AppCardProps) {
   const mode = resolveMode(app);
-  const activatable = mode === 'launchable' || mode === 'external';
   const workspaceCard = mode !== 'catalog';
   const target = mode === 'launchable' ? resolveAppUrl(app) : app.externalUrl;
+  const deploymentPending = mode === 'launchable' && !target;
+  const activatable = Boolean(target) && (mode === 'launchable' || mode === 'external');
   const actionVerb = mode === 'launchable' ? 'Launch' : 'Open';
   const themedActionStyle = { '--hub-action-theme': app.gradient } as CSSProperties;
 
-  const activate = () => {
-    if (target) window.location.assign(target);
-  };
-
-  const openDetails = (event: MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-    onDetails(app);
-  };
-
+  const activate = () => { if (target) window.location.assign(target); };
+  const openDetails = (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); onDetails(app); };
+  const requestApp = (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); onRequest(app); };
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.target !== event.currentTarget) return;
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      activate();
-    }
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
   };
 
-  const statusClass = mode === 'launchable'
-    ? 'hub-module-card__status--ready'
+  const statusClass = deploymentPending
+    ? 'hub-module-card__status--coming-soon'
+    : mode === 'launchable'
+      ? 'hub-module-card__status--ready'
     : mode === 'external'
       ? 'hub-module-card__status--external'
       : mode === 'unavailable'
@@ -62,50 +56,21 @@ export function AppCard({ app, onDetails }: AppCardProps) {
     >
       <span className="hub-module-card__accent" style={{ background: app.gradient }} aria-hidden="true" />
       <span className="hub-module-card__wash" style={{ background: app.gradient }} aria-hidden="true" />
-
       <div className="hub-module-card__top">
         <span className="hub-module-card__icon" style={{ background: app.gradient }}>{app.icon}</span>
-        <span className={`hub-module-card__status ${statusClass}`}>{app.statusLabel}</span>
+        <span className={`hub-module-card__status ${statusClass}`}>{deploymentPending ? 'Deployment pending' : app.statusLabel}</span>
       </div>
-
       <div className="hub-module-card__content">
         <span className="hub-module-card__category">{app.category}</span>
         <h3>{app.name}</h3>
         <p>{app.description}</p>
       </div>
-
       <div className={`hub-card-actions ${workspaceCard ? 'hub-card-actions--launchable' : 'hub-card-actions--catalog'}`}>
-        {activatable ? (
-          <a
-            href={target}
-            onClick={(event) => event.stopPropagation()}
-            className="hub-card-action hub-card-action--primary"
-            style={themedActionStyle}
-          >
-            <span>{actionVerb}</span><span aria-hidden="true">→</span>
-          </a>
-        ) : null}
-
-        {mode === 'catalog' ? (
-          <PlatformLink
-            to={`/request-access?product=${encodeURIComponent(app.id)}`}
-            onClick={(event) => event.stopPropagation()}
-            className="hub-card-action hub-card-action--primary"
-            style={themedActionStyle}
-          >
-            <span>Request app</span><span aria-hidden="true">→</span>
-          </PlatformLink>
-        ) : null}
-
+        {activatable ? <a href={target} onClick={(event) => event.stopPropagation()} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>{actionVerb}</span><span aria-hidden="true">→</span></a> : null}
+        {mode === 'catalog' ? <button type="button" onClick={requestApp} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>Request app</span><span aria-hidden="true">→</span></button> : null}
         {mode === 'unavailable' ? <span className="hub-card-action hub-card-action--muted">Coming soon</span> : null}
-
-        <button
-          type="button"
-          onClick={openDetails}
-          className="hub-card-action hub-card-action--secondary-on-light"
-        >
-          <span aria-hidden="true">ⓘ</span><span>Details</span>
-        </button>
+        {deploymentPending ? <span className="hub-card-action hub-card-action--muted">Deployment pending</span> : null}
+        <button type="button" onClick={openDetails} className="hub-card-action hub-card-action--secondary-on-light"><span aria-hidden="true">ⓘ</span><span>Details</span></button>
       </div>
     </article>
   );

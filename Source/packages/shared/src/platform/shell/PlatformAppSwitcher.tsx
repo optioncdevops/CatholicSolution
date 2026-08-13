@@ -82,7 +82,8 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
     );
   };
 
-  const gridClass = availableSwitcherApps.length > 6
+  const switcherApps = availableSwitcherApps.filter((app) => Boolean(switcherTarget(app)));
+  const gridClass = switcherApps.length > 6
     ? 'app-switcher__grid app-switcher__grid--three'
     : 'app-switcher__grid app-switcher__grid--two';
 
@@ -107,7 +108,7 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
           </div>
 
           <ul className={gridClass}>
-            {availableSwitcherApps.map((app) => <li key={app.id}>{renderApp(app)}</li>)}
+            {switcherApps.map((app) => <li key={app.id}>{renderApp(app)}</li>)}
           </ul>
 
           <div className="app-switcher__footer">

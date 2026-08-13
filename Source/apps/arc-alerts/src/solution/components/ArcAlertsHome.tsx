@@ -9,7 +9,7 @@ const recentAlerts = [
   ['📢', 'School reopening reminder', 'All school contacts · Yesterday', 'Delivered'],
   ['⛪', 'Parish event update', 'Parish families · Yesterday', 'Pending'],
 ] as const;
-const channels = [['Text', '99.2%', 99], ['Email', '98.7%', 98], ['Voicemail', '96.4%', 96], ['Push', '99.6%', 99.6]] as const;
+const channels = [['Text', '99.2%', 99], ['Email', '98.7%', 98], ['Voicemail', '96.4%', 96]] as const;
 
 export function ArcAlertsHome() {
   const { showToast } = useToast();
@@ -44,7 +44,7 @@ export function ArcAlertsHome() {
         <section className="surface-card p-4 sm:p-5">
           <PanelHeader title="Delivery by channel" description="Provider-level performance" />
           <div className="mt-4 grid gap-3">{channels.map(([label, value, percent]) => <div key={label}><div className="mb-1.5 flex justify-between text-xs font-bold"><span className="text-slate-700">{label}</span><span className="text-slate-400">{value}</span></div><div className="h-2 overflow-hidden rounded-full bg-orange-50"><div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-red-600" style={{ width: `${percent}%` }} /></div></div>)}</div>
-          <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs leading-5 text-emerald-800"><strong className="block">All providers operational</strong>SMS, email, voicemail, and push services are reporting normally.</div>
+          <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs leading-5 text-emerald-800"><strong className="block">All providers operational</strong>SMS, email, and voicemail services are reporting normally.</div>
         </section>
       </div>
 

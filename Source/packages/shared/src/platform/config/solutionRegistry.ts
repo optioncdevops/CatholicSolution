@@ -9,7 +9,8 @@ export type SolutionId =
   | 'optionc-parish'
   | 'catholic-content'
   | 'unified-directory'
-  | 'support-center';
+  | 'support-center'
+  | 'ai-lesson-plan';
 
 export interface SolutionConfig {
   id: SolutionId;
@@ -54,6 +55,10 @@ export const SOLUTION_REGISTRY: Record<SolutionId, SolutionConfig> = {
   'support-center': {
     id: 'support-center', name: 'Support Center', category: 'Member Services', route: '/',
     origin: environment.origins.supportCenter, favicon: '/favicon.svg', themeColor: '#0f4c81', title: 'Support Center | Catholic Solutions',
+  },
+  'ai-lesson-plan': {
+    id: 'ai-lesson-plan', name: 'AI Lesson Plan Generator', category: 'AI · Teaching', route: '/',
+    origin: environment.origins.aiLessonPlan, favicon: '/favicon.svg', themeColor: '#d97706', title: 'AI Lesson Plan Generator | Catholic Solutions',
   },
 };
 

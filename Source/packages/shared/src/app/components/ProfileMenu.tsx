@@ -77,7 +77,7 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
 
             <div className="profile-menu__actions">
               <button type="button" role="menuitem" onClick={() => openModal('profile')}><span><UserIcon size={17} /></span><div><strong>Profile</strong><small>Personal and contact details</small></div></button>
-              <button type="button" role="menuitem" onClick={() => openModal('password')}><span><LockIcon size={17} /></span><div><strong>Security</strong><small>Password and account access</small></div></button>
+              <button type="button" role="menuitem" onClick={() => openModal('password')}><span><LockIcon size={17} /></span><div><strong>Change password</strong><small>Update your account password</small></div></button>
             </div>
 
             <div className="profile-menu__divider" />

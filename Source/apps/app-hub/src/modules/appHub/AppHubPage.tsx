@@ -9,6 +9,7 @@ import { aiApps, discoverApps, yourApps } from '@shared/app/config/appCatalog';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import type { CatalogApp } from '@shared/app/types/app';
 import { AppCard } from './AppCard';
+import { RequestInterestModal } from './RequestInterestModal';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 
 function greeting(firstName: string) {
@@ -23,6 +24,7 @@ export function AppHubPage() {
   const { firstName } = useCurrentUser();
   const [query, setQuery] = useState('');
   const [selectedApp, setSelectedApp] = useState<CatalogApp | null>(null);
+  const [requestedApp, setRequestedApp] = useState<CatalogApp | null>(null);
   const normalized = query.trim().toLowerCase();
   const filter = (apps: CatalogApp[]) => normalized ? apps.filter((app) => [app.name, app.description, app.category, ...app.keywords].join(' ').toLowerCase().includes(normalized)) : apps;
   const groups = [
@@ -64,7 +66,7 @@ export function AppHubPage() {
               <SectionHeading title={group.title} count={group.count} />
               {group.apps.length ? (
                 <div className="hub-app-grid">
-                  {group.apps.map((app) => <AppCard key={app.id} app={app} onDetails={setSelectedApp} />)}
+                  {group.apps.map((app) => <AppCard key={app.id} app={app} onDetails={setSelectedApp} onRequest={setRequestedApp} />)}
                 </div>
               ) : (
                 <div className="hub-empty-state">No {group.title.toLowerCase()} match “{query}”.</div>
@@ -74,7 +76,8 @@ export function AppHubPage() {
         </div>
       </section>
       <Footer />
-      <AppDetailsModal app={selectedApp} onClose={() => setSelectedApp(null)} />
+      <AppDetailsModal app={selectedApp} onClose={() => setSelectedApp(null)} onRequest={(requested) => { setSelectedApp(null); setRequestedApp(requested); }} />
+      <RequestInterestModal app={requestedApp} onClose={() => setRequestedApp(null)} />
     </main>
   );
 }

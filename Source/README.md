@@ -1,9 +1,36 @@
-# Catholic Solutions Workspace — v1.4.5
+# Catholic Solutions Workspace — v1.5.2
 
-**Release:** v1.4.5  
+**Release:** v1.5.2  
 **Architecture:** independent-domain multi-app SaaS monorepo with centralized login
 
 This repository contains one independently deployable React/Vite application per Catholic Solutions product. Product applications are deployment-independent, while authentication entry is centralized on one Catholic Solutions Login domain. Shared platform source is maintained once under `packages/shared`.
+
+
+### v1.5.2 Directory export, Support defaults, and first-party Lesson Plan
+
+- Unified Directory **Print** renders only the currently filtered member-detail dataset in a dedicated print document; it no longer prints the shell, toolbar, detail panel, or unrelated page content. CSV export remains member-detail only.
+- Add/Edit member telephone and email rows use aligned compact field/Primary/Unlisted columns with consistent control heights.
+- Support Center new tickets default **Support area** to **Member Services** unless a contextual deep link explicitly provides another supported area. Cancel is grouped directly beside Close ticket in the resolved-ticket action set.
+- **AI Lesson Plan Generator** is now a first-party Catholic Solutions workspace under `apps/ai-lesson-plan`; the old XtraCoach external destination is removed. The new source uses shared auth/shell conventions and a populated Week / Day / List lesson-plan workspace.
+- Development: `npm run dev:lesson-plan` on port `4010`. Targeted build: `npm run build:lesson-plan`. Hosted origin remains centralized in `packages/shared/src/auth/appAuthConfig.ts` and is intentionally left unconfigured until an approved production domain is supplied.
+
+### v1.5.1 Navigation, table and communication-form refinement
+
+- Matt Money now uses a compact Administrator/Member selector in the page header and a full-width horizontal module bar directly below the header. The module bar fills available desktop width while preserving the existing URL-addressable `?view=<role>&section=<module>` contract.
+- Shared data tables use a consistent enterprise treatment: stronger neutral headers, subtle alternating row surfaces, restrained hover feedback, and existing selected-row states preserved. Matt Money and ArcAlerts list tables opt into the same shared treatment while Directory, Catholic Content and ArcAlerts Preferences inherit it through their established table classes.
+- The shared profile menu renames **Security** to **Change password** with clearer password-specific supporting copy; the existing password modal and recovery routes are unchanged.
+- Authenticated Request App confirmation now follows the approved **REQUEST RECEIVED / Thank you for your interest!** hierarchy, names the requested SaaS app, confirms successful receipt, states the 24-hour Member Services follow-up, and retains the signed-in member/contact context.
+- ArcAlerts New Alert removes the redundant **Unified Directory / Choose individual members or one or more directory groups** copy and presents Members/Groups plus the selection count in one compact recipient toolbar.
+- ArcAlerts Settings fixes required-marker and field-label alignment by giving labels a stable inline baseline, keeping paired controls aligned across the two-column form.
+
+### v1.5.0 Directory-driven communication and workspace refinement
+
+- Authenticated **Request app** actions on App Hub no longer navigate to the public Request Access form. They show a signed-in confirmation dialog using the current member identity and explain that Member Services will contact the member within 24 hours.
+- Matt Money adds role-aware portal navigation. Administrator and Member views keep their existing overview dashboards and expose URL-addressable finance modules through `?view=<role>&section=<module>`.
+- ArcAlerts removes Push from active channel surfaces. New Alert recipients are sourced from a shared Unified Directory recipient projection and support multi-member selection, multi-group selection, and All Groups. User Preferences use a denser two-line identity column with typed Home/Work/Mobile/Organization contact destinations, and Settings follows the approved Reply-To / Caller ID / recording phone / timezone / failed-alert notice / ArcAlerts-name contract.
+- Catholic Content returns to an attachment-aligned month/category link model without dropdowns or horizontal scrolling. Month and Search share the first row, Categories wrap naturally on the second row, and overview, discovery, resource list, preview, and rights notice live inside one primary library card.
+- Unified Directory adds SaaS-app and group filters, Print and CSV export, renames **Last activity** to **Last accessed**, replaces the Groups **Connected apps** column with Description, removes SaaS assignment from group creation, and restricts user add/edit SaaS choices to Matt Money and ArcAlerts. New-user contact capture supports Home/Work/Mobile telephone records with Unlisted/Primary and Home/Work/Organization email records with Primary.
+- Support Center is consolidated into one primary card. Resolved tickets are hidden by default, new-ticket layout uses a compact three-control row plus full-width message, **Start ticket** wording, and open conversations provide Cancel, Close ticket, and Send reply with the approved closure guidance.
 
 ### v1.4.5 Support Center in-place upgrade build repair
 
@@ -47,7 +74,7 @@ This repository contains one independently deployable React/Vite application per
 - `Forgot password?` is a real `/forgot-password` route with context-preserving, non-enumerating recovery UX.
 - App launches, partner links, switcher destinations, Details-modal destinations, and `All apps` now use same-tab navigation by default; users can still use browser-native alternate-tab gestures.
 - App Hub hero is reduced to greeting + one supporting line; the apps/approvals/system-status widget is removed.
-- AI Lesson Plan Generator moved to **Your Apps** and opens `https://demo.optionc.com/XtraCoach`. AI/Discover cards now expose a consistent in-card **Request app** action.
+- AI Lesson Plan Generator is a first-party **Your Apps** workspace under `apps/ai-lesson-plan`; AI/Discover cards continue to expose the consistent in-card **Request app** action.
 - Matt Money now has Administrator and Member dashboard views (`?view=admin|member`).
 - ArcAlerts Directory now exposes only User Preferences; legacy Members/Groups routes redirect to Preferences, whose grid supports search and Voice/Email/Text channel filters/toggles.
 
@@ -238,7 +265,7 @@ Generated `.artifacts/` content is release output, not development source of tru
 
 `packages/shared` contains only cross-solution concerns: centralized-auth redirect/return handling, authentication guard/shell, common topbar, 9-dot app switcher, profile/account UI, footer, catalog, environment/domain resolver, browser branding, user context, toasts, common UI primitives, and design-system styles.
 
-The shared switcher is catalog-synchronized with the published destinations in App Hub **Your Apps**. It currently exposes the seven Catholic Solutions applications, the five published partner products, and AI Lesson Plan Generator/XtraCoach; unpublished `Friar Friend` remains App Hub-only until it has a destination. The launcher uses three columns whenever more than six destinations are available and falls back to two columns on very narrow screens.
+The shared switcher is catalog-synchronized with the published destinations in App Hub **Your Apps**. It currently exposes the eight first-party Catholic Solutions applications plus the five published partner products; unpublished `Friar Friend` remains App Hub-only until it has a destination. The launcher uses three columns whenever more than six destinations are available and falls back to two columns on very narrow screens.
 
 User-facing partner names are standardized as **Vincent Volunteer**, **Alive Date**, and **Friar Friend**; stable product IDs and public URLs remain unchanged. The desktop Login is tuned as a `100dvh` composition with a wider catalog showcase so the complete product ecosystem and credential area remain readable without page scrolling at supported desktop sizes. App Hub **Your Apps** cards use premium white surfaces with dark text and retain each product's unique gradient through its accent/icon treatment.
 
@@ -281,3 +308,11 @@ npm run build:production --workspace @catholic-solutions/app-hub
 ```
 
 The single maintained product/architecture source of truth is [`docs/SPECIFICATION.md`](docs/SPECIFICATION.md).
+
+
+## v1.5.2 review update
+
+- Unified Directory Print now renders only the filtered member-detail table; CSV export remains member-only.
+- Directory telephone/email capture uses aligned compact columns with centered Primary/Unlisted controls.
+- Support Center defaults new tickets to Member Services and groups Cancel directly with Close ticket.
+- AI Lesson Plan Generator is now a first-party workspace under `apps/ai-lesson-plan` instead of an external XtraCoach link. It includes populated Week, Day and List views with term/week/grade/course/teacher filters and shared Catholic Solutions authentication.

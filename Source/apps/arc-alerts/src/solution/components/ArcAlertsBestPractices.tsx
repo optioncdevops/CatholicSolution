@@ -3,7 +3,7 @@ import { AlertTriangleIcon, BellIcon, CheckCircleIcon, MailIcon, MessageIcon, Sh
 const practices = [
   { icon: AlertTriangleIcon, title: 'Use emergency priority intentionally', detail: 'Reserve emergency priority for safety incidents, closures, evacuations, or similarly urgent situations.' },
   { icon: MessageIcon, title: 'Lead with the action', detail: 'Put the most important instruction first. Keep text alerts concise and avoid unnecessary context.' },
-  { icon: BellIcon, title: 'Use multiple channels for critical alerts', detail: 'For urgent notices, combine text, email, voicemail, and push so recipients have more than one path to the message.' },
+  { icon: BellIcon, title: 'Use multiple channels for critical alerts', detail: 'For urgent notices, combine text, email, and voicemail so recipients have more than one path to the message.' },
   { icon: MailIcon, title: 'Use clear subject lines', detail: 'For email, identify the organization, topic, and urgency without using all caps or vague wording.' },
   { icon: ShieldCheckIcon, title: 'Verify audience and timing', detail: 'Double-check the recipient group, dates, locations, and schedule before sending or scheduling a message.' },
   { icon: CheckCircleIcon, title: 'Review delivery results', detail: 'Check completion and failed-delivery patterns after important communications and follow up when necessary.' },

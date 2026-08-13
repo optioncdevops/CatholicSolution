@@ -1,5 +1,5 @@
 {
-  "version": "1.4.5",
+  "version": "1.5.2",
   "architecture": "multi-app-saas-central-login-independent-deployments",
   "domainConfiguration": "packages/shared/src/auth/appAuthConfig.ts",
   "environmentFiles": [
@@ -70,6 +70,14 @@
       "devPort": 4009,
       "deploymentBoundary": "apps/support-center",
       "standaloneExport": ".artifacts/standalone/support-center"
+    },
+    {
+      "folder": "apps/ai-lesson-plan",
+      "package": "@catholic-solutions/ai-lesson-plan",
+      "appId": "ai-lesson-plan",
+      "devPort": 4010,
+      "deploymentBoundary": "apps/ai-lesson-plan",
+      "standaloneExport": ".artifacts/standalone/ai-lesson-plan"
     }
   ],
   "sharedPackage": "packages/shared",
