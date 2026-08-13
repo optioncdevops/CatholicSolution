@@ -1,5 +1,6 @@
 export type AppKind = 'launchable' | 'external' | 'ai' | 'discover';
 export type AppStatus = 'active' | 'all-clear' | 'available' | 'ai-powered' | 'coming-soon';
+export type AppNavigationTarget = 'same-tab' | 'new-tab';
 
 export interface AppStat {
   value: string;
@@ -46,4 +47,10 @@ export interface CatalogApp {
    * value is not yet published and renders as a non-interactive "Coming soon" card.
    */
   externalUrl?: string;
+  /**
+   * Launch behavior used by App Hub, Details actions, and the shared switcher.
+   * Same-tab is the safe default. Only products explicitly marked `new-tab` open a
+   * separate protected browser tab.
+   */
+  navigationTarget?: AppNavigationTarget;
 }

@@ -1,0 +1,6 @@
+import { useNavigate } from 'react-router-dom';
+import { DashboardHeader } from '@shared/app/components/DashboardHeader';
+import { LessonPlanSubnav } from '../components/LessonPlanSubnav';
+import { sharedPlans } from '../lessonPlanData';
+
+export function SharedPlansPage(){const navigate=useNavigate();return <main className="dashboard-content dashboard-stack lesson-screen"><DashboardHeader eyebrow="Lesson Plan · Collaboration" title="Shared with me" status={<span className="lesson-count-badge">{sharedPlans.length} shared plans</span>}/><LessonPlanSubnav/><section className="lesson-panel"><header className="lesson-panel-heading"><div><span>Shared lesson plans</span><h2>Plans from your teaching community</h2><p>Review shared lessons and create your own copy without changing the original.</p></div></header><div className="lesson-table-scroll"><table className="lesson-enterprise-table"><thead><tr><th>Lesson plan</th><th>Course</th><th>Shared by</th><th>Shared</th><th>Action</th></tr></thead><tbody>{sharedPlans.map((item)=><tr key={item.id}><td><strong>{item.title}</strong></td><td>{item.course}</td><td>{item.owner}</td><td>{item.shared}</td><td><button className="lesson-table-action" type="button" onClick={()=>navigate('/lesson-plans/new')}>Create a copy</button></td></tr>)}</tbody></table></div></section></main>}

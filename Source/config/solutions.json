@@ -1,5 +1,5 @@
 {
-  "version": "1.5.2",
+  "version": "1.6.4",
   "architecture": "multi-app-saas-central-login-independent-deployments",
   "domainConfiguration": "packages/shared/src/auth/appAuthConfig.ts",
   "environmentFiles": [

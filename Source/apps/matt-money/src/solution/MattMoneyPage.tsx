@@ -10,39 +10,57 @@ const app = getAppById('matt-money')!;
 type DashboardView = 'admin' | 'member';
 type SectionId = 'overview' | 'billing' | 'payments' | 'reconciliation' | 'reports' | 'methods' | 'statements';
 
-const adminSections: Array<{ id: SectionId; label: string; icon: string }> = [
-  { id: 'overview', label: 'Overview', icon: '▦' },
-  { id: 'billing', label: 'Billing', icon: '🧾' },
-  { id: 'payments', label: 'Payments', icon: '💳' },
-  { id: 'reconciliation', label: 'Reconciliation', icon: '↔' },
-  { id: 'reports', label: 'Reports', icon: '📊' },
+type NavItem = { id: SectionId; label: string };
+const adminSections: NavItem[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'billing', label: 'Billing' },
+  { id: 'payments', label: 'Payments' },
+  { id: 'reconciliation', label: 'Reconciliation' },
+  { id: 'reports', label: 'Reports' },
 ];
-const memberSections: Array<{ id: SectionId; label: string; icon: string }> = [
-  { id: 'overview', label: 'Overview', icon: '▦' },
-  { id: 'payments', label: 'Payments', icon: '💳' },
-  { id: 'methods', label: 'Payment methods', icon: '▤' },
-  { id: 'statements', label: 'Statements', icon: '📄' },
+const memberSections: NavItem[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'payments', label: 'Payments' },
+  { id: 'methods', label: 'Payment methods' },
+  { id: 'statements', label: 'Statements' },
 ];
 
 function RoleSelector({ value, onChange }: { value: DashboardView; onChange: (view: DashboardView) => void }) {
   return (
-    <div className="matt-role-selector" role="group" aria-label="Matt Money portal view">
+    <div className="matt-role-selector matt-role-selector--nav" role="group" aria-label="Matt Money workspace">
       <button type="button" className={value === 'admin' ? 'is-active' : ''} aria-pressed={value === 'admin'} onClick={() => onChange('admin')}>Administrator</button>
       <button type="button" className={value === 'member' ? 'is-active' : ''} aria-pressed={value === 'member'} onClick={() => onChange('member')}>Member</button>
     </div>
   );
 }
 
-function ModuleNav({ view, section, onChange }: { view: DashboardView; section: SectionId; onChange: (section: SectionId) => void }) {
+function FinanceNavigation({ view, section, onViewChange, onSectionChange }: {
+  view: DashboardView;
+  section: SectionId;
+  onViewChange: (view: DashboardView) => void;
+  onSectionChange: (section: SectionId) => void;
+}) {
   const sections = view === 'admin' ? adminSections : memberSections;
   return (
-    <nav className="matt-module-nav matt-module-nav--full" aria-label={`${view} finance modules`}>
-      {sections.map((item) => (
-        <button key={item.id} type="button" className={section === item.id ? 'is-active' : ''} onClick={() => onChange(item.id)} aria-current={section === item.id ? 'page' : undefined}>
-          <span aria-hidden="true">{item.icon}</span>{item.label}
-        </button>
-      ))}
-    </nav>
+    <div className="matt-finance-nav">
+      <nav className="matt-finance-nav__modules" aria-label={`${view} finance modules`}>
+        {sections.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={section === item.id ? 'is-active' : ''}
+            onClick={() => onSectionChange(item.id)}
+            aria-current={section === item.id ? 'page' : undefined}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
+      <div className="matt-finance-nav__workspace">
+        <span>Workspace</span>
+        <RoleSelector value={view} onChange={onViewChange}/>
+      </div>
+    </div>
   );
 }
 
@@ -73,18 +91,18 @@ export function MattMoneyPage() {
   const setSection = (next: SectionId) => updateParams(view, next);
   const currentLabel = allowedSections.find((item) => item.id === section)?.label ?? 'Overview';
   const roleLabel = view === 'admin' ? 'Administrator' : 'Member';
-  const pageTitle = section === 'overview' ? `${roleLabel} dashboard` : currentLabel;
+  const pageTitle = section === 'overview' ? (view === 'admin' ? 'Finance overview' : 'Account overview') : currentLabel;
 
   return (
     <AppLayout app={app} className="bg-[#f4f6fa]">
       <main className="dashboard-content dashboard-stack matt-money-shell">
+        <FinanceNavigation view={view} section={section} onViewChange={setView} onSectionChange={setSection}/>
         <DashboardHeader
-          eyebrow={`Billing & finance · ${roleLabel}`}
+          eyebrow={`Matt Money · ${roleLabel} workspace`}
           title={pageTitle}
           status={<span className="matt-account-status">{view === 'admin' ? 'Organization account' : 'Household account'}</span>}
-          actions={<div className="matt-header-actions"><RoleSelector value={view} onChange={setView}/><button type="button" className="action-secondary matt-header-export" onClick={() => showToast(view === 'admin' ? 'Financial report export prepared' : 'Statement download prepared')}>{view === 'admin' ? 'Export report' : 'Download statement'}</button></div>}
+          actions={<button type="button" className="action-secondary matt-header-export" onClick={() => showToast(view === 'admin' ? 'Financial report export prepared' : 'Statement download prepared')}>{view === 'admin' ? 'Export report' : 'Download statement'}</button>}
         />
-        <ModuleNav view={view} section={section} onChange={setSection}/>
         {section === 'overview' ? (view === 'admin' ? <MattMoneyAdminDashboard/> : <MattMoneyMemberDashboard/>) : <SectionWorkspace section={section as Exclude<SectionId,'overview'>}/>} 
       </main>
     </AppLayout>

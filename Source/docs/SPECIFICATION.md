@@ -1,6 +1,6 @@
-# Catholic Solutions — Living Specification v1.5.2
+# Catholic Solutions — Living Specification v1.6.2
 
-> **Canonical release baseline:** v1.0.0. **Current release:** v1.5.2. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
+> **Canonical release baseline:** v1.0.0. **Current release:** v1.6.2. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
 
 ## v1.0 Repository and Solution Architecture
 
@@ -16,7 +16,7 @@
 - `config/solutions.json` is the machine-readable solution/build manifest; runtime domains are centralized in `packages/shared/src/auth/appAuthConfig.ts`.
 
 **Development model:** Spec-driven development  
-**Current version:** 1.5.2  
+**Current version:** 1.6.0  
 **Last updated:** August 13, 2026  
 **Status:** Active source of truth
 
@@ -35,7 +35,7 @@ Precedence is newest explicit user direction first. A newer direction may delibe
 
 ## 2. Product purpose and flow
 
-Catholic Solutions is a front-end App Hub prototype for Catholic schools, parishes, ministries, and families. It demonstrates login, application discovery, application launching, account/profile interactions, application switching, and eight launchable product modules across nine application workspaces using static prototype data.
+Catholic Solutions is a front-end App Hub prototype for Catholic schools, parishes, ministries, and families. It demonstrates login, application discovery, application launching, account/profile interactions, application switching, and nine first-party product workspaces within the shared Catholic Solutions platform using static prototype data.
 
 Primary flow:
 
@@ -1903,3 +1903,179 @@ This release supersedes earlier review-batch UI contracts where they conflict wi
 - Verify Support area defaults to Member Services and contextual deep links still override it.
 - Verify Cancel sits next to Close ticket and both return to New Ticket as specified.
 - Verify `npm run dev:lesson-plan`, targeted production build, and populated lesson-plan filters/views. After an approved hosted origin is configured, also verify App Hub launch, App Switcher destination, and authentication return flow.
+
+## 34. v1.5.3 — Matt Money enterprise navigation refinement
+
+### 34.1 Navigation hierarchy
+- **Owner:** Senior UI/UX Engineer + Senior Frontend Developer.
+- This requirement supersedes the v1.5.1 Matt Money placement rule that kept the Administrator/Member selector inside the page-header actions.
+- Matt Money MUST use a dedicated product-level finance navigation surface immediately below the shared Catholic Solutions product header and before page-specific heading/content.
+- Module navigation is left-aligned and content-width rather than stretching every menu item into an oversized equal-width tile. Administrator modules remain **Overview, Billing, Payments, Reconciliation, Reports**; Member modules remain **Overview, Payments, Payment methods, Statements**.
+- Active navigation uses a restrained emerald text/background cue plus a clear bottom indicator. Non-active modules remain neutral; navigation must not resemble dashboard KPI cards.
+- Administrator/Member is treated as a **workspace scope**, visually separated from the module menu on the right of the navigation surface. On narrower screens the workspace scope moves below the module row rather than compressing or wrapping module labels.
+- Page-specific heading follows the navigation surface. Overview titles are **Finance overview** for Administrator and **Account overview** for Member. Export/Download remains a page action, not part of the module menu.
+- Existing query-addressable URLs remain authoritative: `?view=admin|member&section=<module>`.
+
+### 34.2 Interaction and responsive behavior
+- Module tabs remain semantic buttons with `aria-current="page"` for the active module; the workspace switch remains an accessible pressed-state control.
+- Desktop module navigation stays one line and uses horizontal scrolling only when the viewport cannot accommodate the content. It MUST NOT wrap into multiple ambiguous rows.
+- Hover/focus states may change surface, border, text, or underline emphasis but MUST NOT translate or shift controls.
+- On mobile, Administrator/Member becomes a full-width segmented scope control below the module row and the page action becomes full width when needed.
+
+### 34.3 QA
+- Verify Administrator and Member module sets and all existing query URLs.
+- Verify navigation appears before the page heading, no module is rendered as a large equal-width dashboard tile, and the active state is unambiguous at 1366px, 1024px, tablet, and mobile widths.
+- Verify keyboard focus, `aria-current`, pressed-state semantics, module horizontal overflow, and no regression in finance dashboard content or export actions.
+
+## 35. v1.6.0 — Complete Lesson Plan workspace reference coverage
+
+**Date:** August 13, 2026. This release supersedes the narrow v1.5.2 Lesson Plan view-only contract where the requirements below are more complete.
+
+### 35.1 Source-of-truth reference
+- **Owner:** Senior UI/UX Engineer + Senior Full Stack Developer.
+- The uploaded `XtraCoach SaaS LessonPlan(1).html` is the functional reference for Lesson Plan information architecture and workflow coverage. The Catholic Solutions implementation MUST preserve the repository's shared shell/design system rather than copying the legacy styling literally.
+- The first-party Lesson Plan workspace MUST cover the reference screens and flows: My Classes, Class Summary, Calendar, Unit Plans, Lesson Plans, Lesson Plan Form, XtraCoach Preparation, XtraCoach Preview, Student Portal/My Learning, XtraCoach Player, Agent Integration Flow, and Reports.
+- Reference actions that were previously placeholders (Templates and Shared with me) are implemented as usable first-party workspace views rather than dead controls.
+
+### 35.2 Workspace navigation and routes
+- The app uses route-level, deep-linkable pages under the shared authenticated `AppLayout`.
+- Primary product navigation: **My Classes, Calendar, Unit Plans, Lesson Plans, Reports**. Student Portal and Integration are secondary utilities, not peer KPI-style cards.
+- Lesson Plan subnavigation: **View, Add, Templates, Shared with me, Go to Unit Plans**.
+- Default app entry resolves to `/lesson-plans`. Existing central authentication, App Switcher, profile, logout, staging/production build behavior, and app ID remain unchanged.
+
+### 35.3 Classes, calendar, and unit planning
+- My Classes includes Term, Teacher, Grade, and Search controls plus the reference class columns: Class, Section, Course, Teacher, Enrollment, Skills, Homeroom, Report Cards, and Progress Report.
+- Selecting a class opens a Class Summary with General, Assignments & Grading, and XtraCoach context tabs plus Edit/Delete/Class Report actions.
+- Calendar supports Day, Week, and Month modes with lesson-to-editor navigation.
+- Unit Plans show unit metadata, sequenced lessons/status, instructional timeline, and navigation to existing/new lesson plans.
+
+### 35.4 Lesson Plan workflow
+- Lesson Plans support Week, Day, and List modes, populated records, Term/Week/Grade/Course/Teacher filters, Search, previous/next-week navigation, records-per-page control, Print/CSV actions, direct lesson opening, new-plan generation, and a compact bulk-generation workflow.
+- Bulk generation covers the reference planning inputs: scope (Single Day / Unit (Week) / Academic Year), Grade, Course, Term, Class Duration, Instructional Days, Start Date, and Total Lessons.
+- The lesson editor captures teacher, grade, course, title, unit, dates, duration, and standard type, then exposes the complete **19-section** reference lesson structure for review/editing.
+- Teachers can Save, Share, Cancel, and Prepare with XtraCoach. No generated content is treated as published until explicit teacher approval.
+- Templates provides reusable lesson structures; Shared with me provides shared plans and a non-destructive Create a copy action.
+
+### 35.5 XtraCoach learning workflow
+- XtraCoach Preparation displays approved lesson context, editable Level 1–3 question banks, Save, Preview, and explicit Approve & make available behavior.
+- Preview communicates Orientation → Level 1 → Level 2 → Level 3 → Mastery, including re-teach/retry behavior without grades, rankings, or badges.
+- Student Portal/My Learning lists teacher-available lessons and launches the XtraCoach Player.
+- XtraCoach Player demonstrates orientation, adaptive learning checks, help/re-teach states, mastery, and a student-only improvement summary.
+
+### 35.6 Integration and reports
+- Agent Integration Flow documents the six reference service responsibilities: Generate, Store, Review & approve, Serve learning checks, Write evidence home, and Student-only improvement report. It distinguishes lesson-service data from school-system identity/evidence data.
+- Reports expose Class/Course, Concept, Term, Student Search, Level 1–3/Mastery filtering, stage distribution, concepts mastered, effort, and Last accessed. Reports remain learning-evidence views rather than grade/leaderboard surfaces.
+
+### 35.7 UI/UX contract
+- The reference's compact planning hierarchy is retained: clear horizontal navigation, compact secondary tabs, one primary work panel, dense filter rows, professional zebra tables, sticky headers where appropriate, and space-efficient actions.
+- The implementation uses the current Catholic Solutions typography, spacing, card radii, focus states, shared topbar/profile/switcher, and restrained interactions. No transform-based hover movement is introduced.
+- Desktop tables may scroll horizontally when the reference data requires width; controls must remain readable and keyboard accessible. Mobile layouts stack filters/actions without changing workflow meaning.
+
+### 35.8 QA
+- Verify every route can be opened directly and after refresh under the protected route.
+- Verify My Classes → Class Summary, Calendar → Lesson, Unit → Lesson, Lesson List → Editor, Editor → XtraCoach Preparation → Preview, Student Portal → Player, and Reports filters.
+- Verify Week/Day/List data, 19 lesson sections, templates, shared-plan copy action, bulk generation panel, XtraCoach levels/re-teach/mastery, integration flow, and report filtering.
+- Verify App Hub/App Switcher destination opens `/lesson-plans`, no external XtraCoach URL is reintroduced, all source TS/TSX files stay developer-friendly, and no new package dependency is added.
+
+## 36. v1.6.1 — Product launch policy and ArcAlerts channel composition
+
+**Date:** August 13, 2026. This section supersedes earlier same-tab App Hub/App Switcher rules and supersedes §35 only for the active AI Lesson Plan product destination. The v1.6.0 native Lesson Plan source is retained as a dormant prototype, not deleted or exposed as the current launch target.
+
+### 36.1 Product launch behavior
+- **Owner:** Senior Frontend Developer + Senior UI/UX Engineer.
+- App launch behavior is metadata-driven from the centralized app catalog; individual cards/switchers MUST NOT maintain independent per-app URL rules.
+- App Hub primary Launch/Open actions, whole-card activation, Details-modal destinations, and shared App Switcher destinations open in a new browser tab with `rel="noopener noreferrer"` by default.
+- **Support Center is the explicit same-tab exception** because it is the in-context member-support destination. `All apps` remains App Hub navigation rather than a product launch and therefore stays in the current tab.
+- AI Lesson Plan Generator uses `https://demo.optionc.com/XtraCoach` as the approved active destination and MUST open in a new tab from every active product-entry surface. Its catalog kind is external for this phase.
+
+### 36.2 ArcAlerts New Alert channel composition
+- **Owner:** Senior Full Stack Developer + Senior UI/UX Engineer.
+- Supported channels remain Email, Voice, and Text; Push MUST NOT reappear.
+- Delivery-channel selection controls which detail accordions are rendered. Unselected channel panels are hidden; selected panels are expandable/collapsible.
+- Email details include Subject, Reply-To Email, message formatting controls, message body, and attachment entry.
+- Voice details include Phone To Call, Record voicemail via phone call, and Voice Recording ID.
+- Text details include Text Message, character count, and 140-character SMS-segment guidance.
+- The channel panels remain dependency-free and use existing application components/styles; no third-party rich-text editor is introduced for this prototype.
+
+### 36.3 Recipient selection
+- Members and Groups each expose a Select All control plus Clear selection.
+- Select All materializes the full set as individual selections. It MUST NOT disable child checkboxes; after Select All, the user can uncheck any specific member or group while the remaining selections stay checked.
+- Search continues to filter the visible Member list without silently changing the current selection set.
+- Selection counts reflect the active Members/Groups mode.
+
+### 36.4 QA
+- Verify OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, external partner products, and AI Lesson Plan open new tabs from App Hub and the shared switcher.
+- Verify Support Center stays in the current tab from those same surfaces.
+- Verify AI Lesson Plan resolves exactly to `https://demo.optionc.com/XtraCoach` and no active catalog route points to the dormant native Lesson Plan workspace.
+- Verify Email/Voice/Text channel toggles show/hide their accordions, accordion expansion is keyboard operable, and no Push control exists.
+- Verify Select All Members and Select All Groups permit subsequent individual unchecking and Clear selection resets the active selection set.
+
+## 37. v1.6.2 — Explicit product tab policy
+
+**Date:** August 13, 2026. This section supersedes §36.1 and §36.4 only where they describe which product destinations open in a new tab. ArcAlerts composition requirements in §36 remain unchanged.
+
+### 37.1 Navigation contract
+- **Owner:** Senior Frontend Developer + Senior UI/UX Engineer.
+- Launch behavior MUST remain centralized in the canonical app catalog. App Hub cards, whole-card activation, Details-modal actions, and the shared App Switcher MUST NOT maintain separate product-specific tab rules.
+- Same-tab navigation is the default for any catalog product that does not explicitly opt into `navigationTarget: "new-tab"`.
+- Exactly these currently approved destinations open in a protected new tab with `rel="noopener noreferrer"`: **AI Lesson Plan Generator, FerrerWorks, Mass Card Requests, Vincent Volunteer, Berchmans, Alive Date**.
+- **OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, and Support Center** open in the current tab.
+- `All apps` remains same-tab App Hub navigation and is not considered a product destination.
+- AI Lesson Plan Generator continues to resolve to `https://demo.optionc.com/XtraCoach`.
+
+### 37.2 QA
+- Verify App Hub primary actions, whole-card activation, Details actions, and App Switcher all apply the same tab rule.
+- Verify the six approved new-tab products open with `target="_blank"` and `noopener noreferrer`.
+- Verify OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, and Support Center remain in the current tab.
+- Verify no component contains a duplicate product-name allowlist; the catalog metadata is the single source of truth.
+
+## 38. v1.6.3 - ArcAlerts profile-driven user preferences
+
+**Date:** August 13, 2026. This section supersedes earlier ArcAlerts User Preferences requirements only where they assumed one fixed phone/email destination per member.
+
+### 38.1 Contact-data source
+- **Owner:** Senior Full Stack Developer + Senior UI/UX Engineer.
+- ArcAlerts User Preferences MUST consume contact destinations from the shared Unified Directory profile projection. It MUST NOT maintain a separate hard-coded contact list for preference management.
+- The shared projection exposes Home/Work/Mobile telephone entries and Home/Work/Organization email entries, including Primary and Unlisted metadata where present. Unified Directory's projected seed users consume the same shared profile contacts so the two products do not drift.
+
+### 38.2 Preference behavior
+- Email preferences are destination-specific. When two or more email addresses are present on a profile, the administrator can enable any one address, multiple addresses, or all available addresses independently.
+- Voice and Text follow the same destination-specific behavior across all telephone numbers available on the profile. The system MUST NOT render an enabled/disabled toggle for a destination that is absent from the profile.
+- A multi-destination channel cell may provide **Enable all** and **Clear** shortcuts, but individual destinations remain independently toggleable after either action.
+- Primary contact metadata is informational and supplies the initial preference where available; it does not prevent another saved contact method from being enabled. Unlisted telephone metadata remains visible to the administrator.
+- Pausing preferences disables editing without hiding the saved profile contact data or changing the underlying selections.
+
+### 38.3 Filtering and UX
+- User Preferences keeps the two-line member identity treatment. Contact details live in the Voice/Email/Text columns rather than expanding the identity column.
+- The All/Voice/Email/Text filters represent availability of that channel on the profile, not whether the preference is currently enabled.
+- Search covers member name, group, telephone type/number/extension, and email type/address.
+- The footer reports both visible members and the total enabled contact destinations.
+
+### 38.4 QA
+- Verify a member with multiple emails can enable either email individually, enable both/all, clear all, then re-enable one without affecting Voice/Text.
+- Verify telephone destinations behave independently for Voice and Text.
+- Verify members with only one email or one phone render only that destination and members with a missing channel do not receive a fake toggle.
+- Verify Primary and Unlisted indicators match the shared directory profile projection and Unified Directory displays the same seeded contact values.
+- Verify search, availability filters, preference pause/resume, Save preferences, responsive horizontal table behavior, and existing ArcAlerts navigation remain unchanged.
+
+## 39. v1.6.4 - ArcAlerts space-optimized user preferences
+
+**Date:** August 13, 2026. This section refines §38 only for presentation density; all profile-driven data and preference behavior from §38 remain authoritative.
+
+### 39.1 Density and hierarchy
+- **Owner:** Senior UI/UX Engineer + Senior Frontend Developer.
+- The User Preferences grid MUST prioritize scan density without hiding contact data: Member, Voice, Email, and Text remain visible as the primary columns.
+- Member rows use compact identity treatment and channel destinations use compact two-line rows (destination value plus type/Primary/Unlisted metadata). Large nested cards or excess vertical whitespace are not permitted.
+- Multi-destination channel cells keep the per-member contact count and Enable all/Clear shortcut but use reduced spacing so three telephone destinations remain readable without making one member consume excessive viewport height.
+- Voice, Email, and Text controls preserve independent toggling and accessible pressed state; visual compaction MUST NOT reduce the click target below a practical touch/mouse target.
+
+### 39.2 Responsive behavior
+- Desktop table minimum width is reduced compared with v1.6.3 so the four-column preference grid requires less horizontal travel.
+- The member column remains sticky and compact; bounded vertical scrolling should expose more member rows per viewport.
+- Narrow screens may continue to use horizontal scrolling rather than collapsing destination semantics or hiding saved profile data.
+
+### 39.3 QA
+- Verify a member with three telephone numbers and two email addresses is materially shorter than the v1.6.3 row while every destination remains legible and independently toggleable.
+- Verify Enable all/Clear, Primary/Unlisted labels, search, availability filters, pause/resume, Save preferences, and shared Unified Directory contact values are unchanged.
+- Verify keyboard focus/pressed state remain usable and no destination value is removed solely to save space.
+

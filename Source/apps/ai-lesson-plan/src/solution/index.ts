@@ -1,1 +1,2 @@
-export { LessonPlanPage } from './LessonPlanPage';
+export { LessonWorkspaceLayout } from './LessonWorkspaceLayout';
+export * from './lessonPlanData';

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { availableSwitcherApps } from '@shared/app/config/appCatalog';
+import { appOpensInNewTab, availableSwitcherApps } from '@shared/app/config/appCatalog';
 import type { CatalogApp } from '@shared/app/types/app';
 import { AppsIcon, ChevronDownIcon, ChevronRightIcon } from '@shared/app/components/UiIcons';
 import { resolveAppUrl, resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
@@ -44,7 +44,7 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
   }, []);
 
   const renderApp = (app: CatalogApp) => {
-    const current = app.id === currentApp.id;
+    const current = app.id === currentApp.id && app.kind !== 'external';
     const target = switcherTarget(app);
     const content = (
       <>
@@ -70,12 +70,15 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
       );
     }
 
+    const openInNewTab = appOpensInNewTab(app);
     return (
       <a
         href={target}
+        target={openInNewTab ? '_blank' : undefined}
+        rel={openInNewTab ? 'noopener noreferrer' : undefined}
         onClick={() => setOpen(false)}
         className="app-switcher__tile"
-        aria-label={`Open ${app.name}`}
+        aria-label={`Open ${app.name}${openInNewTab ? ' in a new tab' : ''}`}
       >
         {content}
       </a>

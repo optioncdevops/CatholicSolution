@@ -1,9 +1,43 @@
-# Catholic Solutions Workspace — v1.5.2
+# Catholic Solutions Workspace — v1.6.4
 
-**Release:** v1.5.2  
+**Release:** v1.6.4  
 **Architecture:** independent-domain multi-app SaaS monorepo with centralized login
 
 This repository contains one independently deployable React/Vite application per Catholic Solutions product. Product applications are deployment-independent, while authentication entry is centralized on one Catholic Solutions Login domain. Shared platform source is maintained once under `packages/shared`.
+
+
+
+### v1.6.4 ArcAlerts space-optimized user preferences
+
+- ArcAlerts User Preferences keeps the v1.6.3 profile-driven destination model while significantly reducing row height and visual bulk.
+- Member identity, Voice, Email, and Text remain four scan-friendly columns; channel options use compact two-line destination rows with smaller toggles/type badges and tighter spacing.
+- Multi-destination Enable all/Clear behavior, individual destination toggles, Primary/Unlisted metadata, availability filters, and Unified Directory sourcing are unchanged.
+- Desktop table width is reduced so more of the grid fits without unnecessary horizontal travel, while bounded scrolling shows more members per viewport.
+
+### v1.6.3 ArcAlerts profile-driven user preferences
+
+- ArcAlerts User Preferences now reads telephone and email destinations from the shared Unified Directory profile projection instead of maintaining a separate preference-only contact list.
+- Every available profile email address is shown independently (Home, Work, Organization), so a member can enable one address, multiple addresses, or all available addresses for Email alerts.
+- Voice and Text use the same profile-driven model for available Home, Work, and Mobile telephone numbers; unavailable contact methods are shown as unavailable rather than rendering a misleading toggle.
+- Primary and Unlisted directory metadata remain visible, and multi-destination cells provide an Enable all/Clear shortcut without preventing individual opt-out.
+- Channel filters represent members who have that contact method available, while the footer reports the number of individually enabled destinations.
+
+
+### v1.6.2 Explicit product tab policy
+
+- Product navigation remains centralized in `packages/shared/src/app/config/appCatalog.ts`; cards, Details actions, and the shared App Switcher consume the same metadata-driven rule.
+- Only **AI Lesson Plan Generator, FerrerWorks, Mass Card Requests, Vincent Volunteer, Berchmans, and Alive Date** open in a protected new browser tab (`noopener noreferrer`).
+- **OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, and Support Center** open in the current tab.
+- Same-tab is now the catalog default; new-tab behavior must be explicitly declared per product so future apps do not accidentally open a new tab.
+
+
+### v1.6.1 Launch policy and ArcAlerts compose refinement
+
+- AI Lesson Plan Generator temporarily returns to the approved external XtraCoach destination at `https://demo.optionc.com/XtraCoach`. App Hub, Details, and the shared App Switcher open it in a new tab; the native `apps/ai-lesson-plan` workspace remains dormant for future review and is not the active catalog destination.
+- App Hub and App Switcher use one catalog-driven launch policy: product destinations open in a protected new tab (`noopener noreferrer`) by default, while **Support Center** is the explicit same-tab exception.
+- ArcAlerts New Alert uses channel-driven expandable **Email details**, **Voice details**, and **Text details** panels. A detail panel is present only while its channel is selected.
+- Email details include Subject, Reply-To Email, formatting toolbar, message body, and attachment entry; Voice details include callback number, record-by-phone action, and Voice Recording ID; Text details include message length and SMS segment guidance.
+- ArcAlerts Members and Groups each provide **Select all** and **Clear selection** controls. Select All populates the individual selections rather than locking them, so any specific member or group can still be unchecked afterward.
 
 
 ### v1.5.2 Directory export, Support defaults, and first-party Lesson Plan
@@ -265,7 +299,7 @@ Generated `.artifacts/` content is release output, not development source of tru
 
 `packages/shared` contains only cross-solution concerns: centralized-auth redirect/return handling, authentication guard/shell, common topbar, 9-dot app switcher, profile/account UI, footer, catalog, environment/domain resolver, browser branding, user context, toasts, common UI primitives, and design-system styles.
 
-The shared switcher is catalog-synchronized with the published destinations in App Hub **Your Apps**. It currently exposes the eight first-party Catholic Solutions applications plus the five published partner products; unpublished `Friar Friend` remains App Hub-only until it has a destination. The launcher uses three columns whenever more than six destinations are available and falls back to two columns on very narrow screens.
+The shared switcher is catalog-synchronized with the published destinations in App Hub **Your Apps**. It exposes available first-party Catholic Solutions applications plus published partner products; unpublished `Friar Friend` remains App Hub-only until it has a destination. The launcher uses three columns whenever more than six destinations are available and falls back to two columns on very narrow screens.
 
 User-facing partner names are standardized as **Vincent Volunteer**, **Alive Date**, and **Friar Friend**; stable product IDs and public URLs remain unchanged. The desktop Login is tuned as a `100dvh` composition with a wider catalog showcase so the complete product ecosystem and credential area remain readable without page scrolling at supported desktop sizes. App Hub **Your Apps** cards use premium white surfaces with dark text and retain each product's unique gradient through its accent/icon treatment.
 
@@ -316,3 +350,15 @@ The single maintained product/architecture source of truth is [`docs/SPECIFICATI
 - Directory telephone/email capture uses aligned compact columns with centered Primary/Unlisted controls.
 - Support Center defaults new tickets to Member Services and groups Cancel directly with Close ticket.
 - AI Lesson Plan Generator is now a first-party workspace under `apps/ai-lesson-plan` instead of an external XtraCoach link. It includes populated Week, Day and List views with term/week/grade/course/teacher filters and shared Catholic Solutions authentication.
+
+### v1.5.3 Matt Money navigation refinement
+- Matt Money now uses a compact enterprise finance navigation bar directly below the shared product header, before page-specific heading/content.
+- Finance modules are left-aligned content-width tabs with a restrained active underline instead of large equal-width dashboard-style tiles.
+- Administrator/Member is a separate workspace-scope control on the right of the navigation bar and moves below the module row responsively.
+- Existing `?view=...&section=...` URLs and dashboard functionality are preserved.
+
+## Lesson Plan workspace v1.6.0
+
+The first-party AI Lesson Plan Generator now implements the complete workflow modeled by the supplied XtraCoach/OptionC Lesson Plan reference while staying inside the Catholic Solutions shared shell. Week/Day/List planning also includes previous/next week controls, records-per-page, Print/CSV actions, and the reference bulk-planning inputs; Reports include class/course, concept, term, student search, and learning-stage filters. The workspace includes My Classes and Class Summary, Day/Week/Month Calendar, Unit Plans, Week/Day/List Lesson Plans, new/edit lesson forms with the 19-section planning structure, templates, shared plans, bulk generation, XtraCoach preparation/preview, Student Portal/My Learning, an adaptive XtraCoach player, integration flow, and learning-evidence Reports.
+
+Run locally with `npm run dev:lesson-plan` and open `http://localhost:4010/lesson-plans`. Production/staging builds use the existing workspace build commands; the hosted Lesson Plan origin remains centralized in `packages/shared/src/auth/appAuthConfig.ts` and must be populated only when an approved domain is available.

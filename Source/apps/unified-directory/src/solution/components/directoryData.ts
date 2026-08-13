@@ -64,16 +64,8 @@ function buildUsers(): DirectoryUser[] {
       name: member.name,
       email: member.email,
       phone: member.phone,
-      phones: [
-        { type: 'Home', number: member.phone, unlisted: false, primary: index % 3 === 0 },
-        { type: 'Work', number: `(585) 555-${String(6100 + index).slice(-4)}`, extension: index % 4 === 0 ? String(110 + index) : undefined, unlisted: index % 7 === 0, primary: index % 3 === 1 },
-        { type: 'Mobile', number: `(585) 555-${String(7100 + index).slice(-4)}`, unlisted: false, primary: index % 3 === 2 },
-      ],
-      emails: [
-        { type: 'Home', address: member.email, primary: index % 3 === 0 },
-        { type: 'Work', address: member.email, primary: index % 3 === 1 },
-        { type: 'Organization', address: member.email, primary: index % 3 === 2 },
-      ],
+      phones: member.phones.map((item) => ({ ...item, unlisted: Boolean(item.unlisted), primary: Boolean(item.primary) })),
+      emails: member.emails.map((item) => ({ ...item, primary: Boolean(item.primary) })),
       applications: [primaryApp],
       groups: [...member.groups],
       active: true,

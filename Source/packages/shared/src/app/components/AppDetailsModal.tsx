@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
+import { appOpensInNewTab } from '@shared/app/config/appCatalog';
 import { resolveAppUrl, resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
 
 interface AppDetailsModalProps {
@@ -41,12 +42,11 @@ export function AppDetailsModal({ app, onClose, onRequest }: AppDetailsModalProp
   const isExternal = app.kind === 'external';
   const unpublished = isExternal && !app.externalUrl;
 
-  // App Hub navigation intentionally stays in the current tab. Users can still use the
-  // browser's native context-menu / modifier-key behavior when they want another tab.
   const target = app.route ? resolveAppUrl(app) : app.externalUrl;
+  const openInNewTab = appOpensInNewTab(app);
   const deploymentPending = Boolean(app.route) && !target;
   const requestTarget = !target && !unpublished && !deploymentPending ? resolvePlatformUrl(`/request-access?product=${encodeURIComponent(app.id)}`) : '';
-  const primaryLabel = deploymentPending ? 'Deployment pending' : app.route ? 'Launch →' : isExternal ? (unpublished ? 'Coming soon' : 'Visit site →') : 'Request this app →';
+  const primaryLabel = deploymentPending ? 'Deployment pending' : app.route ? `Launch ${openInNewTab ? '↗' : '→'}` : isExternal ? (unpublished ? 'Coming soon' : `Visit site ${openInNewTab ? '↗' : '→'}`) : 'Request this app →';
   const primaryClass = `action-primary ${app.route || app.externalUrl ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 shadow-sm' : 'border border-brand-navy bg-white text-brand-navy hover:bg-brand-navy hover:text-white'}`;
   const details = app.details;
   const statusClass = app.route ? 'bg-emerald-50 text-emerald-700' : isExternal ? 'bg-slate-100 text-slate-700' : app.kind === 'ai' ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-700';
@@ -86,7 +86,7 @@ export function AppDetailsModal({ app, onClose, onRequest }: AppDetailsModalProp
         <footer className="flex flex-wrap items-center gap-3 border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-6">
           <span className={`mr-auto rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide ${statusClass}`}>{app.statusDetail ?? app.statusLabel}</span>
           {target ? (
-            <a href={target} onClick={onClose} className={primaryClass}>{primaryLabel}</a>
+            <a href={target} target={openInNewTab ? '_blank' : undefined} rel={openInNewTab ? 'noopener noreferrer' : undefined} onClick={onClose} className={primaryClass}>{primaryLabel}</a>
           ) : deploymentPending ? (
             <button type="button" disabled className={`${primaryClass} cursor-default border-slate-300 bg-slate-100 text-slate-500`}>{primaryLabel}</button>
           ) : onRequest && !unpublished ? (

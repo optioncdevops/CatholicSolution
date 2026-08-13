@@ -1,81 +1,215 @@
 import { useMemo, useState } from 'react';
 import { MailIcon, SearchIcon } from '@shared/app/components/UiIcons';
 import { useToast } from '@shared/app/components/ToastProvider';
+import {
+  DIRECTORY_RECIPIENTS,
+  type DirectoryEmailContact,
+  type DirectoryPhoneContact,
+  type DirectoryRecipient,
+} from '@shared/app/data/directoryRecipients';
 
 type Channel = 'voice' | 'email' | 'text';
-type PreferenceRow = {
+type PreferenceSelection = Record<string, Record<Channel, string[]>>;
+type ContactDestination = {
   id: string;
-  family: string;
-  contact: string;
-  relation: string;
-  phoneType: 'Home' | 'Work' | 'Mobile';
-  emailType: 'Home' | 'Work' | 'Organization';
-  voice: boolean;
-  email: boolean;
-  text: boolean;
-  phone: string;
-  emailAddress: string;
+  typeCode: string;
+  typeLabel: string;
+  value: string;
+  primary: boolean;
   unlisted?: boolean;
 };
 
-const initialRows: PreferenceRow[] = [
-  { id: '1', family: 'Andani Family', contact: 'Marco Andani', relation: 'Father', phoneType: 'Home', emailType: 'Home', voice: true, email: true, text: true, phone: '(555) 123-4567', emailAddress: 'marco.andani@example.org' },
-  { id: '2', family: 'Andani Family', contact: 'Rafaela Andani', relation: 'Mother', phoneType: 'Mobile', emailType: 'Work', voice: true, email: true, text: false, phone: '(555) 123-4568', emailAddress: 'rafaela.andani@example.org' },
-  { id: '3', family: 'Angelica Family', contact: 'Teresa Angelica', relation: 'Guardian', phoneType: 'Work', emailType: 'Work', voice: false, email: true, text: true, phone: '(555) 989-7654', emailAddress: 'teresa.angelica@example.org' },
-  { id: '4', family: 'Aarthi Family', contact: 'Aarthi A.', relation: 'Mother', phoneType: 'Work', emailType: 'Home', voice: true, email: true, text: true, phone: '(324) 233-4222', emailAddress: 'aarthi@example.org' },
-  { id: '5', family: 'Alexander Family', contact: 'Michael Alexander', relation: 'Parent', phoneType: 'Mobile', emailType: 'Organization', voice: true, email: false, text: true, phone: '(234) 323-4234', emailAddress: 'michael.alexander@example.org' },
-  { id: '6', family: 'Admin Staff', contact: 'Front Office', relation: 'Staff', phoneType: 'Work', emailType: 'Organization', voice: true, email: true, text: false, phone: '(555) 555-5555', emailAddress: 'office@example.org', unlisted: true },
-];
-
 const channelMeta: Record<Channel, { label: string; hint: string }> = {
-  voice: { label: 'Voice', hint: 'Phone call' },
-  email: { label: 'Email', hint: 'Email notice' },
-  text: { label: 'Text', hint: 'SMS message' },
+  voice: { label: 'Voice', hint: 'Available telephone numbers' },
+  email: { label: 'Email', hint: 'Available email addresses' },
+  text: { label: 'Text', hint: 'Available telephone numbers' },
 };
 
-function typeCode(type: PreferenceRow['phoneType'] | PreferenceRow['emailType']) {
+function typeCode(type: DirectoryPhoneContact['type'] | DirectoryEmailContact['type']) {
   if (type === 'Home') return 'H';
   if (type === 'Work') return 'W';
   if (type === 'Mobile') return 'M';
   return 'O';
 }
 
-function ChannelToggle({ enabled, label, detail, type, onToggle, disabled, unlisted }: { enabled: boolean; label: string; detail: string; type: string; onToggle: () => void; disabled?: boolean; unlisted?: boolean }) {
+function phoneDestinations(member: DirectoryRecipient): ContactDestination[] {
+  return member.phones.filter((item) => item.number).map((item) => ({
+    id: `phone:${item.type}`,
+    typeCode: typeCode(item.type),
+    typeLabel: item.type,
+    value: `${item.number}${item.extension ? ` ext ${item.extension}` : ''}`,
+    primary: Boolean(item.primary),
+    unlisted: Boolean(item.unlisted),
+  }));
+}
+
+function emailDestinations(member: DirectoryRecipient): ContactDestination[] {
+  return member.emails.filter((item) => item.address).map((item) => ({
+    id: `email:${item.type}`,
+    typeCode: typeCode(item.type),
+    typeLabel: item.type,
+    value: item.address,
+    primary: Boolean(item.primary),
+  }));
+}
+
+function destinationsFor(member: DirectoryRecipient, channel: Channel) {
+  return channel === 'email' ? emailDestinations(member) : phoneDestinations(member);
+}
+
+function createInitialPreferences(): PreferenceSelection {
+  return Object.fromEntries(DIRECTORY_RECIPIENTS.map((member) => {
+    const phones = phoneDestinations(member);
+    const emails = emailDestinations(member);
+    const preferredPhone = phones.find((item) => item.primary) ?? phones[0];
+    const preferredEmail = emails.find((item) => item.primary) ?? emails[0];
+    return [member.id, {
+      voice: preferredPhone ? [preferredPhone.id] : [],
+      email: preferredEmail ? [preferredEmail.id] : [],
+      text: preferredPhone ? [preferredPhone.id] : [],
+    }];
+  }));
+}
+
+function ContactChannelCell({
+  channel,
+  destinations,
+  selected,
+  disabled,
+  onToggle,
+  onSetAll,
+}: {
+  channel: Channel;
+  destinations: ContactDestination[];
+  selected: string[];
+  disabled: boolean;
+  onToggle: (id: string) => void;
+  onSetAll: (ids: string[]) => void;
+}) {
+  if (!destinations.length) {
+    return <div className="arc-profile-channel-empty">Not available in profile</div>;
+  }
+  const allSelected = destinations.every((item) => selected.includes(item.id));
   return (
-    <div className="arc-channel-cell">
-      <button type="button" className="arc-channel-toggle" aria-pressed={enabled} aria-label={`${enabled ? 'Disable' : 'Enable'} ${label} for ${detail}`} onClick={onToggle} disabled={disabled}><span className={`arc-preference-switch ${enabled ? 'is-enabled' : ''}`} aria-hidden="true"><i /></span><span>{enabled ? 'On' : 'Off'}</span></button>
-      <div className="arc-channel-value"><b>{type}</b><span title={detail}>{detail}</span>{unlisted ? <em>Unlisted</em> : null}</div>
+    <div className="arc-profile-channel-cell">
+      <div className="arc-profile-channel-summary">
+        <span>{destinations.length} {destinations.length === 1 ? 'contact' : 'contacts'}</span>
+        {destinations.length > 1 ? (
+          <button type="button" onClick={() => onSetAll(allSelected ? [] : destinations.map((item) => item.id))} disabled={disabled}>
+            {allSelected ? 'Clear' : 'Enable all'}
+          </button>
+        ) : null}
+      </div>
+      <div className="arc-profile-channel-options">
+        {destinations.map((destination) => {
+          const active = selected.includes(destination.id);
+          return (
+            <button
+              key={`${channel}-${destination.id}`}
+              type="button"
+              className={`arc-profile-contact-option ${active ? 'is-enabled' : ''}`}
+              aria-pressed={active}
+              aria-label={`${active ? 'Disable' : 'Enable'} ${channelMeta[channel].label} using ${destination.typeLabel} ${destination.value}`}
+              onClick={() => onToggle(destination.id)}
+              disabled={disabled}
+            >
+              <span className={`arc-preference-switch ${active ? 'is-enabled' : ''}`} aria-hidden="true"><i /></span>
+              <span className="arc-profile-contact-type">{destination.typeCode}</span>
+              <span className="arc-profile-contact-copy">
+                <strong title={destination.value}>{destination.value}</strong>
+                <small>{destination.typeLabel}{destination.primary ? ' - Primary' : ''}{destination.unlisted ? ' - Unlisted' : ''}</small>
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 export function ArcAlertsPreferences() {
   const { showToast } = useToast();
-  const [rows, setRows] = useState<PreferenceRow[]>(initialRows.map((row) => ({ ...row })));
+  const [preferences, setPreferences] = useState<PreferenceSelection>(createInitialPreferences);
   const [enabled, setEnabled] = useState(true);
   const [query, setQuery] = useState('');
   const [channel, setChannel] = useState<'all' | Channel>('all');
+
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return rows.filter((row) => {
-      const matchesText = !normalized || [row.family, row.contact, row.relation, row.phone, row.emailAddress, row.phoneType, row.emailType].join(' ').toLowerCase().includes(normalized);
-      return matchesText && (channel === 'all' || row[channel]);
+    return DIRECTORY_RECIPIENTS.filter((member) => {
+      const profileValues = [
+        member.name,
+        ...member.groups,
+        ...member.phones.flatMap((item) => [item.type, item.number, item.extension ?? '']),
+        ...member.emails.flatMap((item) => [item.type, item.address]),
+      ];
+      const matchesText = !normalized || profileValues.join(' ').toLowerCase().includes(normalized);
+      const hasChannel = channel === 'all' || destinationsFor(member, channel).length > 0;
+      return matchesText && hasChannel;
     });
-  }, [channel, query, rows]);
-  const counts = useMemo(() => ({ all: rows.length, voice: rows.filter((row) => row.voice).length, email: rows.filter((row) => row.email).length, text: rows.filter((row) => row.text).length }), [rows]);
-  const toggleChannel = (id: string, key: Channel) => setRows((current) => current.map((row) => row.id === id ? { ...row, [key]: !row[key] } : row));
+  }, [channel, query]);
+
+  const counts = useMemo(() => ({
+    all: DIRECTORY_RECIPIENTS.length,
+    voice: DIRECTORY_RECIPIENTS.filter((member) => phoneDestinations(member).length > 0).length,
+    email: DIRECTORY_RECIPIENTS.filter((member) => emailDestinations(member).length > 0).length,
+    text: DIRECTORY_RECIPIENTS.filter((member) => phoneDestinations(member).length > 0).length,
+  }), []);
+
+  const configuredCount = useMemo(() => Object.values(preferences).reduce((total, item) =>
+    total + item.voice.length + item.email.length + item.text.length, 0), [preferences]);
+
+  const toggleDestination = (memberId: string, key: Channel, destinationId: string) => {
+    setPreferences((current) => {
+      const selected = current[memberId]?.[key] ?? [];
+      const next = selected.includes(destinationId)
+        ? selected.filter((item) => item !== destinationId)
+        : [...selected, destinationId];
+      return { ...current, [memberId]: { ...current[memberId], [key]: next } };
+    });
+  };
+
+  const setAllDestinations = (memberId: string, key: Channel, ids: string[]) => {
+    setPreferences((current) => ({ ...current, [memberId]: { ...current[memberId], [key]: ids } }));
+  };
 
   return (
     <div className="grid gap-4">
-      <header className="arc-view-header arc-preference-page-header"><div><p className="arc-view-kicker">Directory</p><h1>User Preferences</h1><p>Communication details come from Unified Directory. Choose which primary phone and email destinations ArcAlerts may use for each person.</p></div><button type="button" className={`arc-preference-master ${enabled ? 'is-enabled' : ''}`} aria-pressed={enabled} onClick={() => setEnabled((value) => !value)}><span className="arc-preference-master__dot"/><span><strong>{enabled ? 'Preferences enabled' : 'Preferences paused'}</strong><small>{enabled ? 'Channel controls are active' : 'All preference changes are paused'}</small></span></button></header>
-      <section className="surface-card arc-preference-surface arc-preference-surface--refined">
-        <div className="arc-preference-toolbar"><label className="arc-directory-search"><SearchIcon size={16}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search member, family, phone or email" aria-label="Search user preferences"/></label><div className="arc-preference-filter-group"><span className="arc-preference-filter-label">Filter</span><div className="arc-segmented arc-preference-segmented">{(['all','voice','email','text'] as const).map((item) => <button key={item} type="button" className={channel === item ? 'is-active' : ''} onClick={() => setChannel(item)}><span>{item === 'all' ? 'All' : channelMeta[item].label}</span><small>{counts[item]}</small></button>)}</div></div></div>
-        <div className="arc-preference-info-row"><div className="arc-preference-legend"><span><b>H</b> Home</span><span><b>W</b> Work</span><span><b>M</b> Mobile</span><span><b>O</b> Organization</span></div><span className="arc-preference-info-note"><MailIcon size={14}/> Primary directory contact details are shown below.</span></div>
-        <div className="arc-preference-table-wrap arc-preference-table-wrap--refined">
-          <table className="arc-preference-table arc-preference-table--refined"><thead><tr><th><span className="arc-preference-column-title">Member</span><small>Family / relationship</small></th>{(['voice','email','text'] as const).map((key) => <th key={key}><span className="arc-preference-column-title">{channelMeta[key].label}</span><small>{channelMeta[key].hint}</small></th>)}</tr></thead><tbody>{filtered.map((row) => <tr key={row.id}><td><div className="arc-preference-contact arc-preference-contact--two-lines"><span className="arc-member-avatar">{row.contact.split(/\s+/).map((part) => part[0]).slice(0,2).join('')}</span><span><strong>{row.contact}</strong><small>{row.family} · {row.relation}</small></span></div></td><td><ChannelToggle enabled={row.voice} label="voice" detail={row.phone} type={typeCode(row.phoneType)} onToggle={() => toggleChannel(row.id,'voice')} disabled={!enabled} unlisted={row.unlisted}/></td><td><ChannelToggle enabled={row.email} label="email" detail={row.emailAddress} type={typeCode(row.emailType)} onToggle={() => toggleChannel(row.id,'email')} disabled={!enabled}/></td><td><ChannelToggle enabled={row.text} label="text" detail={row.phone} type={typeCode(row.phoneType)} onToggle={() => toggleChannel(row.id,'text')} disabled={!enabled} unlisted={row.unlisted}/></td></tr>)}</tbody></table>
+      <header className="arc-view-header arc-preference-page-header">
+        <div>
+          <p className="arc-view-kicker">Directory</p>
+          <h1>User Preferences</h1>
+          <p>ArcAlerts uses contact methods available on each Unified Directory profile. Enable one, multiple, or all available destinations for each channel.</p>
         </div>
-        {!filtered.length ? <div className="arc-empty-state">No contacts match the current search and channel filter.</div> : null}
-        <footer className="arc-preference-footer"><p><strong>{filtered.length}</strong> contacts shown · Update contact numbers and email addresses in Unified Directory.</p><button type="button" onClick={() => showToast('ArcAlerts user preferences saved ✓')} className="action-primary bg-gradient-to-r from-orange-600 to-rose-500 px-5 text-white">Save preferences</button></footer>
+        <button type="button" className={`arc-preference-master ${enabled ? 'is-enabled' : ''}`} aria-pressed={enabled} onClick={() => setEnabled((value) => !value)}>
+          <span className="arc-preference-master__dot"/>
+          <span><strong>{enabled ? 'Preferences enabled' : 'Preferences paused'}</strong><small>{enabled ? 'Profile channel controls are active' : 'All preference changes are paused'}</small></span>
+        </button>
+      </header>
+      <section className="surface-card arc-preference-surface arc-preference-surface--refined">
+        <div className="arc-preference-toolbar">
+          <label className="arc-directory-search"><SearchIcon size={16}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search member, group, phone or email" aria-label="Search user preferences"/></label>
+          <div className="arc-preference-filter-group"><span className="arc-preference-filter-label">Available channel</span><div className="arc-segmented arc-preference-segmented">{(['all','voice','email','text'] as const).map((item) => <button key={item} type="button" className={channel === item ? 'is-active' : ''} onClick={() => setChannel(item)}><span>{item === 'all' ? 'All' : channelMeta[item].label}</span><small>{counts[item]}</small></button>)}</div></div>
+        </div>
+        <div className="arc-preference-info-row">
+          <div className="arc-preference-legend"><span><b>H</b> Home</span><span><b>W</b> Work</span><span><b>M</b> Mobile</span><span><b>O</b> Organization</span></div>
+          <span className="arc-preference-info-note"><MailIcon size={14}/> Only contact details saved on the member profile are shown; each destination can be enabled independently.</span>
+        </div>
+        <div className="arc-preference-table-wrap arc-preference-table-wrap--refined">
+          <table className="arc-preference-table arc-preference-table--profile-driven">
+            <thead><tr><th><span className="arc-preference-column-title">Member</span><small>Directory profile</small></th>{(['voice','email','text'] as const).map((key) => <th key={key}><span className="arc-preference-column-title">{channelMeta[key].label}</span><small>{channelMeta[key].hint}</small></th>)}</tr></thead>
+            <tbody>{filtered.map((member) => {
+              const memberPreferences = preferences[member.id] ?? { voice: [], email: [], text: [] };
+              const groupLabel = member.groups.length > 1 ? `${member.groups[0]} +${member.groups.length - 1}` : (member.groups[0] ?? 'No group');
+              return <tr key={member.id}>
+                <td><div className="arc-preference-contact arc-preference-contact--two-lines"><span className="arc-member-avatar">{member.name.split(/\s+/).map((part) => part[0]).slice(0,2).join('')}</span><span><strong>{member.name}</strong><small>{groupLabel}</small></span></div></td>
+                {(['voice','email','text'] as const).map((key) => <td key={key}><ContactChannelCell channel={key} destinations={destinationsFor(member, key)} selected={memberPreferences[key]} disabled={!enabled} onToggle={(destinationId) => toggleDestination(member.id, key, destinationId)} onSetAll={(ids) => setAllDestinations(member.id, key, ids)}/></td>)}
+              </tr>;
+            })}</tbody>
+          </table>
+        </div>
+        {!filtered.length ? <div className="arc-empty-state">No member profiles match the current search and available-channel filter.</div> : null}
+        <footer className="arc-preference-footer"><p><strong>{filtered.length}</strong> members shown - <strong>{configuredCount}</strong> channel destinations enabled. Contact details are maintained in Unified Directory.</p><button type="button" onClick={() => showToast('ArcAlerts user preferences saved')} className="action-primary bg-gradient-to-r from-orange-600 to-rose-500 px-5 text-white">Save preferences</button></footer>
       </section>
     </div>
   );

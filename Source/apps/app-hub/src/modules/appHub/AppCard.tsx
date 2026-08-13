@@ -1,5 +1,6 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
+import { appOpensInNewTab } from '@shared/app/config/appCatalog';
 import { resolveAppUrl } from '@shared/platform/navigation/solutionNavigation';
 
 interface AppCardProps {
@@ -24,8 +25,13 @@ export function AppCard({ app, onDetails, onRequest }: AppCardProps) {
   const activatable = Boolean(target) && (mode === 'launchable' || mode === 'external');
   const actionVerb = mode === 'launchable' ? 'Launch' : 'Open';
   const themedActionStyle = { '--hub-action-theme': app.gradient } as CSSProperties;
+  const openInNewTab = appOpensInNewTab(app);
 
-  const activate = () => { if (target) window.location.assign(target); };
+  const activate = () => {
+    if (!target) return;
+    if (openInNewTab) window.open(target, '_blank', 'noopener,noreferrer');
+    else window.location.assign(target);
+  };
   const openDetails = (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); onDetails(app); };
   const requestApp = (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); onRequest(app); };
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -52,7 +58,7 @@ export function AppCard({ app, onDetails, onRequest }: AppCardProps) {
       onKeyDown={activatable ? onKeyDown : undefined}
       tabIndex={activatable ? 0 : undefined}
       role={activatable ? 'link' : undefined}
-      aria-label={activatable ? `${actionVerb} ${app.name}` : undefined}
+      aria-label={activatable ? `${actionVerb} ${app.name}${openInNewTab ? ' in a new tab' : ''}` : undefined}
     >
       <span className="hub-module-card__accent" style={{ background: app.gradient }} aria-hidden="true" />
       <span className="hub-module-card__wash" style={{ background: app.gradient }} aria-hidden="true" />
@@ -66,7 +72,7 @@ export function AppCard({ app, onDetails, onRequest }: AppCardProps) {
         <p>{app.description}</p>
       </div>
       <div className={`hub-card-actions ${workspaceCard ? 'hub-card-actions--launchable' : 'hub-card-actions--catalog'}`}>
-        {activatable ? <a href={target} onClick={(event) => event.stopPropagation()} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>{actionVerb}</span><span aria-hidden="true">→</span></a> : null}
+        {activatable ? <a href={target} target={openInNewTab ? '_blank' : undefined} rel={openInNewTab ? 'noopener noreferrer' : undefined} onClick={(event) => event.stopPropagation()} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>{actionVerb}</span><span aria-hidden="true">{openInNewTab ? '↗' : '→'}</span></a> : null}
         {mode === 'catalog' ? <button type="button" onClick={requestApp} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>Request app</span><span aria-hidden="true">→</span></button> : null}
         {mode === 'unavailable' ? <span className="hub-card-action hub-card-action--muted">Coming soon</span> : null}
         {deploymentPending ? <span className="hub-card-action hub-card-action--muted">Deployment pending</span> : null}

@@ -107,7 +107,7 @@ export const APP_CATALOG: CatalogApp[] = [
     id: "support-center", name: "Support Center", shortName: "Support", category: "Member Services",
     description: "Submit support tickets and keep the complete conversation history for every Catholic Solutions request in one workspace.",
     icon: "🛟", gradient: "linear-gradient(135deg,#164E63,#0E7490)",
-    route: "/",
+    route: "/", navigationTarget: "same-tab",
     keywords: ["support", "help", "ticket", "resources", "member services", "contact"],
     features: ["🎫 Ticket inbox", "💬 Conversation history", "📎 Attachments", "🧭 Product routing"],
     stats: [{ value: "3", label: "Sample tickets" }, { value: "9", label: "Conversation entries" }, { value: "1 day", label: "Typical response" }, { value: "12", label: "Products supported" }],
@@ -138,17 +138,17 @@ export const APP_CATALOG: CatalogApp[] = [
   },
   {
     id: "ai-lesson-plan", name: "AI Lesson Plan Generator", shortName: "Lesson Plans", category: "AI · Teaching",
-    description: "Plan, review, and reuse weekly lessons in one connected teaching workspace with filters by term, grade, course, and teacher.",
-    icon: "📝", gradient: "linear-gradient(135deg,#D97706,#FBBF24)", route: "/",
-    keywords: ["lesson plan", "teacher", "week view", "planning", "course"],
-    features: ["📅 Week / day / list views", "🔎 Term & teacher filters", "🗂️ Reusable lesson records"],
-    stats: [{ value: "8", label: "Plans this week" }, { value: "5", label: "Teaching days" }, { value: "3", label: "View modes" }, { value: "Connected", label: "Workspace" }],
-    kind: "launchable", status: "active", statusLabel: "Active", statusDetail: "● Active · Lesson planning workspace",
+    description: "Open the current XtraCoach lesson-planning experience while the Catholic Solutions native workspace remains under review.",
+    icon: "📝", gradient: "linear-gradient(135deg,#D97706,#FBBF24)",
+    externalUrl: "https://demo.optionc.com/XtraCoach", navigationTarget: "new-tab",
+    keywords: ["lesson plan", "teacher", "planning", "xtracoach"],
+    features: ["📝 Lesson planning", "✨ XtraCoach", "📚 Teaching workflow"],
+    stats: [],
+    kind: "external", status: "available", statusLabel: "Open XtraCoach", statusDetail: "Opens XtraCoach in a new tab",
     details: {
-      longDescription: "A first-party Catholic Solutions lesson-planning workspace for reviewing weekly teaching plans, filtering by term, grade, course and teacher, and moving between week, day and list views.",
-      included: ["Week, day and list plan views", "Term, week, grade, course and teacher filters", "Searchable populated lesson records", "Export-ready planning table", "Shared Catholic Solutions authentication and shell"],
+      longDescription: "AI Lesson Plan Generator currently opens the approved XtraCoach lesson-planning experience in a separate browser tab. The native Catholic Solutions lesson-plan workspace is retained only as an implementation prototype and is not the active product destination.",
+      included: ["Current XtraCoach lesson-planning experience", "Separate-tab launch that keeps Catholic Solutions open", "Existing XtraCoach teaching workflow"],
       integrations: ["🎓 OptionC School", "📚 Catholic Content"],
-      activity: [{ title: "Week plan opened — Aug 10–14", meta: "Today" }, { title: "Religion 6 plan reviewed", meta: "Today" }, { title: "Lesson-plan workspace connected", meta: "Aug 13" }],
     },
   },
   {
@@ -200,15 +200,16 @@ export const APP_CATALOG: CatalogApp[] = [
     },
   },
 
-  // Partner products hosted outside the Catholic Solutions SSO boundary. Published links use
-  // normal same-tab navigation so development and hosted behavior stay predictable. Entries
+  // Partner products hosted outside the Catholic Solutions SSO boundary. Navigation behavior is
+  // explicit metadata: only approved partner destinations use `new-tab`; all unspecified apps default
+  // to same-tab navigation. Entries
   // deliberately carry no fabricated usage metrics or feature detail. An entry without
   // `externalUrl` is not published yet and renders as a non-interactive "Coming soon" card.
   {
     id: "ferrerworks", name: "FerrerWorks", shortName: "FerrerWorks", category: "Facility Management",
     description: "Facility management for school, hall and parish grounds. Opens on the FerrerWorks site.",
     icon: "🏢", gradient: "linear-gradient(135deg,#374151,#6B7280)",
-    externalUrl: "https://ferrerworks.com",
+    externalUrl: "https://ferrerworks.com", navigationTarget: "new-tab",
     keywords: ["facility", "management", "rooms", "campus", "maintenance", "ferrerworks"],
     features: ["🏢 Facility management"],
     stats: [],
@@ -219,7 +220,7 @@ export const APP_CATALOG: CatalogApp[] = [
     id: "mass-card-requests", name: "Mass Card Requests", shortName: "Mass Cards", category: "Liturgy & Offerings",
     description: "Request and manage Mass cards online. Opens on the MassCardRequests site.",
     icon: "💌", gradient: "linear-gradient(135deg,#9F1239,#F43F5E)",
-    externalUrl: "https://masscardrequests.com",
+    externalUrl: "https://masscardrequests.com", navigationTarget: "new-tab",
     keywords: ["mass", "card", "requests", "offering", "intention", "liturgy"],
     features: ["💌 Mass card requests"],
     stats: [],
@@ -230,7 +231,7 @@ export const APP_CATALOG: CatalogApp[] = [
     id: "vincent-volunteer", name: "Vincent Volunteer", shortName: "Vincent Volunteer", category: "Service & Community",
     description: "Volunteer coordination for your parish and school community. Opens on the Vincent Volunteer site.",
     icon: "🤝", gradient: "linear-gradient(115deg,#1E2340,#7C2D4B)",
-    externalUrl: "https://vincentvolunteer.com",
+    externalUrl: "https://vincentvolunteer.com", navigationTarget: "new-tab",
     keywords: ["volunteer", "service", "community", "sign-up", "hours", "vincent"],
     features: ["🤝 Volunteer coordination"],
     stats: [],
@@ -241,7 +242,7 @@ export const APP_CATALOG: CatalogApp[] = [
     id: "berchmans", name: "Berchmans", shortName: "Berchmans", category: "Liturgy",
     description: "Altar server scheduling and assignments. Opens on the Berchmans site.",
     icon: "🗓️", gradient: "linear-gradient(135deg,#15803D,#4ADE80)",
-    externalUrl: "https://berchmans.app",
+    externalUrl: "https://berchmans.app", navigationTarget: "new-tab",
     keywords: ["altar", "server", "scheduler", "mass", "liturgy", "berchmans"],
     features: ["🗓️ Altar server scheduling"],
     stats: [],
@@ -252,7 +253,7 @@ export const APP_CATALOG: CatalogApp[] = [
     id: "alive-date", name: "Alive Date", shortName: "Alive Date", category: "Records & Directory",
     description: "Check each person's alive date for directory and register upkeep. Opens on the Alive Date site.",
     icon: "📅", gradient: "linear-gradient(135deg,#92400E,#F59E0B)",
-    externalUrl: "https://alivedate.com",
+    externalUrl: "https://alivedate.com", navigationTarget: "new-tab",
     keywords: ["alive", "date", "records", "register", "directory", "alivedate"],
     features: ["📅 Alive-date lookup"],
     stats: [],
@@ -281,3 +282,5 @@ export const availableSwitcherApps = yourApps.filter((app) => app.kind === 'laun
 export const aiApps = APP_CATALOG.filter((app) => app.kind === 'ai');
 export const discoverApps = APP_CATALOG.filter((app) => app.kind === 'discover');
 export const getAppById = (id: string) => APP_CATALOG.find((app) => app.id === id);
+/** Central App Hub / switcher launch policy. */
+export const appOpensInNewTab = (app: CatalogApp) => app.navigationTarget === 'new-tab';
