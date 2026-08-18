@@ -1,7 +1,7 @@
 {
   "name": "catholic-solutions-workspace",
   "private": true,
-  "version": "1.6.4",
+  "version": "1.6.7",
   "type": "module",
   "workspaces": [
     "apps/*",

@@ -4,3 +4,11 @@
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^ index.html [L]
 </IfModule>
+
+<IfModule mod_headers.c>
+  <Files "app-switcher.js">
+    Header set Cache-Control "public, max-age=300, must-revalidate"
+    Header set Access-Control-Allow-Origin "*"
+  </Files>
+</IfModule>
+

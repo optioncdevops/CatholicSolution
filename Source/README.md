@@ -1,11 +1,30 @@
-# Catholic Solutions Workspace — v1.6.4
+# Catholic Solutions Workspace — v1.6.7
 
-**Release:** v1.6.4  
+**Release:** v1.6.7  
 **Architecture:** independent-domain multi-app SaaS monorepo with centralized login
 
 This repository contains one independently deployable React/Vite application per Catholic Solutions product. Product applications are deployment-independent, while authentication entry is centralized on one Catholic Solutions Login domain. Shared platform source is maintained once under `packages/shared`.
 
+### v1.6.7 App Hub production-build fix
 
+- Fixes the App Hub `tsc -b` production failure introduced by the external App Switcher build-time manifest import.
+- `apps/app-hub/tsconfig.node.json` now explicitly owns the shared manifest builder and its direct TypeScript dependencies, provides the shared alias mapping used by `appCatalog.ts`, and targets ES2022 for the catalog/manifest language features.
+- The fix keeps the external launcher centralized in `packages/shared`; no duplicate manifest/catalog was added and no application-local switcher implementation is introduced.
+
+### v1.6.6 Centrally hosted external App Switcher plugin
+
+- Internal Catholic Solutions workspaces continue to receive the shared Switch App launcher through `packages/shared` -> `AppLayout` -> `PlatformTopbar`; there is no per-page switcher copy to maintain.
+- App Hub now publishes a framework-neutral Web Component at `/integrations/app-switcher/app-switcher.js`. External teams can add one hosted script plus `<catholic-solutions-app-switcher current-app-id="...">` without importing the monorepo, React, Tailwind, or duplicating the application list.
+- The published external asset is generated at App Hub build time from the same centralized `APP_CATALOG` and production domain configuration. A partner product is registered once by the Catholic Solutions team; the external application only keeps its assigned stable `current-app-id`.
+- The Web Component uses Shadow DOM for style isolation, keeps the current application inert, includes only products with real destinations, preserves explicit same-tab/new-tab policy, and keeps `All apps in App Hub` as a separate footer action.
+- External-team onboarding and the drop-in integration snippet are documented in `docs/integrations/EXTERNAL_APP_SWITCHER.md`.
+
+### v1.6.5 External-ready application launcher
+
+- The shared Switch App launcher now resolves every destination through one navigation contract used by the launcher, App Hub cards, and app Details actions.
+- Approved external SaaS/apps stay catalog-only: add an `external` `APP_CATALOG` entry with an absolute HTTP(S) `externalUrl`; do **not** create an `apps/*` workspace or `SOLUTION_REGISTRY` entry solely to expose it in the launcher.
+- External URLs are accepted only when they are valid HTTP(S) destinations. Explicit `navigationTarget: "new-tab"` continues to add protected `noopener noreferrer` behavior; otherwise the existing same-tab default applies.
+- The launcher subtitle now describes both Catholic Solutions workspaces and approved connected apps rather than implying that every destination is an internally hosted workspace.
 
 ### v1.6.4 ArcAlerts space-optimized user preferences
 
@@ -299,7 +318,7 @@ Generated `.artifacts/` content is release output, not development source of tru
 
 `packages/shared` contains only cross-solution concerns: centralized-auth redirect/return handling, authentication guard/shell, common topbar, 9-dot app switcher, profile/account UI, footer, catalog, environment/domain resolver, browser branding, user context, toasts, common UI primitives, and design-system styles.
 
-The shared switcher is catalog-synchronized with the published destinations in App Hub **Your Apps**. It exposes available first-party Catholic Solutions applications plus published partner products; unpublished `Friar Friend` remains App Hub-only until it has a destination. The launcher uses three columns whenever more than six destinations are available and falls back to two columns on very narrow screens.
+The shared switcher is synchronized with the canonical `APP_CATALOG` and the shared destination resolver. It exposes every registered Catholic Solutions application with a configured origin plus every approved catalog-only application with a valid HTTP(S) `externalUrl`; no switcher-specific app list is maintained. External apps do not require an `apps/*` workspace or `SOLUTION_REGISTRY` entry. The launcher uses three columns whenever more than six destinations are available and falls back to two columns on very narrow screens.
 
 User-facing partner names are standardized as **Vincent Volunteer**, **Alive Date**, and **Friar Friend**; stable product IDs and public URLs remain unchanged. The desktop Login is tuned as a `100dvh` composition with a wider catalog showcase so the complete product ecosystem and credential area remain readable without page scrolling at supported desktop sizes. App Hub **Your Apps** cards use premium white surfaces with dark text and retain each product's unique gradient through its accent/icon treatment.
 

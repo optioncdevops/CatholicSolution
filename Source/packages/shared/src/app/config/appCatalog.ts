@@ -200,11 +200,11 @@ export const APP_CATALOG: CatalogApp[] = [
     },
   },
 
-  // Partner products hosted outside the Catholic Solutions SSO boundary. Navigation behavior is
-  // explicit metadata: only approved partner destinations use `new-tab`; all unspecified apps default
-  // to same-tab navigation. Entries
-  // deliberately carry no fabricated usage metrics or feature detail. An entry without
-  // `externalUrl` is not published yet and renders as a non-interactive "Coming soon" card.
+  // Catalog-only products hosted outside the Catholic Solutions solution registry / SSO boundary.
+  // Adding another approved external application requires only a catalog entry with an absolute
+  // HTTP(S) `externalUrl`; it must not be coupled to an `apps/*` workspace merely to appear in the
+  // launcher. Navigation behavior remains explicit metadata, and unspecified apps default to same-tab.
+  // Entries deliberately carry no fabricated usage metrics or feature detail.
   {
     id: "ferrerworks", name: "FerrerWorks", shortName: "FerrerWorks", category: "Facility Management",
     description: "Facility management for school, hall and parish grounds. Opens on the FerrerWorks site.",

@@ -1,18 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { appOpensInNewTab, APP_CATALOG } from '@shared/app/config/appCatalog';
+import { APP_CATALOG } from '@shared/app/config/appCatalog';
 import type { CatalogApp } from '@shared/app/types/app';
 import { AppsIcon, ChevronDownIcon, ChevronRightIcon } from '@shared/app/components/UiIcons';
-import { solutionForApp } from '@shared/platform/config/solutionRegistry';
-import { resolveAppUrl, resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
+import { resolveAppDestination, resolvePlatformUrl, type AppDestination } from '@shared/platform/navigation/solutionNavigation';
 
 interface PlatformAppSwitcherProps {
   currentApp: CatalogApp;
-}
-
-/** A catalog product is a switcher destination when it resolves to a first-party workspace URL or a partner URL. */
-function switcherTarget(app: CatalogApp) {
-  return solutionForApp(app) ? resolveAppUrl(app) : app.externalUrl;
 }
 
 export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
@@ -45,9 +39,8 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
     };
   }, []);
 
-  const renderApp = (app: CatalogApp) => {
-    const current = app.id === currentApp.id && app.kind !== 'external';
-    const target = switcherTarget(app);
+  const renderApp = (app: CatalogApp, destination: AppDestination) => {
+    const current = app.id === currentApp.id;
     const content = (
       <>
         <span className="app-switcher__app-icon" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
@@ -66,30 +59,24 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
       );
     }
 
-    if (!target) {
-      return (
-        <div className="app-switcher__tile app-switcher__tile--disabled" aria-disabled="true">
-          {content}
-        </div>
-      );
-    }
-
-    const openInNewTab = appOpensInNewTab(app);
     return (
       <a
-        href={target}
-        target={openInNewTab ? '_blank' : undefined}
-        rel={openInNewTab ? 'noopener noreferrer' : undefined}
+        href={destination.href}
+        target={destination.target}
+        rel={destination.rel}
         onClick={() => setOpen(false)}
         className="app-switcher__tile"
-        aria-label={`Open ${app.name}${openInNewTab ? ' in a new tab' : ''}`}
+        aria-label={`Open ${app.name}${destination.openInNewTab ? ' in a new tab' : ''}`}
       >
         {content}
       </a>
     );
   };
 
-  const switcherApps = APP_CATALOG.filter((app) => Boolean(switcherTarget(app)));
+  const switcherApps = APP_CATALOG.flatMap((app) => {
+    const destination = resolveAppDestination(app);
+    return destination ? [{ app, destination }] : [];
+  });
   const gridClass = switcherApps.length > 6
     ? 'app-switcher__grid app-switcher__grid--three'
     : 'app-switcher__grid app-switcher__grid--two';
@@ -117,13 +104,13 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
           <div className="app-switcher__header">
             <div>
               <h2 id={headingId}>Jump to another app</h2>
-              <p>Open any published Catholic Solutions workspace</p>
+              <p>Open Catholic Solutions and approved connected apps</p>
             </div>
             <span className="app-switcher__count">{switcherApps.length}</span>
           </div>
 
           <ul className={gridClass}>
-            {switcherApps.map((app) => <li key={app.id}>{renderApp(app)}</li>)}
+            {switcherApps.map(({ app, destination }) => <li key={app.id}>{renderApp(app, destination)}</li>)}
           </ul>
 
           <div className="app-switcher__footer">

@@ -42,9 +42,10 @@ export interface CatalogApp {
    */
   route?: string;
   /**
-   * Absolute URL of a partner product hosted outside the Catholic Solutions SSO
-   * boundary. Present only for `external` apps. An `external` app without this
-   * value is not yet published and renders as a non-interactive "Coming soon" card.
+   * Absolute HTTP(S) destination for a catalog-only application hosted outside
+   * the Catholic Solutions solution registry / central-session boundary. Adding
+   * one does not require an `apps/*` workspace or SOLUTION_REGISTRY entry. An
+   * `external` app without this value is not published and remains non-launchable.
    */
   externalUrl?: string;
   /**

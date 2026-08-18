@@ -1,6 +1,6 @@
-# Catholic Solutions — Living Specification v1.6.2
+# Catholic Solutions — Living Specification v1.6.7
 
-> **Canonical release baseline:** v1.0.0. **Current release:** v1.6.2. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
+> **Canonical release baseline:** v1.0.0. **Current release:** v1.6.7. The v1.x line remains the first formal architecture generation; pre-baseline prototype iteration numbers are intentionally not part of the release sequence.
 
 ## v1.0 Repository and Solution Architecture
 
@@ -16,8 +16,8 @@
 - `config/solutions.json` is the machine-readable solution/build manifest; runtime domains are centralized in `packages/shared/src/auth/appAuthConfig.ts`.
 
 **Development model:** Spec-driven development  
-**Current version:** 1.6.0  
-**Last updated:** August 13, 2026  
+**Current version:** 1.6.7  
+**Last updated:** August 18, 2026  
 **Status:** Active source of truth
 
 This is the only maintained specification document for the React implementation. Every behavior, visual-standard, architecture, data, validation, or scope change must update this file in the same delivery as the code.
@@ -2242,3 +2242,153 @@ This release supersedes earlier review-batch UI contracts where they conflict wi
 - `apps/app-hub/src/modules/appHub/AppCard.tsx` — name promoted into the logo row, new secondary meta row, description-only content block.
 - `packages/shared/src/designSystem/styles.css` — `v1.7.7` block (card density, meta row, action-row compaction, six-tier grid, section-emphasis retune).
 - Validation: `tsc -b` (App Hub) 0 diagnostics; `eslint apps/app-hub/src` 0 problems; `npm run build:hub` succeeds; shared CSS balanced (3,127 / 3,127 braces); resolved-cascade inspection confirms 3/4/5/6 columns at 1024/1366/1440/1700+ px. Rendered-browser verification was not performed in this environment.
+
+## 44. v1.6.5 — External-ready application launcher contract
+
+**Date:** August 18, 2026. Approved extension of §42. The launcher remains catalog-driven and architecture-neutral: approved applications hosted outside Catholic Solutions may participate without becoming monorepo workspaces or being placed inside the Catholic Solutions authentication boundary. Where this section clarifies external-destination handling, it governs over older partner-only wording.
+
+### 44.1 Destination ownership and configuration
+
+- **Owner:** Senior Frontend Developer.
+- `APP_CATALOG` remains the single product metadata source. A standalone SaaS/application that is not implemented under `apps/*` is represented as `kind: 'external'` with an absolute HTTP(S) `externalUrl` and, only when needed, an explicit `navigationTarget`.
+- An external product MUST NOT be added to `SOLUTION_REGISTRY`, given a fake internal route, or wrapped in a Catholic Solutions workspace merely to make it appear in Switch App. `SOLUTION_REGISTRY` remains reserved for genuine first-party independently deployed Catholic Solutions applications.
+- The shared switcher continues to inspect the complete catalog and includes every entry for which the canonical destination resolver returns a real destination. No switcher-specific app array or URL list is permitted.
+- Adding another approved external application therefore requires catalog/configuration only; the shared launcher component itself must not be edited for each new product. App Hub section/entitlement placement remains governed by the existing App Hub rules and is not inferred from launcher presence.
+
+### 44.2 Canonical destination resolver and security
+
+- `resolveAppDestination(app)` in `packages/shared/src/platform/navigation/solutionNavigation.ts` is the canonical UI launch resolver. An explicit catalog `externalUrl` is authoritative for a direct-open product, even if a dormant/internal prototype with the same stable app id remains registered; otherwise genuine first-party products resolve through the existing solution/environment registry.
+- Catalog-only destinations are launchable only when `externalUrl` is a valid absolute `http:` or `https:` URL. Empty, malformed, and non-web schemes are rejected and therefore omitted from the switcher rather than rendered as unsafe links. Production external destinations SHOULD use HTTPS.
+- `navigationTarget` remains the single tab-policy source. `new-tab` produces `_blank` plus `rel="noopener noreferrer"`; unspecified products retain the existing same-tab default.
+- Credentials, access tokens, tenant secrets, or user data MUST NOT be embedded in catalog URLs. A later federated/SSO integration must use a dedicated identity/broker flow while keeping this destination contract as the launcher boundary; direct external-link support does not imply SSO coverage.
+- App Hub cards and the shared Details modal consume the same destination resolver so launch availability, tab behavior, and URL safety cannot drift from the switcher.
+
+### 44.3 Launcher UX
+
+- Existing two/three-column density, current-app inert state, focus/hover behavior, bounded scrolling, product identity, and `All apps in App Hub` footer remain unchanged.
+- The subtitle reads **Open Catholic Solutions and approved connected apps** so the UI accurately represents a mixed launcher containing first-party and outside applications.
+- External applications remain visually equal launcher destinations; no badge is required merely because hosting is external. Their presence does not imply Catholic Solutions ownership or authentication coverage.
+
+### 44.4 Implementation traceability
+
+- `packages/shared/src/platform/navigation/solutionNavigation.ts` — canonical `AppDestination` contract, HTTP(S) validation, first-party/external resolution, protected new-tab metadata.
+- `packages/shared/src/platform/shell/PlatformAppSwitcher.tsx` — all destinations derived from `APP_CATALOG` through the canonical resolver; connected-app subtitle.
+- `apps/app-hub/src/modules/appHub/AppCard.tsx` — App Hub launch/logo links consume the same destination contract.
+- `packages/shared/src/app/components/AppDetailsModal.tsx` — Details launch action consumes the same destination contract.
+- `packages/shared/src/app/types/app.ts` and `packages/shared/src/app/config/appCatalog.ts` — developer-facing external-app contract/documentation.
+- `README.md` — concise external-app onboarding guidance.
+
+### 44.5 Acceptance and validation
+
+1. Existing registered Catholic Solutions applications continue to resolve through `SOLUTION_REGISTRY` and existing environment/domain rules.
+2. Existing approved external catalog products continue to launch without any required `apps/*` workspace or solution-registry entry; an explicit direct-open catalog URL takes precedence over any dormant registered prototype.
+3. A future external catalog entry with a valid HTTP(S) `externalUrl` becomes switcher-eligible without modifying `PlatformAppSwitcher.tsx`.
+4. Invalid or non-HTTP(S) external URLs do not produce launcher links.
+5. `navigationTarget: 'new-tab'` retains `_blank` + `noopener noreferrer`; same-tab remains the default.
+6. Current app remains inert and `All apps in App Hub` remains separate.
+7. App Hub and Details actions use the same resolved destination policy as Switch App.
+8. Release metadata is synchronized to **v1.6.5** across root package metadata, solution manifest, README, and this Living Specification.
+
+**Validation record:** targeted static inspection confirms all three launch surfaces import `resolveAppDestination`; the catalog contains 18 products, 7 direct external destinations, and 0 malformed/non-HTTP(S) external URLs; the modified TS/TSX files report 0 parser syntax diagnostics; this change adds no solution-registry entries; release metadata is synchronized to v1.6.5. Dependency-backed TypeScript/lint/build validation could not be completed because the uploaded archive does not contain installed dependencies.
+
+## 45. v1.6.6 — Central external App Switcher plugin and single registration contract
+
+**Date:** August 18, 2026. This section extends §44 without changing the existing multi-app deployment architecture, authentication boundary, App Hub section semantics, or product routes. The goal is to make the existing shared launcher consumable by independently owned external applications without copying Catholic Solutions UI/catalog source into those applications.
+
+### 45.1 Central ownership and internal propagation
+
+- **Owner:** Platform / Frontend Engineering.
+- `packages/shared` remains the canonical source for the authenticated Catholic Solutions shell and Switch App behavior. Any Catholic Solutions workspace using `AppLayout` -> `PlatformTopbar` continues to receive the shared launcher; product pages MUST NOT carry local switcher copies.
+- Catalog/destination registration remains centralized in `packages/shared/src/app/config/appCatalog.ts`. A product with no real destination MUST NOT be published in either launcher.
+- Internal workspaces inherit shared-source changes when their normal deployment build consumes the updated `packages/shared` source. No application-specific switcher implementation is permitted.
+- Current-app state is determined solely by stable application ID and MUST remain non-navigating even when that product's active destination is external.
+
+### 45.2 External application plugin
+
+- App Hub MUST publish a framework-neutral Web Component at `/integrations/app-switcher/app-switcher.js` as part of its normal Vite build and development server.
+- The external integration asset MUST be generated from the same `APP_CATALOG` and approved production domain configuration used by Catholic Solutions. External teams MUST NOT maintain a second application catalog or destination map.
+- The partner integration surface is:
+
+  `<catholic-solutions-app-switcher current-app-id="<assigned-app-id>"></catholic-solutions-app-switcher>`
+
+  plus the centrally hosted App Hub script.
+- The component MUST have no React/Tailwind/Bootstrap dependency in the partner application and MUST isolate its presentation with Shadow DOM so host-site CSS cannot silently change launcher layout.
+- The partner application supplies only its Catholic Solutions-assigned stable application ID at runtime. Product name, category, icon treatment, destinations, count, and App Hub footer URL are centrally supplied by the published launcher asset.
+- Partner applications may be implemented in any web technology capable of loading a browser script and custom element. They MUST NOT be added to the React monorepo merely to participate in the launcher.
+
+### 45.3 External-team onboarding contract
+
+Before registration, the external team provides Catholic Solutions with product name, requested/stable ID, short display name, category, approved HTTPS production destination, same-tab/new-tab preference, approved icon/logo treatment, and short description. SSO/federation details are separate identity work and are not implied by launcher registration.
+
+Catholic Solutions owns catalog registration and App Hub deployment. The external team adds the hosted script once and sets `current-app-id`. Subsequent catalog changes are delivered through the centrally hosted asset rather than requiring the partner to copy or edit a launcher list. A strict partner Content Security Policy must permit the Catholic Solutions App Hub origin in `script-src`.
+
+### 45.4 Security and interaction requirements
+
+1. Only centrally approved entries with resolved HTTP(S) destinations are emitted.
+2. New-tab destinations use `noopener noreferrer`; same-tab remains the default unless explicitly configured otherwise.
+3. The current application is inert, uses only the approved active background treatment, and does not show CURRENT/check badges or actionable hover feedback.
+4. Other applications retain keyboard focus, hover, and navigation behavior.
+5. `All apps in App Hub` remains a separate footer action to the central App Hub.
+6. The launcher performs navigation only; it does not share credentials, tokens, cookies, or authentication state with an external SaaS product.
+7. External launcher source MUST use safe DOM text assignment for catalog labels and MUST NOT inject untrusted product strings as HTML.
+
+### 45.5 Implementation traceability
+
+- `packages/shared/src/platform/shell/PlatformAppSwitcher.tsx` — shared internal launcher and ID-only inert-current rule.
+- `packages/shared/src/platform/integrations/app-switcher/manifest.ts` — production external-launcher manifest derived from centralized catalog/domain configuration.
+- `packages/shared/src/platform/integrations/app-switcher/catholic-solutions-app-switcher.js` — framework-neutral Shadow DOM Web Component source.
+- `apps/app-hub/vite.config.ts` — development/build publisher for the stable `/integrations/app-switcher/app-switcher.js` asset with the generated manifest embedded.
+- `apps/app-hub/vercel.json`, `apps/app-hub/netlify.toml`, `apps/app-hub/public/web.config`, and `apps/app-hub/public/.htaccess` — short revalidation/CORS delivery policy for the stable external integration asset across supported hosts.
+- `docs/integrations/EXTERNAL_APP_SWITCHER.md` — partner onboarding, integration snippet, ownership and CSP guidance.
+- `docs/integrations/external-app-switcher-example.html` — minimal host-application example.
+
+### 45.6 Acceptance criteria
+
+1. Existing internal solution pages continue to receive the switcher through the shared layout/topbar without product-local copies.
+2. App Hub development/build configuration publishes one stable external switcher asset with a short revalidation policy so central updates do not require partner releases.
+3. The published asset contains the same set of approved real destinations as the centralized production launcher contract.
+4. An external HTML page can integrate the launcher with one script tag and one custom element, without React or Catholic Solutions CSS dependencies.
+5. Setting an external product's registered ID as `current-app-id` makes its tile inert while all other approved destinations remain navigable.
+6. Partner integration requires no duplicate catalog list and no `apps/*` workspace for the external SaaS product.
+7. Unsafe/non-HTTP(S) external destinations remain excluded and protected new-tab behavior is preserved.
+8. Root release metadata, solution manifest, README, and Living Specification are synchronized to **v1.6.6**.
+
+### 45.7 Validation record
+
+- Static source validation confirms the internal switcher remains centralized through `AppLayout` -> `PlatformTopbar` -> `PlatformAppSwitcher`.
+- External Web Component source is framework-neutral, Shadow DOM scoped, uses text assignment for catalog labels, and applies `noopener noreferrer` to new-tab links.
+- App Hub Vite configuration emits the integration asset from the shared plugin source with a build-time manifest derived from centralized `APP_CATALOG` and production origins.
+- The current-app check is ID-based for both internal and external launcher use.
+- Full dependency-backed Vite build/typecheck/lint remains environment-dependent when `node_modules` is not present in the supplied source archive; targeted syntax and generated-asset checks are required before delivery.
+
+## 46. v1.6.7 — App Hub build-project boundary fix for external launcher publishing
+
+**Date:** August 18, 2026. This section is a build/configuration correction to §45 only. The centralized launcher architecture, partner integration contract, catalog ownership, routes, authentication behavior, and UI are unchanged.
+
+### 46.1 Requirement
+
+- **Owner:** Frontend / Build Engineering.
+- App Hub production builds MUST type-check the build-time external-switcher manifest dependency graph without `TS6307` project-file errors or `TS2307` shared-alias errors.
+- Because `apps/app-hub/vite.config.ts` imports the shared manifest builder during the Node/Vite build, `apps/app-hub/tsconfig.node.json` MUST explicitly include that builder and its direct shared TypeScript dependencies instead of relying on the browser application tsconfig.
+- The Node project MUST resolve the existing `@shared/*` alias used by the catalog and MUST target a modern ECMAScript level compatible with `Set`, `Array.find`, `Array.flatMap`, and `String.startsWith`.
+- The fix MUST NOT duplicate `APP_CATALOG`, move external applications into `apps/*`, or create a second switcher manifest source.
+
+### 46.2 Implementation traceability
+
+- `apps/app-hub/tsconfig.node.json` — adds `target: ES2022`, a Node-project `rootDir` covering App Hub plus the shared build-time files, the existing `@shared/*` path mapping, and explicit inclusion of `manifest.ts`, `appCatalog.ts`, `appAuthConfig.ts`, and `app.ts`.
+- No runtime component, catalog entry, route, authentication file, or external-team integration markup changes are required.
+
+### 46.3 Acceptance criteria
+
+1. `npm run build:production --workspace @catholic-solutions/app-hub` no longer reports the five `TS6307` / `TS2307` diagnostics from the external switcher manifest import chain.
+2. The App Hub Vite config continues to generate `/integrations/app-switcher/app-switcher.js` from the centralized shared manifest/catalog.
+3. Internal applications continue using `AppLayout -> PlatformTopbar -> PlatformAppSwitcher`; no product-local switcher copies are introduced.
+4. External applications continue using the hosted Web Component and assigned `current-app-id`; no partner-side catalog is introduced.
+5. Root package metadata, lockfile root metadata, solution manifest, README, and Living Specification are synchronized to **v1.6.7**.
+
+### 46.4 Validation record
+
+- Reproduced the reported TypeScript project-boundary cause: `vite.config.ts` imports `packages/shared/src/platform/integrations/app-switcher/manifest.ts`, while the previous Node tsconfig included only `vite.config.ts`.
+- Targeted TypeScript validation of the corrected Node project with dependency type shims reports 0 diagnostics, confirming the `TS6307`, alias-resolution, and modern-library issues are resolved by the project configuration.
+- A full dependency-backed Vite build could not be executed in this environment because package installation was unavailable; the supplied repository already declares the required Vite/Node/TypeScript dependencies and the user should run the normal workspace production build after extraction.
+

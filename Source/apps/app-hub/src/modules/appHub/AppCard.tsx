@@ -1,7 +1,6 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
-import { appOpensInNewTab } from '@shared/app/config/appCatalog';
-import { resolveAppUrl } from '@shared/platform/navigation/solutionNavigation';
+import { resolveAppDestination } from '@shared/platform/navigation/solutionNavigation';
 
 interface AppCardProps {
   app: CatalogApp;
@@ -16,22 +15,23 @@ interface AppCardProps {
 
 type CardMode = 'launchable' | 'external' | 'unavailable' | 'catalog';
 
-function resolveMode(app: CatalogApp): CardMode {
+function resolveMode(app: CatalogApp, hasDestination: boolean): CardMode {
   if (app.route) return 'launchable';
   if (app.kind !== 'external') return 'catalog';
-  return app.externalUrl ? 'external' : 'unavailable';
+  return hasDestination ? 'external' : 'unavailable';
 }
 
 export function AppCard({ app, onDetails, onRequest, hidePrimaryAction = false, actionMode = 'launch', statusMode = 'catalog' }: AppCardProps) {
-  const mode = resolveMode(app);
+  const destination = resolveAppDestination(app);
+  const mode = resolveMode(app, Boolean(destination));
   const requestMode = actionMode === 'request';
   const workspaceCard = mode !== 'catalog';
-  const target = mode === 'launchable' ? resolveAppUrl(app) : app.externalUrl;
+  const target = destination?.href;
   const deploymentPending = mode === 'launchable' && !target;
   const activatable = !requestMode && Boolean(target) && (mode === 'launchable' || mode === 'external');
   const actionVerb = mode === 'launchable' ? 'Launch' : 'Open';
   const themedActionStyle = { '--hub-action-theme': app.gradient } as CSSProperties;
-  const openInNewTab = appOpensInNewTab(app);
+  const openInNewTab = destination?.openInNewTab ?? false;
   const cardActivatable = activatable && !hidePrimaryAction;
   const showPrimaryAction = activatable && !hidePrimaryAction;
   const showRequestAction = requestMode && !hidePrimaryAction;
@@ -78,8 +78,8 @@ export function AppCard({ app, onDetails, onRequest, hidePrimaryAction = false, 
         {(requestMode || hidePrimaryAction) && target ? (
           <a
             href={target}
-            target={openInNewTab ? '_blank' : undefined}
-            rel={openInNewTab ? 'noopener noreferrer' : undefined}
+            target={destination?.target}
+            rel={destination?.rel}
             onClick={(event) => event.stopPropagation()}
             className="hub-module-card__icon hub-module-card__icon-link"
             style={{ background: app.gradient }}
@@ -101,7 +101,7 @@ export function AppCard({ app, onDetails, onRequest, hidePrimaryAction = false, 
         <p>{app.description}</p>
       </div>
       <div className={`hub-card-actions ${workspaceCard ? 'hub-card-actions--launchable' : 'hub-card-actions--catalog'}`}>
-        {showPrimaryAction ? <a href={target} target={openInNewTab ? '_blank' : undefined} rel={openInNewTab ? 'noopener noreferrer' : undefined} onClick={(event) => event.stopPropagation()} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>{actionVerb}</span><span aria-hidden="true">{openInNewTab ? '↗' : '→'}</span></a> : null}
+        {showPrimaryAction ? <a href={target} target={destination?.target} rel={destination?.rel} onClick={(event) => event.stopPropagation()} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>{actionVerb}</span><span aria-hidden="true">{openInNewTab ? '↗' : '→'}</span></a> : null}
         {showCatalogAction ? <button type="button" onClick={requestApp} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>Request app</span><span aria-hidden="true">→</span></button> : null}
         {showRequestAction ? <button type="button" onClick={requestApp} className="hub-card-action hub-card-action--request" aria-label={`Request access to ${app.name}`}><span aria-hidden="true">✚</span><span>Request access</span></button> : null}
         {mode === 'unavailable' ? <span className="hub-card-action hub-card-action--muted">Coming soon</span> : null}
