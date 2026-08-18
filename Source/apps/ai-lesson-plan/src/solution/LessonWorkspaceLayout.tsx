@@ -14,7 +14,7 @@ const primaryNav = [
 
 export function LessonWorkspaceLayout() {
   return (
-    <AppLayout app={app} className="bg-[#eef3f8]">
+    <AppLayout app={app} className="lesson-app">
       <div className="lesson-workspace-shell">
         <div className="lesson-workspace-nav-wrap">
           <nav className="lesson-workspace-nav" aria-label="Lesson Plan modules">
@@ -24,7 +24,7 @@ export function LessonWorkspaceLayout() {
           </nav>
           <div className="lesson-workspace-nav__utilities">
             <NavLink to="/student-learning">Student portal</NavLink>
-            <NavLink to="/integration">Integration</NavLink>
+            <NavLink to="/integration">Integrations</NavLink>
           </div>
         </div>
         <Outlet />

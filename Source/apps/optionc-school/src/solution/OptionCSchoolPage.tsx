@@ -23,17 +23,16 @@ const approvals = [
 export function OptionCSchoolPage() {
   const { showToast } = useToast();
   return (
-    <AppLayout app={app} className="bg-[#f1f7fd]">
+    <AppLayout app={app} className="school-app">
       <div className="dashboard-content grid items-start gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="grid gap-4 xl:sticky xl:top-[88px]">
-          <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-700 to-sky-400 p-5 text-white shadow-[0_18px_40px_rgba(29,78,216,.18)]">
-            <span className="pointer-events-none absolute -right-14 -top-14 size-40 rounded-full bg-white/10" />
-            <div className="relative flex items-center gap-3">
-              <div className="grid size-14 shrink-0 place-items-center rounded-2xl border border-white/35 bg-white font-display text-lg font-extrabold text-blue-700">CL</div>
-              <div className="min-w-0"><h2 className="truncate font-display text-base font-extrabold">Carl Lapp</h2><p className="mt-1 text-[11px] text-white/75">School operations workspace</p></div>
+          <section className="school-profile-card">
+            <div className="school-profile-card__identity">
+              <div className="school-profile-card__avatar">CL</div>
+              <div className="min-w-0"><h2>Carl Lapp</h2><p>School administrator</p></div>
             </div>
-            <div className="relative mt-5 grid grid-cols-3 divide-x divide-white/15 rounded-xl border border-white/15 bg-white/10 py-3">
-              {([['842', 'Students'], ['46', 'Staff'], ['3', 'Pending']] as const).map(([value, label]) => <div key={label} className="text-center"><strong className="block font-display text-lg">{value}</strong><span className="mt-0.5 block text-[9px] font-bold uppercase tracking-wide text-white/65">{label}</span></div>)}
+            <div className="school-profile-card__stats">
+              {([['842', 'Students'], ['46', 'Staff'], ['3', 'Pending']] as const).map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}
             </div>
           </section>
 
@@ -52,7 +51,7 @@ export function OptionCSchoolPage() {
           <section className="surface-card p-4">
             <PanelHeader title="Quick actions" />
             <div className="mt-2 grid gap-1">
-              {['🎒 New admission', '✅ Mark attendance', '📄 Report cards', '👩‍🏫 Staff directory'].map((label) => <button key={label} type="button" onClick={() => showToast(`${label.slice(2)} would open here`)} className="rounded-xl border border-transparent px-3 py-2.5 text-left text-xs font-bold text-slate-600 hover:border-blue-100 hover:bg-blue-50 hover:text-blue-700">{label}</button>)}
+              {['New admission', 'Mark attendance', 'Report cards', 'Staff directory'].map((label) => <button key={label} type="button" onClick={() => showToast(`${label} would open here`)} className="school-quick-action">{label}</button>)}
             </div>
           </section>
         </aside>
@@ -60,9 +59,10 @@ export function OptionCSchoolPage() {
         <main className="dashboard-stack min-w-0">
           <DashboardHeader
             eyebrow="School operations"
-            title="School operations this week"
-            status={<span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wide text-blue-700">Week 32 · Term 1</span>}
-            actions={<button type="button" onClick={() => showToast('School overview report would open here')} className="action-secondary border border-blue-200 bg-white text-blue-700 hover:bg-blue-50">View overview</button>}
+            title="This week"
+            description="Calendar, attendance, and approvals for your school."
+            status={<span className="portal-status-badge portal-status-badge--info">Week 32 · Term 1</span>}
+            actions={<button type="button" onClick={() => showToast('School overview report would open here')} className="action-secondary">View overview</button>}
           />
 
           <section className="surface-card p-5 sm:p-6">

@@ -82,7 +82,7 @@ Development ports are intentionally separate so cross-solution behavior can be t
 - OptionC School → `http://localhost:4002`
 - Matt Money → `http://localhost:4003`
 - ArcAlerts → `http://localhost:4004`
-- OptionC Parish → `http://localhost:4005`
+- Parish Hub → `http://localhost:4005`
 - Catholic Content → `http://localhost:4006`
 - Unified Directory → `http://localhost:4007`
 - Support Center → `http://localhost:4009`
@@ -156,7 +156,7 @@ These files contain per-application public build metadata only: app ID, title, b
 - `/best-practices`
 - `/members` and `/groups` — legacy compatibility paths that redirect to `/preferences`
 
-**OptionC Parish domain**
+**Parish Hub domain**
 - `/`
 
 **Catholic Content domain**
@@ -175,7 +175,7 @@ These files contain per-application public build metadata only: app ID, title, b
 1. OptionC School
 2. Matt Money
 3. ArcAlerts
-4. OptionC Parish
+4. Parish Hub
 5. Catholic Content
 6. Unified Directory
 7. Support Center
@@ -587,7 +587,7 @@ The About view must preserve the information supplied in the August 7, 2026 ArcA
 10. Best Practices is operational guidance, not a marketing page.
 11. Shared AppTopbar, App Switcher, footer, responsive rules, focus states, and spacing conventions remain consistent with other launchable modules.
 
-### OptionC Parish
+### Parish Hub
 
 Light parish-operations dashboard with latest approved prototype values, including:
 
@@ -752,7 +752,7 @@ Paths are repository-relative. Shared platform source lives once under `packages
 | Matt Money | `apps/matt-money/src/solution/MattMoneyPage.tsx`, `MattMoneyAdminDashboard.tsx`, `MattMoneyMemberDashboard.tsx` |
 | OptionC School | `apps/optionc-school/src/solution/OptionCSchoolPage.tsx` |
 | ArcAlerts | `apps/arc-alerts/src/solution/ArcAlertsPage.tsx`, `apps/arc-alerts/src/solution/components/*`, `apps/arc-alerts/src/solution/assets/*` |
-| OptionC Parish | `apps/optionc-parish/src/solution/OptionCParishPage.tsx` |
+| Parish Hub | `apps/optionc-parish/src/solution/OptionCParishPage.tsx` |
 | Catholic Content | `apps/catholic-content/src/solution/CatholicContentPage.tsx`, `apps/catholic-content/src/solution/components/*` |
 | Unified Directory | `apps/unified-directory/src/solution/UnifiedDirectoryPage.tsx`, `apps/unified-directory/src/solution/components/*` |
 | Support Center | `apps/support-center/src/solution/SupportCenterPage.tsx`, `apps/support-center/src/solution/components/*` |
@@ -860,7 +860,7 @@ Verify at 320px, 375px, 768px, 1024px, 1440px, and wide desktop:
 
 - Established the canonical industry-standard npm-workspaces monorepo structure with independently deployable applications under `apps/*` and reusable cross-solution code under `packages/*`.
 - Normalized workspace package scope to `@catholic-solutions/*`.
-- Preserved nine independently deployable web applications: App Hub, OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, Volunteer Manager, and Support Center.
+- Preserved nine independently deployable web applications: App Hub, OptionC School, Matt Money, ArcAlerts, Parish Hub, Catholic Content, Unified Directory, Volunteer Manager, and Support Center.
 - Preserved one domain per solution with separate development, staging, and production client configuration.
 - Preserved per-application favicon, Vite/TypeScript configuration, and SPA refresh/deep-link fallback files.
 - Standardized shared product chrome through `packages/shared` while keeping product business logic inside the owning `apps/<product>/src` boundary.
@@ -916,7 +916,7 @@ Port `4000` is reserved for a future/local identity service. The independently r
 - OptionC School: `4002`
 - Matt Money: `4003`
 - ArcAlerts: `4004`
-- OptionC Parish: `4005`
+- Parish Hub: `4005`
 - Catholic Content: `4006`
 - Unified Directory: `4007`
 - Volunteer Manager: `4008`
@@ -987,7 +987,7 @@ Each product remains an independently buildable and independently deployable Saa
 - `4002` — OptionC School.
 - `4003` — Matt Money.
 - `4004` — ArcAlerts.
-- `4005` — OptionC Parish.
+- `4005` — Parish Hub.
 - `4006` — Catholic Content.
 - `4007` — Unified Directory.
 - `4008` — Volunteer Manager.
@@ -2004,7 +2004,7 @@ This release supersedes earlier review-batch UI contracts where they conflict wi
 - Selection counts reflect the active Members/Groups mode.
 
 ### 36.4 QA
-- Verify OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, external partner products, and AI Lesson Plan open new tabs from App Hub and the shared switcher.
+- Verify OptionC School, Matt Money, ArcAlerts, Parish Hub, Catholic Content, Unified Directory, external partner products, and AI Lesson Plan open new tabs from App Hub and the shared switcher.
 - Verify Support Center stays in the current tab from those same surfaces.
 - Verify AI Lesson Plan resolves exactly to `https://demo.optionc.com/XtraCoach` and no active catalog route points to the dormant native Lesson Plan workspace.
 - Verify Email/Voice/Text channel toggles show/hide their accordions, accordion expansion is keyboard operable, and no Push control exists.
@@ -2019,14 +2019,14 @@ This release supersedes earlier review-batch UI contracts where they conflict wi
 - Launch behavior MUST remain centralized in the canonical app catalog. App Hub cards, whole-card activation, Details-modal actions, and the shared App Switcher MUST NOT maintain separate product-specific tab rules.
 - Same-tab navigation is the default for any catalog product that does not explicitly opt into `navigationTarget: "new-tab"`.
 - Exactly these currently approved destinations open in a protected new tab with `rel="noopener noreferrer"`: **AI Lesson Plan Generator, FerrerWorks, Mass Card Requests, Vincent Volunteer, Berchmans, Alive Date**.
-- **OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, and Support Center** open in the current tab.
+- **OptionC School, Matt Money, ArcAlerts, Parish Hub, Catholic Content, Unified Directory, and Support Center** open in the current tab.
 - `All apps` remains same-tab App Hub navigation and is not considered a product destination.
 - AI Lesson Plan Generator continues to resolve to `https://demo.optionc.com/XtraCoach`.
 
 ### 37.2 QA
 - Verify App Hub primary actions, whole-card activation, Details actions, and App Switcher all apply the same tab rule.
 - Verify the six approved new-tab products open with `target="_blank"` and `noopener noreferrer`.
-- Verify OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, and Support Center remain in the current tab.
+- Verify OptionC School, Matt Money, ArcAlerts, Parish Hub, Catholic Content, Unified Directory, and Support Center remain in the current tab.
 - Verify no component contains a duplicate product-name allowlist; the catalog metadata is the single source of truth.
 
 ## 38. v1.6.3 - ArcAlerts profile-driven user preferences
@@ -2079,3 +2079,166 @@ This release supersedes earlier review-batch UI contracts where they conflict wi
 - Verify Enable all/Clear, Primary/Unlisted labels, search, availability filters, pause/resume, Save preferences, and shared Unified Directory contact values are unchanged.
 - Verify keyboard focus/pressed state remain usable and no destination value is removed solely to save space.
 
+
+## 40. Central Login desktop composition balance (amends §32.1 and §34.1)
+
+**Date:** August 18, 2026. Presentation-only refinement of the desktop Central Login. Authentication behavior, credential handling, Remember Me, Forgot Password, SSO actions, Request Access, `returnUrl` handling, central-session behavior, routes, and catalog data are unchanged. Where this section conflicts with the older Login density text in §32.1/§34.1, this section governs; all other Login requirements in those sections remain in force.
+
+### 40.1 Requirements
+
+- **Owner:** Senior UI/UX Engineer.
+- The approved balanced two-panel desktop split (`1.02fr / minmax(30rem,.98fr)` from 1024px, `1.08fr / minmax(34rem,.92fr)` from 1280px) and the Sign In panel's width and card dimensions are unchanged. Brand-panel balance MUST be achieved through text measure, density, and grid geometry — never by widening the brand panel or shrinking the credential panel.
+- The brand headline MUST use the available horizontal width before reducing type size. Its measure is `26ch` on desktop so the welcome headline resolves in about two lines instead of a tall narrow block.
+- At supported desktop viewports (≥1024px wide, ≥720px tall) the ecosystem panel MUST resolve inside `100dvh` **without an internal vertical scrollbar**. The panel retains `overflow:auto` only as a graceful fallback for unsupported shorter viewports; it must not be the fit strategy.
+- Core Platform and Also in the Ecosystem remain visually grouped inside one panel. Core products use two readable columns from 1024px and three from 1536px, where the brand column is wide enough to keep product names and category text legible.
+- Vertical density is height-tiered: compact tiles below 820px viewport height, standard tiles between 821px and 939px, and relaxed tiles/spacing from 940px so tall desktops read as composed rather than as empty space above a compressed grid.
+- The Login footer legal line (`© 2026 Catholic Solutions…` and `Built in the USA · Mission-driven technology`) MUST be readable: at least `0.65rem` with `rgba(255,255,255,.76)` on the navy footer, with vertical padding and horizontal inset from the viewport edge. The footer remains compact and MUST NOT compete with the Sign In card. Non-auth `.app-footer` presentation is unchanged.
+
+### 40.2 Implementation traceability
+
+- `packages/shared/src/designSystem/styles.css` — `v1.7.1 Login left panel` block (hero measure/type, tile and chip density, short-height tier) and the appended `v1.7.3 Login desktop composition balance` block (1536px core column tier, ≥940px height tier, `.app-footer--auth` legal legibility).
+- No TSX changes: `AuthShell.tsx`, `CentralLoginPage.tsx`, and `Footer.tsx` markup, labels, focus order, and handlers are untouched.
+
+### 40.3 Acceptance criteria
+
+1. Desktop Login remains a balanced two-panel composition with unchanged Sign In width.
+2. The welcome headline wraps to roughly two lines and does not create an oversized empty hero block.
+3. All 18 catalog products remain visible and readable on the brand panel; product names never lose legibility to category text.
+4. No internal vertical scrollbar appears in the ecosystem panel at 1024×720, 1366×768, 1440×900, or 1920×1080.
+5. Copyright and mission footer text are clearly readable with spacing from the viewport edge.
+6. No horizontal page overflow; tablet/mobile Login remains naturally scrollable under the existing base rules.
+7. Keyboard focus, labels, accessibility behavior, and all authentication interactions are unchanged, and no dependency is added.
+
+### 40.4 Validation record
+
+- `@catholic-solutions/app-hub` (Login-owning workspace): `tsc -b` reports 0 diagnostics; `eslint` over App Hub, shared auth, and shared Footer sources reports 0 errors (1 pre-existing `react-refresh/only-export-components` warning in `AuthProvider.tsx`); `npm run build:hub` (Vite production) succeeds.
+- Shared design-system CSS remains structurally balanced (3,053 opening / 3,053 closing braces).
+- Resolved-cascade inspection at 1024×720, 1366×768, 1440×900, and 1920×1080 confirms the intended headline measure, core-column tier, tile/chip density tier, and footer legal size at each viewport.
+- Rendered-browser verification was not performed in this environment; QA must confirm the no-internal-scroll and footer-legibility criteria visually at the four listed viewports before release.
+
+## 41. App Hub section hierarchy, request-access actions, and workspace footer
+
+**Date:** August 18, 2026. Approved App Hub presentation direction. Authentication, routes, catalog membership/ordering, Details behavior, Your Apps launch behavior, and the existing Request Access implementation are unchanged. Where this section conflicts with earlier App Hub section/footer presentation text, this section governs.
+
+### 41.1 App Hub section hierarchy
+
+- **Owner:** Senior UI/UX Engineer.
+- The three App Hub collections MUST read as three levels of emphasis while sharing one card system. Individual product branding (icon, gradient, accent, name, category, description) is unchanged.
+- **Your Apps** is the strongest surface: elevated panel, largest section heading, gold section mark, solid navy count badge, thicker card accent, and the themed launch action retained as the primary action.
+- **Available Apps** is a distinct discovery surface: parchment/gold-tinted panel, gold count badge, dashed card border that resolves on hover, and an `Access on request` status badge instead of the catalog launch status.
+- **Future Apps** is the quietest surface: muted panel, smaller/desaturated heading, flatter and shorter cards with a reduced icon, and no primary action (Details only).
+- Each panel carries one short supporting line under its heading explaining what the section is for. Counts are stated in section-appropriate language (`active`, `on request`, `on the roadmap`).
+
+### 41.2 Available Apps action
+
+- The Available Apps primary action is **Request access**, not `Open`. It MUST invoke the existing App Hub Request Access flow (`RequestInterestModal`) with the selected app preselected. No duplicate request component and no new dependency.
+- In request mode the card body is not a launch surface: card-level activation and the external-site action button are suppressed. The product logo remains the single outward link, as described in §41.7.
+- `Details` remains the secondary action on every card and its behavior is unchanged, including its existing hand-off into the same Request Access modal.
+- The request action is visually lighter than a Your Apps launch action (navy outline, not a themed gradient fill), preserving the section hierarchy.
+
+### 41.3 Authenticated workspace footer
+
+- The authenticated (`app`) footer is a single compact SaaS row: copyright, one mission line, and a system-status indicator, aligned in one responsive row that may wrap on narrow screens.
+- The authenticated footer MUST NOT contain the Catholic Solutions brand/logo block, Privacy, Terms, a Support entry, or a second legal row. This supersedes the earlier same-tab navigation requirement for a footer Support link in authenticated shells; the Support Center remains reachable from the App Switcher and product navigation.
+- The unauthenticated Login/Request Access footer (`variant="auth"`) is unchanged and retains its brand block, secure badge, Privacy/Terms/Support links, and legal row per §40.1.
+
+### 41.4 Implementation traceability
+
+- `apps/app-hub/src/modules/appHub/AppHubPage.tsx` — section variants, supporting lines, section-specific counts, and `actionMode` wiring.
+- `apps/app-hub/src/modules/appHub/AppCard.tsx` — `actionMode: 'launch' | 'request'` prop, request-mode primary action, suppressed launch affordances, `Access on request` badge.
+- `apps/app-hub/src/modules/appHub/RequestInterestModal.tsx` — reused unchanged.
+- `packages/shared/src/app/components/Footer.tsx` — compact workspace footer branch; auth branch untouched.
+- `packages/shared/src/designSystem/styles.css` — `v1.7.4 App Hub section hierarchy, request-access action, workspace footer` block.
+
+### 41.5 Acceptance criteria
+
+1. Your Apps, Available Apps, and Future Apps are visually distinguishable by surface, heading, badge, card emphasis, and action hierarchy without three separate card designs.
+2. Every Available Apps card shows `Request access` as its primary action and no `Open` action.
+3. `Request access` opens the existing Request Access modal with that app preselected; `Details` still opens the Details modal.
+4. Your Apps launch behavior, targets, and new-tab policy are unchanged.
+5. The authenticated footer is one row with no brand block, Privacy, Terms, or Support entries, and wraps cleanly on narrow viewports.
+6. The Login/Request Access footer is unchanged.
+7. The hero summary reports Your Apps, Available Apps, and Future Apps totals derived from the same collections that render the sections — no separately maintained figures.
+8. An Available Apps card opens its configured external/demo site only when the product logo is activated, and that logo carries an `Open <App Name> site` accessible label and title. No separate external-link icon action exists.
+
+### 41.6 Validation record
+
+- `npm run typecheck` across all workspaces → 0 errors (shared `Footer` consumers included).
+- `eslint` over `apps/app-hub/src` and `packages/shared/src/app/components/Footer.tsx` → 0 problems.
+- `npm run build:hub` (Vite production) → success.
+- Shared design-system CSS structurally balanced (3,095 opening / 3,095 closing braces).
+- Rendered-browser verification was not performed in this environment; QA must confirm the three section treatments, the request-access path, and footer alignment visually before release.
+
+### 41.7 Hero summary and Available Apps demo access
+
+**Date:** August 18, 2026. Approved refinement of §41.1/§41.2; all other §41 requirements stand.
+
+- The App Hub hero summary MUST report the three collections that are actually rendered below it — **Your Apps**, **Available Apps**, **Future Apps** — replacing the earlier `Your apps / More to explore / In catalog` figures. Totals are derived from the same section definitions that render the grids; duplicate or hard-coded counts are not permitted. The summary keeps its existing compact hero-integrated presentation.
+- Available Apps are demo/discovery products. `Request access` remains the visually dominant primary action into the existing Request Access flow with the app preselected, and `Details` remains secondary.
+- Each Available Apps card exposes its already-configured external/demo URL through the **product logo only**. The logo anchor reuses the existing link/navigation behavior (same-tab or new-tab per catalog policy) and carries an `Open <App Name> site` accessible label and title. It is the only element on the card that navigates outward; the card body is not clickable and no separate external-link action button is permitted.
+- The action row stays a two-action row — `Request access` primary, `Details` secondary — so the request path remains the obvious primary action.
+- Traceability: `AppHubPage.tsx` (section-derived hero summary), `AppCard.tsx` (request-mode logo link and labels), `styles.css` `v1.7.5` block (discovery logo-link affordance).
+- Validation: `tsc -b` (App Hub) 0 diagnostics; `eslint apps/app-hub/src` 0 problems; `npm run build:hub` succeeds; shared CSS balanced (3,097 / 3,097 braces). Rendered-browser verification not performed in this environment.
+
+## 42. Shared App Switcher destinations and current-app semantics
+
+**Date:** August 18, 2026. Approved refinement of the shared launcher. Catalog data, product URLs, routes, authentication, App Hub behavior, and dependencies are unchanged. Where this section conflicts with the §25 (v1.3.5) launcher density text — specifically the collection it draws from, the visible `Current` badge, and the rule that the grid never scrolls internally — this section governs.
+
+### 42.1 Destinations
+
+- **Owner:** Senior Frontend Developer.
+- The switcher MUST offer **every catalog product that resolves to a real navigable destination**: a registered first-party solution URL, or a configured partner URL. Products with neither remain absent.
+- Destinations are derived at render time from `APP_CATALOG` plus the existing solution registry. No second app list, no duplicated URLs, and no catalog edits. Products whose origin is unconfigured in the current environment resolve to an empty URL and are filtered out.
+- `All apps in App Hub` remains the separate footer action and is not part of the grid.
+
+### 42.2 Current app
+
+- The current app tile MUST NOT display a `Current` badge, checkmark, tooltip, or any additional status text. Current state is conveyed by `aria-current="page"` plus the existing active background/border treatment.
+- The current app renders as a non-navigating element, so it is inert: no href, no click handler, and it is skipped in the tab order rather than being a focusable dead link.
+- The current tile MUST NOT change appearance on hover; it keeps its active background, border, and no elevation.
+
+### 42.3 Other apps and layout
+
+- Every other destination remains a normal same-tab link under the existing navigation contract (`navigationTarget: 'new-tab'` still honored where the catalog sets it), with hover and `focus-visible` feedback retained and product icons/gradients unchanged.
+- The launcher stays compact: existing responsive two/three-column grid, existing menu width. The grid is bounded to `min(52dvh, 23rem)` and scrolls internally **only** when the viewport genuinely requires it; the dropdown is not enlarged to fit all destinations.
+
+### 42.4 Implementation traceability and validation
+
+- `packages/shared/src/platform/shell/PlatformAppSwitcher.tsx` — catalog-derived destinations, registry-aware target resolution, removed `Current` badge and its screen-reader duplicate.
+- `packages/shared/src/designSystem/styles.css` — `v1.7.6` block (bounded grid scrolling, inert current-tile hover). The now-unused `.app-switcher__current-badge` rule is retained as dead style only.
+- `availableSwitcherApps` remains exported and unchanged because Support Center and Unified Directory consume it; the switcher no longer depends on it.
+- Validation: `npm run typecheck` across all workspaces → 0 errors; `eslint` over the switcher and App Hub sources → 0 problems; `npm run build:hub` and `npm run build --workspace @catholic-solutions/support-center` → success; shared CSS balanced (3,100 / 3,100 braces). Rendered-browser verification was not performed in this environment; QA must confirm destination coverage, current-app inertness, and bounded scrolling visually.
+
+## 43. App Hub card density and responsive catalog grid
+
+**Date:** August 18, 2026. Approved space optimization of the App Hub grids and cards. Catalog data, routes, authentication, the Details flow, the Request Access flow, and dependencies are unchanged. This section supersedes the earlier App Hub grid column tiers and card metric text in §41 where they conflict; the §41 section-hierarchy and Available Apps action requirements remain in force.
+
+### 43.1 Responsive grid
+
+- **Owner:** Senior UI/UX Engineer.
+- The App Hub catalog grid resolves **1 → 2 → 3 → 4 → 5 → 6 columns** at 0 / 560 / 768 / 1100 / 1400 / 1700 px. Six columns is the maximum.
+- Column tiers are chosen so a card stays roughly 250px wide at every desktop tier; the grid MUST NOT add a column that makes cards excessively narrow.
+
+### 43.2 Card composition
+
+- Card rhythm is fixed: **logo + product name on one horizontal row**, then a secondary meta row (category and status), then the description, then the action row.
+- The product name truncates with an ellipsis and carries a `title`; category and status are visually secondary (uppercase micro-label and compact chip) and both truncate rather than wrap.
+- Descriptions clamp consistently to two lines on every card in every section.
+- Padding, gaps, action height, and card minimum height are reduced (min-height 8.75rem, 8.25rem in Future Apps) while the product accent bar, gradient icon, and wash preserve per-product identity.
+
+### 43.3 Status labels
+
+- Status text is catalog-driven (`statusLabel`) and MUST remain truthful. No section hard-codes a duplicate status vocabulary.
+- Render-time overrides are section-driven and rule-based, never per-product: `Access on request` for Available Apps in request mode, `Deployment pending` when a launchable product has no resolvable URL in the current environment, and the Future Apps rule below.
+- **Future Apps is the upcoming/roadmap section**, so its cards MUST NOT present live-workspace status text such as `Active` or `All clear`. Each Future Apps card shows `Coming soon` when the catalog marks the product `coming-soon`, and `Upcoming` otherwise, using the muted coming-soon chip treatment. One rule derived from catalog status — no duplicated per-app status list.
+
+### 43.5 Product display naming
+
+- `OptionC Parish` is renamed to **Parish Hub** in all user-facing surfaces: catalog name and long description, cross-product integration lists, solution registry name and browser title, product environment titles, ArcAlerts group source labels, README, and this specification.
+- All technical identifiers are unchanged: app id `optionc-parish`, workspace `@catholic-solutions/optionc-parish`, folder `apps/optionc-parish`, component `OptionCParishPage`, origin keys `optioncParish`, hosted domain `optionc-parish.optioncapp.com`, and development port `4005`.
+
+### 43.4 Traceability and validation
+
+- `apps/app-hub/src/modules/appHub/AppCard.tsx` — name promoted into the logo row, new secondary meta row, description-only content block.
+- `packages/shared/src/designSystem/styles.css` — `v1.7.7` block (card density, meta row, action-row compaction, six-tier grid, section-emphasis retune).
+- Validation: `tsc -b` (App Hub) 0 diagnostics; `eslint apps/app-hub/src` 0 problems; `npm run build:hub` succeeds; shared CSS balanced (3,127 / 3,127 braces); resolved-cascade inspection confirms 3/4/5/6 columns at 1024/1366/1440/1700+ px. Rendered-browser verification was not performed in this environment.

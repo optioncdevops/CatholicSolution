@@ -1,0 +1,18 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
+    "ANTHROPIC_API_KEY": "",
+    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
+    "ANTHROPIC_DEFAULT_FABLE_MODEL": "google/gemma-4-31b-it:free",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "google/gemma-4-31b-it:free",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "google/gemma-4-31b-it:free",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "google/gemma-4-31b-it:free",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "google/gemma-4-31b-it:free"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"d:/Besp Task/GitHub/Catholic_Solution\" 2>/dev/null; echo \"---SOURCE---\"; ls -la \"d:/Besp Task/GitHub/Catholic_Solution/Source\" 2>/dev/null)",
+      "Read(//d/Besp Task/GitHub/Catholic_Solution/**)"
+    ]
+  }
+}

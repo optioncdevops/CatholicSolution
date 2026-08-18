@@ -1,16 +1,18 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { appOpensInNewTab, availableSwitcherApps } from '@shared/app/config/appCatalog';
+import { appOpensInNewTab, APP_CATALOG } from '@shared/app/config/appCatalog';
 import type { CatalogApp } from '@shared/app/types/app';
 import { AppsIcon, ChevronDownIcon, ChevronRightIcon } from '@shared/app/components/UiIcons';
+import { solutionForApp } from '@shared/platform/config/solutionRegistry';
 import { resolveAppUrl, resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
 
 interface PlatformAppSwitcherProps {
   currentApp: CatalogApp;
 }
 
+/** A catalog product is a switcher destination when it resolves to a first-party workspace URL or a partner URL. */
 function switcherTarget(app: CatalogApp) {
-  return app.kind === 'external' ? app.externalUrl : resolveAppUrl(app);
+  return solutionForApp(app) ? resolveAppUrl(app) : app.externalUrl;
 }
 
 export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
@@ -48,9 +50,11 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
     const target = switcherTarget(app);
     const content = (
       <>
-        <span className="app-switcher__app-icon" style={{ background: app.gradient }}>{app.icon}</span>
-        <span className="app-switcher__item-title">{app.name}</span>
-        {current ? <span className="sr-only">— current app</span> : null}
+        <span className="app-switcher__app-icon" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
+        <span className="app-switcher__item-copy">
+          <span className="app-switcher__item-title">{app.shortName || app.name}</span>
+          <span className="app-switcher__item-category">{app.category}</span>
+        </span>
       </>
     );
 
@@ -85,7 +89,7 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
     );
   };
 
-  const switcherApps = availableSwitcherApps.filter((app) => Boolean(switcherTarget(app)));
+  const switcherApps = APP_CATALOG.filter((app) => Boolean(switcherTarget(app)));
   const gridClass = switcherApps.length > 6
     ? 'app-switcher__grid app-switcher__grid--three'
     : 'app-switcher__grid app-switcher__grid--two';
@@ -97,17 +101,25 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
         className={`app-switcher__trigger ${open ? 'app-switcher__trigger--open' : ''}`}
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
+        aria-haspopup="menu"
         aria-controls={menuId}
       >
-        <span className="app-switcher__trigger-icon"><AppsIcon size={18} /></span>
-        <span className="hidden sm:inline">Switch app</span>
+        <span className="app-switcher__trigger-icon" aria-hidden="true"><AppsIcon size={16} /></span>
+        <span className="app-switcher__trigger-label">
+          <span className="app-switcher__trigger-title">Switch app</span>
+          <span className="app-switcher__trigger-sub">{currentApp.shortName || currentApp.name}</span>
+        </span>
         <ChevronDownIcon size={14} className={`app-switcher__chevron ${open ? 'app-switcher__chevron--open' : ''}`} />
       </button>
 
       {open ? (
-        <div id={menuId} className="app-switcher__menu" aria-labelledby={headingId}>
+        <div id={menuId} className="app-switcher__menu" role="menu" aria-labelledby={headingId}>
           <div className="app-switcher__header">
-            <h2 id={headingId}>Jump to</h2>
+            <div>
+              <h2 id={headingId}>Jump to another app</h2>
+              <p>Open any published Catholic Solutions workspace</p>
+            </div>
+            <span className="app-switcher__count">{switcherApps.length}</span>
           </div>
 
           <ul className={gridClass}>
@@ -122,7 +134,7 @@ export function PlatformAppSwitcher({ currentApp }: PlatformAppSwitcherProps) {
               aria-label="Open all apps in the App Hub"
             >
               <AppsIcon size={15} />
-              <span>All apps</span>
+              <span>All apps in App Hub</span>
               <ChevronRightIcon size={14} />
             </a>
           </div>

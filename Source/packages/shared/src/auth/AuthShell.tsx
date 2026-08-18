@@ -22,6 +22,8 @@ export function AuthShell({
   description = 'One secure sign-in for the school, parish, finance, communications, content, and ministry tools your organization uses every day.',
 }: AuthShellProps) {
   const solution = SOLUTION_REGISTRY[solutionId];
+  const platformApps = APP_CATALOG.filter((app) => app.kind === 'launchable');
+  const ecosystemApps = APP_CATALOG.filter((app) => app.kind !== 'launchable');
 
   return (
     <main className="auth-shell">
@@ -50,28 +52,49 @@ export function AuthShell({
               <div className="auth-platform-showcase__head">
                 <div>
                   <span>Connected Catholic ecosystem</span>
-                  <strong id="auth-platform-showcase-title">Your all-in-one Catholic platform</strong>
+                  <strong id="auth-platform-showcase-title">Everything your organization runs in one place</strong>
                 </div>
-                <span className="auth-platform-showcase__count">{APP_CATALOG.length} solutions</span>
+                <span className="auth-platform-showcase__count" aria-label={`${APP_CATALOG.length} solutions`}>{APP_CATALOG.length} solutions</span>
               </div>
 
-              <div className="auth-platform-showcase__grid" role="list" aria-label="Catholic Solutions applications and tools">
-                {APP_CATALOG.map((app) => (
-                  <div key={app.id} className="auth-platform-app" role="listitem">
-                    <span className="auth-platform-app__accent" style={{ background: app.gradient }} aria-hidden="true" />
-                    <span className="auth-platform-app__icon" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
-                    <span className="auth-platform-app__copy">
-                      <strong>{app.name}</strong>
-                      <small>{app.category}</small>
-                    </span>
-                    {app.status === 'coming-soon' ? <small className="auth-platform-app__status">Soon</small> : null}
+              <div className="auth-platform-showcase__panel">
+                <div className="auth-platform-showcase__group">
+                  <p className="auth-platform-showcase__label">Core platform</p>
+                  <div className="auth-platform-showcase__grid auth-platform-showcase__grid--core" role="list" aria-label="Core Catholic Solutions applications">
+                    {platformApps.map((app) => (
+                      <div key={app.id} className="auth-platform-app" role="listitem">
+                        <span className="auth-platform-app__icon" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
+                        <span className="auth-platform-app__copy">
+                          <strong title={app.name}>{app.name}</strong>
+                          <small title={app.category}>{app.category}</small>
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div className="auth-platform-showcase__group">
+                  <p className="auth-platform-showcase__label">Also in the ecosystem</p>
+                  <div className="auth-platform-showcase__chips" role="list" aria-label="Additional Catholic Solutions tools">
+                    {ecosystemApps.map((app) => (
+                      <div
+                        key={app.id}
+                        className={`auth-platform-chip${app.status === 'coming-soon' ? ' auth-platform-chip--soon' : ''}`}
+                        role="listitem"
+                        title={`${app.name} · ${app.category}`}
+                      >
+                        <span className="auth-platform-chip__icon" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
+                        <span className="auth-platform-chip__name">{app.shortName}</span>
+                        {app.status === 'coming-soon' ? <span className="auth-platform-chip__status">Soon</span> : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </section>
 
             <div className="auth-brand-panel__trust">
-              <span><ShieldCheckIcon size={16} /> Enterprise security</span>
+              <span><ShieldCheckIcon size={15} /> Enterprise security</span>
               <span>✝ Mission-driven</span>
               <span>🇺🇸 Built in the USA</span>
             </div>
@@ -81,7 +104,7 @@ export function AuthShell({
         <section className="auth-form-panel">
           <div className="auth-form-panel__topbar">
             <div className="lg:hidden"><Brand compact to="/login" local /></div>
-            <div className="auth-form-panel__secure"><ShieldCheckIcon size={15} /> Protected {solution.name} access</div>
+            {/* <div className="auth-form-panel__secure"><ShieldCheckIcon size={15} /> Protected {solution.name} access</div> */}
           </div>
           <div className="auth-form-panel__body">{children}</div>
         </section>

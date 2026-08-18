@@ -4,10 +4,10 @@ import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 
 const recentAlerts = [
-  ['⚠️', 'Weather advisory', 'All families · 10:42 AM', 'Delivered'],
-  ['🚌', 'Route 4 delay', 'Transport group · 8:14 AM', 'Delivered'],
-  ['📢', 'School reopening reminder', 'All school contacts · Yesterday', 'Delivered'],
-  ['⛪', 'Parish event update', 'Parish families · Yesterday', 'Pending'],
+  ['WX', 'Weather advisory', 'All families · 10:42 AM', 'Delivered'],
+  ['TR', 'Route 4 delay', 'Transport group · 8:14 AM', 'Delivered'],
+  ['RM', 'School reopening reminder', 'All school contacts · Yesterday', 'Delivered'],
+  ['EV', 'Parish event update', 'Parish families · Yesterday', 'Pending'],
 ] as const;
 const channels = [['Text', '99.2%', 99], ['Email', '98.7%', 98], ['Voicemail', '96.4%', 96]] as const;
 
@@ -17,15 +17,21 @@ export function ArcAlertsHome() {
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><p className="text-[10px] font-black uppercase tracking-[.16em] text-orange-600">Home</p><h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">Communication overview</h1></div>
-        <div className="flex flex-wrap items-center gap-2"><span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide text-emerald-700"><i className="size-2 rounded-full bg-emerald-500" />All systems operational</span><button type="button" onClick={() => navigate('/new-alert')} className="action-primary bg-gradient-to-r from-orange-600 to-red-600 px-4 text-white">+ New alert</button></div>
+        <div>
+          <p className="dashboard-kicker">Home</p>
+          <h1 className="dashboard-heading">Communication overview</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="portal-status-badge portal-status-badge--success">All systems operational</span>
+          <button type="button" onClick={() => navigate('/new-alert')} className="action-primary arc-primary-action">+ New alert</button>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Reachable contacts" value="2,340" detail="+18 this month" accentClass="bg-orange-500" icon="👥" />
-        <KpiCard label="Delivery rate" value="98.6%" detail="+0.8% vs last month" accentClass="bg-orange-500" icon="✓" />
-        <KpiCard label="Average delivery" value="42 sec" detail="Target under 60 sec" accentClass="bg-orange-500" icon="⏱" />
-        <KpiCard label="Active incidents" value="0" detail="All systems clear" accentClass="bg-orange-500" icon="🛡" />
+        <KpiCard label="Reachable contacts" value="2,340" detail="+18 this month" accentClass="bg-orange-500" icon="C" />
+        <KpiCard label="Delivery rate" value="98.6%" detail="+0.8% vs last month" accentClass="bg-orange-500" icon="%" />
+        <KpiCard label="Average delivery" value="42 sec" detail="Target under 60 sec" accentClass="bg-orange-500" icon="T" />
+        <KpiCard label="Active incidents" value="0" detail="All systems clear" accentClass="bg-orange-500" icon="0" />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.25fr_.75fr]">

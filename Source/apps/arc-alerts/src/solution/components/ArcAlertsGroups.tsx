@@ -8,7 +8,7 @@ const groups = [
   { name: 'Staff Only', type: 'System', members: 176, source: 'OptionC School', channels: ['Text', 'Email', 'Voicemail'], lastUsed: 'Today, 8:14 AM' },
   { name: 'Transport Group', type: 'Custom', members: 318, source: 'ArcAlerts', channels: ['Text', 'Voicemail'], lastUsed: 'Today, 8:14 AM' },
   { name: 'Grade 9 Families', type: 'Custom', members: 184, source: 'ArcAlerts', channels: ['Text', 'Email'], lastUsed: 'Aug 4' },
-  { name: 'Parish Families', type: 'Integrated', members: 486, source: 'OptionC Parish', channels: ['Text', 'Email'], lastUsed: 'Yesterday' },
+  { name: 'Parish Families', type: 'Integrated', members: 486, source: 'Parish Hub', channels: ['Text', 'Email'], lastUsed: 'Yesterday' },
 ] as const;
 
 export function ArcAlertsGroups() {

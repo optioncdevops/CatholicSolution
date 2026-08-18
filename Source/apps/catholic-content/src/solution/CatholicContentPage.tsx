@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { DashboardHeader } from '@shared/app/components/DashboardHeader';
-import { ArrowRightIcon, DownloadIcon, EyeIcon, FileTextIcon, SearchIcon, SparklesIcon } from '@shared/app/components/UiIcons';
+import { DownloadIcon, EyeIcon, FileTextIcon, SearchIcon, SparklesIcon } from '@shared/app/components/UiIcons';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { getAppById } from '@shared/app/config/appCatalog';
 import { AppLayout } from '@shared/app/layouts/AppLayout';
@@ -9,7 +9,6 @@ import { resolveSolutionUrl } from '@shared/platform/navigation/solutionNavigati
 import { categories, contentResources, months } from '@/solution/components/contentData';
 
 const app = getAppById('catholic-content')!;
-const supportCenterUrl = resolveSolutionUrl(SOLUTION_REGISTRY['support-center']);
 const memberServicesUrl = resolveSolutionUrl(SOLUTION_REGISTRY['support-center'], '/?view=new&contact=Member%20Services&product=catholic-content');
 
 export function CatholicContentPage() {
@@ -34,15 +33,15 @@ export function CatholicContentPage() {
   return (
     <AppLayout app={app} className="cc-premium-page">
       <main className="dashboard-content cc-premium-shell">
-        <DashboardHeader eyebrow="Faith resource library" title="Catholic Content" status={<span className="cc-resource-count">1,200+ resources</span>}/>
+        <DashboardHeader
+          eyebrow="Faith resource library"
+          title="Catholic Content"
+          description="High-quality faith resources for Catholic schools and religious education."
+          status={<span className="cc-resource-count">1,200+ resources</span>}
+          actions={<a href={memberServicesUrl} className="action-secondary">Contact support</a>}
+        />
 
         <section className="cc-library-card">
-          <div className="cc-context-strip cc-context-strip--inside" aria-label="Catholic Content overview">
-            <span className="cc-context-icon" aria-hidden="true">✦</span>
-            <p><strong>OptionC Catholic Content</strong> provides more than 1,200 high-quality faith-based resources for Catholic schools and religious education programs, with regular additions based on current events in the Church.</p>
-            <div className="cc-context-actions"><a href={memberServicesUrl} className="cc-context-link cc-context-link--primary">Contact Member Services <ArrowRightIcon size={13}/></a><a href={supportCenterUrl} className="cc-context-link">Support Center <ArrowRightIcon size={13}/></a></div>
-          </div>
-
           <div className="cc-classic-discovery" aria-label="Resource discovery">
             <div className="cc-classic-discovery__top">
               <div className="cc-filter-block cc-filter-block--months">

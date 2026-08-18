@@ -31,7 +31,7 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "Matt Money handles every dollar moving through your school and parish — tuition invoicing, online payments, donation processing and expense approvals — with automatic bank reconciliation so your books stay accurate without manual entry.",
       included: ["Online tuition billing with auto-pay and payment plans", "One-tap donation and offertory processing", "Expense submission and multi-level approval workflow", "Automatic bank reconciliation and monthly close reports", "PCI-DSS compliant payment handling"],
-      integrations: ["🎓 OptionC School", "✝️ OptionC Parish", "📊 Financial Needs Assessment"],
+      integrations: ["🎓 OptionC School", "✝️ Parish Hub", "📊 Financial Needs Assessment"],
       activity: [{ title: "Term 1 tuition batch received — $450,000", meta: "Today, 7:40 AM" }, { title: "Expense approved — Building rent", meta: "Yesterday, 3:15 PM" }, { title: "Monthly reconciliation completed", meta: "Aug 4, 6:00 AM" }],
     },
   },
@@ -48,12 +48,12 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "ArcAlerts is your emergency notification system — send one message and reach every parent, staff member and parishioner across text, email and voicemail in under a minute. Built for weather closures, safety incidents, and everyday schedule notices alike.",
       included: ["Multi-channel delivery — text, email and voicemail, simultaneously", "Pre-built templates for weather, safety and schedule alerts", "Live delivery tracking with per-channel success rates", "Group targeting — by campus, grade, class or role", "Scheduled drills and delivery-rate reporting"],
-      integrations: ["🎓 OptionC School", "✝️ OptionC Parish", "🤝 Vincent Volunteer"],
+      integrations: ["🎓 OptionC School", "✝️ Parish Hub", "🤝 Vincent Volunteer"],
       activity: [{ title: "Storm alert sent — early dismissal", meta: "Aug 1, 2:12 PM · 2,310 delivered" }, { title: "Feast day schedule notice sent", meta: "Jul 28, 9:00 AM · 2,150 delivered" }, { title: "Monthly safety drill scheduled", meta: "Aug 15, 10:00 AM" }],
     },
   },
   {
-    id: "optionc-parish", name: "OptionC Parish", shortName: "Parish", category: "Parish Administration",
+    id: "optionc-parish", name: "Parish Hub", shortName: "Parish", category: "Parish Administration",
     description: "Integrated tools to manage your parish community and sacraments — family records, sacrament registers and Mass intentions.",
     icon: "✝️", gradient: "linear-gradient(135deg,#166534,#22C55E)",
     route: "/",
@@ -63,7 +63,7 @@ export const APP_CATALOG: CatalogApp[] = [
     kind: "launchable", status: "active", statusLabel: "Active",
     statusDetail: "● Active · Last used today 8:02 AM",
     details: {
-      longDescription: "OptionC Parish keeps every family, sacrament and Mass intention organized in diocese-approved registers. Track requests from first enquiry through completion, manage the Mass schedule, and see offertory and giving trends alongside your sacrament records.",
+      longDescription: "Parish Hub keeps every family, sacrament and Mass intention organized in diocese-approved registers. Track requests from first enquiry through completion, manage the Mass schedule, and see offertory and giving trends alongside your sacrament records.",
       included: ["Family directory with household and contact records", "Sacrament registers — baptism, communion, confirmation, marriage", "Request board tracking enquiry through completion", "Mass schedule and intention booking", "Offertory & giving reports"],
       integrations: ["💰 Matt Money", "🗓️ Berchmans", "🔔 ArcAlerts"],
       activity: [{ title: "Baptism completed — Rodrigues family", meta: "Aug 2 · Certificate issued" }, { title: "Confirmation rehearsal scheduled", meta: "Aug 9, 5:00 PM" }, { title: "House blessing confirmed — Fernandes family", meta: "Aug 9, 4:30 PM" }],
@@ -99,7 +99,7 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "Unified Directory is the shared people, SaaS-access, and group layer for Catholic Solutions. Administrators can manage active and inactive users, assign application access, maintain group membership, and review each identity from one scalable directory workspace.",
       included: ["Active and inactive user workspaces with 100+ directory identities", "Matt Money and ArcAlerts access captured when a user is added", "Reusable groups with direct member management", "Search and filter by user, email, application, or group", "Scrollable grids, Print/CSV export, and a dedicated detail panel"],
-      integrations: ["🎓 OptionC School", "✝️ OptionC Parish", "🤝 Vincent Volunteer", "🔔 ArcAlerts"],
+      integrations: ["🎓 OptionC School", "✝️ Parish Hub", "🤝 Vincent Volunteer", "🔔 ArcAlerts"],
       activity: [{ title: "Volunteer Coordinators group updated", meta: "Today" }, { title: "Anna Rodrigues added", meta: "Yesterday" }, { title: "Faculty membership synchronized", meta: "Aug 6" }],
     },
   },
@@ -116,7 +116,7 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "Support Center brings Catholic Solutions ticket management into one shared workspace. Staff can create a product-routed request, select any existing ticket to read the complete support conversation, reply in context, and return to a fresh ticket form without leaving the page.",
       included: ["Full-width ticket inbox and conversation workspace", "Complete per-ticket conversation history", "Support-ticket form with product and contact-team routing", "Attachment entry point for screenshots or supporting files", "Member Services route for organization-wide or account questions"],
-      integrations: ["🎓 OptionC School", "💰 Matt Money", "🔔 ArcAlerts", "✝️ OptionC Parish", "📚 Catholic Content", "👥 Unified Directory", "🤝 Vincent Volunteer"],
+      integrations: ["🎓 OptionC School", "💰 Matt Money", "🔔 ArcAlerts", "✝️ Parish Hub", "📚 Catholic Content", "👥 Unified Directory", "🤝 Vincent Volunteer"],
       activity: [{ title: "My Classes support ticket opened", meta: "Today" }, { title: "ArcAlerts delivery question awaiting reply", meta: "Yesterday" }, { title: "Directory export request resolved", meta: "Aug 5" }],
     },
   },
@@ -132,7 +132,7 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "Describe your school or parish and get a complete, responsive website back — pages, navigation, and design included — with hosting handled for you. Update news, bulletins and staff listings yourself with no code and no developer needed.",
       included: ["Custom design generated from a short description", "Fully responsive on desktop, tablet and mobile", "Hosting, domain connection and SSL included", "Built-in news, bulletin and staff-directory pages", "No coding required to launch or maintain"],
-      integrations: ["✝️ OptionC Parish", "🎓 OptionC School"],
+      integrations: ["✝️ Parish Hub", "🎓 OptionC School"],
       steps: ["Request access from your administrator", "Describe your school or parish community", "Review your generated site and go live"],
     },
   },
@@ -195,7 +195,7 @@ export const APP_CATALOG: CatalogApp[] = [
     details: {
       longDescription: "A nationwide directory of Catholic summer camps that families can search and filter directly from your parish or school portal — by age group, dates and location — with enquiries routed straight to each camp.",
       included: ["Nationwide directory of Catholic-affiliated camps", "Filter by age, dates, location and camp type", "Direct enquiry forms to each camp", "Family-friendly browsing experience", "Regularly updated camp listings"],
-      integrations: ["✝️ OptionC Parish", "🎓 OptionC School"],
+      integrations: ["✝️ Parish Hub", "🎓 OptionC School"],
       steps: ["Request access from your administrator", "Share the directory link with families", "Families search, filter and enquire directly"],
     },
   },
@@ -262,23 +262,30 @@ export const APP_CATALOG: CatalogApp[] = [
   },
   {
     id: "friar-friend", name: "Friar Friend", shortName: "Friar Friend", category: "AI · Teaching",
-    description: "AI quiz maker for faith-based teaching. Not published yet — a link will be added once it goes live.",
+    description: "AI quiz maker for faith-based teaching. Opens on the Friar Friend site.",
     icon: "🧠", gradient: "linear-gradient(135deg,#EA580C,#FB923C)",
+    externalUrl: "https://friarfriend.com", navigationTarget: "new-tab",
     keywords: ["ai", "quiz", "maker", "teaching", "friarfriend"],
     features: ["🧠 AI quiz maker"],
     stats: [],
-    kind: "external", status: "coming-soon", statusLabel: "Coming soon",
-    statusDetail: "Not published yet",
+    kind: "external", status: "available", statusLabel: "Open site",
+    statusDetail: "Opens at friarfriend.com",
   },
 ];
 
 export const launchableApps = APP_CATALOG.filter((app) => app.kind === 'launchable');
 /** Partner products opened at their own domain, outside the central-login boundary. */
 export const externalApps = APP_CATALOG.filter((app) => app.kind === 'external');
+const yourAppIds = new Set(['optionc-school', 'optionc-parish']);
+const availableAppIds = new Set(['ferrerworks', 'mass-card-requests', 'vincent-volunteer', 'berchmans', 'alive-date', 'friar-friend']);
 /** The App Hub `Your Apps` collection, kept in catalog order. */
-export const yourApps = [...launchableApps, ...externalApps];
-/** Published `Your Apps` destinations that can be opened immediately from the shared switcher. */
-export const availableSwitcherApps = yourApps.filter((app) => app.kind === 'launchable' || Boolean(app.externalUrl));
+export const yourApps = APP_CATALOG.filter((app) => yourAppIds.has(app.id));
+/** App Hub partner products available to add or open now. */
+export const availableApps = APP_CATALOG.filter((app) => availableAppIds.has(app.id));
+/** App Hub products that remain on the roadmap. */
+export const futureApps = APP_CATALOG.filter((app) => !yourAppIds.has(app.id) && !availableAppIds.has(app.id));
+/** Published destinations that can be opened immediately from the shared switcher. */
+export const availableSwitcherApps = [...yourApps, ...availableApps].filter((app) => app.kind === 'launchable' || Boolean(app.externalUrl));
 export const aiApps = APP_CATALOG.filter((app) => app.kind === 'ai');
 export const discoverApps = APP_CATALOG.filter((app) => app.kind === 'discover');
 export const getAppById = (id: string) => APP_CATALOG.find((app) => app.id === id);

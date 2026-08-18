@@ -80,8 +80,8 @@ export function CentralLoginPage() {
           <form onSubmit={submit} className="auth-form">
             <div>
               <label className="auth-label" htmlFor="email">Email address</label>
-              <div className="auth-input-wrap mt-2">
-                <span className="auth-input-icon"><MailIcon size={17} /></span>
+              <div className="auth-input-wrap mt-1.5">
+                <span className="auth-input-icon"><MailIcon size={16} /></span>
                 <input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input" autoComplete="email" required />
               </div>
             </div>
@@ -91,16 +91,16 @@ export function CentralLoginPage() {
                 <label className="auth-label" htmlFor="password">Password</label>
                 <PlatformLink to={`/forgot-password${location.search}`} className="auth-text-link">Forgot password?</PlatformLink>
               </div>
-              <div className="auth-input-wrap mt-2">
-                <span className="auth-input-icon"><LockIcon size={17} /></span>
+              <div className="auth-input-wrap mt-1.5">
+                <span className="auth-input-icon"><LockIcon size={16} /></span>
                 <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} className="auth-input auth-input--with-action" autoComplete="current-password" required />
-                <button type="button" onClick={() => setShowPassword((value) => !value)} className="auth-input-action" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}</button>
+                <button type="button" onClick={() => setShowPassword((value) => !value)} className="auth-input-action" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOffIcon size={17} /> : <EyeIcon size={17} />}</button>
               </div>
             </div>
 
             <label className="auth-checkbox auth-checkbox--login"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> <span>Keep me signed in on this device</span></label>
 
-            <button type="submit" className="auth-primary-button auth-primary-button--large">Sign in securely <ArrowRightIcon size={17} /></button>
+            <button type="submit" className="auth-primary-button auth-primary-button--large">Sign in securely <ArrowRightIcon size={16} /></button>
 
             <div className="auth-divider"><span>Or continue with</span></div>
             <div className="auth-sso-grid">
@@ -115,7 +115,7 @@ export function CentralLoginPage() {
           <PlatformLink to="/request-access" className="auth-access-callout__action">Request access <ArrowRightIcon size={15} /></PlatformLink>
         </section>
 
-        {environment.authMode === 'mock' ? <p className="auth-prototype-note">Development authentication · Central preview session is enabled.</p> : null}
+        {/* {environment.authMode === 'mock' ? <p className="auth-prototype-note">Development authentication · Central preview session is enabled.</p> : null} */}
       </div>
     </AuthShell>
   );

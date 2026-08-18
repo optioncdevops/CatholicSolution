@@ -27,7 +27,7 @@ This repository contains one independently deployable React/Vite application per
 
 - Product navigation remains centralized in `packages/shared/src/app/config/appCatalog.ts`; cards, Details actions, and the shared App Switcher consume the same metadata-driven rule.
 - Only **AI Lesson Plan Generator, FerrerWorks, Mass Card Requests, Vincent Volunteer, Berchmans, and Alive Date** open in a protected new browser tab (`noopener noreferrer`).
-- **OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, and Support Center** open in the current tab.
+- **OptionC School, Matt Money, ArcAlerts, Parish Hub, Catholic Content, Unified Directory, and Support Center** open in the current tab.
 - Same-tab is now the catalog default; new-tab behavior must be explicitly declared per product so future apps do not accidentally open a new tab.
 
 
@@ -159,7 +159,7 @@ The user-facing centralized Login and App Hub run on `4001`; product application
 | OptionC School | `@catholic-solutions/optionc-school` | `http://localhost:4002` |
 | Matt Money | `@catholic-solutions/matt-money` | `http://localhost:4003` |
 | ArcAlerts | `@catholic-solutions/arc-alerts` | `http://localhost:4004` |
-| OptionC Parish | `@catholic-solutions/optionc-parish` | `http://localhost:4005` |
+| Parish Hub | `@catholic-solutions/optionc-parish` | `http://localhost:4005` |
 | Catholic Content | `@catholic-solutions/catholic-content` | `http://localhost:4006` |
 | Unified Directory | `@catholic-solutions/unified-directory` | `http://localhost:4007` |
 | Support Center | `@catholic-solutions/support-center` | `http://localhost:4009` |
@@ -230,7 +230,7 @@ Domain routing is intentionally **not duplicated in Vite environment files**. Th
 packages/shared/src/auth/appAuthConfig.ts
 ```
 
-It contains the local development origins and the approved hosted origins (`cfr.optioncapp.com`, OptionC School, Matt Money, ArcAlerts, OptionC Parish, Catholic Content, Unified Directory, and Support Center). App Hub launch cards, the shared switcher, central Login redirects, return-URL allowlisting, and logout all consume that same configuration.
+It contains the local development origins and the approved hosted origins (`cfr.optioncapp.com`, OptionC School, Matt Money, ArcAlerts, Parish Hub, Catholic Content, Unified Directory, and Support Center). App Hub launch cards, the shared switcher, central Login redirects, return-URL allowlisting, and logout all consume that same configuration.
 
 Each application has only `.env.development` and `.env.production`. Those files contain per-application metadata such as `VITE_APP_ID`, title, base path, domain-routing flag, and development port; they do not repeat the solution-domain matrix.
 

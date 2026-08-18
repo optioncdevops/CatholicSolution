@@ -51,12 +51,13 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
           type="button"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
+          aria-haspopup="menu"
           aria-controls={menuId}
           aria-label={`${user.name} account menu`}
           className={`profile-menu__trigger ${open ? 'profile-menu__trigger--open' : ''}`}
           title={user.name}
         >
-          <span className="profile-menu__avatar" style={gradient ? { background: gradient } : undefined}>{initials}</span>
+          <span className="profile-menu__avatar" style={gradient ? { background: gradient } : undefined} aria-hidden="true">{initials}</span>
           <span className="profile-menu__trigger-copy">
             <span>{user.name}</span>
             <small>Account</small>
@@ -65,9 +66,9 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
         </button>
 
         {open ? (
-          <div id={menuId} role="menu" className="profile-menu__panel">
+          <div id={menuId} role="menu" className="profile-menu__panel" aria-label="Account menu">
             <div className="profile-menu__summary" style={gradient ? { '--profile-accent': gradient } as CSSProperties : undefined}>
-              <span className="profile-menu__summary-avatar" style={gradient ? { background: gradient } : undefined}>{initials}</span>
+              <span className="profile-menu__summary-avatar" style={gradient ? { background: gradient } : undefined} aria-hidden="true">{initials}</span>
               <div>
                 <span className="profile-menu__eyebrow">Signed in as</span>
                 <p>{user.name}</p>
@@ -76,12 +77,27 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
             </div>
 
             <div className="profile-menu__actions">
-              <button type="button" role="menuitem" onClick={() => openModal('profile')}><span><UserIcon size={17} /></span><div><strong>Profile</strong><small>Personal and contact details</small></div></button>
-              <button type="button" role="menuitem" onClick={() => openModal('password')}><span><LockIcon size={17} /></span><div><strong>Change password</strong><small>Update your account password</small></div></button>
+              <button type="button" role="menuitem" onClick={() => openModal('profile')}>
+                <span aria-hidden="true"><UserIcon size={16} /></span>
+                <div>
+                  <strong>Profile</strong>
+                  <small>Personal and contact details</small>
+                </div>
+              </button>
+              <button type="button" role="menuitem" onClick={() => openModal('password')}>
+                <span aria-hidden="true"><LockIcon size={16} /></span>
+                <div>
+                  <strong>Change password</strong>
+                  <small>Update your account password</small>
+                </div>
+              </button>
             </div>
 
-            <div className="profile-menu__divider" />
-            <button type="button" role="menuitem" onClick={handleSignOut} className="profile-menu__signout"><LogOutIcon size={17} /><span>Sign out</span></button>
+            <div className="profile-menu__divider" role="separator" />
+            <button type="button" role="menuitem" onClick={handleSignOut} className="profile-menu__signout">
+              <LogOutIcon size={16} />
+              <span>Sign out</span>
+            </button>
           </div>
         ) : null}
       </div>

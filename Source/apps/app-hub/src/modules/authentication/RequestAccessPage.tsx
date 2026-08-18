@@ -49,8 +49,8 @@ export function RequestAccessPage() {
           <>
             <div className="request-access-hero request-access-hero--compact">
               <div className="request-access-hero__copy">
-                <span className="request-access-kicker request-access-kicker--inline">Organization access</span>
-                <h1>Request organization access</h1>
+                <span className="request-access-kicker request-access-kicker--inline">access request</span>
+                <h1>Request Access</h1>
               </div>
               <span className="request-access-trust-badge"><ShieldCheckIcon size={16} /> Secure request</span>
             </div>
@@ -58,12 +58,15 @@ export function RequestAccessPage() {
             <form onSubmit={submit} className="request-access-form request-access-form--full request-access-form--compact">
               <AccessSection number="01" title="Contact & organization">
                 <div className="request-access-fields-grid">
-                  <Field icon={<UserIcon size={16} />} label="Full name" name="fullName" placeholder="Carl Lapp" autoComplete="name" required />
-                  <Field icon={<MailIcon size={16} />} label="Work email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required />
-                  <Field icon={<BuildingIcon size={16} />} label="Organization name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required />
-                  <SelectField label="Organization type" name="organizationType" options={organizationTypes} required />
-                  <Field icon={<UserIcon size={16} />} label="Role / title" name="role" placeholder="Administrator" autoComplete="organization-title" required />
-                  <Field label="Phone number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" />
+                  <Field icon={<UserIcon size={16} />} label="First Name" name="firstName" placeholder="Carl" autoComplete="given-name" required />
+                  <Field icon={<UserIcon size={16} />} label="Last Name" name="lastName" placeholder="Lapp" autoComplete="family-name" required />
+                  <SelectField label="Organization Type" name="organizationType" options={organizationTypes} required />
+                  <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required />
+                  
+                  <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required />
+                 
+                  
+                  <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" />
                 </div>
               </AccessSection>
 

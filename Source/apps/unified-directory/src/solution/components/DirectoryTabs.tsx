@@ -11,8 +11,8 @@ export function DirectoryTabs({ tab, onChange, activeUsers, inactiveUsers, group
 }) {
   return (
     <div className="directory-tabs" role="tablist" aria-label="Directory sections">
-      <TabButton active={tab === 'Active User'} label="Active User" count={activeUsers} onClick={() => onChange('Active User')} />
-      <TabButton active={tab === 'Inactive Users'} label="Inactive Users" count={inactiveUsers} onClick={() => onChange('Inactive Users')} />
+      <TabButton active={tab === 'Active User'} label="Active users" count={activeUsers} onClick={() => onChange('Active User')} />
+      <TabButton active={tab === 'Inactive Users'} label="Inactive users" count={inactiveUsers} onClick={() => onChange('Inactive Users')} />
       <TabButton active={tab === 'Groups'} label="Groups" count={groups} onClick={() => onChange('Groups')} />
     </div>
   );

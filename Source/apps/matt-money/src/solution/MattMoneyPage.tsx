@@ -42,8 +42,8 @@ function FinanceNavigation({ view, section, onViewChange, onSectionChange }: {
 }) {
   const sections = view === 'admin' ? adminSections : memberSections;
   return (
-    <div className="matt-finance-nav">
-      <nav className="matt-finance-nav__modules" aria-label={`${view} finance modules`}>
+    <div className="matt-finance-nav" data-workspace={view}>
+      <nav className="matt-finance-nav__modules" aria-label={`${view === 'admin' ? 'Administrator' : 'Member'} finance modules`}>
         {sections.map((item) => (
           <button
             key={item.id}
@@ -57,8 +57,8 @@ function FinanceNavigation({ view, section, onViewChange, onSectionChange }: {
         ))}
       </nav>
       <div className="matt-finance-nav__workspace">
-        <span>Workspace</span>
-        <RoleSelector value={view} onChange={onViewChange}/>
+        <span className="matt-finance-nav__workspace-label">Workspace</span>
+        <RoleSelector value={view} onChange={onViewChange} />
       </div>
     </div>
   );
@@ -94,7 +94,7 @@ export function MattMoneyPage() {
   const pageTitle = section === 'overview' ? (view === 'admin' ? 'Finance overview' : 'Account overview') : currentLabel;
 
   return (
-    <AppLayout app={app} className="bg-[#f4f6fa]">
+    <AppLayout app={app} className="matt-money-app">
       <main className="dashboard-content dashboard-stack matt-money-shell">
         <FinanceNavigation view={view} section={section} onViewChange={setView} onSectionChange={setSection}/>
         <DashboardHeader

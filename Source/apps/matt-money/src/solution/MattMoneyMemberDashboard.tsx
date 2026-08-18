@@ -1,4 +1,3 @@
-import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 
 const schedule = [
@@ -15,20 +14,122 @@ const payments = [
 
 export function MattMoneyMemberDashboard() {
   const { showToast } = useToast();
+
   return (
-    <>
-      <section className="grid gap-4 md:grid-cols-3">
-        <article className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-teal-700 to-emerald-500 p-5 text-white shadow-[0_18px_40px_rgba(5,150,105,.15)] md:col-span-1"><span className="metric-label text-white/70">Amount due</span><h2 className="mt-3 font-display text-3xl font-extrabold">$1,240.00</h2><p className="mt-2 text-xs font-semibold text-white/75">Due September 1, 2026</p><button type="button" onClick={() => showToast('Secure payment flow would open here')} className="mt-5 min-h-10 rounded-xl bg-white px-4 text-xs font-extrabold text-emerald-800 shadow-sm hover:bg-emerald-50">Make a payment</button></article>
-        <article className="surface-card p-5"><span className="metric-label text-slate-400">Next auto-pay</span><h2 className="mt-3 font-display text-2xl font-extrabold text-slate-900">$1,050.00</h2><p className="mt-2 text-xs font-semibold text-slate-500">Sep 1 · Visa ending 2481</p><div className="mt-5 rounded-xl bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-700">✓ Auto-pay is active</div></article>
-        <article className="surface-card p-5"><span className="metric-label text-slate-400">Paid this year</span><h2 className="mt-3 font-display text-2xl font-extrabold text-slate-900">$7,480.00</h2><p className="mt-2 text-xs font-semibold text-slate-500">12 successful payments</p><div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full w-[72%] rounded-full bg-emerald-500" /></div><p className="mt-2 text-[10px] font-bold text-slate-400">72% of annual plan complete</p></article>
+    <div className="matt-member-dashboard">
+      <section aria-label="Household balance summary" className="matt-member-kpi-row">
+        <article className="matt-balance-card matt-balance-card--member">
+          <div className="matt-balance-card__glow" aria-hidden="true" />
+          <p className="matt-balance-card__eyebrow">Amount due</p>
+          <h2 className="matt-balance-card__value">$1,240.00</h2>
+          <p className="matt-balance-card__subtitle">Due September 1, 2026</p>
+          <button
+            type="button"
+            className="matt-balance-card__cta"
+            onClick={() => showToast('Secure payment flow would open here')}
+          >
+            Make a payment
+          </button>
+        </article>
+
+        <article className="matt-metric-card">
+          <p className="matt-metric-card__label">Next auto-pay</p>
+          <p className="matt-metric-card__value">$1,050.00</p>
+          <p className="matt-metric-card__detail">Sep 1 · Visa ending 2481</p>
+          <div className="matt-metric-card__note is-success">✓ Auto-pay is active</div>
+        </article>
+
+        <article className="matt-metric-card">
+          <p className="matt-metric-card__label">Paid this year</p>
+          <p className="matt-metric-card__value">$7,480.00</p>
+          <p className="matt-metric-card__detail">12 successful payments</p>
+          <div className="matt-budget-track matt-budget-track--compact" aria-hidden="true">
+            <div className="matt-budget-bar matt-budget-bar--ops" style={{ width: '72%' }} />
+          </div>
+          <p className="matt-metric-card__caption">72% of annual plan complete</p>
+        </article>
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[1.35fr_.85fr]">
-        <section className="surface-card overflow-hidden"><div className="p-5 pb-3 sm:p-6 sm:pb-3"><PanelHeader title="Upcoming charges" description="Scheduled items for your household account" /></div><div className="overflow-x-auto"><table className="cs-enterprise-table w-full min-w-[620px] border-collapse text-left"><thead><tr className="border-y border-slate-100 bg-slate-50/80 text-[10px] uppercase tracking-[.12em] text-slate-400"><th className="px-5 py-3 sm:px-6">Item</th><th className="px-3 py-3">Due date</th><th className="px-3 py-3">Amount</th><th className="px-5 py-3 sm:px-6">Payment</th></tr></thead><tbody>{schedule.map((row) => <tr key={row.item} className="border-b border-slate-100 last:border-0"><td className="px-5 py-4 text-xs font-extrabold text-slate-800 sm:px-6">{row.item}</td><td className="px-3 py-4 text-xs text-slate-500">{row.date}</td><td className="px-3 py-4 text-xs font-extrabold text-slate-800">{row.amount}</td><td className="px-5 py-4 sm:px-6"><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-extrabold text-emerald-700">{row.status}</span></td></tr>)}</tbody></table></div></section>
-        <section className="surface-card p-5 sm:p-6"><PanelHeader title="Payment methods" description="Methods available for your account" /><div className="mt-4 grid gap-3"><button type="button" onClick={() => showToast('Payment method details would open here')} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-left hover:border-emerald-200 hover:bg-emerald-50"><span><strong className="block text-xs text-slate-800">Visa •••• 2481</strong><small className="mt-1 block text-[10px] font-semibold text-slate-400">Primary · Expires 08/29</small></span><span className="text-xs font-extrabold text-emerald-700">Manage</span></button><button type="button" onClick={() => showToast('Add payment method flow would open here')} className="action-secondary justify-center border border-dashed border-emerald-200 bg-emerald-50/50 text-emerald-700">+ Add payment method</button></div></section>
+      <div className="matt-overview-grid matt-overview-grid--member">
+        <section className="matt-panel matt-panel--transactions">
+          <header className="matt-panel__header">
+            <div>
+              <h2>Upcoming charges</h2>
+              <p>Scheduled items for your household account</p>
+            </div>
+          </header>
+          <div className="matt-table-wrap">
+            <table className="matt-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Due date</th>
+                  <th>Amount</th>
+                  <th>Payment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {schedule.map((row) => (
+                  <tr key={row.item}>
+                    <td><strong>{row.item}</strong></td>
+                    <td>{row.date}</td>
+                    <td className="is-amount">{row.amount}</td>
+                    <td><span className="matt-status matt-status--auto-pay">{row.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="matt-panel">
+          <header className="matt-panel__header">
+            <div>
+              <h2>Payment methods</h2>
+              <p>Methods available for your account</p>
+            </div>
+          </header>
+          <div className="matt-method-list">
+            <button
+              type="button"
+              className="matt-method-card"
+              onClick={() => showToast('Payment method details would open here')}
+            >
+              <span>
+                <strong>Visa •••• 2481</strong>
+                <small>Primary · Expires 08/29</small>
+              </span>
+              <em>Manage</em>
+            </button>
+            <button
+              type="button"
+              className="matt-method-add"
+              onClick={() => showToast('Add payment method flow would open here')}
+            >
+              + Add payment method
+            </button>
+          </div>
+        </section>
       </div>
 
-      <section className="surface-card overflow-hidden"><div className="p-5 pb-3 sm:p-6 sm:pb-3"><PanelHeader title="Recent payments" description="Latest successful household transactions" /></div><div className="grid divide-y divide-slate-100">{payments.map((payment) => <div key={`${payment.date}-${payment.description}`} className="grid gap-2 px-5 py-4 sm:grid-cols-[5rem_minmax(0,1fr)_8rem_8rem] sm:items-center sm:px-6"><span className="text-[11px] font-bold text-slate-400">{payment.date}</span><strong className="text-xs text-slate-800">{payment.description}</strong><span className="text-xs text-slate-500">{payment.method}</span><span className="text-right text-xs font-extrabold text-emerald-700">{payment.amount}</span></div>)}</div></section>
-    </>
+      <section className="matt-panel">
+        <header className="matt-panel__header">
+          <div>
+            <h2>Recent payments</h2>
+            <p>Latest successful household transactions</p>
+          </div>
+        </header>
+        <div className="matt-payment-list">
+          {payments.map((payment) => (
+            <div key={`${payment.date}-${payment.description}`} className="matt-payment-row">
+              <span>{payment.date}</span>
+              <strong>{payment.description}</strong>
+              <em>{payment.method}</em>
+              <b>{payment.amount}</b>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

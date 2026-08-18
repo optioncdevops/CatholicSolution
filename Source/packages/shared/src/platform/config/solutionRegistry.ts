@@ -41,8 +41,8 @@ export const SOLUTION_REGISTRY: Record<SolutionId, SolutionConfig> = {
     origin: environment.origins.arcAlerts, favicon: '/favicon.svg', themeColor: '#b91c1c', title: 'ArcAlerts | Catholic Solutions',
   },
   'optionc-parish': {
-    id: 'optionc-parish', name: 'OptionC Parish', category: 'Parish Administration', route: '/',
-    origin: environment.origins.optioncParish, favicon: '/favicon.svg', themeColor: '#166534', title: 'OptionC Parish | Catholic Solutions',
+    id: 'optionc-parish', name: 'Parish Hub', category: 'Parish Administration', route: '/',
+    origin: environment.origins.optioncParish, favicon: '/favicon.svg', themeColor: '#166534', title: 'Parish Hub | Catholic Solutions',
   },
   'catholic-content': {
     id: 'catholic-content', name: 'Catholic Content', category: 'Faith Resources', route: '/',
