@@ -68,6 +68,7 @@ export function GlobalAppSwitcher({ currentAppId, currentAppName }: GlobalAppSwi
       accent-gradient={PLATFORM_ACCENT}
       manifest-url={resolveManifestUrl(switcherScriptUrl)}
       app-hub-url={appHubUrl}
+      hide-current-tile=""
     />
   );
 }

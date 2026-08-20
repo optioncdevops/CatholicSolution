@@ -15,6 +15,7 @@ declare module 'react' {
         'app-hub-url'?: string;
         'manifest-url'?: string;
         'accent-gradient'?: string;
+        'hide-current-tile'?: boolean | '';
       };
     }
   }

@@ -9,7 +9,7 @@
 
   const ICONS = {
     // Minimal line icons in the Lucide visual language (24x24, 2px stroke, currentColor).
-    grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>',
+    grid: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="5" r="1.8"/><circle cx="12" cy="5" r="1.8"/><circle cx="19" cy="5" r="1.8"/><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/><circle cx="5" cy="19" r="1.8"/><circle cx="12" cy="19" r="1.8"/><circle cx="19" cy="19" r="1.8"/></svg>',
     chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>',
     chevronRight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>',
     external: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
@@ -67,7 +67,7 @@
 
     .menu {
       position: absolute; right: 0; top: calc(100% + .45rem); z-index: 2147483000;
-      width: min(33rem, calc(100vw - 1rem)); max-height: min(75dvh, 32rem);
+      width: min(26.5rem, calc(100vw - 1rem)); max-height: min(75dvh, 32rem);
       overflow: hidden; display: flex; flex-direction: column;
       border: 1px solid var(--line, #dde4ec); border-radius: var(--radius-panel, .95rem);
       background: var(--surface, #fff); box-shadow: var(--shadow-elevated, 0 18px 48px rgba(15,23,42,.14), 0 2px 8px rgba(15,23,42,.04));
@@ -149,7 +149,7 @@
     static get observedAttributes() {
       return [
         'current-app-id', 'current-app-name', 'current-app-icon', 'current-app-category',
-        'app-hub-url', 'manifest-url', 'accent-gradient',
+        'app-hub-url', 'manifest-url', 'accent-gradient', 'hide-current-tile',
       ];
     }
 
@@ -248,6 +248,8 @@
       const accent = this.getAttribute('accent-gradient');
       const others = this._apps.filter((app) => app.id !== currentId);
       const current = this._apps.find((app) => app.id === currentId);
+
+      if (this.hasAttribute('hide-current-tile')) return others;
 
       const currentTile = {
         id: currentId || '__current__',
