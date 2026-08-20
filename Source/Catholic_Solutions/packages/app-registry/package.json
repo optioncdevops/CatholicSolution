@@ -1,0 +1,7 @@
+{
+  "name": "@catholic-solutions/app-registry",
+  "private": true,
+  "version": "2.0.3",
+  "type": "module",
+  "description": "Framework-neutral Catholic Solutions application registry and launch metadata"
+}

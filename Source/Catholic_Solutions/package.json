@@ -1,0 +1,45 @@
+{
+  "name": "catholic-solutions-saas-platform",
+  "private": true,
+  "version": "2.0.3",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:cfr",
+    "dev:cfr": "npm run dev --workspace @catholic-solutions/cfr",
+    "dev:admin": "npm run dev --workspace @catholic-solutions/platform-admin",
+    "build": "npm run build:production",
+    "build:cfr": "npm run build:production --workspace @catholic-solutions/cfr",
+    "build:admin": "npm run build:production --workspace @catholic-solutions/platform-admin",
+    "build:platform": "npm run build:production --workspace @catholic-solutions/app-switcher",
+    "build:production": "npm run build:platform && npm run build:cfr && npm run build:admin && npm run build:legacy-switcher-bridge",
+    "build:staging": "npm run build:staging --workspace @catholic-solutions/cfr && npm run build:staging --workspace @catholic-solutions/platform-admin",
+    "typecheck": "npm run typecheck --workspace @catholic-solutions/app-switcher && npm run typecheck --workspace @catholic-solutions/cfr && npm run typecheck --workspace @catholic-solutions/platform-admin",
+    "lint": "eslint \"apps/{cfr,platform-admin}/src/**/*.{ts,tsx}\" \"packages/shared/src/**/*.{ts,tsx}\" \"packages/app-registry/src/**/*.ts\" \"packages/app-switcher/**/*.{ts,js}\"",
+    "build:legacy-switcher-bridge": "node scripts/copy-legacy-switcher-bridge.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "eslint": "^10.8.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.4",
+    "globals": "^17.11.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.67.0",
+    "vite": "~8.2.1"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0",
+    "npm": ">=10"
+  },
+  "description": "Catholic Solutions SaaS control plane with CFR end-user portal, Super Admin console, centralized app registry, and universal App Switcher"
+}
