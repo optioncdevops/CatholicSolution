@@ -4,90 +4,74 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository boundary (read this first)
 
-This delivery has **two independent source boundaries** living side by side under `Source/`:
+There is no npm workspace here. This repository is a set of **fully independent projects** living side by side:
 
 ```text
-Catholic_Solutions/      # the actual platform control plane repo (npm workspace)
-External_SaaS_Apps/      # extracted standalone business-app projects, NOT part of the workspace
+cfr/                      end-user portal + App Hub (own package.json, own build, own deploy)
+cfr-admin/                Super Admin console (own package.json, own build, own deploy)
+SaaS_Apps/<project>/      independent business-app projects (OptionC School, Matt Money, ArcAlerts,
+                          Parish Hub, Catholic Content, Unified Directory, Support Center, AI Lesson Plan)
 ```
 
-`Catholic_Solutions/` is a v2.0.3 rewrite that intentionally owns **only** the CFR end-user portal, the Super Admin console, and the shared platform/registry/switcher packages. All other business products (OptionC School, Parish Hub, Matt Money, ArcAlerts, Catholic Content, Unified Directory, Support Center, AI Lesson Plan) were removed from `apps/*` and now live under `External_SaaS_Apps/<project>/` as fully independent project roots (their own `package.json`, own `npm install`, own deploy config). **Never move an `External_SaaS_Apps/*` project back under `Catholic_Solutions/apps/`.**
+Each of `cfr/`, `cfr-admin/`, and every `SaaS_Apps/<project>/` is its own project root: own `package.json`, own lockfile, own `npm install`, own `tsconfig`, own `netlify.toml`/`vercel.json`/`web.config`. **None of them import from, or are compiled by, any of the others.** There is no shared workspace, no `packages/*`, no monorepo build pipeline. **Never move a `SaaS_Apps/*` project under `cfr/` or `cfr-admin/`, and never add a new business product as a sub-path of `cfr`/`cfr-admin` — it gets its own project root under `SaaS_Apps/`.**
 
-Almost all work happens inside `Catholic_Solutions/`. Treat each `External_SaaS_Apps/<project>` folder as its own repo — `cd` into it and run its own `npm install`/`npm run dev` independently; it shares no workspace, no `packages/shared`, and no build pipeline with `Catholic_Solutions/`.
+`cfr/README.md` and `cfr-admin/README.md` describe `src/shared` and `src/registry` as "governed release snapshots" — treat that as aspirational, not implemented: there is currently no sync tooling, and each project's copy of shared/auth/registry code is hand-maintained independently. When editing one project's `src/shared/*`, do not assume the change reaches any other project.
 
-## Commands (run from `Catholic_Solutions/`)
+## Commands
+
+Every project is driven the same way, run from inside that project's own directory:
 
 ```bash
-npm install
-npm run dev:cfr          # CFR / App Hub on :4001
-npm run dev:admin        # Super Admin console on :4011
-
-npm run typecheck        # app-switcher + cfr + platform-admin, in that order
-npm run lint             # eslint over apps/{cfr,platform-admin}/src, packages/shared/src, packages/app-registry/src, packages/app-switcher
-npm run build:production # build:platform (app-switcher) -> build:cfr -> build:admin -> build:legacy-switcher-bridge
-npm run build:staging    # cfr + platform-admin staging builds
+npm ci               # or npm install
+npm run dev
+npm run typecheck
+npm run lint
+npm run build:production
 ```
 
-Single-workspace targeting:
+There is no root-level `npm install`/`npm run dev:*` — always `cd` into the specific project (`cfr/`, `cfr-admin/`, or `SaaS_Apps/<project>/`) first. Check that project's own `package.json` scripts before assuming a script name from another project applies; most match the pattern above but confirm.
 
-```bash
-npm run typecheck --workspace @catholic-solutions/cfr
-npm run build --workspace @catholic-solutions/platform-admin
-npx eslint "apps/cfr/src/**/*.{ts,tsx}"
-```
-
-**There is no test runner in this repository.** The validation loop for a change is: targeted `typecheck` → `lint` on touched paths → `npm run build:production`. Run the full `npm run typecheck` for any change under `packages/shared` or `packages/app-registry` since both CFR and Admin compile against them. For App Switcher changes, validate both a plain HTML integration and a React/TSX consumer (`packages/app-switcher/react.d.ts`).
-
-Within an `External_SaaS_Apps/<project>` folder, each has its own `package.json` scripts (typically `dev`/`build`/`typecheck`) — check that project's own `README.md`/`package.json` rather than assuming the platform's script names apply.
+**There is no test runner anywhere in this repository.** The validation loop for a change is: `npm run typecheck` → `npm run lint` → `npm run build:production`, run inside every project you touched.
 
 ## Architecture
 
-Two React 19 + Vite + Tailwind apps and three framework-neutral platform packages in one npm workspace:
+- **`cfr/`** — end-user login, request access, App Hub. React 19 + Vite + Tailwind, TypeScript `strict`.
+- **`cfr-admin/`** — Super Admin control plane. Same stack as `cfr/`, structurally a sibling, not a package inside `cfr/`.
+- **`SaaS_Apps/<project>/`** — one independent project per business product. Each has its own `src/shared/*` snapshot (auth, app catalog, solution registry, app-switcher integration) copied by hand from `cfr/`'s equivalent when it was created, not imported live.
+- **`SaaS_Apps/linked-partner-saas/`** — documentation-only; these partner products (FerrerWorks, Mass Card Requests, Vincent Volunteer, Berchmans, Alive Date, Friar Friend) have no source in this repository, only catalog entries pointing at their own domains.
 
-```
-apps/cfr/                    end-user login, request access, App Hub
-apps/platform-admin/         Super Admin control plane
-packages/app-registry/       framework-neutral product catalog (the ONLY app list)
-packages/app-switcher/       framework-neutral Web Component, distributed to any web stack
-packages/shared/             internal React UI/auth/design-system code — used only by CFR/Admin
-config/solutions.json        workspace/port/deployment manifest
-docs/SPECIFICATION.md        the living specification (source of truth)
-```
+### No single shared app registry — this is intentional, not drift
 
-Do **not** add an independent business product under `apps/*`. A product does not need an `apps/*` workspace, and does not need a `packages/shared`-based UI, to appear in App Hub or the switcher — it needs only a registry record (see below).
+Each project keeps its **own** copy of the app catalog (`src/registry/appCatalog.ts` in `cfr`/`cfr-admin`, `src/shared/app/config/appCatalog.ts` in `SaaS_Apps/*`). These are **not required to be identical**: a `SaaS_Apps/<project>` catalog deliberately lists its *own* entry with an in-app `route` (so its own switcher/hub doesn't navigate itself out to its own external domain), while every other entry uses `externalUrl`. `cfr`'s catalog additionally carries App-Hub-only fields (`hubSection`, `launcherEnabled`, `deploymentModel`, `ownership`) that other projects don't need. Do not attempt to force these into one shared file — instead, when adding or changing a product, update it directly in every project whose catalog references it, respecting each project's own self-entry convention.
 
-### The app registry is the single source of truth
+`shared/platform/config/solutionRegistry.ts` (a separate, narrower registry of central-login-participating solutions) is likewise hand-duplicated per project today.
 
-`packages/app-registry/src/appCatalog.ts` is the canonical, framework-neutral product list — id, names, category, `hubSection` (`your`/`available`/`future`), `launcherEnabled`, `deploymentModel`, `ownership` (`first-party`/`partner`), `externalUrl`, `navigationTarget`, status metadata. CFR's App Hub, the Super Admin console, and the published App Switcher projection all derive from this one file. Onboarding or promoting a product is a **registry-only change** — never add source, a workspace, or a `solutionRegistry`-style entry just to expose it.
+### App Switcher
 
-Key invariants:
-- `deploymentModel`, `hubSection`, and `launcherEnabled` are independent concerns: a product can be externally hosted while being Your/Available/Future in CFR.
-- `Future Apps` are **never** published to the switcher, even with a known `externalUrl`.
-- `Available Apps` (including partner SaaS) keep the v1.6.7 behavior: **Request access** is the primary card action, **Details** is secondary, and the external site opens via the product logo / App Switcher.
-
-### Universal App Switcher
-
-`packages/app-switcher` is a standards-based Custom Element (Shadow DOM) consumable from any stack — React, Angular, plain HTML, server-rendered templates:
+Every project loads the switcher as a hosted script + custom element and never hardcodes a destination list beyond its own local catalog:
 
 ```html
-<script src="https://<platform-cdn>/app-switcher/v1/app-switcher.js" defer></script>
+<script src="https://<platform-cdn>/integrations/app-switcher/v1/app-switcher.js" defer></script>
 <catholic-solutions-app-switcher current-app-id="YOUR_ASSIGNED_APP_ID"></catholic-solutions-app-switcher>
 ```
 
-The `/v1/` contract is stable; consuming apps never hardcode a destination list. It carries navigation only — never tokens, cookies, or identity payloads. `scripts/copy-legacy-switcher-bridge.mjs` (via `build:legacy-switcher-bridge`) publishes a compatibility bridge alongside the CFR build.
+Because every product is an independent solution, the switcher only needs an `externalUrl` in a project's local catalog to link to any other solution — adding a new destination never requires touching another project's source or a shared workspace package.
 
 ### Authentication
 
-CFR (`apps/cfr`) owns `/login`, `/request-access`, etc. Development uses a mock/preview session adapter shared by CFR and Admin; each app establishes its own session independently in production — do not design cross-domain shared-cookie SSO. Production SSO must go through a standards-based identity provider/federation contract, not client-only role checks. Super Admin mutation operations must call authenticated platform APIs in production; never trust client-side role checks for that surface.
+Auth code (`src/shared/auth/{appAuthConfig.ts, centralAuth.ts, AuthProvider.tsx, ProtectedRoute.tsx}`) is duplicated per project, not shared. `centralAuth.ts` manages a `cs_platform_preview_session` cookie — a mock/dev session adapter, not real SSO. `ProtectedRoute.tsx` is a **client-side-only** gate; it does not validate a session server-side.
+
+**`getAppAuthConfig('production')` now throws unless `authMode` is `'sso'`** in every project (`cfr`, `cfr-admin`, and each `SaaS_Apps/*`) — production must not silently fall back to the mock/preview cookie session. Until a real identity-provider integration exists, a production build of any of these projects will throw at config-load time by design; this is intentional given the prototype's current non-functional auth state, not a bug to "fix" by reverting the guard. Wiring a real SSO/federation contract is a distinct, larger effort — when that happens, set `authMode: 'sso'` for the project(s) that have it and update `origins`/`loginOrigin`/`authOrigin` accordingly.
+
+Known gap: `SaaS_Apps/ai-lesson-plan`'s production origin is still `''` (never assigned a hosted domain) — do not invent one; get the real domain before wiring this project's production config.
 
 ### Styling
 
-Shared styling lives in `packages/shared/src/designSystem/`, consumed by CFR and Admin only.
+Each project keeps its own copy of the shared design-system CSS/components under `src/shared/` — same duplication model as the registry and auth code.
 
 ## Working conventions
 
-- **Spec-driven.** `docs/SPECIFICATION.md` is authoritative, organized as numbered release sections; the newest applicable section supersedes older ones — append/amend rather than rewriting history. `docs/PLATFORM_ARCHITECTURE.md` and `docs/DEVELOPER_GUIDE.md` describe the current (v2.0.x) boundary and are more current than any older architecture notes you might recall from this codebase.
-- **Package upgrade rule**: prefer latest mutually-compatible versions; don't chase a breaking major just for the version number; update `package.json` and `package-lock.json` together; run typecheck+lint+`build:production` after; record architecture-affecting upgrades in the Living Specification. Note: TypeScript is intentionally pinned to `~6.0.3` (not the npm-stable 7.x) because current `typescript-eslint` v8 warns on TS7 — this is a deliberate compatibility hold, not a stale dependency.
+- **Package upgrade rule**: prefer latest mutually-compatible versions within a single project; don't chase a breaking major just for the version number; update that project's `package.json` and lockfile together; run `typecheck`+`lint`+`build:production` in that project after. TypeScript is intentionally pinned to `~6.0.3` across all projects (not the npm-stable 7.x) because `typescript-eslint` v8 warns on TS7 — a deliberate compatibility hold, not a stale dependency.
 - **No new dependencies** without explicit approval; TypeScript stays `strict`.
-- `.artifacts/` is generated release output (standalone exports), not development source.
+- A change to shared-looking code (auth, registry, design system) in one project does **not** propagate anywhere else — if the same fix is needed elsewhere, apply it in each affected project explicitly.
 - No browser is available in this environment — never claim visual verification; state what was checked statically (typecheck/lint/build) and leave rendered confirmation to QA.

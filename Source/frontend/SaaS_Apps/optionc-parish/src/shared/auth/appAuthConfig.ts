@@ -64,5 +64,13 @@ const configs: Record<RuntimeEnvironment, AppAuthConfig> = {
 };
 
 export function getAppAuthConfig(mode: RuntimeEnvironment) {
-  return configs[mode];
+  const config = configs[mode];
+  if (mode === 'production' && config.authMode !== 'sso') {
+    throw new Error(
+      `Production build is configured with authMode "${config.authMode}". ` +
+        'Production must use authMode "sso" backed by a real identity provider; ' +
+        'the mock/preview cookie session is for development only and must not ship to production.',
+    );
+  }
+  return config;
 }

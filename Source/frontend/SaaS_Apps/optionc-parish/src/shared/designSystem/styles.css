@@ -153,6 +153,22 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   }
 }
 
+/* Compact placeholder shown while the hosted App Switcher script registers. */
+.app-switcher-skeleton {
+  display: inline-flex;
+  min-height: 2.35rem;
+  min-width: 5.5rem;
+  border-radius: var(--radius-control, .625rem);
+  background: linear-gradient(90deg, var(--bg-subtle) 25%, var(--surface-muted) 37%, var(--bg-subtle) 63%);
+  background-size: 400% 100%;
+  animation: app-switcher-shimmer 1.4s ease infinite;
+}
+
+@keyframes app-switcher-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
 /* App Hub card actions: explicit CSS keeps button geometry stable across all cards. */
 .hub-card-actions {
   position: relative;

@@ -9,8 +9,12 @@ declare module 'react' {
       > & {
         'current-app-id'?: string;
         'current-app-name'?: string;
+        'current-app-icon'?: string;
+        'current-app-category'?: string;
         'catalog-url'?: string;
         'app-hub-url'?: string;
+        'manifest-url'?: string;
+        'accent-gradient'?: string;
       };
     }
   }

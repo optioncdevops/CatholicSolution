@@ -1,12 +1,13 @@
-# Catholic Solutions SaaS Source Bundle v1.0.0
+# Catholic Solutions SaaS Source Bundle
 
-This archive intentionally has **two source boundaries**:
+This repository intentionally has **three independent project boundaries**, none of them a shared workspace:
 
 ```text
-Catholic_Solutions/      # CFR + Super Admin + platform/control-plane packages
-External_SaaS_Apps/      # actual standalone business-app source projects
+cfr/            # end-user portal + App Hub
+cfr-admin/      # Super Admin console
+SaaS_Apps/      # standalone business-app source projects
 ```
 
-The external apps are outside the Catholic Solutions repository by architecture, but their real v1.6.7 source is included in this delivery so they can be moved to separate repositories/domains without losing functionality.
+Each of `cfr/`, `cfr-admin/`, and every project under `SaaS_Apps/` is a fully independent project root — own `package.json`, own lockfile, own build/deploy config. None of them import from or are compiled by the others.
 
-Start with `Catholic_Solutions/README.md` and `External_SaaS_Apps/README.md`.
+Start with `cfr/README.md`, `cfr-admin/README.md`, and `SaaS_Apps/README.md`.
