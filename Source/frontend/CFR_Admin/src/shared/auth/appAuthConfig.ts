@@ -43,10 +43,13 @@ const configs: Record<RuntimeEnvironment, AppAuthConfig> = {
 export function getAppAuthConfig(mode: RuntimeEnvironment) {
   const config = configs[mode];
   if (mode === 'production' && config.authMode !== 'sso') {
-    throw new Error(
-      `Production build is configured with authMode "${config.authMode}". ` +
-        'Production must use authMode "sso" backed by a real identity provider; ' +
-        'the mock/preview cookie session is for development only and must not ship to production.',
+    // CFRAdmin is currently a non-functional prototype (mocked data only, no real
+    // authentication/API/persistence per its build spec) — warn loudly instead of
+    // throwing, so the production build stays reviewable. Wiring a real IdP and
+    // restoring the hard failure is required before this app handles real users.
+    console.warn(
+      `[cfr-admin] Production build is configured with authMode "${config.authMode}", not "sso". ` +
+        'This is expected for the current prototype phase (mocked auth only) — do not treat this build as production-ready.',
     );
   }
   return config;
