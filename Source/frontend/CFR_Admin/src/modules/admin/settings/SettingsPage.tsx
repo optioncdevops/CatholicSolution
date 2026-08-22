@@ -4,12 +4,6 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import { Tabs, TabPanel } from '../components/Tabs';
 
-const EMAIL_TEMPLATES = [
-  { id: 'welcome', label: 'Welcome email', subject: 'Welcome to Catholic Solutions', body: 'Hi {{first_name}},\n\nYour Catholic Solutions account is ready. Sign in to get started with your organization\'s workspace.' },
-  { id: 'access-approved', label: 'Access approved', subject: 'Your application access request was approved', body: 'Hi {{first_name}},\n\nYour request for access to {{app_name}} has been approved. You can now launch it from App Hub.' },
-  { id: 'access-info', label: 'More information needed', subject: 'More information needed for your request', body: 'Hi {{first_name}},\n\nWe need a bit more information to process your request for {{app_name}}:\n\n{{note}}' },
-];
-
 export function SettingsPage() {
   const { user, updateUser } = useCurrentUser();
   const { showToast } = useToast();
@@ -20,7 +14,6 @@ export function SettingsPage() {
   const [supportEmail, setSupportEmail] = useState('support@optioncapp.com');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [notifications, setNotifications] = useState({ newRequests: true, weeklyDigest: true, productUpdates: false });
-  const [selectedTemplate, setSelectedTemplate] = useState(EMAIL_TEMPLATES[0].id);
 
   const saveProfile = (event: FormEvent) => {
     event.preventDefault();
@@ -36,8 +29,6 @@ export function SettingsPage() {
     showToast('Notification preference updated ✓');
   };
 
-  const template = EMAIL_TEMPLATES.find((item) => item.id === selectedTemplate) ?? EMAIL_TEMPLATES[0];
-
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader title="Settings" description="Admin profile, platform configuration and notification preferences." />
@@ -49,7 +40,6 @@ export function SettingsPage() {
           { id: 'profile', label: 'Admin profile' },
           { id: 'platform', label: 'Platform settings' },
           { id: 'notifications', label: 'Notifications' },
-          { id: 'templates', label: 'Email templates' },
         ]}
       />
 
@@ -108,33 +98,6 @@ export function SettingsPage() {
             </li>
           ))}
         </ul>
-      </TabPanel>
-
-      <TabPanel id="templates" activeId={activeTab}>
-        <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
-          <ul className="flex flex-col gap-1">
-            {EMAIL_TEMPLATES.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedTemplate(item.id)}
-                  className={`w-full rounded-[var(--radius-control)] px-3 py-2 text-left text-[0.8125rem] font-bold ${
-                    item.id === selectedTemplate ? 'bg-[var(--primary)] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--hover)]'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Subject</p>
-            <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">{template.subject}</p>
-            <p className="mt-3 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Body preview</p>
-            <pre className="mt-1 whitespace-pre-wrap rounded-[var(--radius-control)] bg-[var(--surface-muted)] p-3 font-sans text-[0.8125rem] leading-6 text-[var(--text-secondary)]">{template.body}</pre>
-            <p className="mt-3 text-xs text-[var(--text-faint)]">Preview only — this prototype does not send email.</p>
-          </div>
-        </div>
       </TabPanel>
     </div>
   );

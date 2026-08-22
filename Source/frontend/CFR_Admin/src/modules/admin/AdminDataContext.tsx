@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import { MOCK_ACTIVITY, MOCK_APPLICATIONS, MOCK_ORGANIZATIONS, MOCK_REQUESTS, MOCK_USERS } from './mockData';
+import { MOCK_ACTIVITY, MOCK_APPLICATIONS, MOCK_ORGANIZATIONS, MOCK_REQUESTS, MOCK_ROLES, MOCK_USERS } from './mockData';
 import type {
-  AccessRequest, ActivityItem, AdminApplication, AdminUser, Organization, RequestStatus, UserStatus,
+  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, Organization, ProductStatus, RequestStatus, UserStatus,
 } from './types';
 
 interface AdminDataContextValue {
@@ -10,17 +10,25 @@ interface AdminDataContextValue {
   users: AdminUser[];
   requests: AccessRequest[];
   activity: ActivityItem[];
+  roles: AdminRole[];
   getApplication: (id: string) => AdminApplication | undefined;
   getOrganization: (id: string) => Organization | undefined;
   getUser: (id: string) => AdminUser | undefined;
-  upsertApplication: (app: AdminApplication) => void;
-  deleteApplication: (id: string) => void;
+  getRole: (id: string) => AdminRole | undefined;
+  /** Updates an existing product's editable metadata. Products cannot be created or deleted here. */
+  updateApplication: (app: AdminApplication) => void;
+  setApplicationStatus: (id: string, status: ProductStatus) => void;
+  addUser: (user: Omit<AdminUser, 'id' | 'appAccessIds' | 'lastActiveAt'>) => void;
   setUserStatus: (id: string, status: UserStatus) => void;
   grantUserAccess: (userId: string, appId: string) => void;
   revokeUserAccess: (userId: string, appId: string) => void;
   assignOrgApp: (orgId: string, appId: string) => void;
   removeOrgApp: (orgId: string, appId: string) => void;
   resolveRequest: (id: string, status: RequestStatus, note?: string) => void;
+  addRole: (role: Omit<AdminRole, 'id' | 'createdAt'>) => void;
+  updateRole: (role: AdminRole) => void;
+  duplicateRole: (id: string) => void;
+  deleteRole: (id: string) => void;
   logActivity: (message: string, kind: ActivityItem['kind']) => void;
 }
 
@@ -32,6 +40,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<AdminUser[]>(MOCK_USERS);
   const [requests, setRequests] = useState<AccessRequest[]>(MOCK_REQUESTS);
   const [activity, setActivity] = useState<ActivityItem[]>(MOCK_ACTIVITY);
+  const [roles, setRoles] = useState<AdminRole[]>(MOCK_ROLES);
 
   const logActivity = (message: string, kind: ActivityItem['kind']) => {
     setActivity((current) => [
@@ -46,20 +55,24 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     users,
     requests,
     activity,
+    roles,
     getApplication: (id) => applications.find((app) => app.id === id),
     getOrganization: (id) => organizations.find((org) => org.id === id),
     getUser: (id) => users.find((user) => user.id === id),
-    upsertApplication: (app) => {
-      setApplications((current) => {
-        const exists = current.some((item) => item.id === app.id);
-        return exists ? current.map((item) => (item.id === app.id ? app : item)) : [app, ...current];
-      });
-      logActivity(`${applications.some((item) => item.id === app.id) ? 'Updated' : 'Created'} application "${app.name}"`, 'application');
+    getRole: (id) => roles.find((role) => role.id === id),
+    updateApplication: (app) => {
+      setApplications((current) => current.map((item) => (item.id === app.id ? app : item)));
+      logActivity(`Updated product "${app.name}"`, 'application');
     },
-    deleteApplication: (id) => {
+    setApplicationStatus: (id, status) => {
+      setApplications((current) => current.map((item) => (item.id === id ? { ...item, status, updatedAt: new Date().toISOString().slice(0, 10) } : item)));
       const app = applications.find((item) => item.id === id);
-      setApplications((current) => current.filter((item) => item.id !== id));
-      if (app) logActivity(`Removed application "${app.name}" from the registry`, 'application');
+      if (app) logActivity(`Changed "${app.name}" status from ${app.status} to ${status}`, 'application');
+    },
+    addUser: (user) => {
+      const id = `user-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+      setUsers((current) => [...current, { ...user, id, appAccessIds: [], lastActiveAt: '—' }]);
+      logActivity(`Added user "${user.name}"`, 'user');
     },
     setUserStatus: (id, status) => {
       setUsers((current) => current.map((user) => (user.id === id ? { ...user, status } : user)));
@@ -113,8 +126,29 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         logActivity(`${verb} ${app.name} access request from ${request.requesterName}`, 'request');
       }
     },
+    addRole: (role) => {
+      const id = `role-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+      setRoles((current) => [...current, { ...role, id, createdAt: new Date().toISOString().slice(0, 10) }]);
+      logActivity(`Added role "${role.name}"`, 'user');
+    },
+    updateRole: (role) => {
+      setRoles((current) => current.map((item) => (item.id === role.id ? role : item)));
+      logActivity(`Updated role "${role.name}"`, 'user');
+    },
+    duplicateRole: (id) => {
+      const source = roles.find((role) => role.id === id);
+      if (!source) return;
+      const copyId = `role-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+      setRoles((current) => [...current, { ...source, id: copyId, name: `${source.name} (Copy)`, createdAt: new Date().toISOString().slice(0, 10) }]);
+      logActivity(`Duplicated role "${source.name}"`, 'user');
+    },
+    deleteRole: (id) => {
+      const source = roles.find((role) => role.id === id);
+      setRoles((current) => current.filter((role) => role.id !== id));
+      if (source) logActivity(`Deleted role "${source.name}"`, 'user');
+    },
     logActivity,
-  }), [applications, organizations, users, requests, activity]);
+  }), [applications, organizations, users, requests, activity, roles]);
 
   return <AdminDataContext.Provider value={value}>{children}</AdminDataContext.Provider>;
 }

@@ -19,7 +19,7 @@ export function Badge({ tone, children }: { tone: BadgeTone; children: ReactNode
 }
 
 const APPLICATION_STATUS_TONE: Record<string, BadgeTone> = {
-  active: 'success', 'on-request': 'warning', 'coming-soon': 'info', future: 'neutral',
+  active: 'success', inactive: 'neutral', 'coming-soon': 'info', 'on-request': 'warning', archived: 'danger',
 };
 const ORG_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', trial: 'info', suspended: 'danger' };
 const USER_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', invited: 'info', deactivated: 'neutral' };

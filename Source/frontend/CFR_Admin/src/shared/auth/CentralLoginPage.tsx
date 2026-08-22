@@ -1,35 +1,49 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { ArrowRightIcon, EyeIcon, EyeOffIcon, LockIcon, MailIcon } from '@shared/app/components/UiIcons';
-import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { environment } from '@shared/platform/config/environment';
-import { SOLUTION_REGISTRY } from '@shared/platform/config/solutionRegistry';
-import { AuthShell } from './AuthShell';
+import { AdminAuthShell } from './AdminAuthShell';
+import { AdminLoginCard } from './AdminLoginCard';
 import { useAuth } from './AuthProvider';
-import { getRequestedClientId, getSafeReturnUrl, toAbsoluteReturnUrl } from './centralAuth';
+import { getSafeReturnUrl, toAbsoluteReturnUrl } from './centralAuth';
 
 function isAbsolute(value: string) {
   return /^https?:\/\//i.test(value);
 }
 
+const DEMO_EMAIL = 'carl.lapp@optionc.com';
+const DEMO_PASSWORD = 'demo1234';
+const SIGN_IN_SIMULATED_DELAY_MS = 550;
+
+/**
+ * cfr-admin's own `/login` route. This project is the Super Admin console only — it never
+ * serves the CFR Portal's member-facing sign-in — so this always renders the distinct Admin
+ * experience regardless of query params. (A previous version branched on a `client_id` query
+ * param that some redirects forgot to set, silently falling back to the generic CFR design.)
+ */
 export function CentralLoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const clientId = useMemo(() => getRequestedClientId(location.search), [location.search]);
-  const destination = useMemo(() => getSafeReturnUrl(location.search, '/apps'), [location.search]);
+  const destination = useMemo(() => getSafeReturnUrl(location.search, '/admin'), [location.search]);
   const requiresInteractiveSignIn = useMemo(() => {
     const params = new URLSearchParams(location.search);
-    return (clientId === 'platform' || clientId === 'cfr-admin') && params.get('entry') === 'platform';
-  }, [clientId, location.search]);
-  const client = SOLUTION_REGISTRY[clientId];
+    return params.get('entry') === 'platform';
+  }, [location.search]);
   const { isAuthenticated, signIn } = useAuth();
   const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [interactiveSignInCompleted, setInteractiveSignInCompleted] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [email, setEmail] = useState(environment.authMode === 'mock' ? 'carl.lapp@optionc.com' : '');
-  const [password, setPassword] = useState(environment.authMode === 'mock' ? 'demo1234' : '');
+  const [email, setEmail] = useState(environment.authMode === 'mock' ? DEMO_EMAIL : '');
+  const [password, setPassword] = useState(environment.authMode === 'mock' ? DEMO_PASSWORD : '');
+
+  // The mock auth provider always succeeds, so this simulates real validation/invalid-credential/
+  // loading states locally without touching AuthProvider's contract.
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
 
   const completeCentralReturn = useCallback(() => {
     if (!isAbsolute(destination)) {
@@ -45,80 +59,71 @@ export function CentralLoginPage() {
     }
   }, [completeCentralReturn, interactiveSignInCompleted, isAuthenticated, requiresInteractiveSignIn]);
 
-  const completeSignIn = async (provider: 'password' | 'google' | 'microsoft') => {
+  const completeSignIn = async () => {
     const result = await signIn({
       email,
       password,
       remember,
-      provider,
-      clientId,
+      provider: 'password',
+      clientId: environment.appId,
       returnUrl: toAbsoluteReturnUrl(destination),
     });
     if (result === 'authenticated') {
       setInteractiveSignInCompleted(true);
-      showToast(clientId === 'platform' ? 'Signed in to Catholic Solutions' : clientId === 'cfr-admin' ? 'Signed in to CFRAdmin' : `Signed in. Returning to ${client.name}`);
+      showToast('Signed in to CFRAdmin');
     } else if (result === 'unavailable') {
       showToast('The configured identity service is unavailable. Please contact your administrator.');
     }
   };
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
-    void completeSignIn('password');
+    setFormError(null);
+
+    const errors: { email?: string; password?: string } = {};
+    if (!email.trim()) errors.email = 'Enter your email address.';
+    if (!password) errors.password = 'Enter your password.';
+    if (errors.email || errors.password) {
+      setFieldErrors(errors);
+      (errors.email ? emailRef : passwordRef).current?.focus();
+      return;
+    }
+    setFieldErrors({});
+
+    setSubmitting(true);
+    await new Promise((resolve) => setTimeout(resolve, SIGN_IN_SIMULATED_DELAY_MS));
+
+    if (environment.authMode === 'mock' && (email.trim() !== DEMO_EMAIL || password !== DEMO_PASSWORD)) {
+      setSubmitting(false);
+      setFormError('Invalid email or password. Check your credentials and try again.');
+      passwordRef.current?.focus();
+      return;
+    }
+
+    await completeSignIn();
+    setSubmitting(false);
   };
 
   return (
-    <AuthShell>
-      <div className="auth-login-stack">
-        <section className="auth-card auth-login-card">
-          <div className="auth-card__header">
-            <span className="auth-card__kicker">Central member sign in</span>
-            <h2>Welcome back</h2>
-            <p>{clientId === 'platform' ? 'Sign in to continue to your Catholic Solutions workspace.' : `Sign in once to continue securely to ${client.name}.`}</p>
-          </div>
-
-          <form onSubmit={submit} className="auth-form">
-            <div>
-              <label className="auth-label" htmlFor="email">Email address</label>
-              <div className="auth-input-wrap mt-1.5">
-                <span className="auth-input-icon"><MailIcon size={16} /></span>
-                <input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input" autoComplete="email" required />
-              </div>
-            </div>
-
-            <div>
-              <div className="auth-label-row">
-                <label className="auth-label" htmlFor="password">Password</label>
-                <PlatformLink to={`/forgot-password${location.search}`} className="auth-text-link">Forgot password?</PlatformLink>
-              </div>
-              <div className="auth-input-wrap mt-1.5">
-                <span className="auth-input-icon"><LockIcon size={16} /></span>
-                <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} className="auth-input auth-input--with-action" autoComplete="current-password" required />
-                <button type="button" onClick={() => setShowPassword((value) => !value)} className="auth-input-action" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOffIcon size={17} /> : <EyeIcon size={17} />}</button>
-              </div>
-            </div>
-
-            <label className="auth-checkbox auth-checkbox--login"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> <span>Keep me signed in on this device</span></label>
-
-            <button type="submit" className="auth-primary-button auth-primary-button--large">Sign in securely <ArrowRightIcon size={16} /></button>
-
-            <div className="auth-divider"><span>Or continue with</span></div>
-            <div className="auth-sso-grid">
-              <button type="button" onClick={() => void completeSignIn('google')} className="auth-sso-button"><span className="auth-google-mark">G</span><span>Google</span></button>
-              <button type="button" onClick={() => void completeSignIn('microsoft')} className="auth-sso-button"><span className="auth-microsoft-mark" aria-hidden="true"><i/><i/><i/><i/></span><span>Microsoft</span></button>
-            </div>
-          </form>
-        </section>
-
-        {clientId !== 'cfr-admin' ? (
-          <section className="auth-access-callout auth-access-callout--compact">
-            <div className="auth-access-callout__copy"><strong>New to Catholic Solutions?</strong><span>Request organization access.</span></div>
-            <PlatformLink to="/request-access" className="auth-access-callout__action">Request access <ArrowRightIcon size={15} /></PlatformLink>
-          </section>
-        ) : null}
-
-        {/* {environment.authMode === 'mock' ? <p className="auth-prototype-note">Development authentication · Central preview session is enabled.</p> : null} */}
-      </div>
-    </AuthShell>
+    <AdminAuthShell>
+      <AdminLoginCard
+        email={email}
+        onEmailChange={(value) => { setEmail(value); if (fieldErrors.email) setFieldErrors((current) => ({ ...current, email: undefined })); }}
+        password={password}
+        onPasswordChange={(value) => { setPassword(value); if (fieldErrors.password) setFieldErrors((current) => ({ ...current, password: undefined })); }}
+        showPassword={showPassword}
+        onToggleShowPassword={() => setShowPassword((value) => !value)}
+        remember={remember}
+        onRememberChange={setRemember}
+        onSubmit={(event) => void submit(event)}
+        submitting={submitting}
+        formError={formError}
+        fieldErrors={fieldErrors}
+        emailRef={emailRef}
+        passwordRef={passwordRef}
+        forgotHref={`/forgot-password${location.search}`}
+        showDemoHint={environment.authMode === 'mock'}
+      />
+    </AdminAuthShell>
   );
 }

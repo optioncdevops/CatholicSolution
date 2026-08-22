@@ -21,7 +21,8 @@ export function ProtectedRoute() {
 
   const localReturnUrl = `${location.pathname}${location.search}${location.hash}`;
   if (environment.appId === 'platform' || environment.appId === 'cfr-admin') {
-    return <Navigate to={`/login?returnUrl=${encodeURIComponent(localReturnUrl)}`} replace />;
+    const params = new URLSearchParams({ client_id: environment.appId, returnUrl: localReturnUrl });
+    return <Navigate to={`/login?${params.toString()}`} replace />;
   }
 
   const absoluteReturnUrl = typeof window === 'undefined' ? localReturnUrl : window.location.href;

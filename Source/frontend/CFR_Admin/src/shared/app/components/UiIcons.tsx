@@ -164,3 +164,27 @@ export function FileTextIcon(props: IconProps) {
 export function StarIcon(props: IconProps) {
   return <IconBase {...props}><path d="m12 3 2.7 5.5 6 .9-4.4 4.2 1 6-5.3-2.8-5.3 2.8 1-6-4.4-4.2 6-.9L12 3Z"/></IconBase>;
 }
+
+export function PencilIcon(props: IconProps) {
+  return <IconBase {...props}><path d="M13.5 4.5 19.5 10.5 8 22H2v-6L13.5 4.5Z"/><path d="M12 6l6 6"/></IconBase>;
+}
+
+export function CopyIcon(props: IconProps) {
+  return <IconBase {...props}><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></IconBase>;
+}
+
+export function MonitorIcon(props: IconProps) {
+  return <IconBase {...props}><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></IconBase>;
+}
+
+export function SmartphoneIcon(props: IconProps) {
+  return <IconBase {...props}><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M11 19h2"/></IconBase>;
+}
+
+export function RefreshCwIcon(props: IconProps) {
+  return <IconBase {...props}><path d="M21 12a9 9 0 0 1-15.3 6.4L3 16"/><path d="M3 12a9 9 0 0 1 15.3-6.4L21 8"/><path d="M3 21v-5h5M21 3v5h-5"/></IconBase>;
+}
+
+export function ArchiveIcon(props: IconProps) {
+  return <IconBase {...props}><rect x="3" y="3" width="18" height="5" rx="1.3"/><path d="M5 8v11a1.6 1.6 0 0 0 1.6 1.6h10.8A1.6 1.6 0 0 0 19 19V8"/><path d="M10 12h4"/></IconBase>;
+}

@@ -31,6 +31,12 @@
       ],
       "@registry/*": [
         "./src/registry/*"
+      ],
+      "@app/*": [
+        "./src/app/*"
+      ],
+      "@designSystem/*": [
+        "./src/designSystem/*"
       ]
     }
   },

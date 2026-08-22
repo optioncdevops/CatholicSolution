@@ -1,44 +1,141 @@
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Bell, Building2, ChevronDown, ClipboardList, Mail, Package, Settings, ShieldCheck, Sparkles, UserCog, Users } from 'lucide-react';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { ProfileMenu } from '@shared/app/components/ProfileMenu';
-import {
-  AppsIcon, BellIcon, BuildingIcon, ClipboardIcon, SearchIcon, SparklesIcon, UsersIcon,
-} from '@shared/app/components/UiIcons';
+import '../theme.css';
 import '../admin.css';
 
 const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', icon: SparklesIcon, end: true },
-  { to: '/admin/applications', label: 'Applications', icon: AppsIcon },
-  { to: '/admin/organizations', label: 'Organizations', icon: BuildingIcon },
-  { to: '/admin/users', label: 'Users', icon: UsersIcon },
-  { to: '/admin/requests', label: 'Requests', icon: ClipboardIcon },
-  { to: '/admin/settings', label: 'Settings', icon: BellIcon },
+  { to: '/admin', label: 'Dashboard', icon: Sparkles, end: true },
+  { to: '/admin/applications', label: 'Products', icon: Package },
+  { to: '/admin/organizations', label: 'Organizations', icon: Building2 },
+  { to: '/admin/users', label: 'Users', icon: Users },
+  { to: '/admin/requests', label: 'Requests', icon: ClipboardList },
 ];
 
-const BREADCRUMB_LABELS: Record<string, string> = {
-  admin: 'Dashboard', applications: 'Applications', organizations: 'Organizations',
-  users: 'Users', requests: 'Requests', settings: 'Settings', new: 'New',
-};
+const ADMINISTRATION_ITEMS = [
+  { to: '/admin/administration/user-roles', label: 'User roles', icon: UserCog },
+  { to: '/admin/administration/rights', label: 'Rights', icon: ShieldCheck },
+  { to: '/admin/settings', label: 'Settings', icon: Settings },
+  { to: '/admin/administration/email-templates', label: 'Email template', icon: Mail },
+];
 
 const CONTAINER = 'mx-auto w-[95%]';
 
-function useBreadcrumbs() {
-  const { pathname } = useLocation();
-  const segments = pathname.split('/').filter(Boolean);
-  const crumbs: { label: string; to: string }[] = [];
-  let path = '';
-  for (const segment of segments) {
-    path += `/${segment}`;
-    crumbs.push({ label: BREADCRUMB_LABELS[segment] ?? decodeURIComponent(segment), to: path });
-  }
-  return crumbs;
+function AdministrationNavItem() {
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+  const [panelPosition, setPanelPosition] = useState<{ top: number; left: number } | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const isActive = ADMINISTRATION_ITEMS.some((item) => location.pathname.startsWith(item.to));
+
+  const cancelClose = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = undefined;
+    }
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimerRef.current = setTimeout(() => setOpen(false), 150);
+  };
+
+  // The nav strip scrolls horizontally on small screens (overflow-x-auto), which clips any
+  // absolutely-positioned child — render the panel in a portal, positioned from the trigger's rect.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const updatePosition = () => {
+      const rect = wrapperRef.current?.getBoundingClientRect();
+      if (rect) setPanelPosition({ top: rect.bottom + 8, left: rect.left });
+    };
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const closeOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (wrapperRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const closeEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', closeOutside);
+    document.addEventListener('keydown', closeEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeOutside);
+      document.removeEventListener('keydown', closeEscape);
+    };
+  }, []);
+
+  useEffect(() => () => cancelClose(), []);
+
+  return (
+    <div
+      className="admin-nav-dropdown"
+      ref={wrapperRef}
+      onMouseEnter={() => {
+        cancelClose();
+        setOpen(true);
+      }}
+      onMouseLeave={scheduleClose}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={`admin-nav-item ${isActive ? 'admin-nav-item--active' : ''}`}
+      >
+        <Settings size={14} />
+        <span>Administration</span>
+        <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && panelPosition
+        ? createPortal(
+            <div
+              ref={panelRef}
+              role="menu"
+              aria-label="Administration"
+              className="admin-nav-dropdown__panel"
+              style={{ position: 'fixed', top: panelPosition.top, left: panelPosition.left }}
+              onMouseEnter={cancelClose}
+              onMouseLeave={scheduleClose}
+            >
+              {ADMINISTRATION_ITEMS.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className={({ isActive: itemActive }) => `admin-nav-dropdown__item ${itemActive ? 'admin-nav-dropdown__item--active' : ''}`}
+                >
+                  <span className="admin-nav-dropdown__icon" aria-hidden="true"><Icon size={16} /></span>
+                  <span>{label}</span>
+                </NavLink>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
+    </div>
+  );
 }
 
 export function AdminShell() {
-  const crumbs = useBreadcrumbs();
-  const showBreadcrumbs = crumbs.length > 1;
-
   return (
     <div className="flex min-h-screen flex-col bg-[var(--bg-app)] text-[var(--text-primary)]">
       <div className="admin-top-accent" aria-hidden="true" />
@@ -46,31 +143,21 @@ export function AdminShell() {
         <div className={`flex h-14 items-center gap-4 border-b border-[var(--line-soft)] ${CONTAINER}`}>
           <div className="flex shrink-0 items-center gap-3">
             <Brand compact />
-            <span className="admin-plane-badge hidden sm:inline-flex">Control Plane</span>
+            <span className="admin-plane-badge hidden sm:inline-flex">CFR Acutis</span>
           </div>
-
-          <label className="relative hidden max-w-sm flex-1 sm:block">
-            <span className="sr-only">Search the control plane</span>
-            <SearchIcon size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
-            <input
-              type="search"
-              placeholder="Search applications, organizations, users…"
-              className="w-full rounded-full border border-[var(--line)] bg-[var(--surface-muted)] py-2 pl-8 pr-3 text-xs font-medium text-[var(--text-primary)] outline-none placeholder:text-[var(--text-faint)] focus:border-[var(--secondary)] focus:bg-[var(--surface)]"
-            />
-          </label>
 
           <div className="flex-1" />
 
           <div className="flex shrink-0 items-center gap-1.5">
-            <button type="button" aria-label="Notifications" className="grid size-9 place-items-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--hover)]">
-              <BellIcon size={16} />
+            <button type="button" aria-label="Notifications" title="Notifications" className="grid size-9 place-items-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--hover)]">
+              <Bell size={16} />
             </button>
             <ProfileMenu />
           </div>
         </div>
 
-        <div className="border-b border-[var(--line)] bg-[var(--surface-muted)]">
-          <nav aria-label="Admin navigation" className={`admin-nav-scroll flex items-center gap-1 overflow-x-auto ${CONTAINER}`}>
+        <div className="admin-nav-strip">
+          <nav aria-label="Admin navigation" className={`admin-nav-scroll flex items-center overflow-x-auto ${CONTAINER}`}>
             {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
@@ -82,29 +169,15 @@ export function AdminShell() {
                 <span>{label}</span>
               </NavLink>
             ))}
+            <AdministrationNavItem />
           </nav>
         </div>
       </header>
 
-      {showBreadcrumbs ? (
-        <nav aria-label="Breadcrumb" className="border-b border-[var(--line-soft)] bg-[var(--surface)]">
-          <div className={`flex min-w-0 items-center gap-1.5 overflow-x-auto py-2 text-xs font-semibold text-[var(--text-muted)] ${CONTAINER}`}>
-            {crumbs.map((crumb, index) => (
-              <span key={crumb.to} className="flex shrink-0 items-center gap-1.5">
-                {index > 0 ? <span aria-hidden="true" className="text-[var(--text-faint)]">/</span> : null}
-                {index === crumbs.length - 1 ? (
-                  <span className="text-[var(--text-primary)]" aria-current="page">{crumb.label}</span>
-                ) : (
-                  <Link to={crumb.to} className="hover:text-[var(--text-primary)]">{crumb.label}</Link>
-                )}
-              </span>
-            ))}
-          </div>
-        </nav>
-      ) : null}
-
       <main className={`flex-1 py-6 ${CONTAINER}`}>
-        <Outlet />
+        <div className="admin-page-card">
+          <Outlet />
+        </div>
       </main>
 
       <Footer />

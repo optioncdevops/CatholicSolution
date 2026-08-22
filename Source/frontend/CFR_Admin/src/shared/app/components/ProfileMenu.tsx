@@ -1,9 +1,11 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import { AccountModals, type AccountModal } from './AccountModals';
 import { ChevronDownIcon, LockIcon, LogOutIcon, UserIcon } from './UiIcons';
 import { useAuth } from '@shared/auth/AuthProvider';
 import { buildCentralLogoutUrl } from '@shared/auth/centralAuth';
+import { environment } from '@shared/platform/config/environment';
 
 interface ProfileMenuProps {
   gradient?: string;
@@ -12,6 +14,7 @@ interface ProfileMenuProps {
 export function ProfileMenu({ gradient }: ProfileMenuProps) {
   const { signOut } = useAuth();
   const { user, initials } = useCurrentUser();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [modal, setModal] = useState<AccountModal>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -39,6 +42,13 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
 
   const handleSignOut = () => {
     setOpen(false);
+    // CFRAdmin has its own distinct login page on its own origin — sign out locally
+    // via /logout instead of bouncing through CFR's central login/logout domain.
+    if (environment.appId === 'cfr-admin') {
+      signOut();
+      navigate(`/logout?client_id=cfr-admin&returnUrl=${encodeURIComponent('/admin')}`, { replace: true });
+      return;
+    }
     signOut();
     const target = buildCentralLogoutUrl(window.location.href);
     if (target) window.location.replace(target);

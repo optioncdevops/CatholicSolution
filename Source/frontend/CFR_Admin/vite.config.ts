@@ -24,6 +24,8 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(currentDirectory, './src'),
         '@shared': path.resolve(currentDirectory, './src/shared'),
         '@registry': path.resolve(currentDirectory, './src/registry'),
+        '@app': path.resolve(currentDirectory, './src/app'),
+        '@designSystem': path.resolve(currentDirectory, './src/designSystem'),
       },
     },
   };

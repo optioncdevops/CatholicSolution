@@ -6,6 +6,9 @@ import { useAdminData } from '../AdminDataContext';
 import { StatusBadge } from '../components/Badge';
 import { Drawer } from '../components/Drawer';
 import { EntityAvatar } from '../components/EntityAvatar';
+import { Button } from '../components/form/Button';
+import { FilterSelect } from '../components/form/SelectField';
+import { DataTable, type DataTableColumn } from '../components/dataTable/DataTable';
 import type { AccessRequest, RequestStatus } from '../types';
 
 const STATUS_FILTERS: Array<{ id: RequestStatus | 'all'; label: string }> = [
@@ -25,8 +28,7 @@ export function RequestsInboxPage() {
   const rows = useMemo(() => requests
     .filter((request) => statusFilter === 'all' || request.status === statusFilter)
     .filter((request) => appFilter === 'all' || request.appId === appFilter)
-    .filter((request) => orgFilter === 'all' || request.orgId === orgFilter)
-    .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)), [requests, statusFilter, appFilter, orgFilter]);
+    .filter((request) => orgFilter === 'all' || request.orgId === orgFilter), [requests, statusFilter, appFilter, orgFilter]);
 
   const activeRequest = selected ? requests.find((request) => request.id === selected.id) ?? null : null;
 
@@ -39,6 +41,30 @@ export function RequestsInboxPage() {
     setInfoNote('');
     if (status !== 'info-requested') setSelected(null);
   };
+
+  const columns: DataTableColumn<AccessRequest>[] = [
+    {
+      id: 'requester', header: 'Requester', pinLeft: true, width: '15rem',
+      value: (request) => `${request.requesterName} (${request.requesterEmail})`,
+      cell: (request) => (
+        <div className="flex items-center gap-2.5">
+          <EntityAvatar name={request.requesterName} />
+          <span>
+            <span className="block font-bold text-[var(--text-primary)]">{request.requesterName}</span>
+            <span className="block text-xs text-[var(--text-muted)]">{request.requesterEmail}</span>
+          </span>
+        </div>
+      ),
+    },
+    { id: 'org', header: 'Organization', value: (request) => getOrganization(request.orgId)?.name ?? '—', cell: (request) => <span className="text-[var(--text-secondary)]">{getOrganization(request.orgId)?.name ?? '—'}</span> },
+    { id: 'app', header: 'Application', value: (request) => getApplication(request.appId)?.name ?? request.appId, cell: (request) => <span className="text-[var(--text-secondary)]">{getApplication(request.appId)?.name ?? request.appId}</span> },
+    { id: 'status', header: 'Status', value: (request) => request.status, cell: (request) => <StatusBadge status={request.status} kind="request" /> },
+    { id: 'submittedAt', header: 'Submitted', value: (request) => request.submittedAt, cell: (request) => <span className="text-[var(--text-muted)]">{request.submittedAt}</span> },
+    {
+      id: 'review', header: 'Review', sortable: false, excludeFromExport: true,
+      cell: (request) => <Button variant="secondary" onClick={() => setSelected(request)}>Review</Button>,
+    },
+  ];
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -59,48 +85,28 @@ export function RequestsInboxPage() {
             </button>
           ))}
         </div>
-        <select value={appFilter} onChange={(event) => setAppFilter(event.target.value)} aria-label="Filter by application" className="rounded-[var(--radius-control)] border border-[var(--line)] px-2.5 py-2 text-xs font-bold text-[var(--text-secondary)]">
+        <FilterSelect label="Filter by application" value={appFilter} onChange={(event) => setAppFilter(event.target.value)}>
           <option value="all">All applications</option>
           {applications.map((app) => <option key={app.id} value={app.id}>{app.name}</option>)}
-        </select>
-        <select value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)} aria-label="Filter by organization" className="rounded-[var(--radius-control)] border border-[var(--line)] px-2.5 py-2 text-xs font-bold text-[var(--text-secondary)]">
+        </FilterSelect>
+        <FilterSelect label="Filter by organization" value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)}>
           <option value="all">All organizations</option>
           {organizations.map((org) => <option key={org.id} value={org.id}>{org.name}</option>)}
-        </select>
+        </FilterSelect>
       </div>
 
       {rows.length === 0 ? (
         <EmptyState icon="📭" title="No requests found" description="Try a different filter combination." />
       ) : (
-        <div className="admin-table-scroll">
-          <table className="admin-table">
-            <thead><tr><th>Requester</th><th>Organization</th><th>Application</th><th>Status</th><th>Submitted</th><th /></tr></thead>
-            <tbody>
-              {rows.map((request) => (
-                <tr key={request.id}>
-                  <td>
-                    <div className="flex items-center gap-2.5">
-                      <EntityAvatar name={request.requesterName} />
-                      <span>
-                        <span className="block font-bold text-[var(--text-primary)]">{request.requesterName}</span>
-                        <span className="block text-xs text-[var(--text-muted)]">{request.requesterEmail}</span>
-                      </span>
-                    </div>
-                  </td>
-                  <td className="text-[var(--text-secondary)]">{getOrganization(request.orgId)?.name ?? '—'}</td>
-                  <td className="text-[var(--text-secondary)]">{getApplication(request.appId)?.name ?? request.appId}</td>
-                  <td><StatusBadge status={request.status} kind="request" /></td>
-                  <td className="text-[var(--text-muted)]">{request.submittedAt}</td>
-                  <td>
-                    <button type="button" onClick={() => setSelected(request)} className="rounded-[var(--radius-control)] border border-[var(--line)] px-2.5 py-1.5 text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--hover)]">
-                      Review
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          data={rows}
+          columns={columns}
+          getRowId={(request) => request.id}
+          initialSort={[{ id: 'submittedAt', desc: true }]}
+          exportFileName="catholic-solutions-access-requests"
+          exportTitle="Catholic Solutions — Access Requests"
+          emptyMessage="No requests found."
+        />
       )}
 
       <Drawer

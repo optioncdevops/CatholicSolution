@@ -1,0 +1,249 @@
+import { useEffect, useState } from "react";
+import {
+  CommonButton,
+  BUTTON_PRESETS,
+  CommonIconButton,
+} from "@app/components/buttons";
+import {
+  themeCardSurfaceClass,
+  themeFormControlTextClass,
+} from "@designSystem/theme/styles/componentStyle";
+import { cn } from "@app/utilities/cn";
+import { formatFileSize, getFileExtension } from "../fileUpload.utils";
+import type { UploadPreviewItem } from "../fileUpload.utils";
+import {
+  canPreviewZoom,
+  getFilePreviewKind,
+} from "../filePreview/filePreview.utils";
+import { FilePreviewRenderer } from "./FilePreviewRenderer";
+import { AppIcon } from "@app/components/icons";
+
+interface FilePreviewModalProps {
+  isOpen: boolean;
+  items: UploadPreviewItem[];
+  currentIndex: number;
+  onClose: () => void;
+  onIndexChange?: (index: number) => void;
+  onRemoveCurrent?: (index: number) => void;
+  enableDocumentPreview?: boolean;
+}
+
+export function FilePreviewModal({
+  isOpen,
+  items,
+  currentIndex,
+  onClose,
+  onIndexChange,
+  onRemoveCurrent,
+  enableDocumentPreview = false,
+}: FilePreviewModalProps) {
+  const [zoom, setZoom] = useState(1);
+  const [viewMode, setViewMode] = useState<"fit" | "actual">("fit");
+  const safeIndex = Math.max(0, Math.min(currentIndex, items.length - 1));
+  const item = items[safeIndex];
+  const hasNav = items.length > 1;
+  const atFirst = safeIndex <= 0;
+  const atLast = safeIndex >= items.length - 1;
+
+  const previewKind = item
+    ? getFilePreviewKind(item.file, item.url, enableDocumentPreview)
+    : "unsupported";
+  const zoomEnabled = canPreviewZoom(previewKind);
+
+  useEffect(() => {
+    if (isOpen) {
+      setZoom(1);
+      setViewMode("fit");
+    }
+  }, [isOpen, safeIndex]);
+
+  useEffect(() => {
+    if (!isOpen) {return;}
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      setZoom(1);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {return;}
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+      if (event.key === "ArrowLeft" && !atFirst) {
+        event.preventDefault();
+        onIndexChange?.(safeIndex - 1);
+      }
+      if (event.key === "ArrowRight" && !atLast) {
+        event.preventDefault();
+        onIndexChange?.(safeIndex + 1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => { window.removeEventListener("keydown", handleKeyDown); };
+  }, [isOpen, atFirst, atLast, onIndexChange, safeIndex, onClose]);
+
+  if (!isOpen || !item) {return null;}
+
+  const goPrev = () => hasNav && !atFirst && onIndexChange?.(safeIndex - 1);
+  const goNext = () => hasNav && !atLast && onIndexChange?.(safeIndex + 1);
+  const zoomPercent = Math.round(zoom * 100);
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="File preview"
+    >
+      <div className="absolute inset-0 bg-black/50" aria-hidden />
+      <div className="relative z-10 flex h-full w-full flex-col overflow-hidden">
+        <div className="flex h-14 items-center justify-between border-b border-primary-700/40 bg-auth-primary px-4">
+          <div className="min-w-0">
+            <p
+              className={cn(
+                "truncate font-semibold text-white",
+                themeFormControlTextClass,
+              )}
+            >
+              {item.file.name}
+            </p>
+            <p className="text-xs text-primary-100/90">
+              {safeIndex + 1} of {items.length} •{" "}
+              {formatFileSize(item.file.size)} •{" "}
+              {item.file.type ||
+                getFileExtension(item.file.name) ||
+                "Unknown type"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-primary-100 hover:bg-white/15 hover:text-white"
+            aria-label="Close preview"
+          >
+            <AppIcon name="x" size={18} />
+          </button>
+        </div>
+
+        <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-background-muted/60 px-4 py-6 dark:bg-primary-950/55">
+          <FilePreviewRenderer
+            item={item}
+            zoom={zoom}
+            viewMode={viewMode}
+            enableDocumentPreview={enableDocumentPreview}
+          />
+
+          {hasNav ? (
+            <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4">
+              <CommonIconButton
+                aria-label="Previous file"
+                type="button"
+                size="lg"
+                iconName="chevronLeft"
+                onClick={goPrev}
+                disabled={atFirst}
+                variant="primary"
+                tone="solid"
+                className="pointer-events-auto h-12 w-12 rounded-full border border-white/15 shadow-2xl"
+              />
+              <CommonIconButton
+                aria-label="Next file"
+                type="button"
+                size="lg"
+                iconName="chevronRight"
+                onClick={goNext}
+                disabled={atLast}
+                variant="primary"
+                tone="solid"
+                className="pointer-events-auto h-12 w-12 rounded-full border border-white/15 shadow-2xl"
+              />
+            </div>
+          ) : null}
+
+          <div
+            className={`absolute bottom-4 left-1/2 z-20 max-w-[calc(100vw-2rem)] -translate-x-1/2 p-2 backdrop-blur ${themeCardSurfaceClass}`}
+          >
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <CommonIconButton
+                aria-label="Zoom out"
+                type="button"
+                iconName="searchX"
+                onClick={() => { setZoom((z) => Math.max(0.5, z - 0.25)); }}
+                disabled={!zoomEnabled}
+              />
+              <span className="min-w-12 text-center text-xs font-medium text-foreground-muted">
+                {zoomPercent}%
+              </span>
+              <CommonIconButton
+                aria-label="Zoom in"
+                type="button"
+                iconName="search"
+                onClick={() => { setZoom((z) => Math.min(3, z + 0.25)); }}
+                disabled={!zoomEnabled}
+              />
+              <CommonButton
+                {...BUTTON_PRESETS.cancel}
+                type="button"
+                size="sm"
+                onClick={() => { setViewMode("fit"); }}
+                disabled={!zoomEnabled}
+              >
+                <span className="inline-flex items-center gap-1">
+                  <AppIcon name="minimize" size={14} />
+                  Fit
+                </span>
+              </CommonButton>
+              <CommonButton
+                {...BUTTON_PRESETS.cancel}
+                type="button"
+                size="sm"
+                onClick={() => { setViewMode("actual"); }}
+                disabled={!zoomEnabled}
+              >
+                <span className="inline-flex items-center gap-1">
+                  <AppIcon name="expand" size={14} />
+                  Actual
+                </span>
+              </CommonButton>
+              <CommonButton
+                {...BUTTON_PRESETS.cancel}
+                type="button"
+                size="sm"
+                onClick={() => {
+                  setZoom(1);
+                  setViewMode("fit");
+                }}
+                disabled={!zoomEnabled}
+              >
+                Reset
+              </CommonButton>
+              {onRemoveCurrent ? (
+                <CommonButton
+                  {...BUTTON_PRESETS.delete}
+                  type="button"
+                  size="sm"
+                  onClick={() => { onRemoveCurrent(safeIndex); }}
+                >
+                  Remove
+                </CommonButton>
+              ) : null}
+              <CommonButton
+                {...BUTTON_PRESETS.cancel}
+                type="button"
+                size="sm"
+                onClick={onClose}
+              >
+                Close
+              </CommonButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

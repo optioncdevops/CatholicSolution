@@ -7,14 +7,17 @@ import { ProtectedRoute } from '@shared/auth/ProtectedRoute';
 import { AdminDataProvider } from '@/modules/admin/AdminDataContext';
 import { AdminShell } from '@/modules/admin/components/AdminShell';
 import { DashboardPage } from '@/modules/admin/DashboardPage';
-import { ApplicationsListPage } from '@/modules/admin/applications/ApplicationsListPage';
-import { ApplicationDetailPage } from '@/modules/admin/applications/ApplicationDetailPage';
+import { ProductsListPage } from '@/modules/admin/applications/ProductsListPage';
+import { ProductDetailPage } from '@/modules/admin/applications/ProductDetailPage';
 import { OrganizationsListPage } from '@/modules/admin/organizations/OrganizationsListPage';
 import { OrganizationDetailPage } from '@/modules/admin/organizations/OrganizationDetailPage';
 import { UsersListPage } from '@/modules/admin/users/UsersListPage';
 import { UserDetailPage } from '@/modules/admin/users/UserDetailPage';
 import { RequestsInboxPage } from '@/modules/admin/requests/RequestsInboxPage';
 import { SettingsPage } from '@/modules/admin/settings/SettingsPage';
+import { UserRolesPage } from '@/modules/admin/administration/UserRolesPage';
+import { RightsPage } from '@/modules/admin/administration/RightsPage';
+import { EmailTemplatesPage } from '@/modules/admin/administration/EmailTemplatesPage';
 
 export default function App() {
   return (
@@ -33,15 +36,17 @@ export default function App() {
           )}
         >
           <Route path="/admin" element={<DashboardPage />} />
-          <Route path="/admin/applications" element={<ApplicationsListPage />} />
-          <Route path="/admin/applications/new" element={<ApplicationDetailPage mode="create" />} />
-          <Route path="/admin/applications/:appId" element={<ApplicationDetailPage mode="edit" />} />
+          <Route path="/admin/applications" element={<ProductsListPage />} />
+          <Route path="/admin/applications/:appId" element={<ProductDetailPage />} />
           <Route path="/admin/organizations" element={<OrganizationsListPage />} />
           <Route path="/admin/organizations/:orgId" element={<OrganizationDetailPage />} />
           <Route path="/admin/users" element={<UsersListPage />} />
           <Route path="/admin/users/:userId" element={<UserDetailPage />} />
           <Route path="/admin/requests" element={<RequestsInboxPage />} />
           <Route path="/admin/settings" element={<SettingsPage />} />
+          <Route path="/admin/administration/user-roles" element={<UserRolesPage />} />
+          <Route path="/admin/administration/rights" element={<RightsPage />} />
+          <Route path="/admin/administration/email-templates" element={<EmailTemplatesPage />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/admin" replace />} />

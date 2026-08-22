@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useAdminData } from '../AdminDataContext';
-import { ConfirmDialog } from '../components/ConfirmDialog';
+import { confirmAction } from '../lib/confirm';
 import { StatusBadge } from '../components/Badge';
 import { EntityAvatar } from '../components/EntityAvatar';
 
@@ -12,7 +12,6 @@ export function UserDetailPage() {
   const { getUser, getOrganization, applications, setUserStatus, grantUserAccess, revokeUserAccess } = useAdminData();
   const { showToast } = useToast();
   const [appToGrant, setAppToGrant] = useState('');
-  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
 
   const user = userId ? getUser(userId) : undefined;
   if (!user) return <Navigate to="/admin/users" replace />;
@@ -22,7 +21,17 @@ export function UserDetailPage() {
   const grantableApps = applications.filter((app) => !user.appAccessIds.includes(app.id));
 
   const handleActivate = () => { setUserStatus(user.id, 'active'); showToast(`${user.name} activated ✓`); };
-  const handleDeactivate = () => { setUserStatus(user.id, 'deactivated'); showToast(`${user.name} deactivated`); setConfirmDeactivate(false); };
+  const handleDeactivate = async () => {
+    const confirmed = await confirmAction({
+      title: 'Deactivate user?',
+      description: `${user.name} will lose access to their account and all assigned applications.`,
+      confirmLabel: 'Deactivate',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+    setUserStatus(user.id, 'deactivated');
+    showToast(`${user.name} deactivated`);
+  };
   const handleGrant = () => {
     if (!appToGrant) return;
     const app = applications.find((item) => item.id === appToGrant);
@@ -50,7 +59,7 @@ export function UserDetailPage() {
           {user.status === 'deactivated' ? (
             <button type="button" onClick={handleActivate} className="action-primary">Activate</button>
           ) : (
-            <button type="button" onClick={() => setConfirmDeactivate(true)} className="rounded-[var(--radius-control)] border border-[var(--error)] px-3 py-2 text-xs font-bold text-[var(--error)] hover:bg-[var(--error-bg)]">Deactivate</button>
+            <button type="button" onClick={() => void handleDeactivate()} className="rounded-[var(--radius-control)] border border-[var(--error)] px-3 py-2 text-xs font-bold text-[var(--error)] hover:bg-[var(--error-bg)]">Deactivate</button>
           )}
         </div>
       </div>
@@ -103,16 +112,6 @@ export function UserDetailPage() {
           </ul>
         )}
       </section>
-
-      <ConfirmDialog
-        open={confirmDeactivate}
-        title="Deactivate user?"
-        description={`${user.name} will lose access to their account and all assigned applications.`}
-        confirmLabel="Deactivate"
-        tone="danger"
-        onConfirm={handleDeactivate}
-        onCancel={() => setConfirmDeactivate(false)}
-      />
     </div>
   );
 }
