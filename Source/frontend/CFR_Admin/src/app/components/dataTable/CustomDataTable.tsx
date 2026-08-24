@@ -134,11 +134,12 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
     return "";
   };
 
-  /** Sticky / selection cells must track row striping (`group` on `<tr>`). */
+  /** Sticky / selection cells must track row striping (`group` on `<tr>`). This app has no dark
+   * theme, so these are the same CSS-var tokens used everywhere else, not a raw Tailwind scale. */
   const frozenStripedCellClass =
-    "sticky z-10 border-r border-primary-200/75 dark:border-slate-700 group-odd:bg-white group-even:bg-primary-50/75 dark:group-odd:bg-slate-950 dark:group-even:bg-slate-900/85";
+    "sticky z-10 border-r border-[var(--line-soft)] group-odd:bg-[var(--surface)] group-even:bg-[var(--line-soft)]";
   const selectionStripedCellClass =
-    "border-r border-primary-200/75 dark:border-slate-700 group-odd:bg-white group-even:bg-primary-50/75 dark:group-odd:bg-slate-950 dark:group-even:bg-slate-900/85";
+    "border-r border-[var(--line-soft)] group-odd:bg-[var(--surface)] group-even:bg-[var(--line-soft)]";
   const cellTextClass = "min-w-0 align-middle leading-snug";
 
   const exportFileBase = React.useMemo(
@@ -942,7 +943,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
       >
         {/* If, for some reason, all columns are hidden, show a friendly message instead of a broken table */}
         {visibleColumns.length === 0 ? (
-          <div className="px-4 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+          <div className="px-4 py-6 text-center text-xs text-[var(--text-muted)]">
             All columns are hidden. Use the{" "}
             <span className="font-medium">Columns</span> menu to show at least
             one column.
@@ -1110,9 +1111,9 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                         headerCellRefs.current[colIndex] = el;
                       }}
                         className={cn(
-                          `px-1.5 py-0.5 text-[11px] font-semibold text-primary-900 uppercase tracking-wide select-none dark:text-primary-100 bg-primary-100/95 dark:bg-primary-950/55 align-middle ${getColumnTextAlignClass(col.align)}`,
+                          `px-1.5 py-0.5 text-[11px] font-bold text-[var(--primary)] uppercase tracking-wide select-none bg-[var(--primary-muted)] align-middle ${getColumnTextAlignClass(col.align)}`,
                         isFrozen
-                          ? "sticky z-20 border-r border-primary-200/90 bg-primary-100/95 dark:border-primary-800/60 dark:bg-primary-950/55"
+                          ? "sticky z-20 border-r border-[var(--line)] bg-[var(--primary-muted)]"
                             : "",
                           showCellBorders && DATA_TABLE_HEADER_CELL_BORDER_CLASS,
                           col.className,
@@ -1206,7 +1207,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                               data-datatable-header-menu-trigger=""
                                 className={cn(
                                   DATA_TABLE_HEADER_MENU_BTN_CLASS,
-                                  isFilterOpen && "bg-slate-100 dark:bg-slate-800",
+                                  isFilterOpen && "bg-[var(--hover)]",
                                 )}
                                 onMouseDown={(e) => { e.stopPropagation(); }}
                               onClick={(e) => {
@@ -1234,7 +1235,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                                 <div
                                   ref={headerMenuRef}
                                   className={cn(
-                                    "fixed w-32 rounded-md border border-slate-200 bg-white py-1 text-xs shadow-lg dark:border-slate-700 dark:bg-slate-900",
+                                    "fixed w-32 rounded-md border border-[var(--line)] bg-[var(--surface)] py-1 text-xs shadow-lg",
                                     resolveDataTablePortalLayerClass(),
                                   )}
                                   style={
@@ -1247,7 +1248,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                                       className={cn(
                                         DATA_TABLE_HEADER_MENU_ITEM_CLASS,
                                         !col.sortable &&
-                                          "cursor-not-allowed text-slate-400 dark:text-slate-600",
+                                          "cursor-not-allowed text-[var(--text-faint)]",
                                       )}
                                     onClick={() => {
                                         if (!col.sortable) { return; }
@@ -1303,7 +1304,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
 
               {/* On-demand single-column filter row (via column ⋮ menu → Filter) */}
               {showColumnFilterRow && (
-                <tr className="bg-slate-50 border-t border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+                <tr className="bg-[var(--surface-muted)] border-t border-[var(--line)]">
                   {enableRowSelection && (
                     <th
                       className="px-1.5 py-0.5"
@@ -1348,7 +1349,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
               )}
             </thead>
 
-            <tbody className="bg-white divide-y divide-slate-100 dark:bg-slate-950 dark:divide-slate-800">
+            <tbody className="bg-[var(--surface)] divide-y divide-[var(--line-soft)]">
               {/* Skeleton rows while loading */}
               {isLoading && loadingMode === "skeleton"
                 ? Array.from({ length: skeletonRowCount }).map(
@@ -1357,9 +1358,9 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                         key={`skeleton-${rowIndex}`}
                       className={`group animate-pulse ${enableRowStriping
                             ? rowIndex % 2 === 0
-                              ? "bg-white dark:bg-slate-950"
-                              : "bg-primary-50/75 dark:bg-slate-900/85"
-                            : "bg-white dark:bg-slate-950"
+                              ? "bg-[var(--surface)]"
+                              : "bg-[var(--surface-muted)]"
+                            : "bg-[var(--surface)]"
                         }`}
                       >
                         {visibleColumns.map((col, colIndex) => {
@@ -1389,19 +1390,19 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                     grouped
                   ? Array.from(grouped.entries()).map(([groupKey, rows]) => (
                       <React.Fragment key={groupKey}>
-                        <tr className="bg-slate-100 dark:bg-slate-900">
+                        <tr className="bg-[var(--surface-muted)]">
                           <td
                             colSpan={
                               visibleColumns.length +
                               (enableRowSelection ? 1 : 0)
                             }
-                            className="px-1.5 py-0.5 text-xs font-semibold text-slate-700 dark:text-slate-200"
+                            className="px-1.5 py-0.5 text-xs font-semibold text-[var(--text-secondary)]"
                           >
                             {enableGroupingBy}:{" "}
-                            <strong className="text-slate-900 dark:text-white">
+                            <strong className="text-[var(--text-primary)]">
                               {groupKey}
                             </strong>{" "}
-                            <span className="ml-1 text-slate-500 dark:text-slate-400">
+                            <span className="ml-1 text-[var(--text-muted)]">
                               ({rows.length} rows)
                             </span>
                           </td>
@@ -1417,9 +1418,9 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                           return (
                             <tr
                               key={key}
-                              className={`group transition-colors hover:bg-primary-50/60 dark:hover:bg-slate-800 ${enableRowStriping
-                                  ? "odd:bg-white even:bg-primary-50/75 dark:odd:bg-slate-950 dark:even:bg-slate-900/85"
-                                  : "bg-white dark:bg-slate-950"
+                              className={`group transition-colors hover:bg-[var(--hover)] ${enableRowStriping
+                                  ? "odd:bg-[var(--surface)] even:bg-[var(--line-soft)]"
+                                  : "bg-[var(--surface)]"
                               }`}
                             >
                               <CustomDataTableBodyCells
@@ -1455,9 +1456,9 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                       return (
                         <tr
                           key={key}
-                        className={`group transition-colors hover:bg-primary-50/60 dark:hover:bg-slate-800 ${enableRowStriping
-                              ? "odd:bg-white even:bg-primary-50/75 dark:odd:bg-slate-950 dark:even:bg-slate-900/85"
-                              : "bg-white dark:bg-slate-950"
+                        className={`group transition-colors hover:bg-[var(--hover)] ${enableRowStriping
+                              ? "odd:bg-[var(--surface)] even:bg-[var(--line-soft)]"
+                              : "bg-[var(--surface)]"
                           } ${onRowClick || onRowDoubleClick
                               ? "cursor-pointer"
                               : ""
@@ -1540,7 +1541,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                         hasActiveColumnFilters ? (
                           <button
                             type="button"
-                            className="cursor-pointer rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-primary-800 transition-colors hover:bg-primary-50 dark:text-primary-100 dark:hover:bg-primary-900/30"
+                            className="cursor-pointer rounded-lg border border-[var(--line)] bg-[var(--surface)] px-3 py-1.5 text-xs font-medium text-[var(--primary)] transition-colors hover:bg-[var(--primary-muted)]"
                             onClick={clearAllColumnFilters}
                           >
                             Clear column filters
@@ -1557,17 +1558,17 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
 
         {/* Center spinner loader overlay */}
         {isLoading && loadingMode === "spinner" && (
-          <div className="absolute inset-0 z-[60] flex items-center justify-center bg-white/70 dark:bg-slate-950/70">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+          <div className="absolute inset-0 z-[60] flex items-center justify-center bg-[var(--surface)]/70">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
           </div>
         )}
 
         {/* Progressive 'in-progress' overlay with spinner */}
         {isLoading && loadingMode === "progress" && (
-          <div className="absolute inset-0 z-[60] flex items-center justify-center bg-white/75 dark:bg-slate-950/75">
+          <div className="absolute inset-0 z-[60] flex items-center justify-center bg-[var(--surface)]/75">
             <div className="flex flex-col items-center gap-2">
-              <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
-              <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+              <div className="h-7 w-7 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
+              <span className="text-[11px] font-medium text-[var(--text-secondary)]">
                 Loading data...
               </span>
             </div>

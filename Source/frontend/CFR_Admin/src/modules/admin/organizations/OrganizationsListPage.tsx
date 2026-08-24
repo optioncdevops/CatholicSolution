@@ -4,15 +4,15 @@ import { Search } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useAdminData } from '../AdminDataContext';
-import { StatusBadge } from '../components/Badge';
-import { EntityAvatar } from '../components/EntityAvatar';
-import { CONTROL_BASE, CONTROL_HEIGHT } from '../components/form/controlStyles';
-import { DataTable, type DataTableColumn } from '../components/dataTable/DataTable';
+import { StatusBadge } from '@app/components/Badge';
+import { EntityAvatar } from '@app/components/EntityAvatar';
+import { InputField } from '@app/components/formControls';
+import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate } from '../utils/formatDate';
 import type { Organization, OrganizationStatus } from '../types';
 
 const STATUS_FILTERS: Array<{ id: OrganizationStatus | 'all'; label: string }> = [
-  { id: 'all', label: 'All' }, { id: 'active', label: 'Active' }, { id: 'trial', label: 'Trial' }, { id: 'suspended', label: 'Suspended' },
+  { id: 'all', label: 'All statuses' }, { id: 'active', label: 'Active' }, { id: 'trial', label: 'Trial' }, { id: 'suspended', label: 'Suspended' },
 ];
 
 export function OrganizationsListPage() {
@@ -53,28 +53,26 @@ export function OrganizationsListPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Organizations" description={`${organizations.length} organizations using Catholic Solutions.`} />
+      <PanelHeader title="Organizations" />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="relative flex-1 min-w-[200px] max-w-sm">
-          <span className="sr-only">Search organizations</span>
-          <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by name or domain"
-            className={`${CONTROL_BASE} ${CONTROL_HEIGHT} pl-8 text-[length:var(--admin-text-xs)]`}
-          />
-        </label>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
+        <InputField
+          label="Search organizations"
+          hideLabel
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search by name or domain"
+          startIcon={<Search size={13} />}
+          className="min-h-8 text-xs placeholder:text-xs"
+          wrapperClassName="min-w-[200px] max-w-xs shrink-0"
+        />
+        <div className="flex shrink-0 flex-nowrap gap-1.5">
           {STATUS_FILTERS.map((filter) => (
             <button
               key={filter.id}
               type="button"
               onClick={() => setStatusFilter(filter.id)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold capitalize transition-colors ${
-                statusFilter === filter.id ? 'border-[var(--primary)] bg-[var(--primary)] text-white' : 'border-[var(--line)] text-[var(--text-secondary)] hover:bg-[var(--hover)]'
-              }`}
+              className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
             >
               {filter.label}
             </button>

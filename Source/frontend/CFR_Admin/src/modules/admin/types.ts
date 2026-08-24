@@ -5,7 +5,7 @@
  * On Request: not launchable directly — users request access.
  * Archived: hidden from normal product listings.
  */
-export type ProductStatus = 'active' | 'inactive' | 'coming-soon' | 'on-request' | 'archived';
+export type ProductStatus = 'active' | 'inactive' | 'coming-soon';
 export type ProductVisibility = 'public' | 'hidden';
 export type ProductOwnership = 'first-party' | 'partner';
 export type ProductDeploymentModel = 'external-saas';
@@ -39,6 +39,8 @@ export interface AdminApplication {
 }
 
 export type OrganizationStatus = 'active' | 'trial' | 'suspended';
+/** Derived from {@link Organization.expiryDate} vs today — never stored, always computed. */
+export type CustomerAccessStatus = 'active' | 'expiring-soon' | 'expired';
 
 export interface Organization {
   id: string;
@@ -48,6 +50,12 @@ export interface Organization {
   status: OrganizationStatus;
   appIds: string[];
   createdAt: string;
+  /** Short customer/account code shown in invoices and the customers table. */
+  code: string;
+  primaryContact: string;
+  contactEmail: string;
+  /** Subscription/access expiry date — drives {@link CustomerAccessStatus}. */
+  expiryDate: string;
 }
 
 export type UserRole = 'owner' | 'admin' | 'member';
@@ -103,4 +111,29 @@ export interface ActivityItem {
   at: string;
   actor: string;
   kind: 'application' | 'organization' | 'user' | 'request';
+}
+
+export type InvoiceStatus = 'created' | 'paid' | 'cancelled' | 'overdue' | 'expiring-soon';
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  orgId: string;
+  appId: string;
+  invoiceDate: string;
+  dueDate: string;
+  paidDate?: string;
+  amount: number;
+  quantity: number;
+  status: InvoiceStatus;
+}
+
+/** The single Masters reference list — billable line items available when creating an
+ * invoice. Managed under Administration → Masters; never deleted, only activated/deactivated. */
+export interface InvoiceItem {
+  id: string;
+  title: string;
+  description: string;
+  defaultAmount: number;
+  active: boolean;
 }

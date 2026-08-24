@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Drawer } from '../components/Drawer';
-import { Button } from '../components/form/Button';
-import { TextField } from '../components/form/TextField';
-import { SelectField } from '../components/form/SelectField';
+import { CommonButton } from '@app/components/buttons';
+import { Drawer } from '@app/components/Drawer';
+import { Dropdown, InputField } from '@app/components/formControls';
 import type { Organization, UserRole } from '../types';
 
 const ROLE_OPTIONS: UserRole[] = ['owner', 'admin', 'member'];
@@ -71,21 +70,27 @@ export function UserFormDrawer({ open, organizations, onClose, onCreate }: UserF
       onClose={onClose}
       footer={(
         <>
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={hasErrors}>Add user</Button>
+          <CommonButton variant="outline" onClick={onClose}>Cancel</CommonButton>
+          <CommonButton variant="primary" onClick={handleSubmit} disabled={hasErrors}>Add user</CommonButton>
         </>
       )}
     >
       <form onSubmit={(event) => { event.preventDefault(); handleSubmit(); }} className="flex flex-col gap-4" noValidate>
-        <TextField label="Full name" value={form.name} onChange={(event) => update('name', event.target.value)} error={touched ? errors.name : undefined} />
-        <TextField label="Email address" type="email" value={form.email} onChange={(event) => update('email', event.target.value)} error={touched ? errors.email : undefined} />
-        <SelectField label="Organization" value={form.orgId} onChange={(event) => update('orgId', event.target.value)}>
-          {organizations.length === 0 ? <option value="">No organizations available</option> : null}
-          {organizations.map((org) => <option key={org.id} value={org.id}>{org.name}</option>)}
-        </SelectField>
-        <SelectField label="Role" value={form.role} onChange={(event) => update('role', event.target.value as UserRole)}>
-          {ROLE_OPTIONS.map((role) => <option key={role} value={role}>{role}</option>)}
-        </SelectField>
+        <InputField label="Full name" value={form.name} onChange={(event) => update('name', event.target.value)} error={touched ? errors.name : undefined} />
+        <InputField label="Email address" type="email" value={form.email} onChange={(event) => update('email', event.target.value)} error={touched ? errors.email : undefined} />
+        <Dropdown
+          label="Organization" searchable={false} clearable={false}
+          value={form.orgId}
+          onValueChange={(value) => update('orgId', value ?? '')}
+          options={organizations.map((org) => ({ id: org.id, value: org.name }))}
+          helperText={touched ? errors.orgId : undefined}
+        />
+        <Dropdown
+          label="Role" searchable={false} clearable={false}
+          value={form.role}
+          onValueChange={(value) => update('role', (value as UserRole) ?? 'member')}
+          options={ROLE_OPTIONS.map((role) => ({ id: role, value: role }))}
+        />
         <fieldset className="flex flex-col gap-1.5 text-[length:var(--admin-text-xs)] [font-weight:var(--admin-weight-bold)] text-[var(--text-secondary)]">
           <legend className="mb-0.5">Initial status</legend>
           <div className="flex gap-4">

@@ -4,6 +4,55 @@
 @keyframes slide-in-left { from { transform: translateX(-12px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
 @keyframes rise-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
+/* Single shared filter-chip style — every toolbar's status filter buttons use this instead of
+   each page repeating (and subtly drifting from) its own inline Tailwind chain. */
+.admin-filter-chip {
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 750;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.admin-filter-chip:hover { background: var(--hover); }
+.admin-filter-chip--active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+.admin-filter-chip--active:hover { background: var(--primary); }
+
+/* Sticky action bar pinned to the bottom of a form page — stays visible while the form
+   content above it scrolls, the common SaaS "save/cancel toolbar" pattern. */
+.admin-sticky-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin: 0 -1rem -1rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 -8px 20px -12px rgba(18, 38, 76, 0.18);
+}
+
+/* Restrained dot-grid texture behind the console — scoped to AdminShell only (never the
+   login/auth screens, which keep their own brand treatment). */
+.admin-shell-bg {
+  background-color: var(--bg-app);
+  background-image: radial-gradient(circle, rgba(18, 38, 76, 0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
 .admin-reveal { animation: rise-in 220ms ease-out both; }
 .admin-reveal-stagger > * { animation: rise-in 220ms ease-out both; }
 .admin-reveal-stagger > *:nth-child(1) { animation-delay: 0ms; }
@@ -58,16 +107,72 @@
   .admin-reveal, .admin-reveal-stagger > *, .admin-skeleton { animation: none !important; }
 }
 
+/* The whole page body is one framed card — the title strip is its top region, not a
+   separate floating panel, so nothing reads as a "card inside a card". */
 .admin-page-card {
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 60%, var(--surface-muted) 160%);
   box-shadow: var(--shadow-card);
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem 1rem;
 }
 
 @media (max-width: 640px) {
-  .admin-page-card { padding: 1rem; border-radius: var(--radius-control); }
+  .admin-page-card { padding: 0.65rem 0.8rem 0.8rem; border-radius: var(--radius-control); }
+}
+
+.admin-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--line);
+}
+.admin-panel-header__breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  color: var(--text-muted);
+  transition: color 120ms ease;
+}
+.admin-panel-header__breadcrumb:hover { color: var(--primary); }
+.admin-panel-header__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-family: var(--admin-font-family-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+.admin-panel-header__subtitle {
+  margin: 0.1rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.admin-panel-header__title-accent {
+  display: inline-block;
+  width: 0.25rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--secondary) 0%, var(--primary) 100%);
+}
+.admin-panel-header__action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .admin-plane-badge {
@@ -198,7 +303,7 @@
 .admin-panel-card {
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
-  background: var(--surface);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 55%, var(--surface-muted) 180%);
   box-shadow: var(--shadow-card);
 }
 
@@ -244,24 +349,6 @@
   border-top: 1px solid var(--line-soft);
 }
 
-.admin-avatar-stack__item {
-  display: inline-flex;
-  border-radius: 999px;
-  box-shadow: 0 0 0 2px var(--surface);
-  margin-left: -0.45rem;
-}
-.admin-avatar-stack__item:first-child { margin-left: 0; }
-.admin-avatar-stack__more {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: var(--surface-muted);
-  color: var(--text-muted);
-  font-size: 0.625rem;
-  font-weight: 800;
-}
 .admin-panel-card__header {
   display: flex;
   align-items: center;

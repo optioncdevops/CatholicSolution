@@ -42,10 +42,6 @@ export function getProductWarnings(app: AdminApplication, allApplications: Admin
     warnings.push({ id: 'missing-description', message: 'Missing description.' });
   }
 
-  if (app.status === 'archived' && app.visibility === 'public') {
-    warnings.push({ id: 'archived-visible', message: 'Archived product is still marked public and may appear in the launcher.' });
-  }
-
   if (app.ownership === 'partner' && hostnameOf(url)?.endsWith('optioncapp.com')) {
     warnings.push({ id: 'partner-first-party-domain', message: 'Marked as a partner product but hosted on a first-party (optioncapp.com) domain.' });
   }
@@ -53,24 +49,47 @@ export function getProductWarnings(app: AdminApplication, allApplications: Admin
   return warnings;
 }
 
+export interface ProductFormErrors {
+  name?: string;
+  category?: string;
+  productionUrl?: string;
+}
+
+/** Validates the editable fields of a product form. Pure function, shared by every editor. */
+export function validateProductForm(form: AdminApplication): ProductFormErrors {
+  const errors: ProductFormErrors = {};
+  if (!form.name.trim()) errors.name = 'Product name is required.';
+  if (!form.category.trim()) errors.category = 'Category is required.';
+  if (form.productionUrl.trim()) {
+    const isValidUrl = (() => {
+      try {
+        const url = new URL(form.productionUrl.trim());
+        return url.protocol === 'http:' || url.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    })();
+    if (!isValidUrl) errors.productionUrl = 'Enter a valid URL, e.g. https://app.optioncapp.com.';
+  }
+  return errors;
+}
+
 /** Whether the current status allows the product to be launched directly from App Hub. */
 export function isLaunchable(status: AdminApplication['status']) {
   return status === 'active';
 }
 
-export type ProductActionKind = 'launch' | 'request' | 'preview-only' | 'unavailable';
+export type ProductActionKind = 'launch' | 'preview-only' | 'unavailable';
 
 /**
  * The one correct App Hub action per status — derived, not stored, so an invalid combination
- * (e.g. an Archived product exposing a Launch button) can't exist in the UI.
+ * (e.g. an Inactive product exposing a Launch button) can't exist in the UI.
  */
 export function resolveProductAction(status: AdminApplication['status']): { kind: ProductActionKind; label: string } {
   switch (status) {
     case 'active': return { kind: 'launch', label: 'Launch' };
-    case 'on-request': return { kind: 'request', label: 'Request access' };
     case 'coming-soon': return { kind: 'preview-only', label: 'Coming soon' };
     case 'inactive': return { kind: 'unavailable', label: 'Unavailable' };
-    case 'archived': return { kind: 'unavailable', label: 'Archived' };
   }
 }
 
@@ -78,6 +97,4 @@ export const STATUS_IMPACT: Record<AdminApplication['status'], string> = {
   active: 'The product becomes launchable and appears as active in App Hub.',
   inactive: 'The product is temporarily hidden from launch actions but stays in the registry. Existing organization assignments are preserved.',
   'coming-soon': 'The product becomes visible in App Hub as a preview with no launch action available.',
-  'on-request': 'The product requires an approved access request before an organization can use it.',
-  archived: 'The product is removed from normal product listings. Existing assignments and access history are preserved but the product is treated as retired.',
 };

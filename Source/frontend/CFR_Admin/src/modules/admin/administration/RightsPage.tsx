@@ -3,10 +3,9 @@ import { ChevronDown, ChevronRight, XCircle } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { CommonButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
-import { Button } from '../components/form/Button';
-import { FilterSelect } from '../components/form/SelectField';
-import { CONTROL_BASE, CONTROL_HEIGHT } from '../components/form/controlStyles';
+import { Dropdown, InputField } from '@app/components/formControls';
 import { ALL_RIGHTS_NODE_IDS, RIGHTS_TREE, type RightsNode } from './rightsTree';
 import type { PermissionLevel } from '../types';
 
@@ -121,7 +120,7 @@ export function RightsPage() {
   if (!selectedRole) {
     return (
       <div className="admin-reveal flex flex-col gap-4">
-        <PanelHeader title="Rights" description="Grant or revoke permissions per role and module." />
+        <PanelHeader title="Rights" />
         <EmptyState icon="🛡️" title="No roles yet" description="Add a role under User roles before configuring rights." />
       </div>
     );
@@ -129,32 +128,43 @@ export function RightsPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Rights" description="Grant or revoke permissions per role, module, and feature." />
+      <PanelHeader title="Rights" />
 
       <div className="admin-panel-card flex flex-col gap-3 p-4">
         <div className="flex flex-wrap items-end gap-3">
-          <FilterSelect label="Role" value={roleId} onChange={(event) => setRoleId(event.target.value)}>
-            {roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
-          </FilterSelect>
-          <FilterSelect label="Module" value={moduleFilter} onChange={(event) => setModuleFilter(event.target.value)}>
-            <option value="all">All modules</option>
-            {RIGHTS_TREE.map((node) => <option key={node.id} value={node.id}>{node.label}</option>)}
-          </FilterSelect>
-          <Button variant="secondary" icon={<XCircle size={13} />} onClick={clearFilters}>Clear filters</Button>
+          <div className="w-48 shrink-0">
+            <Dropdown
+              label="Role" searchable={false} clearable={false}
+              value={roleId}
+              onValueChange={(value) => setRoleId(value ?? roleId)}
+              options={roles.map((role) => ({ id: role.id, value: role.name }))}
+              className="min-h-8"
+            />
+          </div>
+          <div className="w-48 shrink-0">
+            <Dropdown
+              label="Module" searchable={false} clearable={false}
+              value={moduleFilter}
+              onValueChange={(value) => setModuleFilter(value ?? 'all')}
+              options={[{ id: 'all', value: 'All modules' }, ...RIGHTS_TREE.map((node) => ({ id: node.id, value: node.label }))]}
+              className="min-h-8"
+            />
+          </div>
+          <CommonButton variant="outline" iconLeft={<XCircle size={13} />} onClick={clearFilters}>Clear filters</CommonButton>
           <div className="ml-auto flex items-center gap-1.5">
-            <Button variant="secondary" onClick={() => setExpanded(new Set(ALL_RIGHTS_NODE_IDS))}>Expand all</Button>
-            <Button variant="secondary" onClick={() => setExpanded(new Set())}>Collapse all</Button>
+            <CommonButton variant="outline" onClick={() => setExpanded(new Set(ALL_RIGHTS_NODE_IDS))}>Expand all</CommonButton>
+            <CommonButton variant="outline" onClick={() => setExpanded(new Set())}>Collapse all</CommonButton>
           </div>
         </div>
-        <label className="relative max-w-sm">
-          <span className="sr-only">Search modules and features</span>
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search modules, submodules, or features…"
-            className={`${CONTROL_BASE} ${CONTROL_HEIGHT} text-[length:var(--admin-text-xs)]`}
-          />
-        </label>
+        <InputField
+          label="Search modules and features"
+          hideLabel
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search modules, submodules, or features…"
+          className="min-h-8 text-xs placeholder:text-xs"
+          wrapperClassName="max-w-sm"
+        />
       </div>
 
       <p className="text-xs text-[var(--text-faint)]">

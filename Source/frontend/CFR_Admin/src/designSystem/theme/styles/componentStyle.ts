@@ -206,8 +206,9 @@ export const themeFormSectionTableSlotClass =
 /** Shared data table outer shell (used inside FormSectionCard and standalone). */
 export const themeDataTableShellClass = "relative min-w-0 w-full transition-all duration-200";
 
-/** Data table header band. */
-export const themeDataTableHeadClass = "border-y border-[var(--line)] bg-[var(--surface-muted)]";
+/** Data table header band — a distinct primary-tinted band so it reads clearly above the
+ * striped body rows (which use --surface / --surface-muted), not the same muted gray. */
+export const themeDataTableHeadClass = "border-y border-[var(--line)] bg-[var(--primary-muted)]";
 
 /** Checkbox / radio input — validation border on the control itself. */
 export const themeChoiceInputClass =

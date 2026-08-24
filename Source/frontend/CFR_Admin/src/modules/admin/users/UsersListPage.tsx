@@ -4,19 +4,19 @@ import { Eye, Plus, Power, Search } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
-import { StatusBadge } from '../components/Badge';
-import { EntityAvatar } from '../components/EntityAvatar';
-import { Button, IconButton } from '../components/form/Button';
-import { CONTROL_BASE, CONTROL_HEIGHT } from '../components/form/controlStyles';
-import { DataTable, type DataTableColumn } from '../components/dataTable/DataTable';
+import { StatusBadge } from '@app/components/Badge';
+import { EntityAvatar } from '@app/components/EntityAvatar';
+import { InputField } from '@app/components/formControls';
+import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '../lib/confirm';
 import { formatDate } from '../utils/formatDate';
 import { UserFormDrawer, type NewUserValue } from './UserFormDrawer';
 import type { AdminUser, UserStatus } from '../types';
 
 const STATUS_FILTERS: Array<{ id: UserStatus | 'all'; label: string }> = [
-  { id: 'all', label: 'All' }, { id: 'active', label: 'Active' }, { id: 'invited', label: 'Invited' }, { id: 'deactivated', label: 'Deactivated' },
+  { id: 'all', label: 'All statuses' }, { id: 'active', label: 'Active' }, { id: 'invited', label: 'Invited' }, { id: 'deactivated', label: 'Deactivated' },
 ];
 
 export function UsersListPage() {
@@ -66,14 +66,13 @@ export function UsersListPage() {
       excludeFromExport: true,
       cell: (user) => (
         <div className="flex items-center gap-0.5">
-          <IconButton label={`View ${user.name}`} onClick={() => navigate(`/admin/users/${user.id}`)}><Eye size={15} /></IconButton>
-          <IconButton
-            label={user.status === 'deactivated' ? `Activate ${user.name}` : `Deactivate ${user.name}`}
-            tone={user.status === 'deactivated' ? 'default' : 'danger'}
+          <CommonIconButton aria-label={`View ${user.name}`} icon={<Eye size={15} />} onClick={() => navigate(`/admin/users/${user.id}`)} />
+          <CommonIconButton
+            aria-label={user.status === 'deactivated' ? `Activate ${user.name}` : `Deactivate ${user.name}`}
+            variant={user.status === 'deactivated' ? 'ghost' : 'danger'}
+            icon={<Power size={15} />}
             onClick={() => void handleToggleStatus(user)}
-          >
-            <Power size={15} />
-          </IconButton>
+          />
         </div>
       ),
     },
@@ -101,30 +100,27 @@ export function UsersListPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="Users"
-        description={`${users.length} users across all organizations.`}
-        action={<Button variant="primary" icon={<Plus size={14} />} onClick={() => setAddOpen(true)}>Add user</Button>}
+        action={<CommonButton variant="primary" iconLeft={<Plus size={14} />} onClick={() => setAddOpen(true)}>Add user</CommonButton>}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="relative flex-1 min-w-[200px] max-w-sm">
-          <span className="sr-only">Search users</span>
-          <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by name or email"
-            className={`${CONTROL_BASE} ${CONTROL_HEIGHT} pl-8 text-[length:var(--admin-text-xs)]`}
-          />
-        </label>
-        <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
+        <InputField
+          label="Search users"
+          hideLabel
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search by name or email"
+          startIcon={<Search size={13} />}
+          className="min-h-8 text-xs placeholder:text-xs"
+          wrapperClassName="min-w-[200px] max-w-xs shrink-0"
+        />
+        <div className="flex shrink-0 flex-nowrap gap-1.5">
           {STATUS_FILTERS.map((filter) => (
             <button
               key={filter.id}
               type="button"
               onClick={() => setStatusFilter(filter.id)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold capitalize transition-colors ${
-                statusFilter === filter.id ? 'border-[var(--primary)] bg-[var(--primary)] text-white' : 'border-[var(--line)] text-[var(--text-secondary)] hover:bg-[var(--hover)]'
-              }`}
+              className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
             >
               {filter.label}
             </button>

@@ -1,7 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react';
 import { createPortal } from 'react-dom';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Bell, Building2, ChevronDown, ClipboardList, Mail, Package, Settings, ShieldCheck, Sparkles, UserCog, Users } from 'lucide-react';
+import {
+  Bell, Building2, ChevronDown, ClipboardList, Mail, Package, Receipt, Settings, ShieldCheck, Sparkles, UserCog, Users,
+} from 'lucide-react';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { ProfileMenu } from '@shared/app/components/ProfileMenu';
@@ -21,18 +23,28 @@ const ADMINISTRATION_ITEMS = [
   { to: '/admin/administration/rights', label: 'Rights', icon: ShieldCheck },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
   { to: '/admin/administration/email-templates', label: 'Email template', icon: Mail },
+  { to: '/admin/administration/invoice-items', label: 'Invoice items', icon: Receipt },
+  // Component library (Add/View) pages intentionally have no nav entry — reach them by direct
+  // URL only. Routes still live in App.tsx; see the removal note atop SampleAddPage.tsx.
 ];
 
 const CONTAINER = 'mx-auto w-[95%]';
 
-function AdministrationNavItem() {
+interface NavDropdownItem {
+  to: string;
+  label: string;
+  icon: ComponentType<{ size?: number }>;
+}
+
+/** Shared hover/click dropdown behind both the "Administration" and "Masters" nav menus. */
+function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon: ComponentType<{ size?: number }>; items: NavDropdownItem[] }) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [panelPosition, setPanelPosition] = useState<{ top: number; left: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const isActive = ADMINISTRATION_ITEMS.some((item) => location.pathname.startsWith(item.to));
+  const isActive = items.some((item) => location.pathname.startsWith(item.to));
 
   const cancelClose = () => {
     if (closeTimerRef.current) {
@@ -99,8 +111,8 @@ function AdministrationNavItem() {
         aria-haspopup="menu"
         className={`admin-nav-item ${isActive ? 'admin-nav-item--active' : ''}`}
       >
-        <Settings size={14} />
-        <span>Administration</span>
+        <TriggerIcon size={14} />
+        <span>{label}</span>
         <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
@@ -109,13 +121,13 @@ function AdministrationNavItem() {
             <div
               ref={panelRef}
               role="menu"
-              aria-label="Administration"
+              aria-label={label}
               className="admin-nav-dropdown__panel"
               style={{ position: 'fixed', top: panelPosition.top, left: panelPosition.left }}
               onMouseEnter={cancelClose}
               onMouseLeave={scheduleClose}
             >
-              {ADMINISTRATION_ITEMS.map(({ to, label, icon: Icon }) => (
+              {items.map(({ to, label: itemLabel, icon: Icon }) => (
                 <NavLink
                   key={to}
                   to={to}
@@ -124,7 +136,7 @@ function AdministrationNavItem() {
                   className={({ isActive: itemActive }) => `admin-nav-dropdown__item ${itemActive ? 'admin-nav-dropdown__item--active' : ''}`}
                 >
                   <span className="admin-nav-dropdown__icon" aria-hidden="true"><Icon size={16} /></span>
-                  <span>{label}</span>
+                  <span>{itemLabel}</span>
                 </NavLink>
               ))}
             </div>,
@@ -137,7 +149,7 @@ function AdministrationNavItem() {
 
 export function AdminShell() {
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--bg-app)] text-[var(--text-primary)]">
+    <div className="admin-shell-bg flex min-h-screen flex-col text-[var(--text-primary)]">
       <div className="admin-top-accent" aria-hidden="true" />
       <header className="sticky top-0 z-40 bg-[var(--surface)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--surface)]/80">
         <div className={`flex h-14 items-center gap-4 border-b border-[var(--line-soft)] ${CONTAINER}`}>
@@ -169,12 +181,12 @@ export function AdminShell() {
                 <span>{label}</span>
               </NavLink>
             ))}
-            <AdministrationNavItem />
+            <NavDropdown label="Administration" icon={Settings} items={ADMINISTRATION_ITEMS} />
           </nav>
         </div>
       </header>
 
-      <main className={`flex-1 py-6 ${CONTAINER}`}>
+      <main className={`flex-1 py-4 ${CONTAINER}`}>
         <div className="admin-page-card">
           <Outlet />
         </div>

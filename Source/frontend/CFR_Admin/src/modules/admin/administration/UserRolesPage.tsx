@@ -3,10 +3,10 @@ import { Copy, Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
-import { Button, IconButton } from '../components/form/Button';
-import { CONTROL_BASE, CONTROL_HEIGHT } from '../components/form/controlStyles';
-import { DataTable, type DataTableColumn } from '../components/dataTable/DataTable';
+import { InputField } from '@app/components/formControls';
+import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate } from '../utils/formatDate';
 import { confirmAction } from '../lib/confirm';
 import { RoleFormDrawer, type RoleFormValue } from './RoleFormDrawer';
@@ -62,10 +62,10 @@ export function UserRolesPage() {
       excludeFromExport: true,
       cell: (role) => (
         <div className="flex items-center gap-0.5">
-          <IconButton label={`Edit ${role.name}`} onClick={() => { setDrawerReadOnly(false); setDrawerTarget(role); }}><Pencil size={14} /></IconButton>
-          <IconButton label={`Duplicate ${role.name}`} onClick={() => handleDuplicate(role)}><Copy size={14} /></IconButton>
-          <IconButton label={`View ${role.name}`} onClick={() => { setDrawerReadOnly(true); setDrawerTarget(role); }}><Eye size={14} /></IconButton>
-          <IconButton label={`Delete ${role.name}`} tone="danger" onClick={() => void handleDelete(role)}><Trash2 size={14} /></IconButton>
+          <CommonIconButton aria-label={`Edit ${role.name}`} icon={<Pencil size={14} />} onClick={() => { setDrawerReadOnly(false); setDrawerTarget(role); }} />
+          <CommonIconButton aria-label={`Duplicate ${role.name}`} icon={<Copy size={14} />} onClick={() => handleDuplicate(role)} />
+          <CommonIconButton aria-label={`View ${role.name}`} icon={<Eye size={14} />} onClick={() => { setDrawerReadOnly(true); setDrawerTarget(role); }} />
+          <CommonIconButton aria-label={`Delete ${role.name}`} variant="danger" icon={<Trash2 size={14} />} onClick={() => void handleDelete(role)} />
         </div>
       ),
     },
@@ -87,20 +87,19 @@ export function UserRolesPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="User roles"
-        description={`${roles.length} roles in the catalog.`}
-        action={<Button variant="primary" icon={<Plus size={14} />} onClick={() => { setDrawerReadOnly(false); setDrawerTarget('create'); }}>Add user role</Button>}
+        action={<CommonButton variant="primary" iconLeft={<Plus size={14} />} onClick={() => { setDrawerReadOnly(false); setDrawerTarget('create'); }}>Add user role</CommonButton>}
       />
 
-      <label className="relative max-w-sm">
-        <span className="sr-only">Search roles</span>
-        <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-faint)]" />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name, description, landing page"
-          className={`${CONTROL_BASE} ${CONTROL_HEIGHT} pl-8 text-[length:var(--admin-text-xs)]`}
-        />
-      </label>
+      <InputField
+        label="Search roles"
+        hideLabel
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Search by name, description, landing page"
+        startIcon={<Search size={13} />}
+        className="min-h-8 text-xs placeholder:text-xs"
+        wrapperClassName="max-w-sm"
+      />
 
       {rows.length === 0 ? (
         <EmptyState icon="🧑‍💼" title="No roles found" description="Try a different search term." />

@@ -112,7 +112,7 @@ export function CustomDataTableToolbar<T>({
         )}
         {enableExport && (
           <div className="flex shrink-0 items-center">
-            <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+            <span className="text-[11px] font-medium text-[var(--text-secondary)]">
               Export:
             </span>
             <button

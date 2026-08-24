@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useCurrentUser } from '@shared/app/context/UserContext';
-import { Tabs, TabPanel } from '../components/Tabs';
+import { Tabs, TabPanel } from '@app/components/Tabs';
 
 export function SettingsPage() {
   const { user, updateUser } = useCurrentUser();
@@ -31,7 +31,7 @@ export function SettingsPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Settings" description="Admin profile, platform configuration and notification preferences." />
+      <PanelHeader title="Settings" />
 
       <Tabs
         activeId={activeTab}

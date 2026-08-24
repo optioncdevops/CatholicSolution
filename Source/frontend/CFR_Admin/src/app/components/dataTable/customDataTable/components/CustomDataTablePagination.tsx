@@ -22,11 +22,11 @@ export function CustomDataTablePagination({
   setPageIndex,
 }: CustomDataTablePaginationProps) {
   return (
-    <div className="flex flex-col gap-1.5 px-3 py-1.5 border-t border-slate-200 bg-slate-50 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-1.5 px-3 py-1.5 border-t border-[var(--line)] bg-[var(--surface-muted)] text-xs text-[var(--text-secondary)] sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-1.5">
         <span>Rows per page:</span>
         <select
-          className="h-7 rounded border border-slate-300 bg-white px-2 text-xs text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          className="h-7 rounded border border-[var(--line)] bg-[var(--surface)] px-2 text-xs text-[var(--text-secondary)] focus:border-[var(--primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
           value={pageSize === "all" ? "all" : String(pageSize)}
           onChange={(e) => {
             const raw = e.target.value;
@@ -47,14 +47,14 @@ export function CustomDataTablePagination({
             ),
           )}
         </select>
-        <span className="ml-2 text-slate-500 dark:text-slate-400">
+        <span className="ml-2 text-[var(--text-muted)]">
           Rows: {totalRows} • Page {pageIndex + 1} of {pageCount}
         </span>
       </div>
       <div className="flex items-center gap-1">
         <button
           type="button"
-          className="h-7 w-7 flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="h-7 w-7 flex items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--hover)] disabled:opacity-50 disabled:hover:bg-transparent"
           disabled={pageIndex === 0}
           onClick={() => { setPageIndex(0); }}
           title="First page"
@@ -63,19 +63,19 @@ export function CustomDataTablePagination({
         </button>
         <button
           type="button"
-          className="h-7 px-3 rounded-full border border-slate-300 bg-white text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="h-7 px-3 rounded-full border border-[var(--line)] bg-[var(--surface)] text-xs text-[var(--text-secondary)] hover:bg-[var(--hover)] disabled:opacity-50 disabled:hover:bg-transparent"
           disabled={pageIndex === 0}
           onClick={() => { setPageIndex((p) => Math.max(0, p - 1)); }}
           title="Previous page"
         >
           Prev
         </button>
-        <span className="text-slate-500 dark:text-slate-400 px-1">
+        <span className="text-[var(--text-muted)] px-1">
           {pageIndex + 1} / {pageCount}
         </span>
         <button
           type="button"
-          className="h-7 px-3 rounded-full border border-slate-300 bg-white text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="h-7 px-3 rounded-full border border-[var(--line)] bg-[var(--surface)] text-xs text-[var(--text-secondary)] hover:bg-[var(--hover)] disabled:opacity-50 disabled:hover:bg-transparent"
           disabled={pageIndex >= pageCount - 1}
           onClick={() => { setPageIndex((p) => Math.min(pageCount - 1, p + 1)); }}
           title="Next page"
@@ -84,7 +84,7 @@ export function CustomDataTablePagination({
         </button>
         <button
           type="button"
-          className="h-7 w-7 flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="h-7 w-7 flex items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--hover)] disabled:opacity-50 disabled:hover:bg-transparent"
           disabled={pageIndex >= pageCount - 1}
           onClick={() => { setPageIndex(pageCount - 1); }}
           title="Last page"

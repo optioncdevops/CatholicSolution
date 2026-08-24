@@ -35,7 +35,15 @@ export function Tabs({ tabs, activeId, onChange }: TabsProps) {
             }`}
           >
             {tab.label}
-            {typeof tab.count === 'number' ? <span className="ml-1.5 text-[var(--text-faint)]">{tab.count}</span> : null}
+            {typeof tab.count === 'number' ? (
+              <span
+                className={`ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[0.6875rem] font-extrabold leading-none ${
+                  active ? 'bg-[var(--primary-muted)] text-[var(--primary)]' : 'bg-[var(--surface-muted)] text-[var(--text-faint)]'
+                }`}
+              >
+                {tab.count}
+              </span>
+            ) : null}
           </button>
         );
       })}

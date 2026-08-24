@@ -2,17 +2,17 @@ import { useMemo, useState } from 'react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { CommonButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
-import { StatusBadge } from '../components/Badge';
-import { Drawer } from '../components/Drawer';
-import { EntityAvatar } from '../components/EntityAvatar';
-import { Button } from '../components/form/Button';
-import { FilterSelect } from '../components/form/SelectField';
-import { DataTable, type DataTableColumn } from '../components/dataTable/DataTable';
+import { StatusBadge } from '@app/components/Badge';
+import { Drawer } from '@app/components/Drawer';
+import { EntityAvatar } from '@app/components/EntityAvatar';
+import { Dropdown } from '@app/components/formControls';
+import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import type { AccessRequest, RequestStatus } from '../types';
 
 const STATUS_FILTERS: Array<{ id: RequestStatus | 'all'; label: string }> = [
-  { id: 'all', label: 'All' }, { id: 'pending', label: 'Pending' }, { id: 'approved', label: 'Approved' },
+  { id: 'all', label: 'All statuses' }, { id: 'pending', label: 'Pending' }, { id: 'approved', label: 'Approved' },
   { id: 'rejected', label: 'Rejected' }, { id: 'info-requested', label: 'Info requested' },
 ];
 
@@ -62,13 +62,13 @@ export function RequestsInboxPage() {
     { id: 'submittedAt', header: 'Submitted', value: (request) => request.submittedAt, cell: (request) => <span className="text-[var(--text-muted)]">{request.submittedAt}</span> },
     {
       id: 'review', header: 'Review', sortable: false, excludeFromExport: true,
-      cell: (request) => <Button variant="secondary" onClick={() => setSelected(request)}>Review</Button>,
+      cell: (request) => <CommonButton variant="outline" size="sm" onClick={() => setSelected(request)}>Review</CommonButton>,
     },
   ];
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Access requests" description={`${requests.filter((r) => r.status === 'pending').length} pending review.`} />
+      <PanelHeader title="Access requests" />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1.5">
@@ -77,22 +77,30 @@ export function RequestsInboxPage() {
               key={filter.id}
               type="button"
               onClick={() => setStatusFilter(filter.id)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold capitalize transition-colors ${
-                statusFilter === filter.id ? 'border-[var(--primary)] bg-[var(--primary)] text-white' : 'border-[var(--line)] text-[var(--text-secondary)] hover:bg-[var(--hover)]'
-              }`}
+              className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
             >
               {filter.label}
             </button>
           ))}
         </div>
-        <FilterSelect label="Filter by application" value={appFilter} onChange={(event) => setAppFilter(event.target.value)}>
-          <option value="all">All applications</option>
-          {applications.map((app) => <option key={app.id} value={app.id}>{app.name}</option>)}
-        </FilterSelect>
-        <FilterSelect label="Filter by organization" value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)}>
-          <option value="all">All organizations</option>
-          {organizations.map((org) => <option key={org.id} value={org.id}>{org.name}</option>)}
-        </FilterSelect>
+        <div className="w-44 shrink-0">
+          <Dropdown
+            label="Filter by application" hideLabel searchable={false} clearable={false}
+            value={appFilter}
+            onValueChange={(value) => setAppFilter(value ?? 'all')}
+            options={[{ id: 'all', value: 'All applications' }, ...applications.map((app) => ({ id: app.id, value: app.name }))]}
+            className="min-h-8"
+          />
+        </div>
+        <div className="w-44 shrink-0">
+          <Dropdown
+            label="Filter by organization" hideLabel searchable={false} clearable={false}
+            value={orgFilter}
+            onValueChange={(value) => setOrgFilter(value ?? 'all')}
+            options={[{ id: 'all', value: 'All organizations' }, ...organizations.map((org) => ({ id: org.id, value: org.name }))]}
+            className="min-h-8"
+          />
+        </div>
       </div>
 
       {rows.length === 0 ? (

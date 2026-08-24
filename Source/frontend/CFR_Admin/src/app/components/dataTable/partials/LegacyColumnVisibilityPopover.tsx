@@ -29,12 +29,12 @@ export function LegacyColumnVisibilityPopover<T>({
   return (
     <>
       <div className="flex shrink-0 items-center justify-between gap-4 px-3 pb-2">
-        <span className="whitespace-nowrap font-semibold text-slate-700 dark:text-slate-100">
+        <span className="whitespace-nowrap font-semibold text-[var(--text-primary)]">
           Columns
         </span>
         <button
           type="button"
-          className="shrink-0 whitespace-nowrap text-[11px] text-primary-600 hover:underline dark:text-primary-400"
+          className="shrink-0 whitespace-nowrap text-[11px] text-[var(--primary)] hover:underline"
           onClick={onShowAll}
         >
           Show all
@@ -53,7 +53,7 @@ export function LegacyColumnVisibilityPopover<T>({
                 <span className={COLUMN_VISIBILITY_LABEL_CLASS}>
                   {col.header}
                 </span>
-                <span className="shrink-0 text-[10px] text-slate-400 dark:text-slate-500">
+                <span className="shrink-0 text-[10px] text-[var(--text-faint)]">
                   Locked
                 </span>
               </div>
@@ -68,17 +68,17 @@ export function LegacyColumnVisibilityPopover<T>({
           return (
             <div
               key={col.id}
-              className="flex items-center justify-between gap-3 rounded px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-800"
+              className="flex items-center justify-between gap-3 rounded px-2 py-1 hover:bg-[var(--hover)]"
             >
               <div className="flex items-center gap-1">
                 <span className={COLUMN_VISIBILITY_LABEL_CLASS}>
                   {col.header}
                 </span>
                 {enableColumnReorder && (
-                  <div className="flex flex-col text-[8px] leading-none text-slate-400">
+                  <div className="flex flex-col text-[8px] leading-none text-[var(--text-faint)]">
                     <button
                       type="button"
-                      className={`hover:text-slate-700 dark:hover:text-slate-200 ${
+                      className={`hover:text-[var(--text-secondary)] ${
                         index === 0 ? "cursor-default opacity-30" : ""
                       }`}
                       disabled={index === 0}
@@ -88,7 +88,7 @@ export function LegacyColumnVisibilityPopover<T>({
                     </button>
                     <button
                       type="button"
-                      className={`hover:text-slate-700 dark:hover:text-slate-200 ${
+                      className={`hover:text-[var(--text-secondary)] ${
                         index === orderedColumns.length - 1
                           ? "cursor-default opacity-30"
                           : ""
@@ -107,8 +107,8 @@ export function LegacyColumnVisibilityPopover<T>({
                 onClick={() => { onToggleColumn(col.id); }}
                 className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
                   isVisible
-                    ? "bg-primary-500"
-                    : "bg-slate-300 dark:bg-slate-700"
+                    ? "bg-[var(--primary)]"
+                    : "bg-[var(--line-strong)]"
                 } ${cannotHideLastVisible ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                 aria-pressed={isVisible}
                 aria-label={`${isVisible ? "Hide" : "Show"} ${col.header}`}

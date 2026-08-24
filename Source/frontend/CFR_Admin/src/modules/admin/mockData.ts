@@ -1,4 +1,6 @@
-import type { AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, Organization } from './types';
+import type {
+  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, Invoice, InvoiceItem, Organization,
+} from './types';
 
 export const MOCK_ROLES: AdminRole[] = [
   { id: 'role-super-admin', name: 'Super Admin', description: 'Full control across all organizations, products, and platform settings.', landingPage: 'Dashboard', createdAt: '2025-01-05' },
@@ -41,7 +43,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     integrations: ['OptionC School', 'Parish Hub'],
     productionUrl: 'https://matt-money.optioncapp.com',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'same-tab',
-    status: 'on-request', visibility: 'public', updatedAt: '2026-08-05',
+    status: 'inactive', visibility: 'public', updatedAt: '2026-08-05',
   },
   {
     id: 'arc-alerts', registryRef: 'reg_app_0004', sourceLocation: 'SaaS_Apps/arc-alerts',
@@ -54,7 +56,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     // "duplicate domain" validation warning surfaced in Product Details.
     productionUrl: 'https://matt-money.optioncapp.com',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'same-tab',
-    status: 'on-request', visibility: 'public', updatedAt: '2026-07-30',
+    status: 'coming-soon', visibility: 'public', updatedAt: '2026-07-30',
   },
   {
     id: 'catholic-content', registryRef: 'reg_app_0005', sourceLocation: 'SaaS_Apps/catholic-content',
@@ -98,22 +100,49 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     description: 'Generate faith-integrated lesson plans from a short description of the class and topic.',
     features: ['Lesson planning', 'AI drafting', 'Teaching workflow'],
     integrations: ['OptionC School'],
-    // Intentionally blank and still marked public while archived, to demonstrate the
-    // "missing production URL" and "archived product still visible" warnings.
+    // Intentionally blank to demonstrate the "missing production URL" warning.
     productionUrl: '',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'new-tab',
-    status: 'archived', visibility: 'public', updatedAt: '2026-06-28',
+    status: 'inactive', visibility: 'hidden', updatedAt: '2026-06-28',
   },
 ];
 
 export const MOCK_ORGANIZATIONS: Organization[] = [
-  { id: 'org-holy-family', name: 'Holy Family Academy', domain: 'holyfamilyacademy.edu', plan: 'growth', status: 'active', appIds: ['optionc-school', 'matt-money', 'arc-alerts'], createdAt: '2025-01-14' },
-  { id: 'org-st-anne', name: 'St. Anne Parish', domain: 'stanneparish.org', plan: 'starter', status: 'active', appIds: ['optionc-parish'], createdAt: '2025-02-27' },
-  { id: 'org-sacred-heart', name: 'Sacred Heart Diocese', domain: 'sacredheartdiocese.org', plan: 'enterprise', status: 'active', appIds: ['optionc-school', 'optionc-parish', 'matt-money', 'arc-alerts'], createdAt: '2024-11-03' },
-  { id: 'org-st-jude', name: 'St. Jude School', domain: 'stjudeschool.edu', plan: 'growth', status: 'trial', appIds: ['optionc-school'], createdAt: '2026-06-19' },
-  { id: 'org-our-lady', name: 'Our Lady of Grace', domain: 'ourladyofgrace.org', plan: 'starter', status: 'active', appIds: ['optionc-parish', 'matt-money'], createdAt: '2025-05-08' },
-  { id: 'org-st-benedict', name: "St. Benedict's College Prep", domain: 'stbenedictprep.edu', plan: 'enterprise', status: 'suspended', appIds: ['optionc-school', 'matt-money'], createdAt: '2024-08-30' },
-  { id: 'org-immaculate', name: 'Immaculate Conception Parish', domain: 'immaculateconception.org', plan: 'starter', status: 'trial', appIds: [], createdAt: '2026-08-01' },
+  {
+    id: 'org-holy-family', name: 'Holy Family Academy', domain: 'holyfamilyacademy.edu', plan: 'growth', status: 'active',
+    appIds: ['optionc-school', 'matt-money', 'arc-alerts'], createdAt: '2025-01-14',
+    code: 'CUST-1001', primaryContact: 'Daniel Costa', contactEmail: 'daniel.costa@holyfamilyacademy.edu', expiryDate: '2027-01-14',
+  },
+  {
+    id: 'org-st-anne', name: 'St. Anne Parish', domain: 'stanneparish.org', plan: 'starter', status: 'active',
+    appIds: ['optionc-parish'], createdAt: '2025-02-27',
+    code: 'CUST-1002', primaryContact: 'Rosa Walsh', contactEmail: 'rosa.walsh@stanneparish.org', expiryDate: '2026-09-05',
+  },
+  {
+    id: 'org-sacred-heart', name: 'Sacred Heart Diocese', domain: 'sacredheartdiocese.org', plan: 'enterprise', status: 'active',
+    appIds: ['optionc-school', 'optionc-parish', 'matt-money', 'arc-alerts'], createdAt: '2024-11-03',
+    code: 'CUST-1003', primaryContact: 'Thomas Walsh', contactEmail: 'thomas.walsh@sacredheartdiocese.org', expiryDate: '2027-11-03',
+  },
+  {
+    id: 'org-st-jude', name: 'St. Jude School', domain: 'stjudeschool.edu', plan: 'growth', status: 'trial',
+    appIds: ['optionc-school'], createdAt: '2026-06-19',
+    code: 'CUST-1004', primaryContact: 'Grace Bennett', contactEmail: 'grace.bennett@stjudeschool.edu', expiryDate: '2026-09-19',
+  },
+  {
+    id: 'org-our-lady', name: 'Our Lady of Grace', domain: 'ourladyofgrace.org', plan: 'starter', status: 'active',
+    appIds: ['optionc-parish', 'matt-money'], createdAt: '2025-05-08',
+    code: 'CUST-1005', primaryContact: 'Miguel Sullivan', contactEmail: 'miguel.sullivan@ourladyofgrace.org', expiryDate: '2026-07-08',
+  },
+  {
+    id: 'org-st-benedict', name: "St. Benedict's College Prep", domain: 'stbenedictprep.edu', plan: 'enterprise', status: 'suspended',
+    appIds: ['optionc-school', 'matt-money'], createdAt: '2024-08-30',
+    code: 'CUST-1006', primaryContact: 'Sofia Reyes', contactEmail: 'sofia.reyes@stbenedictprep.edu', expiryDate: '2025-08-30',
+  },
+  {
+    id: 'org-immaculate', name: 'Immaculate Conception Parish', domain: 'immaculateconception.org', plan: 'starter', status: 'trial',
+    appIds: [], createdAt: '2026-08-01',
+    code: 'CUST-1007', primaryContact: 'Priya Nair', contactEmail: 'priya.nair@immaculateconception.org', expiryDate: '2026-11-01',
+  },
 ];
 
 const FIRST_NAMES = ['Carl', 'Maria', 'James', 'Anna', 'Vikram', 'Elena', 'Thomas', 'Grace', 'Miguel', 'Priya', 'Daniel', 'Sofia', 'Peter', 'Rosa', 'Lucas', 'Teresa', 'Marcus', 'Julia', 'Noah', 'Camila'];
@@ -196,4 +225,65 @@ export const MOCK_ACTIVITY: ActivityItem[] = [
   { id: 'act-3', message: 'Published Catholic Content as Coming Soon', at: '2026-07-22', actor: 'Admin', kind: 'application' },
   { id: 'act-4', message: 'Deactivated 2 inactive user accounts at St. Jude School', at: '2026-07-20', actor: 'Admin', kind: 'user' },
   { id: 'act-5', message: 'Rejected Matt Money access request from St. Benedict\'s College Prep', at: '2026-08-07', actor: 'Admin', kind: 'request' },
+];
+
+// ── Invoices ─────────────────────────────────────────────────────────
+// One "past" (paid, for Invoice History) and one "current" invoice per organization/product
+// pair the organization actually has assigned — deterministic, not random, so the data is
+// stable across renders and reproducible for review.
+
+const INVOICE_STATUS_CYCLE: Invoice['status'][] = ['paid', 'created', 'overdue', 'paid', 'cancelled', 'expiring-soon'];
+
+function seededInvoices(): Invoice[] {
+  const pairs = MOCK_ORGANIZATIONS.flatMap((org) => org.appIds.map((appId) => ({ orgId: org.id, appId })));
+  const invoices: Invoice[] = [];
+
+  pairs.forEach((pair, index) => {
+    const amount = 250 + (index % 5) * 75;
+    const quantity = 1 + (index % 3);
+    const pastMonth = String(2 + (index % 6)).padStart(2, '0');
+
+    invoices.push({
+      id: `inv-${index}-past`,
+      invoiceNumber: `INV-2026-${1000 + index * 2}`,
+      orgId: pair.orgId,
+      appId: pair.appId,
+      invoiceDate: `2026-${pastMonth}-05`,
+      dueDate: `2026-${pastMonth}-20`,
+      paidDate: `2026-${pastMonth}-18`,
+      amount,
+      quantity,
+      status: 'paid',
+    });
+
+    const status = INVOICE_STATUS_CYCLE[index % INVOICE_STATUS_CYCLE.length];
+    invoices.push({
+      id: `inv-${index}-current`,
+      invoiceNumber: `INV-2026-${1000 + index * 2 + 1}`,
+      orgId: pair.orgId,
+      appId: pair.appId,
+      invoiceDate: `2026-08-0${1 + (index % 9)}`,
+      dueDate: status === 'overdue' ? '2026-08-10' : status === 'expiring-soon' ? '2026-08-28' : '2026-09-05',
+      paidDate: status === 'paid' ? '2026-08-15' : undefined,
+      amount,
+      quantity,
+      status,
+    });
+  });
+
+  return invoices;
+}
+
+export const MOCK_INVOICES: Invoice[] = seededInvoices();
+
+// ── Masters (reference data) ────────────────────────────────────────
+// A single master: the catalog of billable line items offered when creating an invoice.
+
+export const MOCK_INVOICE_ITEMS: InvoiceItem[] = [
+  { id: 'item-subscription', title: 'Subscription fee', description: 'Recurring monthly or annual product subscription charge.', defaultAmount: 249, active: true },
+  { id: 'item-setup', title: 'Setup & onboarding', description: 'One-time implementation and onboarding fee.', defaultAmount: 199, active: true },
+  { id: 'item-training', title: 'Staff training session', description: 'Live training session for organization staff.', defaultAmount: 149, active: true },
+  { id: 'item-support', title: 'Priority support add-on', description: 'Upgraded response-time support plan.', defaultAmount: 79, active: true },
+  { id: 'item-storage', title: 'Additional storage', description: 'Extra document/media storage allotment.', defaultAmount: 39, active: true },
+  { id: 'item-legacy-migration', title: 'Legacy data migration (retired)', description: 'One-time migration from a discontinued legacy system.', defaultAmount: 299, active: false },
 ];

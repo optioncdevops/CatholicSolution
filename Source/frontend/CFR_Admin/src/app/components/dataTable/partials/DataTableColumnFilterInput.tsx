@@ -34,7 +34,7 @@ export function DataTableColumnFilterInput({
         onChange={(event) => { onChange(event.target.value); }}
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
-        className="w-full rounded-md border border-slate-300 bg-white py-0.5 pr-2 pl-6 text-xs text-slate-800 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
+        className="w-full rounded-md border border-[var(--line)] bg-[var(--surface)] py-0.5 pr-2 pl-6 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-faint)] focus:border-[var(--primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]"
       />
     </div>
   );

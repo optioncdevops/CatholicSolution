@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Drawer } from '../components/Drawer';
-import { Button } from '../components/form/Button';
-import { TextField, TextareaField } from '../components/form/TextField';
-import { SelectField } from '../components/form/SelectField';
+import { CommonButton } from '@app/components/buttons';
+import { Drawer } from '@app/components/Drawer';
+import { Dropdown, InputField, TextareaField } from '@app/components/formControls';
 import type { AdminRole } from '../types';
 
 const LANDING_PAGES = ['Dashboard', 'Products', 'Organizations', 'Users', 'Requests', 'Settings'];
@@ -66,20 +65,24 @@ export function RoleFormDrawer({ target, readOnly = false, onClose, onCreate, on
       description={editing?.name}
       onClose={onClose}
       footer={readOnly ? (
-        <Button variant="secondary" onClick={onClose}>Close</Button>
+        <CommonButton variant="outline" onClick={onClose}>Close</CommonButton>
       ) : (
         <>
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={hasErrors}>{isCreate ? 'Add role' : 'Save changes'}</Button>
+          <CommonButton variant="outline" onClick={onClose}>Cancel</CommonButton>
+          <CommonButton variant="primary" onClick={handleSubmit} disabled={hasErrors}>{isCreate ? 'Add role' : 'Save changes'}</CommonButton>
         </>
       )}
     >
       <form onSubmit={(event) => { event.preventDefault(); handleSubmit(); }} className="flex flex-col gap-4" noValidate>
-        <TextField label="Role name" value={form.name} onChange={(event) => update('name', event.target.value)} error={nameError} disabled={readOnly} />
-        <TextareaField label="Description" value={form.description} onChange={(event) => update('description', event.target.value)} rows={3} disabled={readOnly} />
-        <SelectField label="Landing page" value={form.landingPage} onChange={(event) => update('landingPage', event.target.value)} disabled={readOnly}>
-          {LANDING_PAGES.map((page) => <option key={page} value={page}>{page}</option>)}
-        </SelectField>
+        <InputField label="Role name" value={form.name} onChange={(event) => update('name', event.target.value)} error={nameError} disabled={readOnly} />
+        <TextareaField label="Description" value={form.description} onChange={(event) => update('description', event.target.value)} rows={3} showCharCount={false} disabled={readOnly} />
+        <Dropdown
+          label="Landing page" searchable={false} clearable={false}
+          value={form.landingPage}
+          onValueChange={(value) => update('landingPage', value ?? LANDING_PAGES[0])}
+          options={LANDING_PAGES.map((page) => ({ id: page, value: page }))}
+          disabled={readOnly}
+        />
       </form>
     </Drawer>
   );

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useAdminData } from '../AdminDataContext';
-import { StatusBadge } from '../components/Badge';
+import { StatusBadge } from '@app/components/Badge';
 import { formatDate } from '../utils/formatDate';
-import { EntityAvatar } from '../components/EntityAvatar';
-import { Tabs, TabPanel } from '../components/Tabs';
-import { DataTable, type DataTableColumn } from '../components/dataTable/DataTable';
+import { EntityAvatar } from '@app/components/EntityAvatar';
+import { Tabs, TabPanel } from '@app/components/Tabs';
+import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import type { AdminUser } from '../types';
 
 export function OrganizationDetailPage() {
@@ -57,16 +58,13 @@ export function OrganizationDetailPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <EntityAvatar name={org.name} size={44} square />
-          <div>
-            <h1 className="font-display text-lg font-extrabold text-[var(--text-primary)]">{org.name}</h1>
-            <p className="text-xs text-[var(--text-muted)]">{org.domain}</p>
-          </div>
-        </div>
-        <StatusBadge status={org.status} kind="organization" />
-      </div>
+      <PanelHeader
+        breadcrumb={{ label: 'Organizations', to: '/admin/organizations' }}
+        title={org.name}
+        icon={<EntityAvatar name={org.name} size={40} square />}
+        subtitle={org.domain}
+        action={<StatusBadge status={org.status} kind="organization" />}
+      />
 
       <Tabs
         activeId={activeTab}

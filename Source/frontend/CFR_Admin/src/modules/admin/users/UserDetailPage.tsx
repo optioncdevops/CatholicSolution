@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useAdminData } from '../AdminDataContext';
 import { confirmAction } from '../lib/confirm';
-import { StatusBadge } from '../components/Badge';
-import { EntityAvatar } from '../components/EntityAvatar';
+import { StatusBadge } from '@app/components/Badge';
+import { EntityAvatar } from '@app/components/EntityAvatar';
 
 export function UserDetailPage() {
   const { userId } = useParams();
@@ -46,12 +47,15 @@ export function UserDetailPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <EntityAvatar name={user.name} size={44} />
-          <div>
-            <h1 className="font-display text-lg font-extrabold text-[var(--text-primary)]">{user.name}</h1>
-            <p className="text-xs text-[var(--text-muted)]">{user.email}</p>
+      <div className="admin-panel-header">
+        <div className="flex min-w-0 items-center gap-3">
+          <EntityAvatar name={user.name} size={40} />
+          <div className="min-w-0">
+            <Link to="/admin/users" className="admin-panel-header__breadcrumb">
+              <ChevronLeft size={12} /> Users
+            </Link>
+            <h1 className="admin-panel-header__title truncate">{user.name}</h1>
+            <p className="mt-0.5 text-xs font-semibold text-[var(--text-muted)]">{user.email}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

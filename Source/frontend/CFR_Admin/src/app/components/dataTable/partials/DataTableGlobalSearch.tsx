@@ -32,7 +32,7 @@ export function DataTableGlobalSearch({
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
-          "w-full rounded border border-slate-300 bg-white py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500",
+          "w-full rounded border border-[var(--line)] bg-[var(--surface)] py-1.5 text-xs text-[var(--text-secondary)] placeholder:text-[var(--text-faint)] focus:border-[var(--primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60",
           hasValue ? "pl-3 pr-8" : "px-3",
         )}
         value={value}
@@ -41,7 +41,7 @@ export function DataTableGlobalSearch({
       {hasValue && !disabled && (
         <button
           type="button"
-          className="absolute right-1 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+          className="absolute right-1 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded text-[var(--text-faint)] transition-colors hover:bg-[var(--hover)] hover:text-[var(--text-secondary)]"
           title="Clear search"
           aria-label="Clear search"
           onClick={() => { onChange(""); }}

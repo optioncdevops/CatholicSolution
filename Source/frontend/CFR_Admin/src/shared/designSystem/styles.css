@@ -35,24 +35,24 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   /* Semantic design tokens â enterprise Catholic Solutions system */
-  --bg-app: #f4f6fa;
-  --bg-subtle: #eef2f7;
+  --bg-app: #f6f4ef;
+  --bg-subtle: #efece3;
   --surface: #ffffff;
-  --surface-muted: #f8fafc;
+  --surface-muted: #f6f3ec;
   --surface-elevated: #ffffff;
   --primary: #12264c;
   --primary-hover: #1b3560;
   --primary-muted: rgba(18, 38, 76, 0.08);
   --secondary: #d9a83f;
   --secondary-hover: #e8b54a;
-  --text-primary: #151032;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --text-faint: #94a3b8;
-  --line: #e2e8f0;
-  --line-soft: #eef2f7;
-  --line-strong: #cbd5e1;
-  --hover: #f1f5f9;
+  --text-primary: #17212f;
+  --text-secondary: #495260;
+  --text-muted: #6b7280;
+  --text-faint: #969089;
+  --line: #e4ded2;
+  --line-soft: #efe9dd;
+  --line-strong: #d3c9b6;
+  --hover: #efece2;
   --focus-ring: rgba(217, 168, 63, 0.55);
   --selected: rgba(18, 38, 76, 0.08);
   --success: #047857;
@@ -63,9 +63,11 @@
   --error-bg: #fef2f2;
   --info: #0369a1;
   --info-bg: #f0f9ff;
-  --shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.03), 0 6px 18px rgba(15, 23, 42, 0.04);
-  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 28px rgba(15, 23, 42, 0.06);
-  --shadow-elevated: 0 18px 48px rgba(15, 23, 42, 0.14);
+  /* Layered, brand-tinted "soft UI" shadows — a crisp top highlight plus a soft, navy-tinted
+     ambient glow instead of a flat gray drop shadow. */
+  --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 1px 2px rgba(18, 38, 76, 0.05), 0 6px 16px -4px rgba(18, 38, 76, 0.08);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.75) inset, 0 1px 3px rgba(18, 38, 76, 0.06), 0 14px 32px -10px rgba(18, 38, 76, 0.16);
+  --shadow-elevated: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 8px 20px -6px rgba(18, 38, 76, 0.18), 0 24px 60px -14px rgba(18, 38, 76, 0.32);
   --radius-control: 0.625rem;
   --radius-panel: 0.875rem;
   --control-height: 2.5rem;
@@ -112,12 +114,12 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .dashboard-content { width: 100%; padding: 1.5rem clamp(1rem, 2.5vw, 2.75rem) 4rem; }
 .dashboard-stack { display: grid; gap: 1.25rem; }
 .dashboard-kicker { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
-.dashboard-heading { font-family: var(--font-display); font-size: clamp(1.5rem, 2vw, 2rem); font-weight: 800; line-height: 1.2; letter-spacing: -0.025em; }
+.dashboard-heading { font-family: var(--font-display); font-size: clamp(1.5rem, 2vw, 2rem); font-weight: 800; line-height: 1.2; letter-spacing: 0; }
 .dashboard-description { margin-top: 0.45rem; max-width: 70ch; font-size: 0.875rem; line-height: 1.65; color: #64748b; }
-.panel-title { font-family: var(--font-display); font-size: 0.875rem; font-weight: 800; letter-spacing: -0.01em; }
+.panel-title { font-family: var(--font-display); font-size: 0.875rem; font-weight: 800; letter-spacing: 0; }
 .panel-subtitle { margin-top: 0.2rem; font-size: 0.75rem; line-height: 1.55; color: #94a3b8; }
 .metric-label { font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-.metric-value { margin-top: 0.45rem; font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; line-height: 1.1; letter-spacing: -0.025em; }
+.metric-value { margin-top: 0.45rem; font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; line-height: 1.1; letter-spacing: 0; }
 .action-primary, .action-secondary {
   display: inline-flex;
   min-height: 2.5rem;

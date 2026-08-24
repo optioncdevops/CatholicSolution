@@ -1,7 +1,10 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import { MOCK_ACTIVITY, MOCK_APPLICATIONS, MOCK_ORGANIZATIONS, MOCK_REQUESTS, MOCK_ROLES, MOCK_USERS } from './mockData';
+import {
+  MOCK_ACTIVITY, MOCK_APPLICATIONS, MOCK_INVOICE_ITEMS, MOCK_INVOICES, MOCK_ORGANIZATIONS, MOCK_REQUESTS, MOCK_ROLES, MOCK_USERS,
+} from './mockData';
 import type {
-  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, Organization, ProductStatus, RequestStatus, UserStatus,
+  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, Invoice, InvoiceItem, Organization,
+  ProductStatus, RequestStatus, UserStatus,
 } from './types';
 
 interface AdminDataContextValue {
@@ -11,6 +14,8 @@ interface AdminDataContextValue {
   requests: AccessRequest[];
   activity: ActivityItem[];
   roles: AdminRole[];
+  invoices: Invoice[];
+  invoiceItems: InvoiceItem[];
   getApplication: (id: string) => AdminApplication | undefined;
   getOrganization: (id: string) => Organization | undefined;
   getUser: (id: string) => AdminUser | undefined;
@@ -29,6 +34,13 @@ interface AdminDataContextValue {
   updateRole: (role: AdminRole) => void;
   duplicateRole: (id: string) => void;
   deleteRole: (id: string) => void;
+  /** Creates a new invoice against a customer/product. This is the only invoice mutation —
+   * invoices otherwise stay read-only once issued. */
+  addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber'>) => void;
+  addInvoiceItem: (item: Omit<InvoiceItem, 'id'>) => void;
+  updateInvoiceItem: (item: InvoiceItem) => void;
+  /** Toggles the active/inactive lifecycle flag on an invoice item — masters are never deleted. */
+  toggleInvoiceItemActive: (id: string) => void;
   logActivity: (message: string, kind: ActivityItem['kind']) => void;
 }
 
@@ -41,6 +53,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [requests, setRequests] = useState<AccessRequest[]>(MOCK_REQUESTS);
   const [activity, setActivity] = useState<ActivityItem[]>(MOCK_ACTIVITY);
   const [roles, setRoles] = useState<AdminRole[]>(MOCK_ROLES);
+  const [invoices, setInvoices] = useState<Invoice[]>(MOCK_INVOICES);
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>(MOCK_INVOICE_ITEMS);
 
   const logActivity = (message: string, kind: ActivityItem['kind']) => {
     setActivity((current) => [
@@ -56,6 +70,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     requests,
     activity,
     roles,
+    invoices,
+    invoiceItems,
     getApplication: (id) => applications.find((app) => app.id === id),
     getOrganization: (id) => organizations.find((org) => org.id === id),
     getUser: (id) => users.find((user) => user.id === id),
@@ -147,8 +163,30 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       setRoles((current) => current.filter((role) => role.id !== id));
       if (source) logActivity(`Deleted role "${source.name}"`, 'user');
     },
+    addInvoice: (invoice) => {
+      const id = `inv-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+      const sequence = invoices.length + 1001;
+      setInvoices((current) => [...current, { ...invoice, id, invoiceNumber: `INV-2026-${sequence}` }]);
+      const org = organizations.find((item) => item.id === invoice.orgId);
+      const app = applications.find((item) => item.id === invoice.appId);
+      logActivity(`Created invoice INV-2026-${sequence} for ${org?.name ?? invoice.orgId} · ${app?.name ?? invoice.appId}`, 'application');
+    },
+    addInvoiceItem: (item) => {
+      const id = `item-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+      setInvoiceItems((current) => [...current, { ...item, id }]);
+      logActivity(`Added invoice item "${item.title}"`, 'application');
+    },
+    updateInvoiceItem: (item) => {
+      setInvoiceItems((current) => current.map((existing) => (existing.id === item.id ? item : existing)));
+      logActivity(`Updated invoice item "${item.title}"`, 'application');
+    },
+    toggleInvoiceItemActive: (id) => {
+      const item = invoiceItems.find((existing) => existing.id === id);
+      setInvoiceItems((current) => current.map((existing) => (existing.id === id ? { ...existing, active: !existing.active } : existing)));
+      if (item) logActivity(`${item.active ? 'Deactivated' : 'Activated'} invoice item "${item.title}"`, 'application');
+    },
     logActivity,
-  }), [applications, organizations, users, requests, activity, roles]);
+  }), [applications, organizations, users, requests, activity, roles, invoices, invoiceItems]);
 
   return <AdminDataContext.Provider value={value}>{children}</AdminDataContext.Provider>;
 }

@@ -19,18 +19,29 @@ export function Badge({ tone, children }: { tone: BadgeTone; children: ReactNode
 }
 
 const APPLICATION_STATUS_TONE: Record<string, BadgeTone> = {
-  active: 'success', inactive: 'neutral', 'coming-soon': 'info', 'on-request': 'warning', archived: 'danger',
+  active: 'success', inactive: 'neutral', 'coming-soon': 'info',
 };
 const ORG_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', trial: 'info', suspended: 'danger' };
 const USER_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', invited: 'info', deactivated: 'neutral' };
 const REQUEST_STATUS_TONE: Record<string, BadgeTone> = {
   pending: 'warning', approved: 'success', rejected: 'danger', 'info-requested': 'info',
 };
+const INVOICE_STATUS_TONE: Record<string, BadgeTone> = {
+  created: 'info', paid: 'success', cancelled: 'neutral', overdue: 'danger', 'expiring-soon': 'warning',
+};
+const ACCESS_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', 'expiring-soon': 'warning', expired: 'danger' };
 
-export function StatusBadge({ status, kind }: { status: string; kind: 'application' | 'organization' | 'user' | 'request' }) {
-  const toneMap = kind === 'application' ? APPLICATION_STATUS_TONE
-    : kind === 'organization' ? ORG_STATUS_TONE
-      : kind === 'user' ? USER_STATUS_TONE
-        : REQUEST_STATUS_TONE;
-  return <Badge tone={toneMap[status] ?? 'neutral'}>{status.replace('-', ' ')}</Badge>;
+const TONE_MAP_BY_KIND: Record<StatusKind, Record<string, BadgeTone>> = {
+  application: APPLICATION_STATUS_TONE,
+  organization: ORG_STATUS_TONE,
+  user: USER_STATUS_TONE,
+  request: REQUEST_STATUS_TONE,
+  invoice: INVOICE_STATUS_TONE,
+  access: ACCESS_STATUS_TONE,
+};
+
+type StatusKind = 'application' | 'organization' | 'user' | 'request' | 'invoice' | 'access';
+
+export function StatusBadge({ status, kind }: { status: string; kind: StatusKind }) {
+  return <Badge tone={TONE_MAP_BY_KIND[kind][status] ?? 'neutral'}>{status.replace('-', ' ')}</Badge>;
 }

@@ -1,27 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Building2, Package, Pencil, RefreshCw, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AlertTriangle, Building2, Eye, Pencil, RefreshCw, Search } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { CommonIconButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
-import { StatusBadge } from '../components/Badge';
-import { EntityAvatar } from '../components/EntityAvatar';
-import { IconButton } from '../components/form/Button';
-import { InputField, Dropdown } from '../components/formControls';
+import { StatusBadge } from '@app/components/Badge';
+import { InputField, Dropdown } from '@app/components/formControls';
 import { formatDate } from '../utils/formatDate';
 import { getProductWarnings } from './productValidation';
-import { ProductEditDrawer } from './ProductEditDrawer';
 import { ProductStatusDialog } from './ProductStatusDialog';
-import type { AdminApplication, Organization, ProductStatus } from '../types';
+import type { AdminApplication, ProductStatus } from '../types';
 
+/** Quick-filter chips — the full status set (including On Request / Archived) is still
+ * reachable via "All statuses"; these are just the most common day-to-day filters. */
 const STATUS_FILTERS: Array<{ id: ProductStatus | 'all'; label: string }> = [
   { id: 'all', label: 'All statuses' },
   { id: 'active', label: 'Active' },
   { id: 'inactive', label: 'Inactive' },
-  { id: 'coming-soon', label: 'Coming Soon' },
-  { id: 'on-request', label: 'On Request' },
-  { id: 'archived', label: 'Archived' },
+  { id: 'coming-soon', label: 'Coming soon' },
 ];
 
 const SORT_OPTIONS = [
@@ -31,33 +29,8 @@ const SORT_OPTIONS = [
 ] as const;
 type SortOption = (typeof SORT_OPTIONS)[number]['id'];
 
-function CustomerStack({ customers }: { customers: Organization[] }) {
-  if (customers.length === 0) {
-    return <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-faint)]"><Building2 size={13} /> No customers yet</span>;
-  }
-  const shown = customers.slice(0, 3);
-  const remaining = customers.length - shown.length;
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center" title={customers.map((org) => org.name).join(', ')}>
-        {shown.map((org, index) => (
-          <span key={org.id} className="admin-avatar-stack__item" style={{ zIndex: shown.length - index }}>
-            <EntityAvatar name={org.name} size={22} />
-          </span>
-        ))}
-        {remaining > 0 ? (
-          <span className="admin-avatar-stack__item admin-avatar-stack__more">+{remaining}</span>
-        ) : null}
-      </div>
-      <span className="text-xs font-semibold text-[var(--text-muted)]">
-        {customers.length} customer{customers.length === 1 ? '' : 's'}
-      </span>
-    </div>
-  );
-}
-
 export function ProductsListPage() {
-  const { applications, organizations, updateApplication, setApplicationStatus } = useAdminData();
+  const { applications, organizations, setApplicationStatus } = useAdminData();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -67,7 +40,6 @@ export function ProductsListPage() {
   const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('all');
   const [sortBy, setSortBy] = useState<SortOption>('updated');
 
-  const [editingApp, setEditingApp] = useState<AdminApplication | null>(null);
   const [statusApp, setStatusApp] = useState<AdminApplication | null>(null);
   const [pendingStatus, setPendingStatus] = useState<ProductStatus | null>(null);
 
@@ -95,12 +67,6 @@ export function ProductsListPage() {
     return sorted;
   }, [applications, query, statusFilter, sortBy, customersForApp]);
 
-  const handleSave = (app: AdminApplication) => {
-    updateApplication(app);
-    setEditingApp(null);
-    showToast(`${app.name} updated ✓`);
-  };
-
   const handleConfirmStatus = (status: ProductStatus) => {
     if (!statusApp) return;
     setApplicationStatus(statusApp.id, status);
@@ -112,7 +78,7 @@ export function ProductsListPage() {
   if (simulatedError) {
     return (
       <div className="admin-reveal flex flex-col gap-4">
-        <PanelHeader title="Products" description="Manage the Catholic Solutions product registry." />
+        <PanelHeader title="Products" />
         <EmptyState
           icon="⚠️"
           title="Couldn't load products"
@@ -126,7 +92,7 @@ export function ProductsListPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-2.5">
-      <PanelHeader title="Products" icon={<Package size={16} />} />
+      <PanelHeader title="Products" />
 
       <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
         <InputField
@@ -146,9 +112,7 @@ export function ProductsListPage() {
               key={filter.id}
               type="button"
               onClick={() => setStatusFilter(filter.id)}
-              className={`shrink-0 rounded-full border px-2.5 py-1 text-[0.6875rem] font-bold capitalize transition-colors ${
-                statusFilter === filter.id ? 'border-[var(--primary)] bg-[var(--primary)] text-white' : 'border-[var(--line)] text-[var(--text-secondary)] hover:bg-[var(--hover)]'
-              }`}
+              className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
             >
               {filter.label}
             </button>
@@ -179,41 +143,43 @@ export function ProductsListPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {rows.map((app) => {
             const warnings = getProductWarnings(app, applications);
-            const customers = customersForApp(app);
+            const customerCount = customersForApp(app).length;
             return (
-              <article
-                key={app.id}
-                onClick={() => navigate(`/admin/applications/${app.id}`)}
-                className="admin-product-card"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
+              <article key={app.id} className="admin-product-card relative">
+                <div className="absolute right-[0.85rem] top-3">
                   <StatusBadge status={app.status} kind="application" />
                 </div>
 
-                <div className="mt-2 min-w-0">
-                  <span className="flex items-center gap-1.5">
-                    <span className="truncate text-sm font-extrabold text-[var(--text-primary)]">{app.name}</span>
-                    {warnings.length > 0 ? (
-                      <span title={`${warnings.length} data quality warning${warnings.length === 1 ? '' : 's'}`} aria-label={`${warnings.length} data quality warning${warnings.length === 1 ? '' : 's'}`}>
-                        <AlertTriangle size={13} className="shrink-0 text-[var(--warning)]" />
-                      </span>
-                    ) : null}
-                  </span>
-                  <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{app.category}</span>
+                <div className="flex items-center gap-2.5 pr-16">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
+                  <div className="min-w-0">
+                    <Link to={`/admin/applications/${app.id}`} className="flex items-center gap-1.5 hover:underline">
+                      <span className="truncate text-sm font-extrabold text-[var(--text-primary)]">{app.name}</span>
+                      {warnings.length > 0 ? (
+                        <span title={`${warnings.length} data quality warning${warnings.length === 1 ? '' : 's'}`} aria-label={`${warnings.length} data quality warning${warnings.length === 1 ? '' : 's'}`}>
+                          <AlertTriangle size={13} className="shrink-0 text-[var(--warning)]" />
+                        </span>
+                      ) : null}
+                    </Link>
+                    <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{app.category}</span>
+                  </div>
                 </div>
 
                 <p className="admin-product-card__description">{app.description || 'No description yet.'}</p>
 
                 <div className="admin-product-card__divider" />
 
-                <CustomerStack customers={customers} />
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+                  <Building2 size={13} className="text-[var(--text-faint)]" />
+                  {customerCount} customer{customerCount === 1 ? '' : 's'}
+                </span>
 
                 <div className="admin-product-card__footer">
                   <span className="truncate text-xs font-semibold text-[var(--text-faint)]">Updated {formatDate(app.updatedAt)}</span>
-                  <div className="flex items-center gap-0.5" onClick={(event) => event.stopPropagation()}>
-                    <IconButton label={`Edit ${app.name}`} onClick={() => setEditingApp(app)}><Pencil size={14} /></IconButton>
-                    <IconButton label={`Change status for ${app.name}`} onClick={() => { setStatusApp(app); setPendingStatus(null); }}><RefreshCw size={14} /></IconButton>
+                  <div className="flex items-center gap-0.5">
+                    <CommonIconButton aria-label={`View ${app.name}`} icon={<Eye size={14} />} onClick={() => navigate(`/admin/applications/${app.id}`)} />
+                    <CommonIconButton aria-label={`Edit ${app.name}`} icon={<Pencil size={14} />} onClick={() => navigate(`/admin/applications/${app.id}/edit`)} />
+                    <CommonIconButton aria-label={`Change status for ${app.name}`} icon={<RefreshCw size={14} />} onClick={() => { setStatusApp(app); setPendingStatus(null); }} />
                   </div>
                 </div>
               </article>
@@ -222,7 +188,6 @@ export function ProductsListPage() {
         </div>
       )}
 
-      <ProductEditDrawer app={editingApp} onClose={() => setEditingApp(null)} onSave={handleSave} />
       <ProductStatusDialog
         app={statusApp}
         pendingStatus={pendingStatus}

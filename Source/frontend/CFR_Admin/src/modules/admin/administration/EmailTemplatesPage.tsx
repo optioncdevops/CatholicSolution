@@ -2,8 +2,11 @@ import { useMemo, useRef, useState } from 'react';
 import { Eye, Pencil, RotateCcw, Save, Send } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { Button } from '../components/form/Button';
-import { TextField, TextareaField } from '../components/form/TextField';
+import { CommonButton } from '@app/components/buttons';
+import { InputField } from '@app/components/formControls';
+// The ported formControls `TextareaField` doesn't forward a ref to the underlying <textarea>,
+// which the merge-tag "insert at cursor" feature below needs — keep the local ref-forwarding one.
+import { TextareaField } from '@app/components/form/TextField';
 import { confirmAction } from '../lib/confirm';
 
 interface EmailTemplateVariable {
@@ -106,7 +109,7 @@ export function EmailTemplatesPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Email templates" description="Edit the transactional emails sent to organizations and users." />
+      <PanelHeader title="Email templates" />
 
       <div className="grid gap-4 lg:grid-cols-[15rem_1fr]">
         <ul className="flex flex-col gap-1.5">
@@ -138,15 +141,15 @@ export function EmailTemplatesPage() {
               <p className="panel-subtitle">{template.description}</p>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <Button variant={mode === 'edit' ? 'primary' : 'secondary'} icon={<Pencil size={13} />} onClick={() => setMode('edit')}>Edit</Button>
-              <Button variant={mode === 'preview' ? 'primary' : 'secondary'} icon={<Eye size={13} />} onClick={() => setMode('preview')}>Preview</Button>
-              <Button variant="secondary" icon={<Send size={13} />} onClick={handleSendTest}>Send test</Button>
+              <CommonButton variant={mode === 'edit' ? 'primary' : 'outline'} iconLeft={<Pencil size={13} />} onClick={() => setMode('edit')}>Edit</CommonButton>
+              <CommonButton variant={mode === 'preview' ? 'primary' : 'outline'} iconLeft={<Eye size={13} />} onClick={() => setMode('preview')}>Preview</CommonButton>
+              <CommonButton variant="outline" iconLeft={<Send size={13} />} onClick={handleSendTest}>Send test</CommonButton>
             </div>
           </div>
 
           {mode === 'edit' ? (
             <div className="flex flex-col gap-3 p-4">
-              <TextField
+              <InputField
                 label="Subject"
                 value={template.subject}
                 onChange={(event) => updateField('subject', event.target.value)}
@@ -182,8 +185,8 @@ export function EmailTemplatesPage() {
                   {isDirty ? 'Unsaved changes' : 'No changes since last save'}
                 </span>
                 <div className="flex items-center gap-2">
-                  <Button variant="secondary" icon={<RotateCcw size={13} />} onClick={handleReset} disabled={!isDirty}>Reset to default</Button>
-                  <Button variant="primary" icon={<Save size={13} />} onClick={handleSave} disabled={!isDirty}>Save changes</Button>
+                  <CommonButton variant="outline" iconLeft={<RotateCcw size={13} />} onClick={handleReset} disabled={!isDirty}>Reset to default</CommonButton>
+                  <CommonButton variant="primary" iconLeft={<Save size={13} />} onClick={handleSave} disabled={!isDirty}>Save changes</CommonButton>
                 </div>
               </div>
             </div>
