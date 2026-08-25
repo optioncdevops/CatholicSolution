@@ -1,0 +1,7 @@
+@OptionC_Gateway = http://localhost:5000
+@OptionC_Gateway_https = https://localhost:5000
+
+### Swagger UI (HTTP profile)
+GET {{OptionC_Gateway}}/swagger/index.html
+
+###
