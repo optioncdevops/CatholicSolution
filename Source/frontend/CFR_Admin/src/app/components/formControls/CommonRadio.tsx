@@ -10,7 +10,7 @@ import {
   themeFieldWrapperClass,
   themeHelperClass,
   themeLabelClass,
-  themeOptionalLabelSuffixClass,
+  themeRequiredMarkClass,
 } from "@designSystem/theme/styles/componentStyle";
 
 interface BaseRadioProps {
@@ -46,7 +46,6 @@ const RadioInner = <TFieldValues extends FieldValues = FieldValues>({
   helperText,
   error,
   required,
-  optional,
   disabled = false,
   className,
   value,
@@ -118,17 +117,11 @@ const RadioInner = <TFieldValues extends FieldValues = FieldValues>({
             <span
               className={cn(
                 themeLabelClass,
-                mergedError && "text-danger-600 dark:text-danger-400",
+                mergedError && "text-[var(--error)]",
               )}
             >
               {label}
-              {required && <span className="text-danger-500">*</span>}
-              {optional && !required && (
-                <span className={themeOptionalLabelSuffixClass}>
-                  {" "}
-                  (optional)
-                </span>
-              )}
+              {required && <span className={themeRequiredMarkClass}>*</span>}
             </span>
             {helperText && !mergedError && (
               <span id={`${inputId}-helper`} className={themeHelperClass}>

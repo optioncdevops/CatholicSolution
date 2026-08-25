@@ -33,7 +33,9 @@ export const themeFormDropdownOptionClass =
 /** Date/time picker panel cells and lists. */
 export const themeFormPickerPanelClass = "text-[length:var(--admin-text-base)]";
 
-export const themeOptionalLabelSuffixClass = "font-normal text-[var(--text-faint)]";
+/** Single shared "required field" asterisk — every field label, dynamic-table header, and
+ * mandatory-field legend across the app renders this same red mark instead of an ad hoc one. */
+export const themeRequiredMarkClass = "font-bold text-[var(--error)]";
 
 /** Standard wrapper for label + control + helper/error — keeps vertical gap consistent. */
 export const themeFieldWrapperClass = "flex w-full min-w-0 max-w-full flex-col gap-1";
@@ -193,7 +195,7 @@ export const themeFieldGroupShellErrorClass = "border-[var(--error)]";
 export const themeFormActionFooterStickyClass = "sticky bottom-0 z-30";
 
 export const themeFormActionFooterClass =
-  "-mx-4 mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--line)] bg-[var(--surface)]/95 px-4 py-3 shadow-[0_-8px_20px_rgba(15,23,42,0.08)] backdrop-blur";
+  "-mx-4 mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--line)] bg-[var(--surface)]/95 px-4 py-3 shadow-[0_-8px_20px_rgba(18,38,76,0.1)] backdrop-blur";
 
 export const themeFormActionFooterClassComfortable = "-mx-6 px-6";
 export const themeFormActionFooterBodyPadClass = "pb-4 sm:pb-5";
@@ -206,9 +208,9 @@ export const themeFormSectionTableSlotClass =
 /** Shared data table outer shell (used inside FormSectionCard and standalone). */
 export const themeDataTableShellClass = "relative min-w-0 w-full transition-all duration-200";
 
-/** Data table header band — a distinct primary-tinted band so it reads clearly above the
- * striped body rows (which use --surface / --surface-muted), not the same muted gray. */
-export const themeDataTableHeadClass = "border-y border-[var(--line)] bg-[var(--primary-muted)]";
+/** Data table header band — solid theme-primary color, not a tint, so it reads as a clear header
+ * bar above the striped body rows and fully occludes content scrolling under a frozen column. */
+export const themeDataTableHeadClass = "border-y border-[var(--primary)] bg-[var(--primary)]";
 
 /** Checkbox / radio input — validation border on the control itself. */
 export const themeChoiceInputClass =

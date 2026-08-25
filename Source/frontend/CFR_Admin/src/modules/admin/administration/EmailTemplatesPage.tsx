@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Eye, Pencil, RotateCcw, Save, Send } from 'lucide-react';
+import { RotateCcw, Save, Search, Send } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
@@ -64,12 +64,18 @@ export function EmailTemplatesPage() {
   const { showToast } = useToast();
   const [templates, setTemplates] = useState<EmailTemplateDraft[]>(DEFAULT_TEMPLATES);
   const [selectedId, setSelectedId] = useState(DEFAULT_TEMPLATES[0].id);
-  const [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const [search, setSearch] = useState('');
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const template = templates.find((item) => item.id === selectedId) ?? templates[0];
   const original = useMemo(() => DEFAULT_TEMPLATES.find((item) => item.id === selectedId)!, [selectedId]);
   const isDirty = template.subject !== original.subject || template.body !== original.body;
+
+  const filteredTemplates = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return templates;
+    return templates.filter((item) => item.label.toLowerCase().includes(needle) || item.description.toLowerCase().includes(needle));
+  }, [templates, search]);
 
   const updateField = (field: 'subject' | 'body', value: string) => {
     setTemplates((prev) => prev.map((item) => (item.id === selectedId ? { ...item, [field]: value } : item)));
@@ -109,62 +115,76 @@ export function EmailTemplatesPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Email templates" />
+      <PanelHeader title="Email Templates" subtitle={`${templates.length} templates`} />
 
-      <div className="grid gap-4 lg:grid-cols-[15rem_1fr]">
-        <ul className="flex flex-col gap-1.5">
-          {templates.map((item) => {
-            const itemOriginal = DEFAULT_TEMPLATES.find((def) => def.id === item.id)!;
-            const edited = item.subject !== itemOriginal.subject || item.body !== itemOriginal.body;
-            return (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => { setSelectedId(item.id); setMode('edit'); }}
-                  className={`admin-email-template-item ${item.id === selectedId ? 'admin-email-template-item--active' : ''}`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span className="truncate">{item.label}</span>
-                    {edited ? <span className="admin-email-template-item__dot" title="Edited, not saved" aria-label="Edited, not saved" /> : null}
-                  </span>
-                  <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{item.description}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+      <div className="grid gap-4 lg:grid-cols-[16rem_1fr] lg:items-start">
+        <section className="admin-panel-card overflow-hidden">
+          <div className="border-b border-[var(--line-soft)] p-2.5">
+            <InputField
+              label="Search templates" hideLabel
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search templates…"
+              startIcon={<Search size={13} />}
+              className="min-h-8 text-xs placeholder:text-xs"
+            />
+          </div>
+          <ul className="flex flex-col gap-0.5 p-1.5">
+            {filteredTemplates.length === 0 ? (
+              <li className="px-2 py-3 text-center text-xs text-[var(--text-muted)]">No templates match "{search}".</li>
+            ) : filteredTemplates.map((item) => {
+              const itemOriginal = DEFAULT_TEMPLATES.find((def) => def.id === item.id)!;
+              const edited = item.subject !== itemOriginal.subject || item.body !== itemOriginal.body;
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(item.id)}
+                    className={`admin-email-template-item ${item.id === selectedId ? 'admin-email-template-item--active' : ''}`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate">{item.label}</span>
+                      {edited ? <span className="admin-email-template-item__dot" title="Edited, not saved" aria-label="Edited, not saved" /> : null}
+                    </span>
+                    <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{item.description}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
 
         <section className="admin-panel-card">
           <div className="admin-panel-card__header">
-            <div>
-              <h2 className="panel-title">{template.label}</h2>
-              <p className="panel-subtitle">{template.description}</p>
+            <div className="min-w-0">
+              <h2 className="panel-title truncate">{template.label}</h2>
+              <p className="panel-subtitle truncate">{template.description}</p>
             </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <CommonButton variant={mode === 'edit' ? 'primary' : 'outline'} iconLeft={<Pencil size={13} />} onClick={() => setMode('edit')}>Edit</CommonButton>
-              <CommonButton variant={mode === 'preview' ? 'primary' : 'outline'} iconLeft={<Eye size={13} />} onClick={() => setMode('preview')}>Preview</CommonButton>
-              <CommonButton variant="outline" iconLeft={<Send size={13} />} onClick={handleSendTest}>Send test</CommonButton>
+            <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+              <span className="text-xs font-semibold text-[var(--text-faint)]">{isDirty ? 'Unsaved changes' : 'Saved'}</span>
+              <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty}>Reset</CommonButton>
+              <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={handleSendTest}>Send Test</CommonButton>
+              <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={handleSave} disabled={!isDirty}>Save</CommonButton>
             </div>
           </div>
 
-          {mode === 'edit' ? (
+          <div className="grid gap-0 divide-y divide-[var(--line-soft)] xl:grid-cols-2 xl:divide-x xl:divide-y-0">
             <div className="flex flex-col gap-3 p-4">
               <InputField
-                label="Subject"
+                label="Subject" required
                 value={template.subject}
                 onChange={(event) => updateField('subject', event.target.value)}
               />
               <TextareaField
                 label="Body"
                 ref={bodyRef}
-                rows={11}
+                rows={12}
                 value={template.body}
                 onChange={(event) => updateField('body', event.target.value)}
                 hint="Use the merge tags below to personalize this email — click one to insert it at your cursor."
               />
-
               <div>
-                <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Merge tags</p>
+                <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Merge Tags</p>
                 <div className="flex flex-wrap gap-1.5">
                   {template.variables.map((variable) => (
                     <button
@@ -179,30 +199,25 @@ export function EmailTemplatesPage() {
                   ))}
                 </div>
               </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line-soft)] pt-3">
-                <span className="text-xs font-semibold text-[var(--text-faint)]">
-                  {isDirty ? 'Unsaved changes' : 'No changes since last save'}
-                </span>
-                <div className="flex items-center gap-2">
-                  <CommonButton variant="outline" iconLeft={<RotateCcw size={13} />} onClick={handleReset} disabled={!isDirty}>Reset to default</CommonButton>
-                  <CommonButton variant="primary" iconLeft={<Save size={13} />} onClick={handleSave} disabled={!isDirty}>Save changes</CommonButton>
-                </div>
-              </div>
             </div>
-          ) : (
-            <div className="p-4">
+
+            <div className="flex flex-col gap-2 p-4">
+              <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Live Preview</p>
               <div className="admin-email-preview">
                 <div className="admin-email-preview__meta">
                   <span><strong>To:</strong> jordan.reyes@sampleorg.edu</span>
                   <span><strong>From:</strong> no-reply@catholicsolutions.org</span>
                 </div>
-                <p className="admin-email-preview__subject">{renderSample(template.subject)}</p>
-                <pre className="admin-email-preview__body">{renderSample(template.body)}</pre>
+                <p className="admin-email-preview__subject">{renderSample(template.subject) || 'Untitled subject'}</p>
+                {template.body ? (
+                  <pre className="admin-email-preview__body">{renderSample(template.body)}</pre>
+                ) : (
+                  <p className="text-xs italic text-[var(--text-faint)]">Start typing the body to see it rendered here with sample data.</p>
+                )}
               </div>
-              <p className="mt-3 text-xs text-[var(--text-faint)]">Preview shown with sample data — this prototype does not send real email.</p>
+              <p className="text-xs text-[var(--text-faint)]">Shown with sample data — this prototype does not send real email.</p>
             </div>
-          )}
+          </div>
         </section>
       </div>
     </div>

@@ -20,8 +20,8 @@ const VISIBILITY_OPTIONS: Array<{ id: ProductVisibility; value: string }> = [
 ];
 
 const NAVIGATION_OPTIONS: Array<{ id: ProductNavigationTarget; value: string }> = [
-  { id: 'same-tab', value: 'Same tab' },
-  { id: 'new-tab', value: 'New tab' },
+  { id: 'same-tab', value: 'Same Tab' },
+  { id: 'new-tab', value: 'New Tab' },
 ];
 
 function TagList({ label, values, draft, onDraftChange, onAdd, onRemove, tone = 'muted' }: {
@@ -71,7 +71,7 @@ interface ProductFormProps {
   onUpdate: <K extends keyof AdminApplication>(key: K, value: AdminApplication[K]) => void;
 }
 
-/** Editable product fields, laid out to mirror ProductDetailsTab's card structure so switching between view and edit feels like the same page. */
+/** One consolidated panel, mirroring ProductDetailsTab's layout — same sections, editable. */
 export function ProductForm({ form, errors, touched, onUpdate }: ProductFormProps) {
   const [featureDraft, setFeatureDraft] = useState('');
   const [integrationDraft, setIntegrationDraft] = useState('');
@@ -85,23 +85,14 @@ export function ProductForm({ form, errors, touched, onUpdate }: ProductFormProp
   const removeFromList = (key: 'features' | 'integrations', value: string) => onUpdate(key, form[key].filter((item) => item !== value));
 
   return (
-    <div className="flex flex-col gap-4">
-      <section className="admin-panel-card">
-        <div className="admin-panel-card__header"><h2 className="panel-title">Description</h2></div>
-        <div className="p-4">
-          <TextareaField label="Description" hideLabel value={form.description} onChange={(event) => onUpdate('description', event.target.value)} rows={3} showCharCount={false} placeholder="What does this product do?" />
-        </div>
-      </section>
-
-      <section className="admin-panel-card">
-        <div className="admin-panel-card__header"><h2 className="panel-title">Details</h2></div>
+    <section className="admin-panel-card">
+      <div className="flex flex-col divide-y divide-[var(--line-soft)]">
         <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
           <InputField label="Product name" required value={form.name} onChange={(event) => onUpdate('name', event.target.value)} error={touched ? errors.name : undefined} />
-          <InputField label="Short name" optional value={form.shortName} onChange={(event) => onUpdate('shortName', event.target.value)} />
+          <InputField label="Short name" value={form.shortName} onChange={(event) => onUpdate('shortName', event.target.value)} />
           <InputField label="Category" required value={form.category} onChange={(event) => onUpdate('category', event.target.value)} error={touched ? errors.category : undefined} />
           <InputField
             label="Production URL"
-            optional
             value={form.productionUrl}
             onChange={(event) => onUpdate('productionUrl', event.target.value)}
             placeholder="https://app.optioncapp.com"
@@ -120,32 +111,21 @@ export function ProductForm({ form, errors, touched, onUpdate }: ProductFormProp
             onValueChange={(value) => onUpdate('navigationTarget', value as ProductNavigationTarget)}
           />
         </div>
-      </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="admin-panel-card">
-          <div className="admin-panel-card__header"><h2 className="panel-title">Features</h2></div>
-          <div className="p-4">
+        <div className="grid gap-4 p-4 sm:grid-cols-2">
+          <div>
+            <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Features</p>
             <TagList label="Features" values={form.features} draft={featureDraft} onDraftChange={setFeatureDraft} onAdd={() => addToList('features', featureDraft, setFeatureDraft)} onRemove={(value) => removeFromList('features', value)} />
           </div>
-        </section>
-        <section className="admin-panel-card">
-          <div className="admin-panel-card__header"><h2 className="panel-title">Integrations</h2></div>
-          <div className="p-4">
+          <div>
+            <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Integrations</p>
             <TagList label="Integrations" values={form.integrations} draft={integrationDraft} onDraftChange={setIntegrationDraft} onAdd={() => addToList('integrations', integrationDraft, setIntegrationDraft)} onRemove={(value) => removeFromList('integrations', value)} tone="info" />
           </div>
-        </section>
-      </div>
-
-      <section className="admin-panel-card">
-        <div className="admin-panel-card__header">
-          <div>
-            <h2 className="panel-title">Product preview</h2>
-            <p className="panel-subtitle">How this product will appear in the catalog.</p>
-          </div>
         </div>
-        <div className="flex flex-col gap-3 p-4">
-          <div className="flex flex-wrap items-center gap-2">
+
+        <div className="p-4">
+          <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Product Preview</p>
+          <div className="flex flex-wrap items-center gap-2 pb-3">
             <InputField label="Icon (emoji)" value={form.icon} onChange={(event) => onUpdate('icon', event.target.value)} maxLength={4} wrapperClassName="w-24" />
             <div className="flex flex-col gap-1.5 text-[length:var(--admin-text-xs)] [font-weight:var(--admin-weight-bold)] text-[var(--text-secondary)]">
               Accent color
@@ -177,25 +157,26 @@ export function ProductForm({ form, errors, touched, onUpdate }: ProductFormProp
             <p className="admin-product-card__description">{form.description || 'No description yet.'}</p>
           </div>
         </div>
-      </section>
 
-      <section className="admin-panel-card">
-        <div className="admin-panel-card__header"><h2 className="panel-title">Read-only</h2></div>
-        <div className="grid gap-x-4 gap-y-2 p-4 sm:grid-cols-2">
+        <div className="grid gap-x-5 gap-y-3 p-4 sm:grid-cols-2 lg:grid-cols-5">
           {[
             ['Product ID', form.id],
             ['Ownership', form.ownership],
-            ['Deployment model', form.deploymentModel],
-            ['Registry reference', form.registryRef],
-            ['Source location', form.sourceLocation],
+            ['Deployment Model', form.deploymentModel],
+            ['Registry Reference', form.registryRef],
+            ['Source Location', form.sourceLocation],
           ].map(([label, value]) => (
-            <div key={label} className="flex items-center justify-between gap-3 text-xs">
-              <span className="font-bold text-[var(--text-muted)]">{label}</span>
-              <span className="font-mono text-[var(--text-secondary)]">{value}</span>
+            <div key={label} className="min-w-0">
+              <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">{label}</p>
+              <p className="mt-0.5 truncate text-[0.8125rem] font-bold text-[var(--text-primary)]">{value}</p>
             </div>
           ))}
         </div>
-      </section>
-    </div>
+
+        <div className="p-4">
+          <TextareaField label="Description" value={form.description} onChange={(event) => onUpdate('description', event.target.value)} rows={3} showCharCount={false} placeholder="What does this product do?" />
+        </div>
+      </div>
+    </section>
   );
 }

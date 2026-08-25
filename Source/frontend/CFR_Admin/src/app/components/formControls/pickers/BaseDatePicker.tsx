@@ -6,10 +6,7 @@ import {
   themeFieldWrapperClass,
   themeFormControlMenuClass,
   themeLabelClass,
-  themeOptionalLabelSuffixClass,
 } from "@designSystem/theme/styles/componentStyle";
-
-export { themeOptionalLabelSuffixClass };
 
 export type DatePart = "Date" | "Month" | "Year";
 

@@ -1,15 +1,19 @@
 import { useMemo, useState } from 'react';
-import { Pencil, Plus, Power, Search } from 'lucide-react';
+import { Pencil, Plus, Power } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
 import { Badge } from '@app/components/Badge';
-import { InputField } from '@app/components/formControls';
+import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
+import { confirmAction } from '../lib/confirm';
 import { InvoiceItemFormDrawer, type InvoiceItemFormValue } from './InvoiceItemFormDrawer';
 import type { InvoiceItem } from '../types';
+
+const ALL_PRODUCTS_FILTER = 'all';
+const GENERIC_PRODUCT_FILTER = 'generic';
 
 const STATUS_FILTERS = [
   { id: 'all', label: 'All statuses' },
@@ -19,22 +23,36 @@ const STATUS_FILTERS = [
 type StatusFilter = (typeof STATUS_FILTERS)[number]['id'];
 
 export function InvoiceItemsPage() {
-  const { invoiceItems, addInvoiceItem, updateInvoiceItem, toggleInvoiceItemActive } = useAdminData();
+  const { invoiceItems, applications, getApplication, addInvoiceItem, updateInvoiceItem, toggleInvoiceItemActive } = useAdminData();
   const { showToast } = useToast();
-  const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [productFilter, setProductFilter] = useState(ALL_PRODUCTS_FILTER);
   const [drawerTarget, setDrawerTarget] = useState<'create' | InvoiceItem | null>(null);
 
-  const rows = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return invoiceItems
-      .filter((item) => statusFilter === 'all' || (statusFilter === 'active') === item.active)
-      .filter((item) => !normalized || [item.title, item.description].join(' ').toLowerCase().includes(normalized));
-  }, [invoiceItems, query, statusFilter]);
+  const rows = useMemo(() => invoiceItems
+    .filter((item) => statusFilter === 'all' || (statusFilter === 'active') === item.active)
+    .filter((item) => {
+      if (productFilter === ALL_PRODUCTS_FILTER) return true;
+      if (productFilter === GENERIC_PRODUCT_FILTER) return !item.appId;
+      return item.appId === productFilter;
+    }),
+  [invoiceItems, statusFilter, productFilter]);
 
-  const handleToggle = (item: InvoiceItem) => {
+  const handleToggle = async (item: InvoiceItem) => {
+    if (!item.active) {
+      toggleInvoiceItemActive(item.id);
+      showToast(`${item.title} activated ✓`);
+      return;
+    }
+    const confirmed = await confirmAction({
+      title: 'Deactivate this item?',
+      description: `"${item.title}" will no longer be available to add to new invoices.`,
+      confirmLabel: 'Deactivate',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     toggleInvoiceItemActive(item.id);
-    showToast(`${item.title} ${item.active ? 'deactivated' : 'activated'} ✓`);
+    showToast(`${item.title} deactivated`);
   };
 
   const handleCreate = (value: InvoiceItemFormValue) => {
@@ -55,12 +73,19 @@ export function InvoiceItemsPage() {
       cell: (item) => (
         <div className="flex items-center gap-0.5">
           <CommonIconButton aria-label={`Edit ${item.title}`} icon={<Pencil size={14} />} onClick={() => setDrawerTarget(item)} />
-          <CommonIconButton aria-label={item.active ? `Deactivate ${item.title}` : `Activate ${item.title}`} variant={item.active ? 'danger' : 'ghost'} icon={<Power size={14} />} onClick={() => handleToggle(item)} />
+          <CommonIconButton aria-label={item.active ? `Deactivate ${item.title}` : `Activate ${item.title}`} variant={item.active ? 'danger' : 'ghost'} icon={<Power size={14} />} onClick={() => void handleToggle(item)} />
         </div>
       ),
     },
     { id: 'title', header: 'Title', width: '14rem', value: (item) => item.title, cell: (item) => <span className="font-bold text-[var(--text-primary)]">{item.title}</span> },
-    { id: 'defaultAmount', header: 'Default amount', value: (item) => item.defaultAmount, cell: (item) => <span className="font-bold text-[var(--text-primary)]">${item.defaultAmount.toFixed(2)}</span> },
+    {
+      id: 'product', header: 'Product', width: '11rem',
+      value: (item) => (item.appId ? getApplication(item.appId)?.name ?? item.appId : 'All Products'),
+      cell: (item) => item.appId
+        ? <span className="text-[var(--text-secondary)]">{getApplication(item.appId)?.name ?? item.appId}</span>
+        : <Badge tone="info">All Products</Badge>,
+    },
+    { id: 'defaultAmount', header: 'Default Amount', value: (item) => item.defaultAmount, cell: (item) => <span className="font-bold text-[var(--text-primary)]">${item.defaultAmount.toFixed(2)}</span> },
     { id: 'description', header: 'Description', value: (item) => item.description, cell: (item) => <span className="text-[var(--text-secondary)]">{item.description}</span> },
     { id: 'status', header: 'Status', value: (item) => (item.active ? 'active' : 'inactive'), cell: (item) => <Badge tone={item.active ? 'success' : 'neutral'}>{item.active ? 'Active' : 'Inactive'}</Badge> },
   ];
@@ -68,32 +93,38 @@ export function InvoiceItemsPage() {
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
-        title="Invoice items"
-        action={<CommonButton variant="primary" iconLeft={<Plus size={14} />} onClick={() => setDrawerTarget('create')}>Add new item</CommonButton>}
+        title="Invoice Items"
+        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => setDrawerTarget('create')}>Add New Item</CommonButton>}
       />
 
-      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
-        <InputField
-          label="Search invoice items"
-          hideLabel
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by title or description"
-          startIcon={<Search size={13} />}
-          className="min-h-8 text-xs placeholder:text-xs"
-          wrapperClassName="min-w-[200px] max-w-xs shrink-0"
-        />
-        <div className="flex shrink-0 flex-nowrap gap-1.5">
-          {STATUS_FILTERS.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              onClick={() => setStatusFilter(filter.id)}
-              className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
-            >
-              {filter.label}
-            </button>
-          ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
+          {STATUS_FILTERS.map((filter) => {
+            const count = filter.id === 'all' ? invoiceItems.length : invoiceItems.filter((item) => (filter.id === 'active') === item.active).length;
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setStatusFilter(filter.id)}
+                className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
+              >
+                {filter.label} ({count})
+              </button>
+            );
+          })}
+        </div>
+        <div className="w-52 shrink-0">
+          <Dropdown
+            label="Product" hideLabel searchable={false} clearable={false}
+            value={productFilter}
+            onValueChange={(value) => setProductFilter(value ?? ALL_PRODUCTS_FILTER)}
+            options={[
+              { id: ALL_PRODUCTS_FILTER, value: 'All Products' },
+              { id: GENERIC_PRODUCT_FILTER, value: 'Generic (No Product)' },
+              ...applications.map((app) => ({ id: app.id, value: app.name })),
+            ]}
+            className="min-h-8"
+          />
         </div>
       </div>
 

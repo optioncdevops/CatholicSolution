@@ -10,12 +10,12 @@ import { DashboardPage } from '@/modules/admin/DashboardPage';
 import { ProductsListPage } from '@/modules/admin/applications/ProductsListPage';
 import { ProductDetailPage } from '@/modules/admin/applications/ProductDetailPage';
 import { ProductEditPage } from '@/modules/admin/applications/ProductEditPage';
+import { CreateInvoicePage } from '@/modules/admin/applications/CreateInvoicePage';
 import { OrganizationsListPage } from '@/modules/admin/organizations/OrganizationsListPage';
 import { OrganizationDetailPage } from '@/modules/admin/organizations/OrganizationDetailPage';
 import { UsersListPage } from '@/modules/admin/users/UsersListPage';
 import { UserDetailPage } from '@/modules/admin/users/UserDetailPage';
 import { RequestsInboxPage } from '@/modules/admin/requests/RequestsInboxPage';
-import { SettingsPage } from '@/modules/admin/settings/SettingsPage';
 import { UserRolesPage } from '@/modules/admin/administration/UserRolesPage';
 import { RightsPage } from '@/modules/admin/administration/RightsPage';
 import { EmailTemplatesPage } from '@/modules/admin/administration/EmailTemplatesPage';
@@ -44,12 +44,12 @@ export default function App() {
           <Route path="/admin/applications" element={<ProductsListPage />} />
           <Route path="/admin/applications/:appId" element={<ProductDetailPage />} />
           <Route path="/admin/applications/:appId/edit" element={<ProductEditPage />} />
+          <Route path="/admin/applications/:appId/invoices/create" element={<CreateInvoicePage />} />
           <Route path="/admin/organizations" element={<OrganizationsListPage />} />
           <Route path="/admin/organizations/:orgId" element={<OrganizationDetailPage />} />
           <Route path="/admin/users" element={<UsersListPage />} />
           <Route path="/admin/users/:userId" element={<UserDetailPage />} />
           <Route path="/admin/requests" element={<RequestsInboxPage />} />
-          <Route path="/admin/settings" element={<SettingsPage />} />
           <Route path="/admin/administration/user-roles" element={<UserRolesPage />} />
           <Route path="/admin/administration/rights" element={<RightsPage />} />
           <Route path="/admin/administration/email-templates" element={<EmailTemplatesPage />} />

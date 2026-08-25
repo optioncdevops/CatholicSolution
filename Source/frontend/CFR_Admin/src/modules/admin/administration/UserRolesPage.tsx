@@ -1,28 +1,21 @@
-import { useMemo, useState } from 'react';
-import { Copy, Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Copy, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
-import { InputField } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate } from '../utils/formatDate';
 import { confirmAction } from '../lib/confirm';
-import { RoleFormDrawer, type RoleFormValue } from './RoleFormDrawer';
+import { RoleFormModal, type RoleFormValue } from './RoleFormModal';
 import type { AdminRole } from '../types';
 
 export function UserRolesPage() {
   const { roles, addRole, updateRole, duplicateRole, deleteRole } = useAdminData();
   const { showToast } = useToast();
-  const [query, setQuery] = useState('');
   const [drawerTarget, setDrawerTarget] = useState<'create' | AdminRole | null>(null);
   const [drawerReadOnly, setDrawerReadOnly] = useState(false);
-
-  const rows = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return roles.filter((role) => !normalized || [role.name, role.description, role.landingPage].join(' ').toLowerCase().includes(normalized));
-  }, [roles, query]);
 
   const handleCreate = (value: RoleFormValue) => {
     addRole(value);
@@ -79,33 +72,22 @@ export function UserRolesPage() {
       value: (role) => role.description,
       cell: (role) => <span className="text-[var(--text-secondary)]">{role.description || '—'}</span>,
     },
-    { id: 'landingPage', header: 'Landing page', value: (role) => role.landingPage, cell: (role) => <span className="text-[var(--text-secondary)]">{role.landingPage}</span> },
+    { id: 'landingPage', header: 'Landing Page', value: (role) => role.landingPage, cell: (role) => <span className="text-[var(--text-secondary)]">{role.landingPage}</span> },
     { id: 'createdAt', header: 'Created', value: (role) => role.createdAt, cell: (role) => <span className="text-[var(--text-muted)]">{formatDate(role.createdAt)}</span> },
   ];
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
-        title="User roles"
-        action={<CommonButton variant="primary" iconLeft={<Plus size={14} />} onClick={() => { setDrawerReadOnly(false); setDrawerTarget('create'); }}>Add user role</CommonButton>}
+        title="User Roles"
+        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => { setDrawerReadOnly(false); setDrawerTarget('create'); }}>Add User Role</CommonButton>}
       />
 
-      <InputField
-        label="Search roles"
-        hideLabel
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search by name, description, landing page"
-        startIcon={<Search size={13} />}
-        className="min-h-8 text-xs placeholder:text-xs"
-        wrapperClassName="max-w-sm"
-      />
-
-      {rows.length === 0 ? (
-        <EmptyState icon="🧑‍💼" title="No roles found" description="Try a different search term." />
+      {roles.length === 0 ? (
+        <EmptyState icon="🧑‍💼" title="No roles yet" description="Add a role to get started." />
       ) : (
         <DataTable
-          data={rows}
+          data={roles}
           columns={columns}
           getRowId={(role) => role.id}
           exportFileName="catholic-solutions-user-roles"
@@ -114,7 +96,7 @@ export function UserRolesPage() {
         />
       )}
 
-      <RoleFormDrawer
+      <RoleFormModal
         target={drawerTarget}
         readOnly={drawerReadOnly}
         onClose={() => setDrawerTarget(null)}

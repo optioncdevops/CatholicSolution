@@ -9,6 +9,7 @@ export {
   hasMultiSelectValues,
 } from "./formControlDefaults";
 export { InputField } from "./InputField";
+export { default as MandatoryIndicator, FormBodyMandatoryLegend } from "./MandatoryIndicator";
 export { VehicleNumberInput } from "./VehicleNumberInput";
 export type { VehicleNumberInputProps } from "./VehicleNumberInput";
 export { OtpInputField } from "./OtpInputField";

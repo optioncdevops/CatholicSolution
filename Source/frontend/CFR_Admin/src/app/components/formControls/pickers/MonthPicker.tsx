@@ -7,6 +7,7 @@ import {
   themeControlIconClass,
   themeFieldDisabledClass,
   themeFormControlMenuClass,
+  themeRequiredMarkClass,
   resolveFormControlPortalLayerClass,
 } from "@designSystem/theme/styles/componentStyle";
 import { computeFixedPortalPlacement } from "@designSystem/layouts/utilities/fixedPortalPlacement";
@@ -19,7 +20,6 @@ import {
   monthLabels,
   parseMonthString,
   type BasePickerProps,
-  themeOptionalLabelSuffixClass,
 } from "./BaseDatePicker";
 
 interface MonthPickerProps extends Omit<
@@ -36,7 +36,6 @@ interface MonthPickerProps extends Omit<
 export const MonthPicker: React.FC<MonthPickerProps> = ({
   label,
   required,
-  optional,
   className,
   placeholder,
   name,
@@ -188,10 +187,7 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({
   return (
     <div className="flex flex-col gap-1" ref={wrapperRef}>
       <label className={baseLabelClasses}>
-        {label} {required && <span className="text-danger-500">*</span>}
-        {optional && !required && (
-          <span className={themeOptionalLabelSuffixClass}> (optional)</span>
-        )}
+        {label} {required && <span className={themeRequiredMarkClass}>*</span>}
       </label>
       <div className="relative">
         <input

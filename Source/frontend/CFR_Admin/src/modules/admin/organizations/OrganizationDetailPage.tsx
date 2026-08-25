@@ -53,7 +53,7 @@ export function OrganizationDetailPage() {
     },
     { id: 'role', header: 'Role', value: (user) => user.role, cell: (user) => <span className="capitalize text-[var(--text-secondary)]">{user.role}</span> },
     { id: 'status', header: 'Status', value: (user) => user.status, cell: (user) => <StatusBadge status={user.status} kind="user" /> },
-    { id: 'access', header: 'App access', value: (user) => user.appAccessIds.length, cell: (user) => <span className="text-[var(--text-secondary)]">{user.appAccessIds.length}</span> },
+    { id: 'access', header: 'App Access', value: (user) => user.appAccessIds.length, cell: (user) => <span className="text-[var(--text-secondary)]">{user.appAccessIds.length}</span> },
   ];
 
   return (

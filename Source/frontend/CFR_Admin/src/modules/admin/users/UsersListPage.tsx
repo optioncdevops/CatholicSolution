@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, Plus, Power, Search } from 'lucide-react';
+import { Eye, Plus, Power } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -8,7 +8,6 @@ import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
 import { StatusBadge } from '@app/components/Badge';
 import { EntityAvatar } from '@app/components/EntityAvatar';
-import { InputField } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '../lib/confirm';
 import { formatDate } from '../utils/formatDate';
@@ -23,16 +22,12 @@ export function UsersListPage() {
   const { users, organizations, getOrganization, addUser, setUserStatus } = useAdminData();
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
   const [addOpen, setAddOpen] = useState(false);
 
-  const rows = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return users
-      .filter((user) => statusFilter === 'all' || user.status === statusFilter)
-      .filter((user) => !normalized || [user.name, user.email].join(' ').toLowerCase().includes(normalized));
-  }, [users, query, statusFilter]);
+  const rows = useMemo(() => users
+    .filter((user) => statusFilter === 'all' || user.status === statusFilter),
+  [users, statusFilter]);
 
   const handleCreate = (value: NewUserValue) => {
     addUser(value);
@@ -92,44 +87,35 @@ export function UsersListPage() {
     { id: 'org', header: 'Organization', value: (user) => getOrganization(user.orgId)?.name ?? '—', cell: (user) => <span className="text-[var(--text-secondary)]">{getOrganization(user.orgId)?.name ?? '—'}</span> },
     { id: 'role', header: 'Role', value: (user) => user.role, cell: (user) => <span className="capitalize text-[var(--text-secondary)]">{user.role}</span> },
     { id: 'status', header: 'Status', value: (user) => user.status, cell: (user) => <StatusBadge status={user.status} kind="user" /> },
-    { id: 'access', header: 'App access', value: (user) => user.appAccessIds.length, cell: (user) => <span className="text-[var(--text-secondary)]">{user.appAccessIds.length}</span> },
-    { id: 'lastActive', header: 'Last active', value: (user) => user.lastActiveAt, cell: (user) => <span className="text-[var(--text-muted)]">{user.lastActiveAt === '—' ? '—' : formatDate(user.lastActiveAt)}</span> },
+    { id: 'access', header: 'App Access', value: (user) => user.appAccessIds.length, cell: (user) => <span className="text-[var(--text-secondary)]">{user.appAccessIds.length}</span> },
+    { id: 'lastActive', header: 'Last Active', value: (user) => user.lastActiveAt, cell: (user) => <span className="text-[var(--text-muted)]">{user.lastActiveAt === '—' ? '—' : formatDate(user.lastActiveAt)}</span> },
   ];
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="Users"
-        action={<CommonButton variant="primary" iconLeft={<Plus size={14} />} onClick={() => setAddOpen(true)}>Add user</CommonButton>}
+        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => setAddOpen(true)}>Add User</CommonButton>}
       />
 
-      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
-        <InputField
-          label="Search users"
-          hideLabel
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name or email"
-          startIcon={<Search size={13} />}
-          className="min-h-8 text-xs placeholder:text-xs"
-          wrapperClassName="min-w-[200px] max-w-xs shrink-0"
-        />
-        <div className="flex shrink-0 flex-nowrap gap-1.5">
-          {STATUS_FILTERS.map((filter) => (
+      <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
+        {STATUS_FILTERS.map((filter) => {
+          const count = filter.id === 'all' ? users.length : users.filter((user) => user.status === filter.id).length;
+          return (
             <button
               key={filter.id}
               type="button"
               onClick={() => setStatusFilter(filter.id)}
               className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
             >
-              {filter.label}
+              {filter.label} ({count})
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState icon="🙍" title="No users found" description="Try a different search term or status filter." />
+        <EmptyState icon="🙍" title="No users found" description="Try a different status filter." />
       ) : (
         <DataTable
           data={rows}

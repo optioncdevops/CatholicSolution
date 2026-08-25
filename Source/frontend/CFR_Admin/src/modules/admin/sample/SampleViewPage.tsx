@@ -69,13 +69,13 @@ export function SampleViewPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         breadcrumb={{ label: 'Component library', to: '/admin/administration/component-library/add' }}
-        title="Component library — View"
+        title="Component Library — View"
         icon={<span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[linear-gradient(135deg,#1E3A8A,#3B82F6)] text-lg text-white" aria-hidden="true"><Eye size={18} /></span>}
         subtitle="Display/layout components. Dev reference only — see removal note in SampleViewPage.tsx."
-        action={<CommonButton variant="outline" size="sm" iconLeft={<Info size={13} />} onClick={() => setModalOpen(true)}>Open modal demo</CommonButton>}
+        action={<CommonButton variant="headerSecondary" size="sm" iconLeft={<Info size={13} />} onClick={() => setModalOpen(true)}>Open Modal Demo</CommonButton>}
       />
 
-      <SectionCard title="Badges & status badges" description="Every Badge tone, and every StatusBadge kind × status combination used across the app.">
+      <SectionCard title="Badges & Status Badges" description="Every Badge tone, and every StatusBadge kind × status combination used across the app.">
         <div className="flex flex-wrap gap-2">
           {BADGE_TONES.map((tone) => <Badge key={tone} tone={tone}>{tone}</Badge>)}
         </div>
@@ -89,7 +89,7 @@ export function SampleViewPage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Avatars & detail fields">
+      <SectionCard title="Avatars & Detail Fields">
         <div className="flex flex-wrap items-center gap-3">
           <EntityAvatar name="Jordan Reyes" />
           <EntityAvatar name="Sam Patel" size={40} />
@@ -119,7 +119,7 @@ export function SampleViewPage() {
         <TabPanel id="history" activeId={activeTab}><p className="text-sm text-[var(--text-secondary)]">History panel content.</p></TabPanel>
       </SectionCard>
 
-      <SectionCard title="Data table" description="Sorting, pagination, and Excel/Word/CSV/print export — all built in.">
+      <SectionCard title="Data Table" description="Sorting, pagination, and Excel/Word/CSV/print export — all built in.">
         <DataTable
           data={SAMPLE_TABLE_ROWS}
           columns={columns}
@@ -131,14 +131,14 @@ export function SampleViewPage() {
         />
       </SectionCard>
 
-      <SectionCard title="Empty state">
+      <SectionCard title="Empty State">
         <EmptyState icon="📦" title="Nothing here yet" description="This is what an empty list looks like, with an optional action button." actionLabel="Take action" onAction={() => {}} />
       </SectionCard>
 
-      <SectionCard title="Drawer, modal, tooltip & confirm dialog" description="Overlay components — click to open each one.">
+      <SectionCard title="Drawer, Modal, Tooltip & Confirm Dialog" description="Overlay components — click to open each one.">
         <div className="flex flex-wrap items-center gap-2">
-          <CommonButton variant="primary" iconLeft={<Package size={14} />} onClick={() => setDrawerOpen(true)}>Open drawer</CommonButton>
-          <CommonButton variant="outline" onClick={() => setModalOpen(true)}>Open modal</CommonButton>
+          <CommonButton variant="primary" iconLeft={<Package size={14} />} onClick={() => setDrawerOpen(true)}>Open Drawer</CommonButton>
+          <CommonButton variant="outline" onClick={() => setModalOpen(true)}>Open Modal</CommonButton>
           <Tooltip content="This tooltip appears on hover or focus.">
             <CommonButton variant="ghost">Hover for tooltip</CommonButton>
           </Tooltip>
@@ -147,20 +147,20 @@ export function SampleViewPage() {
             tone="soft"
             onClick={() => void confirmAction({ title: 'Confirm this action?', description: 'This is the themed confirmAction() dialog.', confirmLabel: 'Confirm' })}
           >
-            Open confirm dialog
+            Open Confirm Dialog
           </CommonButton>
           <CommonIconButton aria-label="Icon button with tooltip" tooltip="Icon buttons support tooltips too" icon={<Info size={14} />} />
         </div>
       </SectionCard>
 
-      <Drawer open={drawerOpen} title="Sample drawer" description="Drawer component" onClose={() => setDrawerOpen(false)} footer={<CommonButton variant="primary" onClick={() => setDrawerOpen(false)}>Done</CommonButton>}>
+      <Drawer open={drawerOpen} title="Sample Drawer" description="Drawer component" onClose={() => setDrawerOpen(false)} footer={<CommonButton variant="primary" onClick={() => setDrawerOpen(false)}>Done</CommonButton>}>
         <div className="grid gap-3">
           <DetailField label="Field one" value="Sample value" />
           <DetailField label="Field two" value="Another value" />
         </div>
       </Drawer>
 
-      <BaseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Sample modal" footer={<CommonButton variant="primary" onClick={() => setModalOpen(false)}>Close</CommonButton>}>
+      <BaseModal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Sample Modal" footer={<CommonButton variant="primary" onClick={() => setModalOpen(false)}>Close</CommonButton>}>
         <p className="text-sm text-[var(--text-secondary)]">This is the ported BaseModal component — portal-based, with sizes, height variants, and a sticky footer.</p>
       </BaseModal>
     </div>

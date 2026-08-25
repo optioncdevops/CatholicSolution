@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@app/utilities/cn";
+import { themeRequiredMarkClass } from "@designSystem/theme/styles/componentStyle";
 
 interface MandatoryIndicatorProps {
   /** Extra CSS classes for the wrapper. */
@@ -35,18 +36,11 @@ const MandatoryIndicator: React.FC<MandatoryIndicatorProps> = ({
       className={cn(
         "flex shrink-0 items-center whitespace-nowrap text-xs",
         align === "end" ? "w-full justify-end" : "inline-flex justify-start",
-        isBrand ? "text-white/80" : "text-foreground-muted",
+        isBrand ? "text-white/80" : "text-[var(--text-muted)]",
         className,
       )}
     >
-      <span
-        className={cn(
-          "mr-1 font-semibold",
-          isBrand ? "text-danger-300" : "text-danger-600 dark:text-danger-400",
-        )}
-      >
-        *
-      </span>{" "}
+      <span className={cn("mr-1", isBrand ? "font-bold text-white" : themeRequiredMarkClass)}>*</span>{" "}
       indicates a required field
     </div>
   );

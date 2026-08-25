@@ -16,7 +16,7 @@ export function DataTableSortIcon({ direction, className }: DataTableSortIconPro
     return (
       <AppIcon
         name="sortAsc"
-        className={cn(SORT_ICON_SIZE_CLASS, "text-[var(--primary)]", className)}
+        className={cn(SORT_ICON_SIZE_CLASS, "text-white", className)}
         decorative
       />
     );
@@ -26,7 +26,7 @@ export function DataTableSortIcon({ direction, className }: DataTableSortIconPro
     return (
       <AppIcon
         name="sortDesc"
-        className={cn(SORT_ICON_SIZE_CLASS, "text-[var(--primary)]", className)}
+        className={cn(SORT_ICON_SIZE_CLASS, "text-white", className)}
         decorative
       />
     );
@@ -35,7 +35,7 @@ export function DataTableSortIcon({ direction, className }: DataTableSortIconPro
   return (
     <AppIcon
       name="sort"
-      className={cn(SORT_ICON_SIZE_CLASS, "text-[var(--text-faint)]", className)}
+      className={cn(SORT_ICON_SIZE_CLASS, "text-white/50", className)}
       decorative
     />
   );

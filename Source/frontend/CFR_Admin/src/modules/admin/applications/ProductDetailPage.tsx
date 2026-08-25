@@ -46,8 +46,8 @@ export function ProductDetailPage() {
         subtitle={app.category}
         action={(
           <div className="flex flex-wrap items-center gap-2">
-            <CommonButton variant="outline" iconLeft={<RefreshCw size={14} />} onClick={() => setChangingStatus(true)}>Change status</CommonButton>
-            <CommonButton variant="primary" iconLeft={<Pencil size={14} />} onClick={() => navigate(`/admin/applications/${app.id}/edit`)}>Edit</CommonButton>
+            <CommonButton variant="headerSecondary" iconLeft={<RefreshCw size={14} />} onClick={() => setChangingStatus(true)}>Change Status</CommonButton>
+            <CommonButton variant="headerSecondary" iconLeft={<Pencil size={14} />} onClick={() => navigate(`/admin/applications/${app.id}/edit`)}>Edit</CommonButton>
           </div>
         )}
       />

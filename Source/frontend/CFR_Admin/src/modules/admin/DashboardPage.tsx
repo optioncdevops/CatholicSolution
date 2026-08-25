@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle, Building2, Check, CheckCircle2, ChevronRight, ClipboardList, Package,
-  RefreshCw, Settings, Users, X,
+  RefreshCw, Users, X,
 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -19,7 +19,7 @@ import type { AdminApplication } from './types';
 type DashboardStatus = 'loading' | 'ready' | 'error';
 type DateRange = '7d' | '30d' | '90d' | 'all';
 
-const RANGE_LABELS: Record<DateRange, string> = { '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days', all: 'All time' };
+const RANGE_LABELS: Record<DateRange, string> = { '7d': 'Last 7 Days', '30d': 'Last 30 Days', '90d': 'Last 90 Days', all: 'All Time' };
 const RANGE_DAYS: Partial<Record<DateRange, number>> = { '7d': 7, '30d': 30, '90d': 90 };
 
 function withinRange(dateStr: string, range: DateRange): boolean {
@@ -38,11 +38,10 @@ function domainOf(url: string): string {
 }
 
 const QUICK_ACTIONS = [
-  { to: '/admin/requests', label: 'Review access requests', icon: ClipboardList },
-  { to: '/admin/applications', label: 'Manage products', icon: Package },
-  { to: '/admin/organizations', label: 'Manage organizations', icon: Building2 },
-  { to: '/admin/users', label: 'Manage users', icon: Users },
-  { to: '/admin/settings', label: 'Open settings', icon: Settings },
+  { to: '/admin/requests', label: 'Review Access Requests', icon: ClipboardList },
+  { to: '/admin/applications', label: 'Manage Products', icon: Package },
+  { to: '/admin/organizations', label: 'Manage Organizations', icon: Building2 },
+  { to: '/admin/users', label: 'Manage Users', icon: Users },
 ] as const;
 
 const ACTIVITY_ICON: Record<string, typeof Package> = {
@@ -160,10 +159,10 @@ export function DashboardPage() {
                 className="min-h-8"
               />
             </div>
-            <CommonButton variant="outline" iconLeft={<RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />} onClick={handleRefresh} disabled={refreshing || status === 'loading'}>
+            <CommonButton variant="headerSecondary" iconLeft={<RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />} onClick={handleRefresh} disabled={refreshing || status === 'loading'}>
               {refreshing ? 'Refreshing…' : 'Refresh'}
             </CommonButton>
-            <CommonButton variant="primary" iconLeft={<Package size={14} />} onClick={() => navigate('/admin/applications')}>Manage products</CommonButton>
+            <CommonButton variant="headerSecondary" iconLeft={<Package size={14} />} onClick={() => navigate('/admin/applications')}>Manage Products</CommonButton>
           </div>
         )}
       />
@@ -226,10 +225,10 @@ export function DashboardPage() {
             <section className="admin-panel-card">
               <div className="admin-panel-card__header">
                 <div>
-                  <h2 className="panel-title">Product health</h2>
+                  <h2 className="panel-title">Product Health</h2>
                   <p className="panel-subtitle">Most recently updated products across the registry.</p>
                 </div>
-                <Link to="/admin/applications" className="text-xs font-bold text-[var(--primary)] hover:underline">View all products</Link>
+                <Link to="/admin/applications" className="text-xs font-bold text-[var(--primary)] hover:underline">View All products</Link>
               </div>
               {productHealthRows.length === 0 ? (
                 <EmptyState icon="🗂️" title="No products yet" description="Products added to the registry will appear here." />
@@ -270,10 +269,10 @@ export function DashboardPage() {
             <section className="admin-panel-card">
               <div className="admin-panel-card__header">
                 <div>
-                  <h2 className="panel-title">Access requests</h2>
+                  <h2 className="panel-title">Access Requests</h2>
                   <p className="panel-subtitle">Pending · {RANGE_LABELS[range].toLowerCase()}</p>
                 </div>
-                <Link to="/admin/requests" className="text-xs font-bold text-[var(--primary)] hover:underline">View all</Link>
+                <Link to="/admin/requests" className="text-xs font-bold text-[var(--primary)] hover:underline">View All</Link>
               </div>
               {pendingRequests.length === 0 ? (
                 <EmptyState icon="✅" title="Nothing pending" description="New access requests will show up here as they arrive." />
@@ -308,7 +307,7 @@ export function DashboardPage() {
             <section className="admin-panel-card">
               <div className="admin-panel-card__header">
                 <div>
-                  <h2 className="panel-title">Recent activity</h2>
+                  <h2 className="panel-title">Recent Activity</h2>
                   <p className="panel-subtitle">{RANGE_LABELS[range]}</p>
                 </div>
               </div>
@@ -337,7 +336,7 @@ export function DashboardPage() {
             </section>
 
             <section className="admin-panel-card">
-              <div className="admin-panel-card__header"><h2 className="panel-title">Quick actions</h2></div>
+              <div className="admin-panel-card__header"><h2 className="panel-title">Quick Actions</h2></div>
               <ul className="flex flex-col divide-y divide-[var(--line-soft)]">
                 {QUICK_ACTIONS.map(({ to, label, icon: Icon }) => (
                   <li key={to}>

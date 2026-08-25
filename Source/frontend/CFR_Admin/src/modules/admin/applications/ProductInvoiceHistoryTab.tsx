@@ -6,14 +6,14 @@ import { useAdminData } from '../AdminDataContext';
 import { StatusBadge } from '@app/components/Badge';
 import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
-import { formatDate } from '../utils/formatDate';
+import { formatDate, formatDateTime, effectiveInvoiceStatus } from '../utils/formatDate';
 import { InvoiceDetailDrawer } from './InvoiceDetailDrawer';
 import type { AdminApplication, Invoice } from '../types';
 
 const PAID_FILTERS = [
-  { id: 'all', label: 'Paid & unpaid' },
-  { id: 'paid', label: 'Paid only' },
-  { id: 'unpaid', label: 'Unpaid only' },
+  { id: 'all', label: 'Paid & Unpaid' },
+  { id: 'paid', label: 'Paid Only' },
+  { id: 'unpaid', label: 'Unpaid Only' },
 ] as const;
 type PaidFilter = (typeof PAID_FILTERS)[number]['id'];
 
@@ -39,16 +39,16 @@ export function ProductInvoiceHistoryTab({ app }: { app: AdminApplication }) {
       id: 'actions', header: 'Actions', pinLeft: true, width: '4rem', excludeFromExport: true,
       cell: (invoice) => <CommonIconButton aria-label={`View invoice ${invoice.invoiceNumber}`} icon={<Eye size={15} />} onClick={() => setViewingInvoice(invoice)} />,
     },
-    { id: 'customerCode', header: 'Customer code', value: (invoice) => getOrganization(invoice.orgId)?.code ?? '', cell: (invoice) => <span className="font-mono text-xs text-[var(--text-secondary)]">{getOrganization(invoice.orgId)?.code ?? '—'}</span> },
+    { id: 'customerCode', header: 'Customer Code', value: (invoice) => getOrganization(invoice.orgId)?.code ?? '', cell: (invoice) => <span className="font-mono text-xs text-[var(--text-secondary)]">{getOrganization(invoice.orgId)?.code ?? '—'}</span> },
     { id: 'customer', header: 'Customer', width: '12rem', value: (invoice) => getOrganization(invoice.orgId)?.name ?? invoice.orgId, cell: (invoice) => <span className="font-bold text-[var(--text-primary)]">{getOrganization(invoice.orgId)?.name ?? invoice.orgId}</span> },
     { id: 'invoiceNumber', header: 'Invoice #', value: (invoice) => invoice.invoiceNumber, cell: (invoice) => <span className="font-mono text-xs text-[var(--text-secondary)]">{invoice.invoiceNumber}</span> },
-    { id: 'invoiceDate', header: 'Invoice date', value: (invoice) => invoice.invoiceDate, cell: (invoice) => <span className="text-[var(--text-muted)]">{formatDate(invoice.invoiceDate)}</span> },
-    { id: 'dueDate', header: 'Due date', value: (invoice) => invoice.dueDate, cell: (invoice) => <span className="text-[var(--text-muted)]">{formatDate(invoice.dueDate)}</span> },
-    { id: 'paidDate', header: 'Paid date', value: (invoice) => invoice.paidDate ?? '', cell: (invoice) => <span className="text-[var(--text-muted)]">{invoice.paidDate ? formatDate(invoice.paidDate) : '—'}</span> },
-    { id: 'amount', header: 'Unit amount', value: (invoice) => invoice.amount, cell: (invoice) => <span className="text-[var(--text-secondary)]">${invoice.amount.toFixed(2)}</span> },
+    { id: 'invoiceDate', header: 'Invoice Date', value: (invoice) => invoice.invoiceDate, cell: (invoice) => <span className="text-[var(--text-muted)]">{formatDate(invoice.invoiceDate)}</span> },
+    { id: 'dueDate', header: 'Due Date', value: (invoice) => invoice.dueDate, cell: (invoice) => <span className="text-[var(--text-muted)]">{formatDate(invoice.dueDate)}</span> },
+    { id: 'paidDate', header: 'Paid On', value: (invoice) => invoice.paidDate ?? '', cell: (invoice) => <span className="text-[var(--text-muted)]">{invoice.paidDate ? formatDateTime(invoice.paidDate) : '—'}</span> },
+    { id: 'amount', header: 'Unit Amount', value: (invoice) => invoice.amount, cell: (invoice) => <span className="text-[var(--text-secondary)]">${invoice.amount.toFixed(2)}</span> },
     { id: 'quantity', header: 'Qty', value: (invoice) => invoice.quantity, cell: (invoice) => <span className="text-[var(--text-secondary)]">{invoice.quantity}</span> },
     { id: 'total', header: 'Total', value: (invoice) => invoice.amount * invoice.quantity, cell: (invoice) => <span className="font-bold text-[var(--text-primary)]">${(invoice.amount * invoice.quantity).toFixed(2)}</span> },
-    { id: 'status', header: 'Status', value: (invoice) => invoice.status, cell: (invoice) => <StatusBadge status={invoice.status} kind="invoice" /> },
+    { id: 'status', header: 'Status', value: (invoice) => effectiveInvoiceStatus(invoice.status, invoice.dueDate), cell: (invoice) => <StatusBadge status={effectiveInvoiceStatus(invoice.status, invoice.dueDate)} kind="invoice" /> },
   ];
 
   return (
@@ -59,7 +59,7 @@ export function ProductInvoiceHistoryTab({ app }: { app: AdminApplication }) {
             label="Customer" hideLabel searchable={false} clearable={false}
             value={customerFilter}
             onValueChange={(value) => setCustomerFilter(value ?? 'all')}
-            options={[{ id: 'all', value: 'All customers' }, ...productCustomers.map((org) => ({ id: org.id, value: org.name }))]}
+            options={[{ id: 'all', value: 'All Customers' }, ...productCustomers.map((org) => ({ id: org.id, value: org.name }))]}
             className="min-h-8"
           />
         </div>

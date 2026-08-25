@@ -81,9 +81,9 @@ export function SampleAddPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         breadcrumb={{ label: 'Component library', to: '/admin/administration/component-library/view' }}
-        title="Component library — Add"
+        title="Component Library — Add"
         subtitle="Every form control this app has, in one place. Dev reference only — see removal note in SampleAddPage.tsx."
-        action={<Link to="/admin/administration/component-library/view" className="text-xs font-bold text-[var(--primary)] hover:underline">View page reference →</Link>}
+        action={<Link to="/admin/administration/component-library/view" className="text-xs font-bold text-white hover:underline">View Page Reference →</Link>}
       />
 
       <SectionCard title="Buttons" description="CommonButton — every variant × tone, plus size scale, icons, loading and tooltip.">
@@ -103,14 +103,14 @@ export function SampleAddPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="w-14 shrink-0 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Extras</span>
-          <CommonButton variant="primary" iconLeft={<Plus size={14} />}>Icon left</CommonButton>
-          <CommonButton variant="outline" iconRight={<Check size={14} />}>Icon right</CommonButton>
+          <CommonButton variant="primary" iconLeft={<Plus size={14} />}>Icon Left</CommonButton>
+          <CommonButton variant="outline" iconRight={<Check size={14} />}>Icon Right</CommonButton>
           <CommonButton variant="danger" iconLeft={<Trash2 size={14} />}>Danger</CommonButton>
           <CommonButton variant="primary" loading={loadingDemo} onClick={() => { setLoadingDemo(true); setTimeout(() => setLoadingDemo(false), 1200); }}>
-            {loadingDemo ? 'Loading…' : 'Click to load'}
+            {loadingDemo ? 'Loading…' : 'Click to Load'}
           </CommonButton>
           <CommonButton variant="outline" disabled>Disabled</CommonButton>
-          <CommonButton variant="outline" tooltip="Tooltip content on hover">Hover me</CommonButton>
+          <CommonButton variant="outline" tooltip="Tooltip content on hover">Hover Me</CommonButton>
         </div>
 
         <div className="admin-product-card__divider" />
@@ -128,7 +128,7 @@ export function SampleAddPage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Text inputs" description="InputField in its common states, plus the specialized single-line variants.">
+      <SectionCard title="Text Inputs" description="InputField in its common states, plus the specialized single-line variants.">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <InputField label="Basic" value={text} onChange={(event) => setText(event.target.value)} placeholder="Type something" />
           <InputField label="Required" required value="" onChange={() => {}} />
@@ -146,7 +146,7 @@ export function SampleAddPage() {
         <TextareaField label="Textarea" value={textarea} onChange={(event) => setTextarea(event.target.value)} rows={3} placeholder="Multi-line text" />
       </SectionCard>
 
-      <SectionCard title="Selection controls" description="Dropdown (single + grouped), MultiSelect, RadioGroup, CheckboxGroup, switches and standalone checkbox/radio.">
+      <SectionCard title="Selection Controls" description="Dropdown (single + grouped), MultiSelect, RadioGroup, CheckboxGroup, switches and standalone checkbox/radio.">
         <div className="grid gap-3 sm:grid-cols-2">
           <Dropdown label="Single select" value={dropdownValue ?? undefined} onValueChange={(value) => setDropdownValue(value ?? null)} options={SAMPLE_SINGLE_OPTIONS} />
           <Dropdown label="Grouped options" value={groupedValue ?? undefined} onValueChange={(value) => setGroupedValue(value ?? null)} options={SAMPLE_GROUPED_OPTIONS} />
@@ -163,7 +163,7 @@ export function SampleAddPage() {
         </div>
       </SectionCard>
 
-      <SectionCard title="Date & time pickers" description="Every picker variant in the ported library.">
+      <SectionCard title="Date & Time Pickers" description="Every picker variant in the ported library.">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <DatePicker label="Date" value={date} onChange={setDate} />
           <TimePicker label="Time" value={time} onChange={setTime} />
@@ -182,7 +182,7 @@ export function SampleAddPage() {
         />
       </SectionCard>
 
-      <SectionCard title="Color & rich text">
+      <SectionCard title="Color & Rich Text">
         <div className="grid gap-3 sm:grid-cols-2">
           <ColorPicker label="Accent color" value={color} onChange={setColor} />
           <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]"><Palette size={13} /> Selected: {color ?? 'none'}</div>
@@ -190,7 +190,7 @@ export function SampleAddPage() {
         <RichTextEditor label="Description" value={richText} onChange={setRichText} />
       </SectionCard>
 
-      <SectionCard title="File uploads" description="Every upload variant — single file, image/profile, and multi-file.">
+      <SectionCard title="File Uploads" description="Every upload variant — single file, image/profile, and multi-file.">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <FileUpload label="Document" variant="file" onFileChange={() => {}} helperText="PDF, DOCX up to 10MB" />
           <FileUpload label="Image" variant="image" onFileChange={() => {}} />
@@ -201,7 +201,7 @@ export function SampleAddPage() {
 
       <div className="admin-sticky-footer">
         <CommonButton variant="outline" iconLeft={<X size={14} />}>Cancel</CommonButton>
-        <CommonButton variant="primary" iconLeft={<Save size={14} />}>Save changes</CommonButton>
+        <CommonButton variant="primary" iconLeft={<Save size={14} />}>Save</CommonButton>
       </div>
     </div>
   );

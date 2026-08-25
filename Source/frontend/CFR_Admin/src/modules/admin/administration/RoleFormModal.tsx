@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { CommonButton } from '@app/components/buttons';
-import { Drawer } from '@app/components/Drawer';
+import { BaseModal } from '@app/components/modal/BaseModal';
 import { Dropdown, InputField, TextareaField } from '@app/components/formControls';
 import type { AdminRole } from '../types';
 
-const LANDING_PAGES = ['Dashboard', 'Products', 'Organizations', 'Users', 'Requests', 'Settings'];
+const LANDING_PAGES = ['Dashboard', 'Products', 'Organizations', 'Users', 'Requests'];
 
 interface RoleFormValue {
   name: string;
@@ -14,7 +14,7 @@ interface RoleFormValue {
 
 const EMPTY_FORM: RoleFormValue = { name: '', description: '', landingPage: LANDING_PAGES[0] };
 
-interface RoleFormDrawerProps {
+interface RoleFormModalProps {
   /** `null` = closed. `'create'` = new role. An `AdminRole` = edit/view that role. */
   target: 'create' | AdminRole | null;
   readOnly?: boolean;
@@ -23,7 +23,7 @@ interface RoleFormDrawerProps {
   onSave: (role: AdminRole) => void;
 }
 
-export function RoleFormDrawer({ target, readOnly = false, onClose, onCreate, onSave }: RoleFormDrawerProps) {
+export function RoleFormModal({ target, readOnly = false, onClose, onCreate, onSave }: RoleFormModalProps) {
   const isCreate = target === 'create';
   const editing = target && target !== 'create' ? target : null;
   const [form, setForm] = useState<RoleFormValue>(EMPTY_FORM);
@@ -32,7 +32,7 @@ export function RoleFormDrawer({ target, readOnly = false, onClose, onCreate, on
 
   const targetKey = isCreate ? 'create' : (editing?.id ?? null);
   if (targetKey !== lastTargetKey) {
-    // Reset the form whenever a different role opens for edit/view, or the drawer opens fresh for create.
+    // Reset the form whenever a different role opens for edit/view, or the modal opens fresh for create.
     // (Adjusted during render, matching this codebase's convention — see AccountModals.tsx.)
     setForm(editing ? { name: editing.name, description: editing.description, landingPage: editing.landingPage } : EMPTY_FORM);
     setTouched(false);
@@ -56,25 +56,27 @@ export function RoleFormDrawer({ target, readOnly = false, onClose, onCreate, on
     else if (editing) onSave({ ...editing, ...form });
   };
 
-  const title = readOnly ? 'View role' : isCreate ? 'Add user role' : 'Edit user role';
+  const title = readOnly ? 'View Role' : isCreate ? 'Add User Role' : 'Edit User Role';
 
   return (
-    <Drawer
-      open={Boolean(target)}
-      title={title}
-      description={editing?.name}
+    <BaseModal
+      isOpen={Boolean(target)}
       onClose={onClose}
+      title={title}
+      size="sm"
+      showMandatory={!readOnly}
+      autoFocus={!readOnly}
       footer={readOnly ? (
         <CommonButton variant="outline" onClick={onClose}>Close</CommonButton>
       ) : (
         <>
           <CommonButton variant="outline" onClick={onClose}>Cancel</CommonButton>
-          <CommonButton variant="primary" onClick={handleSubmit} disabled={hasErrors}>{isCreate ? 'Add role' : 'Save changes'}</CommonButton>
+          <CommonButton variant="primary" onClick={handleSubmit} disabled={hasErrors}>Save</CommonButton>
         </>
       )}
     >
       <form onSubmit={(event) => { event.preventDefault(); handleSubmit(); }} className="flex flex-col gap-4" noValidate>
-        <InputField label="Role name" value={form.name} onChange={(event) => update('name', event.target.value)} error={nameError} disabled={readOnly} />
+        <InputField label="Role name" required={!readOnly} value={form.name} onChange={(event) => update('name', event.target.value)} error={nameError} disabled={readOnly} />
         <TextareaField label="Description" value={form.description} onChange={(event) => update('description', event.target.value)} rows={3} showCharCount={false} disabled={readOnly} />
         <Dropdown
           label="Landing page" searchable={false} clearable={false}
@@ -84,7 +86,7 @@ export function RoleFormDrawer({ target, readOnly = false, onClose, onCreate, on
           disabled={readOnly}
         />
       </form>
-    </Drawer>
+    </BaseModal>
   );
 }
 

@@ -6,14 +6,22 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
 import { Dropdown, InputField } from '@app/components/formControls';
-import { ALL_RIGHTS_NODE_IDS, RIGHTS_TREE, type RightsNode } from './rightsTree';
+import { ALL_RIGHTS_NODE_IDS, RIGHTS_TREE, TOTAL_ACTIVITY_COUNT, collectLeafIds, type RightsNode } from './rightsTree';
 import type { PermissionLevel } from '../types';
 
+type RollupLevel = PermissionLevel | 'mixed';
+
 const PERMISSION_LEVELS: Array<{ id: PermissionLevel; label: string }> = [
-  { id: 'read-only', label: 'ReadOnly' },
-  { id: 'full-control', label: 'FullControl' },
+  { id: 'full-control', label: 'Full Control' },
+  { id: 'read-only', label: 'Read Only' },
   { id: 'deny', label: 'Deny' },
 ];
+
+const PERMISSION_TOGGLE_CLASS: Record<PermissionLevel, string> = {
+  'read-only': 'border-[var(--info)]/40 bg-[var(--info-bg)] text-[var(--info)]',
+  'full-control': 'border-[var(--success)]/40 bg-[var(--success-bg)] text-[var(--success)]',
+  deny: 'border-[var(--error)]/40 bg-[var(--error-bg)] text-[var(--error)]',
+};
 
 /** Blanket default permission for a role when no explicit choice has been made yet. */
 const ROLE_DEFAULT_LEVEL: Record<string, PermissionLevel> = {
@@ -37,6 +45,34 @@ interface FlatRow {
   node: RightsNode;
   depth: number;
   moduleId: string;
+}
+
+/** Compact segmented control — the single interactive surface for every row's permission.
+ * On a leaf (Activity) row it sets that one permission; on a Module/Feature row it bulk-applies
+ * the chosen level to every Activity underneath, the standard "cascade to children" pattern
+ * for permission trees. `value: 'mixed'` (some descendants differ) leaves every pill unselected. */
+function PermissionToggle({ value, onChange, disabled }: { value: RollupLevel; onChange: (level: PermissionLevel) => void; disabled?: boolean }) {
+  return (
+    <div className="inline-flex items-center gap-1" role="group">
+      {PERMISSION_LEVELS.map((option) => {
+        const isActive = value === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            disabled={disabled}
+            aria-pressed={isActive}
+            onClick={() => onChange(option.id)}
+            className={`whitespace-nowrap rounded-md border px-2.5 py-1 text-[11px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              isActive ? PERMISSION_TOGGLE_CLASS[option.id] : 'border-[var(--line)] bg-transparent text-[var(--text-faint)] hover:bg-[var(--hover)] hover:text-[var(--text-secondary)]'
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 function nodeMatches(node: RightsNode, needle: string): boolean {
@@ -68,6 +104,16 @@ function flatten(nodes: RightsNode[], depth: number, moduleId: string | null, ex
   return rows;
 }
 
+const ROW_TINT_BY_DEPTH: Record<number, string> = {
+  0: 'bg-[var(--surface-muted)]',
+  1: 'bg-[var(--surface-muted)]/45',
+};
+
+const LABEL_CLASS_BY_DEPTH: Record<number, string> = {
+  0: 'font-extrabold text-[var(--text-primary)]',
+  1: 'font-bold text-[var(--text-secondary)]',
+};
+
 export function RightsPage() {
   const { roles } = useAdminData();
   const { showToast } = useToast();
@@ -87,19 +133,36 @@ export function RightsPage() {
   const effectiveExpanded = search.trim() ? new Set(ALL_RIGHTS_NODE_IDS) : expanded;
   const rows = useMemo(() => flatten(visibleTree, 0, null, effectiveExpanded), [visibleTree, effectiveExpanded]);
 
-  const getPermission = (nodeId: string, moduleId: string): PermissionLevel => {
-    const explicit = overrides[roleId]?.[nodeId];
+  const getPermission = (leafId: string, moduleId: string): PermissionLevel => {
+    const explicit = overrides[roleId]?.[leafId];
     if (explicit) return explicit;
     const moduleOverride = ROLE_MODULE_OVERRIDES[roleId]?.[moduleId];
     if (moduleOverride) return moduleOverride;
     return ROLE_DEFAULT_LEVEL[roleId] ?? 'read-only';
   };
 
-  const setPermission = (nodeId: string, level: PermissionLevel) => {
+  const setPermission = (leafId: string, level: PermissionLevel) => {
     setOverrides((current) => ({
       ...current,
-      [roleId]: { ...current[roleId], [nodeId]: level },
+      [roleId]: { ...current[roleId], [leafId]: level },
     }));
+  };
+
+  /** The value shown/edited in a row's toggle — the leaf's own permission, or a same/mixed
+   * rollup of every Activity beneath a Module/Feature row. */
+  const getRowLevel = (node: RightsNode, moduleId: string): RollupLevel => {
+    const leafIds = collectLeafIds(node);
+    const levels = new Set(leafIds.map((id) => getPermission(id, moduleId)));
+    return levels.size === 1 ? [...levels][0] : 'mixed';
+  };
+
+  const applyToRow = (node: RightsNode, level: PermissionLevel) => {
+    const leafIds = collectLeafIds(node);
+    setOverrides((current) => ({
+      ...current,
+      [roleId]: { ...current[roleId], ...Object.fromEntries(leafIds.map((id) => [id, level])) },
+    }));
+    if (leafIds.length > 1) showToast(`Set ${leafIds.length} activities under "${node.label}" to ${level.replace('-', ' ')} ✓`);
   };
 
   const toggleExpanded = (nodeId: string) => {
@@ -117,6 +180,17 @@ export function RightsPage() {
     showToast('Filters cleared');
   };
 
+  const allLeafIds = useMemo(() => RIGHTS_TREE.flatMap(collectLeafIds), []);
+  const summaryCounts = useMemo(() => {
+    const counts: Record<PermissionLevel, number> = { 'read-only': 0, 'full-control': 0, deny: 0 };
+    for (const leafId of allLeafIds) {
+      const topModuleId = leafId.split('.')[0];
+      counts[getPermission(leafId, topModuleId)] += 1;
+    }
+    return counts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recomputed intentionally whenever the role or its overrides change
+  }, [allLeafIds, roleId, overrides]);
+
   if (!selectedRole) {
     return (
       <div className="admin-reveal flex flex-col gap-4">
@@ -128,7 +202,7 @@ export function RightsPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Rights" />
+      <PanelHeader title="Rights" subtitle={`${TOTAL_ACTIVITY_COUNT} activities across ${RIGHTS_TREE.length} modules`} />
 
       <div className="admin-panel-card flex flex-col gap-3 p-4">
         <div className="flex flex-wrap items-end gap-3">
@@ -146,52 +220,54 @@ export function RightsPage() {
               label="Module" searchable={false} clearable={false}
               value={moduleFilter}
               onValueChange={(value) => setModuleFilter(value ?? 'all')}
-              options={[{ id: 'all', value: 'All modules' }, ...RIGHTS_TREE.map((node) => ({ id: node.id, value: node.label }))]}
+              options={[{ id: 'all', value: 'All Modules' }, ...RIGHTS_TREE.map((node) => ({ id: node.id, value: node.label }))]}
               className="min-h-8"
             />
           </div>
-          <CommonButton variant="outline" iconLeft={<XCircle size={13} />} onClick={clearFilters}>Clear filters</CommonButton>
+          <InputField
+            label="Search modules, features and activities"
+            hideLabel
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search modules, features, or activities…"
+            className="min-h-8 text-xs placeholder:text-xs"
+            wrapperClassName="max-w-xs flex-1"
+          />
+          <CommonButton variant="outline" iconLeft={<XCircle size={13} />} onClick={clearFilters}>Clear Filters</CommonButton>
           <div className="ml-auto flex items-center gap-1.5">
-            <CommonButton variant="outline" onClick={() => setExpanded(new Set(ALL_RIGHTS_NODE_IDS))}>Expand all</CommonButton>
-            <CommonButton variant="outline" onClick={() => setExpanded(new Set())}>Collapse all</CommonButton>
+            <CommonButton variant="outline" onClick={() => setExpanded(new Set(ALL_RIGHTS_NODE_IDS))}>Expand All</CommonButton>
+            <CommonButton variant="outline" onClick={() => setExpanded(new Set())}>Collapse All</CommonButton>
           </div>
         </div>
-        <InputField
-          label="Search modules and features"
-          hideLabel
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search modules, submodules, or features…"
-          className="min-h-8 text-xs placeholder:text-xs"
-          wrapperClassName="max-w-sm"
-        />
-      </div>
 
-      <p className="text-xs text-[var(--text-faint)]">
-        Editing rights for <span className="font-bold text-[var(--text-secondary)]">{selectedRole.name}</span>. Changes apply instantly for this session — this prototype does not persist permissions.
-      </p>
+        <div className="flex flex-wrap items-center gap-4 border-t border-[var(--line-soft)] pt-3 text-xs">
+          <span className="font-bold text-[var(--text-secondary)]">Editing rights for {selectedRole.name}:</span>
+          <span className="inline-flex items-center gap-1.5 font-bold text-[var(--success)]"><span className="size-2 rounded-full bg-[var(--success)]" />{summaryCounts['full-control']} Full Control</span>
+          <span className="inline-flex items-center gap-1.5 font-bold text-[var(--info)]"><span className="size-2 rounded-full bg-[var(--info)]" />{summaryCounts['read-only']} Read Only</span>
+          <span className="inline-flex items-center gap-1.5 font-bold text-[var(--error)]"><span className="size-2 rounded-full bg-[var(--error)]" />{summaryCounts.deny} Deny</span>
+          <span className="text-[var(--text-faint)]">Changes apply instantly for this session — this prototype does not persist permissions.</span>
+        </div>
+      </div>
 
       {rows.length === 0 ? (
         <EmptyState icon="🔍" title="No matches" description="Try a different search term or module filter." />
       ) : (
         <div className="overflow-x-auto rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]">
-          <table className="w-full min-w-[48rem] border-collapse text-sm">
+          <table className="w-full min-w-[44rem] border-collapse text-sm">
             <thead>
-              <tr className="border-b border-[var(--line)] bg-[var(--surface-muted)]">
-                <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Module / feature</th>
-                <th className="px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Description</th>
-                {PERMISSION_LEVELS.map((level) => (
-                  <th key={level.id} className="px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">{level.label}</th>
-                ))}
+              <tr className="bg-[var(--primary)] text-white">
+                <th className="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide">Module / Feature / Activity</th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide">Description</th>
+                <th className="px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide">Permission</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--line-soft)]">
               {rows.map(({ node, depth, moduleId }) => {
                 const hasChildren = Boolean(node.children?.length);
                 const isExpanded = effectiveExpanded.has(node.id);
-                const level = getPermission(node.id, moduleId);
+                const rowLevel = getRowLevel(node, moduleId);
                 return (
-                  <tr key={node.id} className={depth === 0 ? 'bg-[var(--surface-muted)]/50' : undefined}>
+                  <tr key={node.id} className={ROW_TINT_BY_DEPTH[depth]}>
                     <td className="px-3 py-2.5">
                       <div className="flex items-center gap-1.5" style={{ paddingLeft: `${depth * 1.25}rem` }}>
                         {hasChildren ? (
@@ -206,22 +282,13 @@ export function RightsPage() {
                         ) : (
                           <span className="inline-block size-5 shrink-0" />
                         )}
-                        <span className={depth === 0 ? 'font-extrabold text-[var(--text-primary)]' : 'font-bold text-[var(--text-secondary)]'}>{node.label}</span>
+                        <span className={LABEL_CLASS_BY_DEPTH[depth] ?? 'text-[var(--text-primary)]'}>{node.label}</span>
                       </div>
                     </td>
                     <td className="px-3 py-2.5 text-xs text-[var(--text-muted)]">{node.description ?? '—'}</td>
-                    {PERMISSION_LEVELS.map((option) => (
-                      <td key={option.id} className="px-3 py-2.5 text-center">
-                        <input
-                          type="radio"
-                          name={`permission-${node.id}`}
-                          checked={level === option.id}
-                          onChange={() => setPermission(node.id, option.id)}
-                          aria-label={`${option.label} for ${node.label}`}
-                          className="size-3.5 accent-[var(--primary)]"
-                        />
-                      </td>
-                    ))}
+                    <td className="px-3 py-2.5">
+                      <PermissionToggle value={rowLevel} onChange={(level) => (hasChildren ? applyToRow(node, level) : setPermission(node.id, level))} />
+                    </td>
                   </tr>
                 );
               })}

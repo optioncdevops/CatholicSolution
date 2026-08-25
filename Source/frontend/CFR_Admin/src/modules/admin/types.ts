@@ -120,12 +120,18 @@ export interface Invoice {
   invoiceNumber: string;
   orgId: string;
   appId: string;
+  /** Customer-facing invoice title, e.g. "OptionC School — Fall Term Renewal". */
+  title?: string;
   invoiceDate: string;
   dueDate: string;
   paidDate?: string;
   amount: number;
   quantity: number;
   status: InvoiceStatus;
+  /** Optional note shown to the customer alongside the invoice. */
+  customMessage?: string;
+  /** External payment URL the customer uses to pay this invoice. */
+  paymentLink?: string;
 }
 
 /** The single Masters reference list — billable line items available when creating an
@@ -136,4 +142,7 @@ export interface InvoiceItem {
   description: string;
   defaultAmount: number;
   active: boolean;
+  /** Product this item is billed under. Omitted = a generic item available to every product
+   * (e.g. a training session or setup fee that isn't specific to one product). */
+  appId?: string;
 }

@@ -23,9 +23,9 @@ const STATUS_FILTERS: Array<{ id: ProductStatus | 'all'; label: string }> = [
 ];
 
 const SORT_OPTIONS = [
-  { id: 'updated', label: 'Recently updated' },
+  { id: 'updated', label: 'Recently Updated' },
   { id: 'name', label: 'Name (A–Z)' },
-  { id: 'customers', label: 'Most customers' },
+  { id: 'customers', label: 'Most Customers' },
 ] as const;
 type SortOption = (typeof SORT_OPTIONS)[number]['id'];
 
@@ -107,16 +107,19 @@ export function ProductsListPage() {
         />
 
         <div className="flex shrink-0 flex-nowrap gap-1.5">
-          {STATUS_FILTERS.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              onClick={() => setStatusFilter(filter.id)}
-              className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
-            >
-              {filter.label}
-            </button>
-          ))}
+          {STATUS_FILTERS.map((filter) => {
+            const count = filter.id === 'all' ? applications.length : applications.filter((app) => app.status === filter.id).length;
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setStatusFilter(filter.id)}
+                className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
+              >
+                {filter.label} ({count})
+              </button>
+            );
+          })}
         </div>
 
         <div className="w-40 shrink-0">

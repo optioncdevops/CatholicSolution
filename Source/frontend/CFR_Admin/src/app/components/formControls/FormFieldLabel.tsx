@@ -1,7 +1,7 @@
 import { cn } from "@app/utilities/cn";
 import {
   themeLabelClass,
-  themeOptionalLabelSuffixClass,
+  themeRequiredMarkClass,
 } from "@designSystem/theme/styles/componentStyle";
 import { FormFieldInfoTooltip } from "./partials/FormFieldInfoTooltip";
 
@@ -10,8 +10,9 @@ export interface FormFieldLabelProps {
   label: string;
   htmlFor?: string;
   required?: boolean;
+  /** @deprecated No longer rendered — this app never shows an "(optional)" label suffix. Kept so existing callers still type-check. */
   optional?: boolean;
-  /** When false, hides the “(optional)” suffix even if `optional` is true. Default true. */
+  /** @deprecated No longer rendered, see {@link optional}. */
   showOptionalLabel?: boolean;
   error?: boolean;
   infoTooltip?: React.ReactNode;
@@ -32,8 +33,6 @@ export function FormFieldLabel({
   label,
   htmlFor,
   required,
-  optional,
-  showOptionalLabel = true,
   error,
   infoTooltip,
   labelAddon,
@@ -44,10 +43,7 @@ export function FormFieldLabel({
   const labelText = (
     <span className="inline-flex flex-wrap items-center gap-1">
       <span>{label}</span>
-      {required && <span className="text-danger-500">*</span>}
-      {optional && !required && showOptionalLabel && (
-        <span className={themeOptionalLabelSuffixClass}> (optional)</span>
-      )}
+      {required && <span className={themeRequiredMarkClass}>*</span>}
       {infoTooltip ? (
         <FormFieldInfoTooltip content={infoTooltip} label={label} />
       ) : null}
@@ -57,7 +53,7 @@ export function FormFieldLabel({
 
   const labelClasses = cn(
     themeLabelClass,
-    error && "text-danger-600 dark:text-danger-400",
+    error && "text-[var(--error)]",
     hideLabel && "sr-only",
     className,
   );

@@ -85,7 +85,7 @@ export function UserDetailPage() {
       </div>
 
       <section className="flex flex-col gap-3">
-        <h2 className="panel-title">Application access</h2>
+        <h2 className="panel-title">Application Access</h2>
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={appToGrant}
@@ -96,7 +96,7 @@ export function UserDetailPage() {
             <option value="">Select an application to grant…</option>
             {grantableApps.map((app) => <option key={app.id} value={app.id}>{app.name}</option>)}
           </select>
-          <button type="button" onClick={handleGrant} disabled={!appToGrant} className="action-primary disabled:cursor-not-allowed disabled:opacity-50">Grant access</button>
+          <button type="button" onClick={handleGrant} disabled={!appToGrant} className="action-primary disabled:cursor-not-allowed disabled:opacity-50">Grant Access</button>
         </div>
         {accessibleApps.length === 0 ? (
           <EmptyState icon="🔐" title="No application access" description="Grant access to an application above." />

@@ -1111,9 +1111,11 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                         headerCellRefs.current[colIndex] = el;
                       }}
                         className={cn(
-                          `px-1.5 py-0.5 text-[11px] font-bold text-[var(--primary)] uppercase tracking-wide select-none bg-[var(--primary-muted)] align-middle ${getColumnTextAlignClass(col.align)}`,
+                          // Solid (not tinted) background — a semi-transparent header lets content
+                          // scrolling underneath the frozen column show through and overlap its text.
+                          `px-1.5 py-0.5 text-[11px] font-bold text-white uppercase tracking-wide select-none bg-[var(--primary)] align-middle ${getColumnTextAlignClass(col.align)}`,
                         isFrozen
-                          ? "sticky z-20 border-r border-[var(--line)] bg-[var(--primary-muted)]"
+                          ? "sticky z-20 border-r border-white/15 bg-[var(--primary)]"
                             : "",
                           showCellBorders && DATA_TABLE_HEADER_CELL_BORDER_CLASS,
                           col.className,
@@ -1207,7 +1209,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                               data-datatable-header-menu-trigger=""
                                 className={cn(
                                   DATA_TABLE_HEADER_MENU_BTN_CLASS,
-                                  isFilterOpen && "bg-[var(--hover)]",
+                                  isFilterOpen && "bg-white/15",
                                 )}
                                 onMouseDown={(e) => { e.stopPropagation(); }}
                               onClick={(e) => {

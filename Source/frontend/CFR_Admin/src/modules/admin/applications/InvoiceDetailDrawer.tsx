@@ -1,7 +1,7 @@
 import { Drawer } from '@app/components/Drawer';
 import { DetailField } from '@app/components/DetailField';
 import { StatusBadge } from '@app/components/Badge';
-import { formatDate, formatDaysLabel } from '../utils/formatDate';
+import { formatDate, formatDateTime, formatDaysLabel, effectiveInvoiceStatus } from '../utils/formatDate';
 import { useAdminData } from '../AdminDataContext';
 import type { Invoice } from '../types';
 
@@ -13,10 +13,10 @@ export function InvoiceDetailDrawer({ invoice, onClose }: { invoice: Invoice | n
   const app = getApplication(invoice.appId);
 
   return (
-    <Drawer open={Boolean(invoice)} title={invoice.invoiceNumber} description={org?.name} onClose={onClose}>
+    <Drawer open={Boolean(invoice)} title={invoice.title || invoice.invoiceNumber} description={org?.name} onClose={onClose}>
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2">
-          <StatusBadge status={invoice.status} kind="invoice" />
+          <StatusBadge status={effectiveInvoiceStatus(invoice.status, invoice.dueDate)} kind="invoice" />
           {invoice.status !== 'paid' && invoice.status !== 'cancelled' ? (
             <span className="text-xs font-semibold text-[var(--text-muted)]">{formatDaysLabel(invoice.dueDate)}</span>
           ) : null}
@@ -28,9 +28,20 @@ export function InvoiceDetailDrawer({ invoice, onClose }: { invoice: Invoice | n
           <DetailField label="Quantity" value={String(invoice.quantity)} />
           <DetailField label="Invoice date" value={formatDate(invoice.invoiceDate)} />
           <DetailField label="Due date" value={formatDate(invoice.dueDate)} />
-          <DetailField label="Paid date" value={invoice.paidDate ? formatDate(invoice.paidDate) : 'Not paid'} />
+          <DetailField label="Paid on" value={invoice.paidDate ? formatDateTime(invoice.paidDate) : 'Not paid'} />
           <DetailField label="Amount" value={`$${invoice.amount.toFixed(2)}`} />
+          {invoice.paymentLink ? (
+            <div className="col-span-2">
+              <DetailField label="Payment link" value={invoice.paymentLink} />
+            </div>
+          ) : null}
         </div>
+        {invoice.customMessage ? (
+          <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] bg-[var(--surface-muted)] p-3">
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Message to Customer</p>
+            <div className="text-sm text-[var(--text-secondary)]" dangerouslySetInnerHTML={{ __html: invoice.customMessage }} />
+          </div>
+        ) : null}
         <p className="text-xs text-[var(--text-faint)]">Preview only — this prototype has no real billing system or PDF generation.</p>
       </div>
     </Drawer>

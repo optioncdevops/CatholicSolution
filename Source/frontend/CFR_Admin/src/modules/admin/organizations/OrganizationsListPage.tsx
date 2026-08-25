@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useAdminData } from '../AdminDataContext';
 import { StatusBadge } from '@app/components/Badge';
 import { EntityAvatar } from '@app/components/EntityAvatar';
-import { InputField } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate } from '../utils/formatDate';
 import type { Organization, OrganizationStatus } from '../types';
@@ -18,15 +16,11 @@ const STATUS_FILTERS: Array<{ id: OrganizationStatus | 'all'; label: string }> =
 export function OrganizationsListPage() {
   const { organizations, users } = useAdminData();
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrganizationStatus | 'all'>('all');
 
-  const rows = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return organizations
-      .filter((org) => statusFilter === 'all' || org.status === statusFilter)
-      .filter((org) => !normalized || [org.name, org.domain].join(' ').toLowerCase().includes(normalized));
-  }, [organizations, query, statusFilter]);
+  const rows = useMemo(() => organizations
+    .filter((org) => statusFilter === 'all' || org.status === statusFilter),
+  [organizations, statusFilter]);
 
   const userCount = (orgId: string) => users.filter((user) => user.orgId === orgId).length;
 
@@ -55,33 +49,24 @@ export function OrganizationsListPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader title="Organizations" />
 
-      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
-        <InputField
-          label="Search organizations"
-          hideLabel
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name or domain"
-          startIcon={<Search size={13} />}
-          className="min-h-8 text-xs placeholder:text-xs"
-          wrapperClassName="min-w-[200px] max-w-xs shrink-0"
-        />
-        <div className="flex shrink-0 flex-nowrap gap-1.5">
-          {STATUS_FILTERS.map((filter) => (
+      <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
+        {STATUS_FILTERS.map((filter) => {
+          const count = filter.id === 'all' ? organizations.length : organizations.filter((org) => org.status === filter.id).length;
+          return (
             <button
               key={filter.id}
               type="button"
               onClick={() => setStatusFilter(filter.id)}
               className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
             >
-              {filter.label}
+              {filter.label} ({count})
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState icon="🏢" title="No organizations found" description="Try a different search term or status filter." />
+        <EmptyState icon="🏢" title="No organizations found" description="Try a different status filter." />
       ) : (
         <DataTable
           data={rows}

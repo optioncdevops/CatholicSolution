@@ -6,7 +6,7 @@ import {
   themeChoiceLabelDisabledClass,
   themeHelperClass,
   themeLabelClass,
-  themeOptionalLabelSuffixClass,
+  themeRequiredMarkClass,
   themeSwitchDisabledThumbClass,
   themeSwitchDisabledTrackClass,
 } from "@designSystem/theme/styles/componentStyle";
@@ -86,7 +86,6 @@ const SwitchInner = <TFieldValues extends FieldValues = FieldValues>({
   helperText,
   error,
   required,
-  optional,
   size = "md",
   labelPosition = "right",
   disabled = false,
@@ -163,10 +162,7 @@ const SwitchInner = <TFieldValues extends FieldValues = FieldValues>({
             )}
             htmlFor={switchId}
           >
-            {label} {required && <span className="text-danger-500">*</span>}
-            {optional && !required && (
-              <span className={themeOptionalLabelSuffixClass}> (optional)</span>
-            )}
+            {label} {required && <span className={themeRequiredMarkClass}>*</span>}
           </label>
 
           <label

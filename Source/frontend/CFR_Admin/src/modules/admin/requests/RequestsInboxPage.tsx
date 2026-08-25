@@ -68,27 +68,30 @@ export function RequestsInboxPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Access requests" />
+      <PanelHeader title="Access Requests" />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1.5">
-          {STATUS_FILTERS.map((filter) => (
-            <button
-              key={filter.id}
-              type="button"
-              onClick={() => setStatusFilter(filter.id)}
-              className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
-            >
-              {filter.label}
-            </button>
-          ))}
+          {STATUS_FILTERS.map((filter) => {
+            const count = filter.id === 'all' ? requests.length : requests.filter((request) => request.status === filter.id).length;
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setStatusFilter(filter.id)}
+                className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
+              >
+                {filter.label} ({count})
+              </button>
+            );
+          })}
         </div>
         <div className="w-44 shrink-0">
           <Dropdown
             label="Filter by application" hideLabel searchable={false} clearable={false}
             value={appFilter}
             onValueChange={(value) => setAppFilter(value ?? 'all')}
-            options={[{ id: 'all', value: 'All applications' }, ...applications.map((app) => ({ id: app.id, value: app.name }))]}
+            options={[{ id: 'all', value: 'All Applications' }, ...applications.map((app) => ({ id: app.id, value: app.name }))]}
             className="min-h-8"
           />
         </div>
@@ -97,7 +100,7 @@ export function RequestsInboxPage() {
             label="Filter by organization" hideLabel searchable={false} clearable={false}
             value={orgFilter}
             onValueChange={(value) => setOrgFilter(value ?? 'all')}
-            options={[{ id: 'all', value: 'All organizations' }, ...organizations.map((org) => ({ id: org.id, value: org.name }))]}
+            options={[{ id: 'all', value: 'All Organizations' }, ...organizations.map((org) => ({ id: org.id, value: org.name }))]}
             className="min-h-8"
           />
         </div>
@@ -125,7 +128,7 @@ export function RequestsInboxPage() {
         footer={activeRequest && activeRequest.status === 'pending' ? (
           <>
             <button type="button" onClick={() => act('rejected')} className="rounded-[var(--radius-control)] border border-[var(--error)] px-3 py-2 text-xs font-bold text-[var(--error)] hover:bg-[var(--error-bg)]">Reject</button>
-            <button type="button" onClick={() => act('info-requested', infoNote || 'More information requested.')} className="action-secondary">Request info</button>
+            <button type="button" onClick={() => act('info-requested', infoNote || 'More information requested.')} className="action-secondary">Request Info</button>
             <button type="button" onClick={() => act('approved')} className="action-primary">Approve</button>
           </>
         ) : undefined}
@@ -140,7 +143,7 @@ export function RequestsInboxPage() {
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Status timeline</p>
+              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Status Timeline</p>
               <ol className="flex flex-col gap-3 border-l-2 border-[var(--line)] pl-3.5">
                 {activeRequest.timeline.map((entry, index) => (
                   <li key={index} className="relative">

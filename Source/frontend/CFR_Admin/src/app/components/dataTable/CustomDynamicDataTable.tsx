@@ -348,22 +348,21 @@ const TABLE_CONTAINER = cn(
 const THEAD = themeDataTableHeadClass;
 
 const TH =
-  "px-2 py-1.5 text-[11px] font-semibold text-primary-900  tracking-wide select-none dark:text-primary-100 text-left align-middle";
+  "px-2 py-1.5 text-[11px] font-bold text-white uppercase tracking-wide select-none text-left align-middle";
 
 const TD_BASE = "px-2 py-1 text-xs align-top";
 
-const ROW_BORDER = "border-b border-slate-100 dark:border-slate-800";
+const ROW_BORDER = "border-b border-[var(--line-soft)]";
 
 const REORDER_TH =
   "w-9 min-w-9 px-1 py-1.5 text-center align-middle select-none";
 
 const REORDER_TD = "w-9 min-w-9 px-1 py-1 text-center align-middle";
 
-const ERROR_TEXT =
-  "mt-0.5 text-[10px] leading-tight text-danger-600 dark:text-danger-400";
+const ERROR_TEXT = "mt-0.5 text-[10px] leading-tight text-[var(--error)]";
 
 const SPINNER_OVERLAY =
-  "absolute inset-0 z-[60] flex items-center justify-center bg-white/70 dark:bg-slate-950/70";
+  "absolute inset-0 z-[60] flex items-center justify-center bg-[var(--surface)]/70";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -525,7 +524,7 @@ function renderReadOnlyCell<T>(
     return (
       <span
         className={cn(
-          "text-xs text-slate-700 dark:text-slate-200 leading-7",
+          "text-xs text-[var(--text-secondary)] leading-7",
           resolveColumnTextAlign(col.align),
           col.cellClassName,
         )}
@@ -1650,7 +1649,7 @@ function CustomDynamicDataTableInner<T>(
         <div className={DATA_TABLE_TOOLBAR_SHELL_CLASS}>
           {enableExport && (
             <div className="flex shrink-0 items-center">
-              <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+              <span className="text-[11px] font-medium text-[var(--text-muted)]">
                 Export:
               </span>
               <button
@@ -1716,7 +1715,7 @@ function CustomDynamicDataTableInner<T>(
                 >
                   {col.renderHeader ? col.renderHeader() : col.header}
                   {!col.renderHeader && col.required && !col.readOnly && (
-                    <span className="text-danger-500">*</span>
+                    <span className="font-bold text-white">*</span>
                   )}
                 </th>
               ))}
@@ -1728,7 +1727,7 @@ function CustomDynamicDataTableInner<T>(
             </tr>
           </thead>
 
-          <tbody className="bg-white dark:bg-slate-950">
+          <tbody className="bg-[var(--surface)]">
             {displayRows.map((row, rowIndex) => {
               const rowId = getRowId(row);
               const isDraggingRow =
@@ -1748,7 +1747,7 @@ function CustomDynamicDataTableInner<T>(
                     getRowClassName?.(row, rowIndex),
                     isDraggingRow && "opacity-50",
                     isDragOverRow &&
-                      "shadow-[inset_0_2px_0_0] shadow-primary-500 dark:shadow-primary-400",
+                      "shadow-[inset_0_2px_0_0_var(--primary)]",
                   )}
                   onDragOver={
                     canRowReorder ? handleRowDragOver(rowId) : undefined
@@ -1808,7 +1807,7 @@ function CustomDynamicDataTableInner<T>(
               <tr>
                 <td
                   colSpan={totalColumns}
-                  className="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400"
+                  className="px-3 py-4 text-center text-xs text-[var(--text-muted)]"
                 >
                   No matching rows.
                 </td>
@@ -1844,14 +1843,14 @@ function CustomDynamicDataTableInner<T>(
         {/* Loading overlay */}
         {isLoading && (
           <div className={SPINNER_OVERLAY}>
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
           </div>
         )}
       </div>
 
       {/* Disabled overlay */}
       {disabled && (
-        <div className="pointer-events-auto absolute inset-0 z-50 bg-slate-200/5 cursor-not-allowed" />
+        <div className="pointer-events-auto absolute inset-0 z-50 cursor-not-allowed bg-[var(--line)]/20" />
       )}
     </div>
   );

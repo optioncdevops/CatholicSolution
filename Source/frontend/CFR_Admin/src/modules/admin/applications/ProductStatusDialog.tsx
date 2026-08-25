@@ -50,11 +50,11 @@ export function ProductStatusDialog({ app, onClose, onConfirm, pendingStatus, on
         className="w-full max-w-sm rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[var(--shadow-elevated)] motion-safe:animate-[pop-in_140ms_ease-out]"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <h2 id="status-dialog-title" className="font-display text-base font-extrabold text-[var(--text-primary)]">Change status — {app.name}</h2>
-        <p className="mt-1 flex items-center gap-1.5 text-xs text-[var(--text-muted)]">Current status <StatusBadge status={app.status} kind="application" /></p>
+        <h2 id="status-dialog-title" className="font-display text-base font-extrabold text-[var(--text-primary)]">Change Status — {app.name}</h2>
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-[var(--text-muted)]">Current Status <StatusBadge status={app.status} kind="application" /></p>
 
         <fieldset className="mt-4 flex flex-col gap-2">
-          <legend className="sr-only">New status</legend>
+          <legend className="sr-only">New Status</legend>
           {STATUS_OPTIONS.map((status, index) => {
             const isCurrent = status === app.status;
             const isSelected = pendingStatus === status;
