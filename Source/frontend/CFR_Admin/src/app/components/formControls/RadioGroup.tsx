@@ -125,7 +125,7 @@ const RadioGroupInner = <TFieldValues extends FieldValues = FieldValues>({
                 key={id}
                 htmlFor={optionInputId}
                 className={cn(
-                  "inline-flex items-center gap-2 text-[13px] text-foreground",
+                  "inline-flex items-center gap-2 text-[length:var(--admin-text-xs)] text-[var(--text-primary)]",
                   disabled ? themeChoiceLabelDisabledClass : "cursor-pointer",
                 )}
               >
@@ -157,7 +157,7 @@ const RadioGroupInner = <TFieldValues extends FieldValues = FieldValues>({
         {mergedError && (
           <p
             id={`${name}-error`}
-            className="text-xs text-danger-500"
+            className="text-xs text-[var(--error)]"
             role="alert"
             aria-live="polite"
           >

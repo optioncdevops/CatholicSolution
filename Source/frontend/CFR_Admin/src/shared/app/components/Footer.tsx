@@ -12,17 +12,13 @@ export function Footer({ variant = 'app' }: FooterProps) {
   const { showToast } = useToast();
   const auth = variant === 'auth';
 
-  /* Authenticated workspaces use a single compact SaaS row: copyright, mission line, system status. */
+  /* Authenticated workspaces use a single compact SaaS row: copyright and mission line. */
   if (!auth) {
     return (
       <footer className="app-footer app-footer--workspace">
         <div className="app-footer__row">
-          <span className="app-footer__copyright">© 2026 Catholic Solutions</span>
+          <span className="app-footer__copyright">© 2026 Catholic Soft</span>
           <span className="app-footer__mission-inline">Mission-driven technology for Catholic organizations</span>
-          <button type="button" className="app-footer__status" onClick={() => showToast('All Catholic Solutions services are operational')}>
-            <span className="app-footer__status-dot" aria-hidden="true" />
-            All systems operational
-          </button>
         </div>
       </footer>
     );

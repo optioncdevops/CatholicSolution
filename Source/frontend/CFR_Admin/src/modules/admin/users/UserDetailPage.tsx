@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useAdminData } from '../AdminDataContext';
@@ -47,30 +47,25 @@ export function UserDetailPage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <div className="admin-panel-header">
-        <div className="flex min-w-0 items-center gap-3">
-          <EntityAvatar name={user.name} size={40} />
-          <div className="min-w-0">
-            <Link to="/admin/users" className="admin-panel-header__breadcrumb">
-              <ChevronLeft size={12} /> Users
-            </Link>
-            <h1 className="admin-panel-header__title truncate">{user.name}</h1>
-            <p className="mt-0.5 text-xs font-semibold text-[var(--text-muted)]">{user.email}</p>
+      <PanelHeader
+        title={user.name}
+        icon={<EntityAvatar name={user.name} size={40} />}
+        action={(
+          <div className="flex items-center gap-2">
+            <StatusBadge status={user.status} kind="user" />
+            {user.status === 'deactivated' ? (
+              <button type="button" onClick={handleActivate} className="action-primary">Activate</button>
+            ) : (
+              <button type="button" onClick={() => void handleDeactivate()} className="rounded-[var(--radius-control)] border border-[var(--error)] px-3 py-2 text-xs font-bold text-[var(--error)] hover:bg-[var(--error-bg)]">Deactivate</button>
+            )}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <StatusBadge status={user.status} kind="user" />
-          {user.status === 'deactivated' ? (
-            <button type="button" onClick={handleActivate} className="action-primary">Activate</button>
-          ) : (
-            <button type="button" onClick={() => void handleDeactivate()} className="rounded-[var(--radius-control)] border border-[var(--error)] px-3 py-2 text-xs font-bold text-[var(--error)] hover:bg-[var(--error-bg)]">Deactivate</button>
-          )}
-        </div>
-      </div>
+        )}
+      />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           ['Organization', org?.name ?? '—'],
+          ['Email', user.email],
           ['Role', user.role],
           ['Status', user.status],
           ['Last active', user.lastActiveAt],

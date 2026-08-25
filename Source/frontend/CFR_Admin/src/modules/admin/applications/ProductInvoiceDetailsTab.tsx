@@ -7,12 +7,12 @@ import { useAdminData } from '../AdminDataContext';
 import { StatusBadge } from '@app/components/Badge';
 import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
-import { formatDate, formatDateTime, formatDaysLabel, daysSince, daysUntil, effectiveInvoiceStatus } from '../utils/formatDate';
-import { InvoiceDetailDrawer } from './InvoiceDetailDrawer';
+import { formatDate, formatDateTime, daysSince, daysUntil, daysBetween, effectiveInvoiceStatus } from '../utils/formatDate';
+import { InvoiceDetailModal } from './InvoiceDetailModal';
 import type { AdminApplication, Invoice, InvoiceStatus } from '../types';
 
-/** No "Cancelled" chip here — cancelled invoices stay visible in the "All statuses" total and
- * in the table, but are filtered/reviewed from Invoice History, not this active-invoices tab. */
+/** Cancelled invoices are excluded from this active-invoices tab entirely — they're only
+ * reviewed from Invoice History. */
 const STATUS_FILTERS: Array<{ id: InvoiceStatus | 'all'; label: string }> = [
   { id: 'all', label: 'All statuses' },
   { id: 'created', label: 'Created' },
@@ -36,6 +36,7 @@ export function ProductInvoiceDetailsTab({ app }: { app: AdminApplication }) {
     const limit = RANGE_DAYS[range];
     return invoices
       .filter((invoice) => invoice.appId === app.id)
+      .filter((invoice) => invoice.status !== 'cancelled')
       .filter((invoice) => limit === undefined || daysSince(invoice.invoiceDate) <= limit);
   }, [invoices, app.id, range]);
 
@@ -47,7 +48,7 @@ export function ProductInvoiceDetailsTab({ app }: { app: AdminApplication }) {
   const columns: DataTableColumn<Invoice>[] = [
     {
       id: 'actions', header: 'Actions', pinLeft: true, width: '4rem', excludeFromExport: true,
-      cell: (invoice) => <CommonIconButton aria-label={`View invoice ${invoice.invoiceNumber}`} icon={<Eye size={15} />} onClick={() => setViewingInvoice(invoice)} />,
+      cell: (invoice) => <CommonIconButton aria-label={`View invoice ${invoice.invoiceNumber}`} tooltip="View" icon={<Eye size={15} />} onClick={() => setViewingInvoice(invoice)} />,
     },
     { id: 'customerCode', header: 'Customer Code', value: (invoice) => getOrganization(invoice.orgId)?.code ?? '', cell: (invoice) => <span className="font-mono text-xs text-[var(--text-secondary)]">{getOrganization(invoice.orgId)?.code ?? '—'}</span> },
     { id: 'customer', header: 'Customer', width: '12rem', value: (invoice) => getOrganization(invoice.orgId)?.name ?? invoice.orgId, cell: (invoice) => <span className="font-bold text-[var(--text-primary)]">{getOrganization(invoice.orgId)?.name ?? invoice.orgId}</span> },
@@ -56,16 +57,24 @@ export function ProductInvoiceDetailsTab({ app }: { app: AdminApplication }) {
     { id: 'dueDate', header: 'Due Date', value: (invoice) => invoice.dueDate, cell: (invoice) => <span className="text-[var(--text-muted)]">{formatDate(invoice.dueDate)}</span> },
     {
       id: 'days', header: 'Days', value: (invoice) => invoice.dueDate,
-      cell: (invoice) => (
-        <span className={invoice.status !== 'paid' && invoice.status !== 'cancelled' && daysUntil(invoice.dueDate) < 0 ? 'font-bold text-[var(--error)]' : 'text-[var(--text-muted)]'}>
-          {invoice.status === 'paid' || invoice.status === 'cancelled' ? '—' : formatDaysLabel(invoice.dueDate)}
-        </span>
-      ),
+      cell: (invoice) => {
+        if (invoice.status === 'cancelled') {
+          return <span className="text-[var(--text-muted)]">—</span>;
+        }
+        // Paid invoices show the same signed due-date delta, anchored at the payment date
+        // instead of "now" — positive means it was paid ahead of the due date, negative means late.
+        const remaining = invoice.status === 'paid' && invoice.paidDate
+          ? daysBetween(invoice.paidDate, invoice.dueDate)
+          : daysUntil(invoice.dueDate);
+        return (
+          <span className={remaining < 0 ? 'font-bold text-[var(--error)]' : 'text-[var(--text-muted)]'}>
+            {remaining}
+          </span>
+        );
+      },
     },
-    { id: 'amount', header: 'Unit Amount', value: (invoice) => invoice.amount, cell: (invoice) => <span className="text-[var(--text-secondary)]">${invoice.amount.toFixed(2)}</span> },
-    { id: 'quantity', header: 'Qty', value: (invoice) => invoice.quantity, cell: (invoice) => <span className="text-[var(--text-secondary)]">{invoice.quantity}</span> },
     { id: 'total', header: 'Total', value: (invoice) => invoice.amount * invoice.quantity, cell: (invoice) => <span className="font-bold text-[var(--text-primary)]">${(invoice.amount * invoice.quantity).toFixed(2)}</span> },
-    { id: 'paidDate', header: 'Paid On', value: (invoice) => invoice.paidDate ?? '', cell: (invoice) => <span className="text-[var(--text-muted)]">{invoice.paidDate ? formatDateTime(invoice.paidDate) : '—'}</span> },
+    { id: 'paidDate', header: 'Paid On', value: (invoice) => invoice.paidDate ?? '', cell: (invoice) => <span className="text-[var(--text-muted)]">{invoice.paidDate ? formatDateTime(invoice.paidDate) : 'Not paid yet'}</span> },
     { id: 'status', header: 'Status', value: (invoice) => effectiveInvoiceStatus(invoice.status, invoice.dueDate), cell: (invoice) => <StatusBadge status={effectiveInvoiceStatus(invoice.status, invoice.dueDate)} kind="invoice" /> },
   ];
 
@@ -116,7 +125,7 @@ export function ProductInvoiceDetailsTab({ app }: { app: AdminApplication }) {
         />
       )}
 
-      <InvoiceDetailDrawer invoice={viewingInvoice} onClose={() => setViewingInvoice(null)} />
+      <InvoiceDetailModal invoice={viewingInvoice} onClose={() => setViewingInvoice(null)} />
     </div>
   );
 }

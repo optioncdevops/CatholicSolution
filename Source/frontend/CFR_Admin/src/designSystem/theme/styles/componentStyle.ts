@@ -14,9 +14,10 @@ import { cn } from "@app/utilities/cn";
 
 // ── Typography ───────────────────────────────────────────────────────
 
-/** Standard form label. */
+/** Standard form label. `capitalize` renders every label in Title Case without requiring
+ * each call site to hand-author its label string that way. */
 export const themeLabelClass =
-  "text-[length:var(--admin-text-xs)] [font-weight:var(--admin-weight-bold)] text-[var(--text-secondary)]";
+  "text-[length:var(--admin-text-xs)] [font-weight:var(--admin-weight-bold)] text-[var(--text-secondary)] capitalize";
 
 /** Input values, dropdown triggers, picker triggers, and control text. */
 export const themeFormControlTextClass =
@@ -208,9 +209,10 @@ export const themeFormSectionTableSlotClass =
 /** Shared data table outer shell (used inside FormSectionCard and standalone). */
 export const themeDataTableShellClass = "relative min-w-0 w-full transition-all duration-200";
 
-/** Data table header band — solid theme-primary color, not a tint, so it reads as a clear header
- * bar above the striped body rows and fully occludes content scrolling under a frozen column. */
-export const themeDataTableHeadClass = "border-y border-[var(--primary)] bg-[var(--primary)]";
+/** Data table header band — a solid (not tinted) light slate-blue, not the brand navy, so it
+ * reads as a structural header surface above the striped body rows while still fully occluding
+ * content scrolling under a frozen column. */
+export const themeDataTableHeadClass = "border-y border-[var(--table-header-border)] bg-[var(--table-header-bg)]";
 
 /** Checkbox / radio input — validation border on the control itself. */
 export const themeChoiceInputClass =

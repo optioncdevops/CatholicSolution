@@ -6,7 +6,7 @@
  * Archived: hidden from normal product listings.
  */
 export type ProductStatus = 'active' | 'inactive' | 'coming-soon';
-export type ProductVisibility = 'public' | 'hidden';
+export type ProductLicenseType = 'free' | 'licensed';
 export type ProductOwnership = 'first-party' | 'partner';
 export type ProductDeploymentModel = 'external-saas';
 export type ProductNavigationTarget = 'same-tab' | 'new-tab';
@@ -21,18 +21,19 @@ export interface AdminApplication {
   sourceLocation: string;
   name: string;
   shortName: string;
+  /** Shown as the product's subtitle, under its name, throughout the UI. */
   category: string;
+  /** An emoji, or an uploaded logo image as a data URL. */
   icon: string;
   gradient: string;
   description: string;
   features: string[];
-  integrations: string[];
   productionUrl: string;
   /** Read-only in this prototype — ownership does not change via product editing. */
   ownership: ProductOwnership;
   /** Read-only in this prototype. */
   deploymentModel: ProductDeploymentModel;
-  visibility: ProductVisibility;
+  licenseType: ProductLicenseType;
   navigationTarget: ProductNavigationTarget;
   status: ProductStatus;
   updatedAt: string;
@@ -54,6 +55,7 @@ export interface Organization {
   code: string;
   primaryContact: string;
   contactEmail: string;
+  contactPhone: string;
   /** Subscription/access expiry date — drives {@link CustomerAccessStatus}. */
   expiryDate: string;
 }
@@ -81,6 +83,7 @@ export interface AdminRole {
   /** Route a user with this role lands on after signing in. */
   landingPage: string;
   createdAt: string;
+  active: boolean;
 }
 
 export type PermissionLevel = 'read-only' | 'full-control' | 'deny';
@@ -142,7 +145,6 @@ export interface InvoiceItem {
   description: string;
   defaultAmount: number;
   active: boolean;
-  /** Product this item is billed under. Omitted = a generic item available to every product
-   * (e.g. a training session or setup fee that isn't specific to one product). */
-  appId?: string;
+  /** Product this item is billed under — every invoice item belongs to exactly one product. */
+  appId: string;
 }

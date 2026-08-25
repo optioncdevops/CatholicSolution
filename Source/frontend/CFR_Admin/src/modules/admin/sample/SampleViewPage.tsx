@@ -68,10 +68,8 @@ export function SampleViewPage() {
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
-        breadcrumb={{ label: 'Component library', to: '/admin/administration/component-library/add' }}
         title="Component Library — View"
         icon={<span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[linear-gradient(135deg,#1E3A8A,#3B82F6)] text-lg text-white" aria-hidden="true"><Eye size={18} /></span>}
-        subtitle="Display/layout components. Dev reference only — see removal note in SampleViewPage.tsx."
         action={<CommonButton variant="headerSecondary" size="sm" iconLeft={<Info size={13} />} onClick={() => setModalOpen(true)}>Open Modal Demo</CommonButton>}
       />
 

@@ -14,7 +14,7 @@ export const CONTROL_HEIGHT = 'min-h-[var(--admin-control-height)]';
 export const CONTROL_INVALID = 'aria-[invalid=true]:border-[var(--error)] aria-[invalid=true]:focus:border-[var(--error)]';
 
 export const FIELD_LABEL =
-  'text-[length:var(--admin-text-xs)] [font-weight:var(--admin-weight-bold)] text-[var(--text-secondary)]';
+  'text-[length:var(--admin-text-xs)] [font-weight:var(--admin-weight-bold)] text-[var(--text-secondary)] capitalize';
 
 export const FIELD_ERROR =
   'text-[length:var(--admin-text-xs)] [font-weight:var(--admin-weight-medium)] text-[var(--error)]';

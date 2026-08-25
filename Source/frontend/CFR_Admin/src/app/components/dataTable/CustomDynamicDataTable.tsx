@@ -14,7 +14,6 @@ import {
   resolveClientExportPrintTitle,
   runExportAfterPaint,
 } from "./partials/tableExportUtils";
-import { downloadExcelXlsx } from "./partials/tableExcelExport";
 import { downloadTableCsv } from "./partials/tableCsvExport";
 import {
   DATA_TABLE_EXPORT_BTN_CSV_CLASS,
@@ -348,7 +347,7 @@ const TABLE_CONTAINER = cn(
 const THEAD = themeDataTableHeadClass;
 
 const TH =
-  "px-2 py-1.5 text-[11px] font-bold text-white uppercase tracking-wide select-none text-left align-middle";
+  "px-2 py-1.5 text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wide select-none text-left align-middle";
 
 const TD_BASE = "px-2 py-1 text-xs align-top";
 
@@ -860,7 +859,7 @@ function CustomDynamicDataTableInner<T>(
   const showToolbar = enableGlobalSearch || enableExport;
   const canExport = enableExport && exportRows.length > 0;
 
-  const runClientExport = React.useCallback((task: () => void) => {
+  const runClientExport = React.useCallback((task: () => void | Promise<void>) => {
     if (exportBusyRef.current) {return;}
     exportBusyRef.current = true;
     setExportBusy(true);
@@ -886,14 +885,16 @@ function CustomDynamicDataTableInner<T>(
   }, [exportFileBase, runClientExport]);
 
   const handleExportExcel = React.useCallback(() => {
-    runClientExport(() =>
+    // exceljs is a large dependency — load it only when Excel export is actually used.
+    runClientExport(async () => {
+      const { downloadExcelXlsx } = await import("./partials/tableExcelExport");
       downloadExcelXlsx(
         exportColumnsRef.current,
         displayRowsExportRef.current,
         `${exportFileBase}.xlsx`,
         { title: resolveClientExportPrintTitle(exportFileBase) },
-      ),
-    );
+      );
+    });
   }, [exportFileBase, runClientExport]);
 
   const handleExportPrint = React.useCallback(() => {
@@ -1715,7 +1716,7 @@ function CustomDynamicDataTableInner<T>(
                 >
                   {col.renderHeader ? col.renderHeader() : col.header}
                   {!col.renderHeader && col.required && !col.readOnly && (
-                    <span className="font-bold text-white">*</span>
+                    <span className="font-bold text-[var(--error)]">*</span>
                   )}
                 </th>
               ))}

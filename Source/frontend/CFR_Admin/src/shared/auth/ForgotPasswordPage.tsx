@@ -1,8 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, MailIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
-import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
-import { AuthShell } from './AuthShell';
+import { AdminAuthShell } from './AdminAuthShell';
 
 export function ForgotPasswordPage() {
   const location = useLocation();
@@ -27,47 +26,45 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <AuthShell>
-      <div className="auth-login-stack">
-        <section className="auth-card auth-login-card auth-reset-card">
-          {submittedEmail ? (
-            <div className="auth-reset-success" aria-live="polite">
-              <span className="auth-reset-success__icon"><CheckIcon size={24} /></span>
-              <span className="auth-card__kicker">Recovery requested</span>
-              <h2>Check your email</h2>
-              <p>If an account matches <strong>{submittedEmail}</strong>, the configured identity service will send a short-lived verification code or secure reset link.</p>
-              <PlatformLink to={resetTarget} className="auth-primary-button auth-primary-button--large">
-                I have a reset code <ArrowRightIcon size={17} />
-              </PlatformLink>
-              <div className="auth-reset-success__actions">
-                <button type="button" className="auth-text-link" onClick={() => setSubmittedEmail('')}>Use a different email</button>
-                <PlatformLink to={loginTarget} className="auth-text-link">Return to sign in</PlatformLink>
-              </div>
+    <AdminAuthShell>
+      <section className="admin-auth-card">
+        {submittedEmail ? (
+          <div className="admin-auth-success" aria-live="polite">
+            <span className="admin-auth-success__icon"><CheckIcon size={22} /></span>
+            <span className="admin-auth-card__kicker">Recovery Requested</span>
+            <h2>Check Your Email</h2>
+            <p>If an account matches <strong>{submittedEmail}</strong>, we&apos;ve sent a short-lived verification code or secure reset link.</p>
+            <Link to={resetTarget} className="admin-auth-submit admin-auth-submit--link">
+              I Have a Reset Code <ArrowRightIcon size={15} />
+            </Link>
+            <div className="admin-auth-success__actions">
+              <button type="button" className="admin-auth-text-link" onClick={() => setSubmittedEmail('')}>Use a Different Email</button>
+              <Link to={loginTarget} className="admin-auth-text-link">Return to Sign In</Link>
             </div>
-          ) : (
-            <>
-              <PlatformLink to={loginTarget} className="auth-back-link"><ArrowLeftIcon size={15} /> Back to sign in</PlatformLink>
-              <div className="auth-card__header auth-reset-card__header">
-                <span className="auth-reset-card__mark"><ShieldCheckIcon size={22} /></span>
-                <span className="auth-card__kicker">Account recovery</span>
-                <h2>Forgot your password?</h2>
-                <p>Enter the email connected to your Catholic Solutions account. For privacy, the response is the same whether or not an account exists.</p>
-              </div>
-              <form onSubmit={submit} className="auth-form">
-                <div>
-                  <label className="auth-label" htmlFor="reset-email">Email address</label>
-                  <div className="auth-input-wrap mt-2">
-                    <span className="auth-input-icon"><MailIcon size={17} /></span>
-                    <input id="reset-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input" autoComplete="email" placeholder="name@organization.org" required autoFocus />
-                  </div>
+          </div>
+        ) : (
+          <>
+            <Link to={loginTarget} className="admin-auth-back-link"><ArrowLeftIcon size={13} /> Back to Sign In</Link>
+            <div className="admin-auth-card__header">
+              <span className="admin-auth-card__mark"><ShieldCheckIcon size={20} /></span>
+              <span className="admin-auth-card__kicker">Account Recovery</span>
+              <h1 className="admin-auth-card__title">Forgot Your Password?</h1>
+              <p className="admin-auth-card__description">Enter the email connected to your account. For your security, we show the same response whether or not an account exists.</p>
+            </div>
+            <form onSubmit={submit} className="admin-auth-form" noValidate>
+              <div className="admin-auth-field">
+                <label className="admin-auth-label" htmlFor="reset-email">Email Address</label>
+                <div className="admin-auth-input-wrap">
+                  <span className="admin-auth-input-icon"><MailIcon size={15} /></span>
+                  <input id="reset-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="admin-auth-input" autoComplete="email" placeholder="name@organization.org" required autoFocus />
                 </div>
-                <button type="submit" className="auth-primary-button auth-primary-button--large">Send recovery instructions <ArrowRightIcon size={17} /></button>
-              </form>
-              <div className="auth-reset-security-note"><ShieldCheckIcon size={14} /><span>Recovery requests should expire and be rate-limited by the connected identity service.</span></div>
-            </>
-          )}
-        </section>
-      </div>
-    </AuthShell>
+              </div>
+              <button type="submit" className="admin-auth-submit">Send Recovery Instructions <ArrowRightIcon size={15} /></button>
+            </form>
+            <div className="admin-auth-security-note"><ShieldCheckIcon size={14} /><span>Recovery requests expire and are rate-limited by the connected identity service.</span></div>
+          </>
+        )}
+      </section>
+    </AdminAuthShell>
   );
 }

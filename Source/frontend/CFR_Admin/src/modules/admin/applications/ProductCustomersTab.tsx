@@ -18,13 +18,13 @@ function effectiveStatusOf(org: Organization): EffectiveStatus {
   return org.status;
 }
 
-const STATUS_FILTERS: Array<{ id: EffectiveStatus | 'all'; label: string }> = [
+const STATUS_FILTERS: Array<{ id: EffectiveStatus | 'all'; label: string; dot?: string }> = [
   { id: 'all', label: 'All Statuses' },
-  { id: 'active', label: 'Active' },
-  { id: 'trial', label: 'Trial' },
-  { id: 'suspended', label: 'Suspended' },
-  { id: 'expiring-soon', label: 'Expiring Soon' },
-  { id: 'expired', label: 'Expired' },
+  { id: 'active', label: 'Active', dot: 'var(--success)' },
+  { id: 'trial', label: 'Trial', dot: 'var(--info)' },
+  { id: 'suspended', label: 'Suspended', dot: 'var(--text-secondary)' },
+  { id: 'expiring-soon', label: 'Expiring Soon', dot: 'var(--warning)' },
+  { id: 'expired', label: 'Expired', dot: 'var(--error)' },
 ];
 
 export function ProductCustomersTab({ app }: { app: AdminApplication }) {
@@ -44,17 +44,17 @@ export function ProductCustomersTab({ app }: { app: AdminApplication }) {
   const columns: DataTableColumn<Organization>[] = [
     {
       id: 'actions', header: 'Actions', pinLeft: true, width: '4rem', excludeFromExport: true,
-      cell: (org) => <CommonIconButton aria-label={`View ${org.name}`} icon={<Eye size={15} />} onClick={() => navigate(`/admin/organizations/${org.id}`)} />,
+      cell: (org) => <CommonIconButton aria-label={`View ${org.name}`} tooltip="View" icon={<Eye size={15} />} onClick={() => navigate(`/admin/organizations/${org.id}`)} />,
     },
     {
-      id: 'name', header: 'Customer', width: '16rem', value: (org) => org.name,
+      id: 'name', header: 'Organization', width: '14rem', value: (org) => org.name,
       cell: (org) => (
-        <Link to={`/admin/organizations/${org.id}`} className="block min-w-0 hover:underline" onClick={(event) => event.stopPropagation()}>
-          <span className="block truncate font-bold text-[var(--text-primary)]">{org.name}</span>
-          <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{org.primaryContact}</span>
+        <Link to={`/admin/organizations/${org.id}`} className="block min-w-0 truncate font-bold text-[var(--text-primary)] hover:underline" onClick={(event) => event.stopPropagation()}>
+          {org.name}
         </Link>
       ),
     },
+    { id: 'customerName', header: 'Customer Name', width: '12rem', value: (org) => org.primaryContact, cell: (org) => <span className="text-[var(--text-secondary)]">{org.primaryContact}</span> },
     { id: 'code', header: 'Code', value: (org) => org.code, cell: (org) => <span className="font-mono text-xs text-[var(--text-secondary)]">{org.code}</span> },
     { id: 'email', header: 'Email', value: (org) => org.contactEmail, cell: (org) => <span className="text-[var(--text-secondary)]">{org.contactEmail}</span> },
     { id: 'users', header: 'Users', value: (org) => userCountFor(org.id), cell: (org) => <span className="text-[var(--text-secondary)]">{userCountFor(org.id)}</span> },
@@ -73,7 +73,7 @@ export function ProductCustomersTab({ app }: { app: AdminApplication }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
         {STATUS_FILTERS.map((filter) => {
           const count = filter.id === 'all' ? productCustomers.length : productCustomers.filter((org) => effectiveStatusOf(org) === filter.id).length;
           return (
@@ -81,8 +81,9 @@ export function ProductCustomersTab({ app }: { app: AdminApplication }) {
               key={filter.id}
               type="button"
               onClick={() => setStatusFilter(filter.id)}
-              className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
+              className={`admin-filter-chip inline-flex items-center gap-1.5 ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
             >
+              {filter.dot ? <span className="size-1.5 shrink-0 rounded-full" style={{ background: filter.dot }} aria-hidden="true" /> : null}
               {filter.label} ({count})
             </button>
           );

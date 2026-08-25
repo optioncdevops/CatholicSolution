@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pencil, Plus, Power } from 'lucide-react';
+import { Pencil, Plus, ToggleLeft, ToggleRight } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -9,11 +9,10 @@ import { Badge } from '@app/components/Badge';
 import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '../lib/confirm';
-import { InvoiceItemFormDrawer, type InvoiceItemFormValue } from './InvoiceItemFormDrawer';
+import { InvoiceItemFormModal, type InvoiceItemFormValue } from './InvoiceItemFormModal';
 import type { InvoiceItem } from '../types';
 
 const ALL_PRODUCTS_FILTER = 'all';
-const GENERIC_PRODUCT_FILTER = 'generic';
 
 const STATUS_FILTERS = [
   { id: 'all', label: 'All statuses' },
@@ -31,11 +30,7 @@ export function InvoiceItemsPage() {
 
   const rows = useMemo(() => invoiceItems
     .filter((item) => statusFilter === 'all' || (statusFilter === 'active') === item.active)
-    .filter((item) => {
-      if (productFilter === ALL_PRODUCTS_FILTER) return true;
-      if (productFilter === GENERIC_PRODUCT_FILTER) return !item.appId;
-      return item.appId === productFilter;
-    }),
+    .filter((item) => productFilter === ALL_PRODUCTS_FILTER || item.appId === productFilter),
   [invoiceItems, statusFilter, productFilter]);
 
   const handleToggle = async (item: InvoiceItem) => {
@@ -72,18 +67,16 @@ export function InvoiceItemsPage() {
       id: 'actions', header: 'Actions', pinLeft: true, width: '5.5rem', excludeFromExport: true,
       cell: (item) => (
         <div className="flex items-center gap-0.5">
-          <CommonIconButton aria-label={`Edit ${item.title}`} icon={<Pencil size={14} />} onClick={() => setDrawerTarget(item)} />
-          <CommonIconButton aria-label={item.active ? `Deactivate ${item.title}` : `Activate ${item.title}`} variant={item.active ? 'danger' : 'ghost'} icon={<Power size={14} />} onClick={() => void handleToggle(item)} />
+          <CommonIconButton aria-label={`Edit ${item.title}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => setDrawerTarget(item)} />
+          <CommonIconButton aria-label={item.active ? `Deactivate ${item.title}` : `Activate ${item.title}`} tooltip={item.active ? 'Deactivate' : 'Activate'} variant={item.active ? 'danger' : 'ghost'} icon={item.active ? <ToggleRight size={16} /> : <ToggleLeft size={16} />} onClick={() => void handleToggle(item)} />
         </div>
       ),
     },
     { id: 'title', header: 'Title', width: '14rem', value: (item) => item.title, cell: (item) => <span className="font-bold text-[var(--text-primary)]">{item.title}</span> },
     {
       id: 'product', header: 'Product', width: '11rem',
-      value: (item) => (item.appId ? getApplication(item.appId)?.name ?? item.appId : 'All Products'),
-      cell: (item) => item.appId
-        ? <span className="text-[var(--text-secondary)]">{getApplication(item.appId)?.name ?? item.appId}</span>
-        : <Badge tone="info">All Products</Badge>,
+      value: (item) => getApplication(item.appId)?.name ?? item.appId,
+      cell: (item) => <span className="text-[var(--text-secondary)]">{getApplication(item.appId)?.name ?? item.appId}</span>,
     },
     { id: 'defaultAmount', header: 'Default Amount', value: (item) => item.defaultAmount, cell: (item) => <span className="font-bold text-[var(--text-primary)]">${item.defaultAmount.toFixed(2)}</span> },
     { id: 'description', header: 'Description', value: (item) => item.description, cell: (item) => <span className="text-[var(--text-secondary)]">{item.description}</span> },
@@ -120,7 +113,6 @@ export function InvoiceItemsPage() {
             onValueChange={(value) => setProductFilter(value ?? ALL_PRODUCTS_FILTER)}
             options={[
               { id: ALL_PRODUCTS_FILTER, value: 'All Products' },
-              { id: GENERIC_PRODUCT_FILTER, value: 'Generic (No Product)' },
               ...applications.map((app) => ({ id: app.id, value: app.name })),
             ]}
             className="min-h-8"
@@ -134,7 +126,7 @@ export function InvoiceItemsPage() {
         <DataTable data={rows} columns={columns} getRowId={(item) => item.id} exportFileName="invoice-items" exportTitle="Invoice items" emptyMessage="No invoice items found." />
       )}
 
-      <InvoiceItemFormDrawer target={drawerTarget} onClose={() => setDrawerTarget(null)} onCreate={handleCreate} onSave={handleSave} />
+      <InvoiceItemFormModal target={drawerTarget} onClose={() => setDrawerTarget(null)} onCreate={handleCreate} onSave={handleSave} />
     </div>
   );
 }

@@ -27,13 +27,16 @@ interface AdminDataContextValue {
   setUserStatus: (id: string, status: UserStatus) => void;
   grantUserAccess: (userId: string, appId: string) => void;
   revokeUserAccess: (userId: string, appId: string) => void;
+  addOrganization: (org: Omit<Organization, 'id' | 'createdAt' | 'code' | 'appIds'>) => void;
   assignOrgApp: (orgId: string, appId: string) => void;
   removeOrgApp: (orgId: string, appId: string) => void;
   resolveRequest: (id: string, status: RequestStatus, note?: string) => void;
-  addRole: (role: Omit<AdminRole, 'id' | 'createdAt'>) => void;
+  addRole: (role: Omit<AdminRole, 'id' | 'createdAt' | 'active'>) => void;
   updateRole: (role: AdminRole) => void;
   duplicateRole: (id: string) => void;
   deleteRole: (id: string) => void;
+  /** Toggles the active/inactive lifecycle flag on a role — roles are never deleted this way. */
+  toggleRoleActive: (id: string) => void;
   /** Creates a new invoice against a customer/product. This is the only invoice mutation —
    * invoices otherwise stay read-only once issued. */
   addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber'>) => void;
@@ -113,6 +116,12 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       const app = applications.find((item) => item.id === appId);
       if (user && app) logActivity(`Revoked ${user.name}'s access to ${app.name}`, 'user');
     },
+    addOrganization: (org) => {
+      const id = `org-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+      const code = `CUST-${1000 + organizations.length + 1}`;
+      setOrganizations((current) => [...current, { ...org, id, code, appIds: [], createdAt: new Date().toISOString() }]);
+      logActivity(`Added organization "${org.name}"`, 'organization');
+    },
     assignOrgApp: (orgId, appId) => {
       setOrganizations((current) => current.map((org) => (
         org.id === orgId && !org.appIds.includes(appId) ? { ...org, appIds: [...org.appIds, appId] } : org
@@ -144,7 +153,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     },
     addRole: (role) => {
       const id = `role-${Date.now()}-${Math.round(Math.random() * 1000)}`;
-      setRoles((current) => [...current, { ...role, id, createdAt: new Date().toISOString().slice(0, 10) }]);
+      setRoles((current) => [...current, { ...role, id, active: true, createdAt: new Date().toISOString().slice(0, 10) }]);
       logActivity(`Added role "${role.name}"`, 'user');
     },
     updateRole: (role) => {
@@ -162,6 +171,11 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       const source = roles.find((role) => role.id === id);
       setRoles((current) => current.filter((role) => role.id !== id));
       if (source) logActivity(`Deleted role "${source.name}"`, 'user');
+    },
+    toggleRoleActive: (id) => {
+      const role = roles.find((existing) => existing.id === id);
+      setRoles((current) => current.map((existing) => (existing.id === id ? { ...existing, active: !existing.active } : existing)));
+      if (role) logActivity(`${role.active ? 'Deactivated' : 'Activated'} role "${role.name}"`, 'user');
     },
     addInvoice: (invoice) => {
       const id = `inv-${Date.now()}-${Math.round(Math.random() * 1000)}`;

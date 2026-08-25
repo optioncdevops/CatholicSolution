@@ -69,13 +69,15 @@ export const COMMON_BUTTON_SPINNER_SIZE_CLASSES: Record<ButtonSize, string> = {
   lg: "h-5 w-5",
 };
 
+/** Every variant carries its own distinct, always-visible background — none render as a plain
+ * white/transparent surface, so a button reads as a button regardless of what it sits on. */
 export const COMMON_BUTTON_SOLID_VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: "border border-transparent bg-[var(--primary)] text-white shadow-[var(--shadow-soft)] hover:bg-[var(--primary-hover)]",
   secondary: "border border-transparent bg-[var(--secondary)] text-white shadow-[var(--shadow-soft)] hover:bg-[var(--secondary-hover)]",
-  ghost: "border border-transparent bg-transparent text-[var(--text-primary)] hover:bg-[var(--hover)]",
+  ghost: "border border-transparent bg-[var(--surface-muted)] text-[var(--text-primary)] hover:bg-[var(--hover)]",
   danger: "border border-transparent bg-[var(--error)] text-white shadow-[var(--shadow-soft)] hover:opacity-90",
-  outline: "border border-[var(--line-strong)] bg-transparent text-[var(--text-primary)] shadow-[var(--shadow-soft)] hover:bg-[var(--hover)]",
-  headerSecondary: "border border-white/60 bg-white/95 font-semibold text-[var(--text-primary)] shadow-[var(--shadow-soft)] hover:bg-white",
+  outline: "border border-[var(--line-strong)] bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-[var(--shadow-soft)] hover:bg-[var(--hover)]",
+  headerSecondary: "border border-transparent bg-[var(--secondary)] font-semibold text-[var(--primary)] shadow-[var(--shadow-soft)] hover:bg-[var(--secondary-hover)]",
   success: "border border-transparent bg-[var(--success)] text-white shadow-[var(--shadow-soft)] hover:opacity-90",
   warning: "border border-transparent bg-[var(--warning)] text-white shadow-[var(--shadow-soft)] hover:opacity-90",
   info: "border border-transparent bg-[var(--info)] text-white shadow-[var(--shadow-soft)] hover:opacity-90",
@@ -85,10 +87,10 @@ export const COMMON_BUTTON_SOLID_VARIANT_CLASSES: Record<ButtonVariant, string> 
 export const COMMON_BUTTON_SOFT_VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary: "border border-transparent bg-[var(--primary-muted)] text-[var(--primary)] hover:opacity-80",
   secondary: "border border-transparent bg-[var(--secondary)]/10 text-[var(--secondary-hover)] hover:bg-[var(--secondary)]/18",
-  ghost: "border border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
+  ghost: "border border-transparent bg-[var(--surface-muted)]/60 text-[var(--text-muted)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
   danger: "border border-transparent bg-[var(--error-bg)] text-[var(--error)] hover:opacity-80",
-  outline: "border border-[var(--line)] bg-[var(--surface-muted)]/50 text-[var(--text-primary)] hover:bg-[var(--surface-muted)]",
-  headerSecondary: "border border-white/60 bg-white/95 font-semibold text-[var(--text-primary)] shadow-[var(--shadow-soft)] hover:bg-white",
+  outline: "border border-[var(--line)] bg-[var(--surface-muted)] text-[var(--text-primary)] hover:bg-[var(--hover)]",
+  headerSecondary: "border border-transparent bg-[var(--secondary)] font-semibold text-[var(--primary)] shadow-[var(--shadow-soft)] hover:bg-[var(--secondary-hover)]",
   success: "border border-transparent bg-[var(--success-bg)] text-[var(--success)] hover:opacity-80",
   warning: "border border-transparent bg-[var(--warning-bg)] text-[var(--warning)] hover:opacity-80",
   info: "border border-transparent bg-[var(--info-bg)] text-[var(--info)] hover:opacity-80",
@@ -118,9 +120,9 @@ export const COMMON_ICON_BUTTON_ICON_SIZE: Record<IconButtonSize, number> = {
 export const COMMON_ICON_BUTTON_SOLID_VARIANT_CLASSES: Record<IconButtonVariant, string> = {
   primary: "border-transparent bg-[var(--primary)] text-white shadow-[var(--shadow-soft)] hover:bg-[var(--primary-hover)]",
   secondary: "border-transparent bg-[var(--secondary)] text-white shadow-[var(--shadow-soft)] hover:bg-[var(--secondary-hover)]",
-  ghost: "border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
+  ghost: "border-transparent bg-[var(--surface-muted)]/60 text-[var(--text-muted)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
   danger: "border-transparent bg-[var(--error)] text-white shadow-[var(--shadow-soft)] hover:opacity-90",
-  outline: "border-[var(--line-strong)] bg-transparent text-[var(--text-primary)] shadow-[var(--shadow-soft)] hover:bg-[var(--hover)]",
+  outline: "border-[var(--line-strong)] bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-[var(--shadow-soft)] hover:bg-[var(--hover)]",
   success: "border-transparent bg-[var(--success)] text-white shadow-[var(--shadow-soft)] hover:opacity-90",
   warning: "border-transparent bg-[var(--warning)] text-white shadow-[var(--shadow-soft)] hover:opacity-90",
   info: "border-transparent bg-[var(--info)] text-white shadow-[var(--shadow-soft)] hover:opacity-90",
@@ -129,9 +131,9 @@ export const COMMON_ICON_BUTTON_SOLID_VARIANT_CLASSES: Record<IconButtonVariant,
 export const COMMON_ICON_BUTTON_SOFT_VARIANT_CLASSES: Record<IconButtonVariant, string> = {
   primary: "border-transparent bg-[var(--primary-muted)] text-[var(--primary)] hover:opacity-80",
   secondary: "border-transparent bg-[var(--secondary)]/10 text-[var(--secondary-hover)] hover:bg-[var(--secondary)]/18",
-  ghost: "border-transparent bg-transparent text-[var(--text-muted)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
+  ghost: "border-transparent bg-[var(--surface-muted)]/60 text-[var(--text-muted)] hover:bg-[var(--hover)] hover:text-[var(--text-primary)]",
   danger: "border-transparent bg-[var(--error-bg)] text-[var(--error)] hover:opacity-80",
-  outline: "border-[var(--line)] bg-[var(--surface-muted)]/50 text-[var(--text-primary)] hover:bg-[var(--surface-muted)]",
+  outline: "border-[var(--line)] bg-[var(--surface-muted)] text-[var(--text-primary)] hover:bg-[var(--hover)]",
   success: "border-transparent bg-[var(--success-bg)] text-[var(--success)] hover:opacity-80",
   warning: "border-transparent bg-[var(--warning-bg)] text-[var(--warning)] hover:opacity-80",
   info: "border-transparent bg-[var(--info-bg)] text-[var(--info)] hover:opacity-80",

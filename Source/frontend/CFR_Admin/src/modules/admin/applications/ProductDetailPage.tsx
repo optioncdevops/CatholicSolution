@@ -40,10 +40,8 @@ export function ProductDetailPage() {
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
-        breadcrumb={{ label: 'Products', to: '/admin/applications' }}
         title={app.name}
-        icon={<span className="grid size-10 shrink-0 place-items-center rounded-xl text-lg text-white" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>}
-        subtitle={app.category}
+        icon={<span className="grid size-9 shrink-0 place-items-center rounded-xl text-base text-white" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>}
         action={(
           <div className="flex flex-wrap items-center gap-2">
             <CommonButton variant="headerSecondary" iconLeft={<RefreshCw size={14} />} onClick={() => setChangingStatus(true)}>Change Status</CommonButton>

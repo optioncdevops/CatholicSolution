@@ -11,7 +11,7 @@ import { EntityAvatar } from '@app/components/EntityAvatar';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '../lib/confirm';
 import { formatDate } from '../utils/formatDate';
-import { UserFormDrawer, type NewUserValue } from './UserFormDrawer';
+import { UserFormModal, type NewUserValue } from './UserFormModal';
 import type { AdminUser, UserStatus } from '../types';
 
 const STATUS_FILTERS: Array<{ id: UserStatus | 'all'; label: string }> = [
@@ -127,7 +127,7 @@ export function UsersListPage() {
         />
       )}
 
-      <UserFormDrawer open={addOpen} organizations={organizations} onClose={() => setAddOpen(false)} onCreate={handleCreate} />
+      <UserFormModal open={addOpen} organizations={organizations} onClose={() => setAddOpen(false)} onCreate={handleCreate} />
     </div>
   );
 }

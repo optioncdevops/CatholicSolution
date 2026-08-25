@@ -133,39 +133,22 @@
   justify-content: space-between;
   gap: 0.75rem;
   margin: -0.75rem -1rem 0.5rem;
-  padding: 0.4rem 1rem;
+  padding: 0.375rem 1.25rem;
   border-radius: var(--radius-panel) var(--radius-panel) 0 0;
   background: var(--primary-hover);
   box-shadow: var(--shadow-soft);
 }
-.admin-panel-header__breadcrumb {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15rem;
-  margin-bottom: 0.15rem;
-  font-size: 0.6875rem;
-  font-weight: 750;
-  color: rgba(255, 255, 255, 0.7);
-  transition: color 120ms ease;
-}
-.admin-panel-header__breadcrumb:hover { color: #fff; }
 .admin-panel-header__title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin: 0;
   font-family: var(--admin-font-family-display);
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 600;
   letter-spacing: 0;
   line-height: 1.2;
   color: #fff;
-}
-.admin-panel-header__subtitle {
-  margin: 0.1rem 0 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
 }
 .admin-panel-header__title-accent {
   display: inline-block;
@@ -322,10 +305,11 @@
   background: var(--surface);
   box-shadow: var(--shadow-card);
   padding: 0.75rem 0.85rem;
-  cursor: pointer;
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
-.admin-product-card:hover {
+/* Only the card's own link (icon/name/subtitle) and its action buttons show a hand cursor —
+ * the card itself is a static container, not a single giant click target. */
+.admin-product-card:not(.admin-product-card--static):hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-elevated);
   border-color: var(--line-strong);
@@ -423,6 +407,7 @@
   color: var(--text-muted);
 }
 .admin-swal-confirm, .admin-swal-cancel {
+  font-family: var(--admin-font-family) !important;
   border-radius: var(--admin-control-radius) !important;
   font-size: 0.8125rem !important;
   font-weight: 750 !important;

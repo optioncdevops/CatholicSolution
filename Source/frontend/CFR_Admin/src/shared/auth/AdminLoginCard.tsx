@@ -1,7 +1,7 @@
 import type { FormEvent, RefObject } from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowRightIcon, EyeIcon, EyeOffIcon, LockIcon, MailIcon, AlertTriangleIcon } from '@shared/app/components/UiIcons';
 import { Brand } from '@shared/app/components/Brand';
-import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 
 interface FieldErrors {
   email?: string;
@@ -15,8 +15,6 @@ interface AdminLoginCardProps {
   onPasswordChange: (value: string) => void;
   showPassword: boolean;
   onToggleShowPassword: () => void;
-  remember: boolean;
-  onRememberChange: (value: boolean) => void;
   onSubmit: (event: FormEvent) => void;
   submitting: boolean;
   formError: string | null;
@@ -24,13 +22,12 @@ interface AdminLoginCardProps {
   emailRef: RefObject<HTMLInputElement | null>;
   passwordRef: RefObject<HTMLInputElement | null>;
   forgotHref: string;
-  showDemoHint: boolean;
 }
 
 export function AdminLoginCard({
   email, onEmailChange, password, onPasswordChange, showPassword, onToggleShowPassword,
-  remember, onRememberChange, onSubmit, submitting, formError, fieldErrors,
-  emailRef, passwordRef, forgotHref, showDemoHint,
+  onSubmit, submitting, formError, fieldErrors,
+  emailRef, passwordRef, forgotHref,
 }: AdminLoginCardProps) {
   const canSubmit = email.trim().length > 0 && password.length > 0 && !submitting;
 
@@ -38,9 +35,9 @@ export function AdminLoginCard({
     <section className="admin-auth-card">
       <div className="admin-auth-card__header">
         <div className="admin-auth-card__logo">
-          <Brand compact to="/login" local />
+          <Brand prominent to="/login" local />
         </div>
-        <h1 className="admin-auth-card__title">Sign in to CFR Admin</h1>
+        <h1 className="admin-auth-card__title">Sign In to CFR Acutis</h1>
       </div>
 
       <form onSubmit={onSubmit} className="admin-auth-form" noValidate>
@@ -52,7 +49,7 @@ export function AdminLoginCard({
         ) : null}
 
         <div className="admin-auth-field">
-          <label className="admin-auth-label" htmlFor="admin-email">Email address</label>
+          <label className="admin-auth-label" htmlFor="admin-email">Email Address</label>
           <div className="admin-auth-input-wrap">
             <span className="admin-auth-input-icon"><MailIcon size={15} /></span>
             <input
@@ -73,7 +70,7 @@ export function AdminLoginCard({
         <div className="admin-auth-field">
           <div className="admin-auth-field__label-row">
             <label className="admin-auth-label" htmlFor="admin-password">Password</label>
-            <PlatformLink to={forgotHref} className="admin-auth-forgot">Forgot password?</PlatformLink>
+            <Link to={forgotHref} className="admin-auth-forgot">Forgot Password?</Link>
           </div>
           <div className="admin-auth-input-wrap">
             <span className="admin-auth-input-icon"><LockIcon size={15} /></span>
@@ -100,29 +97,18 @@ export function AdminLoginCard({
           {fieldErrors.password ? <p id="admin-password-error" className="admin-auth-field-error">{fieldErrors.password}</p> : null}
         </div>
 
-        <div className="admin-auth-checkbox-row">
-          <label className="admin-auth-checkbox">
-            <input type="checkbox" checked={remember} onChange={(event) => onRememberChange(event.target.checked)} />
-            Keep me signed in
-          </label>
-        </div>
-
         <button type="submit" className="admin-auth-submit" disabled={!canSubmit}>
           {submitting ? (
             <>
               <span className="admin-auth-spinner" aria-hidden="true" />
-              Signing in…
+              Signing In…
             </>
           ) : (
             <>
-              Sign in <ArrowRightIcon size={15} />
+              Sign In <ArrowRightIcon size={15} />
             </>
           )}
         </button>
-
-        {showDemoHint ? (
-          <p className="admin-auth-hint">Prototype credentials: carl.lapp@optionc.com / demo1234</p>
-        ) : null}
       </form>
     </section>
   );

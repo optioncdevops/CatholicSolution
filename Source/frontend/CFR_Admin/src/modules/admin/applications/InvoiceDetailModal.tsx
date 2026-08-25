@@ -1,11 +1,11 @@
-import { Drawer } from '@app/components/Drawer';
+import { BaseModal } from '@app/components/modal/BaseModal';
 import { DetailField } from '@app/components/DetailField';
 import { StatusBadge } from '@app/components/Badge';
 import { formatDate, formatDateTime, formatDaysLabel, effectiveInvoiceStatus } from '../utils/formatDate';
 import { useAdminData } from '../AdminDataContext';
 import type { Invoice } from '../types';
 
-export function InvoiceDetailDrawer({ invoice, onClose }: { invoice: Invoice | null; onClose: () => void }) {
+export function InvoiceDetailModal({ invoice, onClose }: { invoice: Invoice | null; onClose: () => void }) {
   const { getOrganization, getApplication } = useAdminData();
   if (!invoice) return null;
 
@@ -13,8 +13,9 @@ export function InvoiceDetailDrawer({ invoice, onClose }: { invoice: Invoice | n
   const app = getApplication(invoice.appId);
 
   return (
-    <Drawer open={Boolean(invoice)} title={invoice.title || invoice.invoiceNumber} description={org?.name} onClose={onClose}>
+    <BaseModal isOpen={Boolean(invoice)} onClose={onClose} title={invoice.title || invoice.invoiceNumber} size="md">
       <div className="flex flex-col gap-4">
+        {org?.name ? <p className="-mt-2 text-xs text-[var(--text-muted)]">{org.name}</p> : null}
         <div className="flex items-center gap-2">
           <StatusBadge status={effectiveInvoiceStatus(invoice.status, invoice.dueDate)} kind="invoice" />
           {invoice.status !== 'paid' && invoice.status !== 'cancelled' ? (
@@ -44,6 +45,6 @@ export function InvoiceDetailDrawer({ invoice, onClose }: { invoice: Invoice | n
         ) : null}
         <p className="text-xs text-[var(--text-faint)]">Preview only — this prototype has no real billing system or PDF generation.</p>
       </div>
-    </Drawer>
+    </BaseModal>
   );
 }

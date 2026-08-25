@@ -80,9 +80,7 @@ export function SampleAddPage() {
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
-        breadcrumb={{ label: 'Component library', to: '/admin/administration/component-library/view' }}
         title="Component Library — Add"
-        subtitle="Every form control this app has, in one place. Dev reference only — see removal note in SampleAddPage.tsx."
         action={<Link to="/admin/administration/component-library/view" className="text-xs font-bold text-white hover:underline">View Page Reference →</Link>}
       />
 

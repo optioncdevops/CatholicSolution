@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { AlertTriangle, Building2, Eye, Pencil, RefreshCw, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Building2, Eye, Pencil, RefreshCw, Search } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonIconButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
-import { StatusBadge } from '@app/components/Badge';
 import { InputField, Dropdown } from '@app/components/formControls';
 import { formatDate } from '../utils/formatDate';
 import { getProductWarnings } from './productValidation';
 import { ProductStatusDialog } from './ProductStatusDialog';
+import { ProductCard } from './ProductCard';
 import type { AdminApplication, ProductStatus } from '../types';
 
 /** Quick-filter chips — the full status set (including On Request / Archived) is still
@@ -37,7 +37,7 @@ export function ProductsListPage() {
   const [loading, setLoading] = useState(true);
   const [simulatedError, setSimulatedError] = useState(false);
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<ProductStatus | 'all'>('active');
   const [sortBy, setSortBy] = useState<SortOption>('updated');
 
   const [statusApp, setStatusApp] = useState<AdminApplication | null>(null);
@@ -100,7 +100,7 @@ export function ProductsListPage() {
           hideLabel
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name, ID, category, domain"
+          placeholder="Search by name, ID, subtitle, domain"
           startIcon={<Search size={13} />}
           className="min-h-8 text-xs placeholder:text-xs"
           wrapperClassName="min-w-[200px] max-w-xs shrink-0"
@@ -148,44 +148,28 @@ export function ProductsListPage() {
             const warnings = getProductWarnings(app, applications);
             const customerCount = customersForApp(app).length;
             return (
-              <article key={app.id} className="admin-product-card relative">
-                <div className="absolute right-[0.85rem] top-3">
-                  <StatusBadge status={app.status} kind="application" />
-                </div>
-
-                <div className="flex items-center gap-2.5 pr-16">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
-                  <div className="min-w-0">
-                    <Link to={`/admin/applications/${app.id}`} className="flex items-center gap-1.5 hover:underline">
-                      <span className="truncate text-sm font-extrabold text-[var(--text-primary)]">{app.name}</span>
-                      {warnings.length > 0 ? (
-                        <span title={`${warnings.length} data quality warning${warnings.length === 1 ? '' : 's'}`} aria-label={`${warnings.length} data quality warning${warnings.length === 1 ? '' : 's'}`}>
-                          <AlertTriangle size={13} className="shrink-0 text-[var(--warning)]" />
-                        </span>
-                      ) : null}
-                    </Link>
-                    <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{app.category}</span>
-                  </div>
-                </div>
-
-                <p className="admin-product-card__description">{app.description || 'No description yet.'}</p>
-
-                <div className="admin-product-card__divider" />
-
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
-                  <Building2 size={13} className="text-[var(--text-faint)]" />
-                  {customerCount} customer{customerCount === 1 ? '' : 's'}
-                </span>
-
-                <div className="admin-product-card__footer">
-                  <span className="truncate text-xs font-semibold text-[var(--text-faint)]">Updated {formatDate(app.updatedAt)}</span>
-                  <div className="flex items-center gap-0.5">
-                    <CommonIconButton aria-label={`View ${app.name}`} icon={<Eye size={14} />} onClick={() => navigate(`/admin/applications/${app.id}`)} />
-                    <CommonIconButton aria-label={`Edit ${app.name}`} icon={<Pencil size={14} />} onClick={() => navigate(`/admin/applications/${app.id}/edit`)} />
-                    <CommonIconButton aria-label={`Change status for ${app.name}`} icon={<RefreshCw size={14} />} onClick={() => { setStatusApp(app); setPendingStatus(null); }} />
-                  </div>
-                </div>
-              </article>
+              <ProductCard
+                key={app.id}
+                app={app}
+                linkTo={`/admin/applications/${app.id}`}
+                warningCount={warnings.length}
+                footer={(
+                  <>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+                      <Building2 size={13} className="text-[var(--text-faint)]" />
+                      {customerCount} customer{customerCount === 1 ? '' : 's'}
+                    </span>
+                    <div className="admin-product-card__footer">
+                      <span className="truncate text-xs font-semibold text-[var(--text-faint)]">Updated {formatDate(app.updatedAt)}</span>
+                      <div className="flex items-center gap-0.5">
+                        <CommonIconButton aria-label={`View ${app.name}`} tooltip="View" icon={<Eye size={14} />} onClick={() => navigate(`/admin/applications/${app.id}`)} />
+                        <CommonIconButton aria-label={`Edit ${app.name}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => navigate(`/admin/applications/${app.id}/edit`)} />
+                        <CommonIconButton aria-label={`Change status for ${app.name}`} tooltip="Change Status" icon={<RefreshCw size={14} />} onClick={() => { setStatusApp(app); setPendingStatus(null); }} />
+                      </div>
+                    </div>
+                  </>
+                )}
+              />
             );
           })}
         </div>

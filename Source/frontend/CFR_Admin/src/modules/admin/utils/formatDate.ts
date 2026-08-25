@@ -42,6 +42,12 @@ export function daysUntil(value: string): number {
   return -daysSince(value);
 }
 
+/** Whole days from one ISO date/datetime to another (positive = `to` is after `from`). */
+export function daysBetween(from: string, to: string): number {
+  const parse = (value: string) => new Date(value.includes('T') ? value : `${value}T00:00:00`);
+  return Math.round((parse(to).getTime() - parse(from).getTime()) / 86_400_000);
+}
+
 /** Derives a customer's access status from their subscription expiry date — never stored. */
 export function accessStatusOf(expiryDate: string): 'active' | 'expiring-soon' | 'expired' {
   const remaining = daysUntil(expiryDate);

@@ -102,7 +102,7 @@ export function FilePreviewModal({
     >
       <div className="absolute inset-0 bg-black/50" aria-hidden />
       <div className="relative z-10 flex h-full w-full flex-col overflow-hidden">
-        <div className="flex h-14 items-center justify-between border-b border-primary-700/40 bg-auth-primary px-4">
+        <div className="flex h-14 items-center justify-between border-b border-white/15 bg-[var(--primary)] px-4">
           <div className="min-w-0">
             <p
               className={cn(
@@ -112,7 +112,7 @@ export function FilePreviewModal({
             >
               {item.file.name}
             </p>
-            <p className="text-xs text-primary-100/90">
+            <p className="text-xs text-white/80">
               {safeIndex + 1} of {items.length} •{" "}
               {formatFileSize(item.file.size)} •{" "}
               {item.file.type ||
@@ -123,14 +123,14 @@ export function FilePreviewModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-primary-100 hover:bg-white/15 hover:text-white"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-white/80 hover:bg-white/15 hover:text-white"
             aria-label="Close preview"
           >
             <AppIcon name="x" size={18} />
           </button>
         </div>
 
-        <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-background-muted/60 px-4 py-6 dark:bg-primary-950/55">
+        <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-black/70 px-4 py-6">
           <FilePreviewRenderer
             item={item}
             zoom={zoom}
@@ -176,7 +176,7 @@ export function FilePreviewModal({
                 onClick={() => { setZoom((z) => Math.max(0.5, z - 0.25)); }}
                 disabled={!zoomEnabled}
               />
-              <span className="min-w-12 text-center text-xs font-medium text-foreground-muted">
+              <span className="min-w-12 text-center text-xs font-medium text-[var(--text-muted)]">
                 {zoomPercent}%
               </span>
               <CommonIconButton

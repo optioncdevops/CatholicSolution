@@ -43,10 +43,10 @@ const DATA_TABLE_TOOLBAR_BTN_BASE =
 export const DATA_TABLE_HEADER_MENU_ITEM_CLASS =
   "flex w-full cursor-pointer items-center px-2 py-1.5 text-left text-[var(--text-secondary)] hover:bg-[var(--hover)]";
 
-/** Sits inside the solid-primary header bar — needs light-on-dark contrast, not the page's
- * default muted-text/hover tokens (those assume a light background). */
+/** Sits inside the light slate-blue header bar — dark-on-light contrast, with a subtle
+ * navy-tinted hover instead of the page's default `--hover` token (tuned for a white surface). */
 export const DATA_TABLE_HEADER_MENU_BTN_CLASS =
-  "inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded text-white/70 hover:bg-white/15 hover:text-white";
+  "inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded text-[var(--text-muted)] hover:bg-[var(--table-header-hover)] hover:text-[var(--text-primary)]";
 
 export const DATA_TABLE_FULLSCREEN_BTN_CLASS = `${DATA_TABLE_TOOLBAR_BTN_BASE} h-7 w-7 shrink-0 border-[var(--line)] bg-[var(--surface)] text-[var(--text-muted)] hover:border-[var(--line-strong)] hover:bg-[var(--hover)]`;
 
