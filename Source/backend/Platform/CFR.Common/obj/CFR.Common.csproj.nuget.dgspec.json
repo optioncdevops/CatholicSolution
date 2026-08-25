@@ -1,28 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "E:\\Projects\\GitHub_OptionC\\CatholicSolution_SRC_PATH\\Source\\backend\\Platform\\CFR.Common\\CFR.Common.csproj": {}
+    "D:\\Project\\OptionC_CFR\\Source\\backend\\Platform\\CFR.Common\\CFR.Common.csproj": {}
   },
   "projects": {
-    "E:\\Projects\\GitHub_OptionC\\CatholicSolution_SRC_PATH\\Source\\backend\\Platform\\CFR.Common\\CFR.Common.csproj": {
+    "D:\\Project\\OptionC_CFR\\Source\\backend\\Platform\\CFR.Common\\CFR.Common.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\Projects\\GitHub_OptionC\\CatholicSolution_SRC_PATH\\Source\\backend\\Platform\\CFR.Common\\CFR.Common.csproj",
+        "projectUniqueName": "D:\\Project\\OptionC_CFR\\Source\\backend\\Platform\\CFR.Common\\CFR.Common.csproj",
         "projectName": "CFR.Common",
-        "projectPath": "E:\\Projects\\GitHub_OptionC\\CatholicSolution_SRC_PATH\\Source\\backend\\Platform\\CFR.Common\\CFR.Common.csproj",
-        "packagesPath": "C:\\Users\\paulb\\.nuget\\packages\\",
-        "outputPath": "E:\\Projects\\GitHub_OptionC\\CatholicSolution_SRC_PATH\\Source\\backend\\Platform\\CFR.Common\\obj\\",
+        "projectPath": "D:\\Project\\OptionC_CFR\\Source\\backend\\Platform\\CFR.Common\\CFR.Common.csproj",
+        "packagesPath": "C:\\Users\\Bsoft\\.nuget\\packages\\",
+        "outputPath": "D:\\Project\\OptionC_CFR\\Source\\backend\\Platform\\CFR.Common\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files\\DevExpress 24.2\\Components\\Offline Packages",
-          "C:\\Program Files\\DevExpress 26.1\\Components\\Offline Packages",
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
           "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
         ],
         "configFilePaths": [
-          "C:\\Users\\paulb\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 24.2.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 26.1.config",
+          "C:\\Users\\Bsoft\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -31,10 +27,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\DevExpress 24.2\\Components\\System\\Components\\Packages": {},
-          "C:\\Program Files\\DevExpress 26.1\\Components\\System\\Components\\Packages": {},
-          "https://api.nuget.org/v3/index.json": {},
-          "https://nuget.devexpress.com/lXcvCDOjiO3V9kHIKvqMGsaoxLa9XRVWCsA1WbWb3yRFdPhcRB/api/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net10.0": {
@@ -60,17 +53,9 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "dependencies": {
-            "HtmlAgilityPack": {
-              "target": "Package",
-              "version": "[1.12.4, )"
-            },
             "Microsoft.AspNetCore.Authentication.Certificate": {
               "target": "Package",
               "version": "[10.0.8, )"
-            },
-            "Microsoft.AspNetCore.Http.Abstractions": {
-              "target": "Package",
-              "version": "[2.3.10, )"
             },
             "Microsoft.Extensions.Caching.Memory": {
               "target": "Package",
@@ -88,25 +73,9 @@
               "target": "Package",
               "version": "[10.0.8, )"
             },
-            "NPOI": {
-              "target": "Package",
-              "version": "[2.8.0, )"
-            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.4, )"
-            },
-            "System.Security.Cryptography.Xml": {
-              "target": "Package",
-              "version": "[10.0.10, )"
-            },
-            "WindowsAzure.Storage": {
-              "target": "Package",
-              "version": "[9.3.3, )"
-            },
-            "ZXing.Net": {
-              "target": "Package",
-              "version": "[0.16.11, )"
             }
           },
           "imports": [
@@ -125,7 +94,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.301/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.303/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

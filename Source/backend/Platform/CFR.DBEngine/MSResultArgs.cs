@@ -1,5 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using CFR.Common;
+
 namespace CFR.DBEngine
 {
     public class TableSetDto
@@ -7,6 +9,30 @@ namespace CFR.DBEngine
         public List<List<Dictionary<string, object?>>> Tables { get; set; } = new();
     }
 
+    public class ErrorDetail(string field, string message)
+    {
+        public string Field { get; set; } = field;
+        public string Message { get; set; } = message;
+    }
+
+    /// <summary>
+    /// Paginated result metadata for a data query.
+    /// </summary>
+    public class ResponseData
+    {
+        public int TotalRecords { get; set; }
+        public int TotalMale { get; set; }
+        public int TotalFemale { get; set; }
+        public int TotalTransgender { get; set; }
+        public int FilteredCount { get; set; }
+        public int PageNumber { get; set; }
+        public int PageSize { get; set; }
+        public object Data { get; set; } = null!;
+    }
+
+    /// <summary>
+    /// Shared result envelope for DB operations and API responses.
+    /// </summary>
     public class MSResultArgs: IDisposable
     {
         private Dictionary<string, object>? _rowUniqueIdCollection;
@@ -20,6 +46,28 @@ namespace CFR.DBEngine
         {
             IsShowExceptionMessage = isShowExceptionMessage;
         }
+
+        #region API response
+
+        public long StatusCode { get; set; } = ErrorCodes.Success;
+        public string? StatusMessage { get; set; } = ErrorMessages.Success;
+        public object? ResultData { get; set; }
+        public List<ErrorDetail> Errors { get; set; } = [];
+        public string TraceId { get; set; } = Guid.NewGuid().ToString();
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+        public static MSResultArgs Custom(string message)
+        {
+            return new MSResultArgs
+            {
+                StatusCode = ErrorCodes.CustomMessage,
+                StatusMessage = message
+            };
+        }
+
+        #endregion API response
+
+        #region DB result
 
         public bool Success { get; set; }
 
@@ -72,6 +120,8 @@ namespace CFR.DBEngine
             }
         }
 
+        #endregion DB result
+
         #region Class Result Source
 
         public class ResultSource: IDisposable
@@ -93,25 +143,12 @@ namespace CFR.DBEngine
                 }
             }
 
-            /// <summary>
-            /// Get Dataset Object
-            /// </summary>
             public DataSet TableSet => _dataSource as DataSet ?? new DataSet();
 
-            /// <summary>
-            /// Get Data Table Object
-            /// </summary>
             public DataTable Table => _dataSource as DataTable ?? new DataTable();
 
-            /// <summary>
-            /// Get Data View Object
-            /// </summary>
             public DataView TableView => _dataSource as DataView ?? new DataView();
 
-            /// <summary>
-            /// Get Sclar value
-            /// </summary>
-            ///
             public ScalarType Scalar => ScalarType1 ?? new ScalarType();
 
             public ScalarType? ScalarType1 { get => ScalarType2; set => ScalarType2 = value; }
@@ -171,5 +208,17 @@ namespace CFR.DBEngine
         }
 
         #endregion IDisposable Members
+    }
+
+    /// <summary>
+    /// Typed API response envelope.
+    /// </summary>
+    public class MSResultArgs<T>
+    {
+        public long StatusCode { get; set; } = ErrorCodes.Success;
+        public string? StatusMessage { get; set; } = ErrorMessages.Success;
+        public T? ResultData { get; set; }
+        public List<ErrorDetail> Errors { get; set; } = [];
+        public string TraceId { get; set; } = string.Empty;
     }
 }

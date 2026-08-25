@@ -1,17 +1,16 @@
 // Copyright (c) OptionC. All rights reserved.
 
 using CFR.Common;
+using CFR.DBEngine;
 
 namespace CFR.Base
 {
     public static class ResultArgsHandler
     {
         /// <summary>
-        /// Sets the result arguments based on the HTTP type for non-generic ResultArgs.
+        /// Sets the result arguments based on the HTTP type for non-generic MSResultArgs.
         /// </summary>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        /// <param name="type">The HTTP type (e.g., POST, GET, DELETE, PUT).</param>
-        public static void SetResultArgs(ResultArgs resultArgs, APIHttpType type)
+        public static void SetResultArgs(MSResultArgs resultArgs, APIHttpType type)
         {
             ArgumentNullException.ThrowIfNull(resultArgs);
 
@@ -47,12 +46,9 @@ namespace CFR.Base
         }
 
         /// <summary>
-        /// Sets the result arguments based on the HTTP type for generic ResultArgs.
+        /// Sets the result arguments based on the HTTP type for generic MSResultArgs.
         /// </summary>
-        /// <typeparam name="T">The type of the result data.</typeparam>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        /// <param name="type">The HTTP type (e.g., POST, GET, DELETE, PUT).</param>
-        public static void SetResultArgs<T>(ResultArgs<T> resultArgs, APIHttpType type)
+        public static void SetResultArgs<T>(MSResultArgs<T> resultArgs, APIHttpType type)
         {
             ArgumentNullException.ThrowIfNull(resultArgs);
 
@@ -87,11 +83,7 @@ namespace CFR.Base
             }
         }
 
-        /// <summary>
-        /// Handles HTTP POST logic for non-generic ResultArgs.
-        /// </summary>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        private static void HandleHttpPost(ResultArgs resultArgs)
+        private static void HandleHttpPost(MSResultArgs resultArgs)
         {
             if (resultArgs.ResultData != null && int.TryParse(resultArgs.ResultData.ToString(), out int result) && result > 0)
             {
@@ -105,11 +97,7 @@ namespace CFR.Base
             }
         }
 
-        /// <summary>
-        /// Handles HTTP GET logic for non-generic ResultArgs.
-        /// </summary>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        private static void HandleHttpGet(ResultArgs resultArgs)
+        private static void HandleHttpGet(MSResultArgs resultArgs)
         {
             if (resultArgs.ResultData != null)
             {
@@ -123,11 +111,7 @@ namespace CFR.Base
             }
         }
 
-        /// <summary>
-        /// Handles HTTP DELETE logic for non-generic ResultArgs.
-        /// </summary>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        private static void HandleHttpDelete(ResultArgs resultArgs)
+        private static void HandleHttpDelete(MSResultArgs resultArgs)
         {
             if (resultArgs.ResultData != null && int.TryParse(resultArgs.ResultData.ToString(), out int result) && result > 0)
             {
@@ -141,11 +125,7 @@ namespace CFR.Base
             }
         }
 
-        /// <summary>
-        /// Handles HTTP PUT logic for non-generic ResultArgs.
-        /// </summary>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        private static void HandleHttpPut(ResultArgs resultArgs)
+        private static void HandleHttpPut(MSResultArgs resultArgs)
         {
             if (resultArgs.ResultData != null)
             {
@@ -159,12 +139,7 @@ namespace CFR.Base
             }
         }
 
-        /// <summary>
-        /// Handles HTTP POST logic for generic ResultArgs.
-        /// </summary>
-        /// <typeparam name="T">The type of the result data.</typeparam>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        private static void HandleHttpPost<T>(ResultArgs<T> resultArgs)
+        private static void HandleHttpPost<T>(MSResultArgs<T> resultArgs)
         {
             if (resultArgs.ResultData != null && int.TryParse(resultArgs.ResultData.ToString(), out int result) && result > 0)
             {
@@ -178,12 +153,7 @@ namespace CFR.Base
             }
         }
 
-        /// <summary>
-        /// Handles HTTP GET logic for generic ResultArgs.
-        /// </summary>
-        /// <typeparam name="T">The type of the result data.</typeparam>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        private static void HandleHttpGet<T>(ResultArgs<T> resultArgs)
+        private static void HandleHttpGet<T>(MSResultArgs<T> resultArgs)
         {
             if (resultArgs.ResultData != null)
             {
@@ -197,12 +167,7 @@ namespace CFR.Base
             }
         }
 
-        /// <summary>
-        /// Handles HTTP DELETE logic for generic ResultArgs.
-        /// </summary>
-        /// <typeparam name="T">The type of the result data.</typeparam>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        private static void HandleHttpDelete<T>(ResultArgs<T> resultArgs)
+        private static void HandleHttpDelete<T>(MSResultArgs<T> resultArgs)
         {
             if (resultArgs.ResultData != null && int.TryParse(resultArgs.ResultData.ToString(), out int result) && result > 0)
             {
@@ -216,12 +181,7 @@ namespace CFR.Base
             }
         }
 
-        /// <summary>
-        /// Handles HTTP PUT logic for generic ResultArgs.
-        /// </summary>
-        /// <typeparam name="T">The type of the result data.</typeparam>
-        /// <param name="resultArgs">The ResultArgs object to update.</param>
-        private static void HandleHttpPut<T>(ResultArgs<T> resultArgs)
+        private static void HandleHttpPut<T>(MSResultArgs<T> resultArgs)
         {
             if (resultArgs.ResultData != null)
             {

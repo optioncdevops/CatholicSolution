@@ -26,8 +26,6 @@ namespace CFR.DBEngine
             }
             _logFileName = string.Concat(_logFilePath, "\\", "Log_", DateTime.Today.ToShortDateString().Replace("/", "_"), ".log");
             _logAPIFileName = string.Concat(_logFilePath, "\\", "APILog_", DateTime.Today.ToShortDateString().Replace("/", "_"), ".log");
-            _logConductFileName = string.Concat(_logFilePath, "\\", "ConductLog_", DateTime.Today.ToShortDateString().Replace("/", "_"), ".log");
-            _logAttendanceFileName = string.Concat(_logFilePath, "\\", "AttendanceLog_", DateTime.Today.ToShortDateString().Replace("/", "_"), ".log");
         }
 
         /// <summary>

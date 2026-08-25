@@ -77,5 +77,4 @@ namespace CFR.CommonService.Interfaces
         public DateTime ModifiedAt { get; set; } = DateTime.UtcNow;
         public bool IsDeleted { get; set; } = true;
     }
-
 }

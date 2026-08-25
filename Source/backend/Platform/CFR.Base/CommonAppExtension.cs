@@ -1,12 +1,10 @@
 // Copyright (c) OptionC. All rights reserved.
 
 // using Serilog;
+using CFR.Base.Middlewares;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
-using CFR.Base.Middlewares;
-
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
 

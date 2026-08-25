@@ -2,9 +2,9 @@
 
 namespace CFR.Common
 {
-    public class ApiHttpClientHelper(IHttpClientFactory httpClientFactory)
+    public class ApiHttpClientHelper(System.Net.Http.IHttpClientFactory httpClientFactory)
     {
-        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+        private readonly System.Net.Http.IHttpClientFactory _httpClientFactory = httpClientFactory;
 
         public async Task<string> SendRequestAsync(string clientName, string endpoint, HttpMethod method, object? body = null, string? bearerToken = null)
         {

@@ -1,8 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using System.Threading.RateLimiting;
-
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading.RateLimiting;
 
 namespace CFR.Base
 {

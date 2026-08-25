@@ -2,7 +2,7 @@
 
 namespace CFR.Base;
 
-public class DisableAuthenticationPolicyEvaluator: IPolicyEvaluator
+public class DisableAuthenticationPolicyEvaluator : IPolicyEvaluator
 {
     public async Task<AuthenticateResult> AuthenticateAsync(AuthorizationPolicy policy, HttpContext context)
     {

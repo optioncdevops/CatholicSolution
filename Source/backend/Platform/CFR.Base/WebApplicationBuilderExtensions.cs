@@ -5,7 +5,7 @@ namespace CFR.Base
     public static class WebApplicationBuilderExtensions
     {
         /// <summary>
-        ///  var builder = WebApplication.CreateBuilder(args).UseSecureKestrel();  in program.cs files 
+        ///  var builder = WebApplication.CreateBuilder(args).UseSecureKestrel();  in program.cs files
         /// </summary>
         /// <param name="builder"></param>
         /// <returns></returns>
