@@ -3,3 +3,16 @@
 ################################################################################
 
 /.vs
+/Source/backend/.vs/CatholicSolution.slnx
+/Source/backend/CatholicSolution/.vs
+/Source/backend/CatholicSolution/obj
+/Source/backend/Gateway/CFR.Gateway/obj
+/Source/backend/Infrastructure/CFR.AcutisInfrastructure/obj
+/Source/backend/Infrastructure/CFR.PortalInfrastructure/obj
+/Source/backend/Microservices/CFR.Acutis/obj
+/Source/backend/Microservices/CFR.Portal/obj
+/Source/backend/Platform/CFR.Base/obj
+/Source/backend/Platform/CFR.CommonService/obj
+/Source/backend/Platform/CFR.DBEngine/obj
+/Source/backend/Service/CFR.AcutisService/obj
+/Source/backend/Service/CFR.PortalService/obj
