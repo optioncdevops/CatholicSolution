@@ -2,9 +2,9 @@
 
 using Swashbuckle.AspNetCore.SwaggerUI;
 
-using static MattMoney.Common.Constant;
+using static CFR.Common.Constant;
 
-namespace MattMoney.Gateway;
+namespace CFR.Gateway;
 
 /// <summary>
 /// Swagger UI at the gateway: local APIGateway spec plus OpenAPI JSON proxied through YARP.

@@ -2,9 +2,9 @@
 
 using Scalar.AspNetCore;
 
-using static MattMoney.Common.Constant;
+using static CFR.Common.Constant;
 
-namespace MattMoney.Gateway;
+namespace CFR.Gateway;
 
 /// <summary>
 /// Scalar API reference at the gateway: local APIGateway spec plus OpenAPI JSON proxied through YARP.

@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Platform\MattMoney.Base\MattMoney.Base.csproj" />
+    <ProjectReference Include="..\..\Platform\CFR.Base\CFR.Base.csproj" />
   </ItemGroup>
 
 </Project>

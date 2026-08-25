@@ -1,5 +1,7 @@
 <Solution>
-  <Folder Name="/Gateway/" />
+  <Folder Name="/Gateway/">
+    <Project Path="Gateway/CFR.Gateway/CFR.Gateway.csproj" />
+  </Folder>
   <Folder Name="/Infrastructure/">
     <Project Path="Infrastructure/CFR.AcutisInfrastructure/CFR.AcutisInfrastructure.csproj" Id="5b369e69-40b5-4a0c-a021-1b4e89ba40fa" />
     <Project Path="Infrastructure/CFR.PortalInfrastructure/CFR.PortalInfrastructure.csproj" Id="5da51d3b-9888-4004-acb6-179d7435b7b2" />
