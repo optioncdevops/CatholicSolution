@@ -16,3 +16,16 @@
 /Source/backend/Platform/CFR.DBEngine/obj
 /Source/backend/Service/CFR.AcutisService/obj
 /Source/backend/Service/CFR.PortalService/obj
+/Source/backend/Infrastructure/CFR.AcutisInfrastructure/bin/Debug/net10.0
+/Source/backend/Infrastructure/CFR.PortalInfrastructure/bin/Debug/net10.0
+/Source/backend/Microservices/CFR.Acutis/bin/Debug/net10.0
+/Source/backend/Microservices/CFR.Portal/bin/Debug/net10.0
+/Source/backend/Platform/CFR.Base/bin/Debug/net10.0
+/Source/backend/Platform/CFR.Common/bin/Debug/net10.0
+/Source/backend/Platform/CFR.DBEngine/bin/Debug/net10.0
+/Source/backend/Service/CFR.AcutisService/bin/Debug/net10.0
+/Source/backend/Service/CFR.CommonService/bin/Debug/net10.0
+/Source/backend/Service/CFR.CommonService/obj
+/Source/backend/Service/CFR.PortalService/bin/Debug/net10.0
+/Source/backend/Platform/CFR.Common/obj/Debug/net10.0
+/Source/backend/Platform/CFR.Common/obj
