@@ -9,13 +9,13 @@
     <Project Path="Microservices/CFR.Portal/CFR.Portal.csproj" Id="9c1c772e-bb0a-4e66-95d5-4bde4e09da38" />
   </Folder>
   <Folder Name="/Platform/">
-    <Project Path="Platform/CFR.Base/CFR.Base.csproj" Id="255e93a6-3dbe-435c-8727-7696c43609bf" />
+    <Project Path="Platform/CFR.Base/CFR.Base.csproj" />
     <Project Path="Platform/CFR.Common/CFR.Common.csproj" Id="4814584a-ddc1-4bd9-ab51-13f233192d0d" />
-    <Project Path="Platform/CFR.CommonService/CFR.CommonService.csproj" Id="f6ef559e-9d47-43d9-90b1-9968f14e4881" />
-    <Project Path="Platform/CFR.DBEngine/CFR.DBEngine.csproj" Id="77060b51-df8a-4251-a9c8-18b665913110" />
+    <Project Path="Platform/CFR.DBEngine/CFR.DBEngine.csproj" />
   </Folder>
   <Folder Name="/Service/">
     <Project Path="Service/CFR.AcutisService/CFR.AcutisService.csproj" Id="6f1fbf2e-726b-446a-b4f2-35aab88c9db1" />
+    <Project Path="Service/CFR.CommonService/CFR.CommonService.csproj" />
     <Project Path="Service/CFR.PortalService/CFR.PortalService.csproj" Id="56ff7d75-4b4f-4f51-9dc0-9cbed3742d00" />
   </Folder>
 </Solution>

@@ -225,7 +225,7 @@ namespace CFR.Common
 
         public static class SwaggerModuleDoc
         {
-            public const string OptionCBGateway = "MattMoney.Gateway";
+            public const string OptionCBGateway = "CFR.Gateway";
             /// <summary>
             /// Acutis Potal
             /// </summary>
@@ -248,8 +248,8 @@ namespace CFR.Common
             /// </summary>
             public const string OptionCFamily = "OptionC.Member";
 
-            public const string OptionCFamilyDocs = "MattMoney.Member";
-            public const string FamilyOffice = "MattMoney.Member";
+            public const string OptionCFamilyDocs = "CFR.Member";
+            public const string FamilyOffice = "CFR.Member";
 
             /// <summary>
             /// MyMessage Portal

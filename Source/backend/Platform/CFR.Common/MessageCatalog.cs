@@ -344,7 +344,7 @@ namespace CFR.Common
         public const string OrganizationSignupSavedSuccess = "Organization signup saved successfully.";
         public const string OrganizationSignupSaveFailed = "Failed to save organization signup.";
         public const string MattMoneyNavigationLoadFailed = "Failed to load MattMoney navigation.";
-        public const string MattMoneyRoleNotPermitted = "You do not have permission to Sign In to MattMoney.";
+        public const string MattMoneyRoleNotPermitted = "You do not have permission to Sign In to CFR.";
         public const string InCompleteUser = "Your account has not been completed";
         public const string InValidRoleSwitch = "Invalid Role switch has given!";
         public const string InValidCredentials = "Invalid Credentials";
