@@ -1,0 +1,11 @@
+{
+  "note": "These applications were URL-linked SaaS products in v1.6.7; no product source code existed in the Catholic Solutions repository, so no source is fabricated here.",
+  "apps": [
+    "FerrerWorks",
+    "Mass Card Requests",
+    "Vincent Volunteer",
+    "Berchmans",
+    "Alive Date",
+    "Friar Friend"
+  ]
+}

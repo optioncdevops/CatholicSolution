@@ -1,0 +1,100 @@
+import type { AdminApplication } from '../types';
+
+export interface ProductWarning {
+  id: string;
+  message: string;
+}
+
+function hostnameOf(url: string): string | null {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Non-blocking data-quality and lifecycle warnings for a product, evaluated against the
+ * full catalog (needed for the duplicate-domain check). Pure function — no side effects.
+ */
+export function getProductWarnings(app: AdminApplication, allApplications: AdminApplication[]): ProductWarning[] {
+  const warnings: ProductWarning[] = [];
+  const url = app.productionUrl.trim();
+
+  if (!url) {
+    warnings.push({ id: 'missing-url', message: 'Missing production URL.' });
+  } else {
+    const hostname = hostnameOf(url);
+    if (!hostname) {
+      warnings.push({ id: 'invalid-url', message: 'Production URL is not a valid web address.' });
+    } else {
+      if (url.startsWith('http://')) {
+        warnings.push({ id: 'non-https', message: 'Production URL is not HTTPS.' });
+      }
+      const duplicate = allApplications.find((other) => other.id !== app.id && hostnameOf(other.productionUrl.trim()) === hostname);
+      if (duplicate) {
+        warnings.push({ id: 'duplicate-domain', message: `Same domain as "${duplicate.name}".` });
+      }
+    }
+  }
+
+  if (!app.description.trim()) {
+    warnings.push({ id: 'missing-description', message: 'Missing description.' });
+  }
+
+  if (app.ownership === 'partner' && hostnameOf(url)?.endsWith('optioncapp.com')) {
+    warnings.push({ id: 'partner-first-party-domain', message: 'Marked as a partner product but hosted on a first-party (optioncapp.com) domain.' });
+  }
+
+  return warnings;
+}
+
+export interface ProductFormErrors {
+  name?: string;
+  category?: string;
+  productionUrl?: string;
+}
+
+/** Validates the editable fields of a product form. Pure function, shared by every editor. */
+export function validateProductForm(form: AdminApplication): ProductFormErrors {
+  const errors: ProductFormErrors = {};
+  if (!form.name.trim()) errors.name = 'Product name is required.';
+  if (!form.category.trim()) errors.category = 'Subtitle is required.';
+  if (form.productionUrl.trim()) {
+    const isValidUrl = (() => {
+      try {
+        const url = new URL(form.productionUrl.trim());
+        return url.protocol === 'http:' || url.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    })();
+    if (!isValidUrl) errors.productionUrl = 'Enter a valid URL, e.g. https://app.optioncapp.com.';
+  }
+  return errors;
+}
+
+/** Whether the current status allows the product to be launched directly from App Hub. */
+export function isLaunchable(status: AdminApplication['status']) {
+  return status === 'active';
+}
+
+export type ProductActionKind = 'launch' | 'preview-only' | 'unavailable';
+
+/**
+ * The one correct App Hub action per status — derived, not stored, so an invalid combination
+ * (e.g. an Inactive product exposing a Launch button) can't exist in the UI.
+ */
+export function resolveProductAction(status: AdminApplication['status']): { kind: ProductActionKind; label: string } {
+  switch (status) {
+    case 'active': return { kind: 'launch', label: 'Launch' };
+    case 'coming-soon': return { kind: 'preview-only', label: 'Coming soon' };
+    case 'inactive': return { kind: 'unavailable', label: 'Unavailable' };
+  }
+}
+
+export const STATUS_IMPACT: Record<AdminApplication['status'], string> = {
+  active: 'The product becomes launchable and appears as active in App Hub.',
+  inactive: 'The product is temporarily hidden from launch actions but stays in the registry. Existing organization assignments are preserved.',
+  'coming-soon': 'The product becomes visible in App Hub as a preview with no launch action available.',
+};

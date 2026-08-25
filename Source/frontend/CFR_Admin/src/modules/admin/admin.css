@@ -1,0 +1,492 @@
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes slide-in-right { from { transform: translateX(12px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slide-in-left { from { transform: translateX(-12px); opacity: .4; } to { transform: translateX(0); opacity: 1; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Single shared filter-chip style — every toolbar's status filter buttons use this instead of
+   each page repeating (and subtly drifting from) its own inline Tailwind chain. */
+.admin-filter-chip {
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 750;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.admin-filter-chip:hover { background: var(--hover); }
+.admin-filter-chip--active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+.admin-filter-chip--active:hover { background: var(--primary); }
+
+/* Sticky action bar pinned to the bottom of a form page — stays visible while the form
+   content above it scrolls, the common SaaS "save/cancel toolbar" pattern. */
+.admin-sticky-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0 -1rem -1rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 -8px 20px -12px rgba(18, 38, 76, 0.18);
+}
+
+/* Restrained dot-grid texture behind the console — scoped to AdminShell only (never the
+   login/auth screens, which keep their own brand treatment). */
+.admin-shell-bg {
+  background-color: var(--bg-app);
+  background-image: radial-gradient(circle, rgba(18, 38, 76, 0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.admin-reveal { animation: rise-in 220ms ease-out both; }
+.admin-reveal-stagger > * { animation: rise-in 220ms ease-out both; }
+.admin-reveal-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.admin-reveal-stagger > *:nth-child(2) { animation-delay: 30ms; }
+.admin-reveal-stagger > *:nth-child(3) { animation-delay: 60ms; }
+.admin-reveal-stagger > *:nth-child(4) { animation-delay: 90ms; }
+.admin-reveal-stagger > *:nth-child(5) { animation-delay: 120ms; }
+.admin-reveal-stagger > *:nth-child(6) { animation-delay: 150ms; }
+
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.admin-table thead th {
+  text-align: left; padding: 0.6rem 0.9rem; font-size: 0.6875rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); background: var(--surface-muted);
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.admin-table tbody td { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+.admin-table tbody tr:last-child td { border-bottom: none; }
+.admin-table tbody tr:hover { background: var(--hover); }
+.admin-table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow-card); }
+
+/* --- Industry-standard data table: sticky header, frozen leading column, scrollable body --- */
+.admin-datatable-scroll {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.admin-datatable { width: 100%; min-width: max-content; border-collapse: separate; border-spacing: 0; font-size: 0.8125rem; }
+.admin-datatable thead th {
+  position: sticky; top: 0; z-index: 2;
+  text-align: left; padding: 0.6rem 0.9rem; font-size: 0.6875rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); background: var(--surface-muted);
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.admin-datatable tbody td { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--line-soft); vertical-align: middle; background: var(--surface); white-space: nowrap; }
+.admin-datatable tbody tr:last-child td { border-bottom: none; }
+.admin-datatable tbody tr:hover td { background: var(--hover); }
+.admin-datatable__pinned {
+  position: sticky; left: 0; z-index: 1;
+  box-shadow: 2px 0 4px -2px rgba(15, 23, 42, .12);
+}
+.admin-datatable thead th.admin-datatable__pinned { z-index: 3; }
+
+.admin-skeleton {
+  border-radius: var(--radius-control); background: linear-gradient(90deg, var(--bg-subtle) 25%, var(--surface-muted) 37%, var(--bg-subtle) 63%);
+  background-size: 400% 100%; animation: admin-shimmer 1.4s ease infinite;
+}
+@keyframes admin-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-reveal, .admin-reveal-stagger > *, .admin-skeleton { animation: none !important; }
+}
+
+/* The whole page body is one framed card — the title strip is its top region, not a
+   separate floating panel, so nothing reads as a "card inside a card". */
+.admin-page-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 60%, var(--surface-muted) 160%);
+  box-shadow: var(--shadow-soft);
+  padding: 0.75rem 1rem 1rem;
+}
+
+@media (max-width: 640px) {
+  .admin-page-card { padding: 0.65rem 0.8rem 0.8rem; border-radius: var(--radius-control); }
+  .admin-panel-header { margin: -0.65rem -0.8rem 0.5rem; border-radius: var(--radius-control) var(--radius-control) 0 0; }
+}
+
+/* Bleeds to the parent .admin-page-card's edges (cancels its padding) so the title bar reads
+ * as the card's own top region, flush top/left/right, instead of a card floating inside a card.
+ * A distinct, lighter navy from the data-grid header (var(--primary)) below it and the nav strip
+ * above it, so the three brand-navy surfaces don't collapse into one monotone block. */
+.admin-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: -0.75rem -1rem 0.5rem;
+  padding: 0.375rem 1.25rem;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-soft);
+}
+.admin-panel-header__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-family: var(--admin-font-family-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+  color: #fff;
+}
+.admin-panel-header__title-accent {
+  display: inline-block;
+  width: 0.25rem;
+  height: 1rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--secondary);
+}
+.admin-panel-header__action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-plane-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 168, 63, .35);
+  background: rgba(217, 168, 63, .12);
+  padding: 0 0.65rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #92670f;
+  white-space: nowrap;
+}
+
+.admin-top-accent {
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--primary) 100%);
+}
+
+.admin-nav-scroll { scrollbar-width: none; }
+.admin-nav-scroll::-webkit-scrollbar { display: none; }
+
+.admin-nav-strip {
+  background: var(--primary);
+}
+
+.admin-nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  margin: 0.4rem 0.3rem 0.4rem 0;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 750;
+  color: rgba(255, 255, 255, 0.68);
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+}
+.admin-nav-item:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+.admin-nav-item--active {
+  color: var(--primary);
+  background: #fff;
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.35);
+}
+.admin-nav-item--active:hover { color: var(--primary); background: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-nav-item { transition: none; }
+}
+
+.admin-nav-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.admin-nav-dropdown__panel {
+  z-index: 100;
+  width: 13rem;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  padding: 0.4rem;
+}
+
+.admin-nav-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: var(--radius-control);
+  padding: 0.55rem 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 750;
+  color: var(--text-primary);
+  transition: background-color 120ms ease;
+}
+.admin-nav-dropdown__item:hover { background: var(--hover); }
+.admin-nav-dropdown__item--active { background: var(--hover); color: var(--primary); }
+
+.admin-nav-dropdown__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  size: 2rem;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+  color: var(--primary);
+}
+
+.admin-kpi-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  padding: 0.85rem 1rem;
+  box-shadow: var(--shadow-card);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.admin-kpi-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-elevated); }
+.admin-kpi-tile__icon {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.7rem;
+  color: #fff;
+  box-shadow: 0 6px 16px -6px rgba(15, 23, 42, 0.35);
+}
+
+.admin-panel-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 55%, var(--surface-muted) 180%);
+  box-shadow: var(--shadow-card);
+}
+
+.admin-product-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  padding: 0.75rem 0.85rem;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+/* Only the card's own link (icon/name/subtitle) and its action buttons show a hand cursor —
+ * the card itself is a static container, not a single giant click target. */
+.admin-product-card:not(.admin-product-card--static):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+  border-color: var(--line-strong);
+}
+.admin-product-card__description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 0.45rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: var(--text-muted);
+  min-height: 1.95rem;
+}
+.admin-product-card__divider {
+  margin: 0.5rem 0;
+  height: 1px;
+  background: var(--line-soft);
+}
+.admin-product-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.admin-panel-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.admin-health-tile {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-control);
+  padding: 0.85rem 0.9rem;
+  background: var(--surface-muted);
+}
+
+.admin-quick-action {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  padding: 0.85rem 1rem;
+  box-shadow: var(--shadow-soft);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+.admin-quick-action:hover { transform: translateY(-2px); box-shadow: var(--shadow-card); border-color: var(--line-strong); }
+.admin-quick-action__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  flex-shrink: 0;
+  border-radius: 0.65rem;
+  color: #fff;
+  box-shadow: 0 6px 16px -6px rgba(15, 23, 42, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-kpi-tile, .admin-quick-action { transition: none; }
+  .admin-kpi-tile:hover, .admin-quick-action:hover { transform: none; }
+}
+
+/* --- SweetAlert2 confirmation dialogs, themed to match the admin console --- */
+/* Our own drawers/dialogs (Drawer, ProductStatusDialog) use z-index up
+   to 1100, and confirmAction() is often triggered from inside one of them — SweetAlert2's
+   default .swal2-container z-index (1060) sits below that, so raise it here. */
+.swal2-container { z-index: 2000 !important; }
+
+.admin-swal-popup {
+  font-family: var(--admin-font-family);
+  border-radius: var(--radius-panel);
+  padding: 1.5rem;
+}
+.admin-swal-title {
+  font-family: var(--admin-font-family-display);
+  font-size: 1.0625rem !important;
+  font-weight: 800 !important;
+  color: var(--text-primary);
+}
+.admin-swal-text {
+  font-size: 0.8125rem !important;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.admin-swal-confirm, .admin-swal-cancel {
+  font-family: var(--admin-font-family) !important;
+  border-radius: var(--admin-control-radius) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 750 !important;
+  padding: 0.55rem 1.1rem !important;
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swal2-show, .swal2-hide { animation: none !important; }
+}
+
+.admin-email-template-item {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 750;
+  color: var(--text-primary);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.admin-email-template-item:hover { background: var(--hover); }
+.admin-email-template-item--active {
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+.admin-email-template-item__dot {
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--warning);
+}
+
+.admin-email-template-tag {
+  border-radius: 999px;
+  border: 1px dashed var(--line-strong);
+  background: var(--surface-muted);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  font-family: var(--admin-font-family, monospace);
+  color: var(--text-secondary);
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.admin-email-template-tag:hover {
+  background: var(--hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.admin-email-preview {
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
+  padding: 1rem;
+}
+.admin-email-preview__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.admin-email-preview__subject {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.6rem;
+}
+.admin-email-preview__body {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
