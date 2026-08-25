@@ -1,22 +1,20 @@
 import { useState } from 'react';
 import { CommonButton } from '@app/components/buttons';
-import { Drawer } from '@app/components/Drawer';
-import { Dropdown, InputField, MandatoryIndicator, TextareaField } from '@app/components/formControls';
+import { BaseModal } from '@app/components/modal/BaseModal';
+import { Dropdown, InputField, TextareaField } from '@app/components/formControls';
 import { useAdminData } from '../AdminDataContext';
 import type { InvoiceItem } from '../types';
-
-const ALL_PRODUCTS_OPTION = 'all-products';
 
 export interface InvoiceItemFormValue {
   title: string;
   description: string;
   defaultAmount: number;
-  appId?: string;
+  appId: string;
 }
 
-const EMPTY_FORM: InvoiceItemFormValue = { title: '', description: '', defaultAmount: 0, appId: undefined };
+const EMPTY_FORM: InvoiceItemFormValue = { title: '', description: '', defaultAmount: 0, appId: '' };
 
-interface InvoiceItemFormDrawerProps {
+interface InvoiceItemFormModalProps {
   /** `null` = closed. `'create'` = new item. An `InvoiceItem` = edit that item. */
   target: 'create' | InvoiceItem | null;
   onClose: () => void;
@@ -24,7 +22,7 @@ interface InvoiceItemFormDrawerProps {
   onSave: (item: InvoiceItem) => void;
 }
 
-export function InvoiceItemFormDrawer({ target, onClose, onCreate, onSave }: InvoiceItemFormDrawerProps) {
+export function InvoiceItemFormModal({ target, onClose, onCreate, onSave }: InvoiceItemFormModalProps) {
   const { applications } = useAdminData();
   const isCreate = target === 'create';
   const editing = target && target !== 'create' ? target : null;
@@ -33,46 +31,50 @@ export function InvoiceItemFormDrawer({ target, onClose, onCreate, onSave }: Inv
 
   const targetKey = isCreate ? 'create' : (editing?.id ?? null);
   if (targetKey !== lastTargetKey) {
-    // Reset the form whenever a different item opens for edit, or the drawer opens fresh for create.
+    // Reset the form whenever a different item opens for edit, or the modal opens fresh for create.
     // (Adjusted during render — this codebase's convention — see AccountModals.tsx.)
-    setForm(editing ? { title: editing.title, description: editing.description, defaultAmount: editing.defaultAmount, appId: editing.appId } : EMPTY_FORM);
+    setForm(editing ? { title: editing.title, description: editing.description, defaultAmount: editing.defaultAmount, appId: editing.appId } : { ...EMPTY_FORM, appId: applications[0]?.id ?? '' });
     setLastTargetKey(targetKey);
   }
 
   if (!target) return null;
 
+  const hasErrors = !form.title.trim() || !form.appId;
+
   const handleSubmit = () => {
-    if (!form.title.trim()) return;
+    if (hasErrors) return;
     if (isCreate) onCreate(form);
     else if (editing) onSave({ ...editing, ...form });
   };
 
   return (
-    <Drawer
-      open={Boolean(target)}
-      title={isCreate ? 'Add Invoice Item' : 'Edit Invoice Item'}
-      description={editing?.title}
+    <BaseModal
+      isOpen={Boolean(target)}
       onClose={onClose}
+      title={isCreate ? 'Add Invoice Item' : 'Edit Invoice Item'}
+      size="sm"
+      showMandatory
       footer={(
         <>
           <CommonButton variant="outline" onClick={onClose}>Cancel</CommonButton>
-          <CommonButton variant="primary" onClick={handleSubmit} disabled={!form.title.trim()}>Save</CommonButton>
+          <CommonButton variant="primary" onClick={handleSubmit} disabled={hasErrors}>Save</CommonButton>
         </>
       )}
     >
       <div className="flex flex-col gap-3.5">
-        <MandatoryIndicator align="end" />
+        {editing ? <p className="-mt-2 text-xs text-[var(--text-muted)]">{editing.title}</p> : null}
         <InputField label="Title" required value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
         <TextareaField label="Description" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} showCharCount={false} />
         <InputField label="Default amount (USD)" type="number" value={form.defaultAmount} onChange={(event) => setForm({ ...form, defaultAmount: Number(event.target.value) || 0 })} />
         <Dropdown
-          label="Product" searchable={false} clearable={false}
-          value={form.appId ?? ALL_PRODUCTS_OPTION}
-          onValueChange={(value) => setForm({ ...form, appId: value === ALL_PRODUCTS_OPTION ? undefined : value })}
-          options={[{ id: ALL_PRODUCTS_OPTION, value: 'All Products (Generic)' }, ...applications.map((app) => ({ id: app.id, value: app.name }))]}
-          helperText="Scopes this item to one product's invoices, or leave as a generic item available everywhere."
+          label="Product" required searchable={false} clearable={false}
+          value={form.appId}
+          onValueChange={(value) => setForm({ ...form, appId: value ?? '' })}
+          options={applications.map((app) => ({ id: app.id, value: app.name }))}
+          disabled={!isCreate}
+          helperText={isCreate ? "Scopes this item to one product's invoices." : 'The product cannot be changed after an item is created.'}
         />
       </div>
-    </Drawer>
+    </BaseModal>
   );
 }

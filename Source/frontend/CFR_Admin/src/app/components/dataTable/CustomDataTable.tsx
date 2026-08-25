@@ -71,7 +71,6 @@ import {
   resolveClientExportPrintTitle,
   runExportAfterPaint,
 } from "./partials/tableExportUtils";
-import { downloadExcelXlsx } from "./partials/tableExcelExport";
 import { downloadTableCsv } from "./partials/tableCsvExport";
 
 export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
@@ -137,9 +136,9 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
   /** Sticky / selection cells must track row striping (`group` on `<tr>`). This app has no dark
    * theme, so these are the same CSS-var tokens used everywhere else, not a raw Tailwind scale. */
   const frozenStripedCellClass =
-    "sticky z-10 border-r border-[var(--line-soft)] group-odd:bg-[var(--surface)] group-even:bg-[var(--line-soft)]";
+    "sticky z-10 border-r border-[var(--line-soft)] group-odd:bg-[var(--surface)] group-even:bg-[var(--row-stripe)]";
   const selectionStripedCellClass =
-    "border-r border-[var(--line-soft)] group-odd:bg-[var(--surface)] group-even:bg-[var(--line-soft)]";
+    "border-r border-[var(--line-soft)] group-odd:bg-[var(--surface)] group-even:bg-[var(--row-stripe)]";
   const cellTextClass = "min-w-0 align-middle leading-snug";
 
   const exportFileBase = React.useMemo(
@@ -787,7 +786,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
   const exportBusyRef = React.useRef(false);
 
   /** Builds CSV/HTML only on click; refs avoid stale data without per-render memoization of export blobs. */
-  const runClientExport = React.useCallback((task: () => void) => {
+  const runClientExport = React.useCallback((task: () => void | Promise<void>) => {
     if (exportBusyRef.current) { return; }
     exportBusyRef.current = true;
     setExportBusy(true);
@@ -823,14 +822,16 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
   }, [exportFileBase, runClientExport, resolveExportColumns]);
 
   const handleExportExcel = React.useCallback(() => {
-    runClientExport(() =>
+    // exceljs is a large dependency — load it only when Excel export is actually used.
+    runClientExport(async () => {
+      const { downloadExcelXlsx } = await import("./partials/tableExcelExport");
       downloadExcelXlsx(
         resolveExportColumns(),
         sortedRowsExportRef.current,
         `${exportFileBase}.xlsx`,
         { title: resolveClientExportPrintTitle(exportFileBase) },
-      ),
-    );
+      );
+    });
   }, [exportFileBase, runClientExport, resolveExportColumns]);
 
   const handleExportPrint = React.useCallback(() => {
@@ -1113,9 +1114,9 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                         className={cn(
                           // Solid (not tinted) background — a semi-transparent header lets content
                           // scrolling underneath the frozen column show through and overlap its text.
-                          `px-1.5 py-0.5 text-[11px] font-bold text-white uppercase tracking-wide select-none bg-[var(--primary)] align-middle ${getColumnTextAlignClass(col.align)}`,
+                          `px-1.5 py-0.5 text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wide select-none bg-[var(--table-header-bg)] align-middle ${getColumnTextAlignClass(col.align)}`,
                         isFrozen
-                          ? "sticky z-20 border-r border-white/15 bg-[var(--primary)]"
+                          ? "sticky z-20 border-r border-[var(--table-header-border)] bg-[var(--table-header-bg)]"
                             : "",
                           showCellBorders && DATA_TABLE_HEADER_CELL_BORDER_CLASS,
                           col.className,
@@ -1209,7 +1210,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                               data-datatable-header-menu-trigger=""
                                 className={cn(
                                   DATA_TABLE_HEADER_MENU_BTN_CLASS,
-                                  isFilterOpen && "bg-white/15",
+                                  isFilterOpen && "bg-[var(--table-header-hover)]",
                                 )}
                                 onMouseDown={(e) => { e.stopPropagation(); }}
                               onClick={(e) => {
@@ -1421,7 +1422,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                             <tr
                               key={key}
                               className={`group transition-colors hover:bg-[var(--hover)] ${enableRowStriping
-                                  ? "odd:bg-[var(--surface)] even:bg-[var(--line-soft)]"
+                                  ? "odd:bg-[var(--surface)] even:bg-[var(--row-stripe)]"
                                   : "bg-[var(--surface)]"
                               }`}
                             >
@@ -1459,7 +1460,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                         <tr
                           key={key}
                         className={`group transition-colors hover:bg-[var(--hover)] ${enableRowStriping
-                              ? "odd:bg-[var(--surface)] even:bg-[var(--line-soft)]"
+                              ? "odd:bg-[var(--surface)] even:bg-[var(--row-stripe)]"
                               : "bg-[var(--surface)]"
                           } ${onRowClick || onRowDoubleClick
                               ? "cursor-pointer"

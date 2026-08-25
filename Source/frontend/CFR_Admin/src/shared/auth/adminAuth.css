@@ -241,6 +241,7 @@
 .admin-auth-submit:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .admin-auth-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 .admin-auth-submit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.admin-auth-submit--link { width: 100%; margin-top: 0.5rem; text-decoration: none; }
 
 .admin-auth-spinner {
   width: 0.95rem;
@@ -262,4 +263,124 @@
   line-height: 1.55;
   color: var(--text-faint);
   text-align: center;
+}
+
+/* --- Shared across forgot/reset password — same admin card shell as sign-in --- */
+.admin-auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.admin-auth-back-link:hover { color: var(--primary); }
+
+.admin-auth-card__kicker {
+  display: inline-block;
+  margin-bottom: 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--secondary-hover);
+}
+
+.admin-auth-card__mark {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0 auto 0.85rem;
+  border-radius: var(--radius-panel);
+  background: var(--primary-muted);
+  color: var(--primary);
+}
+
+.admin-auth-card__description {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.admin-auth-field-hint {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+.admin-auth-security-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border-radius: var(--radius-control);
+  background: var(--surface-muted);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.admin-auth-security-note svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--text-faint); }
+
+.admin-auth-strength {
+  display: flex;
+  gap: 0.3rem;
+}
+.admin-auth-strength span {
+  flex: 1;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: var(--line-soft);
+  transition: background-color 150ms ease;
+}
+.admin-auth-strength span.is-level-1 { background: var(--error); }
+.admin-auth-strength span.is-level-2 { background: var(--warning); }
+.admin-auth-strength span.is-level-3 { background: var(--secondary); }
+.admin-auth-strength span.is-level-4 { background: var(--success); }
+
+.admin-auth-text-link {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.admin-auth-text-link:hover { text-decoration: underline; }
+
+/* --- Success state (recovery sent / password updated) --- */
+.admin-auth-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+.admin-auth-success__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.5rem;
+  border-radius: 999px;
+  background: var(--success-bg);
+  color: var(--success);
+}
+.admin-auth-success h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.admin-auth-success p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+.admin-auth-success__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.25rem;
 }

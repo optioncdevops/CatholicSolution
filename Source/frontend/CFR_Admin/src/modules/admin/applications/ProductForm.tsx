@@ -1,22 +1,13 @@
 import { useState } from 'react';
 import { CommonButton } from '@app/components/buttons';
-import { StatusBadge } from '@app/components/Badge';
-import { InputField, TextareaField, RadioGroup } from '@app/components/formControls';
-import type { AdminApplication, ProductNavigationTarget, ProductVisibility } from '../types';
+import { InputField, TextareaField, RadioGroup, ProfileImageUpload } from '@app/components/formControls';
+import { ProductCard } from './ProductCard';
+import type { AdminApplication, ProductLicenseType, ProductNavigationTarget } from '../types';
 import type { ProductFormErrors } from './productValidation';
 
-const GRADIENT_PRESETS = [
-  'linear-gradient(135deg,#1E3A8A,#3B82F6)',
-  'linear-gradient(135deg,#166534,#22C55E)',
-  'linear-gradient(135deg,#0F766E,#34D399)',
-  'linear-gradient(135deg,#B91C1C,#EF4444)',
-  'linear-gradient(135deg,#5B21B6,#8B5CF6)',
-  'linear-gradient(135deg,#D97706,#FBBF24)',
-];
-
-const VISIBILITY_OPTIONS: Array<{ id: ProductVisibility; value: string }> = [
-  { id: 'public', value: 'Public' },
-  { id: 'hidden', value: 'Hidden' },
+const LICENSE_TYPE_OPTIONS: Array<{ id: ProductLicenseType; value: string }> = [
+  { id: 'free', value: 'Free' },
+  { id: 'licensed', value: 'Licensed' },
 ];
 
 const NAVIGATION_OPTIONS: Array<{ id: ProductNavigationTarget; value: string }> = [
@@ -24,18 +15,14 @@ const NAVIGATION_OPTIONS: Array<{ id: ProductNavigationTarget; value: string }> 
   { id: 'new-tab', value: 'New Tab' },
 ];
 
-function TagList({ label, values, draft, onDraftChange, onAdd, onRemove, tone = 'muted' }: {
+function TagList({ label, values, draft, onDraftChange, onAdd, onRemove }: {
   label: string;
   values: string[];
   draft: string;
   onDraftChange: (value: string) => void;
   onAdd: () => void;
   onRemove: (value: string) => void;
-  tone?: 'muted' | 'info';
 }) {
-  const chipClass = tone === 'info'
-    ? 'bg-[var(--info-bg)] text-[var(--info)]'
-    : 'bg-[var(--surface-muted)] text-[var(--text-secondary)]';
   return (
     <div className="flex flex-col gap-2">
       {values.length === 0 ? (
@@ -43,7 +30,7 @@ function TagList({ label, values, draft, onDraftChange, onAdd, onRemove, tone = 
       ) : (
         <ul className="flex flex-wrap gap-1.5">
           {values.map((value) => (
-            <li key={value} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${chipClass}`}>
+            <li key={value} className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)]">
               {value}
               <button type="button" onClick={() => onRemove(value)} aria-label={`Remove ${value}`} className="text-[var(--text-faint)] hover:text-[var(--error)]">✕</button>
             </li>
@@ -58,7 +45,7 @@ function TagList({ label, values, draft, onDraftChange, onAdd, onRemove, tone = 
           placeholder={`Add ${label.toLowerCase()} and press Enter`}
           className="flex-1 rounded-[var(--admin-control-radius)] border border-[var(--line)] px-3 py-2 text-[length:var(--admin-text-base)] text-[var(--text-primary)]"
         />
-        <CommonButton variant="outline" onClick={onAdd}>Add</CommonButton>
+        <CommonButton variant="outline" size="sm" onClick={onAdd}>Add</CommonButton>
       </div>
     </div>
   );
@@ -74,23 +61,29 @@ interface ProductFormProps {
 /** One consolidated panel, mirroring ProductDetailsTab's layout — same sections, editable. */
 export function ProductForm({ form, errors, touched, onUpdate }: ProductFormProps) {
   const [featureDraft, setFeatureDraft] = useState('');
-  const [integrationDraft, setIntegrationDraft] = useState('');
 
-  const addToList = (key: 'features' | 'integrations', draft: string, setDraft: (value: string) => void) => {
-    const value = draft.trim();
+  const addFeature = () => {
+    const value = featureDraft.trim();
     if (!value) return;
-    onUpdate(key, [...form[key], value]);
-    setDraft('');
+    onUpdate('features', [...form.features, value]);
+    setFeatureDraft('');
   };
-  const removeFromList = (key: 'features' | 'integrations', value: string) => onUpdate(key, form[key].filter((item) => item !== value));
+  const removeFeature = (value: string) => onUpdate('features', form.features.filter((item) => item !== value));
+
+  const handleLogoChange = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { if (typeof reader.result === 'string') onUpdate('icon', reader.result); };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <section className="admin-panel-card">
       <div className="flex flex-col divide-y divide-[var(--line-soft)]">
         <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
-          <InputField label="Product name" required value={form.name} onChange={(event) => onUpdate('name', event.target.value)} error={touched ? errors.name : undefined} />
-          <InputField label="Short name" value={form.shortName} onChange={(event) => onUpdate('shortName', event.target.value)} />
-          <InputField label="Category" required value={form.category} onChange={(event) => onUpdate('category', event.target.value)} error={touched ? errors.category : undefined} />
+          <InputField label="Product Name" required value={form.name} onChange={(event) => onUpdate('name', event.target.value)} error={touched ? errors.name : undefined} />
+          <InputField label="Short Name" value={form.shortName} onChange={(event) => onUpdate('shortName', event.target.value)} />
+          <InputField label="Product Subtitle" required value={form.category} onChange={(event) => onUpdate('category', event.target.value)} error={touched ? errors.category : undefined} />
           <InputField
             label="Production URL"
             value={form.productionUrl}
@@ -99,78 +92,35 @@ export function ProductForm({ form, errors, touched, onUpdate }: ProductFormProp
             error={touched ? errors.productionUrl : undefined}
           />
           <RadioGroup
-            label="Visibility"
-            options={VISIBILITY_OPTIONS}
-            value={form.visibility}
-            onValueChange={(value) => onUpdate('visibility', value as ProductVisibility)}
+            label="License Type"
+            options={LICENSE_TYPE_OPTIONS}
+            value={form.licenseType}
+            onValueChange={(value) => onUpdate('licenseType', value as ProductLicenseType)}
           />
           <RadioGroup
-            label="Navigation target"
+            label="Navigation Target"
             options={NAVIGATION_OPTIONS}
             value={form.navigationTarget}
             onValueChange={(value) => onUpdate('navigationTarget', value as ProductNavigationTarget)}
           />
         </div>
 
-        <div className="grid gap-4 p-4 sm:grid-cols-2">
-          <div>
-            <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Features</p>
-            <TagList label="Features" values={form.features} draft={featureDraft} onDraftChange={setFeatureDraft} onAdd={() => addToList('features', featureDraft, setFeatureDraft)} onRemove={(value) => removeFromList('features', value)} />
-          </div>
-          <div>
-            <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Integrations</p>
-            <TagList label="Integrations" values={form.integrations} draft={integrationDraft} onDraftChange={setIntegrationDraft} onAdd={() => addToList('integrations', integrationDraft, setIntegrationDraft)} onRemove={(value) => removeFromList('integrations', value)} tone="info" />
-          </div>
+        <div className="p-4">
+          <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Features</p>
+          <TagList label="Features" values={form.features} draft={featureDraft} onDraftChange={setFeatureDraft} onAdd={addFeature} onRemove={removeFeature} />
         </div>
 
         <div className="p-4">
           <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Product Preview</p>
-          <div className="flex flex-wrap items-center gap-2 pb-3">
-            <InputField label="Icon (emoji)" value={form.icon} onChange={(event) => onUpdate('icon', event.target.value)} maxLength={4} wrapperClassName="w-24" />
-            <div className="flex flex-col gap-1.5 text-[length:var(--admin-text-xs)] [font-weight:var(--admin-weight-bold)] text-[var(--text-secondary)]">
-              Accent color
-              <div className="flex flex-wrap gap-2">
-                {GRADIENT_PRESETS.map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => onUpdate('gradient', preset)}
-                    aria-label={`Use accent color ${preset}`}
-                    aria-pressed={form.gradient === preset}
-                    className={`size-7 rounded-lg ${form.gradient === preset ? 'ring-2 ring-offset-2 ring-[var(--secondary)]' : ''}`}
-                    style={{ background: preset }}
-                  />
-                ))}
-              </div>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
+            <ProfileImageUpload
+              label="Product Logo"
+              onFileChange={handleLogoChange}
+              fallbackInitials={form.icon.length <= 2 ? form.icon : undefined}
+              initialPreviewUrl={form.icon.startsWith('data:') || /^https?:\/\//.test(form.icon) ? form.icon : undefined}
+            />
+            <ProductCard app={form} className="max-w-xs" />
           </div>
-
-          <div className="admin-product-card max-w-xs" style={{ cursor: 'default' }}>
-            <div className="flex items-start justify-between gap-2">
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white" style={{ background: form.gradient }} aria-hidden="true">{form.icon}</span>
-              <StatusBadge status={form.status} kind="application" />
-            </div>
-            <div className="mt-2 min-w-0">
-              <span className="block truncate text-sm font-extrabold text-[var(--text-primary)]">{form.name || 'Untitled product'}</span>
-              <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{form.category || 'Uncategorized'}</span>
-            </div>
-            <p className="admin-product-card__description">{form.description || 'No description yet.'}</p>
-          </div>
-        </div>
-
-        <div className="grid gap-x-5 gap-y-3 p-4 sm:grid-cols-2 lg:grid-cols-5">
-          {[
-            ['Product ID', form.id],
-            ['Ownership', form.ownership],
-            ['Deployment Model', form.deploymentModel],
-            ['Registry Reference', form.registryRef],
-            ['Source Location', form.sourceLocation],
-          ].map(([label, value]) => (
-            <div key={label} className="min-w-0">
-              <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">{label}</p>
-              <p className="mt-0.5 truncate text-[0.8125rem] font-bold text-[var(--text-primary)]">{value}</p>
-            </div>
-          ))}
         </div>
 
         <div className="p-4">

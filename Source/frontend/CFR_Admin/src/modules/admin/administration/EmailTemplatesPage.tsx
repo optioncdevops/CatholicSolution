@@ -1,12 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
-import { RotateCcw, Save, Search, Send } from 'lucide-react';
+import { RotateCcw, Save, Search, Send, Settings } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { InputField } from '@app/components/formControls';
-// The ported formControls `TextareaField` doesn't forward a ref to the underlying <textarea>,
-// which the merge-tag "insert at cursor" feature below needs — keep the local ref-forwarding one.
-import { TextareaField } from '@app/components/form/TextField';
+// The ported formControls Input/TextareaField don't forward a ref to the underlying element,
+// which the merge-tag "insert at cursor" feature below needs — keep the local ref-forwarding ones.
+import { InputField as SubjectField, TextareaField } from '@app/components/form/TextField';
 import { confirmAction } from '../lib/confirm';
 
 interface EmailTemplateVariable {
@@ -65,7 +65,9 @@ export function EmailTemplatesPage() {
   const [templates, setTemplates] = useState<EmailTemplateDraft[]>(DEFAULT_TEMPLATES);
   const [selectedId, setSelectedId] = useState(DEFAULT_TEMPLATES[0].id);
   const [search, setSearch] = useState('');
+  const subjectRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const activeFieldRef = useRef<'subject' | 'body'>('body');
 
   const template = templates.find((item) => item.id === selectedId) ?? templates[0];
   const original = useMemo(() => DEFAULT_TEMPLATES.find((item) => item.id === selectedId)!, [selectedId]);
@@ -82,11 +84,13 @@ export function EmailTemplatesPage() {
   };
 
   const insertVariable = (token: string) => {
-    const el = bodyRef.current;
-    const start = el?.selectionStart ?? template.body.length;
-    const end = el?.selectionEnd ?? template.body.length;
-    const next = `${template.body.slice(0, start)}${token}${template.body.slice(end)}`;
-    updateField('body', next);
+    const field = activeFieldRef.current;
+    const el = field === 'subject' ? subjectRef.current : bodyRef.current;
+    const text = field === 'subject' ? template.subject : template.body;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const next = `${text.slice(0, start)}${token}${text.slice(end)}`;
+    updateField(field, next);
     requestAnimationFrame(() => {
       el?.focus();
       el?.setSelectionRange(start + token.length, start + token.length);
@@ -113,9 +117,13 @@ export function EmailTemplatesPage() {
     showToast('Test email sent to you@catholicsolutions.org (prototype only, not actually sent)');
   };
 
+  const handleMailSettings = () => {
+    showToast('Mail settings would open here (prototype only)');
+  };
+
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Email Templates" subtitle={`${templates.length} templates`} />
+      <PanelHeader title="Email Templates" />
 
       <div className="grid gap-4 lg:grid-cols-[16rem_1fr] lg:items-start">
         <section className="admin-panel-card overflow-hidden">
@@ -161,8 +169,8 @@ export function EmailTemplatesPage() {
               <p className="panel-subtitle truncate">{template.description}</p>
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-              <span className="text-xs font-semibold text-[var(--text-faint)]">{isDirty ? 'Unsaved changes' : 'Saved'}</span>
               <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty}>Reset</CommonButton>
+              <CommonButton variant="outline" size="sm" iconLeft={<Settings size={13} />} onClick={handleMailSettings}>Mail Settings</CommonButton>
               <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={handleSendTest}>Send Test</CommonButton>
               <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={handleSave} disabled={!isDirty}>Save</CommonButton>
             </div>
@@ -170,10 +178,12 @@ export function EmailTemplatesPage() {
 
           <div className="grid gap-0 divide-y divide-[var(--line-soft)] xl:grid-cols-2 xl:divide-x xl:divide-y-0">
             <div className="flex flex-col gap-3 p-4">
-              <InputField
+              <SubjectField
                 label="Subject" required
+                ref={subjectRef}
                 value={template.subject}
                 onChange={(event) => updateField('subject', event.target.value)}
+                onFocus={() => { activeFieldRef.current = 'subject'; }}
               />
               <TextareaField
                 label="Body"
@@ -181,7 +191,8 @@ export function EmailTemplatesPage() {
                 rows={12}
                 value={template.body}
                 onChange={(event) => updateField('body', event.target.value)}
-                hint="Use the merge tags below to personalize this email — click one to insert it at your cursor."
+                onFocus={() => { activeFieldRef.current = 'body'; }}
+                hint="Use the merge tags below to personalize the subject or body — click one to insert it at your cursor."
               />
               <div>
                 <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Merge Tags</p>
@@ -204,10 +215,6 @@ export function EmailTemplatesPage() {
             <div className="flex flex-col gap-2 p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Live Preview</p>
               <div className="admin-email-preview">
-                <div className="admin-email-preview__meta">
-                  <span><strong>To:</strong> jordan.reyes@sampleorg.edu</span>
-                  <span><strong>From:</strong> no-reply@catholicsolutions.org</span>
-                </div>
                 <p className="admin-email-preview__subject">{renderSample(template.subject) || 'Untitled subject'}</p>
                 {template.body ? (
                   <pre className="admin-email-preview__body">{renderSample(template.body)}</pre>

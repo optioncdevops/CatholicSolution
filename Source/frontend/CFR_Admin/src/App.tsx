@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CentralLoginPage } from '@shared/auth/CentralLoginPage';
 import { CentralLogoutPage } from '@shared/auth/CentralLogoutPage';
@@ -6,23 +7,26 @@ import { ResetPasswordPage } from '@shared/auth/ResetPasswordPage';
 import { ProtectedRoute } from '@shared/auth/ProtectedRoute';
 import { AdminDataProvider } from '@/modules/admin/AdminDataContext';
 import { AdminShell } from '@/modules/admin/components/AdminShell';
-import { DashboardPage } from '@/modules/admin/DashboardPage';
-import { ProductsListPage } from '@/modules/admin/applications/ProductsListPage';
-import { ProductDetailPage } from '@/modules/admin/applications/ProductDetailPage';
-import { ProductEditPage } from '@/modules/admin/applications/ProductEditPage';
-import { CreateInvoicePage } from '@/modules/admin/applications/CreateInvoicePage';
-import { OrganizationsListPage } from '@/modules/admin/organizations/OrganizationsListPage';
-import { OrganizationDetailPage } from '@/modules/admin/organizations/OrganizationDetailPage';
-import { UsersListPage } from '@/modules/admin/users/UsersListPage';
-import { UserDetailPage } from '@/modules/admin/users/UserDetailPage';
-import { RequestsInboxPage } from '@/modules/admin/requests/RequestsInboxPage';
-import { UserRolesPage } from '@/modules/admin/administration/UserRolesPage';
-import { RightsPage } from '@/modules/admin/administration/RightsPage';
-import { EmailTemplatesPage } from '@/modules/admin/administration/EmailTemplatesPage';
-import { InvoiceItemsPage } from '@/modules/admin/administration/InvoiceItemsPage';
+
+// Route-level code splitting — each admin page (and the ported dataTable/formControls code it
+// pulls in) loads as its own chunk on first visit instead of one 2MB+ bundle up front.
+const DashboardPage = lazy(() => import('@/modules/admin/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const ProductsListPage = lazy(() => import('@/modules/admin/applications/ProductsListPage').then((m) => ({ default: m.ProductsListPage })));
+const ProductDetailPage = lazy(() => import('@/modules/admin/applications/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })));
+const ProductEditPage = lazy(() => import('@/modules/admin/applications/ProductEditPage').then((m) => ({ default: m.ProductEditPage })));
+const CreateInvoicePage = lazy(() => import('@/modules/admin/applications/CreateInvoicePage').then((m) => ({ default: m.CreateInvoicePage })));
+const OrganizationsListPage = lazy(() => import('@/modules/admin/organizations/OrganizationsListPage').then((m) => ({ default: m.OrganizationsListPage })));
+const OrganizationDetailPage = lazy(() => import('@/modules/admin/organizations/OrganizationDetailPage').then((m) => ({ default: m.OrganizationDetailPage })));
+const UsersListPage = lazy(() => import('@/modules/admin/users/UsersListPage').then((m) => ({ default: m.UsersListPage })));
+const UserDetailPage = lazy(() => import('@/modules/admin/users/UserDetailPage').then((m) => ({ default: m.UserDetailPage })));
+const RequestsInboxPage = lazy(() => import('@/modules/admin/requests/RequestsInboxPage').then((m) => ({ default: m.RequestsInboxPage })));
+const UserRolesPage = lazy(() => import('@/modules/admin/administration/UserRolesPage').then((m) => ({ default: m.UserRolesPage })));
+const RightsPage = lazy(() => import('@/modules/admin/administration/RightsPage').then((m) => ({ default: m.RightsPage })));
+const EmailTemplatesPage = lazy(() => import('@/modules/admin/administration/EmailTemplatesPage').then((m) => ({ default: m.EmailTemplatesPage })));
+const InvoiceItemsPage = lazy(() => import('@/modules/admin/administration/InvoiceItemsPage').then((m) => ({ default: m.InvoiceItemsPage })));
 // Dev-only component reference — see the removal note at the top of either sample page file.
-import { SampleAddPage } from '@/modules/admin/sample/SampleAddPage';
-import { SampleViewPage } from '@/modules/admin/sample/SampleViewPage';
+const SampleAddPage = lazy(() => import('@/modules/admin/sample/SampleAddPage').then((m) => ({ default: m.SampleAddPage })));
+const SampleViewPage = lazy(() => import('@/modules/admin/sample/SampleViewPage').then((m) => ({ default: m.SampleViewPage })));
 
 export default function App() {
   return (

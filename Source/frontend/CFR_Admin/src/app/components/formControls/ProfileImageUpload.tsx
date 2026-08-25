@@ -45,16 +45,16 @@ const PROFILE_HELPER_TEXT = formatFileUploadHelperText({
 });
 
 const CARD_CLASS =
-  "inline-flex w-fit max-w-[220px] flex-col items-center rounded-xl border border-border bg-background p-3 shadow-sm";
+  "inline-flex w-fit max-w-[220px] flex-col items-center rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3 shadow-sm";
 
 const AVATAR_CLASS =
-  "h-24 w-24 rounded-full border border-border object-cover shadow-sm ring-2 ring-background";
+  "h-24 w-24 rounded-full border border-[var(--line)] object-cover shadow-sm ring-2 ring-[var(--surface)]";
 
 const OVERLAY_BTN_CLASS =
   "inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/65 disabled:cursor-not-allowed disabled:bg-black/35 disabled:text-white/70 disabled:hover:bg-black/35";
 
 const UPLOAD_LINK_CLASS =
-  "mt-2 text-xs font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300";
+  "mt-2 text-xs font-medium text-[var(--primary)] hover:text-[var(--primary-hover)]";
 
 interface ProfileOverlayActionsProps {
   disabled?: boolean;
@@ -92,7 +92,7 @@ function ProfileOverlayActions({
           type="button"
           disabled={disabled}
           onClick={onRemove}
-          className={cn(OVERLAY_BTN_CLASS, "hover:bg-danger-600")}
+          className={cn(OVERLAY_BTN_CLASS, "hover:bg-[var(--error)]")}
           aria-label="Remove profile image"
           title="Remove"
         >
@@ -192,7 +192,7 @@ export function ProfileImageUpload({
 
   const helperBlock =
     helperText && !validationError ? (
-      <p className="mt-2 text-center text-[11px] leading-snug text-foreground-muted">
+      <p className="mt-2 text-center text-[11px] leading-snug text-[var(--text-muted)]">
         {helperText}
       </p>
     ) : null;
@@ -253,7 +253,7 @@ export function ProfileImageUpload({
               <Tooltip content={file.name} side="top">
                 <span
                   className={cn(
-                    "block truncate font-semibold text-foreground",
+                    "block truncate font-semibold text-[var(--text-primary)]",
                     themeFormControlTextClass,
                   )}
                 >
@@ -261,7 +261,7 @@ export function ProfileImageUpload({
                 </span>
               </Tooltip>
             </span>
-            <p className="truncate text-xs text-foreground-muted">
+            <p className="truncate text-xs text-[var(--text-muted)]">
               {formatFileSize(file.size)} • {extensionLabel}
             </p>
           </div>
@@ -300,7 +300,7 @@ export function ProfileImageUpload({
             CARD_CLASS,
             disabled
               ? cn(themeFieldDisabledSurfaceClass, "shadow-none")
-              : "cursor-pointer hover:bg-background-muted/40",
+              : "cursor-pointer hover:bg-[var(--surface-muted)]",
           )}
           tabIndex={disabled ? undefined : tabIndex}
           onKeyDown={(e) => {
@@ -310,16 +310,16 @@ export function ProfileImageUpload({
             }
           }}
         >
-          <div className="flex h-24 w-24 items-center justify-center rounded-full border border-dashed border-border bg-background-muted/40 shadow-sm ring-2 ring-background">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full border border-dashed border-[var(--line)] bg-[var(--surface-muted)] shadow-sm ring-2 ring-[var(--surface)]">
             {fallbackInitials ? (
-              <span className="text-xl font-bold uppercase tracking-wide text-primary-700 dark:text-primary-200">
+              <span className="text-xl font-bold uppercase tracking-wide text-[var(--primary)]">
                 {fallbackInitials}
               </span>
             ) : (
               <AppIcon
                 name="imagePlus"
                 size={22}
-                className="text-foreground-muted"
+                className="text-[var(--text-muted)]"
                 decorative
               />
             )}
@@ -340,7 +340,7 @@ export function ProfileImageUpload({
       )}
 
       {validationError ? (
-        <p className="max-w-[220px] text-center text-xs text-danger-500">
+        <p className="max-w-[220px] text-center text-xs text-[var(--error)]">
           {validationError}
         </p>
       ) : null}

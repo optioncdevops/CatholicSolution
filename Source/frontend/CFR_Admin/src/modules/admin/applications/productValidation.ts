@@ -59,7 +59,7 @@ export interface ProductFormErrors {
 export function validateProductForm(form: AdminApplication): ProductFormErrors {
   const errors: ProductFormErrors = {};
   if (!form.name.trim()) errors.name = 'Product name is required.';
-  if (!form.category.trim()) errors.category = 'Category is required.';
+  if (!form.category.trim()) errors.category = 'Subtitle is required.';
   if (form.productionUrl.trim()) {
     const isValidUrl = (() => {
       try {

@@ -55,6 +55,15 @@
   --hover: #efece2;
   --focus-ring: rgba(217, 168, 63, 0.55);
   --selected: rgba(18, 38, 76, 0.08);
+  /* Data-grid header — a subtle, opaque light slate-blue (not navy) so headers read as a
+     structural surface, not a brand-color band; must stay opaque (not a tinted/alpha color)
+     so it fully occludes body content scrolling under a frozen/sticky column. */
+  --table-header-bg: #e8edf5;
+  --table-header-border: #cad5e3;
+  --table-header-hover: rgba(18, 38, 76, 0.06);
+  /* Zebra striping — a barely-there neutral instead of the warm beige --line-soft tone, which
+     reads as too strong a stripe when repeated down a tall table. */
+  --row-stripe: #faf9f7;
   --success: #047857;
   --success-bg: #ecfdf5;
   --warning: #b45309;

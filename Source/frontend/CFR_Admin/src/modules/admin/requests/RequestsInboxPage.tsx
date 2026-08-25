@@ -5,7 +5,7 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
 import { StatusBadge } from '@app/components/Badge';
-import { Drawer } from '@app/components/Drawer';
+import { BaseModal } from '@app/components/modal/BaseModal';
 import { EntityAvatar } from '@app/components/EntityAvatar';
 import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
@@ -120,11 +120,11 @@ export function RequestsInboxPage() {
         />
       )}
 
-      <Drawer
-        open={Boolean(activeRequest)}
+      <BaseModal
+        isOpen={Boolean(activeRequest)}
         title={activeRequest ? `${activeRequest.requesterName}'s request` : ''}
-        description={activeRequest ? getApplication(activeRequest.appId)?.name : undefined}
         onClose={() => { setSelected(null); setInfoNote(''); }}
+        size="sm"
         footer={activeRequest && activeRequest.status === 'pending' ? (
           <>
             <button type="button" onClick={() => act('rejected')} className="rounded-[var(--radius-control)] border border-[var(--error)] px-3 py-2 text-xs font-bold text-[var(--error)] hover:bg-[var(--error-bg)]">Reject</button>
@@ -135,6 +135,7 @@ export function RequestsInboxPage() {
       >
         {activeRequest ? (
           <div className="flex flex-col gap-4">
+            {getApplication(activeRequest.appId)?.name ? <p className="-mt-2 text-xs text-[var(--text-muted)]">{getApplication(activeRequest.appId)?.name}</p> : null}
             <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] p-3">
               <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Requester</p>
               <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">{activeRequest.requesterName}</p>
@@ -164,7 +165,7 @@ export function RequestsInboxPage() {
             ) : null}
           </div>
         ) : null}
-      </Drawer>
+      </BaseModal>
     </div>
   );
 }

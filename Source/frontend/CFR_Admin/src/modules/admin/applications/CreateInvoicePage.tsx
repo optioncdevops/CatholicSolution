@@ -14,7 +14,6 @@ import type { Invoice, InvoiceStatus } from '../types';
 const STATUS_OPTIONS: Array<{ id: InvoiceStatus; value: string }> = [
   { id: 'created', value: 'Created' },
   { id: 'paid', value: 'Paid' },
-  { id: 'cancelled', value: 'Cancelled' },
 ];
 
 function today(): string {
@@ -93,24 +92,13 @@ export function CreateInvoicePage() {
     {
       key: 'description', header: 'Description', controlType: 'custom',
       renderEditor: ({ row }) => (
-        <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-          <div className="w-full shrink-0 sm:w-44">
-            <Dropdown
-              label="Item" hideLabel searchable={false} clearable={false}
-              value={row.itemId || undefined}
-              onValueChange={(value) => handleSelectItem(row.key, value ?? '')}
-              options={activeItems.map((item) => ({ id: item.id, value: item.title }))}
-              className="min-h-8"
-            />
-          </div>
-          <InputField
-            label="Description" hideLabel
-            value={row.description}
-            onChange={(event) => updateRow(row.key, { description: event.target.value })}
-            placeholder="Description"
-            className="min-h-8 text-xs"
-          />
-        </div>
+        <Dropdown
+          label="Item" hideLabel searchable={false} clearable={false}
+          value={row.itemId || undefined}
+          onValueChange={(value) => handleSelectItem(row.key, value ?? '')}
+          options={activeItems.map((item) => ({ id: item.id, value: item.title }))}
+          className="min-h-8"
+        />
       ),
     },
     {
@@ -185,7 +173,7 @@ export function CreateInvoicePage() {
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader breadcrumb={{ label: app.name, to: invoiceTabPath }} title="Create Invoice" action={<MandatoryIndicator variant="brand" />} />
+      <PanelHeader title="Create Invoice" action={<MandatoryIndicator variant="brand" />} />
 
       {productCustomers.length === 0 ? (
         <section className="admin-panel-card p-4">

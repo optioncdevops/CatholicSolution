@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CommonButton } from '@app/components/buttons';
-import { Drawer } from '@app/components/Drawer';
-import { Dropdown, InputField, MandatoryIndicator } from '@app/components/formControls';
+import { BaseModal } from '@app/components/modal/BaseModal';
+import { Dropdown, InputField } from '@app/components/formControls';
 import type { Organization, UserRole } from '../types';
 
 const ROLE_OPTIONS: UserRole[] = ['owner', 'admin', 'member'];
@@ -29,21 +29,21 @@ function validate(form: NewUserValue): FieldErrors {
   return errors;
 }
 
-interface UserFormDrawerProps {
+interface UserFormModalProps {
   open: boolean;
   organizations: Organization[];
   onClose: () => void;
   onCreate: (value: NewUserValue) => void;
 }
 
-export function UserFormDrawer({ open, organizations, onClose, onCreate }: UserFormDrawerProps) {
+export function UserFormModal({ open, organizations, onClose, onCreate }: UserFormModalProps) {
   const emptyForm: NewUserValue = { name: '', email: '', role: 'member', orgId: organizations[0]?.id ?? '', status: 'invited' };
   const [form, setForm] = useState<NewUserValue>(emptyForm);
   const [touched, setTouched] = useState(false);
   const [wasOpen, setWasOpen] = useState(open);
 
   if (open !== wasOpen) {
-    // Reset the form each time the drawer opens fresh (adjusted during render, per this
+    // Reset the form each time the modal opens fresh (adjusted during render, per this
     // codebase's convention — see AccountModals.tsx).
     if (open) { setForm(emptyForm); setTouched(false); }
     setWasOpen(open);
@@ -64,10 +64,12 @@ export function UserFormDrawer({ open, organizations, onClose, onCreate }: UserF
   };
 
   return (
-    <Drawer
-      open={open}
-      title="Add User"
+    <BaseModal
+      isOpen={open}
       onClose={onClose}
+      title="Add User"
+      size="sm"
+      showMandatory
       footer={(
         <>
           <CommonButton variant="outline" onClick={onClose}>Cancel</CommonButton>
@@ -76,7 +78,6 @@ export function UserFormDrawer({ open, organizations, onClose, onCreate }: UserF
       )}
     >
       <form onSubmit={(event) => { event.preventDefault(); handleSubmit(); }} className="flex flex-col gap-4" noValidate>
-        <MandatoryIndicator align="end" />
         <InputField label="Full name" required value={form.name} onChange={(event) => update('name', event.target.value)} error={touched ? errors.name : undefined} />
         <InputField label="Email address" required type="email" value={form.email} onChange={(event) => update('email', event.target.value)} error={touched ? errors.email : undefined} />
         <Dropdown
@@ -104,6 +105,6 @@ export function UserFormDrawer({ open, organizations, onClose, onCreate }: UserF
           </div>
         </fieldset>
       </form>
-    </Drawer>
+    </BaseModal>
   );
 }

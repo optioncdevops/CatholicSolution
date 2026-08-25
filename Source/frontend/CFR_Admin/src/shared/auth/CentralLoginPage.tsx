@@ -33,7 +33,6 @@ export function CentralLoginPage() {
   const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [interactiveSignInCompleted, setInteractiveSignInCompleted] = useState(false);
-  const [remember, setRemember] = useState(true);
   const [email, setEmail] = useState(environment.authMode === 'mock' ? DEMO_EMAIL : '');
   const [password, setPassword] = useState(environment.authMode === 'mock' ? DEMO_PASSWORD : '');
 
@@ -63,14 +62,14 @@ export function CentralLoginPage() {
     const result = await signIn({
       email,
       password,
-      remember,
+      remember: true,
       provider: 'password',
       clientId: environment.appId,
       returnUrl: toAbsoluteReturnUrl(destination),
     });
     if (result === 'authenticated') {
       setInteractiveSignInCompleted(true);
-      showToast('Signed in to CFRAdmin');
+      showToast('Signed in to CFR Acutis');
     } else if (result === 'unavailable') {
       showToast('The configured identity service is unavailable. Please contact your administrator.');
     }
@@ -113,8 +112,6 @@ export function CentralLoginPage() {
         onPasswordChange={(value) => { setPassword(value); if (fieldErrors.password) setFieldErrors((current) => ({ ...current, password: undefined })); }}
         showPassword={showPassword}
         onToggleShowPassword={() => setShowPassword((value) => !value)}
-        remember={remember}
-        onRememberChange={setRemember}
         onSubmit={(event) => void submit(event)}
         submitting={submitting}
         formError={formError}
@@ -122,7 +119,6 @@ export function CentralLoginPage() {
         emailRef={emailRef}
         passwordRef={passwordRef}
         forgotHref={`/forgot-password${location.search}`}
-        showDemoHint={environment.authMode === 'mock'}
       />
     </AdminAuthShell>
   );

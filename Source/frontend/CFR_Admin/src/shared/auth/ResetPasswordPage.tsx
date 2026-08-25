@@ -1,8 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, EyeIcon, EyeOffIcon, LockIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
-import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
-import { AuthShell } from './AuthShell';
+import { AdminAuthShell } from './AdminAuthShell';
 
 function passwordScore(value: string) {
   return [
@@ -47,55 +46,63 @@ export function ResetPasswordPage() {
   };
 
   return (
-    <AuthShell>
-      <div className="auth-login-stack">
-        <section className="auth-card auth-login-card auth-reset-card auth-reset-password-card">
-          {complete ? (
-            <div className="auth-reset-success" aria-live="polite">
-              <span className="auth-reset-success__icon"><CheckIcon size={24} /></span>
-              <span className="auth-card__kicker">Password updated</span>
-              <h2>Your password is ready</h2>
-              <p>Your password has been changed for this prototype recovery flow. Sign in again with your new password.</p>
-              <PlatformLink to={loginTarget} className="auth-primary-button auth-primary-button--large">
-                Continue to sign in <ArrowRightIcon size={17} />
-              </PlatformLink>
+    <AdminAuthShell>
+      <section className="admin-auth-card">
+        {complete ? (
+          <div className="admin-auth-success" aria-live="polite">
+            <span className="admin-auth-success__icon"><CheckIcon size={22} /></span>
+            <span className="admin-auth-card__kicker">Password Updated</span>
+            <h2>Your Password Is Ready</h2>
+            <p>Your password has been changed for this prototype recovery flow. Sign in again with your new password.</p>
+            <Link to={loginTarget} className="admin-auth-submit admin-auth-submit--link">
+              Continue to Sign In <ArrowRightIcon size={15} />
+            </Link>
+          </div>
+        ) : (
+          <>
+            <Link to={recoveryTarget} className="admin-auth-back-link"><ArrowLeftIcon size={13} /> Back to Recovery</Link>
+            <div className="admin-auth-card__header">
+              <span className="admin-auth-card__mark"><ShieldCheckIcon size={20} /></span>
+              <span className="admin-auth-card__kicker">Secure Password Reset</span>
+              <h1 className="admin-auth-card__title">Create a New Password</h1>
+              <p className="admin-auth-card__description">{email ? <>Resetting access for <strong>{email}</strong>.</> : 'Enter your recovery code and choose a new password.'}</p>
             </div>
-          ) : (
-            <>
-              <PlatformLink to={recoveryTarget} className="auth-back-link"><ArrowLeftIcon size={15} /> Back to recovery</PlatformLink>
-              <div className="auth-card__header auth-reset-card__header">
-                <span className="auth-reset-card__mark"><ShieldCheckIcon size={22} /></span>
-                <span className="auth-card__kicker">Secure password reset</span>
-                <h2>Create a new password</h2>
-                <p>{email ? <>Resetting access for <strong>{email}</strong>.</> : 'Enter your recovery code and choose a new password.'}</p>
+            <form onSubmit={submit} className="admin-auth-form" noValidate>
+              <div className="admin-auth-field">
+                <label className="admin-auth-label" htmlFor="reset-code">Verification Code</label>
+                <div className="admin-auth-input-wrap">
+                  <span className="admin-auth-input-icon"><ShieldCheckIcon size={15} /></span>
+                  <input id="reset-code" inputMode="numeric" pattern="[0-9]*" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} className="admin-auth-input" autoComplete="one-time-code" placeholder="6-digit code" required autoFocus />
+                </div>
+                <p className="admin-auth-field-hint">Use the code sent to your recovery email. Codes expire after a short period.</p>
               </div>
-              <form onSubmit={submit} className="auth-form auth-reset-form" noValidate>
-                <div>
-                  <label className="auth-label" htmlFor="reset-code">Verification code</label>
-                  <div className="auth-input-wrap mt-2">
-                    <span className="auth-input-icon"><ShieldCheckIcon size={17} /></span>
-                    <input id="reset-code" inputMode="numeric" pattern="[0-9]*" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} className="auth-input auth-reset-code-input" autoComplete="one-time-code" placeholder="6-digit code" required autoFocus />
-                  </div>
-                  <p className="auth-field-hint">Use the code sent to your recovery email. Codes should expire after a short period when connected to the identity service.</p>
+
+              <div className="admin-auth-field">
+                <PasswordField id="new-password" label="New Password" value={password} onChange={setPassword} visible={showPassword} onToggle={() => setShowPassword((value) => !value)} />
+                <div className="admin-auth-strength" aria-label={`Password strength ${score} of 4`}>
+                  {[1, 2, 3, 4].map((bar) => <span key={bar} className={bar <= score ? `is-level-${score}` : ''} />)}
                 </div>
+                <p className="admin-auth-field-hint">8+ characters with upper/lowercase letters and a number. A symbol is recommended.</p>
+              </div>
 
-                <PasswordField id="new-password" label="New password" value={password} onChange={setPassword} visible={showPassword} onToggle={() => setShowPassword((value) => !value)} />
-                <div className="auth-password-strength" aria-label={`Password strength ${score} of 4`}>
-                  {[1, 2, 3, 4].map((bar) => <span key={bar} className={bar <= score ? `is-active is-level-${score}` : ''} />)}
+              <div className="admin-auth-field">
+                <PasswordField id="confirm-password" label="Confirm New Password" value={confirmPassword} onChange={setConfirmPassword} visible={showConfirm} onToggle={() => setShowConfirm((value) => !value)} />
+              </div>
+
+              {error ? (
+                <div className="admin-auth-banner" role="alert">
+                  <ShieldCheckIcon size={15} />
+                  <span>{error}</span>
                 </div>
-                <p className="auth-field-hint">8+ characters with upper/lowercase letters and a number. A symbol is recommended.</p>
+              ) : null}
 
-                <PasswordField id="confirm-password" label="Confirm new password" value={confirmPassword} onChange={setConfirmPassword} visible={showConfirm} onToggle={() => setShowConfirm((value) => !value)} />
-                {error ? <div className="auth-form-error" role="alert">{error}</div> : null}
-
-                <button type="submit" className="auth-primary-button auth-primary-button--large">Reset password <ArrowRightIcon size={17} /></button>
-              </form>
-              <div className="auth-reset-security-note"><LockIcon size={14} /><span>For production, reset codes and password changes must be validated by the configured identity provider or backend service.</span></div>
-            </>
-          )}
-        </section>
-      </div>
-    </AuthShell>
+              <button type="submit" className="admin-auth-submit">Reset Password <ArrowRightIcon size={15} /></button>
+            </form>
+            <div className="admin-auth-security-note"><LockIcon size={14} /><span>For production, reset codes and password changes must be validated by the configured identity provider.</span></div>
+          </>
+        )}
+      </section>
+    </AdminAuthShell>
   );
 }
 
@@ -108,13 +115,13 @@ function PasswordField({ id, label, value, onChange, visible, onToggle }: {
   onToggle: () => void;
 }) {
   return (
-    <div>
-      <label className="auth-label" htmlFor={id}>{label}</label>
-      <div className="auth-input-wrap mt-2">
-        <span className="auth-input-icon"><LockIcon size={17} /></span>
-        <input id={id} type={visible ? 'text' : 'password'} value={value} onChange={(event) => onChange(event.target.value)} className="auth-input auth-input--with-action" autoComplete="new-password" required />
-        <button type="button" className="auth-input-action" onClick={onToggle} aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}>{visible ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}</button>
+    <>
+      <label className="admin-auth-label" htmlFor={id}>{label}</label>
+      <div className="admin-auth-input-wrap">
+        <span className="admin-auth-input-icon"><LockIcon size={15} /></span>
+        <input id={id} type={visible ? 'text' : 'password'} value={value} onChange={(event) => onChange(event.target.value)} className="admin-auth-input admin-auth-input--with-action" autoComplete="new-password" required />
+        <button type="button" className="admin-auth-input-action" onClick={onToggle} aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}>{visible ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}</button>
       </div>
-    </div>
+    </>
   );
 }
