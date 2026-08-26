@@ -51,7 +51,7 @@ export function InvoiceItemFormModal({ target, onClose, onCreate, onSave }: Invo
     <BaseModal
       isOpen={Boolean(target)}
       onClose={onClose}
-      title={isCreate ? 'Add Invoice Item' : 'Edit Invoice Item'}
+      title={isCreate ? 'Add License Item' : 'Edit License Item'}
       size="sm"
       showMandatory
       footer={(
@@ -72,7 +72,7 @@ export function InvoiceItemFormModal({ target, onClose, onCreate, onSave }: Invo
           onValueChange={(value) => setForm({ ...form, appId: value ?? '' })}
           options={applications.map((app) => ({ id: app.id, value: app.name }))}
           disabled={!isCreate}
-          helperText={isCreate ? "Scopes this item to one product's invoices." : 'The product cannot be changed after an item is created.'}
+          helperText={isCreate ? "Scopes this item to one product's licenses." : 'The product cannot be changed after an item is created.'}
         />
       </div>
     </BaseModal>

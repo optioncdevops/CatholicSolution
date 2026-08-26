@@ -26,8 +26,8 @@ const USER_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', invited
 const REQUEST_STATUS_TONE: Record<string, BadgeTone> = {
   pending: 'warning', approved: 'success', rejected: 'danger', 'info-requested': 'info',
 };
-const INVOICE_STATUS_TONE: Record<string, BadgeTone> = {
-  created: 'info', paid: 'success', cancelled: 'neutral', overdue: 'danger', 'expiring-soon': 'warning',
+const LICENSE_STATUS_TONE: Record<string, BadgeTone> = {
+  active: 'success', suspended: 'danger', 'expiring-soon': 'warning', expired: 'danger',
 };
 const ACCESS_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', 'expiring-soon': 'warning', expired: 'danger' };
 const PERMISSION_TONE: Record<string, BadgeTone> = { 'full-control': 'success', 'read-only': 'info', deny: 'danger', mixed: 'neutral' };
@@ -37,12 +37,12 @@ const TONE_MAP_BY_KIND: Record<StatusKind, Record<string, BadgeTone>> = {
   organization: ORG_STATUS_TONE,
   user: USER_STATUS_TONE,
   request: REQUEST_STATUS_TONE,
-  invoice: INVOICE_STATUS_TONE,
+  license: LICENSE_STATUS_TONE,
   access: ACCESS_STATUS_TONE,
   permission: PERMISSION_TONE,
 };
 
-type StatusKind = 'application' | 'organization' | 'user' | 'request' | 'invoice' | 'access' | 'permission';
+type StatusKind = 'application' | 'organization' | 'user' | 'request' | 'license' | 'access' | 'permission';
 
 export function StatusBadge({ status, kind }: { status: string; kind: StatusKind }) {
   return <Badge tone={TONE_MAP_BY_KIND[kind][status] ?? 'neutral'}>{status.replace('-', ' ')}</Badge>;

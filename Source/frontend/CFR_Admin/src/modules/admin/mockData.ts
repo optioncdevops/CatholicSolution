@@ -1,5 +1,5 @@
 import type {
-  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, Invoice, InvoiceItem, Organization,
+  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, License, LicenseStatus, InvoiceItem, Organization,
 } from './types';
 
 export const MOCK_ROLES: AdminRole[] = [
@@ -260,57 +260,70 @@ export const MOCK_ACTIVITY: ActivityItem[] = [
   { id: 'act-8', message: 'Added Divine Mercy Parish as a new customer', at: '2025-09-12', actor: 'Admin', kind: 'organization' },
 ];
 
-// ── Invoices ─────────────────────────────────────────────────────────
-// One "past" (paid, for Invoice History) and one "current" invoice per organization/product
-// pair the organization actually has assigned — deterministic, not random, so the data is
-// stable across renders and reproducible for review.
+// ── Licenses ─────────────────────────────────────────────────────────
+// One "past" (superseded, for License History) and one "current" license per organization/
+// product pair the organization actually has assigned — deterministic, not random, so the
+// data is stable across renders and reproducible for review.
 
-const INVOICE_STATUS_CYCLE: Invoice['status'][] = ['paid', 'created', 'overdue', 'paid', 'cancelled', 'expiring-soon'];
+const LICENSE_STATUS_CYCLE: LicenseStatus[] = ['active', 'active', 'suspended', 'active', 'active', 'active'];
+/** US software product-key alphabet — digits 0/1 and letters I/O are excluded since they're
+ * easily confused with each other, the standard convention for US-issued license keys. */
+const KEY_CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
-function seededInvoices(): Invoice[] {
+/** Deterministic-looking 25-character license key in the standard US product-key shape (five
+ * groups of five, e.g. "3F7KQ-9QRTM-2LMXP-8HDCW-5YBNS") — seeded off an index so the same
+ * license always renders the same key, matching this file's no-Math.random() convention. */
+function licenseKeyFor(seed: number): string {
+  const segment = (offset: number) => Array.from({ length: 5 }, (_, i) => KEY_CHARS[(seed * 7 + offset * 13 + i * 5) % KEY_CHARS.length]).join('');
+  return `${segment(1)}-${segment(2)}-${segment(3)}-${segment(4)}-${segment(5)}`;
+}
+
+function seededLicenses(): License[] {
   const pairs = MOCK_ORGANIZATIONS.flatMap((org) => org.appIds.map((appId) => ({ orgId: org.id, appId })));
-  const invoices: Invoice[] = [];
+  const licenses: License[] = [];
 
   pairs.forEach((pair, index) => {
-    const amount = 250 + (index % 5) * 75;
-    const quantity = 1 + (index % 3);
+    const seats = 5 + (index % 6) * 15;
     const pastMonth = String(2 + (index % 6)).padStart(2, '0');
 
-    invoices.push({
-      id: `inv-${index}-past`,
-      invoiceNumber: `INV-2026-${1000 + index * 2}`,
+    // Prior term — already expired, superseded by the current license below.
+    licenses.push({
+      id: `lic-${index}-past`,
+      licenseNumber: `LIC-2025-${1000 + index * 2}`,
+      licenseKey: licenseKeyFor(index * 2),
       orgId: pair.orgId,
       appId: pair.appId,
-      invoiceDate: `2026-${pastMonth}-05`,
-      dueDate: `2026-${pastMonth}-20`,
-      paidDate: `2026-${pastMonth}-18T${10 + (index % 8)}:${index % 2 === 0 ? '15' : '45'}:00`,
-      amount,
-      quantity,
-      status: 'paid',
+      seats,
+      startDate: `2025-${pastMonth}-05`,
+      expiryDate: `2026-${pastMonth}-05`,
+      status: 'active',
     });
 
-    const status = INVOICE_STATUS_CYCLE[index % INVOICE_STATUS_CYCLE.length];
-    invoices.push({
-      id: `inv-${index}-current`,
-      invoiceNumber: `INV-2026-${1000 + index * 2 + 1}`,
+    const status = LICENSE_STATUS_CYCLE[index % LICENSE_STATUS_CYCLE.length];
+    const expiryDate = index % 6 === 1 ? '2026-09-05' // expiring soon
+      : index % 6 === 3 ? '2026-08-10' // already expired
+      : '2027-08-01'; // comfortably active
+
+    licenses.push({
+      id: `lic-${index}-current`,
+      licenseNumber: `LIC-2026-${1000 + index * 2 + 1}`,
+      licenseKey: licenseKeyFor(index * 2 + 1),
       orgId: pair.orgId,
       appId: pair.appId,
-      invoiceDate: `2026-08-0${1 + (index % 9)}`,
-      dueDate: status === 'overdue' ? '2026-08-10' : status === 'expiring-soon' ? '2026-08-28' : '2026-09-05',
-      paidDate: status === 'paid' ? `2026-08-15T${10 + (index % 8)}:${index % 2 === 0 ? '15' : '45'}:00` : undefined,
-      amount,
-      quantity,
+      seats,
+      startDate: `2026-08-0${1 + (index % 9)}`,
+      expiryDate,
       status,
     });
   });
 
-  return invoices;
+  return licenses;
 }
 
-export const MOCK_INVOICES: Invoice[] = seededInvoices();
+export const MOCK_LICENSES: License[] = seededLicenses();
 
 // ── Masters (reference data) ────────────────────────────────────────
-// A single master: the catalog of billable line items offered when creating an invoice.
+// A single master: the catalog of billable line items offered when creating a license.
 
 export const MOCK_INVOICE_ITEMS: InvoiceItem[] = [
   // OptionC School

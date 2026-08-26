@@ -56,24 +56,20 @@ export function accessStatusOf(expiryDate: string): 'active' | 'expiring-soon' |
   return 'active';
 }
 
-/** Short due-date delta for invoice tables — "3d left" ahead of due, a signed "-15d" once
- * overdue (color carries the "overdue" meaning, so the label stays a plain numeric delta —
- * the industry-standard shorthand for due-date columns). */
-export function formatDaysLabel(dueDate: string): string {
-  const remaining = daysUntil(dueDate);
-  if (remaining === 0) return 'Due today';
+/** Short expiry-date delta — "3d left" ahead of expiry, a signed "-15d" once past it (color
+ * carries the "overdue" meaning, so the label stays a plain numeric delta). */
+export function formatDaysLabel(expiryDate: string): string {
+  const remaining = daysUntil(expiryDate);
+  if (remaining === 0) return 'Expires today';
   if (remaining > 0) return `${remaining}d left`;
   return `-${Math.abs(remaining)}d`;
 }
 
-/** Derives an invoice's effective status live from its due date — 'paid' and 'cancelled' are
- * terminal and always win, otherwise 'overdue' (past due) or 'expiring-soon' (due within 30
- * days, matching {@link accessStatusOf}'s subscription-expiry convention) is computed on read
- * rather than trusted as a stored value, so it never drifts out of date. */
-export function effectiveInvoiceStatus<T extends string>(status: T, dueDate: string): T | 'overdue' | 'expiring-soon' {
-  if (status === 'paid' || status === 'cancelled') return status;
-  const remaining = daysUntil(dueDate);
-  if (remaining < 0) return 'overdue';
-  if (remaining <= 30) return 'expiring-soon';
-  return status;
+/** Derives a license's effective status live from its expiry date — 'suspended' is terminal
+ * and always wins, otherwise 'expired' (past expiry) or 'expiring-soon' (within 30 days,
+ * matching {@link accessStatusOf}) is computed on read rather than trusted as a stored value,
+ * so it never drifts out of date. */
+export function effectiveLicenseStatus(status: 'active' | 'suspended', expiryDate: string): 'active' | 'suspended' | 'expiring-soon' | 'expired' {
+  if (status === 'suspended') return status;
+  return accessStatusOf(expiryDate);
 }

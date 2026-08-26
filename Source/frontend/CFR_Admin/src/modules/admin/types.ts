@@ -116,35 +116,39 @@ export interface ActivityItem {
   kind: 'application' | 'organization' | 'user' | 'request';
 }
 
-export type InvoiceStatus = 'created' | 'paid' | 'cancelled' | 'overdue' | 'expiring-soon';
+/** Stored base state. 'expiring-soon' and 'expired' are never stored — they're derived live
+ * from {@link License.expiryDate}, see {@link effectiveLicenseStatus}. */
+export type LicenseStatus = 'active' | 'suspended';
+export type EffectiveLicenseStatus = LicenseStatus | 'expiring-soon' | 'expired';
 
-export interface Invoice {
+/** A product license issued to an organization — the industry-standard seat/term/key shape
+ * (license key, seat count, start/expiry date) rather than a billing document. */
+export interface License {
   id: string;
-  invoiceNumber: string;
+  licenseNumber: string;
+  /** The actual license key handed to the customer, e.g. "AB12-CD34-EF56-GH78". */
+  licenseKey: string;
   orgId: string;
   appId: string;
-  /** Customer-facing invoice title, e.g. "OptionC School — Fall Term Renewal". */
+  /** Customer-facing license title, e.g. "OptionC School — Fall Term Renewal". */
   title?: string;
-  invoiceDate: string;
-  dueDate: string;
-  paidDate?: string;
-  amount: number;
-  quantity: number;
-  status: InvoiceStatus;
-  /** Optional note shown to the customer alongside the invoice. */
+  /** Omitted = unlimited seats (a site/org-wide license) rather than a per-seat one. */
+  seats?: number;
+  startDate: string;
+  expiryDate: string;
+  status: LicenseStatus;
+  /** Optional note shown to the customer alongside the license, e.g. onboarding instructions. */
   customMessage?: string;
-  /** External payment URL the customer uses to pay this invoice. */
-  paymentLink?: string;
 }
 
-/** The single Masters reference list — billable line items available when creating an
- * invoice. Managed under Administration → Masters; never deleted, only activated/deactivated. */
+/** The single Masters reference list — billable line items available when creating a
+ * license. Managed under Administration → Masters; never deleted, only activated/deactivated. */
 export interface InvoiceItem {
   id: string;
   title: string;
   description: string;
   defaultAmount: number;
   active: boolean;
-  /** Product this item is billed under — every invoice item belongs to exactly one product. */
+  /** Product this item is billed under — every license item belongs to exactly one product. */
   appId: string;
 }

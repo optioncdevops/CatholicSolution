@@ -41,7 +41,7 @@ export function InvoiceItemsPage() {
     }
     const confirmed = await confirmAction({
       title: 'Deactivate this item?',
-      description: `"${item.title}" will no longer be available to add to new invoices.`,
+      description: `"${item.title}" will no longer be available to add to new licenses.`,
       confirmLabel: 'Deactivate',
       tone: 'danger',
     });
@@ -86,7 +86,7 @@ export function InvoiceItemsPage() {
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
-        title="Invoice Items"
+        title="License Items"
         action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => setDrawerTarget('create')}>Add New Item</CommonButton>}
       />
 
@@ -121,9 +121,9 @@ export function InvoiceItemsPage() {
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState icon="🧾" title="No invoice items found" description="Try a different search term or filter." />
+        <EmptyState icon="🧾" title="No license items found" description="Try a different search term or filter." />
       ) : (
-        <DataTable data={rows} columns={columns} getRowId={(item) => item.id} exportFileName="invoice-items" exportTitle="Invoice items" emptyMessage="No invoice items found." />
+        <DataTable data={rows} columns={columns} getRowId={(item) => item.id} exportFileName="license-items" exportTitle="License items" emptyMessage="No license items found." />
       )}
 
       <InvoiceItemFormModal target={drawerTarget} onClose={() => setDrawerTarget(null)} onCreate={handleCreate} onSave={handleSave} />
