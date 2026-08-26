@@ -30,3 +30,10 @@
 /Source/backend/Platform/CFR.Common/obj/Debug/net10.0
 /Source/backend/Platform/CFR.Common/obj
 /Source/backend/Gateway/CFR.Gateway/bin/Debug/net10.0
+/Source/backend/Microservices/CFR.Acutis/bin/Release/net10.0
+/Source/backend/Microservices/CFR.Portal/bin/Release/net10.0
+/Source/backend/Gateway/CFR.Gateway/bin/Release/net10.0
+/Source/backend/Platform/CFR.Base/bin/Release/net10.0
+/Source/backend/Platform/CFR.Common/bin/Release/net10.0
+/Source/backend/Platform/CFR.DBEngine/bin/Release/net10.0
+/Source/backend/Service/CFR.CommonService/bin/Release/net10.0
