@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CFR.DBEngine\CFR.DBEngine.csproj" />
     <ProjectReference Include="..\..\Service\CFR.CommonService\CFR.CommonService.csproj" />
   </ItemGroup> 
 

@@ -1,12 +1,10 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using CFR.Base;
+using CFR.Gateway;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-
-using CFR.Base;
-
 using Scalar.AspNetCore;
-using CFR.Gateway;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -11,3 +11,7 @@ global using System.Net.Http.Headers;
 global using System.Text;
 global using System.Threading;
 global using System.Threading.Tasks;
+
+global using Microsoft.Extensions.Logging;
+
+global using Newtonsoft.Json;

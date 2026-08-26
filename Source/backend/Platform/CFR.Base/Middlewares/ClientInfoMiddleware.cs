@@ -1,6 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
 using CFR.Common;
+using CFR.CommonService;
 using CFR.CommonService.Interfaces;
 
 using Microsoft.Extensions.DependencyInjection;

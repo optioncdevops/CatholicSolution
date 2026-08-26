@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace CFR.Base.Services
 {
-    public class CacheUpdaterService(IMemoryCache memoryCache): IHostedService, IDisposable
+    public class CacheUpdaterService(IMemoryCache memoryCache) : IHostedService, IDisposable
     {
         private readonly IMemoryCache _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
         private Timer? _timer;

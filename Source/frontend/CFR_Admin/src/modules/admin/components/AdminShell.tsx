@@ -22,7 +22,7 @@ const ADMINISTRATION_ITEMS = [
   { to: '/admin/administration/user-roles', label: 'User Roles', icon: UserCog },
   { to: '/admin/administration/rights', label: 'Rights', icon: ShieldCheck },
   { to: '/admin/administration/email-templates', label: 'Email Template', icon: Mail },
-  { to: '/admin/administration/invoice-items', label: 'Invoice Items', icon: Receipt },
+  { to: '/admin/administration/invoice-items', label: 'License Items', icon: Receipt },
   // Component library (Add/View) pages intentionally have no nav entry — reach them by direct
   // URL only. Routes still live in App.tsx; see the removal note atop SampleAddPage.tsx.
 ];

@@ -15,7 +15,7 @@ namespace CFR.Base
         void Remove(string key);
     }
 
-    public class InMemoryCacheHelper(IMemoryCache memoryCache): IInMemoryCacheHelper
+    public class InMemoryCacheHelper(IMemoryCache memoryCache) : IInMemoryCacheHelper
     {
         private readonly IMemoryCache _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
 

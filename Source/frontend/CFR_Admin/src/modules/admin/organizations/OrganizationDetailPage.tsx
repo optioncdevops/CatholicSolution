@@ -8,20 +8,19 @@ import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { useAdminData } from '../AdminDataContext';
 import { StatusBadge } from '@app/components/Badge';
 import { Dropdown } from '@app/components/formControls';
-import { formatDate, formatDateTime, daysUntil, daysBetween, accessStatusOf, effectiveInvoiceStatus } from '../utils/formatDate';
+import { formatDate, formatDateTime, accessStatusOf, effectiveLicenseStatus } from '../utils/formatDate';
 import { EntityAvatar } from '@app/components/EntityAvatar';
 import { Tabs, TabPanel } from '@app/components/Tabs';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { InvoiceDetailModal } from '../applications/InvoiceDetailModal';
-import type { AccessRequest, AdminApplication, AdminUser, Invoice, InvoiceStatus } from '../types';
+import type { AccessRequest, AdminApplication, AdminUser, EffectiveLicenseStatus, License } from '../types';
 
-const INVOICE_STATUS_FILTERS: Array<{ id: InvoiceStatus | 'all'; label: string }> = [
+const LICENSE_STATUS_FILTERS: Array<{ id: EffectiveLicenseStatus | 'all'; label: string }> = [
   { id: 'all', label: 'All statuses' },
-  { id: 'created', label: 'Created' },
-  { id: 'paid', label: 'Paid' },
-  { id: 'overdue', label: 'Overdue' },
+  { id: 'active', label: 'Active' },
   { id: 'expiring-soon', label: 'Expiring soon' },
-  { id: 'cancelled', label: 'Cancelled' },
+  { id: 'expired', label: 'Expired' },
+  { id: 'suspended', label: 'Suspended' },
 ];
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
@@ -35,12 +34,12 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 
 export function OrganizationDetailPage() {
   const { orgId } = useParams();
-  const { getOrganization, applications, users, requests, invoices, assignOrgApp, removeOrgApp } = useAdminData();
+  const { getOrganization, applications, users, requests, licenses, assignOrgApp, removeOrgApp } = useAdminData();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('profile');
   const [appToAssign, setAppToAssign] = useState('');
-  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
-  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<InvoiceStatus | 'all'>('all');
+  const [viewingInvoice, setViewingInvoice] = useState<License | null>(null);
+  const [licenseStatusFilter, setLicenseStatusFilter] = useState<EffectiveLicenseStatus | 'all'>('all');
 
   const org = orgId ? getOrganization(orgId) : undefined;
   if (!org) return <Navigate to="/admin/organizations" replace />;
@@ -49,11 +48,11 @@ export function OrganizationDetailPage() {
   const orgApps = applications.filter((app) => org.appIds.includes(app.id));
   const assignableApps = applications.filter((app) => !org.appIds.includes(app.id));
   const orgRequests = requests.filter((request) => request.orgId === org.id);
-  const allOrgInvoices = invoices
-    .filter((invoice) => invoice.orgId === org.id)
-    .sort((a, b) => b.invoiceDate.localeCompare(a.invoiceDate));
-  const orgInvoices = allOrgInvoices
-    .filter((invoice) => invoiceStatusFilter === 'all' || effectiveInvoiceStatus(invoice.status, invoice.dueDate) === invoiceStatusFilter);
+  const allOrgLicenses = licenses
+    .filter((license) => license.orgId === org.id)
+    .sort((a, b) => b.startDate.localeCompare(a.startDate));
+  const orgLicenses = allOrgLicenses
+    .filter((license) => licenseStatusFilter === 'all' || effectiveLicenseStatus(license.status, license.expiryDate) === licenseStatusFilter);
 
   const handleAssign = () => {
     if (!appToAssign) return;
@@ -100,32 +99,22 @@ export function OrganizationDetailPage() {
     { id: 'lastActive', header: 'Last Active', value: (user) => user.lastActiveAt, cell: (user) => <span className="text-[var(--text-muted)]">{user.lastActiveAt === '—' ? '—' : formatDate(user.lastActiveAt)}</span> },
   ];
 
-  const invoiceColumns: DataTableColumn<Invoice>[] = [
+  const licenseColumns: DataTableColumn<License>[] = [
     {
       id: 'actions', header: 'Actions', pinLeft: true, width: '4rem', excludeFromExport: true,
-      cell: (invoice) => <CommonIconButton aria-label={`View invoice ${invoice.invoiceNumber}`} tooltip="View" icon={<Eye size={15} />} onClick={() => setViewingInvoice(invoice)} />,
+      cell: (license) => <CommonIconButton aria-label={`View license ${license.licenseNumber}`} tooltip="View" icon={<Eye size={15} />} onClick={() => setViewingInvoice(license)} />,
     },
     {
       id: 'product', header: 'Product', width: '12rem',
-      value: (invoice) => applications.find((app) => app.id === invoice.appId)?.name ?? invoice.appId,
-      cell: (invoice) => <span className="font-bold text-[var(--text-primary)]">{applications.find((app) => app.id === invoice.appId)?.name ?? invoice.appId}</span>,
+      value: (license) => applications.find((app) => app.id === license.appId)?.name ?? license.appId,
+      cell: (license) => <span className="font-bold text-[var(--text-primary)]">{applications.find((app) => app.id === license.appId)?.name ?? license.appId}</span>,
     },
-    { id: 'invoiceNumber', header: 'Invoice #', value: (invoice) => invoice.invoiceNumber, cell: (invoice) => <span className="font-mono text-xs text-[var(--text-secondary)]">{invoice.invoiceNumber}</span> },
-    { id: 'invoiceDate', header: 'Invoice Date', value: (invoice) => invoice.invoiceDate, cell: (invoice) => <span className="text-[var(--text-muted)]">{formatDate(invoice.invoiceDate)}</span> },
-    { id: 'dueDate', header: 'Due Date', value: (invoice) => invoice.dueDate, cell: (invoice) => <span className="text-[var(--text-muted)]">{formatDate(invoice.dueDate)}</span> },
-    {
-      id: 'days', header: 'Days', value: (invoice) => invoice.dueDate,
-      cell: (invoice) => {
-        if (invoice.status === 'cancelled') return <span className="text-[var(--text-muted)]">—</span>;
-        const remaining = invoice.status === 'paid' && invoice.paidDate
-          ? daysBetween(invoice.paidDate, invoice.dueDate)
-          : daysUntil(invoice.dueDate);
-        return <span className={remaining < 0 ? 'font-bold text-[var(--error)]' : 'text-[var(--text-muted)]'}>{remaining}</span>;
-      },
-    },
-    { id: 'total', header: 'Total', value: (invoice) => invoice.amount * invoice.quantity, cell: (invoice) => <span className="font-bold text-[var(--text-primary)]">${(invoice.amount * invoice.quantity).toFixed(2)}</span> },
-    { id: 'paidDate', header: 'Paid On', value: (invoice) => invoice.paidDate ?? '', cell: (invoice) => <span className="text-[var(--text-muted)]">{invoice.paidDate ? formatDateTime(invoice.paidDate) : 'Not paid yet'}</span> },
-    { id: 'status', header: 'Status', value: (invoice) => effectiveInvoiceStatus(invoice.status, invoice.dueDate), cell: (invoice) => <StatusBadge status={effectiveInvoiceStatus(invoice.status, invoice.dueDate)} kind="invoice" /> },
+    { id: 'licenseNumber', header: 'License #', value: (license) => license.licenseNumber, cell: (license) => <span className="font-mono text-xs text-[var(--text-secondary)]">{license.licenseNumber}</span> },
+    { id: 'licenseKey', header: 'License Key', width: '16rem', value: (license) => license.licenseKey, cell: (license) => <span className="font-mono text-xs text-[var(--text-secondary)]">{license.licenseKey}</span> },
+    { id: 'seats', header: 'Seats', value: (license) => license.seats ?? 'Unlimited', cell: (license) => <span className="font-bold text-[var(--text-primary)]">{license.seats ?? 'Unlimited'}</span> },
+    { id: 'startDate', header: 'Start Date', value: (license) => license.startDate, cell: (license) => <span className="text-[var(--text-muted)]">{formatDate(license.startDate)}</span> },
+    { id: 'expiryDate', header: 'Expiry Date', value: (license) => license.expiryDate, cell: (license) => <span className="text-[var(--text-muted)]">{formatDate(license.expiryDate)}</span> },
+    { id: 'status', header: 'Status', value: (license) => effectiveLicenseStatus(license.status, license.expiryDate), cell: (license) => <StatusBadge status={effectiveLicenseStatus(license.status, license.expiryDate)} kind="license" /> },
   ];
 
   const productColumns: DataTableColumn<AdminApplication>[] = [
@@ -184,7 +173,7 @@ export function OrganizationDetailPage() {
           { id: 'profile', label: 'Profile' },
           { id: 'users', label: 'Users', count: orgUsers.length },
           { id: 'products', label: 'Products', count: orgApps.length },
-          { id: 'invoices', label: 'Invoices', count: allOrgInvoices.length },
+          { id: 'invoices', label: 'Licenses', count: allOrgLicenses.length },
           { id: 'requests', label: 'Requests', count: orgRequests.length },
         ]}
       />
@@ -269,30 +258,30 @@ export function OrganizationDetailPage() {
       <TabPanel id="invoices" activeId={activeTab}>
         <div className="flex flex-col gap-3">
           <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
-            {INVOICE_STATUS_FILTERS.map((filter) => {
-              const count = filter.id === 'all' ? allOrgInvoices.length : allOrgInvoices.filter((invoice) => effectiveInvoiceStatus(invoice.status, invoice.dueDate) === filter.id).length;
+            {LICENSE_STATUS_FILTERS.map((filter) => {
+              const count = filter.id === 'all' ? allOrgLicenses.length : allOrgLicenses.filter((license) => effectiveLicenseStatus(license.status, license.expiryDate) === filter.id).length;
               return (
                 <button
                   key={filter.id}
                   type="button"
-                  onClick={() => setInvoiceStatusFilter(filter.id)}
-                  className={`admin-filter-chip ${invoiceStatusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
+                  onClick={() => setLicenseStatusFilter(filter.id)}
+                  className={`admin-filter-chip ${licenseStatusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
                 >
                   {filter.label} ({count})
                 </button>
               );
             })}
           </div>
-          {orgInvoices.length === 0 ? (
-            <EmptyState icon="🧾" title="No invoices found" description="Try a different status filter." />
+          {orgLicenses.length === 0 ? (
+            <EmptyState icon="🔑" title="No licenses found" description="Try a different status filter." />
           ) : (
             <DataTable
-              data={orgInvoices}
-              columns={invoiceColumns}
-              getRowId={(invoice) => invoice.id}
-              exportFileName={`${org.name}-invoices`}
-              exportTitle={`${org.name} — Invoices`}
-              emptyMessage="No invoices found."
+              data={orgLicenses}
+              columns={licenseColumns}
+              getRowId={(license) => license.id}
+              exportFileName={`${org.name}-licenses`}
+              exportTitle={`${org.name} — Licenses`}
+              emptyMessage="No licenses found."
             />
           )}
         </div>

@@ -1,7 +1,5 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using Newtonsoft.Json;
-
 namespace CFR.CommonService.MailService
 {
     public class ConfSettings
@@ -11,46 +9,51 @@ namespace CFR.CommonService.MailService
 
     public class SettingConfiguration
     {
-        public SMTPMailConfig? SMTPMailConfig { get; set; }
-        public ApplicationFilePath? ApplicationFilePath { get; set; }
-        public AppSettings? AppSettings { get; set; }
+        public SMTPMailConfig SMTPMailConfig { get; set; } = null!;
+        public ApplicationFilePath ApplicationFilePath { get; set; } = null!;
+        public AppSettings AppSettings { get; set; } = null!;
     }
 
     public class AppSettings
     {
-        public string? DocBaseURL { get; set; }
-        public string? ExpTrainingSchedule { get; set; }
+        public string DocBaseURL { get; set; } = null!;
+        public string ExpTrainingSchedule { get; set; } = null!;
+        public string AchFuzeTestingOrgId { get; set; } = null!;
+        public string OptionCBaseURL { get; set; } = string.Empty;
+        public string FamilyBaseURL { get; set; } = string.Empty;
+        public string SSOOptionCBaseURL { get; set; } = string.Empty;
     }
 
     public class ApplicationFilePath
     {
-        public string? Doc_BasePath { get; set; }
-        public string? OldDocBaseURL { get; set; }
-        public string? OldDocTicket { get; set; }
-        public string? OldSaintImagePath { get; set; }
-        public string? ExistingStaticFilePath { get; set; }
-        public string? StaticFilePath { get; set; }
-        public string? NextGenBaseURL { get; set; }
-        public string? ComponentBaseURL { get; set; }
-        public string? EFormBaseURL { get; set; }
-        public string? ReportManagerBaseURL { get; set; }
+        public string Doc_BasePath { get; set; } = null!;
+        public string DirectoryUploadTemplate { get; set; } = null!;
+        public string OldDocTicket { get; set; } = null!;
+        public string OldSaintImagePath { get; set; } = null!;
+        public string ExistingStaticFilePath { get; set; } = null!;
+        public string StaticFilePath { get; set; } = null!;
     }
 
     public class SMTPMailConfig
     {
-        public string? SendMailFlag { get; set; }
-        public string? SMTPServer { get; set; }
-        public string? SMTPPort { get; set; }
-        public string? DisplayName { get; set; }
-        public string? MUserName { get; set; }
-        public string? MPassword { get; set; }
-        public string? IsSSLEnabled { get; set; }
-        public string? CCMailId { get; set; }
-        public string? LoginURL { get; set; }
-        public string? ContactUsMailId { get; set; }
-        public string? ReceiverMail { get; set; }
-        public string? LogoUrl { get; set; }
-        public string? DefaultToAddress { get; set; }
+        public string SendMailFlag { get; set; } = null!;
+        public string SMTPServer { get; set; } = null!;
+        public string SMTPPort { get; set; } = null!;
+        public string DisplayName { get; set; } = null!;
+        public string MUserName { get; set; } = null!;
+        public string MPassword { get; set; } = null!;
+        public string IsSSLEnabled { get; set; } = null!;
+        public string CCMailId { get; set; } = null!;
+        public string LoginURL { get; set; } = null!;
+        public string ContactUsMailId { get; set; } = null!;
+        public string ReceiverMail { get; set; } = null!;
+        public string DefaultToAddress { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Absolute logo URL for HTML emails. When empty, falls back to
+        /// <c>{LoginURL}/Images/mattmoney-logo.png</c> (legacy MailService).
+        /// </summary>
+        public string LogoUrl { get; set; } = string.Empty;
     }
 
     public class ConfSettingsService
@@ -71,27 +74,10 @@ namespace CFR.CommonService.MailService
             var confSettings = new ConfSettings();
             try
             {
-                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                string? sCSSFileName = Path.Combine(baseDirectory, "_configurationSettings.json");
-
-                if (!File.Exists(sCSSFileName))
+                string? settingsPath = ResolveSettingsFilePath();
+                if (!string.IsNullOrWhiteSpace(settingsPath) && File.Exists(settingsPath))
                 {
-                    var dir = new DirectoryInfo(baseDirectory);
-                    while (dir != null)
-                    {
-                        string candidate = Path.Combine(dir.FullName, "_configurationSettings.json");
-                        if (File.Exists(candidate))
-                        {
-                            sCSSFileName = candidate;
-                            break;
-                        }
-                        dir = dir.Parent;
-                    }
-                }
-
-                if (File.Exists(sCSSFileName))
-                {
-                    string jsonString = File.ReadAllText(sCSSFileName);
+                    string jsonString = File.ReadAllText(settingsPath);
                     confSettings = JsonConvert.DeserializeObject<ConfSettings>(jsonString) ?? new ConfSettings();
                 }
             }
@@ -100,6 +86,33 @@ namespace CFR.CommonService.MailService
                 // Optionally log the exception
             }
             return confSettings;
+        }
+
+        private static string? ResolveSettingsFilePath()
+        {
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string? directPath = Path.Combine(
+                baseDirectory.Replace(@"\bin\Debug\net10.0", string.Empty, StringComparison.OrdinalIgnoreCase)
+                    .Replace(@"\bin\Release\net10.0", string.Empty, StringComparison.OrdinalIgnoreCase),
+                "_configurationSettings.json");
+            if (File.Exists(directPath))
+            {
+                return directPath;
+            }
+
+            var directory = new DirectoryInfo(baseDirectory);
+            while (directory != null)
+            {
+                string candidate = Path.Combine(directory.FullName, "_configurationSettings.json");
+                if (File.Exists(candidate))
+                {
+                    return candidate;
+                }
+
+                directory = directory.Parent;
+            }
+
+            return null;
         }
     }
 }

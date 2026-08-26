@@ -1,9 +1,8 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using System.Globalization;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.RateLimiting;
-
+using CFR.CommonService.Interfaces;
+using CFR.CommonService.Service;
+using CFR.CommonService.Services;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -14,11 +13,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-
-using CFR.Common.Services;
-using CFR.CommonService.Interfaces;
-using CFR.CommonService.Service;
-
+using System.Globalization;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.RateLimiting;
 using static CFR.Common.Constant;
 
 namespace CFR.Base;
@@ -67,20 +64,6 @@ public static class ServiceExtension
         return services;
     }
 
-    public static IServiceCollection AddRedisCachesSetup(this IServiceCollection services, IConfiguration configuration)
-    {
-        _ = configuration;
-        //services.AddStackExchangeRedisCache(options =>
-        //{
-        //    options.Configuration = configuration.GetConnectionString("Redis");
-        //    //options.InstanceName = "MyApp_";
-        //});
-
-        services.AddScoped<IRedisCacheHelper, RedisCacheHelper>();
-
-        return services;
-    }
-
     public static IServiceCollection AddCommonServicesSetup(this IServiceCollection services)
     {
         // Set Global Culture to Invariant (or any specific culture)
@@ -94,22 +77,6 @@ public static class ServiceExtension
 
         // Add in-memory caching services
         _ = services.AddMemoryCache();
-
-        //// Set the API version for all the Controllers
-        //services.AddApiVersioning(options =>
-        //{
-        //    options.DefaultApiVersion = new ApiVersion(1, 0);
-        //    options.AssumeDefaultVersionWhenUnspecified = true;
-        //    options.ReportApiVersions = true;
-        //    options.ApiVersionReader = new UrlSegmentApiVersionReader();
-        //});
-
-        //// Add versioned API explorer
-        //services.AddVersionedApiExplorer(options =>
-        //{
-        //    options.GroupNameFormat = "'v'VVV";
-        //    options.SubstituteApiVersionInUrl = true;
-        //});
 
         // Take the Token Values
         _ = services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -205,9 +172,6 @@ public static class ServiceExtension
                 ClockSkew = TimeSpan.Zero,
             };
         });
-
-        // Configure custom certificate-based services
-        //services.ConfigureLocationCounterBasedServices(configuration);
 
         // Configure CORS - Allow all origins for development (with credentials support)
         services.AddCors(options =>

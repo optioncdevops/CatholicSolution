@@ -63,7 +63,7 @@ export const RIGHTS_TREE: RightsNode[] = [
         ],
       },
       {
-        id: 'products.invoices', label: 'Invoices', description: 'Create and review invoices for a product\'s customers.',
+        id: 'products.invoices', label: 'Licenses', description: 'Create and review licenses for a product\'s customers.',
         children: [
           { id: 'products.invoices.view', label: 'View' },
           { id: 'products.invoices.create', label: 'Create' },
@@ -173,7 +173,7 @@ export const RIGHTS_TREE: RightsNode[] = [
         ],
       },
       {
-        id: 'administration.invoiceItems', label: 'Invoice Items', description: 'The master list of billable invoice items.',
+        id: 'administration.invoiceItems', label: 'License Items', description: 'The master list of billable license items.',
         children: [
           { id: 'administration.invoiceItems.view', label: 'View' },
           { id: 'administration.invoiceItems.manage', label: 'Manage' },

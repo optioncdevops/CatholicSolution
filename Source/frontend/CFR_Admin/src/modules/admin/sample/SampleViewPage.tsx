@@ -29,12 +29,12 @@ import { formatDate } from '../utils/formatDate';
 import { SAMPLE_TABLE_ROWS, type SampleRow } from './sampleData';
 
 const BADGE_TONES = ['success', 'warning', 'neutral', 'danger', 'info'] as const;
-const STATUS_KINDS: Array<{ kind: 'application' | 'organization' | 'user' | 'request' | 'invoice' | 'access'; statuses: string[] }> = [
+const STATUS_KINDS: Array<{ kind: 'application' | 'organization' | 'user' | 'request' | 'license' | 'access'; statuses: string[] }> = [
   { kind: 'application', statuses: ['active', 'inactive', 'coming-soon'] },
   { kind: 'organization', statuses: ['active', 'trial', 'suspended'] },
   { kind: 'user', statuses: ['active', 'invited', 'deactivated'] },
   { kind: 'request', statuses: ['pending', 'approved', 'rejected', 'info-requested'] },
-  { kind: 'invoice', statuses: ['created', 'paid', 'cancelled', 'overdue', 'expiring-soon'] },
+  { kind: 'license', statuses: ['active', 'suspended', 'expiring-soon', 'expired'] },
   { kind: 'access', statuses: ['active', 'expiring-soon', 'expired'] },
 ];
 

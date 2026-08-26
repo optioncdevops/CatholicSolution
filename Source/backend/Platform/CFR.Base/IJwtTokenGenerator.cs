@@ -1,14 +1,11 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Cryptography;
-
+using CFR.Common;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-
-using CFR.Common;
-
 using Newtonsoft.Json;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
 
 namespace CFR.Base
 {
@@ -20,7 +17,7 @@ namespace CFR.Base
         string GenerateRefreshToken();
     }
 
-    public class JwtTokenGenerator(IOptions<JWTSetting> jwtSetting): IJwtTokenGenerator
+    public class JwtTokenGenerator(IOptions<JWTSetting> jwtSetting) : IJwtTokenGenerator
     {
         public string GenerateToken(UserContextData userDetail)
         {
@@ -114,7 +111,5 @@ namespace CFR.Base
         {
             return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         }
-
     }
-
 }

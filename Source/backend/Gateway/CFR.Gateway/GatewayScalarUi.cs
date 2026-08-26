@@ -25,19 +25,8 @@ internal static class GatewayScalarUi
             routePattern: "/swagger/APIGateway/swagger.json",
             isDefault: true);
 
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:AcutisEnabled", configKey: "Gateway:AcutisPathPrefix", defaultPrefix: "/acutis", docs: SwaggerModuleDoc.OptionCAcutisDocs, labelPrefix: "Acutis");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:AdminEnabled", configKey: "Gateway:AdminPathPrefix", defaultPrefix: "/admin", docs: SwaggerModuleDoc.AdminMattMoney, labelPrefix: "Admin");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:FeeEnabled", configKey: "Gateway:FeePathPrefix", defaultPrefix: "/fees", docs: SwaggerModuleDoc.FeeMattMoney, labelPrefix: "Fee");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:MemberEnabled", configKey: "Gateway:MemberPathPrefix", defaultPrefix: "/member", docs: SwaggerModuleDoc.FamilyOffice, labelPrefix: "Member");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:SsoEnabled", configKey: "Gateway:SsoPathPrefix", defaultPrefix: "/sso", docs: SwaggerModuleDoc.OptionCSSO, labelPrefix: "SSO");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:SmsEnabled", configKey: "Gateway:SmsPathPrefix", defaultPrefix: "/sms", docs: SwaggerModuleDoc.OptionCSMSDocs, labelPrefix: "SMS");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:ReportEnabled", configKey: "Gateway:ReportPathPrefix", defaultPrefix: "/reports", docs: SwaggerModuleDoc.OptionCReportsDocs, labelPrefix: "Report");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:FamilyEnabled", configKey: "Gateway:FamilyPathPrefix", defaultPrefix: "/family", docs: SwaggerModuleDoc.OptionCFamilyDocs, labelPrefix: "Family");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:AdmissionEnabled", configKey: "Gateway:AdmissionPathPrefix", defaultPrefix: "/admission", docs: SwaggerModuleDoc.OptionCAdmissionDocs, labelPrefix: "Admission");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:ComponentEnabled", configKey: "Gateway:ComponentPathPrefix", defaultPrefix: "/component", docs: SwaggerModuleDoc.OptionCComponentDocs, labelPrefix: "Component");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:ReferenceEnabled", configKey: "Gateway:ReferencePathPrefix", defaultPrefix: "/reference", docs: SwaggerModuleDoc.OptionCMyMessageDocs, labelPrefix: "Reference");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:FeedEnabled", configKey: "Gateway:FeedPathPrefix", defaultPrefix: "/fee", docs: SwaggerModuleDoc.OptionCFeeDocs, labelPrefix: "FeeLegacy");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:DioceseEnabled", configKey: "Gateway:DiocesePathPrefix", defaultPrefix: "/diocese", docs: SwaggerModuleDoc.OptionCDioceseDocs, labelPrefix: "Diocese");
+        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:AcutisEnabled", configKey: "Gateway:AcutisPathPrefix", defaultPrefix: "/acutis", docs: SwaggerModuleDoc.AcutisDocs, labelPrefix: "Acutis");
+        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:PortalEnabled", configKey: "Gateway:PortalPathPrefix", defaultPrefix: "/portal", docs: SwaggerModuleDoc.PortalDocs, labelPrefix: "Portal");
     }
 
     private static void RegisterIfEnabled(ScalarOptions options, IConfiguration configuration, string enabledKey, string configKey, string defaultPrefix, string docs, string labelPrefix)

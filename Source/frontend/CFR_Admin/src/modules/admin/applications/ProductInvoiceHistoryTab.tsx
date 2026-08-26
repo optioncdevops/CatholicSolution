@@ -6,47 +6,67 @@ import { useAdminData } from '../AdminDataContext';
 import { StatusBadge } from '@app/components/Badge';
 import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
-import { formatDate, formatDateTime, effectiveInvoiceStatus } from '../utils/formatDate';
+import { formatDate, effectiveLicenseStatus } from '../utils/formatDate';
 import { InvoiceDetailModal } from './InvoiceDetailModal';
-import type { AdminApplication, Invoice } from '../types';
+import type { AdminApplication, EffectiveLicenseStatus, License } from '../types';
 
-const PAID_FILTERS = [
-  { id: 'all', label: 'Paid & Unpaid' },
-  { id: 'paid', label: 'Paid Only' },
-  { id: 'unpaid', label: 'Unpaid Only' },
-] as const;
-type PaidFilter = (typeof PAID_FILTERS)[number]['id'];
+const STATUS_FILTERS: Array<{ id: EffectiveLicenseStatus | 'all'; label: string }> = [
+  { id: 'all', label: 'All statuses' },
+  { id: 'active', label: 'Active' },
+  { id: 'expiring-soon', label: 'Expiring soon' },
+  { id: 'expired', label: 'Expired' },
+  { id: 'suspended', label: 'Suspended' },
+];
 
-/** Same grid layout as ProductInvoiceDetailsTab — this tab is just that data scoped to older,
- * historical invoices (any customer/paid-state, not limited to a rolling date range). */
+/** The complete license ledger for this product — every term ever issued to every customer,
+ * including ones superseded by a later renewal. License Details only shows each customer's
+ * current term; this tab is the full audit trail behind it, with a Term column marking which
+ * row is the one currently in effect. */
 export function ProductInvoiceHistoryTab({ app }: { app: AdminApplication }) {
-  const { invoices, organizations, getOrganization } = useAdminData();
+  const { licenses, organizations, getOrganization } = useAdminData();
   const [customerFilter, setCustomerFilter] = useState('all');
-  const [paidFilter, setPaidFilter] = useState<PaidFilter>('all');
-  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+  const [statusFilter, setStatusFilter] = useState<EffectiveLicenseStatus | 'all'>('all');
+  const [viewingInvoice, setViewingInvoice] = useState<License | null>(null);
 
   const productCustomers = organizations.filter((org) => org.appIds.includes(app.id));
 
-  const rows = useMemo(() => invoices
-    .filter((invoice) => invoice.appId === app.id)
-    .filter((invoice) => customerFilter === 'all' || invoice.orgId === customerFilter)
-    .filter((invoice) => paidFilter === 'all' || (paidFilter === 'paid' ? Boolean(invoice.paidDate) : !invoice.paidDate))
-    .sort((a, b) => b.invoiceDate.localeCompare(a.invoiceDate)),
-  [invoices, app.id, customerFilter, paidFilter]);
+  const currentLicenseIdByOrg = useMemo(() => {
+    const currentByOrg = new Map<string, License>();
+    for (const license of licenses) {
+      if (license.appId !== app.id) continue;
+      const existing = currentByOrg.get(license.orgId);
+      if (!existing || license.startDate > existing.startDate) currentByOrg.set(license.orgId, license);
+    }
+    return new Map([...currentByOrg.entries()].map(([orgId, license]) => [orgId, license.id]));
+  }, [licenses, app.id]);
 
-  const columns: DataTableColumn<Invoice>[] = [
+  const rows = useMemo(() => licenses
+    .filter((license) => license.appId === app.id)
+    .filter((license) => customerFilter === 'all' || license.orgId === customerFilter)
+    .filter((license) => statusFilter === 'all' || effectiveLicenseStatus(license.status, license.expiryDate) === statusFilter)
+    .sort((a, b) => b.startDate.localeCompare(a.startDate)),
+  [licenses, app.id, customerFilter, statusFilter]);
+
+  const columns: DataTableColumn<License>[] = [
     {
       id: 'actions', header: 'Actions', pinLeft: true, width: '4rem', excludeFromExport: true,
-      cell: (invoice) => <CommonIconButton aria-label={`View invoice ${invoice.invoiceNumber}`} tooltip="View" icon={<Eye size={15} />} onClick={() => setViewingInvoice(invoice)} />,
+      cell: (license) => <CommonIconButton aria-label={`View license ${license.licenseNumber}`} tooltip="View" icon={<Eye size={15} />} onClick={() => setViewingInvoice(license)} />,
     },
-    { id: 'customerCode', header: 'Customer Code', value: (invoice) => getOrganization(invoice.orgId)?.code ?? '', cell: (invoice) => <span className="font-mono text-xs text-[var(--text-secondary)]">{getOrganization(invoice.orgId)?.code ?? '—'}</span> },
-    { id: 'customer', header: 'Customer', width: '12rem', value: (invoice) => getOrganization(invoice.orgId)?.name ?? invoice.orgId, cell: (invoice) => <span className="font-bold text-[var(--text-primary)]">{getOrganization(invoice.orgId)?.name ?? invoice.orgId}</span> },
-    { id: 'invoiceNumber', header: 'Invoice #', value: (invoice) => invoice.invoiceNumber, cell: (invoice) => <span className="font-mono text-xs text-[var(--text-secondary)]">{invoice.invoiceNumber}</span> },
-    { id: 'invoiceDate', header: 'Invoice Date', value: (invoice) => invoice.invoiceDate, cell: (invoice) => <span className="text-[var(--text-muted)]">{formatDate(invoice.invoiceDate)}</span> },
-    { id: 'dueDate', header: 'Due Date', value: (invoice) => invoice.dueDate, cell: (invoice) => <span className="text-[var(--text-muted)]">{formatDate(invoice.dueDate)}</span> },
-    { id: 'paidDate', header: 'Paid On', value: (invoice) => invoice.paidDate ?? '', cell: (invoice) => <span className="text-[var(--text-muted)]">{invoice.paidDate ? formatDateTime(invoice.paidDate) : 'Not paid yet'}</span> },
-    { id: 'total', header: 'Total', value: (invoice) => invoice.amount * invoice.quantity, cell: (invoice) => <span className="font-bold text-[var(--text-primary)]">${(invoice.amount * invoice.quantity).toFixed(2)}</span> },
-    { id: 'status', header: 'Status', value: (invoice) => effectiveInvoiceStatus(invoice.status, invoice.dueDate), cell: (invoice) => <StatusBadge status={effectiveInvoiceStatus(invoice.status, invoice.dueDate)} kind="invoice" /> },
+    {
+      id: 'term', header: 'Term', width: '6rem',
+      value: (license) => (currentLicenseIdByOrg.get(license.orgId) === license.id ? 'Current' : 'Past'),
+      cell: (license) => (currentLicenseIdByOrg.get(license.orgId) === license.id
+        ? <span className="font-bold text-[var(--success)]">Current</span>
+        : <span className="text-[var(--text-faint)]">Past</span>),
+    },
+    { id: 'customerCode', header: 'Customer Code', value: (license) => getOrganization(license.orgId)?.code ?? '', cell: (license) => <span className="font-mono text-xs text-[var(--text-secondary)]">{getOrganization(license.orgId)?.code ?? '—'}</span> },
+    { id: 'customer', header: 'Customer', width: '12rem', value: (license) => getOrganization(license.orgId)?.name ?? license.orgId, cell: (license) => <span className="font-bold text-[var(--text-primary)]">{getOrganization(license.orgId)?.name ?? license.orgId}</span> },
+    { id: 'licenseNumber', header: 'License #', value: (license) => license.licenseNumber, cell: (license) => <span className="font-mono text-xs text-[var(--text-secondary)]">{license.licenseNumber}</span> },
+    { id: 'licenseKey', header: 'License Key', width: '16rem', value: (license) => license.licenseKey, cell: (license) => <span className="font-mono text-xs text-[var(--text-secondary)]">{license.licenseKey}</span> },
+    { id: 'seats', header: 'Seats', value: (license) => license.seats ?? 'Unlimited', cell: (license) => <span className="font-bold text-[var(--text-primary)]">{license.seats ?? 'Unlimited'}</span> },
+    { id: 'startDate', header: 'Start Date', value: (license) => license.startDate, cell: (license) => <span className="text-[var(--text-muted)]">{formatDate(license.startDate)}</span> },
+    { id: 'expiryDate', header: 'Expiry Date', value: (license) => license.expiryDate, cell: (license) => <span className="text-[var(--text-muted)]">{formatDate(license.expiryDate)}</span> },
+    { id: 'status', header: 'Status', value: (license) => effectiveLicenseStatus(license.status, license.expiryDate), cell: (license) => <StatusBadge status={effectiveLicenseStatus(license.status, license.expiryDate)} kind="license" /> },
   ];
 
   return (
@@ -61,27 +81,27 @@ export function ProductInvoiceHistoryTab({ app }: { app: AdminApplication }) {
             className="min-h-8"
           />
         </div>
-        <div className="w-40 shrink-0">
+        <div className="w-44 shrink-0">
           <Dropdown
-            label="Paid state" hideLabel searchable={false} clearable={false}
-            value={paidFilter}
-            onValueChange={(value) => setPaidFilter((value as PaidFilter) ?? 'all')}
-            options={PAID_FILTERS.map((option) => ({ id: option.id, value: option.label }))}
+            label="Status" hideLabel searchable={false} clearable={false}
+            value={statusFilter}
+            onValueChange={(value) => setStatusFilter((value as EffectiveLicenseStatus | 'all') ?? 'all')}
+            options={STATUS_FILTERS.map((filter) => ({ id: filter.id, value: filter.label }))}
             className="min-h-8"
           />
         </div>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState icon="🕒" title="No invoice history" description="Try a different customer or paid-state filter." />
+        <EmptyState icon="🕒" title="No license history" description="Try a different customer or status filter." />
       ) : (
         <DataTable
           data={rows}
           columns={columns}
-          getRowId={(invoice) => invoice.id}
-          exportFileName={`${app.shortName}-invoice-history`}
-          exportTitle={`${app.name} — Invoice history`}
-          emptyMessage="No invoice history."
+          getRowId={(license) => license.id}
+          exportFileName={`${app.shortName}-license-history`}
+          exportTitle={`${app.name} — License history`}
+          emptyMessage="No license history."
         />
       )}
 

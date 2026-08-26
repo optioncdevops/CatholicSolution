@@ -125,7 +125,7 @@ public static class XmlJsonHelper
 
     /// <summary>
     /// Converts XML to a <see cref="JsonElement"/> via Newtonsoft XML→JSON then System.Text.Json.JsonDocument.Parse.
-    /// Use this for <c>ResultArgs</c> / API payloads when the host serializes with <see cref="System.Text.Json"/> so the client receives correct objects and arrays.
+    /// Use this for <c>MSResultArgs</c> / API payloads when the host serializes with <see cref="System.Text.Json"/> so the client receives correct objects and arrays.
     /// </summary>
     public static JsonElement? ToJsonElement(string? xml, bool omitRootObject = true)
     {

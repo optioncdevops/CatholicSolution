@@ -5,6 +5,7 @@
 // </copyright>
 
 using CFR.Common;
+using CFR.DBEngine;
 
 using Serilog;
 using Serilog.Context;
@@ -26,7 +27,7 @@ namespace CFR.Base;
 [SwaggerResponse(StatusCodes.Status404NotFound, "Resource not found.")]
 [SwaggerResponse(StatusCodes.Status409Conflict, "Resource already exists.")]
 [SwaggerResponse(StatusCodes.Status500InternalServerError, "An internal server error occurred.")]
-public class BaseController: ControllerBase
+public class BaseController : ControllerBase
 {
     [ApiExplorerSettings(IgnoreApi = true)]
     public void AuditSeriLog(string userId, string controllerName = "", string actionName = "", string changeData = "", string message = "Dashboard")
@@ -63,13 +64,13 @@ public class BaseController: ControllerBase
     }
 
     /// <summary>
-    /// Handles ResultArgs and returns an appropriate IActionResult.
+    /// Handles MSResultArgs and returns an appropriate IActionResult.
     /// </summary>
     /// <param name="resultArgs">The result arguments.</param>
     /// <param name="type">The HTTP type of the API call.</param>
     /// <returns>An IActionResult based on resultArgs and type.</returns>
     [ApiExplorerSettings(IgnoreApi = true)]
-    public IActionResult ApiResultArgs(ResultArgs resultArgs, APIHttpType type = APIHttpType.HttpGet)
+    public IActionResult ApiResultArgs(MSResultArgs resultArgs, APIHttpType type = APIHttpType.HttpGet)
     {
         try
         {
@@ -89,14 +90,14 @@ public class BaseController: ControllerBase
     }
 
     /// <summary>
-    /// Handles generic ResultArgs and returns an appropriate IActionResult.
+    /// Handles generic MSResultArgs and returns an appropriate IActionResult.
     /// </summary>
-    /// <typeparam name="T">The type of data in ResultArgs.</typeparam>
+    /// <typeparam name="T">The type of data in MSResultArgs.</typeparam>
     /// <param name="resultArgs">The result arguments.</param>
     /// <param name="type">The HTTP type of the API call.</param>
     /// <returns>An IActionResult based on resultArgs and type.</returns>
     [ApiExplorerSettings(IgnoreApi = true)]
-    public IActionResult ApiResultArgs<T>(ResultArgs<T> resultArgs, APIHttpType type = APIHttpType.HttpGet)
+    public IActionResult ApiResultArgs<T>(MSResultArgs<T> resultArgs, APIHttpType type = APIHttpType.HttpGet)
     {
         try
         {
@@ -117,19 +118,19 @@ public class BaseController: ControllerBase
     /// <summary>
     /// Returns a file response with the specified content type and filename.
     /// </summary>
-    /// <typeparam name="T">The type of data in ResultArgs.</typeparam>
+    /// <typeparam name="T">The type of data in MSResultArgs.</typeparam>
     /// <param name="resultArgs">The result arguments.</param>
     /// <param name="fileName">The name of the file to be downloaded.</param>
     /// <param name="contentType">The content type of the file (default: "application/pdf").</param>
     /// <returns>An IActionResult containing the file or an error response if the file is invalid.</returns>
     [ApiExplorerSettings(IgnoreApi = true)]
-    protected IActionResult ApiResultArgs<T>(ResultArgs<T> resultArgs, string fileName, string contentType = "application/pdf")
+    protected IActionResult ApiResultArgs<T>(MSResultArgs<T> resultArgs, string fileName, string contentType = "application/pdf")
     {
         ArgumentNullException.ThrowIfNull(resultArgs);
 
         if (resultArgs.ResultData == null || resultArgs.ResultData is not byte[] fileBytes)
         {
-            return ApiResultArgs(new ResultArgs
+            return ApiResultArgs(new MSResultArgs
             {
                 StatusCode = ErrorCodes.InternalServerError,
                 StatusMessage = ErrorMessages.InternalServerError
@@ -146,7 +147,7 @@ public class BaseController: ControllerBase
     [ApiExplorerSettings(IgnoreApi = true)]
     protected IActionResult BadRequestApi(string message)
     {
-        return this.ApiResultArgs(new ResultArgs
+        return this.ApiResultArgs(new MSResultArgs
         {
             StatusCode = ErrorCodes.BadRequest,
             StatusMessage = message,
