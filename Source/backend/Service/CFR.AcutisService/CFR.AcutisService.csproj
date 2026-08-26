@@ -10,4 +10,10 @@
     <Folder Include="Service\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform\CFR.Common\CFR.Common.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\CFR.AcutisInfrastructure\CFR.AcutisInfrastructure.csproj" />
+    <ProjectReference Include="..\CFR.CommonService\CFR.CommonService.csproj" />
+  </ItemGroup>
+
 </Project>

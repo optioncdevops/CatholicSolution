@@ -1,5 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using System.Text.Json.Serialization;
+
 using CFR.Common;
 
 namespace CFR.DBEngine
@@ -67,16 +69,31 @@ namespace CFR.DBEngine
 
         #endregion API response
 
+        // Internal, repository-facing DB-result state — NEVER part of the client-facing API
+        // contract. The reference app's equivalent (OptionC.Common.ResultArgs) never had these
+        // fields at all; MSResultArgs added them for internal Dapper/DB-handler plumbing. Left
+        // internally usable (still plain C# properties) but excluded from JSON serialization via
+        // [JsonIgnore] — DataSource in particular must never reach a client: its getter lazily
+        // constructs a live System.Data.DataSet, and DataSet's own object graph (via its Locale
+        // property) is cyclic, which crashes System.Text.Json serialization outright (confirmed:
+        // "$.DataSource.TableSet.Locale.Parent.Parent..." — reproduced against a running
+        // CFR.Acutis instance during this task). This is what previously produced HTTP 500 on
+        // every endpoint returning a plain (non-generic) MSResultArgs.
         #region DB result
 
+        [JsonIgnore]
         public bool Success { get; set; }
 
+        [JsonIgnore]
         public bool IsShowExceptionMessage { get; set; } = true;
 
+        [JsonIgnore]
         public int RowsAffected { get; set; }
 
+        [JsonIgnore]
         public bool IsDeadLock { get; set; }
 
+        [JsonIgnore]
         public object RowUniqueId
         {
             get;
@@ -87,6 +104,7 @@ namespace CFR.DBEngine
             }
         } = "";
 
+        [JsonIgnore]
         public Dictionary<string, object> RowUniqueIdCollection
         {
             get
@@ -102,8 +120,10 @@ namespace CFR.DBEngine
             }
         }
 
+        [JsonIgnore]
         public object? ReturnValue { get; set; }
 
+        [JsonIgnore]
         public ResultSource DataSource
         {
             get

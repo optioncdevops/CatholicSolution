@@ -4,6 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Not a secret — just an id used to locate this developer's local, untracked secrets.json
+         file (%APPDATA%\Microsoft\UserSecrets\<id>\secrets.json on Windows), outside the repo.
+         See docs/acutis-auth-spec/operations-runbook.md. -->
+    <UserSecretsId>cfr-acutis-6f2b6e2e-9e3b-4a4b-8a6e-6f9c2a3ecfr1</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,6 +16,11 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Service\CFR.AcutisService\CFR.AcutisService.csproj" />
+    <ProjectReference Include="..\..\Platform\CFR.Base\CFR.Base.csproj" />
   </ItemGroup>
 
 </Project>

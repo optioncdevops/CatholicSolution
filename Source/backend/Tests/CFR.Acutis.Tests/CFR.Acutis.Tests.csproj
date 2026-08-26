@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- No test in this project connects to a database, the network, or reads a real
+         connection string/secret — every collaborator of the code under test is either the
+         real, pure-in-memory component itself (AcutisJwtTokenGenerator, AcutisMenuMapper,
+         AuthController, AcutisAuthenticationService) or a hand-written in-memory fake under
+         TestDoubles/, matching this codebase's own DEV FAKE convention rather than pulling in
+         a mocking framework. -->
+    <ProjectReference Include="..\..\Microservices\CFR.Acutis\CFR.Acutis.csproj" />
+    <ProjectReference Include="..\..\Service\CFR.AcutisService\CFR.AcutisService.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\CFR.AcutisInfrastructure\CFR.AcutisInfrastructure.csproj" />
+    <ProjectReference Include="..\..\Platform\CFR.Base\CFR.Base.csproj" />
+    <ProjectReference Include="..\..\Platform\CFR.Common\CFR.Common.csproj" />
+    <ProjectReference Include="..\..\Platform\CFR.DBEngine\CFR.DBEngine.csproj" />
+    <ProjectReference Include="..\..\Service\CFR.CommonService\CFR.CommonService.csproj" />
+  </ItemGroup>
+
+</Project>

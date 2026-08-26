@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CFR.Base</name>
+    </assembly>
+    <members>
+        <member name="M:CFR.Base.BaseController.ApiResultArgs(CFR.DBEngine.MSResultArgs,CFR.Common.APIHttpType)">
+            <summary>
+            Handles MSResultArgs and returns an appropriate IActionResult.
+            </summary>
+            <param name="resultArgs">The result arguments.</param>
+            <param name="type">The HTTP type of the API call.</param>
+            <returns>An IActionResult based on resultArgs and type.</returns>
+        </member>
+        <member name="M:CFR.Base.BaseController.ApiResultArgs``1(CFR.DBEngine.MSResultArgs{``0},CFR.Common.APIHttpType)">
+            <summary>
+            Handles generic MSResultArgs and returns an appropriate IActionResult.
+            </summary>
+            <typeparam name="T">The type of data in MSResultArgs.</typeparam>
+            <param name="resultArgs">The result arguments.</param>
+            <param name="type">The HTTP type of the API call.</param>
+            <returns>An IActionResult based on resultArgs and type.</returns>
+        </member>
+        <member name="M:CFR.Base.BaseController.ApiResultArgs``1(CFR.DBEngine.MSResultArgs{``0},System.String,System.String)">
+            <summary>
+            Returns a file response with the specified content type and filename.
+            </summary>
+            <typeparam name="T">The type of data in MSResultArgs.</typeparam>
+            <param name="resultArgs">The result arguments.</param>
+            <param name="fileName">The name of the file to be downloaded.</param>
+            <param name="contentType">The content type of the file (default: "application/pdf").</param>
+            <returns>An IActionResult containing the file or an error response if the file is invalid.</returns>
+        </member>
+        <member name="M:CFR.Base.BaseController.BadRequestApi(System.String)">
+            <summary>
+            Returns a bad request result argument response.
+            </summary>
+            <param name="message">The bad request message.</param>
+            <returns>An IActionResult representing bad request.</returns>
+        </member>
+        <member name="M:CFR.Base.BaseController.GetResponseByStatusCode(System.Int64,System.Object)">
+            <summary>
+            Returns an appropriate IActionResult based on the status code.
+            </summary>
+            <param name="statusCode">The status code to be evaluated.</param>
+            <param name="resultArgs">The result arguments.</param>
+            <returns>An IActionResult based on the provided status code.</returns>
+        </member>
+        <member name="T:CFR.Base.DevReverseProxySslPolicy">
+            <summary>
+            SSL certificate validation for YARP reverse proxy in local development only.
+            Accepts valid certificates and localhost/127.0.0.1 dev certificates; rejects others.
+            </summary>
+        </member>
+        <member name="M:CFR.Base.ResultArgsHandler.SetResultArgs(CFR.DBEngine.MSResultArgs,CFR.Common.APIHttpType)">
+            <summary>
+            Sets the result arguments based on the HTTP type for non-generic MSResultArgs.
+            </summary>
+        </member>
+        <member name="M:CFR.Base.ResultArgsHandler.SetResultArgs``1(CFR.DBEngine.MSResultArgs{``0},CFR.Common.APIHttpType)">
+            <summary>
+            Sets the result arguments based on the HTTP type for generic MSResultArgs.
+            </summary>
+        </member>
+        <member name="M:CFR.Base.ScalarWebApplicationExtensions.MapScalarForSwashbuckle(Microsoft.AspNetCore.Builder.WebApplication,System.String,System.String)">
+            <summary>
+            Serves Scalar at <c>/scalar</c> using the same OpenAPI documents as Swashbuckle
+            (<c>/swagger/{documentName}/swagger.json</c>).
+            </summary>
+            <param name="app">The web application.</param>
+            <param name="swaggerModuleDocsCsv">Comma-separated Swashbuckle document names (same string as <see cref="M:CFR.Base.ServiceExtension.AddSwaggerGenSetup(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.String)"/>).</param>
+            <param name="apiReferenceTitle">Title shown in the Scalar UI.</param>
+        </member>
+        <member name="M:CFR.Base.WebApplicationBuilderExtensions.UseSecureKestrel(Microsoft.AspNetCore.Builder.WebApplicationBuilder)">
+            <summary>
+             var builder = WebApplication.CreateBuilder(args).UseSecureKestrel();  in program.cs files
+            </summary>
+            <param name="builder"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Type)">
+            <summary>
+            Generates a documentation comment ID for a type.
+            Example: T:Namespace.Outer+Inner`1 becomes T:Namespace.Outer.Inner`1
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Reflection.PropertyInfo)">
+            <summary>
+            Generates a documentation comment ID for a property.
+            Example: P:Namespace.ContainingType.PropertyName or for an indexer P:Namespace.ContainingType.Item(System.Int32)
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Type,System.String)">
+            <summary>
+            Generates a documentation comment ID for a property given its container type and property name.
+            Example: P:Namespace.ContainingType.PropertyName
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.CreateDocumentationId(System.Reflection.MethodInfo)">
+            <summary>
+            Generates a documentation comment ID for a method (or constructor).
+            For example:
+              M:Namespace.ContainingType.MethodName(ParamType1,ParamType2)~ReturnType
+              M:Namespace.ContainingType.#ctor(ParamType)
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.GetTypeDocId(System.Type,System.Boolean,System.Boolean)">
+            <summary>
+            Generates a documentation ID string for a type.
+            This method handles nested types (replacing '+' with '.'),
+            generic types, arrays, pointers, by-ref types, and generic parameters.
+            The <paramref name="includeGenericArguments"/> flag controls whether
+            constructed generic type arguments are emitted, while <paramref name="omitGenericArity"/>
+            controls whether the generic arity marker (e.g. "`1") is appended.
+            </summary>
+        </member>
+        <member name="M:Microsoft.AspNetCore.OpenApi.Generated.DocumentationCommentIdHelper.NormalizeDocId(System.String)">
+            <summary>
+            Normalizes a documentation comment ID to match the compiler-style format.
+            Strips the return type suffix for ordinary methods but retains it for conversion operators.
+            </summary>
+            <param name="docId">The documentation comment ID to normalize.</param>
+            <returns>The normalized documentation comment ID.</returns>
+        </member>
+    </members>
+</doc>
