@@ -1,11 +1,15 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import {
-  MOCK_ACTIVITY, MOCK_APPLICATIONS, MOCK_INVOICE_ITEMS, MOCK_INVOICES, MOCK_ORGANIZATIONS, MOCK_REQUESTS, MOCK_ROLES, MOCK_USERS,
+  MOCK_ACTIVITY, MOCK_APPLICATIONS, MOCK_INVOICE_ITEMS, MOCK_LICENSES, MOCK_ORGANIZATIONS, MOCK_REQUESTS, MOCK_ROLES, MOCK_USERS,
 } from './mockData';
 import type {
-  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, Invoice, InvoiceItem, Organization,
+  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, License, InvoiceItem, Organization,
   ProductStatus, RequestStatus, UserStatus,
 } from './types';
+
+/** US software product-key alphabet — digits 0/1 and letters I/O are excluded since they're
+ * easily confused with each other, the standard convention for US-issued license keys. */
+const LICENSE_KEY_CHARS = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 interface AdminDataContextValue {
   applications: AdminApplication[];
@@ -14,7 +18,7 @@ interface AdminDataContextValue {
   requests: AccessRequest[];
   activity: ActivityItem[];
   roles: AdminRole[];
-  invoices: Invoice[];
+  licenses: License[];
   invoiceItems: InvoiceItem[];
   getApplication: (id: string) => AdminApplication | undefined;
   getOrganization: (id: string) => Organization | undefined;
@@ -37,9 +41,9 @@ interface AdminDataContextValue {
   deleteRole: (id: string) => void;
   /** Toggles the active/inactive lifecycle flag on a role — roles are never deleted this way. */
   toggleRoleActive: (id: string) => void;
-  /** Creates a new invoice against a customer/product. This is the only invoice mutation —
-   * invoices otherwise stay read-only once issued. */
-  addInvoice: (invoice: Omit<Invoice, 'id' | 'invoiceNumber'>) => void;
+  /** Issues a new license to a customer/product. This is the only license mutation —
+   * licenses otherwise stay read-only once issued. */
+  addLicense: (license: Omit<License, 'id' | 'licenseNumber' | 'licenseKey'>) => void;
   addInvoiceItem: (item: Omit<InvoiceItem, 'id'>) => void;
   updateInvoiceItem: (item: InvoiceItem) => void;
   /** Toggles the active/inactive lifecycle flag on an invoice item — masters are never deleted. */
@@ -56,7 +60,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [requests, setRequests] = useState<AccessRequest[]>(MOCK_REQUESTS);
   const [activity, setActivity] = useState<ActivityItem[]>(MOCK_ACTIVITY);
   const [roles, setRoles] = useState<AdminRole[]>(MOCK_ROLES);
-  const [invoices, setInvoices] = useState<Invoice[]>(MOCK_INVOICES);
+  const [licenses, setLicenses] = useState<License[]>(MOCK_LICENSES);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>(MOCK_INVOICE_ITEMS);
 
   const logActivity = (message: string, kind: ActivityItem['kind']) => {
@@ -73,7 +77,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     requests,
     activity,
     roles,
-    invoices,
+    licenses,
     invoiceItems,
     getApplication: (id) => applications.find((app) => app.id === id),
     getOrganization: (id) => organizations.find((org) => org.id === id),
@@ -177,30 +181,33 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       setRoles((current) => current.map((existing) => (existing.id === id ? { ...existing, active: !existing.active } : existing)));
       if (role) logActivity(`${role.active ? 'Deactivated' : 'Activated'} role "${role.name}"`, 'user');
     },
-    addInvoice: (invoice) => {
-      const id = `inv-${Date.now()}-${Math.round(Math.random() * 1000)}`;
-      const sequence = invoices.length + 1001;
-      setInvoices((current) => [...current, { ...invoice, id, invoiceNumber: `INV-2026-${sequence}` }]);
-      const org = organizations.find((item) => item.id === invoice.orgId);
-      const app = applications.find((item) => item.id === invoice.appId);
-      logActivity(`Created invoice INV-2026-${sequence} for ${org?.name ?? invoice.orgId} · ${app?.name ?? invoice.appId}`, 'application');
+    addLicense: (license) => {
+      const id = `lic-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+      const sequence = licenses.length + 1001;
+      const licenseKey = Array.from({ length: 5 }, () => (
+        Array.from({ length: 5 }, () => LICENSE_KEY_CHARS[Math.floor(Math.random() * LICENSE_KEY_CHARS.length)]).join('')
+      )).join('-');
+      setLicenses((current) => [...current, { ...license, id, licenseNumber: `LIC-2026-${sequence}`, licenseKey }]);
+      const org = organizations.find((item) => item.id === license.orgId);
+      const app = applications.find((item) => item.id === license.appId);
+      logActivity(`Issued license LIC-2026-${sequence} for ${org?.name ?? license.orgId} · ${app?.name ?? license.appId}`, 'application');
     },
     addInvoiceItem: (item) => {
       const id = `item-${Date.now()}-${Math.round(Math.random() * 1000)}`;
       setInvoiceItems((current) => [...current, { ...item, id }]);
-      logActivity(`Added invoice item "${item.title}"`, 'application');
+      logActivity(`Added license item "${item.title}"`, 'application');
     },
     updateInvoiceItem: (item) => {
       setInvoiceItems((current) => current.map((existing) => (existing.id === item.id ? item : existing)));
-      logActivity(`Updated invoice item "${item.title}"`, 'application');
+      logActivity(`Updated license item "${item.title}"`, 'application');
     },
     toggleInvoiceItemActive: (id) => {
       const item = invoiceItems.find((existing) => existing.id === id);
       setInvoiceItems((current) => current.map((existing) => (existing.id === id ? { ...existing, active: !existing.active } : existing)));
-      if (item) logActivity(`${item.active ? 'Deactivated' : 'Activated'} invoice item "${item.title}"`, 'application');
+      if (item) logActivity(`${item.active ? 'Deactivated' : 'Activated'} license item "${item.title}"`, 'application');
     },
     logActivity,
-  }), [applications, organizations, users, requests, activity, roles, invoices, invoiceItems]);
+  }), [applications, organizations, users, requests, activity, roles, licenses, invoiceItems]);
 
   return <AdminDataContext.Provider value={value}>{children}</AdminDataContext.Provider>;
 }
