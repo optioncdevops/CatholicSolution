@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform\CFR.Base\CFR.Base.csproj" />
+    <ProjectReference Include="..\..\Platform\CFR.DBEngine\CFR.DBEngine.csproj" />
+  </ItemGroup>
+
 </Project>

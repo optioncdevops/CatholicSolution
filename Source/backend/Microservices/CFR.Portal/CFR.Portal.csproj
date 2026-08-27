@@ -14,4 +14,9 @@
     <Folder Include="Controllers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform\CFR.Base\CFR.Base.csproj" />
+    <ProjectReference Include="..\..\Service\CFR.PortalService\CFR.PortalService.csproj" />
+  </ItemGroup>
+
 </Project>

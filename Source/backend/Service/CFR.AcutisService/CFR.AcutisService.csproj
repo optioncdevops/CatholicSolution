@@ -10,4 +10,8 @@
     <Folder Include="Service\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Infrastructure\CFR.AcutisInfrastructure\CFR.AcutisInfrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

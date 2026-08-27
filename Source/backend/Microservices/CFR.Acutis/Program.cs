@@ -27,5 +27,4 @@ app.MapScalarForSwashbuckle(SwaggerModuleDoc.AcutisDocs, "OptionC.Acutis");
 
 app.MapGet("/", () => Results.Text(DefaultData.WebStartPage.Replace("{0}", "OptionC.Acutis"), "text/html")).ExcludeFromDescription(); // Exclude this endpoint from Swagger
 
-
 app.Run();
