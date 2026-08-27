@@ -53,7 +53,9 @@ public class AcutisAuthenticationService(
                 return result;
             }
 
-            AcutisCredentialCheckResult check = await repository.AuthenticateAsync(request.UserName, request.Password, cancellationToken).ConfigureAwait(false);
+            // UserName (email) is trimmed before use — Password is never trimmed or otherwise
+            // transformed; see docs/acutis-auth-spec/validation-standard.md "General rules".
+            AcutisCredentialCheckResult check = await repository.AuthenticateAsync(request.UserName.Trim(), request.Password, cancellationToken).ConfigureAwait(false);
 
             if (!check.Succeeded || check.User is null)
             {
@@ -142,6 +144,20 @@ public class AcutisAuthenticationService(
                 return result;
             }
 
+            if (string.Equals(request.CurrentPassword, request.NewPassword, StringComparison.Ordinal))
+            {
+                result.StatusCode = ErrorCodes.BadRequest;
+                result.StatusMessage = "New password must be different from the current password.";
+                return result;
+            }
+
+            if (!AcutisAuthValidation.IsPasswordPolicyCompliant(request.NewPassword))
+            {
+                result.StatusCode = ErrorCodes.BadRequest;
+                result.StatusMessage = AcutisAuthValidation.PasswordPolicyDescription;
+                return result;
+            }
+
             // Verify step: reuse the login credential-check path (security-model.md option 1) —
             // no dedicated verify-only database object is confirmed to exist.
             AcutisCredentialCheckResult verify = await repository.AuthenticateAsync(userName, request.CurrentPassword, cancellationToken).ConfigureAwait(false);
@@ -195,7 +211,10 @@ public class AcutisAuthenticationService(
                 return result;
             }
 
-            ForgotPasswordLookupResult lookup = await repository.FindAccountByEmailAsync(request.Email, cancellationToken).ConfigureAwait(false);
+            // Trimmed before lookup so trailing/leading whitespace doesn't silently cause a
+            // "not found" lookup for an otherwise-valid, already-registered address.
+            string trimmedEmail = request.Email.Trim();
+            ForgotPasswordLookupResult lookup = await repository.FindAccountByEmailAsync(trimmedEmail, cancellationToken).ConfigureAwait(false);
 
             // Enumeration-safety: the branch taken below never changes what is returned to the
             // caller — only the generic message above is ever sent back, per
@@ -208,7 +227,7 @@ public class AcutisAuthenticationService(
                     ? $"/auth/reset-password?token={token}"
                     : $"{baseUrl.TrimEnd('/')}/auth/reset-password?token={token}";
 
-                await resetEmailSender.SendPasswordResetEmailAsync(lookup.Email ?? request.Email, resetLink, cancellationToken).ConfigureAwait(false);
+                await resetEmailSender.SendPasswordResetEmailAsync(lookup.Email ?? trimmedEmail, resetLink, cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -249,6 +268,22 @@ public class AcutisAuthenticationService(
             {
                 result.StatusCode = ErrorCodes.BadRequest;
                 result.StatusMessage = "New password and confirmation do not match.";
+                return result;
+            }
+
+            if (!AcutisAuthValidation.IsPasswordPolicyCompliant(request.NewPassword))
+            {
+                result.StatusCode = ErrorCodes.BadRequest;
+                result.StatusMessage = AcutisAuthValidation.PasswordPolicyDescription;
+                return result;
+            }
+
+            if (!AcutisAuthValidation.IsPlausibleResetToken(request.Token))
+            {
+                // Reported identically to a token the store itself rejects — never a distinguishable
+                // error, so a malformed token reveals nothing about the real token shape.
+                result.StatusCode = ErrorCodes.Failed;
+                result.StatusMessage = GenericInvalidTokenMessage;
                 return result;
             }
 

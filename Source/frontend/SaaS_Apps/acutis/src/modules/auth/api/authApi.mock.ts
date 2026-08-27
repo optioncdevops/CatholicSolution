@@ -4,7 +4,9 @@ import type {
   AcutisLoginRequest,
   AcutisLoginResult,
   AcutisMenuGroup,
+  AcutisResetPasswordRequest,
 } from '../types';
+import { isPasswordPolicyCompliant, PASSWORD_POLICY_DESCRIPTION } from '../validation';
 import { ApiError, type AcutisAuthApi } from './authApi';
 
 /**
@@ -68,6 +70,18 @@ export const mockAcutisAuthApi: AcutisAuthApi = {
   async changePassword(token: string, request: AcutisChangePasswordRequest): Promise<void> {
     await delay(200);
     if (token !== MOCK_TOKEN) throw new ApiError('Unauthorized', 401);
+    // Same validation order as AcutisAuthenticationService.ChangePasswordAsync — see
+    // docs/acutis-auth-spec/validation-standard.md — so mock mode is never more permissive than
+    // the real backend for a given input.
+    if (request.newPassword !== request.confirmPassword) {
+      throw new ApiError('New password and confirmation do not match.', 400, 400);
+    }
+    if (request.currentPassword === request.newPassword) {
+      throw new ApiError('New password must be different from the current password.', 400, 400);
+    }
+    if (!isPasswordPolicyCompliant(request.newPassword)) {
+      throw new ApiError(PASSWORD_POLICY_DESCRIPTION, 400, 400);
+    }
     if (request.currentPassword !== MOCK_PASSWORD) {
       throw new ApiError('Current password is incorrect.', 400, 203);
     }
@@ -83,8 +97,19 @@ export const mockAcutisAuthApi: AcutisAuthApi = {
     // Always succeeds with a generic outcome — enumeration-safe, matches the real backend.
   },
 
-  async resetPassword(): Promise<void> {
+  async resetPassword(request: AcutisResetPasswordRequest): Promise<void> {
     await delay(200);
+    // Same validation order as AcutisAuthenticationService.ResetPasswordAsync — see
+    // docs/acutis-auth-spec/validation-standard.md.
+    if (request.newPassword !== request.confirmPassword) {
+      throw new ApiError('New password and confirmation do not match.', 400, 400);
+    }
+    if (!isPasswordPolicyCompliant(request.newPassword)) {
+      throw new ApiError(PASSWORD_POLICY_DESCRIPTION, 400, 400);
+    }
+    // No real reset-token store exists in mock mode either — every plausible-looking token still
+    // reports the same generic invalid/expired failure, matching the real backend's DEV-mode
+    // behavior (no token was ever actually issued to be redeemed).
     throw new ApiError('This reset link is invalid or has expired.', 400, 203);
   },
 

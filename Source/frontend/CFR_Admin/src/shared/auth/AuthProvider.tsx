@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 import { environment } from '@shared/platform/config/environment';
-import { canRedirectToExternalIdentityProvider, clearPreviewSession, createPreviewSession, hasPreviewSession } from './centralAuth';
+import { AcutisAuthApiError, acutisLogin } from './acutisAuthApi';
+import {
+  canRedirectToExternalIdentityProvider,
+  clearAcutisToken,
+  getStoredAcutisSession,
+  storeAcutisSession,
+  type StoredAcutisSession,
+} from './centralAuth';
 
 export interface SignInRequest {
   email: string;
@@ -11,9 +18,16 @@ export interface SignInRequest {
   returnUrl?: string;
 }
 
+export type SignInResult = 'authenticated' | 'redirected' | 'unavailable' | 'invalid-credentials';
+
+/** Real identity from CFR.Acutis's login response — never mock/placeholder data. */
+export type AuthenticatedUser = Omit<StoredAcutisSession, 'token'>;
+
 interface AuthContextValue {
   isAuthenticated: boolean;
-  signIn: (request: SignInRequest) => Promise<'authenticated' | 'redirected' | 'unavailable'>;
+  token: string | null;
+  user: AuthenticatedUser | null;
+  signIn: (request: SignInRequest) => Promise<SignInResult>;
   signOut: () => void;
 }
 
@@ -39,16 +53,17 @@ function redirectToIdentityProvider(request: SignInRequest) {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [isAuthenticated, setAuthenticated] = useState(hasPreviewSession);
+  const [session, setSession] = useState<StoredAcutisSession | null>(() => getStoredAcutisSession());
+  const isAuthenticated = session !== null;
 
   useEffect(() => {
     const channel = sessionSync();
     const refreshSession = () => {
-      if (environment.authMode !== 'sso') setAuthenticated(hasPreviewSession());
+      if (environment.authMode !== 'sso') setSession(getStoredAcutisSession());
     };
     const onSignal = (event: MessageEvent<SessionSignal>) => {
-      if (event.data === 'signed-out') setAuthenticated(false);
-      else if (event.data === 'signed-in') setAuthenticated(true);
+      if (event.data === 'signed-out') setSession(null);
+      else if (event.data === 'signed-in') setSession(getStoredAcutisSession());
     };
     const onVisibility = () => { if (!document.hidden) refreshSession(); };
 
@@ -64,21 +79,49 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<AuthContextValue>(() => ({
     isAuthenticated,
+    token: session?.token ?? null,
+    user: session
+      ? { userId: session.userId, email: session.email, firstName: session.firstName, lastName: session.lastName, fullName: session.fullName, isSuperUser: session.isSuperUser }
+      : null,
     async signIn(request) {
       if (environment.authMode === 'sso') {
         return redirectToIdentityProvider(request) ? 'redirected' : 'unavailable';
       }
-      createPreviewSession(Boolean(request.remember));
-      setAuthenticated(true);
-      sessionSync()?.postMessage('signed-in');
-      return 'authenticated';
+
+      if (!request.password) {
+        return 'invalid-credentials';
+      }
+
+      try {
+        const loggedInUser = await acutisLogin(request.email, request.password);
+        const newSession: StoredAcutisSession = {
+          token: loggedInUser.token,
+          userId: loggedInUser.userId,
+          email: loggedInUser.email,
+          firstName: loggedInUser.firstName,
+          lastName: loggedInUser.lastName,
+          fullName: loggedInUser.fullName,
+          isSuperUser: loggedInUser.isSuperUser,
+        };
+        storeAcutisSession(newSession);
+        setSession(newSession);
+        sessionSync()?.postMessage('signed-in');
+        return 'authenticated';
+      } catch (error) {
+        // 401/400-shaped credential failures are the caller's problem to display; anything else
+        // (network down, misconfigured base URL) is reported as the service being unavailable.
+        if (error instanceof AcutisAuthApiError && (error.httpStatus === 400 || error.httpStatus === 401)) {
+          return 'invalid-credentials';
+        }
+        return 'unavailable';
+      }
     },
     signOut() {
-      clearPreviewSession();
-      setAuthenticated(false);
+      clearAcutisToken();
+      setSession(null);
       sessionSync()?.postMessage('signed-out');
     },
-  }), [isAuthenticated]);
+  }), [isAuthenticated, session]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

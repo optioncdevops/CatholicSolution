@@ -1,6 +1,9 @@
 # Operations Runbook — Acutis Authentication
 
-Scope and date: Task 12, 2026-08-26. Local setup and configuration instructions for `CFR.Acutis`. **No real connection string, password, or secret value appears anywhere in this document** — only key names and commands.
+Scope and date: Task 12, 2026-08-26; substantially rewritten the same session after
+`DevelopmentFake` was removed entirely (real-time development only, per explicit instruction — no
+fake account exists anywhere in this codebase). **No real connection string, password, or secret
+value appears anywhere in this document** — only key names and commands.
 
 ## Build / test / run
 
@@ -10,29 +13,30 @@ dotnet test "backend/CatholicSolution.slnx"
 dotnet run --project "backend/Microservices/CFR.Acutis/CFR.Acutis.csproj"
 ```
 
+`dotnet build`/`dotnet test` never need a database connection. **`dotnet run` does** — see below.
+
 Default local port: `5051` (http) — see `backend/Microservices/CFR.Acutis/Properties/launchSettings.json`. Swagger: `/swagger`. Scalar: `/scalar`.
 
-## Authentication repository mode
+## Authentication repository — real database required to run
 
-`CFR.Acutis` selects its `IAcutisAuthenticationRepository` implementation via configuration — see `backend/Microservices/CFR.Acutis/AcutisAuthRepositorySelection.cs`. **You do not need to configure anything to run locally** — the default is the DEV FAKE, which needs no database.
+`CFR.Acutis` has exactly one `IAcutisAuthenticationRepository` implementation:
+`AcutisAuthenticationRepository` (real, Dapper-backed — see
+`backend/Microservices/CFR.Acutis/AcutisAuthRepositorySelection.cs`). **There is no
+development-fake/mock repository and no mode switch** — the app fails to start immediately if a
+real connection string isn't configured. You must set one up before running locally (see below).
 
 | Config key | Values | Default | Meaning |
 |---|---|---|---|
-| `AcutisAuth:RepositoryMode` | `DevelopmentFake` \| `Database` | `DevelopmentFake` (used when the key is absent entirely) | Which repository implementation is registered |
-| `AcutisAuth:ConnectionStringKey` | any string | `AcutisDb` | Which `ConnectionStrings` key to read when `RepositoryMode=Database` |
-| `AcutisAuth:AllowDevelopmentFakeOutsideDevelopment` | `true` \| `false` | `false` | Must be explicitly `true` to allow `DevelopmentFake` mode outside a Development environment — a deliberate, off-by-default production safeguard |
+| `AcutisAuth:ConnectionStringKey` | any string | `ConnString` | Which `ConnectionStrings` key `AcutisAuthRepositorySelection`'s startup check reads. Matches the shared `CFR.DBEngine.DapperHandler.Connection`'s hardcoded `GetConnectionString("ConnString")` call (itself matching the reference app exactly) — see [database-contract.md](database-contract.md). |
 
-`Database` mode is **not yet backed by a real implementation** — see [database-contract.md](database-contract.md) and [implementation-plan.md](implementation-plan.md) for why, and stop here if you're trying to make real login work: that requires a resolved database-contract blocker first, not just flipping this setting.
+Only `Login` (`AuthenticateAsync`, calling `NewViper.DoLogin`) is backed by a confirmed database
+object — live-verified this session (see [database-contract.md](database-contract.md#phase-2--real-repository-implemented-this-session)).
+`GET /navigation/menus` and Forgot Password's account lookup throw an explicit
+`NotImplementedException` (no confirmed standalone database object exists for either yet — an
+accurate, documented limitation, not a bug). Password writes (Change/Reset Password) remain
+unsupported.
 
-## Running against the DEV FAKE (default — no setup required)
-
-```bash
-dotnet run --project "backend/Microservices/CFR.Acutis/CFR.Acutis.csproj"
-```
-
-The only working credential pair is defined in `AcutisAuthenticationRepositoryDevFake.cs` (a clearly-fake, non-production email/password — read that file directly if you need the exact values; not repeated here since this document is about configuration, not credentials).
-
-## If you ever do have a real, approved development database available
+## Setting up the connection string (required to run locally)
 
 **Do not put the connection string in any tracked `appsettings*.json` file.** Use one of:
 
@@ -40,8 +44,7 @@ The only working credential pair is defined in `AcutisAuthenticationRepositoryDe
 
 ```bash
 cd backend/Microservices/CFR.Acutis
-dotnet user-secrets set "ConnectionStrings:AcutisDb" "<your real connection string>"
-dotnet user-secrets set "AcutisAuth:RepositoryMode" "Database"
+dotnet user-secrets set "ConnectionStrings:ConnString" "<private-connection-string>"
 ```
 
 This writes to a file **outside this repository** (`%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\secrets.json` on Windows — the `<UserSecretsId>` itself, in `CFR.Acutis.csproj`, is not a secret, just an identifier for locating this file). User Secrets are only loaded when `ASPNETCORE_ENVIRONMENT=Development` (the default for `dotnet run` locally, per `Program.cs`).
@@ -53,7 +56,7 @@ dotnet user-secrets list --project backend/Microservices/CFR.Acutis
 # prints key names only if you don't read the value; avoid piping this to a shared log
 ```
 
-**Important — this must be run in the same environment/session that will actually build/run/test the repository.** A session verification attempt (Task 13, 2026-08-26) confirmed that a secret set via `dotnet user-secrets set` in one terminal session is **not automatically visible** to a different session/environment running against the same repository — `dotnet user-secrets list` and a direct check of `%APPDATA%\Microsoft\UserSecrets\<UserSecretsId>\` from the second session both showed nothing configured, even after the first session reported success. If you're coordinating between a human developer's terminal and an automated/agent session, confirm both are running on the same machine, as the same OS user account, against the same `CFR.Acutis.csproj` (its `UserSecretsId` is the addressing key — not the project path).
+**Important — this must be run in the same environment/session that will actually build/run/test the repository.** A secret set via `dotnet user-secrets set` in one terminal session is **not automatically visible** to a different session/environment running against the same repository (confirmed the hard way earlier this session — see [database-contract.md](database-contract.md) for the full attempt history). If you're coordinating between a human developer's terminal and an automated/agent session, confirm both are running on the same machine, as the same OS user account, against the same `CFR.Acutis.csproj` (its `UserSecretsId` is the addressing key — not the project path).
 
 ### Any other environment — environment variables
 
@@ -61,24 +64,24 @@ ASP.NET Core's configuration binder maps double-underscore-separated environment
 
 ```bash
 # Windows PowerShell example (illustrative key name, no real value shown)
-$env:ConnectionStrings__AcutisDb = "<supplied by your secret store, never typed into a tracked file>"
-$env:AcutisAuth__RepositoryMode = "Database"
+$env:ConnectionStrings__ConnString = "<supplied by your secret store, never typed into a tracked file>"
 ```
 
-Or via whatever secret-injection mechanism your deployment platform provides (Key Vault, parameter store, CI secret, etc.) — the requirement is only that the value reaches the `ConnectionStrings:AcutisDb` configuration key at runtime, never that it lives in source control.
+Or via whatever secret-injection mechanism your deployment platform provides (Key Vault, parameter store, CI secret, etc.) — the requirement is only that the value reaches the `ConnectionStrings:ConnString` configuration key at runtime, never that it lives in source control.
 
-### What happens if you set `RepositoryMode=Database` today
+## What `CFR.Acutis` does with real requests
 
-The app will start (assuming the connection-string key is present — if it's missing, startup fails immediately with a clear `InvalidOperationException` naming the missing key, not a vague error) and register `AcutisAuthenticationRepositoryNotImplemented`, which throws `NotImplementedException` on every call. This is intentional — it is a registration boundary for a real repository that has not been built yet (see [database-contract.md](database-contract.md)), not a working integration.
+- **`POST /auth/login`** — real. Calls `NewViper.DoLogin` and returns a genuine credential-check result.
+- **`GET /navigation/menus`**, **`POST /auth/forgot-password`'s account lookup** — throw `NotImplementedException` internally (caught safely by the service layer — Forgot Password still returns its generic, enumeration-safe response; a real-account menu request would surface as a `500`). No confirmed standalone database object exists for either yet.
+- **`POST /auth/change-password`/`reset-password`'s write step** — still returns the explicit "not yet supported" outcome, unchanged. No password-write database object is in scope.
 
-**This is still true as of the 2026-08-26 session task (following Task 15).** Five separate attempts to verify the real `NewViper.DoLogin` contract against the reference application's actual development database have all stopped before any implementation. Tasks 8/10/13 found the database itself unreachable (no designated target, then network-unreachable, then port refused); Task 15 and this session's task both found a different, but now-repeated, blocker — `ConnectionStrings:AcutisDb` simply does not resolve in this session's environment (`dotnet user-secrets list` reports nothing configured, the User Secrets directory for `CFR.Acutis`'s `UserSecretsId` is empty, and `ConnectionStrings__AcutisDb` is unset) — see [database-contract.md](database-contract.md#session-task-2026-08-26-post-task-15--result-still-blocked-at-item-1-connection-string-does-not-resolve-here). Two consecutive occurrences of the exact same "not visible here" result strongly suggests the terminal/session where the connection string is being configured is not the same machine, OS user account, or shell that this session's tooling executes in — worth confirming directly before a sixth attempt. If you're reading this because you now have real access to that database (or an equivalent one) **and** have confirmed the connection string is actually set in the same environment/session that runs `dotnet build`/`dotnet test`/`dotnet run` for this repository (see the cross-session-visibility caveat above), the remaining work is: confirm the stored procedure's parameters/result-set shape directly, implement `AcutisAuthenticationRepository` against `IDapperHandler`, and set `AcutisAuth:RepositoryMode=Database` — the configuration/DI scaffolding described above is already in place for that switch.
+See [database-contract.md](database-contract.md) for the full verification history (five prior blocked attempts before the connection succeeded) and exactly what was confirmed live against the real database.
 
 ## Troubleshooting
 
 | Symptom | Likely cause |
 |---|---|
-| Startup fails with `"AcutisAuth:RepositoryMode is Database but ConnectionStrings:X is not configured"` | You set `RepositoryMode=Database` without setting the matching `ConnectionStrings` key (via User Secrets or an environment variable) |
-| Startup fails with `"AcutisAuth:RepositoryMode is DevelopmentFake outside a Development environment"` | `ASPNETCORE_ENVIRONMENT` isn't `Development` and `AcutisAuth:AllowDevelopmentFakeOutsideDevelopment` isn't set to `true` — this is deliberate; either run in Development, or (rarely appropriate) set the escape hatch explicitly |
-| Startup fails with `"Unknown AcutisAuth:RepositoryMode '...'"` | Typo in the configured mode — valid values are exactly `DevelopmentFake` and `Database` (case-insensitive) |
-| `/Auth/Login` returns `401`/`400` unexpectedly | Confirm you're using the DEV FAKE's one known credential pair (see `AcutisAuthenticationRepositoryDevFake.cs`) — real accounts cannot log in yet |
-| `NotImplementedException` from any auth endpoint | You're in `Database` mode — expected, see above |
+| Startup fails with `"ConnectionStrings:ConnString is not configured"` | You haven't set the connection string yet — see "Setting up the connection string" above. This is not optional; there is no fallback mode. |
+| `/Auth/Login` returns `401`/`400` unexpectedly | Wrong credentials against the real database, or the connection string points at the wrong database — `AcutisAuthenticationRepository` never falls back to any hardcoded credential. |
+| `NotImplementedException` from `/Navigation/Menus` or a real-account Forgot Password flow | Expected — no confirmed standalone database object exists for those operations yet, see [database-contract.md](database-contract.md). |
+| User Secret set but not visible to this session | Confirm you're in the same machine/OS user/project as whatever is actually running `dotnet run` — see the cross-session-visibility note above. |

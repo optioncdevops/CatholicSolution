@@ -3,11 +3,11 @@
 namespace CFR.AcutisInfrastructure.Models.Output;
 
 /// <summary>
-/// Thin identity payload for a logged-in Acutis user — deliberately minimal, matching the
-/// reference app's "thin JWT" design (email/sub/name only; see
-/// docs/acutis-auth-spec/security-model.md). Field names/source are ASSUMPTIONS carried over from
-/// the reference app's <c>ViperLoginUserResult</c> doc comments, not verified against a live
-/// database (see docs/acutis-auth-spec/database-contract.md).
+/// Identity payload for a logged-in Acutis user, returned in the Login response BODY (not the
+/// JWT — see <see cref="CFR.Acutis.IJwtTokenGenerator"/>, which reads only
+/// <see cref="UserId"/>/<see cref="Email"/>/<see cref="FullName"/> from this class and nothing
+/// else). Column mapping confirmed live against the real database's first result set — see
+/// docs/acutis-auth-spec/database-contract.md's "Verification succeeded" section.
 /// </summary>
 public class AcutisLoginUser
 {
@@ -20,6 +20,13 @@ public class AcutisLoginUser
     public string? LastName { get; set; }
 
     public string? FullName { get; set; }
+
+    /// <summary>
+    /// Confirmed live column on <c>NewViper.DoLogin</c>'s first result set. A coarse-grained
+    /// authorization signal (not a fine-grained permission) — deliberately kept out of the JWT,
+    /// same as every other authorization value, per docs/acutis-auth-spec/security-model.md.
+    /// </summary>
+    public bool IsSuperUser { get; set; }
 
     /// <summary>
     /// Populated by the JWT token generator once that foundation exists. Empty until then —

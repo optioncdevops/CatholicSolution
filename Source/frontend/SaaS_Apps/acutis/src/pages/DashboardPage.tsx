@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { acutisAuthApi, ApiError } from '@/modules/auth/api';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import type { AcutisCurrentUser, AcutisMenuGroup } from '@/modules/auth/types';
@@ -39,13 +40,21 @@ export function DashboardPage() {
       <main className="flex-1 p-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-          <button
-            type="button"
-            onClick={() => void logout()}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Log out
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/account/change-password"
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Change password
+            </Link>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Log out
+            </button>
+          </div>
         </div>
 
         {error && <p className="mt-4 text-sm text-red-700">{error}</p>}

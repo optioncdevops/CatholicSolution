@@ -1,41 +1,49 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
+import { RequiredMark } from '@/components/RequiredMark';
 import { acutisAuthApi, ApiError } from '../api';
+import { applyServerFieldErrors, newPasswordPolicyRule, requiredPasswordRule } from '../validation';
+
+interface ResetPasswordFormValues {
+  newPassword: string;
+  confirmPassword: string;
+}
+
+const KNOWN_FIELDS = ['newPassword', 'confirmPassword'] as const;
 
 /**
  * Reads `token` from the URL query string (the emailed reset link's shape — see
- * docs/acutis-auth-spec/security-model.md). Per Task 9's rule, this only exercises the currently
- * supported DEV FAKE behavior: the token-write path always reports the generic
- * "invalid or expired" failure, since no real reset-token store/write path exists yet
+ * docs/acutis-auth-spec/security-model.md). The token-write path always reports the generic
+ * "invalid or expired" failure while no real reset-token store/write path exists yet
  * (docs/acutis-auth-spec/database-contract.md) — this page surfaces that response as-is, it does
  * not pretend the feature works end-to-end.
  */
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
-
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const isValid = newPassword.length > 0 && newPassword === confirmPassword;
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    setError,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetPasswordFormValues>({ mode: 'onBlur', defaultValues: { newPassword: '', confirmPassword: '' } });
 
-  const onSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!isValid || isSubmitting) return;
-    setIsSubmitting(true);
-    setError(null);
+  const onSubmit = handleSubmit(async (values) => {
     try {
-      await acutisAuthApi.resetPassword({ token, newPassword, confirmPassword });
+      await acutisAuthApi.resetPassword({ token, newPassword: values.newPassword, confirmPassword: values.confirmPassword });
+      // Clear password fields after a successful submission — nothing sensitive lingers in form state.
+      reset({ newPassword: '', confirmPassword: '' });
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Unable to reset password. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      applyServerFieldErrors(err, setError, KNOWN_FIELDS);
+      setError('root', { type: 'server', message: err instanceof ApiError ? err.message : 'Unable to reset password. Please try again.' });
     }
-  };
+  });
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
@@ -55,39 +63,58 @@ export function ResetPasswordPage() {
             <div>
               <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
                 New password
+                <RequiredMark />
               </label>
               <input
                 id="newPassword"
                 type="password"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
+                autoComplete="new-password"
                 disabled={isSubmitting || !token}
+                aria-invalid={!!errors.newPassword}
+                aria-describedby={errors.newPassword ? 'newPassword-error' : undefined}
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm disabled:opacity-60"
+                {...register('newPassword', { ...requiredPasswordRule, ...newPasswordPolicyRule })}
               />
+              {errors.newPassword && (
+                <p id="newPassword-error" role="alert" className="mt-1 text-sm text-red-700">
+                  {errors.newPassword.message}
+                </p>
+              )}
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm new password
+                <RequiredMark />
               </label>
               <input
                 id="confirmPassword"
                 type="password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
+                autoComplete="new-password"
                 disabled={isSubmitting || !token}
+                aria-invalid={!!errors.confirmPassword}
+                aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm disabled:opacity-60"
+                {...register('confirmPassword', {
+                  ...requiredPasswordRule,
+                  validate: (value) => value === getValues('newPassword') || 'Passwords do not match.',
+                })}
               />
+              {errors.confirmPassword && (
+                <p id="confirmPassword-error" role="alert" className="mt-1 text-sm text-red-700">
+                  {errors.confirmPassword.message}
+                </p>
+              )}
             </div>
 
-            {error && (
+            {errors.root?.message && (
               <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
+                {errors.root.message}
               </p>
             )}
 
             <button
               type="submit"
-              disabled={!isValid || isSubmitting || !token}
+              disabled={isSubmitting || !token}
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? 'Resetting…' : 'Reset password'}

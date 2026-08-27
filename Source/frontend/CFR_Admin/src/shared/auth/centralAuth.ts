@@ -1,7 +1,7 @@
 import { environment } from '@shared/platform/config/environment';
 import { SOLUTION_REGISTRY, type SolutionId } from '@shared/platform/config/solutionRegistry';
 
-const PREVIEW_SESSION_COOKIE = 'cs_platform_preview_session';
+const ACUTIS_SESSION_STORAGE_KEY = 'cs_acutis_session_token';
 const RELATIVE_RESOLUTION_BASE = 'https://return-url.invalid';
 const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
@@ -64,30 +64,65 @@ export function buildCentralLogoutUrl(returnUrl?: string) {
   return url.toString();
 }
 
-function cookieAttributes(expire = false, remember = false) {
-  const attributes = ['Path=/', 'SameSite=Lax'];
-  if (environment.sessionCookieDomain) attributes.push(`Domain=${environment.sessionCookieDomain}`);
-  if (environment.mode === 'production') attributes.push('Secure');
-  if (expire) attributes.push('Max-Age=0');
-  else if (remember) attributes.push('Max-Age=604800');
-  return attributes.join('; ');
+/**
+ * Real session storage — the identity CFR.Acutis's `/Auth/Login` actually returned (JWT + user
+ * fields), not a mock/preview marker. `localStorage`-backed (not a cookie) since it's only ever
+ * read by this SPA's own fetch calls (`Authorization: Bearer`), never by the server via cookie.
+ */
+export interface StoredAcutisSession {
+  token: string;
+  userId: number;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  fullName: string | null;
+  isSuperUser: boolean;
 }
 
-export function hasPreviewSession() {
-  if (typeof document === 'undefined' || environment.authMode === 'sso') return false;
-  return document.cookie.split(';').some((part) => part.trim().startsWith(`${PREVIEW_SESSION_COOKIE}=`));
+function isJwtExpired(token: string): boolean {
+  try {
+    const payloadSegment = token.split('.')[1];
+    const normalized = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(normalized)) as { exp?: number };
+    if (typeof payload.exp !== 'number') return false;
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true; // Malformed token — treat as expired/invalid rather than trusting it.
+  }
 }
 
-export function createPreviewSession(remember = true) {
-  if (typeof document === 'undefined' || environment.authMode === 'sso') return;
-  document.cookie = `${PREVIEW_SESSION_COOKIE}=1; ${cookieAttributes(false, remember)}`;
+export function getStoredAcutisSession(): StoredAcutisSession | null {
+  if (typeof window === 'undefined') return null;
+  const raw = window.localStorage.getItem(ACUTIS_SESSION_STORAGE_KEY);
+  if (!raw) return null;
+
+  let session: StoredAcutisSession;
+  try {
+    session = JSON.parse(raw) as StoredAcutisSession;
+  } catch {
+    window.localStorage.removeItem(ACUTIS_SESSION_STORAGE_KEY);
+    return null;
+  }
+
+  if (!session.token || isJwtExpired(session.token)) {
+    window.localStorage.removeItem(ACUTIS_SESSION_STORAGE_KEY);
+    return null;
+  }
+  return session;
 }
 
-export function clearPreviewSession() {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${PREVIEW_SESSION_COOKIE}=; ${cookieAttributes(true)}`;
-  // Also clear a host-only copy left by older/local builds.
-  document.cookie = `${PREVIEW_SESSION_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0`;
+export function storeAcutisSession(session: StoredAcutisSession) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(ACUTIS_SESSION_STORAGE_KEY, JSON.stringify(session));
+}
+
+export function clearAcutisToken() {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(ACUTIS_SESSION_STORAGE_KEY);
+}
+
+export function hasAcutisSession() {
+  return getStoredAcutisSession() !== null;
 }
 
 export function canRedirectToExternalIdentityProvider() {

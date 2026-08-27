@@ -1,42 +1,18 @@
-import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import {
-  Bell, Building2, ChevronDown, ClipboardList, Mail, Package, Receipt, Settings, ShieldCheck, Sparkles, UserCog, Users,
-} from 'lucide-react';
+import { Bell, ChevronDown } from 'lucide-react';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { ProfileMenu } from '@shared/app/components/ProfileMenu';
+import { useAdminNavigation, type AdminNavItem, type NavIcon } from '../navigation/adminNavigation';
 import '../theme.css';
 import '../admin.css';
 
-const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', icon: Sparkles, end: true },
-  { to: '/admin/applications', label: 'Products', icon: Package },
-  { to: '/admin/organizations', label: 'Organizations', icon: Building2 },
-  { to: '/admin/users', label: 'Users', icon: Users },
-  { to: '/admin/requests', label: 'Requests', icon: ClipboardList },
-];
-
-const ADMINISTRATION_ITEMS = [
-  { to: '/admin/administration/user-roles', label: 'User Roles', icon: UserCog },
-  { to: '/admin/administration/rights', label: 'Rights', icon: ShieldCheck },
-  { to: '/admin/administration/email-templates', label: 'Email Template', icon: Mail },
-  { to: '/admin/administration/invoice-items', label: 'License Items', icon: Receipt },
-  // Component library (Add/View) pages intentionally have no nav entry — reach them by direct
-  // URL only. Routes still live in App.tsx; see the removal note atop SampleAddPage.tsx.
-];
-
 const CONTAINER = 'mx-auto w-[95%]';
 
-interface NavDropdownItem {
-  to: string;
-  label: string;
-  icon: ComponentType<{ size?: number }>;
-}
-
-/** Shared hover/click dropdown behind both the "Administration" and "Masters" nav menus. */
-function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon: ComponentType<{ size?: number }>; items: NavDropdownItem[] }) {
+/** Shared hover/click dropdown behind the "Administration" nav menu (and any future dropdown group). */
+function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon: NavIcon; items: AdminNavItem[] }) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [panelPosition, setPanelPosition] = useState<{ top: number; left: number } | null>(null);
@@ -147,6 +123,14 @@ function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon:
 }
 
 export function AdminShell() {
+  // IsSuperUser was tried as a console-wide gate and reverted — the reference OptionC Acutis
+  // system shows ordinary authenticated staff accounts (e.g. Justine Clement) with full
+  // navigation, so that flag does not mean "allowed into this console" here. ProtectedRoute
+  // already guarantees authentication before this component renders; there is still no confirmed
+  // mapping from Acutis's broader moduleRights list to this console's specific sections (see
+  // docs/acutis-auth-spec), so per-section authorization remains a future task, not invented here.
+  const navigation = useAdminNavigation();
+
   return (
     <div className="admin-shell-bg flex min-h-screen flex-col text-[var(--text-primary)]">
       <div className="admin-top-accent" aria-hidden="true" />
@@ -169,7 +153,7 @@ export function AdminShell() {
 
         <div className="admin-nav-strip">
           <nav aria-label="Admin navigation" className={`admin-nav-scroll flex items-center overflow-x-auto ${CONTAINER}`}>
-            {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+            {navigation.items.map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -180,7 +164,9 @@ export function AdminShell() {
                 <span>{label}</span>
               </NavLink>
             ))}
-            <NavDropdown label="Administration" icon={Settings} items={ADMINISTRATION_ITEMS} />
+            {navigation.groups.map((group) => (
+              <NavDropdown key={group.label} label={group.label} icon={group.icon} items={group.items} />
+            ))}
           </nav>
         </div>
       </header>

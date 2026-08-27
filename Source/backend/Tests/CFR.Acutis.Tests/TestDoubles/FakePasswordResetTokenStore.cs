@@ -13,6 +13,8 @@ public class FakePasswordResetTokenStore : IPasswordResetTokenStore
     public PasswordResetTokenValidationResult ValidationResult { get; set; } =
         new() { IsValid = false, FailureReason = PasswordResetTokenFailureReason.NotFound };
 
+    public int ValidateAndConsumeCallCount { get; private set; }
+
     public Task<string> IssueResetTokenAsync(long userId, TimeSpan validity, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(TokenToIssue);
@@ -20,6 +22,7 @@ public class FakePasswordResetTokenStore : IPasswordResetTokenStore
 
     public Task<PasswordResetTokenValidationResult> ValidateAndConsumeTokenAsync(string token, CancellationToken cancellationToken = default)
     {
+        ValidateAndConsumeCallCount++;
         return Task.FromResult(ValidationResult);
     }
 }

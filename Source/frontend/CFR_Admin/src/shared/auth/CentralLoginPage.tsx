@@ -11,10 +11,6 @@ function isAbsolute(value: string) {
   return /^https?:\/\//i.test(value);
 }
 
-const DEMO_EMAIL = 'carl.lapp@optionc.com';
-const DEMO_PASSWORD = 'demo1234';
-const SIGN_IN_SIMULATED_DELAY_MS = 550;
-
 /**
  * cfr-admin's own `/login` route. This project is the Super Admin console only — it never
  * serves the CFR Portal's member-facing sign-in — so this always renders the distinct Admin
@@ -33,11 +29,9 @@ export function CentralLoginPage() {
   const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [interactiveSignInCompleted, setInteractiveSignInCompleted] = useState(false);
-  const [email, setEmail] = useState(environment.authMode === 'mock' ? DEMO_EMAIL : '');
-  const [password, setPassword] = useState(environment.authMode === 'mock' ? DEMO_PASSWORD : '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  // The mock auth provider always succeeds, so this simulates real validation/invalid-credential/
-  // loading states locally without touching AuthProvider's contract.
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
@@ -58,23 +52,6 @@ export function CentralLoginPage() {
     }
   }, [completeCentralReturn, interactiveSignInCompleted, isAuthenticated, requiresInteractiveSignIn]);
 
-  const completeSignIn = async () => {
-    const result = await signIn({
-      email,
-      password,
-      remember: true,
-      provider: 'password',
-      clientId: environment.appId,
-      returnUrl: toAbsoluteReturnUrl(destination),
-    });
-    if (result === 'authenticated') {
-      setInteractiveSignInCompleted(true);
-      showToast('Signed in to CFR Acutis');
-    } else if (result === 'unavailable') {
-      showToast('The configured identity service is unavailable. Please contact your administrator.');
-    }
-  };
-
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setFormError(null);
@@ -88,18 +65,27 @@ export function CentralLoginPage() {
       return;
     }
     setFieldErrors({});
-
     setSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, SIGN_IN_SIMULATED_DELAY_MS));
 
-    if (environment.authMode === 'mock' && (email.trim() !== DEMO_EMAIL || password !== DEMO_PASSWORD)) {
-      setSubmitting(false);
+    const result = await signIn({
+      email: email.trim(),
+      password,
+      remember: true,
+      provider: 'password',
+      clientId: environment.appId,
+      returnUrl: toAbsoluteReturnUrl(destination),
+    });
+
+    if (result === 'authenticated') {
+      setInteractiveSignInCompleted(true);
+      showToast('Signed in to CFR Acutis');
+    } else if (result === 'invalid-credentials') {
       setFormError('Invalid email or password. Check your credentials and try again.');
       passwordRef.current?.focus();
-      return;
+    } else if (result === 'unavailable') {
+      setFormError('The authentication service is unavailable right now. Please try again shortly.');
     }
 
-    await completeSignIn();
     setSubmitting(false);
   };
 

@@ -2,7 +2,9 @@
 
 using CFR.Acutis;
 using CFR.AcutisInfrastructure.Interfaces.AcutisAuthentication;
+using CFR.AcutisInfrastructure.Models.Output;
 using CFR.AcutisInfrastructure.Repositorys.AcutisAuthentication;
+using CFR.DBEngine;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,171 +14,115 @@ using Xunit;
 namespace CFR.Acutis.Tests;
 
 /// <summary>
-/// Tests <see cref="AcutisAuthRepositorySelection"/> — pure config-driven DI selection. No
+/// Tests <see cref="AcutisAuthRepositorySelection"/> — pure config-driven DI registration. No
 /// database, no network, no real secrets: connection-string "values" used below are obviously
 /// fake test fixtures, only ever checked for presence/absence or (for the logging test) confirmed
-/// to never appear in captured log output.
+/// to never appear in captured log output. No development-fake/mock repository exists in this
+/// codebase — <see cref="AcutisAuthenticationRepository"/> (real, Dapper-backed) is the only
+/// registered implementation, real-time development only.
 /// </summary>
 public class AcutisAuthRepositorySelectionTests
 {
     private static IConfiguration BuildConfiguration(Dictionary<string, string?> values) =>
         new ConfigurationBuilder().AddInMemoryCollection(values).Build();
 
-    // --- Fake mode selection ---
+    private static ServiceCollection BuildServicesWithConfiguredConnectionString(string key = "ConnString")
+    {
+        var services = new ServiceCollection();
+        var configuration = BuildConfiguration(new() { [$"ConnectionStrings:{key}"] = "Server=test-fixture-only;Database=test;Trusted_Connection=True;" });
+        // AcutisAuthenticationRepository -> IDapperHandler -> DapperHandler needs IConfiguration
+        // resolvable from the container itself (not just passed as a parameter).
+        services.AddSingleton(configuration);
+        services.AddLogging();
+        services.AddAcutisAuthRepository(configuration);
+        return services;
+    }
+
+    // --- Missing connection string fails fast ---
 
     [Fact]
-    public void AddAcutisAuthRepository_NoConfigAtAll_DefaultsToDevelopmentFake()
+    public void AddAcutisAuthRepository_NoConnectionString_FailsFast()
     {
         var services = new ServiceCollection();
         var configuration = BuildConfiguration([]);
 
-        services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: true);
+        var ex = Assert.Throws<InvalidOperationException>(() => services.AddAcutisAuthRepository(configuration));
 
-        using var provider = services.BuildServiceProvider();
-        Assert.IsType<AcutisAuthenticationRepositoryDevFake>(provider.GetRequiredService<IAcutisAuthenticationRepository>());
+        Assert.Contains("ConnectionStrings:ConnString", ex.Message);
     }
 
     [Fact]
-    public void AddAcutisAuthRepository_ExplicitDevelopmentFake_RegistersTheFake()
+    public void ConnectionStringKey_DefaultsToConnString_MatchingCFRDBEngineDapperHandlersHardcodedKey()
     {
-        var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new() { ["AcutisAuth:RepositoryMode"] = "DevelopmentFake" });
-
-        services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: true);
-
-        using var provider = services.BuildServiceProvider();
-        Assert.IsType<AcutisAuthenticationRepositoryDevFake>(provider.GetRequiredService<IAcutisAuthenticationRepository>());
+        // CFR.DBEngine.DapperHandler.Connection hardcodes configuration.GetConnectionString("ConnString")
+        // (matching the reference app exactly) — this default must match that key, or the startup
+        // check could pass while the connection AcutisAuthenticationRepository actually opens still
+        // fails. See docs/acutis-auth-spec/database-contract.md.
+        Assert.Equal("ConnString", AcutisAuthRepositoryOptions.DefaultConnectionStringKey);
     }
 
     [Fact]
-    public void AddAcutisAuthRepository_FakeModeOutsideDevelopment_WithoutEscapeHatch_FailsFast()
+    public void AddAcutisAuthRepository_CustomConnectionStringKey_ButNotConfigured_FailsFastWithThatKeyName()
     {
         var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new() { ["AcutisAuth:RepositoryMode"] = "DevelopmentFake" });
+        var configuration = BuildConfiguration(new() { ["AcutisAuth:ConnectionStringKey"] = "SomeOtherKey" });
 
-        var ex = Assert.Throws<InvalidOperationException>(
-            () => services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: false));
-
-        Assert.Contains("DevelopmentFake", ex.Message);
-        Assert.Contains("AllowDevelopmentFakeOutsideDevelopment", ex.Message);
-    }
-
-    [Fact]
-    public void AddAcutisAuthRepository_FakeModeOutsideDevelopment_WithEscapeHatch_IsAllowed()
-    {
-        var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new()
-        {
-            ["AcutisAuth:RepositoryMode"] = "DevelopmentFake",
-            ["AcutisAuth:AllowDevelopmentFakeOutsideDevelopment"] = "true",
-        });
-
-        services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: false);
-
-        using var provider = services.BuildServiceProvider();
-        Assert.IsType<AcutisAuthenticationRepositoryDevFake>(provider.GetRequiredService<IAcutisAuthenticationRepository>());
-    }
-
-    // --- Database mode: missing connection string fails fast ---
-
-    [Fact]
-    public void AddAcutisAuthRepository_DatabaseMode_NoConnectionString_FailsFast()
-    {
-        var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new() { ["AcutisAuth:RepositoryMode"] = "Database" });
-
-        var ex = Assert.Throws<InvalidOperationException>(
-            () => services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: true));
-
-        Assert.Contains("ConnectionStrings:AcutisDb", ex.Message);
-    }
-
-    [Fact]
-    public void AddAcutisAuthRepository_DatabaseMode_CustomConnectionStringKey_ButNotConfigured_FailsFastWithThatKeyName()
-    {
-        var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new()
-        {
-            ["AcutisAuth:RepositoryMode"] = "Database",
-            ["AcutisAuth:ConnectionStringKey"] = "SomeOtherKey",
-        });
-
-        var ex = Assert.Throws<InvalidOperationException>(
-            () => services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: true));
+        var ex = Assert.Throws<InvalidOperationException>(() => services.AddAcutisAuthRepository(configuration));
 
         Assert.Contains("ConnectionStrings:SomeOtherKey", ex.Message);
     }
 
-    // --- Unknown mode fails fast ---
+    // --- Connection string configured: registers the real repository ---
 
     [Fact]
-    public void AddAcutisAuthRepository_UnknownMode_FailsFast()
+    public void AddAcutisAuthRepository_ConnectionStringConfigured_RegistersRealRepositoryAndDapperHandler()
     {
-        var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new() { ["AcutisAuth:RepositoryMode"] = "SomethingNotARealMode" });
-
-        var ex = Assert.Throws<InvalidOperationException>(
-            () => services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: true));
-
-        Assert.Contains("Unknown", ex.Message);
-        Assert.Contains("SomethingNotARealMode", ex.Message);
-    }
-
-    // --- Database mode never silently selects the fake ---
-
-    [Fact]
-    public void AddAcutisAuthRepository_DatabaseMode_ConnectionStringConfigured_RegistersPlaceholder_NeverTheFake()
-    {
-        var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new()
-        {
-            ["AcutisAuth:RepositoryMode"] = "Database",
-            ["ConnectionStrings:AcutisDb"] = "Server=test-fixture-only;Database=test;Trusted_Connection=True;",
-        });
-
-        services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: true);
-
-        using var provider = services.BuildServiceProvider();
+        using var provider = BuildServicesWithConfiguredConnectionString().BuildServiceProvider();
         var repository = provider.GetRequiredService<IAcutisAuthenticationRepository>();
 
-        Assert.IsType<AcutisAuthenticationRepositoryNotImplemented>(repository);
-        Assert.IsNotType<AcutisAuthenticationRepositoryDevFake>(repository);
+        // AcutisAuthenticationRepository — real, Dapper-backed (AuthenticateAsync confirmed live
+        // against the database — see database-contract.md). The only implementation that exists.
+        Assert.IsType<AcutisAuthenticationRepository>(repository);
+        Assert.NotNull(provider.GetService<IDapperHandler>());
     }
 
     [Fact]
-    public async Task DatabaseMode_PlaceholderRepository_ThrowsRatherThanBehavingLikeTheFake()
+    public async Task RealRepository_UnconfirmedOperations_ThrowRatherThanGuessAQuery()
     {
-        var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new()
-        {
-            ["AcutisAuth:RepositoryMode"] = "Database",
-            ["ConnectionStrings:AcutisDb"] = "Server=test-fixture-only;Database=test;Trusted_Connection=True;",
-        });
-        services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: true);
-        using var provider = services.BuildServiceProvider();
+        using var provider = BuildServicesWithConfiguredConnectionString().BuildServiceProvider();
         var repository = provider.GetRequiredService<IAcutisAuthenticationRepository>();
 
-        // The DEV FAKE would return a benign "invalid credentials" result for this call; the
-        // Database-mode placeholder must instead fail loudly, proving it never silently behaves
-        // like the fake.
-        await Assert.ThrowsAsync<NotImplementedException>(() => repository.AuthenticateAsync("anyone", "anything"));
+        // GetModuleRightsAsync/FindAccountByEmailAsync have no confirmed standalone database
+        // object (see database-contract.md) — they must throw immediately, with no network call,
+        // rather than guessing a query. (AuthenticateAsync is intentionally NOT exercised here —
+        // it is confirmed and would attempt a real network call against this fixture's fake host.)
+        await Assert.ThrowsAsync<NotImplementedException>(() => repository.GetModuleRightsAsync(1));
+        await Assert.ThrowsAsync<NotImplementedException>(() => repository.FindAccountByEmailAsync("someone@example.test"));
+    }
+
+    [Fact]
+    public async Task RealRepository_SetPasswordAsync_NeverReportsFalseSuccess_NoNetworkCall()
+    {
+        using var provider = BuildServicesWithConfiguredConnectionString().BuildServiceProvider();
+        var repository = provider.GetRequiredService<IAcutisAuthenticationRepository>();
+
+        var outcome = await repository.SetPasswordAsync(1, "NewPassword1");
+
+        Assert.False(outcome.Completed);
+        Assert.Equal(PasswordOperationFailureReason.NotSupported, outcome.FailureReason);
     }
 
     // --- No secret values are logged ---
 
     [Fact]
-    public void AddAcutisAuthRepository_DatabaseMode_LoggedStatusLineNeverContainsTheConnectionStringValue()
+    public void AddAcutisAuthRepository_LoggedStatusLineNeverContainsTheConnectionStringValue()
     {
         const string fakeSecretValue = "Server=test-fixture-only;Password=NotARealSecret123!;";
         var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new()
-        {
-            ["AcutisAuth:RepositoryMode"] = "Database",
-            ["ConnectionStrings:AcutisDb"] = fakeSecretValue,
-        });
+        var configuration = BuildConfiguration(new() { ["ConnectionStrings:ConnString"] = fakeSecretValue });
         List<string> logged = [];
 
-        services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: true, logMode: logged.Add);
+        services.AddAcutisAuthRepository(configuration, logMode: logged.Add);
 
         Assert.NotEmpty(logged);
         Assert.All(logged, line =>
@@ -185,19 +131,6 @@ public class AcutisAuthRepositorySelectionTests
             Assert.DoesNotContain(fakeSecretValue, line);
         });
         // The key NAME is expected/fine to appear — only the value must never appear.
-        Assert.Contains(logged, line => line.Contains("AcutisDb"));
-    }
-
-    [Fact]
-    public void AddAcutisAuthRepository_FakeMode_LoggedStatusLineContainsNoConnectionStringContentAtAll()
-    {
-        var services = new ServiceCollection();
-        var configuration = BuildConfiguration(new() { ["AcutisAuth:RepositoryMode"] = "DevelopmentFake" });
-        List<string> logged = [];
-
-        services.AddAcutisAuthRepository(configuration, isDevelopmentEnvironment: true, logMode: logged.Add);
-
-        Assert.NotEmpty(logged);
-        Assert.All(logged, line => Assert.DoesNotContain("ConnectionStrings", line));
+        Assert.Contains(logged, line => line.Contains("ConnString"));
     }
 }

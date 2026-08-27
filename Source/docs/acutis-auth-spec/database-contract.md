@@ -2,7 +2,89 @@
 
 Scope and date: Task 2, 2026-08-26 (original, code-only analysis). **Task 8, 2026-08-26 — a live verification attempt was made** (see below); it did not succeed, so everything in this document remains derived from source-code references only, not a live schema. Per the task's rules ("treat unsupported database operations as explicit blockers," "do not silently invent database tables, stored procedures, or fields"), every object below is labeled **Confirmed-in-reference-code** or **Not found / must be confirmed**, and nothing is presented as guaranteed to exist in the target database. **Task 12, 2026-08-26** added the configuration/DI *scaffolding* a real repository will need (mode selection, connection-string key, fail-fast checks) without implementing or connecting to one — see [Configuration scaffolding (Task 12)](#configuration-scaffolding-task-12) below.
 
-## Configuration scaffolding (Task 12)
+## DevelopmentFake removed — real-time development only (this session)
+
+Per explicit instruction ("no fake account... real-time development"), `AcutisAuthenticationRepositoryDevFake`, `AcutisAuthenticationRepositoryNotImplemented`, and the `AcutisAuthRepositoryMode`/`RepositoryMode` config switch have all been **deleted**. `AcutisAuthenticationRepository` (real, Dapper-backed) is now the **only** `IAcutisAuthenticationRepository` implementation registered — `CFR.Acutis` fails to start at all unless `ConnectionStrings:ConnString` is configured (via User Secrets or an environment variable — never a tracked file). There is no more "mode" to select and no fake credential path exists anywhere in this codebase. Every mention of "DevelopmentFake"/"Database mode" elsewhere in this document is **historical** — accurate to what was true at the time each entry was written, superseded by this change.
+
+## Phase 2 — real repository implemented (this session)
+
+Following the verification below, `AcutisAuthenticationRepository` (`backend/Infrastructure/CFR.AcutisInfrastructure/Repositorys/AcutisAuthentication/AcutisAuthenticationRepository.cs`) was implemented and is now the only registered `IAcutisAuthenticationRepository` — later in this same session, `DevelopmentFake` and the placeholder were removed entirely (see the notice above).
+
+- **`AuthenticateAsync`** — real, calls `NewViper.DoLogin` via `IDapperHandler.QueryMultipleAsync`, maps both confirmed result sets. Success is determined **only** from the first result set having a row — the second (rights) result set was observed to return rows even on a failed login, so it is never used to infer success. Live-verified this session: a probe (nonexistent) account correctly returns the generic invalid-credentials failure through the full pipeline (`AuthController` → `AcutisAuthenticationService` → `AcutisAuthenticationRepository` → real SQL Server); malformed-email DTO validation is unaffected; genuine database errors (connection failure, timeout) are intentionally left uncaught in the repository so they propagate to the service's existing exception handling (`ErrorCodes.InternalServerError`, no detail leaked) — consistent with the already-existing test `LoginAsync_RepositoryThrows_HandledSafelyAsInternalServerError`.
+- **`GetModuleRightsAsync`, `FindAccountByEmailAsync`** — **not implemented.** No confirmed standalone database object exists for either (see the verification findings below) — `GetModuleRightsAsync` in particular has no non-invented path, since the only confirmed object (`NewViper.DoLogin`) requires re-authenticating with a password, which this method doesn't have. Both throw `NotImplementedException` with a clear message rather than guessing a query. Live-verified: `ForgotPassword` still returns its generic, enumeration-safe success response even though `FindAccountByEmailAsync` throws internally — the service's existing catch-all handles this gracefully, no crash, no leak. Real-account `GET /navigation/menus` would fail (via `GetModuleRightsAsync`) until this gap is resolved by a future task — this is an accurate, documented limitation, not a regression introduced by this task.
+- **`SetPasswordAsync`** — returns `Completed=false, FailureReason=NotSupported`, never throws — no password-write database object was in scope for this task, per its explicit instruction not to implement password writes.
+
+`IDapperHandler`/`DapperHandler` (`CFR.DBEngine`, unchanged) is now unconditionally registered in DI — `CFR.Acutis` always needs a real database connection to start.
+
+## Verification succeeded (this session) — `NewViper.DoLogin` confirmed live, full contract
+
+After five prior blocked attempts (Tasks 8, 10, 13, 15, and the post-Task 15 session task — see
+below), a connection string was supplied and stored via .NET User Secrets (never committed, never
+placed in a tracked file — see the connection-string-key section below for the key name). A
+read-only verification tool (isolated, outside this repository, deleted after use) resolved the
+connection string internally and printed **only** derived, non-secret metadata — object names,
+column names/types, and row counts, never the connection string, never any row's actual data
+values. Findings:
+
+1. **SQL connection: SUCCESS.** Server version `16.00.1000` (SQL Server 2022).
+2. **`NewViper.DoLogin` exists, confirmed live** — along with seven other `%DoLogin%`-named
+   procedures in the same database (`dbo.System_DoLogin`, `dbo.System_DoLoginDio`,
+   `dbo.System_DoLogineForms`, `dbo.System_DoLoginManual`, `Diocese.System_DoLogin`,
+   `SIS.System_DoLogineForms`, `Viper.DoLogin`) — `NewViper.DoLogin` and `Viper.DoLogin` both
+   exist as distinct objects; `NewViper.DoLogin` was used as the verification target per this
+   session's explicit instruction.
+3. **Parameters (all input, none output):** `@EMail varchar(50)`, `@Password varchar(50)`,
+   `@IPAddress varchar(20)`, `@LoginTransferID varchar(100)`.
+4. **First result set (17 columns) — a single user-identity row:** `UserId int`,
+   `AccessLevel int`, `EMail varchar(50)`, `FirstName varchar(50)`, `LastName varchar(50)`,
+   `FullName varchar(102)`, `RoleId int (nullable)`, `Schools bit`, `Support bit`,
+   `Documentation bit`, `Bugs bit`, `Reports bit`, `DTSRequest bit`, `IsSuperUser bit`,
+   `LastPasswordChange smalldatetime (nullable)`, `IsEnforcePassword int (nullable)`,
+   `IsSystemUser int (nullable)`, `LandingURL varchar(50, nullable)`. This does **not** match the
+   `ViperLoginUserResult`/`AcutisLoginUser` shape currently assumed in this repo's DTOs
+   (`UserId`/`Email`/`FirstName`/`LastName`/`FullName`/`Token` only) — a real mapping would need
+   new fields for `AccessLevel`, the several `bit` capability flags, `LastPasswordChange`,
+   `IsEnforcePassword`, `IsSystemUser`, and `LandingURL`, none of which exist in the current DTO.
+5. **Second result set (11 columns) — the rights rowset:** `ModuleName varchar`, `UserRight int`,
+   `DisplayOrder int`, `IsHideMenu int`, `RoleId int`, `FeatureID int`, `ParentId int`,
+   `RoutingUrl varchar`, `DisplayName varchar`, `LevelId int`, `Icon varchar`. This **does** match
+   the previously-assumed `ViperLoginModuleRightRow` shape (same 11 field names, confirmed) —
+   this part of the original assumption in this document was correct.
+6. **Password verification / empty-result behavior:** invoked with an obviously-nonexistent probe
+   email (`claude-schema-probe-nonexistent-user@example.invalid`) and a probe password — the
+   **first result set returned 0 rows** (no error, no "failure" flag row — an empty result set
+   *is* the failure signal). **The second result set still returned 167 rows even though the first
+   (identity) result set was empty** — i.e., the rights rowset does **not** appear to be
+   conditioned on a successful login/valid `UserId` in this procedure's current form. This is a
+   new, previously-unknown finding with real design implications: a real repository implementation
+   must not assume "second result set has rows" implies "the login succeeded" — the two result
+   sets need to be correlated by checking the **first** result set for a row before trusting
+   anything from the second. This was not something the reference-code-only analysis could have
+   surfaced.
+7. **Timeout behavior confirmed** — a synthetic `WAITFOR DELAY` against a 1-second
+   `SqlCommand.CommandTimeout` reliably threw `SqlException` with `Number = -2` (timeout expired),
+   using no data from the real procedure at all.
+8. **Error behavior observed indirectly** during the tool's own debugging (a parameter-binding
+   mistake in the verification tool itself, not a database issue) — `SqlException.Number = 201`
+   ("expects parameter '@X', which was not supplied") reliably identifies a parameter-binding
+   mismatch, and `Number = 8169` reliably identifies a data-type conversion failure — both
+   standard SQL Server error numbers, not Acutis-specific.
+
+**No write operation of any kind was performed.** The invocation used to observe results is
+equivalent in effect to an ordinary failed login attempt (a real user mistyping their password) —
+no schema, data, or stored procedure was modified. **Phase 1 verification is complete and
+successful** for Login. Following explicit confirmation, Phase 2 (real repository implementation)
+was completed this session — see [Phase 2 — real repository implemented (this session)](#phase-2--real-repository-implemented-this-session) above.
+
+## Connection-string key name — discovered discrepancy, now corrected (this session)
+
+Inspecting the reference `OptionC.Acutis` configuration (`appsettings.json`/`appsettings.Development.json`/`appsettings.QA.json`/`appsettings.Pilot.json`, and its `ConfigurationLoader.LoadConfiguration()` — `appsettings.json` → `appsettings.{Environment}.json` → environment variables, no `AddUserSecrets` call at all) found that the reference's actual `ConnectionStrings` key is **`ConnString`**, not `AcutisDb`. This is confirmed by `OptionC.DBEngine.DapperHandler.Connection`, which hardcodes `configuration.GetConnectionString("ConnString")`.
+
+**`CFR.DBEngine.DapperHandler` — the exact same class, already ported into this repo (`backend/Platform/CFR.DBEngine/DapperHandler.cs`) — has the identical hardcoded `GetConnectionString("ConnString")` call**, and this task did **not** change it (out of scope — no `CFR.DBEngine` change was made). A prior session task had introduced `AcutisDb` as the default `AcutisAuth:ConnectionStringKey`, which only governed `AcutisAuthRepositorySelection`'s own fail-fast startup check and never actually reached `IDapperHandler.Connection` — meaning a startup check could pass while the connection a real repository would open still failed, silently pointing at the wrong key.
+
+**Corrected in this session:** `AcutisAuthRepositoryOptions.DefaultConnectionStringKey` changed from `AcutisDb` to `ConnString`, and the tracked `AcutisAuth:ConnectionStringKey` in `appsettings.Development.json` changed to match — so the startup check and the connection `IDapperHandler` actually opens now read the exact same key. This is a **key-name-only** correction: `CFR.DBEngine.DapperHandler` itself was not touched, no repository was implemented, and `Database` mode still registers `AcutisAuthenticationRepositoryNotImplemented` (never a real connection), unchanged.
+
+## Configuration scaffolding (Task 12, corrected this session)
 
 `CFR.Acutis` now has a config-driven switch between two `IAcutisAuthenticationRepository` registrations, selected by `AcutisAuthRepositorySelection.AddAcutisAuthRepository` (`backend/Microservices/CFR.Acutis/AcutisAuthRepositorySelection.cs`, called from `Program.cs`):
 
@@ -11,11 +93,11 @@ Scope and date: Task 2, 2026-08-26 (original, code-only analysis). **Task 8, 202
 | `DevelopmentFake` (**default** — used when the key is absent) | `AcutisAuthenticationRepositoryDevFake` (unchanged from prior tasks) | One hardcoded credential pair; no database call |
 | `Database` | `AcutisAuthenticationRepositoryNotImplemented` (new — a placeholder, NOT a real repository) | Every method throws `NotImplementedException` immediately — never silently behaves like the fake |
 
-Neither path connects to a database. `Database` mode's only job today is to (a) fail fast at startup if `ConnectionStrings:{ConnectionStringKey}` (default key name `AcutisDb`) isn't configured, and (b) register a repository that fails loudly rather than pretending to work, so the moment someone points `RepositoryMode` at `Database` without a real implementation behind it, that's immediately obvious — not a silent no-op.
+Neither path connects to a database. `Database` mode's only job today is to (a) fail fast at startup if `ConnectionStrings:{ConnectionStringKey}` (default key name **`ConnString`**, corrected this session — matches `CFR.DBEngine.DapperHandler`'s hardcoded key) isn't configured, and (b) register a repository that fails loudly rather than pretending to work, so the moment someone points `RepositoryMode` at `Database` without a real implementation behind it, that's immediately obvious — not a silent no-op.
 
 **Production safeguard:** `DevelopmentFake` mode is rejected at startup (`InvalidOperationException`) outside a Development environment unless `AcutisAuth:AllowDevelopmentFakeOutsideDevelopment=true` is explicitly set — a clearly-named, off-by-default escape hatch, not an implicit allowance.
 
-**Where the real connection string goes when one exists:** never a tracked `appsettings*.json` file. Local development: `dotnet user-secrets set "ConnectionStrings:AcutisDb" "..."` (wired via `builder.Configuration.AddUserSecrets<Program>()`, Development-only, `CFR.Acutis.csproj`'s new `<UserSecretsId>`). Any other environment: the environment variable `ConnectionStrings__AcutisDb` (or your platform's secret-injection mechanism). See [operations-runbook.md](operations-runbook.md) for exact commands (no real values shown).
+**Where the real connection string goes when one exists:** never a tracked `appsettings*.json` file. Local development: `dotnet user-secrets set "ConnectionStrings:ConnString" "..."` (wired via `builder.Configuration.AddUserSecrets<Program>()`, Development-only, `CFR.Acutis.csproj`'s `<UserSecretsId>`). Any other environment: the environment variable `ConnectionStrings__ConnString` (or your platform's secret-injection mechanism). **Key name corrected this session** — was `AcutisDb`, now `ConnString`, to match `CFR.DBEngine.DapperHandler`'s hardcoded key (see above). See [operations-runbook.md](operations-runbook.md) for exact commands (no real values shown).
 
 This scaffolding does **not** change the actual blocker: whether `NewViper.DoLogin` exists with the assumed shape, and whether the approved development database is reachable from wherever implementation work happens, remain exactly as Tasks 8 and 10 left them — see below.
 

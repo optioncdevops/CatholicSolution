@@ -13,19 +13,16 @@ public class AcutisAuthRepositoryOptions
 {
     public const string SectionName = "AcutisAuth";
 
-    /// <summary>Default connection-string key name if none is configured — still just a key name, not a value.</summary>
-    public const string DefaultConnectionStringKey = "AcutisDb";
-
-    /// <summary><see cref="AcutisAuthRepositoryMode"/> as a string (bound/parsed explicitly — see <see cref="AcutisAuthRepositorySelection"/> — so an unrecognized value fails with a clear, specific error rather than a generic binder exception).</summary>
-    public string? RepositoryMode { get; set; }
-
-    /// <summary>Which <c>ConnectionStrings</c> key to read when <see cref="RepositoryMode"/> is <c>Database</c>. A key NAME, never a value.</summary>
-    public string ConnectionStringKey { get; set; } = DefaultConnectionStringKey;
-
     /// <summary>
-    /// Explicit, clearly-named escape hatch: must be <c>true</c> for <see cref="AcutisAuthRepositoryMode.DevelopmentFake"/>
-    /// to be allowed outside a Development environment. Defaults to <c>false</c> — production
-    /// cannot silently start in fake mode.
+    /// Default connection-string key name if none is configured — still just a key name, not a
+    /// value. Matches <c>CFR.DBEngine.DapperHandler.Connection</c>'s hardcoded
+    /// <c>configuration.GetConnectionString("ConnString")</c> call (itself matching the reference
+    /// app's identical hardcoding), so this startup check and the connection
+    /// <c>AcutisAuthenticationRepository</c> actually opens read the same key — see
+    /// docs/acutis-auth-spec/database-contract.md.
     /// </summary>
-    public bool AllowDevelopmentFakeOutsideDevelopment { get; set; }
+    public const string DefaultConnectionStringKey = "ConnString";
+
+    /// <summary>Which <c>ConnectionStrings</c> key to read. A key NAME, never a value.</summary>
+    public string ConnectionStringKey { get; set; } = DefaultConnectionStringKey;
 }

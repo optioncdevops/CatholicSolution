@@ -8,16 +8,25 @@ import type {
   AcutisResetPasswordRequest,
 } from '../types';
 
+/** One field-level validation error, matching `CFR.DBEngine.ErrorDetail` (`{field, message}`). */
+export interface ApiFieldError {
+  field: string;
+  message: string;
+}
+
 /**
  * A normal (non-2xx) API response, thrown by both the mock and real adapters so callers have one
  * shape to handle regardless of mode. `status` is the domain MSResultArgs.statusCode where known
- * (e.g. 203 for a generic auth failure), not necessarily the HTTP status code.
+ * (e.g. 203 for a generic auth failure), not necessarily the HTTP status code. `fieldErrors` is
+ * populated from `MSResultArgs.errors` (backend DataAnnotations/service-level field validation) so
+ * a form can map each entry onto the matching React Hook Form field via `setError`.
  */
 export class ApiError extends Error {
   constructor(
     message: string,
     public readonly httpStatus: number,
     public readonly domainStatusCode?: number,
+    public readonly fieldErrors: ApiFieldError[] = [],
   ) {
     super(message);
     this.name = 'ApiError';

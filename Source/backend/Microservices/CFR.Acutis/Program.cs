@@ -14,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args).UseSecureKestrel();
 // Load configuration using the shared multi-environment loader (appsettings.json -> appsettings.{Environment}.json -> env vars).
 builder.Configuration.AddConfiguration(ConfigurationLoader.LoadConfiguration());
 
-// Local-development-only secret source: `dotnet user-secrets set "ConnectionStrings:AcutisDb" "..."`
+// Local-development-only secret source: `dotnet user-secrets set "ConnectionStrings:ConnString" "..."`
 // writes to a file OUTSIDE this repo (keyed by <UserSecretsId> in CFR.Acutis.csproj), never
 // committed. Added last so it can override the tracked appsettings files. Not enabled outside
 // Development — other environments must supply real values via environment variables/secret
@@ -26,12 +26,17 @@ if (builder.Environment.IsDevelopment())
 
 builder.Services.AddCommonServicesSetup();
 
+// Makes a DataAnnotations validation failure return the same MSResultArgs envelope every other
+// Acutis response uses, instead of ASP.NET Core's default ValidationProblemDetails shape. See
+// docs/acutis-auth-spec/validation-standard.md.
+builder.Services.AddAcutisValidationSetup();
+
 builder.Services.AddDIServicesSetup();
 
-// Mode-selected: DevelopmentFake (default) or Database (placeholder boundary — no real
-// implementation exists yet). Never silently falls back between the two. See
+// Real, database-backed repository only — no development-fake/mock repository exists in this
+// codebase. Fails startup immediately if the connection string isn't configured. See
 // docs/acutis-auth-spec/database-contract.md.
-builder.Services.AddAcutisAuthRepository(builder.Configuration, builder.Environment.IsDevelopment());
+builder.Services.AddAcutisAuthRepository(builder.Configuration);
 
 // JWT bearer authentication — normal validation only. DisableAuthenticationPolicy is intentionally NOT wired here.
 builder.Services.AddAuthenticationSetup(builder.Configuration);

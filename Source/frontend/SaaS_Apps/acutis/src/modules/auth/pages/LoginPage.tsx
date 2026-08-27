@@ -1,36 +1,39 @@
-import { useState, type FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
+import { RequiredMark } from '@/components/RequiredMark';
 import { acutisAuthApi, ApiError } from '../api';
 import { useAuth } from '../hooks/useAuth';
+import { applyServerFieldErrors, emailRule, requiredPasswordRule } from '../validation';
+
+interface LoginFormValues {
+  userName: string;
+  password: string;
+}
+
+const KNOWN_FIELDS = ['userName', 'password'] as const;
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [userName, setUserName] = useState('');
-  const [password, setPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({ mode: 'onBlur', defaultValues: { userName: '', password: '' } });
 
-  const isValid = userName.trim().length > 0 && password.length > 0;
-
-  const onSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!isValid || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setError(null);
+  const onSubmit = handleSubmit(async (values) => {
     try {
-      const result = await acutisAuthApi.login({ userName: userName.trim(), password });
+      const result = await acutisAuthApi.login({ userName: values.userName.trim(), password: values.password });
       login({ user: result.user, token: result.user.token, moduleRights: result.moduleRights, menuItems: result.menuItems });
       navigate('/', { replace: true });
     } catch (err) {
+      applyServerFieldErrors(err, setError, KNOWN_FIELDS);
       // Generic, security-safe message only — never echoes the raw error or any credential.
-      setError(err instanceof ApiError ? err.message : 'Unable to sign in. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      setError('root', { type: 'server', message: err instanceof ApiError ? err.message : 'Unable to sign in. Please try again.' });
     }
-  };
+  });
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
@@ -41,45 +44,57 @@ export function LoginPage() {
         <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4" noValidate>
           <div>
             <label htmlFor="userName" className="block text-sm font-medium text-gray-700">
-              Username
+              Email
+              <RequiredMark />
             </label>
             <input
               id="userName"
-              name="userName"
-              type="text"
+              type="email"
               autoComplete="username"
-              value={userName}
-              onChange={(event) => setUserName(event.target.value)}
               disabled={isSubmitting}
+              aria-invalid={!!errors.userName}
+              aria-describedby={errors.userName ? 'userName-error' : undefined}
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm disabled:opacity-60"
+              {...register('userName', emailRule)}
             />
+            {errors.userName && (
+              <p id="userName-error" role="alert" className="mt-1 text-sm text-red-700">
+                {errors.userName.message}
+              </p>
+            )}
           </div>
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
+              <RequiredMark />
             </label>
             <input
               id="password"
-              name="password"
               type="password"
               autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
               disabled={isSubmitting}
+              aria-invalid={!!errors.password}
+              aria-describedby={errors.password ? 'password-error' : undefined}
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm disabled:opacity-60"
+              {...register('password', requiredPasswordRule)}
             />
+            {errors.password && (
+              <p id="password-error" role="alert" className="mt-1 text-sm text-red-700">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
-          {error && (
+          {errors.root?.message && (
             <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
+              {errors.root.message}
             </p>
           )}
 
           <button
             type="submit"
-            disabled={!isValid || isSubmitting}
+            disabled={isSubmitting}
             className="mt-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? 'Signing in…' : 'Sign in'}

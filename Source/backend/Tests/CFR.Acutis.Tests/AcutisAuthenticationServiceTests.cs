@@ -153,7 +153,7 @@ public class AcutisAuthenticationServiceTests
         await CreateService(repo).ChangePasswordAsync(
             1,
             "dev@example.test",
-            new AcutisChangePasswordRequest { CurrentPassword = "current-pw", NewPassword = "new-pw", ConfirmPassword = "new-pw" });
+            new AcutisChangePasswordRequest { CurrentPassword = "current-pw", NewPassword = "NewPassword1", ConfirmPassword = "NewPassword1" });
 
         Assert.Equal(1, repo.AuthenticateCallCount);
         Assert.Equal("dev@example.test", capturedUserName);
@@ -170,7 +170,7 @@ public class AcutisAuthenticationServiceTests
 
         var result = await CreateService(repo).ChangePasswordAsync(
             1, "dev@example.test",
-            new AcutisChangePasswordRequest { CurrentPassword = "wrong", NewPassword = "new-pw", ConfirmPassword = "new-pw" });
+            new AcutisChangePasswordRequest { CurrentPassword = "wrong", NewPassword = "NewPassword1", ConfirmPassword = "NewPassword1" });
 
         Assert.Equal(ErrorCodes.Failed, result.StatusCode);
         Assert.Equal("Current password is incorrect.", result.StatusMessage);
@@ -197,10 +197,38 @@ public class AcutisAuthenticationServiceTests
 
         var result = await CreateService(repo).ChangePasswordAsync(
             1, "dev@example.test",
-            new AcutisChangePasswordRequest { CurrentPassword = "correct", NewPassword = "new-pw", ConfirmPassword = "new-pw" });
+            new AcutisChangePasswordRequest { CurrentPassword = "correct", NewPassword = "NewPassword1", ConfirmPassword = "NewPassword1" });
 
         Assert.Equal(ErrorCodes.Failed, result.StatusCode);
         Assert.NotEqual(ErrorMessages.Success, result.StatusMessage);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_NewPasswordSameAsCurrent_ReturnsBadRequest_NeverCallsRepository()
+    {
+        var repo = new FakeAcutisAuthenticationRepository();
+
+        var result = await CreateService(repo).ChangePasswordAsync(
+            1, "dev@example.test",
+            new AcutisChangePasswordRequest { CurrentPassword = "SamePassword1", NewPassword = "SamePassword1", ConfirmPassword = "SamePassword1" });
+
+        Assert.Equal(ErrorCodes.BadRequest, result.StatusCode);
+        Assert.Equal("New password must be different from the current password.", result.StatusMessage);
+        Assert.Equal(0, repo.AuthenticateCallCount);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_NewPasswordFailsPolicy_ReturnsBadRequestWithPolicyMessage_NeverCallsRepository()
+    {
+        var repo = new FakeAcutisAuthenticationRepository();
+
+        var result = await CreateService(repo).ChangePasswordAsync(
+            1, "dev@example.test",
+            new AcutisChangePasswordRequest { CurrentPassword = "CurrentPw1", NewPassword = "short", ConfirmPassword = "short" });
+
+        Assert.Equal(ErrorCodes.BadRequest, result.StatusCode);
+        Assert.Equal(AcutisAuthValidation.PasswordPolicyDescription, result.StatusMessage);
+        Assert.Equal(0, repo.AuthenticateCallCount);
     }
 
     // --- Forgot password ---
@@ -253,17 +281,36 @@ public class AcutisAuthenticationServiceTests
 
     // --- Reset password ---
 
-    [Fact]
-    public async Task ResetPasswordAsync_InvalidToken_HandledSafelyWithGenericFailure()
+    [Theory]
+    [InlineData(PasswordResetTokenFailureReason.NotFound)]
+    [InlineData(PasswordResetTokenFailureReason.Expired)]
+    [InlineData(PasswordResetTokenFailureReason.AlreadyUsed)]
+    public async Task ResetPasswordAsync_InvalidToken_HandledSafelyWithGenericFailure(PasswordResetTokenFailureReason reason)
     {
+        // Token is plausible-length (>=16 chars) so this reaches the token store, exercising
+        // NotFound/Expired/AlreadyUsed — never distinguished to the caller, per
+        // docs/acutis-auth-spec/validation-standard.md.
         var tokenStore = new FakePasswordResetTokenStore
         {
-            ValidationResult = new PasswordResetTokenValidationResult { IsValid = false, FailureReason = PasswordResetTokenFailureReason.Expired },
+            ValidationResult = new PasswordResetTokenValidationResult { IsValid = false, FailureReason = reason },
         };
 
         var result = await CreateService(tokenStore: tokenStore).ResetPasswordAsync(
-            new AcutisResetPasswordRequest { Token = "bogus", NewPassword = "new-pw", ConfirmPassword = "new-pw" });
+            new AcutisResetPasswordRequest { Token = "a-plausible-length-token-value", NewPassword = "NewPassword1", ConfirmPassword = "NewPassword1" });
 
+        Assert.Equal(ErrorCodes.Failed, result.StatusCode);
+        Assert.Equal("This reset link is invalid or has expired.", result.StatusMessage);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_ImplausibleToken_NeverReachesTokenStore_SameGenericFailure()
+    {
+        var tokenStore = new FakePasswordResetTokenStore();
+
+        var result = await CreateService(tokenStore: tokenStore).ResetPasswordAsync(
+            new AcutisResetPasswordRequest { Token = "too-short", NewPassword = "NewPassword1", ConfirmPassword = "NewPassword1" });
+
+        Assert.Equal(0, tokenStore.ValidateAndConsumeCallCount);
         Assert.Equal(ErrorCodes.Failed, result.StatusCode);
         Assert.Equal("This reset link is invalid or has expired.", result.StatusMessage);
     }
@@ -272,8 +319,141 @@ public class AcutisAuthenticationServiceTests
     public async Task ResetPasswordAsync_MismatchedPasswords_ReturnsBadRequest()
     {
         var result = await CreateService().ResetPasswordAsync(
-            new AcutisResetPasswordRequest { Token = "t", NewPassword = "a", ConfirmPassword = "b" });
+            new AcutisResetPasswordRequest { Token = "a-plausible-length-token-value", NewPassword = "a", ConfirmPassword = "b" });
 
         Assert.Equal(ErrorCodes.BadRequest, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_PasswordFailsPolicy_ReturnsBadRequestWithPolicyMessage()
+    {
+        var result = await CreateService().ResetPasswordAsync(
+            new AcutisResetPasswordRequest { Token = "a-plausible-length-token-value", NewPassword = "short", ConfirmPassword = "short" });
+
+        Assert.Equal(ErrorCodes.BadRequest, result.StatusCode);
+        Assert.Equal(AcutisAuthValidation.PasswordPolicyDescription, result.StatusMessage);
+    }
+
+    // --- Null request / whitespace fields (non-HTTP-caller boundary) ---
+
+    [Fact]
+    public async Task ForgotPasswordAsync_NullRequest_ReturnsBadRequest()
+    {
+        var result = await CreateService().ForgotPasswordAsync(null!);
+
+        Assert.Equal(ErrorCodes.BadRequest, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_NullRequest_ReturnsBadRequest()
+    {
+        var result = await CreateService().ResetPasswordAsync(null!);
+
+        Assert.Equal(ErrorCodes.BadRequest, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_NullRequest_ReturnsBadRequest()
+    {
+        var result = await CreateService().ChangePasswordAsync(1, "dev@example.test", null!);
+
+        Assert.Equal(ErrorCodes.BadRequest, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WhitespaceOnlyFields_TreatedAsMissing_ReturnsBadRequest()
+    {
+        var result = await CreateService().LoginAsync(new AcutisLoginRequest { UserName = "   ", Password = "   " });
+
+        Assert.Equal(ErrorCodes.BadRequest, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_WhitespaceOnlyFields_TreatedAsMissing_ReturnsBadRequest()
+    {
+        var result = await CreateService().ChangePasswordAsync(
+            1, "dev@example.test",
+            new AcutisChangePasswordRequest { CurrentPassword = "  ", NewPassword = "  ", ConfirmPassword = "  " });
+
+        Assert.Equal(ErrorCodes.BadRequest, result.StatusCode);
+    }
+
+    // --- Trimming (email/username only — never passwords) ---
+
+    [Fact]
+    public async Task LoginAsync_UserNameWithSurroundingWhitespace_TrimmedBeforeRepositoryCall()
+    {
+        string? capturedUserName = null;
+        string? capturedPassword = null;
+        var repo = new FakeAcutisAuthenticationRepository
+        {
+            AuthenticateHandler = (userName, password) =>
+            {
+                capturedUserName = userName;
+                capturedPassword = password;
+                return new AcutisCredentialCheckResult { Succeeded = true, User = new AcutisLoginUser { UserId = 1 } };
+            },
+        };
+
+        await CreateService(repo).LoginAsync(new AcutisLoginRequest { UserName = "  dev@example.test  ", Password = "  keep-me  " });
+
+        Assert.Equal("dev@example.test", capturedUserName);
+        // Password must never be trimmed — the surrounding whitespace is preserved exactly.
+        Assert.Equal("  keep-me  ", capturedPassword);
+    }
+
+    [Fact]
+    public async Task ForgotPasswordAsync_EmailWithSurroundingWhitespace_TrimmedBeforeLookup()
+    {
+        string? capturedEmail = null;
+        var repo = new FakeAcutisAuthenticationRepository
+        {
+            FindAccountByEmailHandler = email =>
+            {
+                capturedEmail = email;
+                return new ForgotPasswordLookupResult { AccountFound = false };
+            },
+        };
+
+        await CreateService(repo).ForgotPasswordAsync(new AcutisForgotPasswordRequest { Email = "  dev@example.test  " });
+
+        Assert.Equal("dev@example.test", capturedEmail);
+    }
+
+    // --- No sensitive values leak into responses ---
+
+    [Fact]
+    public async Task ChangePasswordAsync_AnyFailureResponse_NeverContainsSubmittedPasswordValues()
+    {
+        const string currentPassword = "TotallySecretCurrent1";
+        const string newPassword = "TotallySecretNewOne1";
+        var repo = new FakeAcutisAuthenticationRepository
+        {
+            AuthenticateHandler = (_, _) => new AcutisCredentialCheckResult { Succeeded = false, FailureReason = AcutisAuthFailureReason.InvalidCredentials },
+        };
+
+        var result = await CreateService(repo).ChangePasswordAsync(
+            1, "dev@example.test",
+            new AcutisChangePasswordRequest { CurrentPassword = currentPassword, NewPassword = newPassword, ConfirmPassword = newPassword });
+
+        Assert.DoesNotContain(currentPassword, result.StatusMessage);
+        Assert.DoesNotContain(newPassword, result.StatusMessage);
+    }
+
+    [Fact]
+    public async Task ResetPasswordAsync_AnyFailureResponse_NeverContainsSubmittedTokenOrPasswordValues()
+    {
+        const string token = "a-plausible-length-token-value";
+        const string newPassword = "TotallySecretResetOne1";
+        var tokenStore = new FakePasswordResetTokenStore
+        {
+            ValidationResult = new PasswordResetTokenValidationResult { IsValid = false, FailureReason = PasswordResetTokenFailureReason.NotFound },
+        };
+
+        var result = await CreateService(tokenStore: tokenStore).ResetPasswordAsync(
+            new AcutisResetPasswordRequest { Token = token, NewPassword = newPassword, ConfirmPassword = newPassword });
+
+        Assert.DoesNotContain(token, result.StatusMessage);
+        Assert.DoesNotContain(newPassword, result.StatusMessage);
     }
 }

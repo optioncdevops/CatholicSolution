@@ -1,5 +1,5 @@
 export type RuntimeEnvironment = 'development' | 'production';
-export type ConfiguredAuthMode = 'mock' | 'preview' | 'sso';
+export type ConfiguredAuthMode = 'api' | 'sso';
 
 export interface PlatformOrigins {
   platform: string;
@@ -26,14 +26,16 @@ const productionOrigins: PlatformOrigins = {
 
 const configs: Record<RuntimeEnvironment, AppAuthConfig> = {
   development: {
-    authMode: 'mock',
+    // Real authentication against CFR.Acutis (see acutisAuthApi.ts) — no mock/preview mode
+    // exists in this project. See docs/acutis-auth-spec/database-contract.md for what's
+    // actually backed by a confirmed database object on the server side.
+    authMode: 'api',
     loginOrigin: developmentOrigins.platform,
     authOrigin: developmentOrigins.platform,
     origins: developmentOrigins,
   },
   production: {
-    // Preview auth remains host-scoped. Production federation should use the configured IdP.
-    authMode: 'preview',
+    authMode: 'api',
     loginOrigin: productionOrigins.platform,
     authOrigin: productionOrigins.platform,
     origins: productionOrigins,
@@ -41,16 +43,5 @@ const configs: Record<RuntimeEnvironment, AppAuthConfig> = {
 };
 
 export function getAppAuthConfig(mode: RuntimeEnvironment) {
-  const config = configs[mode];
-  if (mode === 'production' && config.authMode !== 'sso') {
-    // CFRAdmin is currently a non-functional prototype (mocked data only, no real
-    // authentication/API/persistence per its build spec) — warn loudly instead of
-    // throwing, so the production build stays reviewable. Wiring a real IdP and
-    // restoring the hard failure is required before this app handles real users.
-    console.warn(
-      `[cfr-admin] Production build is configured with authMode "${config.authMode}", not "sso". ` +
-        'This is expected for the current prototype phase (mocked auth only) — do not treat this build as production-ready.',
-    );
-  }
-  return config;
+  return configs[mode];
 }

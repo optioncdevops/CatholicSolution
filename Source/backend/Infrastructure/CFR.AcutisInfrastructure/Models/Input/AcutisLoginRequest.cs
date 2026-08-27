@@ -11,7 +11,14 @@ namespace CFR.AcutisInfrastructure.Models.Input;
 /// </summary>
 public class AcutisLoginRequest
 {
+    /// <summary>
+    /// The Acutis login identifier — documented as an email address throughout this spec (the DEV
+    /// FAKE's one credential and every reference in security-model.md/reference-comparison.md).
+    /// <see cref="EmailAddressAttribute"/> added per docs/acutis-auth-spec/validation-standard.md
+    /// §1 to reflect that established contract.
+    /// </summary>
     [Required]
+    [EmailAddress]
     public string UserName { get; set; } = string.Empty;
 
     [Required]

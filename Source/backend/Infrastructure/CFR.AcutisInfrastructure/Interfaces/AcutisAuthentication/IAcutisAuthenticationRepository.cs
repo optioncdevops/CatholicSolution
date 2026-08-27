@@ -6,14 +6,12 @@ namespace CFR.AcutisInfrastructure.Interfaces.AcutisAuthentication;
 
 /// <summary>
 /// Data-access contract for Acutis authentication. Deliberately independent of the
-/// <c>MSResultArgs</c> API envelope — this is the boundary a real Dapper-backed implementation
-/// (calling <c>NewViper.DoLogin</c> or its target-database equivalent, once confirmed) will
-/// eventually satisfy. See docs/acutis-auth-spec/database-contract.md for exactly which of these
-/// operations are confirmed-in-reference-code vs. explicit blockers.
-///
-/// The only implementation registered by this task is
-/// <see cref="Repositorys.AcutisAuthentication.AcutisAuthenticationRepositoryDevFake"/> — no
-/// implementation here performs a real database call.
+/// <c>MSResultArgs</c> API envelope. The only registered implementation is
+/// <see cref="Repositorys.AcutisAuthentication.AcutisAuthenticationRepository"/> — real,
+/// Dapper-backed, calling <c>NewViper.DoLogin</c> for <c>AuthenticateAsync</c>. See
+/// docs/acutis-auth-spec/database-contract.md for exactly which of these operations are backed by
+/// a confirmed database object vs. an explicit, honest blocker (no development-fake/mock
+/// repository exists in this codebase).
 /// </summary>
 public interface IAcutisAuthenticationRepository
 {

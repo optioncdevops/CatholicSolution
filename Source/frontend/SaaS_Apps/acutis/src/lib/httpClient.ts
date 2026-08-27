@@ -1,4 +1,4 @@
-import { ApiError } from '@/modules/auth/api/authApi';
+import { ApiError, type ApiFieldError } from '@/modules/auth/api/authApi';
 
 const BASE_URL = import.meta.env.VITE_APP_REST_API_BASE_URL;
 
@@ -67,6 +67,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     throw new ApiError('You do not have permission to perform this action.', 403);
   }
 
+  if (response.status === 429) {
+    // No rate limiter is actually configured on CFR.Acutis itself today — this exists so the
+    // frontend already behaves correctly the moment the shared gateway/platform layer produces
+    // one, rather than showing a raw/confusing error.
+    throw new ApiError('Too many attempts. Please wait a moment and try again.', 429);
+  }
+
   let parsed: unknown = null;
   try {
     const text = await response.text();
@@ -75,13 +82,16 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     // Non-JSON body — fall through with parsed = null.
   }
 
-  const envelope = parsed as { statusCode?: number; statusMessage?: string; resultData?: T } | null;
+  const envelope = parsed as
+    | { statusCode?: number; statusMessage?: string; resultData?: T; errors?: ApiFieldError[] }
+    | null;
 
   if (!response.ok) {
     throw new ApiError(
       envelope?.statusMessage || `Request failed (${response.status}).`,
       response.status,
       envelope?.statusCode,
+      envelope?.errors ?? [],
     );
   }
 
