@@ -14,6 +14,7 @@ interface ImportMetaEnv {
   readonly VITE_ENABLE_DOMAIN_ROUTING: string;
   readonly VITE_DEV_PORT: string;
   readonly VITE_DEPLOYMENT_TARGET?: 'staging';
+  readonly VITE_APP_REST_API_BASE_URL?: string;
 }
 
 interface ImportMeta { readonly env: ImportMetaEnv }

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 import { environment } from '@shared/platform/config/environment';
-import { canRedirectToExternalIdentityProvider, clearPreviewSession, createPreviewSession, hasPreviewSession } from './centralAuth';
+import { canRedirectToExternalIdentityProvider, clearPreviewSession, createPreviewSession } from './centralAuth';
+import { clearAcutisAuth, hasAcutisToken, loginAuthentication } from './services/authService';
 
 export interface SignInRequest {
   email: string;
@@ -39,12 +40,12 @@ function redirectToIdentityProvider(request: SignInRequest) {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [isAuthenticated, setAuthenticated] = useState(hasPreviewSession);
+  const [isAuthenticated, setAuthenticated] = useState(hasAcutisToken);
 
   useEffect(() => {
     const channel = sessionSync();
     const refreshSession = () => {
-      if (environment.authMode !== 'sso') setAuthenticated(hasPreviewSession());
+      if (environment.authMode !== 'sso') setAuthenticated(hasAcutisToken());
     };
     const onSignal = (event: MessageEvent<SessionSignal>) => {
       if (event.data === 'signed-out') setAuthenticated(false);
@@ -68,12 +69,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (environment.authMode === 'sso') {
         return redirectToIdentityProvider(request) ? 'redirected' : 'unavailable';
       }
+      await loginAuthentication({
+        userName: request.email,
+        password: request.password ?? '',
+      });
       createPreviewSession(Boolean(request.remember));
       setAuthenticated(true);
       sessionSync()?.postMessage('signed-in');
       return 'authenticated';
     },
     signOut() {
+      clearAcutisAuth();
       clearPreviewSession();
       setAuthenticated(false);
       sessionSync()?.postMessage('signed-out');

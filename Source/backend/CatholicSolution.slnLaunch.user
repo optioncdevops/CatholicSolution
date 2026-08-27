@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "Gateway\\CFR.Gateway\\CFR.Gateway.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "Microservices\\CFR.Acutis\\CFR.Acutis.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

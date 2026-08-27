@@ -81,10 +81,8 @@ namespace CFR.DBEngine
 
         public async Task<int> ExecuteAsync(string sql, object? parameters = null, CommandType commandType = CommandType.Text, int commandTimeout = 300)
         {
-            using (Connection)
-            {
-                return await Connection.ExecuteAsync(sql, parameters, commandType: commandType, commandTimeout: commandTimeout);
-            }
+            using var connection = Connection;
+            return await connection.ExecuteAsync(sql, parameters, commandType: commandType, commandTimeout: commandTimeout);
         }
 
         public async Task<GridReader> QueryMultipleAsync(string sql, object? parameters = null, CommandType commandType = CommandType.Text)

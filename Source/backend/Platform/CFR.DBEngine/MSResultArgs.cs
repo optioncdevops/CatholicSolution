@@ -1,6 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
 using CFR.Common;
+using System.Text.Json.Serialization;
 
 namespace CFR.DBEngine
 {
@@ -69,14 +70,19 @@ namespace CFR.DBEngine
 
         #region DB result
 
+        [JsonIgnore]
         public bool Success { get; set; }
 
+        [JsonIgnore]
         public bool IsShowExceptionMessage { get; set; } = true;
 
+        [JsonIgnore]
         public int RowsAffected { get; set; }
 
+        [JsonIgnore]
         public bool IsDeadLock { get; set; }
 
+        [JsonIgnore]
         public object RowUniqueId
         {
             get;
@@ -87,6 +93,7 @@ namespace CFR.DBEngine
             }
         } = "";
 
+        [JsonIgnore]
         public Dictionary<string, object> RowUniqueIdCollection
         {
             get
@@ -102,8 +109,10 @@ namespace CFR.DBEngine
             }
         }
 
+        [JsonIgnore]
         public object? ReturnValue { get; set; }
 
+        [JsonIgnore]
         public ResultSource DataSource
         {
             get

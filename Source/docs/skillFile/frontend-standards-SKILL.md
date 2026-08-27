@@ -1,12 +1,13 @@
 ---
 name: frontend-standards
-description: React + TypeScript frontend module coding standards (list page, then partials, then service, then backend API) using module folders (pages/routes/services/types/validator/utils), shared component library, react-hook-form validators, axios services, and //#region blocks. Use this skill whenever creating, changing, or reviewing ANY frontend page, module, screen, form, table, modal, route, service, type, or validator — even if the user only says "add a page", "new screen", "build a form", "add a module", or "wire this to the API".
+description: React + TypeScript frontend module coding standards (list page, then partials, then service, then backend API) using feature folders under modules/{module}/{feature} (pages, types, utils, validator, services, routes, index.ts), shared component library, react-hook-form validators, axios services, and //#region blocks. Use this skill whenever creating, changing, or reviewing ANY frontend page, module, screen, form, table, modal, route, service, type, or validator — even if the user only says "add a page", "new screen", "build a form", "add a module", or "wire this to the API".
 ---
 
 # Frontend Coding Standards
 
 Use this file as the checklist when adding or changing any module page.
-Example feature used throughout: **Customer Directory**. Replace `CustomerDirectory` / `customerDirectory` with the real feature name, and `{module}` with the real module (product area) name.
+Folder layout reference: [frontend-standards.md](frontend-standards.md).
+Example feature used throughout: **Users** under `modules/admin/users`. Replace `Users` / `users` with the real feature name, and `{module}` with the real module (product area) name (for CFR Admin that is `admin`).
 
 Every new feature follows:
 ```
@@ -29,17 +30,21 @@ Before writing any code, open one existing, recently-built feature in the app an
 
 ## 0. RULES THAT NEVER CHANGE
 
-### 0.1 Every module MUST have these folders
+### 0.1 Every feature MUST have these folders (under the module)
 ```
-pages/
-routes/
-services/
-types/
-validator/
-utils/
+src/modules/{module}/{feature}/
+  pages/
+  types/
+  utils/
+  validator/
+  services/
+  routes/
+  index.ts
 ```
+Example: `src/modules/admin/users/` with those six folders plus one `index.ts`.
 Create all six even if `utils` starts with one small helper file.
 Do not skip `types` or `validator` and put interfaces / rules inside the page.
+Do not put `pages` / `services` / `types` at the module root (`modules/admin/pages`). They belong inside the feature folder.
 
 ### 0.2 components/ is OPTIONAL
 Add module components ONLY when the UI cannot be built from the app's shared controls (form controls, buttons, data table, modal, card).
@@ -116,77 +121,83 @@ Path aliases (from `tsconfig`):
 ```
 
 - Import common UI from `@app/components/...`
-- Import the current module with relative paths (`../services`, `../types`)
-- Import another module with `@modules/{other}/...`
+- Import the current feature with relative paths (`../services`, `../types`)
+- Import another feature/module with `@modules/{module}/{feature}` or the feature `index.ts`
+- App / host router imports `{feature}Routes` from the feature `index.ts`
 
 ---
 
 ## 2. MODULE FOLDER LAYOUT
 
+A **module** is the product area (`admin`). A **feature** is one screen group inside it (`users`).
+Shared module chrome (shell, theme, confirm helper) stays on the module root. Feature code does **not**.
+
 ```
 src/modules/{module}/
-  pages/                          REQUIRED
-    {Feature}.tsx                 LIST PAGE — not inside partials
-    {featureFolder}/              use a folder when the feature has add/edit
-      {Feature}.tsx               LIST PAGE
-      partials/                   ADD, EDIT, MODAL, extra pieces
+  {feature}/                          REQUIRED — one folder per feature
+    index.ts                          REQUIRED — barrel: export routes (+ types/services/utils/validator)
+    pages/                            REQUIRED
+      {Feature}ListPage.tsx           LIST PAGE — not inside partials
+      {Feature}DetailPage.tsx         DETAIL PAGE — not inside partials
+      partials/                       ADD, EDIT, MODAL, extra pieces
+        {Feature}FormModal.tsx
         Add{Feature}.tsx
-        {Feature}Modal.tsx
-        {Feature}Table.tsx        only if the table is large enough to extract
-  routes/                         REQUIRED
-    index.tsx                     feature routes, then registered in app/routes
-  services/                       REQUIRED
-    {feature}Service.ts           axios calls only
-  types/                          REQUIRED
-    {feature}Types.ts             API rows, form values, defaultValues
-  validator/                      REQUIRED  (folder name is validator, not validators)
-    {Feature}Validator.ts         react-hook-form rules + defaultValues
-  utils/                          REQUIRED
-    {feature}Helpers.ts           mapping, date format, URL builders, normalize
-  components/                     OPTIONAL
-    {Feature}Panel.tsx            only if common controls are not enough
-  hooks/                          OPTIONAL
-    use{Feature}Permissions.ts    only if several pages share the same hook
-  context/                        OPTIONAL
-    {Feature}Context.tsx          only if several pages share the same state
+    types/                            REQUIRED
+      {feature}Types.ts
+    utils/                            REQUIRED
+      {feature}Helpers.ts
+    validator/                        REQUIRED  (folder name is validator, not validators)
+      {Feature}Validator.ts
+    services/                         REQUIRED
+      {feature}Service.ts
+    routes/                           REQUIRED
+      index.tsx                       feature <Route> elements; App imports from index.ts
+    components/                       OPTIONAL
+    hooks/                            OPTIONAL
+    context/                          OPTIONAL
 ```
 
-**Example — simple list with a modal:**
+**CFR Admin example — Users:**
 ```
-modules/{module}/
-  pages/
-    customerDirectory/
-      CustomerDirectory.tsx           LIST (outside partials)
+modules/admin/
+  users/
+    index.ts
+    pages/
+      UsersListPage.tsx
+      UserDetailPage.tsx
       partials/
-        AddCustomerDirectoryModal.tsx MODAL (inside partials)
-  services/customerDirectoryService.ts
-  types/customerDirectoryTypes.ts
-  validator/CustomerDirectoryValidator.ts
-  utils/customerDirectoryHelpers.ts
-  routes/index.tsx
+        UserFormModal.tsx
+    types/usersTypes.ts
+    utils/usersHelpers.ts
+    validator/UsersValidator.ts
+    services/usersService.ts
+    routes/index.tsx
 ```
 
 **Example — list with an add/edit page:**
 ```
-modules/{module}/
+modules/{module}/{feature}/
+  index.ts
   pages/
-    systemMessages/
-      SystemMessages.tsx              LIST (outside partials)
-      partials/
-        AddSystemMessage.tsx          ADD / EDIT page
-        MessageTable.tsx              table used by the list
-  services/systemMessagesService.ts
-  types/systemMessagesTypes.ts
-  validator/SystemMessagesValidator.ts
+    {Feature}ListPage.tsx
+    partials/
+      Add{Feature}.tsx
+      {Feature}Table.tsx
+  types/{feature}Types.ts
+  utils/{feature}Helpers.ts
+  validator/{Feature}Validator.ts
+  services/{feature}Service.ts
   routes/index.tsx
 ```
 
 **WRONG:**
-- `CustomerDirectory.tsx` with the add modal written in the same file
-- `AddSystemMessage.tsx` sitting next to `SystemMessages.tsx` (not in partials)
+- `modules/admin/pages/users/` plus `modules/admin/services/` (feature folders split across the module root)
+- `{Feature}ListPage.tsx` sitting directly in `modules/admin/users/` with no `pages/` folder
+- `UserFormModal.tsx` sitting next to the list page (not in `partials/`)
 - types defined inside the page
 - validation rules written inline on `InputField` with no validator file
 - a local `<button>` instead of `CommonButton`
+- skipping `index.ts` or `routes/`
 
 ---
 
@@ -213,21 +224,22 @@ modules/{module}/
 
 ## 4. CHECKLIST (DO IN THIS ORDER)
 
-1. `types/{feature}Types.ts` — API item + form values + defaultValues
-2. `validator/{Feature}Validator.ts` — rules using `FIELD_REQUIRED`
-3. `services/{feature}Service.ts` — GET / POST / PUT / DELETE
-4. `utils/{feature}Helpers.ts` — normalize API -> UI if the payload is nested
-5. `pages/{feature}/{Feature}.tsx` — LIST page with `#region`
-6. `pages/{feature}/partials/Add...` — ADD / EDIT / MODAL with `#region`
-7. `routes/index.tsx` — list = index, add/edit = children
-8. `app/routes/index.tsx` — only if this is a brand-new module
-9. `components/` — ONLY if common controls are not enough
+1. `{feature}/types/{feature}Types.ts` — API item + form values + defaultValues
+2. `{feature}/validator/{Feature}Validator.ts` — rules using `FIELD_REQUIRED`
+3. `{feature}/services/{feature}Service.ts` — GET / POST / PUT / DELETE
+4. `{feature}/utils/{feature}Helpers.ts` — normalize API -> UI if the payload is nested
+5. `{feature}/pages/{Feature}ListPage.tsx` — LIST page with `#region`
+6. `{feature}/pages/partials/Add...` — ADD / EDIT / MODAL with `#region`
+7. `{feature}/routes/index.tsx` — list + detail/add/edit routes
+8. `{feature}/index.ts` — export `{feature}Routes` (and types/services/utils/validator)
+9. Host router (`App.tsx` or `app/routes`) — `{feature}Routes` from the feature index
+10. `components/` — ONLY if common controls are not enough
 
 ---
 
 ## 5. TYPES
 
-File: `modules/{module}/types/{feature}Types.ts`
+File: `modules/{module}/{feature}/types/{feature}Types.ts`
 
 Put: API row shape from `resultData`, form values for react-hook-form, `defaultValues` constant (or keep `defaultValues` in the validator — pick one place).
 Do not: declare interfaces inside the page, or use `any` for `resultData` — cast to the type from this file.
@@ -254,7 +266,7 @@ import type { ApiResponse, ApiError, DropdownOption, RadioOption } from "@app/pa
 
 ## 6. VALIDATOR
 
-File: `modules/{module}/validator/{Feature}Validator.ts`
+File: `modules/{module}/{feature}/validator/{Feature}Validator.ts`
 
 Always import `FIELD_REQUIRED` from `@app/validation/validationMessages`.
 Export a rules object used by `InputField` / `Dropdown` / `DatePicker` via `rules={...}`.
@@ -288,7 +300,7 @@ Do not put validator logic inside the service.
 
 ## 7. SERVICE
 
-File: `modules/{module}/services/{feature}Service.ts`
+File: `modules/{module}/{feature}/services/{feature}Service.ts`
 
 Rules:
 - Use `axiosInstance` from `@app/config/AxiosInstance`
@@ -347,7 +359,7 @@ Do not hard-code the API host; `AxiosInstance` already has the base URL from env
 
 ## 8. UTILS
 
-File: `modules/{module}/utils/{feature}Helpers.ts`
+File: `modules/{module}/{feature}/utils/{feature}Helpers.ts`
 
 Use utils for: normalizing nested API payloads into a flat UI row; date / phone / URL formatting specific to this feature; column builders that would make the list page too long; mapping `resultData` to `DropdownOption[]`.
 
@@ -369,41 +381,51 @@ export const normalizeCustomerDirectoryList = (resultData: unknown): CustomerDir
 
 ## 9. ROUTES
 
-File: `modules/{module}/routes/index.tsx`
+File: `modules/{module}/{feature}/routes/index.tsx`
 
-List route = index of the feature path. Add / edit = child routes that render the partials page.
+List and detail/add/edit routes live in the feature. Lazy-load pages here. Export `{feature}Routes` from `{feature}/index.ts`.
 
 ```tsx
-{
-  path: "system-messages",
-  children: [
-    { index: true, element: <SystemMessages /> },
-    { path: "add", element: <AddSystemMessage /> },
-  ],
-}
+import { lazy } from "react";
+import { Route } from "react-router-dom";
 
-{
-  path: "customer-directory",
-  element: <CustomerDirectory />,
-}
+const UsersListPage = lazy(() => import("../pages/UsersListPage"));
+const UserDetailPage = lazy(() => import("../pages/UserDetailPage"));
+
+export const usersRoutes = (
+  <>
+    <Route path="/admin/users" element={<UsersListPage />} />
+    <Route path="/admin/users/:userId" element={<UserDetailPage />} />
+  </>
+);
+```
+
+`{feature}/index.ts` (one barrel file — required):
+```ts
+export { usersRoutes } from "./routes";
+export * from "./services/usersService";
+export * from "./types/usersTypes";
+export * from "./utils/usersHelpers";
+export * from "./validator/UsersValidator";
+```
+Do not re-export pages from `index.ts` (that would break lazy loading). Routes already lazy-import pages.
+
+Register in the host router (`src/App.tsx` or `src/app/routes/index.tsx`):
+```tsx
+import { usersRoutes } from "@/modules/admin/users";
+// inside the protected layout:
+{usersRoutes}
 ```
 
 Navigate to add:
 ```tsx
 navigate("add")                          // relative (preferred when already on the list)
-navigate("/system-messages/add")         // absolute
+navigate("/admin/users")                 // absolute list
 navigate("/faq-details/edit", { state: { id } })
 ```
 
 Pass edit id through `location.state`, not a query string, unless the URL must be shareable.
-
-Register a NEW module in `src/app/routes/index.tsx` inside the protected layout children:
-```tsx
-import {Module}Routes from "@modules/{module}/routes";
-// ...
-{Module}Routes,
-```
-Wrap module routes with `MainLayout` and the module Index (`PageShell` + `ButtonNavigation`) the same way existing module Index pages already do.
+Wrap feature routes with the existing module shell (`AdminShell`, `MainLayout`, `PageShell`) the same way the host app already does.
 
 ---
 
@@ -471,7 +493,7 @@ Rules:
 
 ## 11. LIST PAGE TEMPLATE
 
-File: `pages/{feature}/{Feature}.tsx` (OUTSIDE partials)
+File: `{feature}/pages/{Feature}ListPage.tsx` (OUTSIDE partials)
 
 ```tsx
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -483,8 +505,8 @@ import { showDeleteConfirm } from "@app/components/common/CommonAlertDialog";
 import { CommonButton, CommonIconButton } from "@app/components/buttons";
 import { PageNote } from "@app/components/common/PageNote";
 import { Trash2 } from "lucide-react";
-import { getCustomerDirectory, deleteCustomerDirectory } from "../../services/customerDirectoryService";
-import type { CustomerDirectoryApiItem } from "../../types/customerDirectoryTypes";
+import { getCustomerDirectory, deleteCustomerDirectory } from "../services/customerDirectoryService";
+import type { CustomerDirectoryApiItem } from "../types/customerDirectoryTypes";
 import { normalizeCustomerDirectoryList } from "../../utils/customerDirectoryHelpers";
 import type { ModulePageShellContext } from "../{Module}Index";
 
@@ -616,7 +638,7 @@ List page rules:
 
 ## 12. ADD / EDIT PAGE TEMPLATE (INSIDE partials)
 
-File: `pages/{feature}/partials/Add{Feature}.tsx`
+File: `{feature}/pages/partials/Add{Feature}.tsx`
 
 Use `CommonCard` + form controls + `FormActionsBar`. Same file handles add and edit when the form is identical (read id from `location.state`).
 
@@ -629,9 +651,9 @@ import { CommonButton } from "@app/components/buttons";
 import { FormActionsBar } from "@app/components/common";
 import { showToast } from "@app/components/common/CustomToastMessage";
 import { InputField, MandatoryIndicator } from "@app/components/formControls";
-import { getCustomerDirectoryById, saveCustomerDirectory } from "../../../services/customerDirectoryService";
-import type { CustomerDirectoryFormValues } from "../../../types/customerDirectoryTypes";
-import { customerDirectoryDefaultValues, customerDirectoryRules } from "../../../validator/CustomerDirectoryValidator";
+import { getCustomerDirectoryById, saveCustomerDirectory } from "../../services/customerDirectoryService";
+import type { CustomerDirectoryFormValues } from "../../types/customerDirectoryTypes";
+import { customerDirectoryDefaultValues, customerDirectoryRules } from "../../validator/CustomerDirectoryValidator";
 import type { EditLocationStateParams } from "@app/pages/types/CommonTypes";
 
 const AddCustomerDirectory = () => {
@@ -748,9 +770,9 @@ import { BaseModal } from "@app/components/modal/BaseModal";
 import { CommonButton } from "@app/components/buttons";
 import { InputField } from "@app/components/formControls";
 import { showToast } from "@app/components/common/CustomToastMessage";
-import { saveCustomerDirectory } from "../../../services/customerDirectoryService";
-import type { CustomerDirectoryFormValues } from "../../../types/customerDirectoryTypes";
-import { customerDirectoryDefaultValues, customerDirectoryRules } from "../../../validator/CustomerDirectoryValidator";
+import { saveCustomerDirectory } from "../../services/customerDirectoryService";
+import type { CustomerDirectoryFormValues } from "../../types/customerDirectoryTypes";
+import { customerDirectoryDefaultValues, customerDirectoryRules } from "../../validator/CustomerDirectoryValidator";
 
 type AddCustomerDirectoryModalProps = {
   isOpen: boolean;
@@ -853,13 +875,15 @@ Always clear `setPageActions` on unmount so the next page does not keep the butt
 
 ## 16. OPTIONAL module/components
 
-Create `modules/{module}/components/` only when:
-- The piece is reused by two or more pages in that module
-- AND it is not a list / add / modal (those stay under `pages/.../partials`)
+Create `modules/{module}/{feature}/components/` only when:
+- The piece is reused by two or more pages in that feature
+- AND it is not a list / add / modal (those stay under `{feature}/pages/partials`)
 - AND app common controls cannot do the job
 
+Module-level `modules/{module}/components/` is only for shell chrome shared across features (e.g. `AdminShell`).
+
 Belongs in `components/`: shared tab panels, detail-tab wrappers reused across pages.
-Belongs in `pages/.../partials/` (not components/): `Add{Feature}.tsx`, `{Feature}Modal.tsx`, `{Feature}FormPage.tsx`, `{Feature}Table.tsx`, feature filter bars.
+Belongs in `{feature}/pages/partials/` (not components/): `Add{Feature}.tsx`, `{Feature}Modal.tsx`, `{Feature}FormPage.tsx`, `{Feature}Table.tsx`, feature filter bars.
 
 Do not create a components folder "just in case".
 
@@ -867,8 +891,8 @@ Do not create a components folder "just in case".
 
 ## 17. HOOKS AND CONTEXT (optional)
 
-- `hooks/use{Feature}Permissions.ts` — shared permission flags used by more than one page.
-- `context/{Feature}Context.tsx` — shared parent-entity id across a tabbed details screen.
+- `{feature}/hooks/use{Feature}Permissions.ts` — shared permission flags used by more than one page.
+- `{feature}/context/{Feature}Context.tsx` — shared parent-entity id across a tabbed details screen.
 
 Keep page-local state in the page. Do not add context for a single list.
 
@@ -890,15 +914,16 @@ Do not use `window.alert` or `window.confirm`.
 
 ## 19. MULTIPLE FRONTEND APPS
 
-When the workspace has several frontend apps, the same folders and rules apply to every app. An app may nest a feature deeper (e.g. `pages/directories/{feature}/`) but still needs:
+When the workspace has several frontend apps, the same folders and rules apply to every app. Nest under `modules/{module}/{feature}/` — still needs:
 ```
-pages/          list outside partials
-partials/       add, edit, modal
-routes/
-services/
+index.ts
+pages/          list / detail outside partials
+pages/partials/ add, edit, modal
 types/
-validator/
 utils/
+validator/
+services/
+routes/
 ```
 Common controls live in that app's `src/app/components` (or the shared path already used). Do not copy form controls into the feature folder.
 
@@ -931,26 +956,28 @@ Common controls live in that app's `src/app/components` (or the shared path alre
 - Do not: call the API
 - Do not: replace a page or a common control
 
-**components/ (module)**
-- Do not: exist unless common controls are not enough
+**index.ts**
+- Do not: re-export page components (breaks lazy loading)
+- Do: export `{feature}Routes` plus types / services / utils / validator
 
 ---
 
 ## 21. QUICK COPY TREE FOR A NEW FEATURE
 
 ```
-src/modules/{module}/
+src/modules/{module}/{feature}/
+  index.ts
   pages/
-    {feature}/
-      {Feature}.tsx                         LIST + #region
-      partials/
-        Add{Feature}.tsx                    ADD/EDIT page + #region
-        {Feature}Modal.tsx                  only if the add UI is a dialog
-  routes/index.tsx                          add the path + children
-  services/{feature}Service.ts
+    {Feature}ListPage.tsx                   LIST + #region
+    {Feature}DetailPage.tsx                 DETAIL + #region (if the feature has one)
+    partials/
+      Add{Feature}.tsx                      ADD/EDIT page + #region
+      {Feature}FormModal.tsx                only if the add UI is a dialog
   types/{feature}Types.ts
-  validator/{Feature}Validator.ts
   utils/{feature}Helpers.ts
+  validator/{Feature}Validator.ts
+  services/{feature}Service.ts
+  routes/index.tsx
 ```
 
-Then wire the route, use only `@app/components` controls, and keep try/catch + toast on the page, not in the service beyond rethrowing the message.
+Then export `{feature}Routes` from `index.ts`, register it in the host router, use only `@app/components` controls, and keep try/catch + toast on the page, not in the service beyond rethrowing the message.

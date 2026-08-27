@@ -91,8 +91,11 @@ namespace CFR.Base
             // Serve static files for Swagger UI (CSS, JS)
             _ = app.UseStaticFiles();
 
-            // Redirect HTTP requests to HTTPS
-            _ = app.UseHttpsRedirection();
+            var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
+            if (!env.IsDevelopment())
+            {
+                _ = app.UseHttpsRedirection();
+            }
 
             _ = app.UseAuthentication();
             _ = app.UseAuthorization();
