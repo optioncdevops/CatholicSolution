@@ -25,7 +25,7 @@ internal static class GatewayScalarUi
             routePattern: "/swagger/APIGateway/swagger.json",
             isDefault: true);
 
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:AcutisEnabled", configKey: "Gateway:AcutisPathPrefix", defaultPrefix: "/acutis", docs: SwaggerModuleDoc.AcutisDocs, labelPrefix: "Acutis");
+        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:AcutisEnabled", configKey: "Gateway:AcutisPathPrefix", defaultPrefix: "/acutis", docs: SwaggerModuleDoc.CFRAcutisDocs, labelPrefix: "Acutis");
         RegisterIfEnabled(options, configuration, enabledKey: "Gateway:PortalEnabled", configKey: "Gateway:PortalPathPrefix", defaultPrefix: "/portal", docs: SwaggerModuleDoc.PortalDocs, labelPrefix: "Portal");
     }
 

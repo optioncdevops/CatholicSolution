@@ -1,30 +1,57 @@
+using CFR.Acutis;
 using CFR.Base;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
+using System.Resources;
 using static CFR.Common.Constant;
 
+[assembly: NeutralResourcesLanguage("en-US", UltimateResourceFallbackLocation.Satellite)]
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Load configuration using the helper
+builder.Configuration.AddConfiguration(ConfigurationLoader.LoadConfiguration());
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddCommonServicesSetup();
+
+builder.Services.AddDIServicesSetup();
+
+// JWT Authentication
+builder.Services.AddAuthenticationSetup(builder.Configuration);
+
+// Go to Project Properties --> Build --> Output  --> XML Documentation File --> Check the checkbox
+// Error and Warning  --> Suppress specific warning ass the ; 1591 and
+// Output             --> Check the Documentation file
+// Set the comments path for the Swagger JSON and UI.
+// To register the swagger generator
+// Add SwaggerGen with XML comments
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true); // Important!
+});
+
+builder.Services.AddSwaggerGenSetup(SwaggerModuleDoc.CFRAcutisDocs);
+
+// Allow the Local system to access the api with jwt token
+builder.Services.DisableAuthenticationPolicy(builder.Environment);
+
+// Use the Serilog configuration from the extension method
+// builder.Host.AddSerilogConfiguration(builder.Configuration.GetConnectionString("AuditLogDB"), AuditTableName.Dietary);
+
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseCommonAppSetup(SwaggerModuleDoc.CFRAcutis, app.Services.GetRequiredService<IOptions<SwaggerGenOptions>>().Value);
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
+app.UseCustomMiddlewareSetup();
 
 app.MapControllers();
+// Scalar reads the same Swashbuckle-generated OpenAPI JSON as Swagger UI (/swagger/{doc}/swagger.json).
+app.MapScalarForSwashbuckle(SwaggerModuleDoc.CFRAcutisDocs, SwaggerModuleDoc.CFRAcutis);
 
-app.MapScalarForSwashbuckle(SwaggerModuleDoc.AcutisDocs, "OptionC.Acutis");
-
-app.MapGet("/", () => Results.Text(DefaultData.WebStartPage.Replace("{0}", "OptionC.Acutis"), "text/html")).ExcludeFromDescription(); // Exclude this endpoint from Swagger
+app.MapGet("/", () => Results.Text(DefaultData.WebStartPage.Replace("{0}", SwaggerModuleDoc.CFRAcutis), "text/html")).ExcludeFromDescription(); // Exclude this endpoint from Swagger
 
 app.Run();
