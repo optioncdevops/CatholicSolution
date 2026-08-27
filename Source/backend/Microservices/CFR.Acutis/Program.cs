@@ -1,11 +1,3 @@
-using CFR.Acutis;
-using CFR.Base;
-using Microsoft.Extensions.Options;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Reflection;
-using System.Resources;
-using static CFR.Common.Constant;
-
 [assembly: NeutralResourcesLanguage("en-US", UltimateResourceFallbackLocation.Satellite)]
 var builder = WebApplication.CreateBuilder(args);
 
