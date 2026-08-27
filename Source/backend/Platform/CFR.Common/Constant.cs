@@ -49,7 +49,9 @@ namespace CFR.Common
             /// Acutis Portal
             /// </summary>
 
-            public const string AcutisDocs = "Acutis.Organization,Acutis.Reports";
+            public const string AcutisDocs = "Acutis.Authentication,Acutis.Administration,Acutis.Organization,Acutis.Reports";
+            public const string AcutisAuthentication = "Acutis.Authentication";
+            public const string AcutisAdministration = "Acutis.Administration";
             public const string AcutisOrganization = "Acutis.Organization";
 
 
