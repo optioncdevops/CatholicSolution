@@ -68,3 +68,14 @@ These stay on `src/modules/` root:
 - `DashboardPage.tsx`
 
 New wired features (organizations, products, requests, administration) follow the same `{feature}/` tree as Users, at `src/modules/{feature}/`.
+
+## Page UX (required on every new/changed page)
+
+These are mandatory in [frontend-standards-SKILL.md](frontend-standards-SKILL.md) sections 0.7–0.9:
+
+- **Edit id:** pass and read `location.state` (not `?id=`).
+- **Toast:** save, edit, delete, activate, deactivate, and load/save failures all use `showToast.success` / `showToast.error`.
+- **Required fields:** Save with missing required fields shows a red ERROR toast listing each `"{Label} is required."`.
+- **Placeholder:** every form control has `Enter {label}` or `Select {label}`.
+- **Autofocus:** the first form control has `autoFocus`.
+- **Tab order:** visual order = DOM order; no custom positive `tabIndex`.

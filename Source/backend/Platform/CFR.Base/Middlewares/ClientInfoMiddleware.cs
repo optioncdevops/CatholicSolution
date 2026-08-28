@@ -63,18 +63,6 @@ namespace CFR.Base.Middlewares
 
             // Set user details in the current user service
             currentUserService.UserId = userId;
-            if (long.TryParse(user.FindFirstValue(Constant.SessionField.SiteLoginID), out long siteLoginId) && siteLoginId > 0)
-            {
-                currentUserService.SiteLoginId = siteLoginId;
-            }
-            else
-            {
-                currentUserService.SiteLoginId = userId;
-            }
-
-            currentUserService.CreateBaseDTO.CreatedById = userId;
-            currentUserService.ModifyBaseDTO.ModifiedById = userId;
-            currentUserService.DeleteBaseDTO.ModifiedById = userId;
             currentUserService.ClientIPAddress = context.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
             currentUserService.DeviceType = clientInfo.Device.Family ?? "Unknown";
             currentUserService.BrowserName = clientInfo.UA.Family ?? "Unknown";
@@ -83,162 +71,11 @@ namespace CFR.Base.Middlewares
             if (int.TryParse(user.FindFirstValue(Constant.SessionField.RoleId), out int roleIdValue))
             {
                 currentUserService.RoleId = roleIdValue;
-            }
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.OrgId), out int orgIdValue))
-            {
-                currentUserService.OrgId = orgIdValue;
-            }
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.StateId), out int stateIdValue))
-            {
-                currentUserService.StateId = stateIdValue;
-            }
+            }           
 
             currentUserService.FirstName = user.FindFirstValue(Constant.SessionField.FirstName) ?? string.Empty;
             currentUserService.LastName = user.FindFirstValue(Constant.SessionField.LastName) ?? string.Empty;
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsVolunteer), out bool isVolunteerValue))
-            {
-                currentUserService.IsVolunteer = isVolunteerValue;
-            }
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.IsSignCompleted), out int isSignCompletedValue))
-            {
-                currentUserService.IsSignCompleted = isSignCompletedValue;
-            }
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.IsAdminSignCompleted), out int isAdminSignCompletedValue))
-            {
-                currentUserService.IsAdminSignCompleted = isAdminSignCompletedValue;
-            }
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.IsParent), out int isParentValue))
-            {
-                currentUserService.IsParent = isParentValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsDollarOneEnabled), out bool isDollarOneEnabledValue))
-            {
-                currentUserService.IsDollarOneEnabled = isDollarOneEnabledValue;
-            }
-
-            currentUserService.FuzeAccountId = user.FindFirstValue(Constant.SessionField.FuzeAccountId) ?? string.Empty;
-            if (decimal.TryParse(user.FindFirstValue(Constant.SessionField.AchProcessingFee), out decimal achProcessingFeeValue))
-            {
-                currentUserService.AchProcessingFee = achProcessingFeeValue;
-            }
-
-            if (decimal.TryParse(user.FindFirstValue(Constant.SessionField.LimitExceed), out decimal limitExceedValue))
-            {
-                currentUserService.LimitExceed = limitExceedValue;
-            }
-
-            if (decimal.TryParse(user.FindFirstValue(Constant.SessionField.CC_PerTransaction), out decimal ccPerTransactionValue))
-            {
-                currentUserService.CC_PerTransaction = ccPerTransactionValue;
-            }
-
-            if (decimal.TryParse(user.FindFirstValue(Constant.SessionField.CreditCardSetupFee), out decimal creditCardSetupFeeValue))
-            {
-                currentUserService.CreditCardSetupFee = creditCardSetupFeeValue;
-            }
-
-            if (decimal.TryParse(user.FindFirstValue(Constant.SessionField.eCheckSetupFee), out decimal eCheckSetupFeeValue))
-            {
-                currentUserService.ECheckSetupFee = eCheckSetupFeeValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.OrgCCsetupservice), out bool orgCCsetupserviceValue))
-            {
-                currentUserService.OrgCCsetupservice = orgCCsetupserviceValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsAchEnable), out bool isAchEnableValue))
-            {
-                currentUserService.IsAchEnable = isAchEnableValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsMMAchEnabled), out bool isMMAchEnabledValue))
-            {
-                currentUserService.IsMMAchEnabled = isMMAchEnabledValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsCategoryEnabled), out bool isCategoryEnabledValue))
-            {
-                currentUserService.IsCategoryEnabled = isCategoryEnabledValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsEnableClassicAccess), out bool isEnableClassicAccessValue))
-            {
-                currentUserService.IsEnableClassicAccess = isEnableClassicAccessValue;
-            }
-
-            currentUserService.ISMMNewChanges = user.FindFirstValue(Constant.SessionField.ISMMNewChanges) ?? string.Empty;
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsViperUser), out bool isViperUserValue))
-            {
-                currentUserService.IsViperUser = isViperUserValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsSurveyCompleted), out bool isSurveyCompletedValue))
-            {
-                currentUserService.IsSurveyCompleted = isSurveyCompletedValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsChoiceSchool), out bool isChoiceSchoolValue))
-            {
-                currentUserService.IsChoiceSchool = isChoiceSchoolValue;
-            }
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.CurrentTermID), out int currentTermIDValue))
-            {
-                currentUserService.CurrentTermID = currentTermIDValue;
-            }
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.AssignmentCurrentTermID), out int assignmentCurrentTermIDValue))
-            {
-                currentUserService.AssignmentCurrentTermID = assignmentCurrentTermIDValue;
-            }
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.DioceseID), out int dioceseIDValue))
-            {
-                currentUserService.DioceseID = dioceseIDValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsDemoSchool), out bool isDemoSchoolValue))
-            {
-                currentUserService.IsDemoSchool = isDemoSchoolValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.ShowFamilyPrivateMessages), out bool showFamilyPrivateMessagesValue))
-            {
-                currentUserService.ShowFamilyPrivateMessages = showFamilyPrivateMessagesValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.EnableStudentAssignmentSubmissions), out bool enableStudentAssignmentSubmissionsValue))
-            {
-                currentUserService.EnableStudentAssignmentSubmissions = enableStudentAssignmentSubmissionsValue;
-            }
-
-            if (bool.TryParse(user.FindFirstValue(Constant.SessionField.IsVVEnabled), out bool isVVEnabledValue))
-            {
-                currentUserService.IsVVEnabled = isVVEnabledValue;
-            }
-
-            currentUserService.IsVVAccess = user.FindFirstValue(Constant.SessionField.IsVVAccess) ?? "False";
-            currentUserService.IsVVSubscriptionactive = user.FindFirstValue(Constant.SessionField.IsVVSubscriptionactive) ?? "False";
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.SchoolType), out int schoolTypeValue))
-            {
-                currentUserService.SchoolType = schoolTypeValue;
-            }
-
-            if (int.TryParse(user.FindFirstValue(Constant.SessionField.IsMMplatform), out int isMmPlatformValue))
-            {
-                currentUserService.IsMMplatform = isMmPlatformValue;
-            }
-
-            currentUserService.StaffRightsJson = user.FindFirstValue(Constant.SessionField.StaffRights) ?? "[]";
-
+           
             await _next(context);
         }
     }

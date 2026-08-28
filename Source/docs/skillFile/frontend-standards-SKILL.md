@@ -86,6 +86,33 @@ export default CustomerDirectory;
 ```
 Named exports are OK for types, validators, utils, and small presentational pieces.
 
+### 0.7 Edit identity MUST use `location.state`
+- Pass the record id (and any other edit payload) with `navigate(..., { state: { id } })`.
+- Read it with `useLocation().state`. Type the state (host `EditLocationStateParams`, or a feature type).
+- Do **not** put the edit id on the query string (`?id=`), in the path unless the URL must be shareable (detail view is OK as `/:id`), or in module context just to avoid `state`.
+- Add and edit may share one form in `partials/`. Add = no state (or `id` missing). Edit = `location.state.id` present.
+
+### 0.8 Toast on EVERY page-level action (MUST)
+Every user action on a list, detail, add/edit page, or modal MUST show a toaster. Use `showToast` from `@app/components/common/CustomToastMessage` (`showToast.success` / `showToast.error` / `showToast.warning`).
+
+| Action | Toast |
+|---|---|
+| Add / save success | `showToast.success("{Feature} added successfully.")` |
+| Edit / update success | `showToast.success("{Feature} updated successfully.")` |
+| Delete success | confirm first, then `showToast.success("{Feature} deleted successfully.")` |
+| Activate | `showToast.success("{Name} activated.")` |
+| Deactivate / inactive | `showToast.success("{Name} deactivated.")` |
+| Load / save / delete / status failure | `showToast.error("...")` |
+| Required fields missing on Save | `showToast.error` listing **each** `"{Label} is required."` (red ERROR toast). Do not save. |
+
+Do not use `window.alert`. Do not skip the toast because the inline field error is visible. Required-field failures still toast.
+
+### 0.9 Form controls: placeholder, autofocus, tab order (MUST)
+On every add / edit page and modal:
+- Every `InputField`, `TextareaField`, `Dropdown` (and the same for DatePicker / other form controls) MUST have a **placeholder**. Text: `Enter {label in sentence case}`. Dropdown: `Select {label in sentence case}`.
+- The **first** focusable form control MUST have `autoFocus`.
+- Tab order MUST follow visual order. Do not set `tabIndex={1}` / `{2}` / … . Do not set `tabIndex={-1}` on a field the user should tab into. Put fields in DOM order that matches the layout.
+
 ---
 
 ## 1. APP FOLDERS (do not recreate these inside a module)
@@ -237,6 +264,8 @@ modules/{feature}/
 9. Host router (`App.tsx` or `app/routes`) — `{feature}Routes` from the feature index
 10. `components/` — ONLY if common controls are not enough
 
+Then verify UX (section 0.7–0.9): `location.state` for edit, toast on save/edit/delete/activate/inactive, ERROR toast on required fields, placeholder on every control, `autoFocus` on the first control, natural tab order.
+
 ---
 
 ## 5. TYPES
@@ -284,7 +313,7 @@ export const customerDirectoryDefaultValues: CustomerDirectoryFormValues = {
 
 export const customerDirectoryRules = {
   txtEmailaddress: {
-    required: FIELD_REQUIRED,
+    required: "E-Mail Address is required.",
     pattern: {
       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
       message: "Invalid email address.",
@@ -295,7 +324,14 @@ export const customerDirectoryRules = {
 
 Page usage: `rules={customerDirectoryRules.txtEmailaddress}`
 
-Do not copy the required message as a raw string on every field.
+Required-rule **message** MUST name the field so the ERROR toast can list it:
+```ts
+firstName: { required: "First name is required." },
+```
+Do not use a generic `"This field is required."` for required rules (the toast would not tell the user which field).
+`FIELD_REQUIRED` is still fine as a fallback only when the host already uses it AND you map field names to labels in `onInvalid`.
+
+Do not copy the required message as a raw string on every field **except** the labeled `"{Label} is required."` pattern above.
 Do not put validator logic inside the service.
 
 ---
@@ -423,10 +459,21 @@ Navigate to add:
 ```tsx
 navigate("add")                          // relative (preferred when already on the list)
 navigate("/admin/users")                 // absolute list
+```
+
+Navigate to **edit** — ALWAYS pass identity in `location.state` (never `?id=`):
+```tsx
+navigate("edit", { state: { id: row.id } })
 navigate("/faq-details/edit", { state: { id } })
 ```
 
-Pass edit id through `location.state`, not a query string, unless the URL must be shareable.
+Read it on the add/edit page:
+```tsx
+const location = useLocation();
+const id = (location.state as { id?: number } | undefined)?.id;
+```
+
+Pass edit id through `location.state`, not a query string, unless the URL must be shareable (then a detail route like `/:userId` is OK for view-only).
 Wrap feature routes with the existing module shell (`AdminShell`, `MainLayout`, `PageShell`) the same way the host app already does.
 
 ---
@@ -646,7 +693,7 @@ Use `CommonCard` + form controls + `FormActionsBar`. Same file handles add and e
 
 ```tsx
 import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CommonCard } from "@app/components/cards/CommonCard";
 import { CommonButton } from "@app/components/buttons";
@@ -703,6 +750,13 @@ const AddCustomerDirectory = () => {
     navigate("/customer-directory", { replace: true });
   };
 
+  const onInvalid = (formErrors: FieldErrors<CustomerDirectoryFormValues>) => {
+    const messages = Object.values(formErrors)
+      .map((error) => error?.message)
+      .filter((message): message is string => Boolean(message));
+    showToast.error(messages.join("\n") || "Please fill in the required fields.");
+  };
+
   const onSubmit = async (values: CustomerDirectoryFormValues) => {
     setLoading(true);
     try {
@@ -721,7 +775,7 @@ const AddCustomerDirectory = () => {
   //#region Render
   return (
     <CommonCard title={id ? "Edit Email Address" : "Add Email Address"} headerStyle="brand" cardVariant="ghost" actions={<MandatoryIndicator />}>
-      <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
           <div className="col-span-12 md:col-span-6">
             <InputField
@@ -730,6 +784,7 @@ const AddCustomerDirectory = () => {
               label="E-Mail Address"
               type="email"
               placeholder="Enter email address"
+              autoFocus
               required
               maxLength={100}
               rules={customerDirectoryRules.txtEmailaddress}
@@ -757,8 +812,12 @@ export default AddCustomerDirectory;
 Form layout:
 - `grid grid-cols-1 gap-6 md:grid-cols-12`; fields use `col-span-12 md:col-span-3|4|6`
 - Save / Cancel live in `FormActionsBar`, Save first, Cancel second
-- `required` on the control AND `rules` from the validator
-- `form noValidate` — HTML5 native bubbles are off; react-hook-form shows the errors
+- `required` on the control AND `rules` from the validator (`"{Label} is required."`)
+- `placeholder` on every control (`Enter …` / `Select …`)
+- `autoFocus` on the **first** control only
+- Tab order = DOM order (no positive `tabIndex`)
+- `form noValidate` — HTML5 native bubbles are off; react-hook-form shows inline errors **and** `handleSubmit(onValid, onInvalid)` shows the ERROR toast
+- Edit id comes from `location.state`, not the query string
 
 ---
 
@@ -767,7 +826,7 @@ Form layout:
 When add/edit is a dialog on top of the list (not a separate route): list stays in `{Feature}.tsx`; modal lives in `partials/{Feature}Modal.tsx`; list imports the modal and passes `isOpen` / `onClose` / `onSaved`.
 
 ```tsx
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { BaseModal } from "@app/components/modal/BaseModal";
 import { CommonButton } from "@app/components/buttons";
 import { InputField } from "@app/components/formControls";
@@ -802,6 +861,13 @@ const AddCustomerDirectoryModal = ({ isOpen, onClose, onSaved }: AddCustomerDire
       showToast.error("Failed to save customer.");
     }
   };
+
+  const onInvalid = (formErrors: FieldErrors<CustomerDirectoryFormValues>) => {
+    const messages = Object.values(formErrors)
+      .map((error) => error?.message)
+      .filter((message): message is string => Boolean(message));
+    showToast.error(messages.join("\n") || "Please fill in the required fields.");
+  };
   //#endregion
 
   //#region Render
@@ -813,12 +879,12 @@ const AddCustomerDirectoryModal = ({ isOpen, onClose, onSaved }: AddCustomerDire
       size="md"
       footer={
         <div className="flex justify-end gap-2">
-          <CommonButton variant="success" onClick={handleSubmit(onSubmit)}>Save</CommonButton>
+          <CommonButton variant="success" onClick={handleSubmit(onSubmit, onInvalid)}>Save</CommonButton>
           <CommonButton variant="secondary" onClick={onClose}>Cancel</CommonButton>
         </div>
       }
     >
-      <InputField control={control} name="txtEmailaddress" label="E-Mail Address" type="email" required rules={customerDirectoryRules.txtEmailaddress} />
+      <InputField control={control} name="txtEmailaddress" label="E-Mail Address" type="email" placeholder="Enter email address" autoFocus required rules={customerDirectoryRules.txtEmailaddress} />
     </BaseModal>
   );
   //#endregion
@@ -902,15 +968,22 @@ Keep page-local state in the page. Do not add context for a single list.
 
 ## 18. TOAST, CONFIRM, ERROR HANDLING
 
+Use `showToast` from `@app/components/common/CustomToastMessage` on the **page / partial**, never in the service.
+
 | Event | Do this |
 |---|---|
 | Load failure | `showToast.error("Failed to load {feature}.")` |
-| Save success | `showToast.success("{Feature} added successfully.")` or `"...updated successfully."` |
-| Delete | `showDeleteConfirm("record name")` then service then `showToast.success("Deleted Successfully.")` |
+| Add success | `showToast.success("{Feature} added successfully.")` |
+| Edit / update success | `showToast.success("{Feature} updated successfully.")` |
+| Delete | confirm first, then service, then `showToast.success("{Feature} deleted successfully.")` |
+| Activate | `showToast.success("{Name} activated.")` |
+| Deactivate / inactive | `showToast.success("{Name} deactivated.")` |
+| Required fields on Save | `handleSubmit(onValid, onInvalid)` → `showToast.error` with each `"{Label} is required."` on its own line (red ERROR toast). Do not submit. |
 | Unexpected | `console.error` in catch, then `showToast.error` |
 
 Do not swallow errors with an empty catch.
 Do not use `window.alert` or `window.confirm`.
+Do not skip the toaster because an inline field error is already showing.
 
 ---
 
@@ -939,11 +1012,17 @@ Common controls live in that app's `src/app/components` (or the shared path alre
 - Do not: define types or validation rules in the page
 - Do not: put add/edit JSX in the list file when it is a full form
 - Do not: use raw HTML form controls
+- Do not: put the edit id on the query string — use `location.state`
+- Do not: skip a toast on save, edit, delete, activate, or deactivate
 
 **Partials (add / edit / modal)**
 - Do not: live outside `partials/`
 - Do not: fetch with axios directly
 - Do not: skip `#region`
+- Do not: omit `placeholder` on a form control
+- Do not: omit `autoFocus` on the first control
+- Do not: use positive `tabIndex` values
+- Do not: submit a required form without `handleSubmit(onValid, onInvalid)` and an ERROR toast listing missing fields
 
 **Service**
 - Do not: showToast
