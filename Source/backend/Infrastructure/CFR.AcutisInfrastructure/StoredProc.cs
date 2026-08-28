@@ -27,6 +27,11 @@ namespace CFR.AcutisInfrastructure
             /// Users list, get, save, status, and lookup operations.
             /// </summary>
             public const string UsersCrud = "[dbo].[Acutis_Users_CRUD]";
+
+            /// <summary>
+            /// User roles list, get, save, status, and delete operations.
+            /// </summary>
+            public const string UserRolesCrud = "[dbo].[Acutis_UserRoles_CRUD]";
         }
     }
 }

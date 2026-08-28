@@ -34,6 +34,8 @@ namespace CFR.Acutis
             // Administration services and repository
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<IUsersRepository, UsersRepository>();
+            services.AddScoped<IUserRolesService, UserRolesService>();
+            services.AddScoped<IUserRolesRepository, UserRolesRepository>();
 
             return services;
         }

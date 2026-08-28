@@ -8,6 +8,7 @@ import { ProtectedRoute } from '@shared/auth/ProtectedRoute';
 import { AdminDataProvider } from '@/modules/admin/AdminDataContext';
 import { AdminShell } from '@/modules/admin/components/AdminShell';
 import { usersRoutes } from '@/modules/admin/users';
+import { userRolesRoutes } from '@/modules/admin/administration/userRoles';
 
 // Route-level code splitting — each admin page (and the ported dataTable/formControls code it
 // pulls in) loads as its own chunk on first visit instead of one 2MB+ bundle up front.
@@ -19,7 +20,6 @@ const CreateInvoicePage = lazy(() => import('@/modules/admin/applications/Create
 const OrganizationsListPage = lazy(() => import('@/modules/admin/organizations/OrganizationsListPage').then((m) => ({ default: m.OrganizationsListPage })));
 const OrganizationDetailPage = lazy(() => import('@/modules/admin/organizations/OrganizationDetailPage').then((m) => ({ default: m.OrganizationDetailPage })));
 const RequestsInboxPage = lazy(() => import('@/modules/admin/requests/RequestsInboxPage').then((m) => ({ default: m.RequestsInboxPage })));
-const UserRolesPage = lazy(() => import('@/modules/admin/administration/UserRolesPage').then((m) => ({ default: m.UserRolesPage })));
 const RightsPage = lazy(() => import('@/modules/admin/administration/RightsPage').then((m) => ({ default: m.RightsPage })));
 const EmailTemplatesPage = lazy(() => import('@/modules/admin/administration/EmailTemplatesPage').then((m) => ({ default: m.EmailTemplatesPage })));
 const InvoiceItemsPage = lazy(() => import('@/modules/admin/administration/InvoiceItemsPage').then((m) => ({ default: m.InvoiceItemsPage })));
@@ -51,8 +51,8 @@ export default function App() {
           <Route path="/admin/organizations" element={<OrganizationsListPage />} />
           <Route path="/admin/organizations/:orgId" element={<OrganizationDetailPage />} />
           {usersRoutes}
+          {userRolesRoutes}
           <Route path="/admin/requests" element={<RequestsInboxPage />} />
-          <Route path="/admin/administration-user-roles" element={<UserRolesPage />} />
           <Route path="/admin/administration-rights" element={<RightsPage />} />
           <Route path="/admin/administration-email-templates" element={<EmailTemplatesPage />} />
           <Route path="/admin/administration-invoice-items" element={<InvoiceItemsPage />} />
