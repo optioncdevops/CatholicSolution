@@ -40,6 +40,11 @@ namespace CFR.CommonService
             public const string GetUserLookups = nameof(GetUserLookups);
             public const string SaveUser = nameof(SaveUser);
             public const string UpdateUserStatus = nameof(UpdateUserStatus);
+            public const string GetUserRoles = nameof(GetUserRoles);
+            public const string GetUserRoleById = nameof(GetUserRoleById);
+            public const string SaveUserRole = nameof(SaveUserRole);
+            public const string UpdateUserRoleStatus = nameof(UpdateUserRoleStatus);
+            public const string DeleteUserRole = nameof(DeleteUserRole);
         }
     }
 }

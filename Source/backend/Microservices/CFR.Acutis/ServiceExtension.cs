@@ -2,11 +2,8 @@
 using CFR.AcutisInfrastructure.Interfaces.Administration;
 using CFR.AcutisInfrastructure.Repositorys.AcutisAuthentication;
 using CFR.AcutisInfrastructure.Repositorys.Administration;
-using CFR.AcutisService.Interfaces.AcutisAuthentication;
-using CFR.AcutisService.Interfaces.Administration;
 using CFR.AcutisService.Service.AcutisAuthentication;
 using CFR.AcutisService.Service.Administration;
-using CFR.Base;
 using CFR.CommonService.Interfaces;
 using CFR.CommonService.Service;
 
@@ -34,6 +31,8 @@ namespace CFR.Acutis
             // Administration services and repository
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<IUsersRepository, UsersRepository>();
+            services.AddScoped<IUserRolesService, UserRolesService>();
+            services.AddScoped<IUserRolesRepository, UserRolesRepository>();
 
             return services;
         }
