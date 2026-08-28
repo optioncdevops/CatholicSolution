@@ -87,6 +87,16 @@ namespace CFR.AcutisInfrastructure
             /// Role description.
             /// </summary>
             public const string Description = nameof(Description);
+
+            /// <summary>
+            /// Logged-in user who created the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string InsertedBy = nameof(InsertedBy);
+
+            /// <summary>
+            /// Logged-in user who last updated the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string UpdatedBy = nameof(UpdatedBy);
         }
     }
 }

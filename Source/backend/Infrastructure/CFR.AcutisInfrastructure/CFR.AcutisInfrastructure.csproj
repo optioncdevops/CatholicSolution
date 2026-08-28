@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Platform\CFR.Common\CFR.Common.csproj" />
     <ProjectReference Include="..\..\Platform\CFR.DBEngine\CFR.DBEngine.csproj" />
+    <ProjectReference Include="..\..\Service\CFR.CommonService\CFR.CommonService.csproj" />
   </ItemGroup>
 
 </Project>

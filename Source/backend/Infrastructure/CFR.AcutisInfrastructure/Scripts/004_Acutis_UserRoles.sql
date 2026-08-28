@@ -14,11 +14,15 @@ CREATE PROCEDURE [dbo].[Acutis_UserRoles_CRUD]
     @RoleName NVARCHAR(100) = NULL,
     @Description NVARCHAR(300) = NULL,
     @Status NVARCHAR(20) = NULL,
+    @InsertedBy BIGINT = NULL,
+    @UpdatedBy BIGINT = NULL,
     @ReturnValue INT = NULL OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
     SET @ReturnValue = 0;
+    SET @InsertedBy = NULLIF(@InsertedBy, 0);
+    SET @UpdatedBy = NULLIF(@UpdatedBy, 0);
 
     IF @ActionId = 1
     BEGIN
@@ -40,7 +44,7 @@ BEGIN
 
             INSERT INTO [auth].[AcutisRole]
             (
-                [RoleId], [RoleName], [Description], [IsActive], [CreatedDate], [IsDeleted]
+                [RoleId], [RoleName], [Description], [IsActive], [CreatedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
@@ -49,6 +53,7 @@ BEGIN
                 @Description,
                 CASE WHEN @Status = N'inactive' THEN 0 ELSE 1 END,
                 SYSUTCDATETIME(),
+                @InsertedBy,
                 0
             );
 
@@ -61,7 +66,7 @@ BEGIN
                 t.[FeatureId],
                 t.[AccessRight],
                 SYSUTCDATETIME(),
-                NULL,
+                @InsertedBy,
                 0,
                 NULL
             FROM [auth].[ModuleRights] AS t
@@ -102,7 +107,8 @@ BEGIN
                 WHEN @Status = N'active' THEN 1
                 ELSE [IsActive]
             END,
-            [UpdatedDate] = SYSUTCDATETIME()
+            [UpdatedDate] = SYSUTCDATETIME(),
+            [UpdatedBy] = @UpdatedBy
         WHERE [RoleId] = @RoleId
           AND [IsDeleted] = 0;
 
@@ -114,7 +120,8 @@ BEGIN
     BEGIN
         UPDATE [auth].[AcutisRole]
         SET [IsActive] = CASE WHEN @Status = N'inactive' THEN 0 ELSE 1 END,
-            [UpdatedDate] = SYSUTCDATETIME()
+            [UpdatedDate] = SYSUTCDATETIME(),
+            [UpdatedBy] = @UpdatedBy
         WHERE [RoleId] = @RoleId
           AND [IsDeleted] = 0;
 
@@ -166,13 +173,15 @@ BEGIN
         UPDATE [auth].[AcutisRole]
         SET [IsDeleted] = 1,
             [IsActive] = 0,
-            [UpdatedDate] = SYSUTCDATETIME()
+            [UpdatedDate] = SYSUTCDATETIME(),
+            [UpdatedBy] = @UpdatedBy
         WHERE [RoleId] = @RoleId
           AND [IsDeleted] = 0;
 
         UPDATE [auth].[ModuleRights]
         SET [IsDeleted] = 1,
-            [UpdatedDate] = SYSUTCDATETIME()
+            [UpdatedDate] = SYSUTCDATETIME(),
+            [UpdatedBy] = @UpdatedBy
         WHERE [RoleId] = @RoleId
           AND [UserId] IS NULL
           AND [IsDeleted] = 0;

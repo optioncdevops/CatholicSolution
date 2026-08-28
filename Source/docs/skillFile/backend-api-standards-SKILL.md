@@ -1,6 +1,6 @@
 ---
 name: backend-api-standards
-description: Layered .NET backend API coding standards for the Controller to Service to Repository to SQL Stored Procedure architecture (Dapper + ResultArgs + Serilog). Use this skill whenever adding, changing, or reviewing ANY backend API code — a new endpoint, controller, service, repository, DTO, stored-procedure call, or CRUD feature — even if the user only says "add an API", "new endpoint", "create a feature", or "fix this controller". Follow it as the checklist for every backend change.
+description: Layered .NET backend API coding standards for the Controller to Service to Repository to SQL Stored Procedure architecture (Dapper + ResultArgs + Serilog). Use this skill whenever adding, changing, or reviewing ANY backend API code — a new endpoint, controller, service, repository, DTO, stored-procedure call, or CRUD feature — even if the user only says "add an API", "new endpoint", "create a feature", or "fix this controller". Follow it as the checklist for every backend change. Tables with InsertedBy/UpdatedBy must stamp those columns from ICurrentUserService.UserId in the repository, never from the client.
 ---
 
 # Backend API Coding Standards
@@ -20,6 +20,7 @@ Replace `CustomerDirectory` with the real feature name.
 | `{ServiceProject}` | The business-logic project | `Contoso.Service` |
 | `{InfraProject}` | The data-access project | `Contoso.Infrastructure` |
 | `{CommonProject}` | Shared constants project | `Contoso.Common` |
+| `{CommonServiceProject}` | Shared current-user / helpers project | `Contoso.CommonService` |
 | `{Module}` | Product area | `Administration` |
 | `{Feature}` | The feature being built | `CustomerDirectory` |
 | `{SpGroup}` | Grouping class for stored-procedure constants | `Directory` |
@@ -87,7 +88,7 @@ Either way, the Service wraps the result in `ResultArgs`.
 ### 0.6 try/catch lives ONLY in the Service
 - **Controller** = no try/catch, no Serilog, no Dapper
 - **Service** = business rules + try/catch + Serilog + ResultArgs
-- **Repository** = DynamicParameters + stored procedure only (no try/catch)
+- **Repository** = DynamicParameters + stored procedure only (no try/catch). When the table has `InsertedBy` / `UpdatedBy`, also inject `ICurrentUserService` and pass `currentUserService.UserId` (see rule 0.9).
 
 ### 0.7 Regions by HTTP verb (in controller, service, repository and their interfaces)
 ```csharp
@@ -127,6 +128,39 @@ Comment template (copy this block):
 /// <returns>...</returns>
 /// <response code="200">...</response>   (controller actions only)
 /// <response code="500">...</response>   (controller actions only)
+```
+
+### 0.9 Audit columns (`InsertedBy` / `UpdatedBy`) come from the logged-in user
+
+Tables that have `InsertedBy` and/or `UpdatedBy` MUST stamp them from the **current login**, not from the request body and not from a hardcoded value.
+
+How the login user is available:
+- After a successful login, the JWT is sent on later requests (`Authorization: Bearer ...`).
+- `ClientInfoMiddleware` (already in the host pipeline) fills the scoped `ICurrentUserService` / `CurrentUserService` from JWT claims (`UserId`, `UserName`, `RoleId`, `FirstName`, `LastName`).
+- `{ServiceProject}` already registers `services.AddScoped<ICurrentUserService, CurrentUserService>();` once. Do not register it again per feature.
+
+MUST:
+- Inject `ICurrentUserService` into the **repository** (same primary-constructor line as `IDapperHandler`).
+- Pass `currentUserService.UserId` as SP params named `InsertedBy` (insert / save-new) and `UpdatedBy` (update / status / delete).
+- Add those names to `DBParameterName.{SpGroup}Params` (`nameof(InsertedBy)`, `nameof(UpdatedBy)`).
+- Stored procedure: `@InsertedBy BIGINT = NULL`, `@UpdatedBy BIGINT = NULL`. Insert sets `[InsertedBy]`; update / status / delete sets `[UpdatedBy]` (and `[UpdatedDate]`). Treat `0` as NULL (`NULLIF(@InsertedBy, 0)`).
+- Add `global using CFR.CommonService.Interfaces;` in the infrastructure `ImplicitUsings.cs`. If the infrastructure project does not yet reference `{CommonServiceProject}`, add that project reference.
+- GET list / GET by id do not pass audit params.
+
+MUST NOT:
+- Put `InsertedBy` / `UpdatedBy` on the frontend payload or Input DTO.
+- Read the user id in the controller or service and pass it as a method argument — the repository reads `ICurrentUserService` itself.
+- Invent a second current-user helper. Use `{CommonServiceProject}/Service/CurrentUserService.cs` (`ICurrentUserService`).
+
+Repository constructor (ONE line):
+```csharp
+public class CustomerDirectoryRepository(IDapperHandler dapperHandler, ICurrentUserService currentUserService): ICustomerDirectoryRepository
+```
+
+POST / PUT / DELETE parameter lines:
+```csharp
+parameters.Add(DBParameterName.{SpGroup}Params.InsertedBy, currentUserService.UserId, DbType.Int64);
+parameters.Add(DBParameterName.{SpGroup}Params.UpdatedBy, currentUserService.UserId, DbType.Int64);
 ```
 
 ---
@@ -203,7 +237,7 @@ Controller action names match `APIActionName` constants. Never hard-code action 
 5. `Models/Output` DTO — typed result of SELECT *(skip if using the dynamic style)*
 6. `Models/Input` DTO — typed body / save payload (if POST/PUT)
 7. `I{Feature}Repository` — typed return or dynamic (match the chosen style)
-8. `{Feature}Repository` — params + one-line SP call
+8. `{Feature}Repository` — params + one-line SP call. If the table has `InsertedBy` / `UpdatedBy`, inject `ICurrentUserService` and pass `currentUserService.UserId` (rule 0.9). Never take those values from the client.
 9. `I{Feature}Service` — XML comments on class AND every method
 10. `{Feature}Service` — try/catch + Serilog + ResultArgs
 11. `{Feature}Controller` — one-line `ApiResultArgs` return
@@ -245,6 +279,8 @@ public static class DBParameterName
     {
         public const string CustomerEmailAddress = nameof(CustomerEmailAddress);
         public const string ID = nameof(ID);
+        public const string InsertedBy = nameof(InsertedBy);
+        public const string UpdatedBy = nameof(UpdatedBy);
         public const string ReturnValue = nameof(ReturnValue);
     }
 }
@@ -423,13 +459,14 @@ File: `{InfraProject}/Repositories/{Module}/{Feature}Repository.cs`
 
 Rules:
 - Primary constructor on ONE line
-- Inject `IDapperHandler` only
+- Inject `IDapperHandler`. Also inject `ICurrentUserService` when the table has `InsertedBy` / `UpdatedBy` (rule 0.9)
 - Build `DynamicParameters` from `DBParameterName.*`
 - SP name from `StoredProc.*`
 - Always `CommandType.StoredProcedure`
 - Dapper call on ONE line
 - No try/catch, no ResultArgs, no AppLogger
 - XML comments on the class AND on every method
+- Never copy audit user ids from the Input DTO or from a controller argument
 
 Which Dapper method:
 | Result | Method |
@@ -446,7 +483,7 @@ namespace {InfraProject}.Repositories.Administration
     /// Infrastructure Responsibility:
     /// - Uses IDapperHandler to execute stored procedures and map results to CustomerDirectoryOutput.
     /// </summary>
-    public class CustomerDirectoryRepository(IDapperHandler dapperHandler): ICustomerDirectoryRepository
+    public class CustomerDirectoryRepository(IDapperHandler dapperHandler, ICurrentUserService currentUserService): ICustomerDirectoryRepository
     {
         #region GET Methods
 
@@ -490,6 +527,7 @@ namespace {InfraProject}.Repositories.Administration
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.{SpGroup}Params.CustomerEmailAddress, input.EmailAddress, DbType.String);
+            parameters.Add(DBParameterName.{SpGroup}Params.InsertedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.{SpGroup}Params.ReturnValue, 0, DbType.Int16);
             var result = await dapperHandler.ExecuteScalarAsync<int>(StoredProc.{SpGroup}.AddCustomerDirectoryList, parameters, CommandType.StoredProcedure);
             return result;
@@ -516,6 +554,7 @@ namespace {InfraProject}.Repositories.Administration
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.{SpGroup}Params.ID, id, DbType.Int32);
+            parameters.Add(DBParameterName.{SpGroup}Params.UpdatedBy, currentUserService.UserId, DbType.Int64);
             int affected = await dapperHandler.ExecuteAsync(StoredProc.{SpGroup}.DeleteCustomerDirectoryList, parameters, CommandType.StoredProcedure);
             return affected > 0;
         }
@@ -814,6 +853,7 @@ global using Dapper;
 global using {InfraProject}.Interfaces.{Module};
 global using {InfraProject}.Models.Input;
 global using {InfraProject}.Models.Output;
+global using CFR.CommonService.Interfaces;
 global using static {InfraProject}.StoredProc;
 ```
 
@@ -946,6 +986,7 @@ JSON envelope returned by `BaseController.ApiResultArgs`:
 - Do not: mix typed and dynamic returns within one feature (pick DTOs OR dynamic — see rule 0.5)
 - Do not: split the Dapper call across multiple lines
 - Do not: hard-code SP names or parameter names
+- Do not: take `InsertedBy` / `UpdatedBy` from the client, Input DTO, or a service method argument — read `ICurrentUserService.UserId` in the repository (rule 0.9)
 
 ---
 
