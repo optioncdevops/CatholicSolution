@@ -69,6 +69,21 @@ namespace CFR.AcutisInfrastructure
             public const string RoleId = nameof(RoleId);
 
             /// <summary>
+            /// Active flag: 1 = active, 0 = inactive.
+            /// </summary>
+            public const string IsActive = nameof(IsActive);
+
+            /// <summary>
+            /// Locked flag: 1 = locked, 0 = unlocked.
+            /// </summary>
+            public const string IsLocked = nameof(IsLocked);
+
+            /// <summary>
+            /// Date of birth.
+            /// </summary>
+            public const string DateOfBirth = nameof(DateOfBirth);
+
+            /// <summary>
             /// User status value.
             /// </summary>
             public const string Status = nameof(Status);

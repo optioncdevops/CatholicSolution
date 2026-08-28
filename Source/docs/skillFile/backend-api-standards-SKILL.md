@@ -88,7 +88,7 @@ Either way, the Service wraps the result in `ResultArgs`.
 ### 0.6 try/catch lives ONLY in the Service
 - **Controller** = no try/catch, no Serilog, no Dapper
 - **Service** = business rules + try/catch + Serilog + ResultArgs
-- **Repository** = DynamicParameters + stored procedure only (no try/catch). When the table has `InsertedBy` / `UpdatedBy`, also inject `ICurrentUserService` and pass `currentUserService.UserId` (see rule 0.9).
+- **Repository** = DynamicParameters + stored procedure only (no try/catch). When the table has `InsertedBy` / `UpdatedBy`, also inject `ICurrentUserService` (see rule 0.9). Save with id = 0 → `InsertedBy`. Save with id present → `UpdatedBy`. PUT status / DELETE → `UpdatedBy`.
 
 ### 0.7 Regions by HTTP verb (in controller, service, repository and their interfaces)
 ```csharp
@@ -141,14 +141,20 @@ How the login user is available:
 
 MUST:
 - Inject `ICurrentUserService` into the **repository** (same primary-constructor line as `IDapperHandler`).
-- Pass `currentUserService.UserId` as SP params named `InsertedBy` (insert / save-new) and `UpdatedBy` (update / status / delete).
+- Combined save already uses id = 0 for insert and a real id for update. Use that same check for audit params:
+  - **Insert** (`UserId == 0` / `RoleId == 0`): pass `InsertedBy` only. Do **not** pass `UpdatedBy`.
+  - **Update** (id is present): pass `UpdatedBy` only. Do **not** pass `InsertedBy`.
+- **PUT status / DELETE**: pass `UpdatedBy` only. Do **not** pass `InsertedBy`.
 - Add those names to `DBParameterName.{SpGroup}Params` (`nameof(InsertedBy)`, `nameof(UpdatedBy)`).
-- Stored procedure: `@InsertedBy BIGINT = NULL`, `@UpdatedBy BIGINT = NULL`. Insert sets `[InsertedBy]`; update / status / delete sets `[UpdatedBy]` (and `[UpdatedDate]`). Treat `0` as NULL (`NULLIF(@InsertedBy, 0)`).
+- Stored procedure: `@InsertedBy BIGINT = NULL`, `@UpdatedBy BIGINT = NULL`. Insert sets `[InsertedBy]` only; update / status / delete sets `[UpdatedBy]` (and `[UpdatedDate]`). Treat `0` as NULL (`NULLIF(@InsertedBy, 0)`).
 - Add `global using CFR.CommonService.Interfaces;` in the infrastructure `ImplicitUsings.cs`. If the infrastructure project does not yet reference `{CommonServiceProject}`, add that project reference.
 - GET list / GET by id do not pass audit params.
 
 MUST NOT:
 - Put `InsertedBy` / `UpdatedBy` on the frontend payload or Input DTO.
+- Pass both `InsertedBy` and `UpdatedBy` on the same save call.
+- Pass `UpdatedBy` when inserting a new row (`UserId == 0`).
+- Pass `InsertedBy` when updating (`UserId` present), changing status, or deleting.
 - Read the user id in the controller or service and pass it as a method argument — the repository reads `ICurrentUserService` itself.
 - Invent a second current-user helper. Use `{CommonServiceProject}/Service/CurrentUserService.cs` (`ICurrentUserService`).
 
@@ -157,11 +163,25 @@ Repository constructor (ONE line):
 public class CustomerDirectoryRepository(IDapperHandler dapperHandler, ICurrentUserService currentUserService): ICustomerDirectoryRepository
 ```
 
-POST / PUT / DELETE parameter lines:
+Save — insert vs update from the existing id:
 ```csharp
-parameters.Add(DBParameterName.{SpGroup}Params.InsertedBy, currentUserService.UserId, DbType.Int64);
+if (input.UserId == 0)
+{
+    parameters.Add(DBParameterName.{SpGroup}Params.InsertedBy, currentUserService.UserId, DbType.Int64);
+}
+else
+{
+    parameters.Add(DBParameterName.{SpGroup}Params.UpdatedBy, currentUserService.UserId, DbType.Int64);
+}
+```
+
+PUT status / DELETE — `UpdatedBy` only:
+```csharp
 parameters.Add(DBParameterName.{SpGroup}Params.UpdatedBy, currentUserService.UserId, DbType.Int64);
 ```
+
+### 0.10 Unused usings MUST be removed
+When adding or changing any `.cs` file, remove unused `using` statements. Do not add a `using` that is already covered by that project's `ImplicitUsings.cs`. Do not leave unused usings "for later".
 
 ---
 
@@ -237,7 +257,7 @@ Controller action names match `APIActionName` constants. Never hard-code action 
 5. `Models/Output` DTO — typed result of SELECT *(skip if using the dynamic style)*
 6. `Models/Input` DTO — typed body / save payload (if POST/PUT)
 7. `I{Feature}Repository` — typed return or dynamic (match the chosen style)
-8. `{Feature}Repository` — params + one-line SP call. If the table has `InsertedBy` / `UpdatedBy`, inject `ICurrentUserService` and pass `currentUserService.UserId` (rule 0.9). Never take those values from the client.
+8. `{Feature}Repository` — params + one-line SP call. If the table has `InsertedBy` / `UpdatedBy`, inject `ICurrentUserService` (rule 0.9). Save with id = 0 → `InsertedBy`. Save with id present → `UpdatedBy`. PUT / DELETE → `UpdatedBy`. Never take those values from the client.
 9. `I{Feature}Service` — XML comments on class AND every method
 10. `{Feature}Service` — try/catch + Serilog + ResultArgs
 11. `{Feature}Controller` — one-line `ApiResultArgs` return
@@ -987,6 +1007,9 @@ JSON envelope returned by `BaseController.ApiResultArgs`:
 - Do not: split the Dapper call across multiple lines
 - Do not: hard-code SP names or parameter names
 - Do not: take `InsertedBy` / `UpdatedBy` from the client, Input DTO, or a service method argument — read `ICurrentUserService.UserId` in the repository (rule 0.9)
+- Do not: pass both `InsertedBy` and `UpdatedBy` on the same save call
+- Do not: pass `UpdatedBy` when id is 0 (insert), or `InsertedBy` when id is present (update) / status / delete
+- Do not: leave unused `using` statements (rule 0.10)
 
 ---
 

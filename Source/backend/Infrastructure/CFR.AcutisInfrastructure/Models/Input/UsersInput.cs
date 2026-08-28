@@ -53,9 +53,21 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public int RoleId { get; set; }
 
         /// <summary>
-        /// Gets or sets the user status (active, invited, or deactivated).
+        /// Gets or sets the active flag. 1 = active, 0 = inactive.
         /// </summary>
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = "invited";
+        [JsonPropertyName("isActive")]
+        public int IsActive { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets the locked flag. 1 = locked, 0 = unlocked.
+        /// </summary>
+        [JsonPropertyName("isLocked")]
+        public int IsLocked { get; set; }
+
+        /// <summary>
+        /// Gets or sets the date of birth.
+        /// </summary>
+        [JsonPropertyName("dateOfBirth")]
+        public DateTime? DateOfBirth { get; set; }
     }
 }

@@ -1,20 +1,27 @@
-import type { UsersApiItem, UsersFormValues, UserStatusValue } from '../types/usersTypes';
+import type { UsersApiItem, UsersFormValues } from '../types/usersTypes';
+
+export const toDateOnly = (value?: string | null): string => {
+  if (!value?.trim()) return '';
+  return value.trim().slice(0, 10);
+};
 
 export const normalizeUsersList = (resultData: unknown): UsersApiItem[] => {
   if (!Array.isArray(resultData)) return [];
-  return resultData as UsersApiItem[];
+  return resultData.map((row) => normalizeUser(row)).filter((row): row is UsersApiItem => row != null);
 };
 
 export const normalizeUser = (resultData: unknown): UsersApiItem | null => {
   if (!resultData || typeof resultData !== 'object') return null;
-  return resultData as UsersApiItem;
-};
-
-export const splitFullName = (name: string): { firstName: string; lastName: string } => {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return { firstName: '', lastName: '' };
-  if (parts.length === 1) return { firstName: parts[0], lastName: '' };
-  return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
+  const row = resultData as UsersApiItem;
+  const isActive = Number(row.isActive) === 1 ? 1 : 0;
+  const isLocked = Number(row.isLocked) === 1 ? 1 : 0;
+  return {
+    ...row,
+    isActive,
+    isLocked,
+    status: isActive === 1 ? 'active' : 'inactive',
+    dateOfBirth: toDateOnly(row.dateOfBirth) || null,
+  };
 };
 
 export const toSaveUserPayload = (values: UsersFormValues, userId = 0) => ({
@@ -23,11 +30,8 @@ export const toSaveUserPayload = (values: UsersFormValues, userId = 0) => ({
   lastName: values.lastName.trim(),
   eMail: values.eMail.trim(),
   password: values.password,
-  organizationId: Number(values.organizationId),
   roleId: Number(values.roleId),
-  status: values.status,
+  isActive: Number(values.isActive) === 0 ? 0 : 1,
+  isLocked: Number(values.isLocked) === 1 ? 1 : 0,
+  dateOfBirth: toDateOnly(values.dateOfBirth) || null,
 });
-
-export const isUserStatus = (value: string): value is UserStatusValue => (
-  value === 'active' || value === 'invited' || value === 'deactivated'
-);

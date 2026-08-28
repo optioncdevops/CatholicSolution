@@ -5,7 +5,7 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
     /// <summary>
     /// Repository interface for Acutis Users database operations.
     /// Repository Responsibility:
-    /// - Declares SELECT, INSERT, and UPDATE operations against SQL Server via Dapper stored procedures.
+    /// - Declares SELECT, INSERT, UPDATE, and DELETE operations against SQL Server via Dapper stored procedures.
     /// </summary>
     public interface IUsersRepository
     {
@@ -29,7 +29,7 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         /// Retrieves one Acutis user by identifier.
         /// </summary>
         /// <remarks>
-        /// Purpose: Fetch a user for the detail page.
+        /// Purpose: Fetch a user for the edit page.
         /// Request Flow: IUsersService -> IUsersRepository.GetUserByIdAsync() -> SQL Database.
         /// Validation Details: UserId parameter mapping.
         /// Business Logic: Directly retrieves the matching row.
@@ -79,20 +79,39 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         #region PUT Methods
 
         /// <summary>
-        /// Updates an Acutis user status.
+        /// Updates an Acutis user active flag.
         /// </summary>
         /// <remarks>
         /// Purpose: Activate or deactivate a user.
         /// Request Flow: IUsersService -> IUsersRepository.UpdateUserStatusAsync() -> SQL Database.
-        /// Validation Details: UserId and Status parameter mapping.
+        /// Validation Details: UserId and IsActive parameter mapping.
         /// Business Logic: Executes the status update stored procedure.
         /// Repository Interaction: Executes StoredProc.Administration.UsersCrud with ActionId 2.
         /// Response Details: Returns the UserId when the update succeeded.
         /// </remarks>
-        /// <param name="input">Status change payload.</param>
+        /// <param name="input">Status change payload with IsActive 0 or 1.</param>
         /// <returns>The updated user identifier.</returns>
         Task<int> UpdateUserStatusAsync(UserStatusInput input);
 
         #endregion PUT Methods
+
+        #region DELETE Methods
+
+        /// <summary>
+        /// Soft-deletes an Acutis user.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Remove a user row.
+        /// Request Flow: IUsersService -> IUsersRepository.DeleteUserAsync() -> SQL Database.
+        /// Validation Details: UserId parameter mapping.
+        /// Business Logic: Executes the delete stored procedure.
+        /// Repository Interaction: Executes StoredProc.Administration.UsersCrud with ActionId 6.
+        /// Response Details: Returns the UserId when the delete succeeded.
+        /// </remarks>
+        /// <param name="userId">User identifier.</param>
+        /// <returns>The deleted user identifier.</returns>
+        Task<int> DeleteUserAsync(int userId);
+
+        #endregion DELETE Methods
     }
 }

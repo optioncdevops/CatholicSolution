@@ -59,7 +59,7 @@ BEGIN
 
             INSERT INTO [auth].[ModuleRights]
             (
-                [RoleId], [FeatureId], [AccessRight], [CreatedDate], [InsertedBy], [IsDeleted], [UserId]
+                [RoleId], [FeatureId], [AccessRight], [CreatedDate], [InsertedBy], [IsDeleted]
             )
             SELECT
                 @RoleId,
@@ -67,18 +67,15 @@ BEGIN
                 t.[AccessRight],
                 SYSUTCDATETIME(),
                 @InsertedBy,
-                0,
-                NULL
+                0
             FROM [auth].[ModuleRights] AS t
             WHERE t.[RoleId] = 1
-              AND t.[UserId] IS NULL
               AND t.[IsDeleted] = 0
               AND NOT EXISTS (
                   SELECT 1
                   FROM [auth].[ModuleRights] AS x
                   WHERE x.[RoleId] = @RoleId
                     AND x.[FeatureId] = t.[FeatureId]
-                    AND x.[UserId] IS NULL
                     AND x.[IsDeleted] = 0
               );
 
@@ -183,7 +180,6 @@ BEGIN
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UpdatedBy
         WHERE [RoleId] = @RoleId
-          AND [UserId] IS NULL
           AND [IsDeleted] = 0;
 
         SET @ReturnValue = @RoleId;

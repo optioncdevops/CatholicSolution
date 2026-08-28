@@ -1,0 +1,236 @@
+import { useEffect, useState } from 'react';
+import { useForm, type FieldErrors } from 'react-hook-form';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Save, X } from 'lucide-react';
+import { PanelHeader } from '@shared/app/components/PanelHeader';
+import { useToast } from '@shared/app/components/ToastProvider';
+import { CommonButton } from '@app/components/buttons';
+import { DatePicker, Dropdown, InputField, MandatoryIndicator, RadioGroup } from '@app/components/formControls';
+import { getUserById, getUserLookups, saveUser } from '../../services/usersService';
+import type { RoleLookupItem, UsersFormValues } from '../../types/usersTypes';
+import { toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
+import { usersDefaultValues, usersRules } from '../../validator/UsersValidator';
+
+const AddUsers = () => {
+  //#region Hooks
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { showToast } = useToast();
+  const userId = (location.state as { id?: number } | undefined)?.id;
+  const isEdit = Boolean(userId && userId > 0);
+  //#endregion
+
+  //#region States
+  const [saving, setSaving] = useState(false);
+  const [roles, setRoles] = useState<RoleLookupItem[]>([]);
+  //#endregion
+
+  //#region Form
+  const { control, handleSubmit, reset } = useForm<UsersFormValues>({
+    defaultValues: usersDefaultValues,
+    mode: 'onChange',
+  });
+  //#endregion
+
+  //#region Functions
+  const navigateToList = () => {
+    navigate('/admin/users', { replace: true });
+  };
+  //#endregion
+
+  //#region Effects
+  useEffect(() => {
+    if (location.pathname === '/admin/edit-users' && !isEdit) {
+      navigateToList();
+    }
+  }, [isEdit, location.pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { resultData } = await getUserLookups();
+        if (cancelled) return;
+        const lookups = (resultData ?? {}) as { roles?: RoleLookupItem[] };
+        const roleRows = lookups.roles ?? [];
+        setRoles(roleRows);
+
+        if (isEdit && userId) {
+          const detail = await getUserById(userId);
+          if (cancelled) return;
+          const row = detail.resultData as {
+            firstName?: string;
+            lastName?: string;
+            eMail?: string;
+            roleId?: number;
+            isActive?: number;
+            isLocked?: number;
+            dateOfBirth?: string | null;
+          } | null;
+          if (!row) {
+            showToast('Failed to load user.');
+            navigateToList();
+            return;
+          }
+          reset({
+            firstName: row.firstName ?? '',
+            lastName: row.lastName ?? '',
+            eMail: row.eMail ?? '',
+            password: '',
+            roleId: row.roleId ? String(row.roleId) : (roleRows[0] ? String(roleRows[0].roleId) : ''),
+            isActive: Number(row.isActive) === 0 ? '0' : '1',
+            isLocked: Number(row.isLocked) === 1 ? '1' : '0',
+            dateOfBirth: toDateOnly(row.dateOfBirth),
+          });
+          return;
+        }
+
+        reset({
+          ...usersDefaultValues,
+          roleId: roleRows[0] ? String(roleRows[0].roleId) : '',
+        });
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Error loading user form:', error);
+        showToast(typeof error === 'string' ? error : 'Failed to load user form.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, reset, showToast, userId]);
+  //#endregion
+
+  //#region Handlers
+  const onInvalid = (formErrors: FieldErrors<UsersFormValues>) => {
+    const messages = Object.values(formErrors)
+      .map((error) => error?.message)
+      .filter((message): message is string => Boolean(message));
+    showToast(messages.join(' ') || 'Please fill in the required fields.');
+  };
+
+  const onSubmit = async (values: UsersFormValues) => {
+    setSaving(true);
+    try {
+      const response = await saveUser(toSaveUserPayload(values, isEdit ? userId : 0));
+      if (response.statusCode === 409) {
+        showToast(response.statusMessage || 'A user with this email already exists.');
+        return;
+      }
+      showToast(isEdit ? 'User updated successfully.' : 'User added successfully.');
+      navigateToList();
+    } catch (error) {
+      console.error('Error saving user:', error);
+      showToast(typeof error === 'string' ? error : 'Failed to save user.');
+    } finally {
+      setSaving(false);
+    }
+  };
+  //#endregion
+
+  //#region Render
+  return (
+    <div className="admin-reveal flex flex-col gap-4">
+      <PanelHeader title={isEdit ? 'Edit User' : 'Add User'} action={<MandatoryIndicator variant="brand" />} />
+
+      <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <InputField
+            control={control}
+            name="firstName"
+            label="First name"
+            placeholder="Enter first name"
+            autoFocus
+            required
+            rules={usersRules.firstName}
+            disabled={saving}
+          />
+          <InputField
+            control={control}
+            name="lastName"
+            label="Last name"
+            placeholder="Enter last name"
+            required
+            rules={usersRules.lastName}
+            disabled={saving}
+          />
+          <InputField
+            control={control}
+            name="eMail"
+            label="Email address"
+            type="email"
+            placeholder="Enter email address"
+            required
+            rules={usersRules.eMail}
+            disabled={saving}
+          />
+          <InputField
+            control={control}
+            name="password"
+            label="Password"
+            type="password"
+            placeholder={isEdit ? 'Leave blank to keep the current password' : 'Enter password'}
+            required={!isEdit}
+            rules={isEdit ? undefined : usersRules.password}
+            disabled={saving}
+          />
+          <DatePicker
+            control={control}
+            name="dateOfBirth"
+            label="Date of birth"
+            placeholder="Select date of birth"
+            required
+            rules={usersRules.dateOfBirth}
+            disabled={saving}
+          />
+          <Dropdown
+            control={control}
+            name="roleId"
+            label="Role"
+            placeholder="Select role"
+            required
+            searchable={false}
+            clearable={false}
+            rules={usersRules.roleId}
+            options={roles.map((role) => ({ id: String(role.roleId), value: role.roleName }))}
+            disabled={saving}
+          />
+          <RadioGroup
+            control={control}
+            name="isActive"
+            label="Status"
+            direction="horizontal"
+            required
+            rules={usersRules.isActive}
+            options={[
+              { id: '1', value: 'Active' },
+              { id: '0', value: 'Inactive' },
+            ]}
+            disabled={saving}
+          />
+          <RadioGroup
+            control={control}
+            name="isLocked"
+            label="Locked"
+            direction="horizontal"
+            required
+            rules={usersRules.isLocked}
+            options={[
+              { id: '0', value: 'Unlocked' },
+              { id: '1', value: 'Locked' },
+            ]}
+            disabled={saving}
+          />
+        </div>
+
+        <div className="admin-sticky-footer">
+          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={saving}>Cancel</CommonButton>
+          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+        </div>
+      </form>
+    </div>
+  );
+  //#endregion
+};
+
+export default AddUsers;

@@ -49,13 +49,26 @@ export const saveUser = async (value: SaveUserPayload): Promise<ApiResponse> => 
   }
 };
 
-export const updateUserStatus = async (userId: number, status: string): Promise<ApiResponse> => {
+export const updateUserStatus = async (userId: number, isActive: number): Promise<ApiResponse> => {
   try {
-    const response = await axiosInstance.put<ApiResponse>(`${controller}/UpdateUserStatus`, { userId, status });
+    const response = await axiosInstance.put<ApiResponse>(`${controller}/UpdateUserStatus`, { userId, isActive });
     const { statusCode, statusMessage, resultData } = response.data;
     return { statusCode, statusMessage, resultData };
   } catch (error: unknown) {
     const err = error as ApiError;
     throw err.response?.data?.statusMessage || err.message || 'Failed to update user status';
+  }
+};
+
+export const deleteUser = async (userId: number): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.delete<ApiResponse>(`${controller}/DeleteUser`, {
+      params: { userId },
+    });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to delete user';
   }
 };

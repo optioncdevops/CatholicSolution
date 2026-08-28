@@ -25,9 +25,8 @@ src/modules/users/
   index.ts
   pages/
     UsersListPage.tsx
-    UserDetailPage.tsx
     partials/
-      UserFormModal.tsx
+      AddUsers.tsx
   types/
     usersTypes.ts
   utils/
@@ -71,9 +70,11 @@ New wired features (organizations, products, requests, administration) follow th
 
 ## Page UX (required on every new/changed page)
 
-These are mandatory in [frontend-standards-SKILL.md](frontend-standards-SKILL.md) sections 0.7–0.9:
+These are mandatory in [frontend-standards-SKILL.md](frontend-standards-SKILL.md) sections 0.7–0.11:
 
 - **Edit id:** pass and read `location.state` (not `?id=`).
+- **Two-level routes:** `/admin/users`, `/admin/add-users`, `/admin/edit-users` — never `/admin/users/add`.
+- **Unused imports:** remove unused imports and helpers from every file you touch.
 - **Toast:** save, edit, delete, activate, deactivate, and load/save failures all use `showToast.success` / `showToast.error`.
 - **Required fields:** Save with missing required fields shows a red ERROR toast listing each `"{Label} is required."`.
 - **Placeholder:** every form control has `Enter {label}` or `Select {label}`.
