@@ -89,7 +89,7 @@ Named exports are OK for types, validators, utils, and small presentational piec
 ### 0.7 Edit identity MUST use `location.state`
 - Pass the record id (and any other edit payload) with `navigate(..., { state: { id } })`.
 - Read it with `useLocation().state`. Type the state (host `EditLocationStateParams`, or a feature type).
-- Do **not** put the edit id on the query string (`?id=`), in the path unless the URL must be shareable (detail view is OK as `/:id`), or in module context just to avoid `state`.
+- Do **not** put the edit id on the query string (`?id=`), as a third path segment (`/admin/users/edit`), or in module context just to avoid `state`.
 - Add and edit may share one form in `partials/`. Add = no state (or `id` missing). Edit = `location.state.id` present.
 
 ### 0.8 Toast on EVERY page-level action (MUST)
@@ -112,6 +112,27 @@ On every add / edit page and modal:
 - Every `InputField`, `TextareaField`, `Dropdown` (and the same for DatePicker / other form controls) MUST have a **placeholder**. Text: `Enter {label in sentence case}`. Dropdown: `Select {label in sentence case}`.
 - The **first** focusable form control MUST have `autoFocus`.
 - Tab order MUST follow visual order. Do not set `tabIndex={1}` / `{2}` / … . Do not set `tabIndex={-1}` on a field the user should tab into. Put fields in DOM order that matches the layout.
+
+### 0.10 Admin routes MUST be two levels (MUST)
+CFR Admin URLs under `/admin` are **two segments only**. Do not nest add/edit under the list path.
+
+| Page | YES | NO |
+|---|---|---|
+| List | `/admin/users` | |
+| Add | `/admin/add-users` | `/admin/users/add` |
+| Edit | `/admin/edit-users` | `/admin/users/edit` |
+
+Pattern:
+- List = `/admin/{feature}`
+- Add = `/admin/add-{feature}`
+- Edit = `/admin/edit-{feature}`
+
+Same rule for grouped screens: `/admin/administration-user-roles` is already two levels; an add page would be `/admin/add-user-roles`, not `/admin/administration-user-roles/add`.
+
+Do **not** use relative `"add"` / `"edit"` children of the list route. Pass edit identity in `location.state` (rule 0.7) on `/admin/edit-{feature}`.
+
+### 0.11 Unused imports MUST be removed
+When creating or changing any page, partial, service, type, validator, or util file, remove unused imports, unused variables, and unused types before finishing. Do not keep an import "for later". Use `import type` only for type-only symbols. If a helper is no longer called, delete it from the util file too.
 
 ---
 
@@ -242,8 +263,8 @@ modules/{feature}/
 | Types | `{feature}Types.ts` |
 | Validator | `{Feature}Validator.ts` |
 | Utils | `{feature}Helpers.ts` / `normalize{Feature}.ts` |
-| Route path | kebab-case: `customer-directory`, `system-messages` |
-| Child routes | `add` \| `new` \| `edit` \| `copy` — pick one convention per module and stay consistent |
+| Route path | Two levels under `/admin`: list `/admin/{feature}`, add `/admin/add-{feature}`, edit `/admin/edit-{feature}` |
+| Child routes | Do not nest `/add` or `/edit` under the list path |
 
 - Component names: **PascalCase**
 - Functions / files for services and utils: **camelCase**
@@ -264,7 +285,7 @@ modules/{feature}/
 9. Host router (`App.tsx` or `app/routes`) — `{feature}Routes` from the feature index
 10. `components/` — ONLY if common controls are not enough
 
-Then verify UX (section 0.7–0.9): `location.state` for edit, toast on save/edit/delete/activate/inactive, ERROR toast on required fields, placeholder on every control, `autoFocus` on the first control, natural tab order.
+Then verify UX (section 0.7–0.11): `location.state` for edit, two-level routes (`/admin/add-users`, `/admin/edit-users`), toast on save/edit/delete/activate/inactive, ERROR toast on required fields, placeholder on every control, `autoFocus` on the first control, natural tab order, unused imports removed.
 
 ---
 
@@ -428,12 +449,13 @@ import { lazy } from "react";
 import { Route } from "react-router-dom";
 
 const UsersListPage = lazy(() => import("../pages/UsersListPage"));
-const UserDetailPage = lazy(() => import("../pages/UserDetailPage"));
+const AddUsers = lazy(() => import("../pages/partials/AddUsers"));
 
 export const usersRoutes = (
   <>
     <Route path="/admin/users" element={<UsersListPage />} />
-    <Route path="/admin/users/:userId" element={<UserDetailPage />} />
+    <Route path="/admin/add-users" element={<AddUsers />} />
+    <Route path="/admin/edit-users" element={<AddUsers />} />
   </>
 );
 ```
@@ -455,16 +477,18 @@ import { usersRoutes } from "@/modules/users";
 {usersRoutes}
 ```
 
-Navigate to add:
+Navigate to add / edit — two-level paths only (rule 0.10):
 ```tsx
-navigate("add")                          // relative (preferred when already on the list)
-navigate("/admin/users")                 // absolute list
+navigate("/admin/users")
+navigate("/admin/add-users")
+navigate("/admin/edit-users", { state: { id: row.userId } })
 ```
 
-Navigate to **edit** — ALWAYS pass identity in `location.state` (never `?id=`):
+Do **not**:
 ```tsx
-navigate("edit", { state: { id: row.id } })
-navigate("/faq-details/edit", { state: { id } })
+navigate("add")
+navigate("/admin/users/add")
+navigate("/admin/users/edit", { state: { id } })
 ```
 
 Read it on the add/edit page:
@@ -473,7 +497,7 @@ const location = useLocation();
 const id = (location.state as { id?: number } | undefined)?.id;
 ```
 
-Pass edit id through `location.state`, not a query string, unless the URL must be shareable (then a detail route like `/:userId` is OK for view-only).
+Pass edit id through `location.state`, not a query string, and not a third URL segment.
 Wrap feature routes with the existing module shell (`AdminShell`, `MainLayout`, `PageShell`) the same way the host app already does.
 
 ---
@@ -592,7 +616,7 @@ const CustomerDirectory = () => {
 
   useEffect(() => {
     setPageActions(
-      <CommonButton size="xs" onClick={() => navigate("add")}>
+      <CommonButton size="xs" onClick={() => navigate("/admin/add-users")}>
         Add New Email Address
       </CommonButton>,
     );
@@ -1013,7 +1037,9 @@ Common controls live in that app's `src/app/components` (or the shared path alre
 - Do not: put add/edit JSX in the list file when it is a full form
 - Do not: use raw HTML form controls
 - Do not: put the edit id on the query string — use `location.state`
+- Do not: use a three-level add/edit path (`/admin/users/add`) — use `/admin/add-users` and `/admin/edit-users` (rule 0.10)
 - Do not: skip a toast on save, edit, delete, activate, or deactivate
+- Do not: leave unused imports, unused variables, or unused helpers (rule 0.11)
 
 **Partials (add / edit / modal)**
 - Do not: live outside `partials/`
@@ -1023,19 +1049,23 @@ Common controls live in that app's `src/app/components` (or the shared path alre
 - Do not: omit `autoFocus` on the first control
 - Do not: use positive `tabIndex` values
 - Do not: submit a required form without `handleSubmit(onValid, onInvalid)` and an ERROR toast listing missing fields
+- Do not: leave unused imports (rule 0.11)
 
 **Service**
 - Do not: showToast
 - Do not: useState / JSX
 - Do not: validation
+- Do not: leave unused imports
 
 **Validator**
 - Do not: call the API
 - Do not: use JSX
+- Do not: leave unused imports
 
 **Utils**
 - Do not: call the API
 - Do not: replace a page or a common control
+- Do not: keep helpers that nothing calls
 
 **index.ts**
 - Do not: re-export page components (breaks lazy loading)

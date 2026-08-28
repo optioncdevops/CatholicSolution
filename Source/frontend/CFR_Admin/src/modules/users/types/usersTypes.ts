@@ -1,4 +1,4 @@
-export type UserStatusValue = 'active' | 'invited' | 'deactivated';
+export type UserStatusValue = 'active' | 'inactive';
 
 export interface UsersApiItem {
   userId: number;
@@ -6,17 +6,13 @@ export interface UsersApiItem {
   lastName: string;
   fullName: string;
   eMail: string;
-  organizationId: number;
-  organizationName: string;
   roleId: number;
   roleName: string;
+  isActive: number;
+  isLocked: number;
   status: UserStatusValue;
+  dateOfBirth: string | null;
   lastActiveAt: string | null;
-}
-
-export interface OrganizationLookupItem {
-  organizationId: number;
-  name: string;
 }
 
 export interface RoleLookupItem {
@@ -24,19 +20,15 @@ export interface RoleLookupItem {
   roleName: string;
 }
 
-export interface UserLookupResult {
-  organizations: OrganizationLookupItem[];
-  roles: RoleLookupItem[];
-}
-
 export interface UsersFormValues {
   firstName: string;
   lastName: string;
   eMail: string;
   password: string;
-  organizationId: string;
   roleId: string;
-  status: 'active' | 'invited';
+  isActive: string;
+  isLocked: string;
+  dateOfBirth: string;
 }
 
 export interface SaveUserPayload {
@@ -45,7 +37,8 @@ export interface SaveUserPayload {
   lastName: string;
   eMail: string;
   password: string;
-  organizationId: number;
   roleId: number;
-  status: string;
+  isActive: number;
+  isLocked: number;
+  dateOfBirth: string | null;
 }

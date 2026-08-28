@@ -17,9 +17,9 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public int UserId { get; set; }
 
         /// <summary>
-        /// Gets or sets the target status (active or deactivated).
+        /// Gets or sets the active flag. 1 = active, 0 = inactive.
         /// </summary>
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = string.Empty;
+        [JsonPropertyName("isActive")]
+        public int IsActive { get; set; }
     }
 }

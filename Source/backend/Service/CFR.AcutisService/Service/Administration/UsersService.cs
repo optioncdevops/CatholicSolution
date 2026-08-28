@@ -45,7 +45,7 @@ namespace CFR.AcutisService.Service.Administration
         /// Retrieves one Acutis user by identifier.
         /// </summary>
         /// <remarks>
-        /// Purpose: Fetch a user for the detail page.
+        /// Purpose: Fetch a user for the edit page.
         /// Request Flow: UsersController -> UsersService.GetUserByIdAsync() -> IUsersRepository.GetUserByIdAsync().
         /// Validation Details: Identifier must be a positive integer.
         /// Business Logic: Wraps the typed record in MSResultArgs.
@@ -201,7 +201,7 @@ namespace CFR.AcutisService.Service.Administration
             var result = new MSResultArgs();
             try
             {
-                if (input == null || input.UserId <= 0 || string.IsNullOrWhiteSpace(input.Status))
+                if (input == null || input.UserId <= 0 || (input.IsActive != 0 && input.IsActive != 1))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
@@ -221,5 +221,46 @@ namespace CFR.AcutisService.Service.Administration
         }
 
         #endregion PUT Methods
+
+        #region DELETE Methods
+
+        /// <summary>
+        /// Soft-deletes an Acutis user.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Remove a user.
+        /// Request Flow: UsersController -> UsersService.DeleteUserAsync() -> IUsersRepository.DeleteUserAsync().
+        /// Validation Details: Identifier must be a positive integer.
+        /// Business Logic: Delegates delete to the repository and wraps the scalar result.
+        /// Repository Interaction: Calls IUsersRepository.DeleteUserAsync().
+        /// Response Details: MSResultArgs containing the deletion outcome.
+        /// </remarks>
+        /// <param name="userId">User identifier.</param>
+        /// <returns>MSResultArgs containing the deletion outcome.</returns>
+        public async Task<MSResultArgs> DeleteUserAsync(int userId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (userId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                result.ResultData = await repository.DeleteUserAsync(userId);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.DeleteUserFailed, userId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        #endregion DELETE Methods
     }
 }
