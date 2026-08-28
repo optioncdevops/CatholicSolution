@@ -20,7 +20,6 @@ namespace CFR.Acutis
             // To access the files in web Browsers
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
             services.AddTransient<IAcutisJwtTokenGenerator, AcutisJwtTokenGenerator>();
             services.AddScoped<IDapperHandler, DapperHandler>();
 
