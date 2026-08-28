@@ -33,6 +33,10 @@ namespace CFR.Acutis
                 new(JwtRegisteredClaimNames.Email, EncryptionHelper.EncryptValue(user.EMail ?? string.Empty)),
                 new(JwtRegisteredClaimNames.Sub, EncryptionHelper.EncryptValue(user.UserId.ToString())),
                 new(JwtRegisteredClaimNames.Name, EncryptionHelper.EncryptValue(user.FullName ?? string.Empty)),
+                new(Constant.SessionField.UserId, user.UserId.ToString()),
+                new(Constant.SessionField.UserName, user.EMail ?? string.Empty),
+                new(Constant.SessionField.FirstName, user.FirstName ?? string.Empty),
+                new(Constant.SessionField.LastName, user.LastName ?? string.Empty),
                 new(Constant.SessionField.RoleId, user.RoleId.ToString())
             };
 

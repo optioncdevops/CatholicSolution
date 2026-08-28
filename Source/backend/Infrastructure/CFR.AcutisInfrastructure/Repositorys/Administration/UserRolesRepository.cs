@@ -7,7 +7,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
     /// Infrastructure Responsibility:
     /// - Uses IDapperHandler to execute stored procedures and map results to UserRolesOutput.
     /// </summary>
-    public class UserRolesRepository(IDapperHandler dapperHandler): IUserRolesRepository
+    public class UserRolesRepository(IDapperHandler dapperHandler, ICurrentUserService currentUserService): IUserRolesRepository
     {
         #region GET Methods
 
@@ -79,6 +79,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.AdministrationParams.RoleName, input.RoleName, DbType.String);
             parameters.Add(DBParameterName.AdministrationParams.Description, input.Description, DbType.String);
             parameters.Add(DBParameterName.AdministrationParams.Status, input.Status, DbType.String);
+            parameters.Add(DBParameterName.AdministrationParams.InsertedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.AdministrationParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Administration.UserRolesCrud, parameters, CommandType.StoredProcedure);
             return parameters.Get<int>(DBParameterName.AdministrationParams.ReturnValue);
@@ -108,6 +109,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.AdministrationParams.ActionId, 2, DbType.Int32);
             parameters.Add(DBParameterName.AdministrationParams.RoleId, input.RoleId, DbType.Int32);
             parameters.Add(DBParameterName.AdministrationParams.Status, input.Status, DbType.String);
+            parameters.Add(DBParameterName.AdministrationParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.AdministrationParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Administration.UserRolesCrud, parameters, CommandType.StoredProcedure);
             return parameters.Get<int>(DBParameterName.AdministrationParams.ReturnValue);
@@ -135,6 +137,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.AdministrationParams.ActionId, 5, DbType.Int32);
             parameters.Add(DBParameterName.AdministrationParams.RoleId, roleId, DbType.Int32);
+            parameters.Add(DBParameterName.AdministrationParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.AdministrationParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Administration.UserRolesCrud, parameters, CommandType.StoredProcedure);
             return parameters.Get<int>(DBParameterName.AdministrationParams.ReturnValue);

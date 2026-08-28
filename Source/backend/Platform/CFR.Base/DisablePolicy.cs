@@ -6,7 +6,11 @@ public class DisableAuthenticationPolicyEvaluator : IPolicyEvaluator
 {
     public async Task<AuthenticateResult> AuthenticateAsync(AuthorizationPolicy policy, HttpContext context)
     {
-        // Always pass authentication.
+        if (context.User?.Identity?.IsAuthenticated == true)
+        {
+            return await Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(context.User, JwtBearerDefaults.AuthenticationScheme)));
+        }
+
         var authenticationTicket = new AuthenticationTicket(new ClaimsPrincipal(), new AuthenticationProperties(), JwtBearerDefaults.AuthenticationScheme);
         return await Task.FromResult(AuthenticateResult.Success(authenticationTicket));
     }
