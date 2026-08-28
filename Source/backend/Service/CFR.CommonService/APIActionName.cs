@@ -24,5 +24,22 @@ namespace CFR.CommonService
         {
             public const string userAuthenticateAsync = nameof(userAuthenticateAsync);
         }
+
+        public static class API_Acutis
+        {
+            public static class AcutisAuthentication
+            {
+                public const string LoginAuthentication = nameof(LoginAuthentication);
+            }
+        }
+
+        public static class API_Administration
+        {
+            public const string GetUsers = nameof(GetUsers);
+            public const string GetUserById = nameof(GetUserById);
+            public const string GetUserLookups = nameof(GetUserLookups);
+            public const string SaveUser = nameof(SaveUser);
+            public const string UpdateUserStatus = nameof(UpdateUserStatus);
+        }
     }
 }

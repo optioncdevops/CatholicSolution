@@ -1,0 +1,17 @@
+{
+  "SMTPMailConfig": {
+    "SendMailFlag": "1",
+    "SMTPServer": "smtp.gmail.com",
+    "SMTPPort": "587",
+    "DisplayName": "OptionC",
+    "MUserName": "levinjose6371@gmail.com",
+    "MPassword": "yitnkxshdijrngxe",
+    "IsSSLEnabled": "1",
+    "ContactUsMailId": "",
+    "CCMailId": "",
+    "LoginURL": "https://devsms.allnewoptionc.com"
+  },
+  "ApplicationFilePath": {
+    "Doc_BasePath": "D:\\Project\\OptionC_CFR\\Source\\backend\\Microservices\\CFR.Acutis\\wwwroot"
+  }
+}

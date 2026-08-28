@@ -2,30 +2,16 @@ import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentT
 import { createPortal } from 'react-dom';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  Bell, Building2, ChevronDown, ClipboardList, Mail, Package, Receipt, Settings, ShieldCheck, Sparkles, UserCog, Users,
+  Bell, ChevronDown, Settings,
 } from 'lucide-react';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { ProfileMenu } from '@shared/app/components/ProfileMenu';
+import { ACUTIS_AUTH_CHANGED_EVENT } from '@shared/auth/constants/storageKeys';
+import { getStoredAcutisAuth } from '@shared/auth/services/authService';
+import { resolveMenuIcon, splitAdminMenus, toDropdownItems } from '@shared/auth/utils/menuHelpers';
 import '../theme.css';
 import '../admin.css';
-
-const NAV_ITEMS = [
-  { to: '/admin', label: 'Dashboard', icon: Sparkles, end: true },
-  { to: '/admin/applications', label: 'Products', icon: Package },
-  { to: '/admin/organizations', label: 'Organizations', icon: Building2 },
-  { to: '/admin/users', label: 'Users', icon: Users },
-  { to: '/admin/requests', label: 'Requests', icon: ClipboardList },
-];
-
-const ADMINISTRATION_ITEMS = [
-  { to: '/admin/administration/user-roles', label: 'User Roles', icon: UserCog },
-  { to: '/admin/administration/rights', label: 'Rights', icon: ShieldCheck },
-  { to: '/admin/administration/email-templates', label: 'Email Template', icon: Mail },
-  { to: '/admin/administration/invoice-items', label: 'License Items', icon: Receipt },
-  // Component library (Add/View) pages intentionally have no nav entry — reach them by direct
-  // URL only. Routes still live in App.tsx; see the removal note atop SampleAddPage.tsx.
-];
 
 const CONTAINER = 'mx-auto w-[95%]';
 
@@ -147,6 +133,22 @@ function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon:
 }
 
 export function AdminShell() {
+  const [menuItems, setMenuItems] = useState(() => getStoredAcutisAuth()?.resultData?.menuItems ?? []);
+
+  useEffect(() => {
+    const refresh = () => setMenuItems(getStoredAcutisAuth()?.resultData?.menuItems ?? []);
+    window.addEventListener(ACUTIS_AUTH_CHANGED_EVENT, refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener(ACUTIS_AUTH_CHANGED_EVENT, refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
+
+  const { topItems, administration } = splitAdminMenus(menuItems);
+  const administrationItems = toDropdownItems(administration?.links);
+  const AdministrationIcon = resolveMenuIcon(administration?.icon);
+
   return (
     <div className="admin-shell-bg flex min-h-screen flex-col text-[var(--text-primary)]">
       <div className="admin-top-accent" aria-hidden="true" />
@@ -169,18 +171,23 @@ export function AdminShell() {
 
         <div className="admin-nav-strip">
           <nav aria-label="Admin navigation" className={`admin-nav-scroll flex items-center overflow-x-auto ${CONTAINER}`}>
-            {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) => `admin-nav-item ${isActive ? 'admin-nav-item--active' : ''}`}
-              >
-                <Icon size={14} />
-                <span>{label}</span>
-              </NavLink>
-            ))}
-            <NavDropdown label="Administration" icon={Settings} items={ADMINISTRATION_ITEMS} />
+            {topItems.map((item) => {
+              const Icon = resolveMenuIcon(item.icon);
+              return (
+                <NavLink
+                  key={item.sessionKey || item.path}
+                  to={item.path || '/admin'}
+                  end={item.path === '/admin'}
+                  className={({ isActive }) => `admin-nav-item ${isActive ? 'admin-nav-item--active' : ''}`}
+                >
+                  <Icon size={14} />
+                  <span>{item.title}</span>
+                </NavLink>
+              );
+            })}
+            {administrationItems.length > 0 ? (
+              <NavDropdown label={administration?.title || 'Administration'} icon={AdministrationIcon || Settings} items={administrationItems} />
+            ) : null}
           </nav>
         </div>
       </header>

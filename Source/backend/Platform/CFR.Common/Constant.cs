@@ -49,16 +49,17 @@ namespace CFR.Common
             /// Acutis Portal
             /// </summary>
 
-            public const string AcutisDocs = "Acutis.Organization,Acutis.Reports";
-            public const string AcutisOrganization = "Acutis.Organization";
-
-
+            public const string CFRAcutisDocs = "CFRAcutis.Authentication,CFRAcutis.Administration,CFRAcutis.Organization,CFRAcutis.Product";
+            public const string CFRAcutis = "CFRAcutis";
+            public const string CFRAcutisAuthentication = "CFRAcutis.Authentication";
+            public const string CFRAcutisAdministration = "CFRAcutis.Administration";
+            public const string CFRAcutisOrganization = "CFRAcutis.Organization";
+            public const string CFRAcutisProduct = "CFRAcutis.Product";
 
             /// <summary>
-            /// Portal 
+            /// Portal
             /// </summary>
             public const string PortalDocs = "Portal.Organization,Portal.Reports";
-
         }
 
         public static class SwaggerDocs

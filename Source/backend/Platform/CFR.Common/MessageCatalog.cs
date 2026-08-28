@@ -22,6 +22,8 @@ namespace CFR.Common
         public const int InValidToken = 207;
         public const int CustomMessage = 102;
         public const int BadRequest = 400;
+        public const int UnAuthorized = 401;
+        public const int Conflict = 409;
         public const int InternalServerError = 500;
     }
 
@@ -36,6 +38,11 @@ namespace CFR.Common
         public const string DeleteSuccess = "Deleted successfully.";
         public const string DeleteFailed = "Delete failed.";
         public const string InternalServerError = "An internal server error occurred.";
+        public const string InvalidLogin = "Invalid email or password.";
+        public const string ExistUser = "A user with this email already exists.";
+        public const string Failed = "The request could not be completed.";
+        public const string BadRequest = "Invalid request.";
+        public const string UnAuthorized = "Unauthorized.";
     }
 
     public static class SerilogErrorMessages
@@ -43,6 +50,12 @@ namespace CFR.Common
         public static class AcutisLogMessages
         {
             public const string GetSteps = "Failed to get";
+            public const string LoginAuthenticationFailed = "Error while authenticating Acutis login for {UserName}";
+            public const string FetchUsersFailed = "Error while fetching Acutis users";
+            public const string FetchUserByIdFailed = "Error while fetching Acutis user {UserId}";
+            public const string SaveUserFailed = "Error while saving Acutis user";
+            public const string UpdateUserStatusFailed = "Error while updating Acutis user status for {UserId}";
+            public const string FetchUserLookupsFailed = "Error while fetching Acutis user lookups";
         }
     }
 }

@@ -23,7 +23,7 @@ internal static class GatewaySwaggerUi
 
         options.SwaggerEndpoint("/swagger/APIGateway/swagger.json", SwaggerModuleDoc.OptionCBGateway);
 
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:AcutisEnabled", configKey: "Gateway:AcutisPathPrefix", defaultPrefix: "/acutis", docs: SwaggerModuleDoc.AcutisDocs, labelPrefix: "Acutis");
+        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:AcutisEnabled", configKey: "Gateway:AcutisPathPrefix", defaultPrefix: "/acutis", docs: SwaggerModuleDoc.CFRAcutisDocs, labelPrefix: "Acutis");
         RegisterIfEnabled(options, configuration, enabledKey: "Gateway:PortalEnabled", configKey: "Gateway:PortalPathPrefix", defaultPrefix: "/portal", docs: SwaggerModuleDoc.PortalDocs, labelPrefix: "Portal");
 
         options.DocumentTitle = SwaggerModuleDoc.OptionCBGateway;

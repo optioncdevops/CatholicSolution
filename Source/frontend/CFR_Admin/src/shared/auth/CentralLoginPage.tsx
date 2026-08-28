@@ -11,9 +11,8 @@ function isAbsolute(value: string) {
   return /^https?:\/\//i.test(value);
 }
 
-const DEMO_EMAIL = 'carl.lapp@optionc.com';
-const DEMO_PASSWORD = 'demo1234';
-const SIGN_IN_SIMULATED_DELAY_MS = 550;
+const DEMO_EMAIL = 'priya.nair@cfracutis.org';
+const DEMO_PASSWORD = 'password';
 
 /**
  * cfr-admin's own `/login` route. This project is the Super Admin console only — it never
@@ -33,8 +32,8 @@ export function CentralLoginPage() {
   const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [interactiveSignInCompleted, setInteractiveSignInCompleted] = useState(false);
-  const [email, setEmail] = useState(environment.authMode === 'mock' ? DEMO_EMAIL : '');
-  const [password, setPassword] = useState(environment.authMode === 'mock' ? DEMO_PASSWORD : '');
+  const [email, setEmail] = useState(import.meta.env.DEV ? DEMO_EMAIL : '');
+  const [password, setPassword] = useState(import.meta.env.DEV ? DEMO_PASSWORD : '');
 
   // The mock auth provider always succeeds, so this simulates real validation/invalid-credential/
   // loading states locally without touching AuthProvider's contract.
@@ -90,17 +89,14 @@ export function CentralLoginPage() {
     setFieldErrors({});
 
     setSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, SIGN_IN_SIMULATED_DELAY_MS));
-
-    if (environment.authMode === 'mock' && (email.trim() !== DEMO_EMAIL || password !== DEMO_PASSWORD)) {
-      setSubmitting(false);
-      setFormError('Invalid email or password. Check your credentials and try again.');
+    try {
+      await completeSignIn();
+    } catch (error) {
+      setFormError(typeof error === 'string' ? error : 'Invalid email or password. Check your credentials and try again.');
       passwordRef.current?.focus();
-      return;
+    } finally {
+      setSubmitting(false);
     }
-
-    await completeSignIn();
-    setSubmitting(false);
   };
 
   return (
