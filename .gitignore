@@ -7,6 +7,7 @@
 /Source/backend/CatholicSolution/.vs
 /Source/backend/CatholicSolution/obj
 /Source/backend/Gateway/CFR.Gateway/obj
+**/dataprotection-keys/
 /Source/backend/Infrastructure/CFR.AcutisInfrastructure/obj
 /Source/backend/Infrastructure/CFR.PortalInfrastructure/obj
 /Source/backend/Microservices/CFR.Acutis/obj

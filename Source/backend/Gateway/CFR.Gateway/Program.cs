@@ -2,7 +2,6 @@
 
 using CFR.Base;
 using CFR.Gateway;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Scalar.AspNetCore;
 
@@ -10,12 +9,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Load configuration using the helper
 builder.Configuration.AddCustomConfiguration(); // Uses the extension
-
-// Persist DataProtection keys (IIS app pools often have no user profile / HKLM access).
-string dataProtectionKeysPath = Path.Combine(builder.Environment.ContentRootPath, "dataprotection-keys");
-Directory.CreateDirectory(dataProtectionKeysPath);
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
 
 // Avoid StaticFiles warning when wwwroot is missing under IIS.
 string webRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
