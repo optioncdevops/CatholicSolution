@@ -77,6 +77,16 @@ namespace CFR.AcutisInfrastructure
             /// Stored procedure output / return value.
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);
+
+            /// <summary>
+            /// Role display name.
+            /// </summary>
+            public const string RoleName = nameof(RoleName);
+
+            /// <summary>
+            /// Role description.
+            /// </summary>
+            public const string Description = nameof(Description);
         }
     }
 }

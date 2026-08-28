@@ -1,6 +1,6 @@
 /**
  * Shared Tailwind class fragments for form controls, built on the theme tokens in
- * `modules/admin/theme.css`. Centralized here so every control (input, select, textarea)
+ * `modules/theme.css`. Centralized here so every control (input, select, textarea)
  * stays visually consistent without repeating the same arbitrary-value classes everywhere.
  */
 export const CONTROL_BASE =

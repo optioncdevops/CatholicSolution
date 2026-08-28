@@ -40,6 +40,8 @@ namespace CFR.Common
         public const string InternalServerError = "An internal server error occurred.";
         public const string InvalidLogin = "Invalid email or password.";
         public const string ExistUser = "A user with this email already exists.";
+        public const string ExistRole = "A role with this name already exists.";
+        public const string RoleInUse = "This role is assigned to one or more users.";
         public const string Failed = "The request could not be completed.";
         public const string BadRequest = "Invalid request.";
         public const string UnAuthorized = "Unauthorized.";
@@ -56,6 +58,11 @@ namespace CFR.Common
             public const string SaveUserFailed = "Error while saving Acutis user";
             public const string UpdateUserStatusFailed = "Error while updating Acutis user status for {UserId}";
             public const string FetchUserLookupsFailed = "Error while fetching Acutis user lookups";
+            public const string FetchUserRolesFailed = "Error while fetching Acutis user roles";
+            public const string FetchUserRoleByIdFailed = "Error while fetching Acutis user role {RoleId}";
+            public const string SaveUserRoleFailed = "Error while saving Acutis user role";
+            public const string UpdateUserRoleStatusFailed = "Error while updating Acutis user role status for {RoleId}";
+            public const string DeleteUserRoleFailed = "Error while deleting Acutis user role {RoleId}";
         }
     }
 }

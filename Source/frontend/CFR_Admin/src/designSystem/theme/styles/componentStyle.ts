@@ -6,7 +6,7 @@ import { cn } from "@app/utilities/cn";
  * This is an adapted port of the reference project's `componentStyle.ts` — same exported
  * symbol names (so the ported files require no call-site changes), but every class value
  * is rebuilt on top of CFR_Admin's own CSS-custom-property design tokens
- * (`modules/admin/theme.css`, `shared/designSystem/styles.css`) and Tailwind v4 arbitrary
+ * (`modules/theme.css`, `shared/designSystem/styles.css`) and Tailwind v4 arbitrary
  * values, instead of the reference project's foreign Tailwind color scale
  * (`primary-800`, `analyze-500`, `danger-400`, ...). Only the symbols actually consumed
  * by the ported dataTable/formControls/tab/treeView/tooltip/modal/common code are kept.
