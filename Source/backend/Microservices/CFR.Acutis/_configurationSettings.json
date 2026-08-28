@@ -10,8 +10,5 @@
     "ContactUsMailId": "",
     "CCMailId": "",
     "LoginURL": "https://devsms.allnewoptionc.com"
-  },
-  "ApplicationFilePath": {
-    "Doc_BasePath": "D:\\Project\\OptionC_CFR\\Source\\backend\\Microservices\\CFR.Acutis\\wwwroot"
   }
 }
