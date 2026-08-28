@@ -1,7 +1,7 @@
 /**
  * Adapted port of the reference project's `buttonComponentStyle.ts` — same exported
  * symbol names, values rebuilt on CFR_Admin's own CSS-custom-property tokens
- * (`modules/admin/theme.css`, `shared/designSystem/styles.css`) instead of the reference
+ * (`modules/theme.css`, `shared/designSystem/styles.css`) instead of the reference
  * project's foreign Tailwind color scale.
  */
 

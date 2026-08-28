@@ -4,10 +4,10 @@ Canonical feature folder layout for CFR frontends. The agent checklist is [front
 
 ## Rule
 
-`modules/{module}/{feature}/` owns the feature. Do not put `pages`, `services`, `types`, `validator`, or `routes` on the module root.
+`modules/{feature}/` owns the feature. Features live **directly** under `src/modules/` — do not wrap them in an `admin` folder. Do not put `pages`, `services`, `types`, `validator`, or `routes` on the `src/modules/` root.
 
 ```
-src/modules/{module}/{feature}/
+src/modules/{feature}/
   index.ts              barrel — export routes (+ types, services, utils, validator)
   pages/                list and detail (not inside partials)
     partials/           add / edit / modal
@@ -21,7 +21,7 @@ src/modules/{module}/{feature}/
 ## CFR Admin — Users
 
 ```
-src/modules/admin/users/
+src/modules/users/
   index.ts
   pages/
     UsersListPage.tsx
@@ -40,24 +40,31 @@ src/modules/admin/users/
     index.tsx
 ```
 
+Grouped screens (example — User Roles under Administration):
+
+```
+src/modules/administration/userRoles/
+```
+
 Host router (`src/App.tsx`) imports the feature barrel:
 
 ```ts
-import { usersRoutes } from '@/modules/admin/users';
+import { usersRoutes } from '@/modules/users';
 ```
 
 Then renders `{usersRoutes}` inside the protected admin shell.
 
 `index.ts` must not re-export page components (that would skip lazy loading). `routes/index.tsx` lazy-imports the pages.
 
-## Shared module files (not a feature)
+## Shared files (not a feature)
 
-These stay on the module root:
+These stay on `src/modules/` root:
 
 - `components/AdminShell.tsx`
 - `AdminDataContext.tsx`
 - `lib/confirm.ts`
 - `utils/formatDate.ts` (shared date helper)
-- theme / css
+- theme / css (`theme.css`, `admin.css`)
+- `DashboardPage.tsx`
 
-New wired features (organizations, products, requests, administration) follow the same `{feature}/` tree as Users.
+New wired features (organizations, products, requests, administration) follow the same `{feature}/` tree as Users, at `src/modules/{feature}/`.

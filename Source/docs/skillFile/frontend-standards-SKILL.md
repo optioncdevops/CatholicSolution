@@ -1,13 +1,13 @@
 ---
 name: frontend-standards
-description: React + TypeScript frontend module coding standards (list page, then partials, then service, then backend API) using feature folders under modules/{module}/{feature} (pages, types, utils, validator, services, routes, index.ts), shared component library, react-hook-form validators, axios services, and //#region blocks. Use this skill whenever creating, changing, or reviewing ANY frontend page, module, screen, form, table, modal, route, service, type, or validator — even if the user only says "add a page", "new screen", "build a form", "add a module", or "wire this to the API".
+description: React + TypeScript frontend module coding standards (list page, then partials, then service, then backend API) using feature folders under modules/{feature} (pages, types, utils, validator, services, routes, index.ts), shared component library, react-hook-form validators, axios services, and //#region blocks. Use this skill whenever creating, changing, or reviewing ANY frontend page, module, screen, form, table, modal, route, service, type, or validator — even if the user only says "add a page", "new screen", "build a form", "add a module", or "wire this to the API".
 ---
 
 # Frontend Coding Standards
 
 Use this file as the checklist when adding or changing any module page.
 Folder layout reference: [frontend-standards.md](frontend-standards.md).
-Example feature used throughout: **Users** under `modules/admin/users`. Replace `Users` / `users` with the real feature name, and `{module}` with the real module (product area) name (for CFR Admin that is `admin`).
+Example feature used throughout: **Users** under `modules/users`. Replace `Users` / `users` with the real feature name. CFR Admin features live **directly** under `src/modules/` (`users`, `administration`, `organizations`) — there is no wrapping `admin` folder.
 
 Every new feature follows:
 ```
@@ -30,9 +30,9 @@ Before writing any code, open one existing, recently-built feature in the app an
 
 ## 0. RULES THAT NEVER CHANGE
 
-### 0.1 Every feature MUST have these folders (under the module)
+### 0.1 Every feature MUST have these folders (under `src/modules/`)
 ```
-src/modules/{module}/{feature}/
+src/modules/{feature}/
   pages/
   types/
   utils/
@@ -41,10 +41,12 @@ src/modules/{module}/{feature}/
   routes/
   index.ts
 ```
-Example: `src/modules/admin/users/` with those six folders plus one `index.ts`.
+Example: `src/modules/users/` with those six folders plus one `index.ts`.
+Grouped screens (User Roles) live at `src/modules/administration/userRoles/`.
 Create all six even if `utils` starts with one small helper file.
 Do not skip `types` or `validator` and put interfaces / rules inside the page.
-Do not put `pages` / `services` / `types` at the module root (`modules/admin/pages`). They belong inside the feature folder.
+Do not put `pages` / `services` / `types` on the `src/modules/` root (`modules/pages`). They belong inside the feature folder.
+Do not wrap features in `modules/admin/` — that folder was removed.
 
 ### 0.2 components/ is OPTIONAL
 Add module components ONLY when the UI cannot be built from the app's shared controls (form controls, buttons, data table, modal, card).
@@ -108,7 +110,7 @@ src/
     routes/              AppNavigator — registers every module routes file
     hooks/               useAuth and other app-wide hooks
   modules/
-    {module}/            one folder per product area
+    {feature}/           one folder per feature (users, administration, …)
   designSystem/          theme, MainLayout, top navbar — do not put feature UI here
 ```
 
@@ -122,19 +124,19 @@ Path aliases (from `tsconfig`):
 
 - Import common UI from `@app/components/...`
 - Import the current feature with relative paths (`../services`, `../types`)
-- Import another feature/module with `@modules/{module}/{feature}` or the feature `index.ts`
+- Import another feature/module with `@modules/{feature}` or the feature `index.ts`
 - App / host router imports `{feature}Routes` from the feature `index.ts`
 
 ---
 
 ## 2. MODULE FOLDER LAYOUT
 
-A **module** is the product area (`admin`). A **feature** is one screen group inside it (`users`).
-Shared module chrome (shell, theme, confirm helper) stays on the module root. Feature code does **not**.
+A **feature** is one screen group (`users`, `organizations`, `administration`). Features live **directly** under `src/modules/` — there is no wrapping `admin` folder.
+Shared chrome (shell, theme, confirm helper) stays on `src/modules/` root. Feature code does **not**.
 
 ```
-src/modules/{module}/
-  {feature}/                          REQUIRED — one folder per feature
+src/modules/
+  {feature}/                          REQUIRED — one folder per feature (users, organizations, …)
     index.ts                          REQUIRED — barrel: export routes (+ types/services/utils/validator)
     pages/                            REQUIRED
       {Feature}ListPage.tsx           LIST PAGE — not inside partials
@@ -159,24 +161,23 @@ src/modules/{module}/
 
 **CFR Admin example — Users:**
 ```
-modules/admin/
-  users/
-    index.ts
-    pages/
-      UsersListPage.tsx
-      UserDetailPage.tsx
-      partials/
-        UserFormModal.tsx
-    types/usersTypes.ts
-    utils/usersHelpers.ts
-    validator/UsersValidator.ts
-    services/usersService.ts
-    routes/index.tsx
+modules/users/
+  index.ts
+  pages/
+    UsersListPage.tsx
+    UserDetailPage.tsx
+    partials/
+      UserFormModal.tsx
+  types/usersTypes.ts
+  utils/usersHelpers.ts
+  validator/UsersValidator.ts
+  services/usersService.ts
+  routes/index.tsx
 ```
 
 **Example — list with an add/edit page:**
 ```
-modules/{module}/{feature}/
+modules/{feature}/
   index.ts
   pages/
     {Feature}ListPage.tsx
@@ -191,8 +192,9 @@ modules/{module}/{feature}/
 ```
 
 **WRONG:**
-- `modules/admin/pages/users/` plus `modules/admin/services/` (feature folders split across the module root)
-- `{Feature}ListPage.tsx` sitting directly in `modules/admin/users/` with no `pages/` folder
+- `modules/admin/users/` (do not wrap features in an `admin` folder)
+- `modules/pages/users/` plus `modules/services/` (feature folders split across the modules root)
+- `{Feature}ListPage.tsx` sitting directly in `modules/users/` with no `pages/` folder
 - `UserFormModal.tsx` sitting next to the list page (not in `partials/`)
 - types defined inside the page
 - validation rules written inline on `InputField` with no validator file
@@ -239,7 +241,7 @@ modules/{module}/{feature}/
 
 ## 5. TYPES
 
-File: `modules/{module}/{feature}/types/{feature}Types.ts`
+File: `modules/{feature}/types/{feature}Types.ts`
 
 Put: API row shape from `resultData`, form values for react-hook-form, `defaultValues` constant (or keep `defaultValues` in the validator — pick one place).
 Do not: declare interfaces inside the page, or use `any` for `resultData` — cast to the type from this file.
@@ -266,7 +268,7 @@ import type { ApiResponse, ApiError, DropdownOption, RadioOption } from "@app/pa
 
 ## 6. VALIDATOR
 
-File: `modules/{module}/{feature}/validator/{Feature}Validator.ts`
+File: `modules/{feature}/validator/{Feature}Validator.ts`
 
 Always import `FIELD_REQUIRED` from `@app/validation/validationMessages`.
 Export a rules object used by `InputField` / `Dropdown` / `DatePicker` via `rules={...}`.
@@ -300,7 +302,7 @@ Do not put validator logic inside the service.
 
 ## 7. SERVICE
 
-File: `modules/{module}/{feature}/services/{feature}Service.ts`
+File: `modules/{feature}/services/{feature}Service.ts`
 
 Rules:
 - Use `axiosInstance` from `@app/config/AxiosInstance`
@@ -359,7 +361,7 @@ Do not hard-code the API host; `AxiosInstance` already has the base URL from env
 
 ## 8. UTILS
 
-File: `modules/{module}/{feature}/utils/{feature}Helpers.ts`
+File: `modules/{feature}/utils/{feature}Helpers.ts`
 
 Use utils for: normalizing nested API payloads into a flat UI row; date / phone / URL formatting specific to this feature; column builders that would make the list page too long; mapping `resultData` to `DropdownOption[]`.
 
@@ -381,7 +383,7 @@ export const normalizeCustomerDirectoryList = (resultData: unknown): CustomerDir
 
 ## 9. ROUTES
 
-File: `modules/{module}/{feature}/routes/index.tsx`
+File: `modules/{feature}/routes/index.tsx`
 
 List and detail/add/edit routes live in the feature. Lazy-load pages here. Export `{feature}Routes` from `{feature}/index.ts`.
 
@@ -412,7 +414,7 @@ Do not re-export pages from `index.ts` (that would break lazy loading). Routes a
 
 Register in the host router (`src/App.tsx` or `src/app/routes/index.tsx`):
 ```tsx
-import { usersRoutes } from "@/modules/admin/users";
+import { usersRoutes } from "@/modules/users";
 // inside the protected layout:
 {usersRoutes}
 ```
@@ -875,12 +877,12 @@ Always clear `setPageActions` on unmount so the next page does not keep the butt
 
 ## 16. OPTIONAL module/components
 
-Create `modules/{module}/{feature}/components/` only when:
+Create `modules/{feature}/components/` only when:
 - The piece is reused by two or more pages in that feature
 - AND it is not a list / add / modal (those stay under `{feature}/pages/partials`)
 - AND app common controls cannot do the job
 
-Module-level `modules/{module}/components/` is only for shell chrome shared across features (e.g. `AdminShell`).
+`src/modules/components/` is only for shell chrome shared across features (e.g. `AdminShell`).
 
 Belongs in `components/`: shared tab panels, detail-tab wrappers reused across pages.
 Belongs in `{feature}/pages/partials/` (not components/): `Add{Feature}.tsx`, `{Feature}Modal.tsx`, `{Feature}FormPage.tsx`, `{Feature}Table.tsx`, feature filter bars.
@@ -914,7 +916,7 @@ Do not use `window.alert` or `window.confirm`.
 
 ## 19. MULTIPLE FRONTEND APPS
 
-When the workspace has several frontend apps, the same folders and rules apply to every app. Nest under `modules/{module}/{feature}/` — still needs:
+When the workspace has several frontend apps, the same folders and rules apply to every app. Nest under `modules/{feature}/` — still needs:
 ```
 index.ts
 pages/          list / detail outside partials
@@ -965,7 +967,7 @@ Common controls live in that app's `src/app/components` (or the shared path alre
 ## 21. QUICK COPY TREE FOR A NEW FEATURE
 
 ```
-src/modules/{module}/{feature}/
+src/modules/{feature}/
   index.ts
   pages/
     {Feature}ListPage.tsx                   LIST + #region
