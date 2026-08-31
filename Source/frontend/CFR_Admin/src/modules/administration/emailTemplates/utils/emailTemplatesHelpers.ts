@@ -34,6 +34,19 @@ export const renderSample = (templateCode: string, text: string): string => {
   return text.replace(/\[(\w+)\]/g, (match, key: string) => values[key] ?? match);
 };
 
+// Flags any [Token] in the subject/body that isn't one of this template's known merge tags —
+// SMTPMailService.FormatMailContent leaves unknown tokens untouched, so they'd reach the recipient literally.
+export const getUnsupportedPlaceholders = (templateCode: string, subject: string, body: string): string[] => {
+  const allowed = new Set((EMAIL_TEMPLATE_VARIABLES[templateCode] ?? []).map((variable) => variable.token));
+  const found = new Set<string>();
+  for (const text of [subject, body]) {
+    for (const match of text.match(/\[\w+\]/g) ?? []) {
+      if (!allowed.has(match)) found.add(match);
+    }
+  }
+  return Array.from(found);
+};
+
 export const normalizeEmailTemplatesList = (resultData: unknown): EmailTemplateApiItem[] => {
   if (!Array.isArray(resultData)) return [];
   return resultData as EmailTemplateApiItem[];

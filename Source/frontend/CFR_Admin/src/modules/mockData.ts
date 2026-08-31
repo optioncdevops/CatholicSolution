@@ -1,5 +1,5 @@
 import type {
-  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, License, LicenseStatus, InvoiceItem, Organization,
+  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, License, LicenseStatus, Organization,
 } from './types';
 
 export const MOCK_ROLES: AdminRole[] = [
@@ -321,64 +321,3 @@ function seededLicenses(): License[] {
 }
 
 export const MOCK_LICENSES: License[] = seededLicenses();
-
-// ── Masters (reference data) ────────────────────────────────────────
-// A single master: the catalog of billable line items offered when creating a license.
-
-export const MOCK_INVOICE_ITEMS: InvoiceItem[] = [
-  // OptionC School
-  { id: 'item-legacy-migration', title: 'Legacy data migration (retired)', description: 'One-time migration from a discontinued legacy system.', defaultAmount: 299, active: false, appId: 'optionc-school' },
-  { id: 'item-optionc-sis-import', title: 'Student Records Import', description: 'Bulk import of existing student and enrollment records.', defaultAmount: 349, active: true, appId: 'optionc-school' },
-  { id: 'item-optionc-parent-portal', title: 'Parent Portal Setup', description: 'One-time configuration of the parent portal for a new school year.', defaultAmount: 129, active: true, appId: 'optionc-school' },
-  { id: 'item-optionc-gradebook-training', title: 'Gradebook Training Session', description: 'Live training for staff on gradebook and report card workflows.', defaultAmount: 99, active: true, appId: 'optionc-school' },
-  { id: 'item-optionc-report-cards', title: 'Report Card Printing Service', description: 'Bulk printing and mailing of report cards each term.', defaultAmount: 179, active: true, appId: 'optionc-school' },
-
-  // Parish Hub
-  { id: 'item-subscription', title: 'Subscription fee', description: 'Recurring monthly or annual product subscription charge.', defaultAmount: 249, active: true, appId: 'optionc-parish' },
-  { id: 'item-parish-branding', title: 'Custom Branding Package', description: 'Parish-specific logo, color theme, and certificate templates.', defaultAmount: 129, active: true, appId: 'optionc-parish' },
-  { id: 'item-parish-sacrament-cert', title: 'Sacrament Certificate Pack', description: 'Printed certificate stock for baptism, confirmation, and marriage records.', defaultAmount: 59, active: true, appId: 'optionc-parish' },
-  { id: 'item-parish-mass-intentions', title: 'Mass Intention Scheduling Add-on', description: 'Extended intention scheduling with bulletin export.', defaultAmount: 69, active: true, appId: 'optionc-parish' },
-  { id: 'item-parish-family-import', title: 'Family Directory Import', description: 'Bulk import of existing family and household records.', defaultAmount: 149, active: true, appId: 'optionc-parish' },
-
-  // Matt Money
-  { id: 'item-mattmoney-processing', title: 'Transaction Processing Fee', description: 'Per-transaction processing fee for online giving and payments.', defaultAmount: 29, active: true, appId: 'matt-money' },
-  { id: 'item-mattmoney-donation-portal', title: 'Online Donation Portal Setup', description: 'One-time configuration of the online giving/donation portal.', defaultAmount: 199, active: true, appId: 'matt-money' },
-  { id: 'item-mattmoney-reconciliation', title: 'Auto-Reconcile Add-on', description: 'Monthly automatic bank reconciliation service.', defaultAmount: 49, active: true, appId: 'matt-money' },
-  { id: 'item-mattmoney-tuition-plan', title: 'Tuition Payment Plan Setup', description: 'Configuration of installment tuition billing plans.', defaultAmount: 89, active: true, appId: 'matt-money' },
-  { id: 'item-mattmoney-statement', title: 'Year-End Giving Statements', description: 'Generation and mailing of annual donation statements.', defaultAmount: 119, active: true, appId: 'matt-money' },
-
-  // ArcAlerts
-  { id: 'item-arcalerts-sms', title: 'SMS Alert Bundle', description: 'Additional block of outbound SMS alert credits.', defaultAmount: 59, active: true, appId: 'arc-alerts' },
-  { id: 'item-arcalerts-voice', title: 'Voicemail Alert Bundle', description: 'Additional block of outbound voicemail alert minutes.', defaultAmount: 49, active: true, appId: 'arc-alerts' },
-  { id: 'item-arcalerts-email', title: 'Email Alert Bundle', description: 'Additional block of outbound email alert credits.', defaultAmount: 19, active: true, appId: 'arc-alerts' },
-  { id: 'item-arcalerts-templates', title: 'Custom Alert Template Design', description: 'Design of branded emergency notification templates.', defaultAmount: 99, active: true, appId: 'arc-alerts' },
-  { id: 'item-arcalerts-setup', title: 'Emergency Contact Import', description: 'Bulk import of staff, parent, and parishioner contact lists.', defaultAmount: 129, active: true, appId: 'arc-alerts' },
-
-  // Catholic Content
-  { id: 'item-setup', title: 'Setup & onboarding', description: 'One-time implementation and onboarding fee.', defaultAmount: 199, active: true, appId: 'catholic-content' },
-  { id: 'item-content-workbook-pack', title: 'Grade-Level Workbook Pack', description: 'Printable workbook bundle for one grade level.', defaultAmount: 39, active: true, appId: 'catholic-content' },
-  { id: 'item-content-video-library', title: 'Video Library Add-on', description: 'Expanded access to the full faith-based video library.', defaultAmount: 79, active: true, appId: 'catholic-content' },
-  { id: 'item-content-custom-curriculum', title: 'Custom Curriculum Build', description: 'Custom-tagged content collection built for a parish curriculum.', defaultAmount: 199, active: true, appId: 'catholic-content' },
-  { id: 'item-content-coloring-set', title: 'Coloring Page Seasonal Set', description: 'Liturgical-season coloring page bundle.', defaultAmount: 19, active: true, appId: 'catholic-content' },
-
-  // Unified Directory
-  { id: 'item-training', title: 'Staff training session', description: 'Live training session for organization staff.', defaultAmount: 149, active: true, appId: 'unified-directory' },
-  { id: 'item-directory-report', title: 'Annual Directory Report', description: 'Formatted yearly export of the full member and group directory.', defaultAmount: 89, active: true, appId: 'unified-directory' },
-  { id: 'item-directory-group-setup', title: 'Group Structure Setup', description: 'Configuration of ministry/department group hierarchy.', defaultAmount: 99, active: true, appId: 'unified-directory' },
-  { id: 'item-directory-sso', title: 'SaaS App Access Provisioning', description: 'Bulk provisioning of app access across the directory.', defaultAmount: 149, active: true, appId: 'unified-directory' },
-  { id: 'item-directory-cleanup', title: 'Directory Data Cleanup', description: 'One-time deduplication and cleanup of member records.', defaultAmount: 129, active: true, appId: 'unified-directory' },
-
-  // Support Center
-  { id: 'item-support', title: 'Priority support add-on', description: 'Upgraded response-time support plan.', defaultAmount: 79, active: true, appId: 'support-center' },
-  { id: 'item-support-priority-queue', title: 'Priority Ticket Queue', description: 'Upgraded queue placement for faster ticket response.', defaultAmount: 59, active: true, appId: 'support-center' },
-  { id: 'item-support-onboarding', title: 'Support Onboarding Session', description: 'Guided walkthrough of the ticket inbox and routing rules.', defaultAmount: 89, active: true, appId: 'support-center' },
-  { id: 'item-support-integration', title: 'Product Routing Configuration', description: 'Custom ticket routing rules across multiple products.', defaultAmount: 119, active: true, appId: 'support-center' },
-  { id: 'item-support-history-export', title: 'Conversation History Export', description: 'One-time export of historical ticket conversations.', defaultAmount: 49, active: true, appId: 'support-center' },
-
-  // AI Lesson Plan Generator
-  { id: 'item-storage', title: 'Additional storage', description: 'Extra document/media storage allotment.', defaultAmount: 39, active: true, appId: 'ai-lesson-plan' },
-  { id: 'item-lessonplan-bulk-credits', title: 'AI Drafting Credit Pack', description: 'Additional block of AI lesson-draft generations.', defaultAmount: 29, active: true, appId: 'ai-lesson-plan' },
-  { id: 'item-lessonplan-templates', title: 'Custom Lesson Template Pack', description: 'Branded lesson plan templates for a diocese.', defaultAmount: 79, active: true, appId: 'ai-lesson-plan' },
-  { id: 'item-lessonplan-training', title: 'Teacher Onboarding Session', description: 'Live training for staff on the lesson planning workflow.', defaultAmount: 99, active: true, appId: 'ai-lesson-plan' },
-  { id: 'item-lessonplan-review', title: 'Curriculum Alignment Review', description: 'Review pass checking generated lessons against a curriculum standard.', defaultAmount: 149, active: true, appId: 'ai-lesson-plan' },
-];
