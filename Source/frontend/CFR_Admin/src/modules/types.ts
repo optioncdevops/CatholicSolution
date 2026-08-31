@@ -58,6 +58,26 @@ export interface Organization {
   contactPhone: string;
   /** Subscription/access expiry date — drives {@link CustomerAccessStatus}. */
   expiryDate: string;
+  /** Registered/legal business name, when different from the everyday display name. */
+  legalName?: string;
+  /** Business type / industry classification, e.g. "Education", "Parish". */
+  industry?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  /** IANA timezone id, e.g. "America/Chicago". */
+  timezone?: string;
+  /** Preferred language/region, e.g. "en-US". */
+  locale?: string;
+  /** ISO 4217 currency code, e.g. "USD". */
+  currency?: string;
+  /** Logo image URL or local object-URL preview — prototype only, never uploaded anywhere. */
+  logoUrl?: string;
+  /** Brand accent color (hex), used for lightweight visual identity — prototype only. */
+  brandColor?: string;
 }
 
 export type UserRole = 'owner' | 'admin' | 'member';

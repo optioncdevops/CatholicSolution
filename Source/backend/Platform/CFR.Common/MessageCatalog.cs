@@ -54,6 +54,8 @@ namespace CFR.Common
         public const string InvalidCurrentPassword = "Your current password is incorrect.";
         public const string ProfileUpdated = "Profile updated successfully.";
         public const string PasswordChanged = "Password changed successfully.";
+        public const string OrganizationUpdated = "Organization updated successfully.";
+        public const string OrganizationNotFound = "Organization not found.";
     }
 
     public static class SerilogErrorMessages
@@ -82,6 +84,9 @@ namespace CFR.Common
             public const string FetchProfileFailed = "Error while fetching profile for user {UserId}";
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
             public const string ChangePasswordFailed = "Error while changing password for user {UserId}";
+            public const string FetchOrganizationsFailed = "Error while fetching organizations";
+            public const string FetchOrganizationByIdFailed = "Error while fetching organization {OrgId}";
+            public const string UpdateOrganizationFailed = "Error while updating organization {OrgId}";
         }
     }
 }

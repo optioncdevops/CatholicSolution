@@ -7,6 +7,7 @@ global using Dapper;
 global using CFR.AcutisInfrastructure;
 global using CFR.AcutisInfrastructure.Interfaces.AcutisAuthentication;
 global using CFR.AcutisInfrastructure.Interfaces.Administration;
+global using CFR.AcutisInfrastructure.Interfaces.Organization;
 global using CFR.AcutisInfrastructure.Interfaces.Profile;
 global using CFR.AcutisInfrastructure.Models.Input;
 global using CFR.AcutisInfrastructure.Models.Output;

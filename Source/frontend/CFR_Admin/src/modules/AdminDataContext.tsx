@@ -31,6 +31,8 @@ interface AdminDataContextValue {
   grantUserAccess: (userId: string, appId: string) => void;
   revokeUserAccess: (userId: string, appId: string) => void;
   addOrganization: (org: Omit<Organization, 'id' | 'createdAt' | 'code' | 'appIds'>) => void;
+  /** Updates an existing organization's profile fields (identity, contact, address, preferences, branding). */
+  updateOrganization: (org: Organization) => void;
   assignOrgApp: (orgId: string, appId: string) => void;
   removeOrgApp: (orgId: string, appId: string) => void;
   resolveRequest: (id: string, status: RequestStatus, note?: string) => void;
@@ -118,6 +120,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       const code = `CUST-${1000 + organizations.length + 1}`;
       setOrganizations((current) => [...current, { ...org, id, code, appIds: [], createdAt: new Date().toISOString() }]);
       logActivity(`Added organization "${org.name}"`, 'organization');
+    },
+    updateOrganization: (org) => {
+      setOrganizations((current) => current.map((item) => (item.id === org.id ? org : item)));
+      logActivity(`Updated organization profile for "${org.name}"`, 'organization');
     },
     assignOrgApp: (orgId, appId) => {
       setOrganizations((current) => current.map((org) => (
