@@ -230,5 +230,61 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);
         }
+
+        /// <summary>
+        /// Parameters for Organization stored procedures.
+        /// </summary>
+        public static class OrganizationParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>
+            /// Organization identifier.
+            /// </summary>
+            public const string OrgId = nameof(OrgId);
+
+            /// <summary>
+            /// Organization display name.
+            /// </summary>
+            public const string OrgName = nameof(OrgName);
+
+            /// <summary>
+            /// Organization status value.
+            /// </summary>
+            public const string OrgStatus = nameof(OrgStatus);
+
+            /// <summary>
+            /// Organization contact email address.
+            /// </summary>
+            public const string ContactEmail = nameof(ContactEmail);
+
+            /// <summary>
+            /// Organization website URL.
+            /// </summary>
+            public const string Website = nameof(Website);
+
+            /// <summary>
+            /// Primary contact person's name.
+            /// </summary>
+            public const string ContactPerson = nameof(ContactPerson);
+
+            /// <summary>
+            /// Primary contact phone number.
+            /// </summary>
+            public const string ContactPhone = nameof(ContactPhone);
+
+            /// <summary>
+            /// Logged-in user who last updated the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string UpdatedBy = nameof(UpdatedBy);
+
+            /// <summary>
+            /// Stored procedure output / return value.
+            /// </summary>
+            public const string ReturnValue = nameof(ReturnValue);
+        }
     }
 }

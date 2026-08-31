@@ -262,8 +262,8 @@ function EmailTemplatesPage() {
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <span className={`admin-email-status-chip ${isDirty ? 'admin-email-status-chip--dirty' : 'admin-email-status-chip--saved'}`}>
-                  <span className="admin-email-status-chip__dot" aria-hidden="true" />
+                <span className={`admin-status-chip ${isDirty ? 'admin-status-chip--dirty' : 'admin-status-chip--saved'}`}>
+                  <span className="admin-status-chip__dot" aria-hidden="true" />
                   {isDirty ? 'Unsaved changes' : 'All changes saved'}
                 </span>
                 <div className="flex flex-wrap items-center gap-1.5">

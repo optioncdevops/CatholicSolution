@@ -19,7 +19,6 @@ const ProductDetailPage = lazy(() => import('@/modules/applications/ProductDetai
 const ProductEditPage = lazy(() => import('@/modules/applications/ProductEditPage').then((m) => ({ default: m.ProductEditPage })));
 const CreateInvoicePage = lazy(() => import('@/modules/applications/CreateInvoicePage').then((m) => ({ default: m.CreateInvoicePage })));
 const OrganizationsListPage = lazy(() => import('@/modules/organizations/OrganizationsListPage').then((m) => ({ default: m.OrganizationsListPage })));
-const OrganizationDetailPage = lazy(() => import('@/modules/organizations/OrganizationDetailPage').then((m) => ({ default: m.OrganizationDetailPage })));
 const RequestsInboxPage = lazy(() => import('@/modules/requests/RequestsInboxPage').then((m) => ({ default: m.RequestsInboxPage })));
 const RightsPage = lazy(() => import('@/modules/administration/RightsPage').then((m) => ({ default: m.RightsPage })));
 // Dev-only component reference — see the removal note at the top of either sample page file.
@@ -48,7 +47,6 @@ export default function App() {
           <Route path="/admin/applications/:appId/edit" element={<ProductEditPage />} />
           <Route path="/admin/applications/:appId/invoices/create" element={<CreateInvoicePage />} />
           <Route path="/admin/organizations" element={<OrganizationsListPage />} />
-          <Route path="/admin/organizations/:orgId" element={<OrganizationDetailPage />} />
           {usersRoutes}
           {userRolesRoutes}
           <Route path="/admin/requests" element={<RequestsInboxPage />} />

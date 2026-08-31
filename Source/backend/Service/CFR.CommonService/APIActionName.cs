@@ -60,5 +60,12 @@ namespace CFR.CommonService
             public const string UpdateProfile = nameof(UpdateProfile);
             public const string ChangePassword = nameof(ChangePassword);
         }
+
+        public static class API_Organization
+        {
+            public const string GetOrganizations = nameof(GetOrganizations);
+            public const string GetOrganizationById = nameof(GetOrganizationById);
+            public const string UpdateOrganization = nameof(UpdateOrganization);
+        }
     }
 }

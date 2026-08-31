@@ -491,7 +491,9 @@
   background: var(--warning);
 }
 
-.admin-email-status-chip {
+/* Generic "unsaved changes" / "all changes saved" pill — shared by any edit-in-place screen
+   (Email Templates, Organization Profile, ...), not specific to one feature. */
+.admin-status-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -501,9 +503,9 @@
   font-weight: 800;
   white-space: nowrap;
 }
-.admin-email-status-chip--saved { background: var(--success-bg); color: var(--success); }
-.admin-email-status-chip--dirty { background: var(--warning-bg); color: var(--warning); }
-.admin-email-status-chip__dot { width: 0.4rem; height: 0.4rem; border-radius: 999px; background: currentColor; flex-shrink: 0; }
+.admin-status-chip--saved { background: var(--success-bg); color: var(--success); }
+.admin-status-chip--dirty { background: var(--warning-bg); color: var(--warning); }
+.admin-status-chip__dot { width: 0.4rem; height: 0.4rem; border-radius: 999px; background: currentColor; flex-shrink: 0; }
 
 .admin-email-template-tag {
   display: inline-flex;
