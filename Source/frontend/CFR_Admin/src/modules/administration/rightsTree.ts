@@ -172,13 +172,6 @@ export const RIGHTS_TREE: RightsNode[] = [
           { id: 'administration.templates.edit', label: 'Edit' },
         ],
       },
-      {
-        id: 'administration.invoiceItems', label: 'License Items', description: 'The master list of billable license items.',
-        children: [
-          { id: 'administration.invoiceItems.view', label: 'View' },
-          { id: 'administration.invoiceItems.manage', label: 'Manage' },
-        ],
-      },
     ],
   },
 ];

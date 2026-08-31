@@ -140,15 +140,3 @@ export interface License {
   /** Optional note shown to the customer alongside the license, e.g. onboarding instructions. */
   customMessage?: string;
 }
-
-/** The single Masters reference list — billable line items available when creating a
- * license. Managed under Administration → Masters; never deleted, only activated/deactivated. */
-export interface InvoiceItem {
-  id: string;
-  title: string;
-  description: string;
-  defaultAmount: number;
-  active: boolean;
-  /** Product this item is billed under — every license item belongs to exactly one product. */
-  appId: string;
-}

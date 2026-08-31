@@ -22,7 +22,6 @@ const OrganizationsListPage = lazy(() => import('@/modules/organizations/Organiz
 const OrganizationDetailPage = lazy(() => import('@/modules/organizations/OrganizationDetailPage').then((m) => ({ default: m.OrganizationDetailPage })));
 const RequestsInboxPage = lazy(() => import('@/modules/requests/RequestsInboxPage').then((m) => ({ default: m.RequestsInboxPage })));
 const RightsPage = lazy(() => import('@/modules/administration/RightsPage').then((m) => ({ default: m.RightsPage })));
-const InvoiceItemsPage = lazy(() => import('@/modules/administration/InvoiceItemsPage').then((m) => ({ default: m.InvoiceItemsPage })));
 // Dev-only component reference — see the removal note at the top of either sample page file.
 const SampleAddPage = lazy(() => import('@/modules/sample/SampleAddPage').then((m) => ({ default: m.SampleAddPage })));
 const SampleViewPage = lazy(() => import('@/modules/sample/SampleViewPage').then((m) => ({ default: m.SampleViewPage })));
@@ -55,7 +54,6 @@ export default function App() {
           <Route path="/admin/requests" element={<RequestsInboxPage />} />
           <Route path="/admin/administration-rights" element={<RightsPage />} />
           {emailTemplatesRoutes}
-          <Route path="/admin/administration-invoice-items" element={<InvoiceItemsPage />} />
           {/* Dev-only — see the removal note at the top of SampleAddPage.tsx / SampleViewPage.tsx. */}
           <Route path="/admin/administration/component-library/add" element={<SampleAddPage />} />
           <Route path="/admin/administration/component-library/view" element={<SampleViewPage />} />
