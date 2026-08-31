@@ -1,0 +1,218 @@
+-- Copyright (c) OptionC. All rights reserved.
+-- Email Templates CRUD for Acutis, backed by the existing [adm].[EmailTemplate] table.
+-- Seeds the four templates the CFR Admin "Email Templates" screen already presents, including
+-- PasswordReset — the one AcutisPasswordService loads at send time instead of a hard-coded body.
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+
+IF OBJECT_ID(N'[dbo].[Acutis_EmailTemplates_CRUD]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD];
+GO
+
+-- ActionId 1: Save (insert when @TemplateId = 0, otherwise update Subject/Body/Status).
+-- ActionId 2: Get by TemplateId.
+-- ActionId 3: Get list (all templates).
+-- ActionId 4: Get by TemplateCode (used internally by AcutisPasswordService to load PasswordReset).
+CREATE PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD]
+    @ActionId INT,
+    @TemplateId INT = 0,
+    @TemplateCode NVARCHAR(50) = NULL,
+    @Subject NVARCHAR(200) = NULL,
+    @Body NVARCHAR(MAX) = NULL,
+    @Status NVARCHAR(20) = NULL,
+    @UpdatedBy BIGINT = NULL,
+    @ReturnValue INT = NULL OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET @ReturnValue = 0;
+    SET @UpdatedBy = NULLIF(@UpdatedBy, 0);
+
+    IF @ActionId = 1
+    BEGIN
+        IF @TemplateId = 0
+        BEGIN
+            IF @TemplateCode IS NULL OR EXISTS (
+                SELECT 1 FROM [adm].[EmailTemplate]
+                WHERE [TemplateCode] = @TemplateCode AND [IsDeleted] = 0
+            )
+            BEGIN
+                SET @ReturnValue = -99;
+                RETURN @ReturnValue;
+            END
+
+            -- TemplateId is not an IDENTITY column; assign the next value the same way
+            -- 004_Acutis_UserRoles.sql does for [auth].[AcutisRole].[RoleId].
+            SELECT @TemplateId = ISNULL(MAX([TemplateId]), 0) + 1
+            FROM [adm].[EmailTemplate];
+
+            INSERT INTO [adm].[EmailTemplate]
+            (
+                [TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [InsertedBy], [IsDeleted]
+            )
+            VALUES
+            (
+                @TemplateId,
+                @TemplateCode,
+                @Subject,
+                @Body,
+                CASE WHEN @Status = N'inactive' THEN 0 ELSE 1 END,
+                SYSUTCDATETIME(),
+                @UpdatedBy,
+                0
+            );
+
+            SET @ReturnValue = @TemplateId;
+            RETURN @ReturnValue;
+        END
+
+        UPDATE [adm].[EmailTemplate]
+        SET
+            [Subject] = @Subject,
+            [Body] = @Body,
+            [IsActive] = CASE
+                WHEN @Status = N'inactive' THEN 0
+                WHEN @Status = N'active' THEN 1
+                ELSE [IsActive]
+            END,
+            [UpdatedDate] = SYSUTCDATETIME(),
+            [UpdatedBy] = @UpdatedBy
+        WHERE [TemplateId] = @TemplateId
+          AND [IsDeleted] = 0;
+
+        SET @ReturnValue = @TemplateId;
+        RETURN @ReturnValue;
+    END
+
+    IF @ActionId = 2
+    BEGIN
+        SELECT
+            t.[TemplateId],
+            t.[TemplateCode],
+            t.[Subject],
+            t.[Body],
+            CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
+            t.[CreatedDate],
+            t.[UpdatedDate]
+        FROM [adm].[EmailTemplate] AS t
+        WHERE t.[TemplateId] = @TemplateId
+          AND t.[IsDeleted] = 0;
+        RETURN 0;
+    END
+
+    IF @ActionId = 3
+    BEGIN
+        SELECT
+            t.[TemplateId],
+            t.[TemplateCode],
+            t.[Subject],
+            t.[Body],
+            CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
+            t.[CreatedDate],
+            t.[UpdatedDate]
+        FROM [adm].[EmailTemplate] AS t
+        WHERE t.[IsDeleted] = 0
+        ORDER BY t.[TemplateCode];
+        RETURN 0;
+    END
+
+    IF @ActionId = 4
+    BEGIN
+        SELECT TOP (1)
+            t.[TemplateId],
+            t.[TemplateCode],
+            t.[Subject],
+            t.[Body],
+            CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
+            t.[CreatedDate],
+            t.[UpdatedDate]
+        FROM [adm].[EmailTemplate] AS t
+        WHERE t.[TemplateCode] = @TemplateCode
+          AND t.[IsActive] = 1
+          AND t.[IsDeleted] = 0;
+        RETURN 0;
+    END
+END
+GO
+
+-- Seed the four templates the CFR Admin screen presents. Idempotent — safe to re-run.
+-- TemplateId is not an IDENTITY column, so each insert assigns MAX(TemplateId) + 1 itself.
+DECLARE @SeedTemplateId INT;
+
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'PasswordReset')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'PasswordReset',
+        N'Reset your CFR Acutis password',
+        N'<p>Hello [FirstName],</p><p>Use the link below to reset your CFR Acutis password. This link expires in [ExpiryMinutes] minutes and can only be used once.</p><p><a href="[ResetLink]">[ResetLink]</a></p>',
+        1,
+        SYSUTCDATETIME(),
+        0
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Welcome')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'Welcome',
+        N'Welcome to Catholic Solutions',
+        N'Hi [FirstName],
+
+Your Catholic Solutions account is ready. Sign in to get started with your organization''s workspace.',
+        1,
+        SYSUTCDATETIME(),
+        0
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'AccessApproved')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'AccessApproved',
+        N'Your application access request was approved',
+        N'Hi [FirstName],
+
+Your request for access to [AppName] has been approved. You can now launch it from App Hub.',
+        1,
+        SYSUTCDATETIME(),
+        0
+    );
+END
+
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'AccessInfo')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'AccessInfo',
+        N'More information needed for your request',
+        N'Hi [FirstName],
+
+We need a bit more information to process your request for [AppName]:
+
+[Note]',
+        1,
+        SYSUTCDATETIME(),
+        0
+    );
+END
+GO

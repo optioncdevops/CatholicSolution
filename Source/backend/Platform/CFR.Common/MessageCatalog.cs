@@ -23,6 +23,7 @@ namespace CFR.Common
         public const int CustomMessage = 102;
         public const int BadRequest = 400;
         public const int UnAuthorized = 401;
+        public const int NotFound = 404;
         public const int Conflict = 409;
         public const int InternalServerError = 500;
     }
@@ -45,6 +46,14 @@ namespace CFR.Common
         public const string Failed = "The request could not be completed.";
         public const string BadRequest = "Invalid request.";
         public const string UnAuthorized = "Unauthorized.";
+        public const string ResetInstructionsSent = "Password reset instructions have been sent to your email address.";
+        public const string AccountNotFound = "No account found with this email address.";
+        public const string InvalidResetToken = "This reset link is invalid or has expired.";
+        public const string PasswordMismatch = "The new passwords do not match or do not meet the minimum length.";
+        public const string ExistEmailTemplateCode = "A template with this code already exists.";
+        public const string InvalidCurrentPassword = "Your current password is incorrect.";
+        public const string ProfileUpdated = "Profile updated successfully.";
+        public const string PasswordChanged = "Password changed successfully.";
     }
 
     public static class SerilogErrorMessages
@@ -64,6 +73,15 @@ namespace CFR.Common
             public const string SaveUserRoleFailed = "Error while saving Acutis user role";
             public const string UpdateUserRoleStatusFailed = "Error while updating Acutis user role status for {RoleId}";
             public const string DeleteUserRoleFailed = "Error while deleting Acutis user role {RoleId}";
+            public const string ForgotPasswordFailed = "Error while processing forgot-password request for {UserName}";
+            public const string ResetPasswordFailed = "Error while resetting Acutis user password";
+            public const string FetchEmailTemplatesFailed = "Error while fetching email templates";
+            public const string FetchEmailTemplateByIdFailed = "Error while fetching email template {TemplateId}";
+            public const string SaveEmailTemplateFailed = "Error while saving email template";
+            public const string SendTestEmailFailed = "Error while sending test email";
+            public const string FetchProfileFailed = "Error while fetching profile for user {UserId}";
+            public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
+            public const string ChangePasswordFailed = "Error while changing password for user {UserId}";
         }
     }
 }

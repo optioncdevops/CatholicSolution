@@ -9,6 +9,7 @@ import { AdminDataProvider } from '@/modules/AdminDataContext';
 import { AdminShell } from '@/modules/components/AdminShell';
 import { usersRoutes } from '@/modules/users';
 import { userRolesRoutes } from '@/modules/administration/userRoles';
+import { emailTemplatesRoutes } from '@/modules/administration/emailTemplates';
 
 // Route-level code splitting — each admin page (and the ported dataTable/formControls code it
 // pulls in) loads as its own chunk on first visit instead of one 2MB+ bundle up front.
@@ -21,7 +22,6 @@ const OrganizationsListPage = lazy(() => import('@/modules/organizations/Organiz
 const OrganizationDetailPage = lazy(() => import('@/modules/organizations/OrganizationDetailPage').then((m) => ({ default: m.OrganizationDetailPage })));
 const RequestsInboxPage = lazy(() => import('@/modules/requests/RequestsInboxPage').then((m) => ({ default: m.RequestsInboxPage })));
 const RightsPage = lazy(() => import('@/modules/administration/RightsPage').then((m) => ({ default: m.RightsPage })));
-const EmailTemplatesPage = lazy(() => import('@/modules/administration/EmailTemplatesPage').then((m) => ({ default: m.EmailTemplatesPage })));
 const InvoiceItemsPage = lazy(() => import('@/modules/administration/InvoiceItemsPage').then((m) => ({ default: m.InvoiceItemsPage })));
 // Dev-only component reference — see the removal note at the top of either sample page file.
 const SampleAddPage = lazy(() => import('@/modules/sample/SampleAddPage').then((m) => ({ default: m.SampleAddPage })));
@@ -54,7 +54,7 @@ export default function App() {
           {userRolesRoutes}
           <Route path="/admin/requests" element={<RequestsInboxPage />} />
           <Route path="/admin/administration-rights" element={<RightsPage />} />
-          <Route path="/admin/administration-email-templates" element={<EmailTemplatesPage />} />
+          {emailTemplatesRoutes}
           <Route path="/admin/administration-invoice-items" element={<InvoiceItemsPage />} />
           {/* Dev-only — see the removal note at the top of SampleAddPage.tsx / SampleViewPage.tsx. */}
           <Route path="/admin/administration/component-library/add" element={<SampleAddPage />} />

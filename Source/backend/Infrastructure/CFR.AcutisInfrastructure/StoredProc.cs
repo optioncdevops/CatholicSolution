@@ -16,6 +16,22 @@ namespace CFR.AcutisInfrastructure
             /// Authenticates an Acutis user and returns the user row plus module rights.
             /// </summary>
             public const string DoLogin = "[dbo].[Acutis_DoLogin]";
+
+            /// <summary>
+            /// Requests and completes password reset token operations for an Acutis user.
+            /// </summary>
+            public const string PasswordResetCrud = "[dbo].[Acutis_PasswordReset_CRUD]";
+        }
+
+        /// <summary>
+        /// Stored procedure names for self-service account features.
+        /// </summary>
+        public class Profile
+        {
+            /// <summary>
+            /// Get, update, and change-password operations for the signed-in user's own account.
+            /// </summary>
+            public const string ProfileCrud = "[dbo].[Acutis_Profile_CRUD]";
         }
 
         /// <summary>
@@ -32,6 +48,11 @@ namespace CFR.AcutisInfrastructure
             /// User roles list, get, save, status, and delete operations.
             /// </summary>
             public const string UserRolesCrud = "[dbo].[Acutis_UserRoles_CRUD]";
+
+            /// <summary>
+            /// Email templates list, get by id, get by code, and save operations.
+            /// </summary>
+            public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates_CRUD]";
         }
     }
 }

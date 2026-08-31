@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { createPortal } from 'react-dom';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import { resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
+import { changePassword, getProfile, updateProfile, updateStoredAcutisUser } from '@shared/auth/services/authService';
 import { useToast } from './ToastProvider';
 
 export type AccountModal = 'profile' | 'password' | null;
@@ -40,47 +41,126 @@ function DialogShell({ title, description, onClose, children, footer }: { title:
 const inputClass = 'account-dialog__input';
 
 export function AccountModals({ modal, onClose }: AccountModalsProps) {
-  const { user, initials, updateUser } = useCurrentUser();
+  const { user, initials } = useCurrentUser();
   const { showToast } = useToast();
-  const [name, setName] = useState(user.name);
+
+  //#region Profile state
+  const [firstName, setFirstName] = useState(user.firstName);
+  const [lastName, setLastName] = useState(user.lastName);
   const [email, setEmail] = useState(user.email);
-  const [phone, setPhone] = useState(user.phone);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  //#endregion
+
+  //#region Password state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [visible, setVisible] = useState<Record<string, boolean>>({});
   const [passwordError, setPasswordError] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  //#endregion
 
-  // Seed the profile fields from the current user, and clear the password fields, whenever
-  // a modal opens or the underlying user changes. Adjusted during render rather than in an
-  // effect: an effect body would paint the previous values for one frame before resetting,
-  // which is visible when reopening the profile modal after a save. `user` is a stable
-  // state object from UserProvider, so the identity comparison cannot loop.
-  const [renderedFor, setRenderedFor] = useState({ modal, user });
-  if (renderedFor.modal !== modal || renderedFor.user !== user) {
-    setRenderedFor({ modal, user });
-    if (modal === 'profile') { setName(user.name); setEmail(user.email); setPhone(user.phone); }
-    if (modal === 'password') { setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); setPasswordError(''); setVisible({}); }
+  // Seed form fields from the current user and clear transient state whenever a modal opens.
+  // Adjusted during render rather than in an effect: an effect body would paint the previous
+  // values for one frame before resetting, which is visible when reopening a modal after a save.
+  const [renderedFor, setRenderedFor] = useState<AccountModal>(null);
+  if (renderedFor !== modal) {
+    setRenderedFor(modal);
+    if (modal === 'profile') {
+      setProfileError('');
+      setFirstName(user.firstName);
+      setLastName(user.lastName);
+      setEmail(user.email);
+    }
+    if (modal === 'password') {
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordError('');
+      setVisible({});
+    }
   }
+
+  // Refresh the profile fields from the server (the JWT-derived defaults above may be stale)
+  // whenever the profile modal opens.
+  useEffect(() => {
+    if (modal !== 'profile') return undefined;
+    let cancelled = false;
+    void (async () => {
+      try {
+        setProfileLoading(true);
+        const { resultData } = await getProfile();
+        if (cancelled || !resultData) return;
+        const profile = resultData as { firstName?: string; lastName?: string; email?: string };
+        setFirstName(profile.firstName ?? user.firstName);
+        setLastName(profile.lastName ?? user.lastName);
+        setEmail(profile.email ?? user.email);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Error loading profile:', error);
+        showToast('Failed to load your profile.', 'error');
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per modal open, not on every user/showToast identity change
+  }, [modal]);
 
   if (!modal) return null;
 
-  const saveProfile = (event: FormEvent) => {
+  const saveProfile = async (event: FormEvent) => {
     event.preventDefault();
-    if (!name.trim() || !email.trim()) { showToast('Please fill in your name and email'); return; }
-    updateUser({ name: name.trim(), email: email.trim(), phone: phone.trim() });
-    onClose();
-    showToast('Profile updated ✓');
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      setProfileError('Please fill in your first name, last name, and email.');
+      return;
+    }
+
+    setProfileError('');
+    setProfileSaving(true);
+    try {
+      await updateProfile({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim() });
+      updateStoredAcutisUser({ firstName: firstName.trim(), lastName: lastName.trim(), eMail: email.trim() });
+      showToast('Profile updated.', 'success');
+      onClose();
+    } catch (error) {
+      const message = typeof error === 'string' ? error : 'Failed to update profile.';
+      setProfileError(message);
+      showToast(message, 'error');
+    } finally {
+      setProfileSaving(false);
+    }
   };
+
   const score = [newPassword.length >= 8, /[0-9]/.test(newPassword), /[^A-Za-z0-9]/.test(newPassword), /[a-z]/.test(newPassword) && /[A-Z]/.test(newPassword)].filter(Boolean).length;
   const strengthLabels = ['Weak — add more characters', 'Fair — add a number or symbol', 'Good — almost there', 'Strong password'];
   const strengthColors = ['is-empty', 'is-weak', 'is-fair', 'is-good', 'is-strong'];
-  const savePassword = (event: FormEvent) => {
+
+  const savePassword = async (event: FormEvent) => {
     event.preventDefault();
-    if (!currentPassword || !newPassword || !confirmPassword) { showToast('Please fill in all password fields'); return; }
+    if (!currentPassword || !newPassword || !confirmPassword) { setPasswordError('Please fill in all password fields.'); return; }
     if (newPassword !== confirmPassword) { setPasswordError('Passwords do not match.'); return; }
-    setPasswordError(''); onClose(); showToast('Password updated successfully ✓');
+    if (score < 3) { setPasswordError('Use at least 8 characters with upper/lowercase letters, a number, and preferably a symbol.'); return; }
+
+    setPasswordError('');
+    setPasswordSaving(true);
+    try {
+      await changePassword({ currentPassword, newPassword, confirmPassword });
+      showToast('Password changed.', 'success');
+      onClose();
+    } catch (error) {
+      const message = typeof error === 'string' ? error : 'Failed to change password.';
+      setPasswordError(message);
+      showToast(message, 'error');
+    } finally {
+      setPasswordSaving(false);
+    }
   };
+
   const toggleVisible = (key: string) => setVisible((state) => ({ ...state, [key]: !state[key] }));
   const recoveryUrl = resolvePlatformUrl(`/forgot-password${typeof window !== 'undefined' ? `?returnUrl=${encodeURIComponent(window.location.href)}` : ''}`);
 
@@ -92,11 +172,11 @@ export function AccountModals({ modal, onClose }: AccountModalsProps) {
       footer={(
         <>
           <button type="button" onClick={onClose} className="action-secondary">Cancel</button>
-          <button type="submit" form="profile-form" className="action-primary">Save changes</button>
+          <button type="submit" form="profile-form" className="action-primary" disabled={profileSaving || profileLoading}>{profileSaving ? 'Saving…' : 'Save changes'}</button>
         </>
       )}
     >
-      <form id="profile-form" onSubmit={saveProfile} className="account-dialog__form">
+      <form id="profile-form" onSubmit={(event) => void saveProfile(event)} className="account-dialog__form">
         <div className="account-dialog__identity">
           <span className="account-dialog__avatar" aria-hidden="true">{initials}</span>
           <p>
@@ -104,12 +184,13 @@ export function AccountModals({ modal, onClose }: AccountModalsProps) {
             <strong>Initials shown across the platform</strong>
           </p>
         </div>
-        {([['Full name', name, setName, 'text'], ['Email address', email, setEmail, 'email'], ['Phone number', phone, setPhone, 'tel']] as const).map(([label, value, setter, type]) => (
+        {([['First name', firstName, setFirstName, 'text'], ['Last name', lastName, setLastName, 'text'], ['Email address', email, setEmail, 'email']] as const).map(([label, value, setter, type]) => (
           <label key={label} className="account-dialog__field">
             {label}
-            <input type={type} value={value} onChange={(event) => setter(event.target.value)} className={inputClass} />
+            <input type={type} value={value} onChange={(event) => setter(event.target.value)} className={inputClass} disabled={profileLoading || profileSaving} />
           </label>
         ))}
+        {profileError ? <p className="account-dialog__error">{profileError}</p> : null}
       </form>
     </DialogShell>
   );
@@ -123,6 +204,7 @@ export function AccountModals({ modal, onClose }: AccountModalsProps) {
           value={value}
           onChange={(event) => setter(event.target.value)}
           className={inputClass}
+          disabled={passwordSaving}
         />
         <button
           type="button"
@@ -144,11 +226,11 @@ export function AccountModals({ modal, onClose }: AccountModalsProps) {
       footer={(
         <>
           <button type="button" onClick={onClose} className="action-secondary">Cancel</button>
-          <button type="submit" form="password-form" className="action-primary">Update password</button>
+          <button type="submit" form="password-form" className="action-primary" disabled={passwordSaving}>{passwordSaving ? 'Updating…' : 'Update password'}</button>
         </>
       )}
     >
-      <form id="password-form" onSubmit={savePassword} className="account-dialog__form">
+      <form id="password-form" onSubmit={(event) => void savePassword(event)} className="account-dialog__form">
         <div>
           {passwordField('Current password', 'current', currentPassword, setCurrentPassword)}
           <a href={recoveryUrl} className="account-recovery-link">Forgot your current password? Start account recovery</a>
