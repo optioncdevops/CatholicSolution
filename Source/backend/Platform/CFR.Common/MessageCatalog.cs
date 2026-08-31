@@ -66,6 +66,7 @@ namespace CFR.Common
             public const string FetchUserByIdFailed = "Error while fetching Acutis user {UserId}";
             public const string SaveUserFailed = "Error while saving Acutis user";
             public const string UpdateUserStatusFailed = "Error while updating Acutis user status for {UserId}";
+            public const string DeleteUserFailed = "Error while deleting Acutis user {UserId}";
             public const string FetchUserLookupsFailed = "Error while fetching Acutis user lookups";
             public const string FetchUserRolesFailed = "Error while fetching Acutis user roles";
             public const string FetchUserRoleByIdFailed = "Error while fetching Acutis user role {RoleId}";

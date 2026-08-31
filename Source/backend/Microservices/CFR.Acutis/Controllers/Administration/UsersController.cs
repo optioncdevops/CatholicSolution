@@ -38,7 +38,7 @@ namespace CFR.Acutis.Controllers.Administration
         /// Retrieves one Acutis user by identifier.
         /// </summary>
         /// <remarks>
-        /// Purpose: Fetch a user for the detail page.
+        /// Purpose: Fetch a user for the edit page.
         /// Request Flow: Client API GET -> UsersController.GetUserById() -> IUsersService.GetUserByIdAsync() -> Database.
         /// Validation Details: Query parameter binding maps the identifier.
         /// Business Logic: None at the controller level; delegates to the service layer.
@@ -130,5 +130,31 @@ namespace CFR.Acutis.Controllers.Administration
         }
 
         #endregion PUT Methods
+
+        #region DELETE Methods
+
+        /// <summary>
+        /// Removes an Acutis user by its identifier.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Soft-delete a user.
+        /// Request Flow: Client API DELETE -> UsersController.DeleteUser() -> IUsersService.DeleteUserAsync() -> Database.
+        /// Validation Details: Query parameter binding maps the identifier.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IUsersService.DeleteUserAsync().
+        /// Response Details: Standard API result representing the deletion outcome.
+        /// </remarks>
+        /// <param name="userId">Identifier of the user to delete.</param>
+        /// <returns>Standardized success or failure response.</returns>
+        /// <response code="200">Successfully deleted the user.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpDelete]
+        [ActionName(API_Administration.DeleteUser)]
+        public async Task<IActionResult> DeleteUser(int userId)
+        {
+            return ApiResultArgs(await service.DeleteUserAsync(userId), APIHttpType.HttpDelete);
+        }
+
+        #endregion DELETE Methods
     }
 }

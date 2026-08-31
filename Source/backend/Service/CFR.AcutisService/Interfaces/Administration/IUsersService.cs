@@ -31,7 +31,7 @@ namespace CFR.AcutisService.Interfaces.Administration
         /// Retrieves one Acutis user by identifier.
         /// </summary>
         /// <remarks>
-        /// Purpose: Fetch a user for the detail page.
+        /// Purpose: Fetch a user for the edit page.
         /// Request Flow: UsersController -> IUsersService.GetUserByIdAsync() -> IUsersRepository.GetUserByIdAsync().
         /// Validation Details: Identifier must be a positive integer.
         /// Business Logic: Wraps the typed record in MSResultArgs.
@@ -95,5 +95,24 @@ namespace CFR.AcutisService.Interfaces.Administration
         Task<MSResultArgs> UpdateUserStatusAsync(UserStatusInput input);
 
         #endregion PUT Methods
+
+        #region DELETE Methods
+
+        /// <summary>
+        /// Soft-deletes an Acutis user.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Remove a user.
+        /// Request Flow: UsersController -> IUsersService.DeleteUserAsync() -> IUsersRepository.DeleteUserAsync().
+        /// Validation Details: Identifier must be a positive integer.
+        /// Business Logic: Delegates delete to the repository and wraps the scalar result.
+        /// Repository Interaction: Calls IUsersRepository.DeleteUserAsync().
+        /// Response Details: MSResultArgs containing the deletion outcome.
+        /// </remarks>
+        /// <param name="userId">User identifier.</param>
+        /// <returns>MSResultArgs containing the deletion outcome.</returns>
+        Task<MSResultArgs> DeleteUserAsync(int userId);
+
+        #endregion DELETE Methods
     }
 }

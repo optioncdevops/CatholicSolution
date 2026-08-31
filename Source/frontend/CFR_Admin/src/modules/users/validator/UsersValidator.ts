@@ -1,4 +1,3 @@
-import { FIELD_REQUIRED } from '@app/validation/validationMessages';
 import type { UsersFormValues } from '../types/usersTypes';
 
 export const usersDefaultValues: UsersFormValues = {
@@ -6,22 +5,25 @@ export const usersDefaultValues: UsersFormValues = {
   lastName: '',
   eMail: '',
   password: '',
-  organizationId: '',
   roleId: '',
-  status: 'invited',
+  isActive: '1',
+  isLocked: '0',
+  dateOfBirth: '',
 };
 
 export const usersRules = {
-  firstName: { required: FIELD_REQUIRED },
-  lastName: { required: FIELD_REQUIRED },
+  firstName: { required: 'First name is required.' },
+  lastName: { required: 'Last name is required.' },
   eMail: {
-    required: FIELD_REQUIRED,
+    required: 'Email address is required.',
     pattern: {
       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
       message: 'Invalid email address.',
     },
   },
-  password: { required: FIELD_REQUIRED },
-  organizationId: { required: FIELD_REQUIRED },
-  roleId: { required: FIELD_REQUIRED },
+  password: { required: 'Password is required.' },
+  roleId: { required: 'Role is required.' },
+  dateOfBirth: { required: 'Date of birth is required.' },
+  isActive: { required: 'Status is required.' },
+  isLocked: { required: 'Locked is required.' },
 };

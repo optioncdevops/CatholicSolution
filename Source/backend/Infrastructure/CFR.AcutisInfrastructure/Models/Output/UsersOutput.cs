@@ -65,10 +65,28 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string RoleName { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the active flag. 1 = active, 0 = inactive.
+        /// </summary>
+        [JsonPropertyName("isActive")]
+        public int IsActive { get; set; }
+
+        /// <summary>
+        /// Gets or sets the locked flag. 1 = locked, 0 = unlocked.
+        /// </summary>
+        [JsonPropertyName("isLocked")]
+        public int IsLocked { get; set; }
+
+        /// <summary>
         /// Gets or sets the user status.
         /// </summary>
         [JsonPropertyName("status")]
         public string Status { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the date of birth.
+        /// </summary>
+        [JsonPropertyName("dateOfBirth")]
+        public string? DateOfBirth { get; set; }
 
         /// <summary>
         /// Gets or sets the last active timestamp.
