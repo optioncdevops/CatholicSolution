@@ -65,3 +65,32 @@ export interface LoginAuthenticationPayload {
   password: string;
   ipAddress?: string;
 }
+
+export interface ForgotPasswordPayload {
+  userName: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ProfileApiItem {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface UpdateProfilePayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}

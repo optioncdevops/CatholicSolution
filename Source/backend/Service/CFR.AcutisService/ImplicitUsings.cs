@@ -2,11 +2,15 @@
 
 global using CFR.AcutisInfrastructure.Interfaces.AcutisAuthentication;
 global using CFR.AcutisInfrastructure.Interfaces.Administration;
+global using CFR.AcutisInfrastructure.Interfaces.Profile;
 global using CFR.AcutisInfrastructure.Models.Input;
 global using CFR.AcutisInfrastructure.Models.Output;
 global using CFR.AcutisService.Interfaces.AcutisAuthentication;
 global using CFR.AcutisService.Interfaces.Administration;
+global using CFR.AcutisService.Interfaces.Profile;
 global using CFR.Common;
 global using CFR.CommonService;
+global using CFR.CommonService.Interfaces;
+global using CFR.CommonService.Services;
 global using CFR.DBEngine;
 global using Microsoft.Extensions.Logging;

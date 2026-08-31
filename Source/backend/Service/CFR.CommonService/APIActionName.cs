@@ -30,6 +30,8 @@ namespace CFR.CommonService
             public static class AcutisAuthentication
             {
                 public const string LoginAuthentication = nameof(LoginAuthentication);
+                public const string ForgotPassword = nameof(ForgotPassword);
+                public const string ResetPassword = nameof(ResetPassword);
             }
         }
 
@@ -45,6 +47,17 @@ namespace CFR.CommonService
             public const string SaveUserRole = nameof(SaveUserRole);
             public const string UpdateUserRoleStatus = nameof(UpdateUserRoleStatus);
             public const string DeleteUserRole = nameof(DeleteUserRole);
+            public const string GetEmailTemplates = nameof(GetEmailTemplates);
+            public const string GetEmailTemplateById = nameof(GetEmailTemplateById);
+            public const string SaveEmailTemplate = nameof(SaveEmailTemplate);
+            public const string SendTestEmail = nameof(SendTestEmail);
+        }
+
+        public static class API_Profile
+        {
+            public const string GetProfile = nameof(GetProfile);
+            public const string UpdateProfile = nameof(UpdateProfile);
+            public const string ChangePassword = nameof(ChangePassword);
         }
     }
 }

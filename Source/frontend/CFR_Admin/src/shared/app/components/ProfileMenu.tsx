@@ -70,7 +70,7 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
           <span className="profile-menu__avatar" style={gradient ? { background: gradient } : undefined} aria-hidden="true">{initials}</span>
           <span className="profile-menu__trigger-copy">
             <span>{user.name}</span>
-            <small>Account</small>
+            <small>{user.roleName || 'Account'}</small>
           </span>
           <ChevronDownIcon size={14} className={`profile-menu__chevron ${open ? 'profile-menu__chevron--open' : ''}`} />
         </button>

@@ -13,6 +13,11 @@ namespace CFR.AcutisInfrastructure
         public static class AcutisAuthParams
         {
             /// <summary>
+            /// CRUD action identifier (password reset stored procedure only).
+            /// </summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>
             /// Login email address.
             /// </summary>
             public const string Email = nameof(Email);
@@ -21,6 +26,26 @@ namespace CFR.AcutisInfrastructure
             /// Plain-text password verified with dbo.DecryptUserPassword.
             /// </summary>
             public const string Password = nameof(Password);
+
+            /// <summary>
+            /// SHA-256 hash of a password reset token; the raw token is never persisted.
+            /// </summary>
+            public const string TokenHash = nameof(TokenHash);
+
+            /// <summary>
+            /// UTC expiry timestamp for a password reset token.
+            /// </summary>
+            public const string ExpiresAtUtc = nameof(ExpiresAtUtc);
+
+            /// <summary>
+            /// Plain-text new password; SQL encrypts it with dbo.EncryptUserPassword.
+            /// </summary>
+            public const string NewPassword = nameof(NewPassword);
+
+            /// <summary>
+            /// Stored procedure output / return value.
+            /// </summary>
+            public const string ReturnValue = nameof(ReturnValue);
         }
 
         /// <summary>
@@ -97,6 +122,98 @@ namespace CFR.AcutisInfrastructure
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);
+        }
+
+        /// <summary>
+        /// Parameters for Email Templates stored procedures.
+        /// </summary>
+        public static class EmailTemplateParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>
+            /// Email template identifier.
+            /// </summary>
+            public const string TemplateId = nameof(TemplateId);
+
+            /// <summary>
+            /// Stable code used to look up a template at send time (e.g. "PasswordReset").
+            /// </summary>
+            public const string TemplateCode = nameof(TemplateCode);
+
+            /// <summary>
+            /// Email subject line, may contain [placeholder] merge tags.
+            /// </summary>
+            public const string Subject = nameof(Subject);
+
+            /// <summary>
+            /// Email body, may contain [placeholder] merge tags.
+            /// </summary>
+            public const string Body = nameof(Body);
+
+            /// <summary>
+            /// Template status value ("active" / "inactive").
+            /// </summary>
+            public const string Status = nameof(Status);
+
+            /// <summary>
+            /// Logged-in user who last updated the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string UpdatedBy = nameof(UpdatedBy);
+
+            /// <summary>
+            /// Stored procedure output / return value.
+            /// </summary>
+            public const string ReturnValue = nameof(ReturnValue);
+        }
+
+        /// <summary>
+        /// Parameters for self-service profile / change-password stored procedures.
+        /// </summary>
+        public static class ProfileParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>
+            /// Signed-in user identifier, from ICurrentUserService.UserId.
+            /// </summary>
+            public const string UserId = nameof(UserId);
+
+            /// <summary>
+            /// User first name.
+            /// </summary>
+            public const string FirstName = nameof(FirstName);
+
+            /// <summary>
+            /// User last name.
+            /// </summary>
+            public const string LastName = nameof(LastName);
+
+            /// <summary>
+            /// User email address.
+            /// </summary>
+            public const string Email = nameof(Email);
+
+            /// <summary>
+            /// Current plain-text password, verified with dbo.DecryptUserPassword.
+            /// </summary>
+            public const string CurrentPassword = nameof(CurrentPassword);
+
+            /// <summary>
+            /// New plain-text password; SQL encrypts it with dbo.EncryptUserPassword.
+            /// </summary>
+            public const string NewPassword = nameof(NewPassword);
+
+            /// <summary>
+            /// Stored procedure output / return value.
+            /// </summary>
+            public const string ReturnValue = nameof(ReturnValue);
         }
     }
 }

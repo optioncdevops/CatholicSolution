@@ -1,35 +1,51 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 import { ACUTIS_AUTH_CHANGED_EVENT } from '@shared/auth/constants/storageKeys';
-import { getStoredAcutisAuth } from '@shared/auth/services/authService';
+import { getRoleName, getStoredAcutisAuth } from '@shared/auth/services/authService';
 
 export interface CurrentUser {
+  firstName: string;
+  lastName: string;
   name: string;
   email: string;
-  phone: string;
+  roleId: number;
+  roleName: string;
 }
 
 interface UserContextValue {
   user: CurrentUser;
   initials: string;
   firstName: string;
-  updateUser: (updates: Pick<CurrentUser, 'name' | 'email' | 'phone'>) => void;
 }
 
 const DEFAULT_USER: CurrentUser = {
+  firstName: 'Carl',
+  lastName: 'Lapp',
   name: 'Carl Lapp',
   email: 'carl.lapp@optionc.com',
-  phone: '(555) 214-7788',
+  roleId: 0,
+  roleName: '',
 };
 
+function buildUser(firstName: string, lastName: string, email: string, roleId: number, roleName = ''): CurrentUser {
+  const name = `${firstName} ${lastName}`.trim();
+  return {
+    firstName,
+    lastName,
+    name: name || DEFAULT_USER.name,
+    email: email || DEFAULT_USER.email,
+    roleId,
+    roleName,
+  };
+}
+
+// Reads from the stored Acutis JWT payload, kept fresh by authService.updateStoredAcutisUser
+// whenever the Profile dialog saves a real change — there is no separate client-side "draft"
+// of the user; the stored auth blob is the single source of truth. roleName is resolved
+// separately (see the effect below) since the JWT only carries roleId.
 function userFromAuth(): CurrentUser {
   const stored = getStoredAcutisAuth()?.resultData?.user;
   if (!stored) return DEFAULT_USER;
-  const name = stored.fullName?.trim() || `${stored.firstName ?? ''} ${stored.lastName ?? ''}`.trim();
-  return {
-    name: name || DEFAULT_USER.name,
-    email: stored.eMail || DEFAULT_USER.email,
-    phone: DEFAULT_USER.phone,
-  };
+  return buildUser(stored.firstName ?? '', stored.lastName ?? '', stored.eMail ?? '', stored.roleId ?? 0);
 }
 
 const UserContext = createContext<UserContextValue | null>(null);
@@ -50,11 +66,27 @@ export function UserProvider({ children }: PropsWithChildren) {
       window.removeEventListener('focus', refresh);
     };
   }, []);
+
+  // Resolve the role name once per roleId (e.g. "Administrator") for display in the account
+  // menu. Best-effort: getRoleName never throws, so a lookup failure just leaves roleName empty
+  // and the UI falls back to a generic label.
+  useEffect(() => {
+    if (!user.roleId || user.roleName) return undefined;
+    let cancelled = false;
+    void (async () => {
+      const roleName = await getRoleName(user.roleId);
+      if (cancelled || !roleName) return;
+      setUser((current) => (current.roleId === user.roleId ? { ...current, roleName } : current));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user.roleId, user.roleName]);
+
   const value = useMemo<UserContextValue>(() => ({
     user,
     initials: getInitials(user.name),
-    firstName: user.name.trim().split(/\s+/)[0] || 'there',
-    updateUser: (updates) => setUser((current) => ({ ...current, ...updates })),
+    firstName: user.firstName || 'there',
   }), [user]);
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

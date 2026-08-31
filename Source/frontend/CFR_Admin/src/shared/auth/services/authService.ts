@@ -1,9 +1,11 @@
 import axiosInstance from '@app/config/AxiosInstance';
 import type { ApiError, ApiResponse } from '@app/pages/types/CommonTypes';
 import { ACUTIS_AUTH_CHANGED_EVENT, ACUTIS_AUTH_STORAGE_KEY } from '../constants/storageKeys';
-import type { AcutisLoginApiResponse, LoginAuthenticationPayload } from '../types/authTypes';
+import type { AcutisLoginApiResponse, AcutisLoginUser, ChangePasswordPayload, ForgotPasswordPayload, LoginAuthenticationPayload, ResetPasswordPayload, UpdateProfilePayload } from '../types/authTypes';
 
 const controller = 'AcutisLogin';
+const passwordController = 'AcutisPassword';
+const profileController = 'Profile';
 
 function applyBearerFromPayload(data: AcutisLoginApiResponse): void {
   const token = data.resultData?.user?.token;
@@ -40,6 +42,20 @@ export function hasAcutisToken(): boolean {
   return Boolean(getStoredAcutisAuth()?.resultData?.user?.token);
 }
 
+// Patches the stored JWT payload's user fields after a real profile save, and fires the same
+// event AuthProvider/UserContext already listen for — so a successful save is reflected
+// everywhere immediately without a second sign-in.
+export function updateStoredAcutisUser(patch: Partial<AcutisLoginUser>): void {
+  const stored = getStoredAcutisAuth();
+  if (!stored?.resultData?.user) return;
+  const next: AcutisLoginApiResponse = {
+    ...stored,
+    resultData: { ...stored.resultData, user: { ...stored.resultData.user, ...patch } },
+  };
+  localStorage.setItem(ACUTIS_AUTH_STORAGE_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event(ACUTIS_AUTH_CHANGED_EVENT));
+}
+
 export const loginAuthentication = async (payload: LoginAuthenticationPayload): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.post<AcutisLoginApiResponse>(`${controller}/LoginAuthentication`, payload);
@@ -53,5 +69,74 @@ export const loginAuthentication = async (payload: LoginAuthenticationPayload): 
     const err = error as ApiError;
     const apiMessage = err.response?.data?.statusMessage;
     throw (typeof error === 'string' ? error : apiMessage || err.message) || 'Failed to sign in';
+  }
+};
+
+export const forgotPassword = async (payload: ForgotPasswordPayload): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.post<ApiResponse>(`${passwordController}/ForgotPassword`, payload);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    const apiMessage = err.response?.data?.statusMessage;
+    throw (typeof error === 'string' ? error : apiMessage || err.message) || 'Failed to send reset instructions.';
+  }
+};
+
+export const resetPassword = async (payload: ResetPasswordPayload): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.put<ApiResponse>(`${passwordController}/ResetPassword`, payload);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    const apiMessage = err.response?.data?.statusMessage;
+    throw (typeof error === 'string' ? error : apiMessage || err.message) || 'Failed to reset password.';
+  }
+};
+
+export const getProfile = async (): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${profileController}/GetProfile`);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to load profile.';
+  }
+};
+
+export const updateProfile = async (payload: UpdateProfilePayload): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.put<ApiResponse>(`${profileController}/UpdateProfile`, payload);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to update profile.';
+  }
+};
+
+export const changePassword = async (payload: ChangePasswordPayload): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.put<ApiResponse>(`${profileController}/ChangePassword`, payload);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to change password.';
+  }
+};
+
+// Best-effort role-name lookup for display (e.g. the account menu's subtitle) — reuses the
+// existing Administration/UserRoles endpoint rather than adding a role name to the JWT. Returns
+// null on any failure so a lookup problem never blocks sign-in or breaks the account menu.
+export const getRoleName = async (roleId: number): Promise<string | null> => {
+  if (!roleId || roleId <= 0) return null;
+  try {
+    const response = await axiosInstance.get<ApiResponse>('UserRoles/GetUserRoleById', { params: { roleId } });
+    const data = response.data.resultData as { roleName?: string } | undefined;
+    return data?.roleName?.trim() || null;
+  } catch {
+    return null;
   }
 };

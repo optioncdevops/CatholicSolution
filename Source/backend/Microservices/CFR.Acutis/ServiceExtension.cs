@@ -1,11 +1,15 @@
 ﻿using CFR.AcutisInfrastructure.Interfaces.AcutisAuthentication;
 using CFR.AcutisInfrastructure.Interfaces.Administration;
+using CFR.AcutisInfrastructure.Interfaces.Profile;
 using CFR.AcutisInfrastructure.Repositorys.AcutisAuthentication;
 using CFR.AcutisInfrastructure.Repositorys.Administration;
+using CFR.AcutisInfrastructure.Repositorys.Profile;
 using CFR.AcutisService.Service.AcutisAuthentication;
 using CFR.AcutisService.Service.Administration;
+using CFR.AcutisService.Service.Profile;
 using CFR.CommonService.Interfaces;
 using CFR.CommonService.Service;
+using CFR.CommonService.Services;
 
 namespace CFR.Acutis
 {
@@ -26,12 +30,21 @@ namespace CFR.Acutis
             // Acutis authentication services and repository
             services.AddScoped<IAcutisAuthenticationService, AcutisAuthenticationService>();
             services.AddScoped<IAcutisAuthenticationRepository, AcutisAuthenticationRepository>();
+            services.AddScoped<IAcutisPasswordService, AcutisPasswordService>();
+            services.AddScoped<IAcutisPasswordRepository, AcutisPasswordRepository>();
+            services.AddScoped<ISMTPMailService, SMTPMailService>();
 
             // Administration services and repository
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<IUsersRepository, UsersRepository>();
             services.AddScoped<IUserRolesService, UserRolesService>();
             services.AddScoped<IUserRolesRepository, UserRolesRepository>();
+            services.AddScoped<IEmailTemplatesService, EmailTemplatesService>();
+            services.AddScoped<IEmailTemplatesRepository, EmailTemplatesRepository>();
+
+            // Self-service profile / change-password
+            services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<IProfileRepository, ProfileRepository>();
 
             return services;
         }
