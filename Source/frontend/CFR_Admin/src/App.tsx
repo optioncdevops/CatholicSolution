@@ -49,11 +49,6 @@ const OrganizationDetailPage = lazy(() =>
     default: m.OrganizationDetailPage,
   })),
 );
-const RequestsInboxPage = lazy(() =>
-  import("@/modules/requests/RequestsInboxPage").then((m) => ({
-    default: m.RequestsInboxPage,
-  })),
-);
 const RightsPage = lazy(() =>
   import("@/modules/administration/RightsPage").then((m) => ({
     default: m.RightsPage,
