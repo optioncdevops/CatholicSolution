@@ -418,6 +418,51 @@ namespace CFR.AcutisInfrastructure
             public const string IsAvailable = nameof(IsAvailable);
 
             /// <summary>
+            /// License identifier.
+            /// </summary>
+            public const string LicenseId = nameof(LicenseId);
+
+            /// <summary>
+            /// Organization product link identifier.
+            /// </summary>
+            public const string OrganizationProductId = nameof(OrganizationProductId);
+
+            /// <summary>
+            /// Organization identifier.
+            /// </summary>
+            public const string OrgId = nameof(OrgId);
+
+            /// <summary>
+            /// License type (e.g. licensed, trial, subscription).
+            /// </summary>
+            public const string LicenseType = nameof(LicenseType);
+
+            /// <summary>
+            /// License activation date.
+            /// </summary>
+            public const string ActivationDate = nameof(ActivationDate);
+
+            /// <summary>
+            /// License expiration date.
+            /// </summary>
+            public const string ExpiryDate = nameof(ExpiryDate);
+
+            /// <summary>
+            /// License status.
+            /// </summary>
+            public const string LicenseStatus = nameof(LicenseStatus);
+
+            /// <summary>
+            /// Assignment status on OrganizationProduct.
+            /// </summary>
+            public const string AssignStatus = nameof(AssignStatus);
+
+            /// <summary>
+            /// License remarks or notes.
+            /// </summary>
+            public const string Remarks = nameof(Remarks);
+
+            /// <summary>
             /// Logged-in user identifier for audit columns (ICurrentUserService.UserId).
             /// </summary>
             public const string UserId = nameof(UserId);

@@ -57,24 +57,24 @@ namespace CFR.AcutisService.Interfaces.Products
         /// <returns>MSResultArgs containing the product license records list.</returns>
         Task<MSResultArgs> GetLicenseDetailsAsync(int productId);
 
+        /// <summary>
+        /// Retrieves a single license by its identifier.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch a specific license for view or edit.
+        /// Request Flow: ProductsController -> IProductsService.GetLicenseByIdAsync() -> IProductsRepository.GetLicenseByIdAsync().
+        /// Validation Details: LicenseId must be greater than zero.
+        /// Business Logic: Wraps the typed license output in MSResultArgs or returns NoRecordFound.
+        /// Repository Interaction: Calls IProductsRepository.GetLicenseByIdAsync().
+        /// Response Details: MSResultArgs containing ProductLicenseOutput or NoRecordFound.
+        /// </remarks>
+        /// <param name="licenseId">License identifier.</param>
+        /// <returns>MSResultArgs containing the license record.</returns>
+        Task<MSResultArgs> GetLicenseByIdAsync(long licenseId);
+
         #endregion GET Methods
 
         #region POST Methods
-
-        /// <summary>
-        /// Creates a new product in Core.Product.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Add a new product to Core.Product.
-        /// Request Flow: ProductsController -> IProductsService.SaveProductAsync() -> IProductsRepository.SaveProductAsync().
-        /// Validation Details: Validates required ProductName and checks for duplicates.
-        /// Business Logic: Returns Conflict when duplicate name exists, otherwise returns generated ProductId.
-        /// Repository Interaction: Calls IProductsRepository.CheckProductNameExistsAsync and SaveProductAsync.
-        /// Response Details: MSResultArgs containing the created ProductId.
-        /// </remarks>
-        /// <param name="input">Input DTO containing new product details without ProductId.</param>
-        /// <returns>MSResultArgs containing the generated ProductId.</returns>
-        Task<MSResultArgs> SaveProductAsync(ProductSaveInput input);
 
         /// <summary>
         /// Validates and saves an uploaded product logo image (JPG or PNG, max 2MB).
@@ -90,6 +90,21 @@ namespace CFR.AcutisService.Interfaces.Products
         /// <param name="file">Uploaded image file from multipart form data.</param>
         /// <returns>MSResultArgs containing relative accessible URL path.</returns>
         Task<MSResultArgs> UploadProductLogoAsync(IFormFile file);
+
+        /// <summary>
+        /// Creates a new product license.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Create organization product assignment and create license record.
+        /// Request Flow: ProductsController -> IProductsService.CreateLicenseAsync() -> IProductsRepository.CreateLicenseAsync().
+        /// Validation Details: OrgId and ProductId must be greater than zero (or OrganizationProductId > 0).
+        /// Business Logic: Inserts new license row and returns created LicenseId.
+        /// Repository Interaction: Calls IProductsRepository.CreateLicenseAsync().
+        /// Response Details: MSResultArgs containing the created LicenseId.
+        /// </remarks>
+        /// <param name="input">Input DTO containing new license details.</param>
+        /// <returns>MSResultArgs containing the created LicenseId.</returns>
+        Task<MSResultArgs> CreateLicenseAsync(ProductLicenseInput input);
 
         #endregion POST Methods
 
@@ -110,25 +125,21 @@ namespace CFR.AcutisService.Interfaces.Products
         /// <returns>MSResultArgs representing update status.</returns>
         Task<MSResultArgs> UpdateProductAsync(ProductInput input);
 
-        #endregion PUT Methods
-
-        #region DELETE Methods
-
         /// <summary>
-        /// Soft-deletes a product by setting IsDeleted = 1.
+        /// Updates an existing license in lic.License and lic.OrganizationProduct.
         /// </summary>
         /// <remarks>
-        /// Purpose: Soft-delete a product record.
-        /// Request Flow: ProductsController -> IProductsService.DeleteProductAsync() -> IProductsRepository.DeleteProductAsync().
-        /// Validation Details: ProductId must be greater than zero.
-        /// Business Logic: Validates product existence before deletion.
-        /// Repository Interaction: Calls IProductsRepository.DeleteProductAsync.
-        /// Response Details: MSResultArgs representing deletion status.
+        /// Purpose: Update editable fields of a license and assignment status.
+        /// Request Flow: ProductsController -> IProductsService.UpdateLicenseAsync() -> IProductsRepository.UpdateLicenseAsync().
+        /// Validation Details: LicenseId must be greater than zero.
+        /// Business Logic: Returns NotFound when license does not exist, otherwise updates license.
+        /// Repository Interaction: Calls IProductsRepository.UpdateLicenseAsync().
+        /// Response Details: MSResultArgs representing update status.
         /// </remarks>
-        /// <param name="productId">Identifier of the product to delete.</param>
-        /// <returns>MSResultArgs representing deletion status.</returns>
-        Task<MSResultArgs> DeleteProductAsync(int productId);
+        /// <param name="input">Input DTO containing updated license details.</param>
+        /// <returns>MSResultArgs representing update status.</returns>
+        Task<MSResultArgs> UpdateLicenseAsync(ProductLicenseInput input);
 
-        #endregion DELETE Methods
+        #endregion PUT Methods
     }
 }

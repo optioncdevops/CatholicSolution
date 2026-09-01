@@ -113,9 +113,10 @@ namespace CFR.Common
             public const string UpdateOrganizationFailed = "Error while updating organization";
             public const string FetchProductByIdFailed = "Error while fetching product {ProductId}";
             public const string FetchProductLicensesFailed = "Error while fetching product licenses for {ProductId}";
-            public const string SaveProductFailed = "Error while saving product";
+            public const string FetchLicenseByIdFailed = "Error while fetching license {LicenseId}";
+            public const string CreateLicenseFailed = "Error while creating license";
+            public const string UpdateLicenseFailed = "Error while updating license {LicenseId}";
             public const string UpdateProductFailed = "Error while updating product {ProductId}";
-            public const string DeleteProductFailed = "Error while deleting product {ProductId}";
             public const string UploadProductLogoFailed = "Error while uploading product logo";
         }
     }

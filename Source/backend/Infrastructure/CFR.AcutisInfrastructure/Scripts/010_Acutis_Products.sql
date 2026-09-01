@@ -1,5 +1,13 @@
 -- Copyright (c) OptionC. All rights reserved.
--- App Hub product list. ActionId 4 returns Your / Available / Future rows from core.Product.
+-- CRUD for [core].[Product] and [lic].[License] / [lic].[OrganizationProduct].
+-- ActionId 1: Product GET All
+-- ActionId 2: Product GET by ID
+-- ActionId 3: Product PUT (Update)
+-- ActionId 4: Product Check Name
+-- ActionId 5: License GET All
+-- ActionId 6: License GET by ID
+-- ActionId 7: License POST (Create)
+-- ActionId 8: License PUT (Update)
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -10,97 +18,361 @@ GO
 
 CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
     @ActionId INT,
+    -- Product Parameters
+    @ProductId INT = 0,
+    @ProductName NVARCHAR(200) = NULL,
+    @SubCategoryName NVARCHAR(200) = NULL,
+    @ProdDescription NVARCHAR(MAX) = NULL,
+    @ExternalPageUrl NVARCHAR(500) = NULL,
+    @DefaultAccessDays INT = 365,
+    @LogoUrl NVARCHAR(500) = NULL,
+    @Features NVARCHAR(MAX) = NULL,
+    @IsActive BIT = 1,
+    @IsAvailable BIT = 1,
+    -- License Parameters
+    @LicenseId BIGINT = 0,
+    @OrganizationProductId BIGINT = 0,
+    @OrgId BIGINT = 0,
+    @LicenseType NVARCHAR(50) = NULL,
+    @ActivationDate DATETIME2 = NULL,
+    @ExpiryDate DATETIME2 = NULL,
+    @LicenseStatus NVARCHAR(50) = NULL,
+    @AssignStatus NVARCHAR(50) = NULL,
+    @Remarks NVARCHAR(500) = NULL,
+    -- Audit & Output Parameters
+    @InsertedBy BIGINT = NULL,
+    @UpdatedBy BIGINT = NULL,
     @RequesterEmail NVARCHAR(256) = NULL,
     @ReturnValue INT = NULL OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
     SET @ReturnValue = 0;
+    SET @InsertedBy = NULLIF(@InsertedBy, 0);
+    SET @UpdatedBy = NULLIF(@UpdatedBy, 0);
+    SET @ProductName = NULLIF(LTRIM(RTRIM(@ProductName)), N'');
+    SET @SubCategoryName = NULLIF(LTRIM(RTRIM(@SubCategoryName)), N'');
+    SET @ProdDescription = NULLIF(LTRIM(RTRIM(@ProdDescription)), N'');
+    SET @ExternalPageUrl = NULLIF(LTRIM(RTRIM(@ExternalPageUrl)), N'');
+    SET @LogoUrl = NULLIF(LTRIM(RTRIM(@LogoUrl)), N'');
+    SET @LicenseType = NULLIF(LTRIM(RTRIM(@LicenseType)), N'');
+    SET @LicenseStatus = NULLIF(LTRIM(RTRIM(@LicenseStatus)), N'');
+    SET @AssignStatus = NULLIF(LTRIM(RTRIM(@AssignStatus)), N'');
+    SET @Remarks = NULLIF(LTRIM(RTRIM(@Remarks)), N'');
     SET @RequesterEmail = NULLIF(LTRIM(RTRIM(@RequesterEmail)), N'');
 
-    IF @ActionId = 4
+    ---------------------------------------------------------------------------
+    -- ActionId 1: Product GET All
+    ---------------------------------------------------------------------------
+    IF @ActionId = 1
     BEGIN
         SELECT
-            CAST(p.[ProductId] AS NVARCHAR(20)) AS [ProductId],
-            p.[ProductName] AS [ProductName],
-            ISNULL(p.[SubCategoryName], N'') AS [Category],
-            ISNULL(p.[ProdDescription], N'') AS [Description],
-            ISNULL(
-                (
-                    SELECT TOP (1) pe.[BaseUrl]
-                    FROM [core].[ProductEnvironment] pe
-                    WHERE pe.[ProductId] = p.[ProductId]
-                      AND pe.[IsDeleted] = 0
-                      AND pe.[IsActive] = 1
-                      AND pe.[EnvironmentName] = N'prod'
-                ),
-                ISNULL(
-                    (
-                        SELECT TOP (1) pe.[BaseUrl]
-                        FROM [core].[ProductEnvironment] pe
-                        WHERE pe.[ProductId] = p.[ProductId]
-                          AND pe.[IsDeleted] = 0
-                          AND pe.[IsActive] = 1
-                        ORDER BY pe.[ProductEnvironmentId]
-                    ),
-                    ISNULL(p.[ExternalPageUrl], N'')
-                )
-            ) AS [ExternalUrl],
-            ISNULL(STRING_AGG(f.[FeatureName], N'|') WITHIN GROUP (ORDER BY f.[ProductFeatureId]), N'') AS [FeatureNames],
-            CASE
-                WHEN @RequesterEmail IS NOT NULL AND (
-                    EXISTS (
-                        SELECT 1
-                        FROM [lic].[OrganizationProduct] op
-                        INNER JOIN [auth].[OrganizationUser] ou
-                            ON ou.[OrgId] = op.[OrgId]
-                           AND ou.[IsDeleted] = 0
-                        INNER JOIN [auth].[AuthUser] au
-                            ON au.[AuthUserId] = ou.[AuthUserId]
-                           AND au.[IsDeleted] = 0
-                           AND au.[IsActive] = 1
-                        WHERE op.[ProductId] = p.[ProductId]
-                          AND op.[IsDeleted] = 0
-                          AND LOWER(LTRIM(RTRIM(op.[AssignStatus]))) IN (N'active', N'trial')
-                          AND LOWER(au.[Email]) = LOWER(@RequesterEmail)
-                    )
-                    OR EXISTS (
-                        SELECT 1
-                        FROM [lic].[UserProductAccess] upa
-                        INNER JOIN [auth].[OrganizationUser] ou
-                            ON ou.[OrganizationUserId] = upa.[OrganizationUserId]
-                           AND ou.[IsDeleted] = 0
-                        INNER JOIN [auth].[AuthUser] au
-                            ON au.[AuthUserId] = ou.[AuthUserId]
-                           AND au.[IsDeleted] = 0
-                           AND au.[IsActive] = 1
-                        WHERE upa.[ProductId] = p.[ProductId]
-                          AND upa.[IsDeleted] = 0
-                          AND LOWER(au.[Email]) = LOWER(@RequesterEmail)
-                    )
-                ) THEN N'your'
-                WHEN CONVERT(INT, p.[IsAvailable]) = 1 THEN N'available'
-                ELSE N'future'
-            END AS [HubSection],
-            CAST(p.[IsActive] AS INT) AS [IsActive],
-            CAST(p.[IsAvailable] AS INT) AS [IsAvailable]
-        FROM [core].[Product] p
-        LEFT JOIN [core].[ProductFeature] f
-            ON f.[ProductId] = p.[ProductId]
-           AND f.[IsDeleted] = 0
-           AND f.[IsActive] = 1
-        WHERE p.[IsDeleted] = 0
-        GROUP BY
             p.[ProductId],
             p.[ProductName],
             p.[SubCategoryName],
             p.[ProdDescription],
             p.[ExternalPageUrl],
+            ISNULL(p.[DefaultAccessDays], 365) AS [DefaultAccessDays],
+            p.[LogoUrl],
             p.[IsActive],
-            p.[IsAvailable]
+            p.[IsAvailable],
+            p.[CreatedDate],
+            p.[InsertedBy],
+            p.[UpdatedDate],
+            p.[UpdatedBy],
+            p.[IsDeleted]
+        FROM [core].[Product] AS p
+        WHERE p.[IsDeleted] = 0
         ORDER BY p.[ProductName];
 
         RETURN 0;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 2: Product GET by ID
+    ---------------------------------------------------------------------------
+    IF @ActionId = 2
+    BEGIN
+        SELECT
+            p.[ProductId],
+            p.[ProductName],
+            p.[SubCategoryName],
+            p.[ProdDescription],
+            p.[ExternalPageUrl],
+            ISNULL(p.[DefaultAccessDays], 365) AS [DefaultAccessDays],
+            p.[LogoUrl],
+            p.[IsActive],
+            p.[IsAvailable],
+            p.[CreatedDate],
+            p.[InsertedBy],
+            p.[UpdatedDate],
+            p.[UpdatedBy],
+            p.[IsDeleted]
+        FROM [core].[Product] AS p
+        WHERE p.[ProductId] = @ProductId
+          AND p.[IsDeleted] = 0;
+
+        SELECT
+            f.[FeatureName]
+        FROM [core].[ProductFeature] AS f
+        WHERE f.[ProductId] = @ProductId
+          AND f.[IsDeleted] = 0
+          AND f.[IsActive] = 1
+        ORDER BY f.[ProductFeatureId];
+
+        RETURN 0;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 3: Product PUT (Update)
+    ---------------------------------------------------------------------------
+    IF @ActionId = 3
+    BEGIN
+        IF @ProductId <= 0 OR NOT EXISTS (
+            SELECT 1 FROM [core].[Product]
+            WHERE [ProductId] = @ProductId AND [IsDeleted] = 0
+        )
+        BEGIN
+            SET @ReturnValue = -95;
+            RETURN @ReturnValue;
+        END
+
+        IF @ProductName IS NOT NULL AND EXISTS (
+            SELECT 1 FROM [core].[Product]
+            WHERE LOWER(LTRIM(RTRIM([ProductName]))) = LOWER(@ProductName)
+              AND [ProductId] <> @ProductId
+              AND [IsDeleted] = 0
+        )
+        BEGIN
+            SET @ReturnValue = -99;
+            RETURN @ReturnValue;
+        END
+
+        UPDATE [core].[Product]
+        SET
+            [ProductName] = ISNULL(@ProductName, [ProductName]),
+            [SubCategoryName] = @SubCategoryName,
+            [ProdDescription] = @ProdDescription,
+            [ExternalPageUrl] = @ExternalPageUrl,
+            [DefaultAccessDays] = @DefaultAccessDays,
+            [LogoUrl] = @LogoUrl,
+            [IsActive] = @IsActive,
+            [IsAvailable] = @IsAvailable,
+            [UpdatedDate] = SYSUTCDATETIME(),
+            [UpdatedBy] = @UpdatedBy
+        WHERE [ProductId] = @ProductId;
+
+        IF @Features IS NOT NULL
+        BEGIN
+            UPDATE [core].[ProductFeature]
+            SET [IsDeleted] = 1,
+                [IsActive] = 0,
+                [UpdatedDate] = SYSUTCDATETIME(),
+                [UpdatedBy] = @UpdatedBy
+            WHERE [ProductId] = @ProductId;
+
+            INSERT INTO [core].[ProductFeature]
+            (
+                [ProductId], [FeatureName], [IsActive], [CreatedDate], [InsertedBy], [IsDeleted]
+            )
+            SELECT
+                @ProductId,
+                LTRIM(RTRIM(value)),
+                1,
+                SYSUTCDATETIME(),
+                @UpdatedBy,
+                0
+            FROM STRING_SPLIT(@Features, '|')
+            WHERE LTRIM(RTRIM(value)) <> N'';
+        END
+
+        SET @ReturnValue = @ProductId;
+        RETURN @ReturnValue;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 4: Product Check Name
+    ---------------------------------------------------------------------------
+    IF @ActionId = 4
+    BEGIN
+        IF EXISTS (
+            SELECT 1 FROM [core].[Product]
+            WHERE LOWER(LTRIM(RTRIM([ProductName]))) = LOWER(@ProductName)
+              AND [IsDeleted] = 0
+              AND (@ProductId = 0 OR [ProductId] <> @ProductId)
+        )
+            SELECT CAST(1 AS BIT);
+        ELSE
+            SELECT CAST(0 AS BIT);
+
+        RETURN 0;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 5: License GET All
+    ---------------------------------------------------------------------------
+    IF @ActionId = 5
+    BEGIN
+        SELECT
+            ISNULL(l.[LicenseId], 0) AS [LicenseId],
+            op.[OrganizationProductId],
+            op.[OrgId],
+            ISNULL(o.[OrgName], N'') AS [OrgName],
+            op.[ProductId],
+            ISNULL(p.[ProductName], N'') AS [ProductName],
+            l.[LicenseType],
+            ISNULL(l.[ActivationDate], op.[CreatedDate]) AS [ActivationDate],
+            l.[ExpiryDate],
+            ISNULL(l.[LicenseStatus], N'active') AS [LicenseStatus],
+            op.[AssignStatus],
+            l.[IssuedBy],
+            l.[Remarks],
+            ISNULL(l.[CreatedDate], op.[CreatedDate]) AS [CreatedDate]
+        FROM [lic].[OrganizationProduct] AS op
+        INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
+        INNER JOIN [core].[Organization] AS o ON o.[OrgId] = op.[OrgId]
+        LEFT JOIN [lic].[License] AS l ON l.[OrganizationProductId] = op.[OrganizationProductId]
+        WHERE (@ProductId = 0 OR op.[ProductId] = @ProductId)
+          AND (@OrgId = 0 OR op.[OrgId] = @OrgId)
+          AND op.[IsDeleted] = 0
+          AND p.[IsDeleted] = 0
+        ORDER BY op.[CreatedDate] DESC;
+
+        RETURN 0;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 6: License GET by ID
+    ---------------------------------------------------------------------------
+    IF @ActionId = 6
+    BEGIN
+        SELECT
+            l.[LicenseId],
+            op.[OrganizationProductId],
+            op.[OrgId],
+            ISNULL(o.[OrgName], N'') AS [OrgName],
+            op.[ProductId],
+            ISNULL(p.[ProductName], N'') AS [ProductName],
+            l.[LicenseType],
+            l.[ActivationDate],
+            l.[ExpiryDate],
+            ISNULL(l.[LicenseStatus], N'active') AS [LicenseStatus],
+            op.[AssignStatus],
+            l.[IssuedBy],
+            l.[Remarks],
+            l.[CreatedDate]
+        FROM [lic].[License] AS l
+        INNER JOIN [lic].[OrganizationProduct] AS op ON op.[OrganizationProductId] = l.[OrganizationProductId]
+        INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
+        INNER JOIN [core].[Organization] AS o ON o.[OrgId] = op.[OrgId]
+        WHERE l.[LicenseId] = @LicenseId;
+
+        RETURN 0;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 7: License POST (Create)
+    ---------------------------------------------------------------------------
+    IF @ActionId = 7
+    BEGIN
+        IF @OrganizationProductId = 0 AND @OrgId > 0 AND @ProductId > 0
+        BEGIN
+            SELECT @OrganizationProductId = [OrganizationProductId]
+            FROM [lic].[OrganizationProduct]
+            WHERE [OrgId] = @OrgId
+              AND [ProductId] = @ProductId
+              AND [IsDeleted] = 0;
+
+            IF @OrganizationProductId = 0
+            BEGIN
+                INSERT INTO [lic].[OrganizationProduct]
+                (
+                    [OrgId], [ProductId], [AssignStatus], [CreatedDate], [IsDeleted]
+                )
+                VALUES
+                (
+                    @OrgId, @ProductId, ISNULL(@AssignStatus, N'active'), SYSUTCDATETIME(), 0
+                );
+
+                SET @OrganizationProductId = SCOPE_IDENTITY();
+            END
+        END
+
+        IF @OrganizationProductId = 0
+        BEGIN
+            SET @ReturnValue = -95;
+            RETURN @ReturnValue;
+        END
+
+        INSERT INTO [lic].[License]
+        (
+            [OrganizationProductId],
+            [LicenseType],
+            [ActivationDate],
+            [ExpiryDate],
+            [LicenseStatus],
+            [IssuedBy],
+            [Remarks],
+            [CreatedDate],
+            [InsertedBy]
+        )
+        VALUES
+        (
+            @OrganizationProductId,
+            ISNULL(@LicenseType, N'licensed'),
+            ISNULL(@ActivationDate, SYSUTCDATETIME()),
+            @ExpiryDate,
+            ISNULL(@LicenseStatus, N'active'),
+            @InsertedBy,
+            @Remarks,
+            SYSUTCDATETIME(),
+            @InsertedBy
+        );
+
+        SET @LicenseId = SCOPE_IDENTITY();
+        SET @ReturnValue = CAST(@LicenseId AS INT);
+        RETURN @ReturnValue;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 8: License PUT (Update)
+    ---------------------------------------------------------------------------
+    IF @ActionId = 8
+    BEGIN
+        IF @LicenseId <= 0 OR NOT EXISTS (
+            SELECT 1 FROM [lic].[License]
+            WHERE [LicenseId] = @LicenseId
+        )
+        BEGIN
+            SET @ReturnValue = -95;
+            RETURN @ReturnValue;
+        END
+
+        UPDATE [lic].[License]
+        SET
+            [LicenseType] = ISNULL(@LicenseType, [LicenseType]),
+            [ActivationDate] = ISNULL(@ActivationDate, [ActivationDate]),
+            [ExpiryDate] = @ExpiryDate,
+            [LicenseStatus] = ISNULL(@LicenseStatus, [LicenseStatus]),
+            [Remarks] = @Remarks,
+            [UpdatedDate] = SYSUTCDATETIME(),
+            [UpdatedBy] = @UpdatedBy
+        WHERE [LicenseId] = @LicenseId;
+
+        IF @AssignStatus IS NOT NULL
+        BEGIN
+            UPDATE op
+            SET
+                op.[AssignStatus] = @AssignStatus,
+                op.[UpdatedDate] = SYSUTCDATETIME(),
+                op.[UpdatedBy] = @UpdatedBy
+            FROM [lic].[OrganizationProduct] AS op
+            INNER JOIN [lic].[License] AS l ON l.[OrganizationProductId] = op.[OrganizationProductId]
+            WHERE l.[LicenseId] = @LicenseId;
+        END
+
+        SET @ReturnValue = CAST(@LicenseId AS INT);
+        RETURN @ReturnValue;
     END
 END
 GO

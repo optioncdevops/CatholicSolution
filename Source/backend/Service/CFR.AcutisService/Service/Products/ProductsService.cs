@@ -124,61 +124,54 @@ namespace CFR.AcutisService.Service.Products
             return result;
         }
 
-        #endregion GET Methods
-
-        #region POST Methods
-
         /// <summary>
-        /// Creates a new product in Core.Product.
+        /// Retrieves a single license by identifier from lic.License.
         /// </summary>
         /// <remarks>
-        /// Purpose: Add a new product with uniqueness check on ProductName.
-        /// Request Flow: ProductsController -> ProductsService.SaveProductAsync() -> IProductsRepository.SaveProductAsync().
-        /// Validation Details: Input is required and ProductName cannot be empty.
-        /// Business Logic: Checks duplicate ProductName and saves record.
-        /// Repository Interaction: Calls IProductsRepository.CheckProductNameExistsAsync and SaveProductAsync.
-        /// Response Details: MSResultArgs containing the created ProductId, or Conflict if duplicate.
+        /// Purpose: Fetch a specific license for view or edit.
+        /// Request Flow: ProductsController -> ProductsService.GetLicenseByIdAsync() -> IProductsRepository.GetLicenseByIdAsync().
+        /// Validation Details: LicenseId must be greater than zero.
+        /// Business Logic: Wraps the typed record in MSResultArgs or returns NoRecordFound.
+        /// Repository Interaction: Calls IProductsRepository.GetLicenseByIdAsync().
+        /// Response Details: MSResultArgs containing ProductLicenseOutput or NoRecordFound.
         /// </remarks>
-        /// <param name="input">Input DTO containing new product details without ProductId.</param>
-        /// <returns>MSResultArgs containing the generated ProductId.</returns>
-        public async Task<MSResultArgs> SaveProductAsync(ProductSaveInput input)
+        /// <param name="licenseId">License identifier.</param>
+        /// <returns>MSResultArgs containing the license record.</returns>
+        public async Task<MSResultArgs> GetLicenseByIdAsync(long licenseId)
         {
             var result = new MSResultArgs();
             try
             {
-                if (input == null || string.IsNullOrWhiteSpace(input.ProductName))
+                if (licenseId <= 0)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
                     return result;
                 }
 
-                int newProductId = await repository.SaveProductAsync(input);
-                if (newProductId == -99)
+                var data = await repository.GetLicenseByIdAsync(licenseId);
+                if (data == null)
                 {
-                    result.StatusCode = ErrorCodes.Conflict;
-                    result.StatusMessage = ErrorMessages.ExistProduct;
+                    result.StatusCode = ErrorCodes.NoRecordFound;
+                    result.StatusMessage = ErrorMessages.NoRecordFound;
                     return result;
                 }
 
-                if (newProductId <= 0)
-                {
-                    result.StatusCode = ErrorCodes.Failed;
-                    result.StatusMessage = ErrorMessages.Failed;
-                    return result;
-                }
-
-                result.ResultData = newProductId;
+                result.ResultData = data;
             }
             catch (Exception ex)
             {
-                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.SaveProductFailed);
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchLicenseByIdFailed, licenseId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
 
             return result;
         }
+
+        #endregion GET Methods
+
+        #region POST Methods
 
         /// <summary>
         /// Validates and saves an uploaded product logo image (JPG or PNG, max 2MB).
@@ -235,6 +228,58 @@ namespace CFR.AcutisService.Service.Products
             catch (Exception ex)
             {
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.UploadProductLogoFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Creates a new product license in lic.License and lic.OrganizationProduct.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Create new license record.
+        /// Request Flow: ProductsController -> ProductsService.CreateLicenseAsync() -> IProductsRepository.CreateLicenseAsync().
+        /// Validation Details: OrgId and ProductId must be positive (or OrganizationProductId > 0).
+        /// Business Logic: Inserts new license row and returns created LicenseId.
+        /// Repository Interaction: Calls IProductsRepository.CreateLicenseAsync.
+        /// Response Details: MSResultArgs containing the created LicenseId.
+        /// </remarks>
+        /// <param name="input">Input DTO containing new license details.</param>
+        /// <returns>MSResultArgs containing the created LicenseId.</returns>
+        public async Task<MSResultArgs> CreateLicenseAsync(ProductLicenseInput input)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (input == null || (input.OrganizationProductId <= 0 && (input.OrgId <= 0 || input.ProductId <= 0)))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                long createdId = await repository.CreateLicenseAsync(input);
+                if (createdId == -95)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = "Invalid Organization or Product for license creation.";
+                    return result;
+                }
+
+                if (createdId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.Failed;
+                    result.StatusMessage = ErrorMessages.Failed;
+                    return result;
+                }
+
+                result.ResultData = createdId;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.CreateLicenseFailed);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
@@ -313,55 +358,51 @@ namespace CFR.AcutisService.Service.Products
             return result;
         }
 
-        #endregion PUT Methods
-
-        #region DELETE Methods
-
         /// <summary>
-        /// Soft-deletes a product by setting IsDeleted = 1.
+        /// Updates an existing license in lic.License and lic.OrganizationProduct.
         /// </summary>
         /// <remarks>
-        /// Purpose: Soft-delete a product from Core.Product.
-        /// Request Flow: ProductsController -> ProductsService.DeleteProductAsync() -> IProductsRepository.DeleteProductAsync().
-        /// Validation Details: ProductId must be greater than zero.
-        /// Business Logic: Executes stored procedure soft delete.
-        /// Repository Interaction: Calls IProductsRepository.DeleteProductAsync.
-        /// Response Details: MSResultArgs containing the deleted ProductId.
+        /// Purpose: Update editable license fields and assignment status.
+        /// Request Flow: ProductsController -> ProductsService.UpdateLicenseAsync() -> IProductsRepository.UpdateLicenseAsync().
+        /// Validation Details: LicenseId must be greater than zero.
+        /// Business Logic: Validates license existence and updates record.
+        /// Repository Interaction: Calls IProductsRepository.UpdateLicenseAsync.
+        /// Response Details: MSResultArgs containing the updated LicenseId.
         /// </remarks>
-        /// <param name="productId">Identifier of the product to delete.</param>
-        /// <returns>MSResultArgs containing the deleted ProductId.</returns>
-        public async Task<MSResultArgs> DeleteProductAsync(int productId)
+        /// <param name="input">Input DTO containing updated license details.</param>
+        /// <returns>MSResultArgs containing the updated LicenseId.</returns>
+        public async Task<MSResultArgs> UpdateLicenseAsync(ProductLicenseInput input)
         {
             var result = new MSResultArgs();
             try
             {
-                if (productId <= 0)
+                if (input == null || input.LicenseId <= 0)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
                     return result;
                 }
 
-                int deletedId = await repository.DeleteProductAsync(productId);
-                if (deletedId == -95)
+                long updatedId = await repository.UpdateLicenseAsync(input);
+                if (updatedId == -95)
                 {
                     result.StatusCode = ErrorCodes.NotFound;
-                    result.StatusMessage = ErrorMessages.ProductNotFound;
+                    result.StatusMessage = "License not found.";
                     return result;
                 }
 
-                if (deletedId <= 0)
+                if (updatedId <= 0)
                 {
                     result.StatusCode = ErrorCodes.Failed;
                     result.StatusMessage = ErrorMessages.Failed;
                     return result;
                 }
 
-                result.ResultData = productId;
+                result.ResultData = input.LicenseId;
             }
             catch (Exception ex)
             {
-                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.DeleteProductFailed, productId);
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.UpdateLicenseFailed, input?.LicenseId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
@@ -369,7 +410,7 @@ namespace CFR.AcutisService.Service.Products
             return result;
         }
 
-        #endregion DELETE Methods
+        #endregion PUT Methods
 
         #region Private Helper Methods
 

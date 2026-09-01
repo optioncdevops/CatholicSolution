@@ -81,33 +81,33 @@ namespace CFR.Acutis.Controllers.Products
             return ApiResultArgs(await service.GetLicenseDetailsAsync(productId), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves a single license by identifier.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch a single license record for view or edit.
+        /// Request Flow: Client API GET -> ProductsController.GetLicenseById() -> IProductsService.GetLicenseByIdAsync() -> Database.
+        /// Validation Details: Query parameter binding maps licenseId.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IProductsService.GetLicenseByIdAsync().
+        /// Response Details: Standard API result enclosing ProductLicenseOutput with status 200, 204, 400, or 500.
+        /// </remarks>
+        /// <param name="licenseId">License identifier.</param>
+        /// <returns>A consistent API response containing the license.</returns>
+        /// <response code="200">Successfully fetched the license.</response>
+        /// <response code="204">License not found.</response>
+        /// <response code="400">Invalid license identifier.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Product.GetLicenseById)]
+        public async Task<IActionResult> GetLicenseById(long licenseId)
+        {
+            return ApiResultArgs(await service.GetLicenseByIdAsync(licenseId), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
 
         #region POST Methods
-
-        /// <summary>
-        /// Creates a new product record.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Insert a new product into Core.Product.
-        /// Request Flow: Client API POST -> ProductsController.SaveProduct() -> IProductsService.SaveProductAsync() -> Database.
-        /// Validation Details: Model binding maps ProductInput from the request body.
-        /// Business Logic: None at the controller level; delegates to the service layer.
-        /// Service Interaction: Calls IProductsService.SaveProductAsync().
-        /// Response Details: Standard API result indicating execution status and newly created ProductId.
-        /// </remarks>
-        /// <param name="input">Input DTO containing new product details without ProductId.</param>
-        /// <returns>Result of the save operation.</returns>
-        /// <response code="200">Successfully saved the product.</response>
-        /// <response code="400">Invalid request payload.</response>
-        /// <response code="409">A product with this name already exists.</response>
-        /// <response code="500">Internal server error occurred.</response>
-        [HttpPost]
-        [ActionName(API_Product.SaveProduct)]
-        public async Task<IActionResult> SaveProduct([FromBody] ProductSaveInput input)
-        {
-            return ApiResultArgs(await service.SaveProductAsync(input), APIHttpType.HttpPost);
-        }
 
         /// <summary>
         /// Uploads a product logo image (JPG or PNG, max 2MB).
@@ -131,6 +131,29 @@ namespace CFR.Acutis.Controllers.Products
         public async Task<IActionResult> UploadProductLogo(IFormFile file)
         {
             return ApiResultArgs(await service.UploadProductLogoAsync(file), APIHttpType.HttpPost);
+        }
+
+        /// <summary>
+        /// Creates a new product license.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Create a new license record.
+        /// Request Flow: Client API POST -> ProductsController.CreateLicense() -> IProductsService.CreateLicenseAsync() -> Database.
+        /// Validation Details: Model binding maps ProductLicenseInput from the request body.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IProductsService.CreateLicenseAsync().
+        /// Response Details: Standard API result enclosing the created LicenseId.
+        /// </remarks>
+        /// <param name="input">Input DTO containing new license details.</param>
+        /// <returns>Standardized success or failure response.</returns>
+        /// <response code="200">Successfully created the license.</response>
+        /// <response code="400">Invalid request payload.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpPost]
+        [ActionName(API_Product.CreateLicense)]
+        public async Task<IActionResult> CreateLicense([FromBody] ProductLicenseInput input)
+        {
+            return ApiResultArgs(await service.CreateLicenseAsync(input), APIHttpType.HttpPost);
         }
 
         #endregion POST Methods
@@ -162,34 +185,30 @@ namespace CFR.Acutis.Controllers.Products
             return ApiResultArgs(await service.UpdateProductAsync(input), APIHttpType.HttpPut);
         }
 
-        #endregion PUT Methods
-
-        #region DELETE Methods
-
         /// <summary>
-        /// Soft-deletes a product by its identifier.
+        /// Updates an existing license.
         /// </summary>
         /// <remarks>
-        /// Purpose: Soft-delete a product record.
-        /// Request Flow: Client API DELETE -> ProductsController.DeleteProduct() -> IProductsService.DeleteProductAsync() -> Database.
-        /// Validation Details: Query parameter binding maps productId.
+        /// Purpose: Update editable fields of a license in lic.License.
+        /// Request Flow: Client API PUT -> ProductsController.UpdateLicense() -> IProductsService.UpdateLicenseAsync() -> Database.
+        /// Validation Details: Model binding maps ProductLicenseInput from the request body.
         /// Business Logic: None at the controller level; delegates to the service layer.
-        /// Service Interaction: Calls IProductsService.DeleteProductAsync().
-        /// Response Details: Standard API result representing the deletion outcome.
+        /// Service Interaction: Calls IProductsService.UpdateLicenseAsync().
+        /// Response Details: Standard API result representing the update outcome.
         /// </remarks>
-        /// <param name="productId">Identifier of the product to delete.</param>
+        /// <param name="input">Input DTO containing updated license details.</param>
         /// <returns>Standardized success or failure response.</returns>
-        /// <response code="200">Successfully deleted the product.</response>
-        /// <response code="400">Invalid product identifier.</response>
-        /// <response code="404">Product not found.</response>
+        /// <response code="200">Successfully updated the license.</response>
+        /// <response code="400">Invalid request payload.</response>
+        /// <response code="404">License not found.</response>
         /// <response code="500">Internal server error occurred.</response>
-        [HttpDelete]
-        [ActionName(API_Product.DeleteProduct)]
-        public async Task<IActionResult> DeleteProduct(int productId)
+        [HttpPut]
+        [ActionName(API_Product.UpdateLicense)]
+        public async Task<IActionResult> UpdateLicense([FromBody] ProductLicenseInput input)
         {
-            return ApiResultArgs(await service.DeleteProductAsync(productId), APIHttpType.HttpDelete);
+            return ApiResultArgs(await service.UpdateLicenseAsync(input), APIHttpType.HttpPut);
         }
 
-        #endregion DELETE Methods
+        #endregion PUT Methods
     }
 }

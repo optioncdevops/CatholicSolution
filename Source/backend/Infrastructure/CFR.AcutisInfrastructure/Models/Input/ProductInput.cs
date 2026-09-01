@@ -3,12 +3,17 @@
 namespace CFR.AcutisInfrastructure.Models.Input
 {
     /// <summary>
-    /// Input DTO used to create a new product in Core.Product.
-    /// Bound from the controller request body on POST /api/v1/Products/SaveProduct.
-    /// ProductId is omitted because it is generated sequentially on the server.
+    /// Input DTO used to update an existing product in Core.Product.
+    /// Bound from the controller request body on PUT /api/v1/Products/UpdateProduct.
     /// </summary>
-    public class ProductSaveInput
+    public class ProductInput
     {
+        /// <summary>
+        /// Gets or sets the product identifier.
+        /// </summary>
+        [JsonPropertyName("productId")]
+        public int ProductId { get; set; }
+
         /// <summary>
         /// Gets or sets the product name.
         /// </summary>
@@ -62,18 +67,5 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("features")]
         public List<string>? Features { get; set; }
-    }
-
-    /// <summary>
-    /// Input DTO used to update an existing product in Core.Product.
-    /// Bound from the controller request body on PUT /api/v1/Products/UpdateProduct.
-    /// </summary>
-    public class ProductInput : ProductSaveInput
-    {
-        /// <summary>
-        /// Gets or sets the product identifier.
-        /// </summary>
-        [JsonPropertyName("productId")]
-        public int ProductId { get; set; }
     }
 }
