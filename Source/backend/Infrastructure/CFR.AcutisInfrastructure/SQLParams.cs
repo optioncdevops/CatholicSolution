@@ -361,12 +361,12 @@ namespace CFR.AcutisInfrastructure
             /// <summary>
             /// CRUD action identifier.
             /// </summary>
-            public const string ActionId = nameof(ActionId);
+            public const string ActionId = "@ActionId";
 
             /// <summary>
             /// Member email used to decide Your Apps vs Available Apps.
             /// </summary>
-            public const string RequesterEmail = nameof(RequesterEmail);
+            public const string RequesterEmail = "@RequesterEmail";
         }
     }
 }
