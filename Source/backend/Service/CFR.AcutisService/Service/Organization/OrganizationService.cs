@@ -211,6 +211,44 @@ namespace CFR.AcutisService.Service.Organization
             return result;
         }
 
+        /// <summary>
+        /// Retrieves the real licenses issued against an organization's assigned products.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Licenses section of the organization detail page.
+        /// Request Flow: OrganizationController -> OrganizationService.GetOrganizationLicensesAsync() -> IOrganizationRepository.GetOrganizationLicensesAsync().
+        /// Validation Details: Identifier must be a positive integer.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IOrganizationRepository.GetOrganizationLicensesAsync().
+        /// Response Details: MSResultArgs containing List of OrganizationLicenseOutput, or NoRecordFound.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <returns>MSResultArgs containing the licenses issued against the organization's products.</returns>
+        public async Task<MSResultArgs> GetOrganizationLicensesAsync(long orgId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (orgId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                var data = await repository.GetOrganizationLicensesAsync(orgId);
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchOrganizationLicensesFailed, orgId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion GET Methods
 
         #region POST Methods

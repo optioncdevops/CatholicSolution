@@ -108,3 +108,16 @@ export const removeOrganizationProduct = async (orgId: number, productId: number
     throw err.response?.data?.statusMessage || err.message || 'Failed to remove product';
   }
 };
+
+export const getOrganizationLicenses = async (orgId: number): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetOrganizationLicenses`, {
+      params: { orgId },
+    });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to load organization licenses';
+  }
+};

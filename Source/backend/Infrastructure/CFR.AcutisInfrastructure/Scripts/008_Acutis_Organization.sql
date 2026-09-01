@@ -50,6 +50,7 @@ GO
 -- ActionId 7: Get products NOT yet assigned to an organization (assign dropdown source).
 -- ActionId 8: Assign a product to an organization.
 -- ActionId 9: Remove (soft-delete) a product assignment from an organization.
+-- ActionId 10: Get the real licenses issued against an organization's assigned products.
 CREATE PROCEDURE [dbo].[Acutis_Organization_CRUD]
     @ActionId INT,
     @OrgId BIGINT = 0,
@@ -263,6 +264,28 @@ BEGIN
 
         SET @ReturnValue = CAST(@ProductId AS INT);
         RETURN @ReturnValue;
+    END
+
+    IF @ActionId = 10
+    BEGIN
+        SELECT
+            l.[LicenseId],
+            l.[OrganizationProductId],
+            p.[ProductId],
+            p.[ProductName],
+            l.[LicenseType],
+            l.[ActivationDate],
+            l.[ExpiryDate],
+            l.[LicenseStatus],
+            l.[Remarks],
+            l.[CreatedDate]
+        FROM [lic].[License] AS l
+        INNER JOIN [lic].[OrganizationProduct] AS op ON op.[OrganizationProductId] = l.[OrganizationProductId]
+        INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
+        WHERE op.[OrgId] = @OrgId
+          AND op.[IsDeleted] = 0
+        ORDER BY l.[CreatedDate] DESC;
+        RETURN 0;
     END
 END
 GO

@@ -119,6 +119,28 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             return result.ToList();
         }
 
+        /// <summary>
+        /// Fetches the real licenses issued against an organization's assigned products using StoredProc.Organization.OrganizationCrud.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Licenses section of the organization detail page.
+        /// Request Flow: IOrganizationService -> OrganizationRepository.GetOrganizationLicensesAsync() -> Database.
+        /// Validation Details: OrgId parameter mapping.
+        /// Business Logic: Maps the joined lic.License + lic.OrganizationProduct + core.Product rows to OrganizationLicenseOutput.
+        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud with ActionId 10.
+        /// Response Details: Returns a list of organization license output records.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <returns>A list of licenses issued against the organization's products.</returns>
+        public async Task<List<OrganizationLicenseOutput>> GetOrganizationLicensesAsync(long orgId)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.OrganizationParams.ActionId, 10, DbType.Int32);
+            parameters.Add(DBParameterName.OrganizationParams.OrgId, orgId, DbType.Int64);
+            var result = await dapperHandler.QueryAsync<OrganizationLicenseOutput>(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
+            return result.ToList();
+        }
+
         #endregion GET Methods
 
         #region POST Methods

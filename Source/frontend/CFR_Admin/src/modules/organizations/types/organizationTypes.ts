@@ -67,3 +67,16 @@ export interface AssignOrganizationProductPayload {
   orgId: number;
   productId: number;
 }
+
+export interface OrganizationLicenseApiItem {
+  licenseId: number;
+  organizationProductId: number;
+  productId: number;
+  productName: string;
+  licenseType: string | null;
+  activationDate: string;
+  expiryDate: string | null;
+  licenseStatus: string;
+  remarks: string | null;
+  createdDate: string;
+}

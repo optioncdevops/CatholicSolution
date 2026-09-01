@@ -85,6 +85,21 @@ namespace CFR.AcutisInfrastructure.Interfaces.Organization
         /// <returns>A list of products not yet assigned to the organization.</returns>
         Task<List<ProductLookupOutput>> GetAssignableProductsAsync(long orgId);
 
+        /// <summary>
+        /// Retrieves the real licenses issued against an organization's assigned products.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Licenses section of the organization detail page.
+        /// Request Flow: IOrganizationService -> IOrganizationRepository.GetOrganizationLicensesAsync() -> SQL Database.
+        /// Validation Details: OrgId parameter mapping.
+        /// Business Logic: Joins lic.License to lic.OrganizationProduct and core.Product; directly retrieves rows without manipulation.
+        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud with ActionId 10.
+        /// Response Details: Returns a list of OrganizationLicenseOutput records.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <returns>A list of licenses issued against the organization's products.</returns>
+        Task<List<OrganizationLicenseOutput>> GetOrganizationLicensesAsync(long orgId);
+
         #endregion GET Methods
 
         #region POST Methods

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
-import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Tabs, TabPanel } from '@app/components/Tabs';
@@ -17,6 +16,7 @@ import OrganizationProfilePanel from './partials/OrganizationProfilePanel';
 import OrganizationUsersPanel from './partials/OrganizationUsersPanel';
 import OrganizationProductsPanel from './partials/OrganizationProductsPanel';
 import OrganizationRequestsPanel from './partials/OrganizationRequestsPanel';
+import OrganizationLicensesPanel from './partials/OrganizationLicensesPanel';
 
 const OrganizationDetailPage = () => {
   //#region Hooks
@@ -164,7 +164,7 @@ const OrganizationDetailPage = () => {
           </TabPanel>
 
           <TabPanel id="licenses" activeId={activeTab}>
-            <EmptyState icon="🔑" title="Licenses not yet available" description="License management for organizations has not been implemented in the backend yet." />
+            <OrganizationLicensesPanel orgId={numericOrgId} />
           </TabPanel>
 
           <TabPanel id="requests" activeId={activeTab}>

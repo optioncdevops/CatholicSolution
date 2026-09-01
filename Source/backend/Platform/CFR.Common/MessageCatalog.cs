@@ -105,12 +105,13 @@ namespace CFR.Common
             public const string FetchOrganizationProductsFailed = "Error while fetching organization products for organization {OrgId}";
             public const string SaveAccessRequestFailed = "Error while saving access request";
             public const string FetchAssignableProductsFailed = "Error while fetching assignable products for organization {OrgId}";
+            public const string FetchOrganizationLicensesFailed = "Error while fetching licenses for organization {OrgId}";
             public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string CreateOrganizationFailed = "Error while creating organization";
-            public const string SendAccessRequestEmailFailed = "Error while sending access request email";
-            public const string AssignOrganizationProductFailed = "Error while assigning product to organization";
-            public const string RemoveOrganizationProductFailed = "Error while removing product from organization";
-            public const string UpdateOrganizationFailed = "Error while updating organization";
+            public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
+            public const string AssignOrganizationProductFailed = "Error while assigning product to organization {OrgId}";
+            public const string RemoveOrganizationProductFailed = "Error while removing product from organization {OrgId}";
+            public const string UpdateOrganizationFailed = "Error while updating organization {OrgId}";
             public const string FetchProductByIdFailed = "Error while fetching product {ProductId}";
             public const string FetchProductLicensesFailed = "Error while fetching product licenses for {ProductId}";
             public const string SaveProductFailed = "Error while saving product";
