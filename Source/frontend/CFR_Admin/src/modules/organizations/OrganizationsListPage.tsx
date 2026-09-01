@@ -79,9 +79,11 @@ export function OrganizationsListPage() {
   );
 
   // Filter chips are data-driven — only statuses actually present in the loaded organizations
-  // show up, each with a live count, rather than a fixed always-shown vocabulary. Falls back to
-  // a title-cased label for any status not in the known ORG_STATUS_OPTIONS lookup.
+  // show up, each with a live count, rather than a fixed always-shown vocabulary. Ordered to
+  // match ORG_STATUS_OPTIONS' natural lifecycle order (Active -> Trial -> Suspended), not
+  // alphabetically, with any status outside that known vocabulary appended at the end.
   const statusFilterOptions = useMemo(() => {
+    const orderById = new Map(ORG_STATUS_OPTIONS.map((option, index) => [option.id, index]));
     const labelById = new Map(ORG_STATUS_OPTIONS.map((option) => [option.id, option.value]));
     const counts = new Map<string, number>();
     rows.forEach((org) => counts.set(org.orgStatus, (counts.get(org.orgStatus) ?? 0) + 1));
@@ -91,7 +93,7 @@ export function OrganizationsListPage() {
         value: labelById.get(id) ?? (id.charAt(0).toUpperCase() + id.slice(1)),
         count,
       }))
-      .sort((a, b) => a.value.localeCompare(b.value));
+      .sort((a, b) => (orderById.get(a.id) ?? ORG_STATUS_OPTIONS.length) - (orderById.get(b.id) ?? ORG_STATUS_OPTIONS.length));
   }, [rows]);
 
   //#region Columns
