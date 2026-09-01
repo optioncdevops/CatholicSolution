@@ -54,6 +54,8 @@ namespace CFR.Common
         public const string InvalidCurrentPassword = "Your current password is incorrect.";
         public const string ProfileUpdated = "Profile updated successfully.";
         public const string PasswordChanged = "Password changed successfully.";
+        public const string ExistProduct = "A product with this name already exists.";
+        public const string ProductNotFound = "Product not found.";
     }
 
     public static class SerilogErrorMessages
@@ -82,6 +84,13 @@ namespace CFR.Common
             public const string FetchProfileFailed = "Error while fetching profile for user {UserId}";
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
             public const string ChangePasswordFailed = "Error while changing password for user {UserId}";
+            public const string FetchProductsFailed = "Error while fetching products";
+            public const string FetchProductByIdFailed = "Error while fetching product {ProductId}";
+            public const string FetchProductLicensesFailed = "Error while fetching product licenses for {ProductId}";
+            public const string SaveProductFailed = "Error while saving product";
+            public const string UpdateProductFailed = "Error while updating product {ProductId}";
+            public const string DeleteProductFailed = "Error while deleting product {ProductId}";
+            public const string UploadProductLogoFailed = "Error while uploading product logo";
         }
     }
 }

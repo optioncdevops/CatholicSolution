@@ -10,14 +10,11 @@ import { AdminShell } from '@/modules/components/AdminShell';
 import { usersRoutes } from '@/modules/users';
 import { userRolesRoutes } from '@/modules/administration/userRoles';
 import { emailTemplatesRoutes } from '@/modules/administration/emailTemplates';
+import { productsRoutes } from '@/modules/Products';
 
 // Route-level code splitting — each admin page (and the ported dataTable/formControls code it
 // pulls in) loads as its own chunk on first visit instead of one 2MB+ bundle up front.
 const DashboardPage = lazy(() => import('@/modules/DashboardPage').then((m) => ({ default: m.DashboardPage })));
-const ProductsListPage = lazy(() => import('@/modules/applications/ProductsListPage').then((m) => ({ default: m.ProductsListPage })));
-const ProductDetailPage = lazy(() => import('@/modules/applications/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })));
-const ProductEditPage = lazy(() => import('@/modules/applications/ProductEditPage').then((m) => ({ default: m.ProductEditPage })));
-const CreateInvoicePage = lazy(() => import('@/modules/applications/CreateInvoicePage').then((m) => ({ default: m.CreateInvoicePage })));
 const OrganizationsListPage = lazy(() => import('@/modules/organizations/OrganizationsListPage').then((m) => ({ default: m.OrganizationsListPage })));
 const OrganizationDetailPage = lazy(() => import('@/modules/organizations/OrganizationDetailPage').then((m) => ({ default: m.OrganizationDetailPage })));
 const RequestsInboxPage = lazy(() => import('@/modules/requests/RequestsInboxPage').then((m) => ({ default: m.RequestsInboxPage })));
@@ -44,10 +41,7 @@ export default function App() {
           )}
         >
           <Route path="/admin" element={<DashboardPage />} />
-          <Route path="/admin/applications" element={<ProductsListPage />} />
-          <Route path="/admin/applications/:appId" element={<ProductDetailPage />} />
-          <Route path="/admin/applications/:appId/edit" element={<ProductEditPage />} />
-          <Route path="/admin/applications/:appId/invoices/create" element={<CreateInvoicePage />} />
+          {productsRoutes}
           <Route path="/admin/organizations" element={<OrganizationsListPage />} />
           <Route path="/admin/organizations/:orgId" element={<OrganizationDetailPage />} />
           {usersRoutes}

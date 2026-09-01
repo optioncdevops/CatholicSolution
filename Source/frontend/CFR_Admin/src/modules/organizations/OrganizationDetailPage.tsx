@@ -12,7 +12,7 @@ import { formatDate, formatDateTime, accessStatusOf, effectiveLicenseStatus } fr
 import { EntityAvatar } from '@app/components/EntityAvatar';
 import { Tabs, TabPanel } from '@app/components/Tabs';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
-import { InvoiceDetailModal } from '../applications/InvoiceDetailModal';
+import { InvoiceDetailModal } from '../Products';
 import type { AccessRequest, AdminApplication, AdminUser, EffectiveLicenseStatus, License } from '../types';
 
 const LICENSE_STATUS_FILTERS: Array<{ id: EffectiveLicenseStatus | 'all'; label: string }> = [
@@ -121,7 +121,7 @@ export function OrganizationDetailPage() {
     {
       id: 'name', header: 'Product', pinLeft: true, width: '14rem', value: (app) => app.name,
       cell: (app) => (
-        <Link to={`/admin/applications/${app.id}`} className="flex min-w-0 items-center gap-2.5 hover:underline">
+        <Link to={`/admin/products/${app.id}`} className="flex min-w-0 items-center gap-2.5 hover:underline">
           <span className="grid size-8 shrink-0 place-items-center rounded-lg text-sm text-white" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
           <span className="truncate font-bold text-[var(--text-primary)]">{app.name}</span>
         </Link>

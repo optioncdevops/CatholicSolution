@@ -1,9 +1,9 @@
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { DetailField } from '@app/components/DetailField';
 import { StatusBadge } from '@app/components/Badge';
-import { formatDate, formatDaysLabel, effectiveLicenseStatus } from '../utils/formatDate';
-import { useAdminData } from '../AdminDataContext';
-import type { License } from '../types';
+import { formatDate, formatDaysLabel, effectiveLicenseStatus } from '@/modules/utils/formatDate';
+import { useAdminData } from '@/modules/AdminDataContext';
+import type { License } from '@/modules/types';
 
 export function InvoiceDetailModal({ invoice, onClose }: { invoice: License | null; onClose: () => void }) {
   const { getOrganization, getApplication } = useAdminData();

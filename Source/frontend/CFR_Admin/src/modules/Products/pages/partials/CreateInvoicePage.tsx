@@ -5,9 +5,9 @@ import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { CommonCheckbox, DatePicker, Dropdown, InputField, MandatoryIndicator, RichTextEditor } from '@app/components/formControls';
-import { useAdminData } from '../AdminDataContext';
-import { confirmAction } from '../lib/confirm';
-import type { License, LicenseStatus } from '../types';
+import { useAdminData } from '@/modules/AdminDataContext';
+import { confirmAction } from '@/modules/lib/confirm';
+import type { License, LicenseStatus } from '@/modules/types';
 
 const STATUS_OPTIONS: Array<{ id: LicenseStatus; value: string }> = [
   { id: 'active', value: 'Active' },
@@ -21,19 +21,17 @@ function inDays(days: number): string {
   return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 }
 
-/** Issues a standard product license — customer, an optional seat count (unlimited/site
- * licenses are common for SaaS products that aren't sold per-seat), a start/expiry term, and
- * an optional note to the customer — instead of a line-itemized billing form. */
 export function CreateInvoicePage() {
-  const { appId } = useParams();
+  const { appId, productId } = useParams();
+  const id = productId ?? appId;
   const navigate = useNavigate();
   const { getApplication, organizations, addLicense } = useAdminData();
   const { showToast } = useToast();
 
-  const app = appId ? getApplication(appId) : undefined;
-  const licenseTabPath = `/admin/applications/${appId}`;
+  const app = id ? getApplication(id) : undefined;
+  const licenseTabPath = `/admin/products/${id}`;
 
-  const productCustomers = organizations.filter((org) => org.appIds.includes(appId ?? ''));
+  const productCustomers = organizations.filter((org) => org.appIds.includes(id ?? ''));
 
   const [title, setTitle] = useState(app ? `${app.name} — License` : '');
   const [orgId, setOrgId] = useState(productCustomers[0]?.id ?? '');
@@ -45,7 +43,7 @@ export function CreateInvoicePage() {
   const [customMessage, setCustomMessage] = useState('');
   const [touched, setTouched] = useState(false);
 
-  if (!app || !appId) return <Navigate to="/admin/applications" replace />;
+  if (!app || !id) return <Navigate to="/admin/products" replace />;
 
   const hasErrors = !title.trim() || !orgId || !startDate || !expiryDate || (!unlimitedSeats && seats < 1);
 
@@ -67,7 +65,7 @@ export function CreateInvoicePage() {
     if (hasErrors) return;
     const license: Omit<License, 'id' | 'licenseNumber' | 'licenseKey'> = {
       orgId,
-      appId,
+      appId: id,
       title: title.trim(),
       seats: unlimitedSeats ? undefined : seats,
       startDate,
@@ -76,7 +74,7 @@ export function CreateInvoicePage() {
       customMessage: customMessage.trim() || undefined,
     };
     addLicense(license);
-    showToast('License created ✓ (prototype only, not persisted)');
+    showToast('License created (prototype only, not persisted)');
     navigate(licenseTabPath);
   };
 
@@ -166,3 +164,5 @@ export function CreateInvoicePage() {
     </div>
   );
 }
+
+export default CreateInvoicePage;

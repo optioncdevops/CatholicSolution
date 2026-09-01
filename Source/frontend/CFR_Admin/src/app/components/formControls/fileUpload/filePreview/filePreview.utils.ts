@@ -39,6 +39,31 @@ export function getFilePreviewKind(
   const ext = getFileExtension(file.name);
   const mime = resolvePreviewMime(file);
 
+  if (
+    ext === ".png" ||
+    ext === ".jpg" ||
+    ext === ".jpeg" ||
+    ext === ".webp" ||
+    ext === ".gif" ||
+    ext === ".svg"
+  ) {
+    return "image";
+  }
+
+  if (url) {
+    const urlExt = getFileExtension(url.split("?")[0] || "");
+    if (
+      urlExt === ".png" ||
+      urlExt === ".jpg" ||
+      urlExt === ".jpeg" ||
+      urlExt === ".webp" ||
+      urlExt === ".gif" ||
+      urlExt === ".svg"
+    ) {
+      return "image";
+    }
+  }
+
   if (ext === ".pdf" || mime === "application/pdf") {return "pdf";}
   if (ext === ".docx" || mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
     return "docx";

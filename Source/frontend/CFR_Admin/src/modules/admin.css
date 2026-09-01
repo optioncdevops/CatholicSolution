@@ -300,6 +300,7 @@
 .admin-product-card {
   display: flex;
   flex-direction: column;
+  height: 100%;
   border: 1px solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
@@ -315,15 +316,14 @@
   border-color: var(--line-strong);
 }
 .admin-product-card__description {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
   margin-top: 0.45rem;
   font-size: 0.75rem;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--text-muted);
-  min-height: 1.95rem;
+  min-height: 2rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 .admin-product-card__divider {
   margin: 0.5rem 0;
@@ -385,34 +385,46 @@
 }
 
 /* --- SweetAlert2 confirmation dialogs, themed to match the admin console --- */
-/* Our own drawers/dialogs (Drawer, ProductStatusDialog) use z-index up
-   to 1100, and confirmAction() is often triggered from inside one of them — SweetAlert2's
-   default .swal2-container z-index (1060) sits below that, so raise it here. */
-.swal2-container { z-index: 2000 !important; }
+/* BaseModal uses z-[10100] and toast uses z-[10400], so set swal2-container to 10500 so confirmation alerts always appear in front of all open dialogs */
+.swal2-container {
+  z-index: 10500 !important;
+}
 
 .admin-swal-popup {
   font-family: var(--admin-font-family);
   border-radius: var(--radius-panel);
-  padding: 1.5rem;
+  padding: 1.75rem 1.5rem;
+  background: var(--surface) !important;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-elevated) !important;
 }
 .admin-swal-title {
   font-family: var(--admin-font-family-display);
-  font-size: 1.0625rem !important;
+  font-size: 1.125rem !important;
   font-weight: 800 !important;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
+  margin-top: 0.5rem !important;
 }
 .admin-swal-text {
   font-size: 0.8125rem !important;
   line-height: 1.6;
-  color: var(--text-muted);
+  color: var(--text-muted) !important;
 }
 .admin-swal-confirm, .admin-swal-cancel {
   font-family: var(--admin-font-family) !important;
   border-radius: var(--admin-control-radius) !important;
   font-size: 0.8125rem !important;
   font-weight: 750 !important;
-  padding: 0.55rem 1.1rem !important;
+  padding: 0.55rem 1.25rem !important;
   box-shadow: none !important;
+}
+.admin-swal-popup .swal2-icon {
+  margin: 0.5rem auto 1rem !important;
+  border-width: 3px !important;
+}
+.admin-swal-popup .swal2-actions {
+  margin-top: 1.5rem !important;
+  gap: 0.75rem !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

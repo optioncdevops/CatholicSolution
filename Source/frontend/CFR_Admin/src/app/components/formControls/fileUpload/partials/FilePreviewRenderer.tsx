@@ -48,16 +48,16 @@ function ImagePreviewPanel({
 }) {
   return (
     <div
-      className={`flex h-full w-full items-center justify-center overflow-auto p-3 ${themeCardMutedSurfaceClass}`}
+      className="flex h-full w-full items-center justify-center overflow-auto p-3"
     >
       <img
         src={item.url ?? undefined}
         alt={item.file.name}
         style={{ transform: `scale(${zoom})` }}
         className={[
-          "object-contain transition-transform duration-150",
+          "object-contain transition-transform duration-150 rounded-lg shadow-sm",
           viewMode === "fit"
-            ? "h-full w-full max-h-full max-w-full"
+            ? "max-h-[42vh] max-w-full"
             : "h-auto w-auto max-h-none max-w-none",
         ].join(" ")}
       />

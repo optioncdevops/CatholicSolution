@@ -1,9 +1,10 @@
-﻿global using CFR.Acutis;
+global using CFR.Acutis;
 global using CFR.AcutisInfrastructure.Models.Input;
 global using CFR.AcutisInfrastructure.Models.Output;
 global using CFR.AcutisService.Interfaces.AcutisAuthentication;
 global using CFR.AcutisService.Interfaces.Administration;
 global using CFR.AcutisService.Interfaces.Profile;
+global using CFR.AcutisService.Interfaces.Products;
 global using CFR.Base;
 global using CFR.Common;
 global using CFR.CommonService;

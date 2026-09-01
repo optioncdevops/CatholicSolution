@@ -45,8 +45,15 @@ function toastStyle(variant: ToastVariant): CSSProperties {
 }
 
 export function ToastProvider({ children }: PropsWithChildren) {
-  const showToast = useCallback((message: string, variant: ToastVariant = 'success') => {
-    toast(message, { icon: toastIcon(variant), style: toastStyle(variant) });
+  const showToast = useCallback((message: string, variant?: ToastVariant) => {
+    const cleanMessage = message.replace(/\s*✓\s*$/, '').trim();
+    const resolvedVariant: ToastVariant =
+      variant !== undefined
+        ? variant
+        : /^(failed|error|unable|invalid|cannot|could not)/i.test(cleanMessage)
+          ? 'error'
+          : 'success';
+    toast(cleanMessage, { icon: toastIcon(resolvedVariant), style: toastStyle(resolvedVariant) });
   }, []);
 
   const value = useMemo(() => ({ showToast }), [showToast]);
