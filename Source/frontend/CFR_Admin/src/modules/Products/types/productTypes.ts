@@ -36,6 +36,19 @@ export interface ProductInputPayload extends ProductSaveInputPayload {
   productId: number;
 }
 
+export interface ProductLicenseInputPayload {
+  licenseId?: number;
+  organizationProductId?: number;
+  orgId: number;
+  productId: number;
+  licenseType: string;
+  activationDate: string;
+  expiryDate: string;
+  licenseStatus: string;
+  assignStatus?: string;
+  remarks?: string;
+}
+
 export interface ProductLicenseApiItem {
   licenseId: number;
   organizationProductId: number;

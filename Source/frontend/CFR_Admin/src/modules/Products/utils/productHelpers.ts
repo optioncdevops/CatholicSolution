@@ -3,9 +3,9 @@ import type { AdminApplication, ProductStatus } from '@/modules/types';
 
 export const PRODUCTS_PATHS = {
   list: '/admin/products',
-  details: '/admin/products/details',
-  edit: '/admin/products/edit',
-  addLicense: '/admin/products/add-license',
+  details: '/admin/product-details',
+  edit: '/admin/edit-products',
+  addLicense: '/admin/add-product-license',
 } as const;
 
 export const DEFAULT_PRODUCT_ICON = '📦';

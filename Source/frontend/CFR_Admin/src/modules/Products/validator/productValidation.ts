@@ -70,6 +70,23 @@ export function validateProductForm(form: Partial<AdminApplication>): ProductFor
   return errors;
 }
 
+export function validateLicenseForm(values: {
+  title: string;
+  orgId: string;
+  activationDate: string;
+  expiryDate: string;
+  unlimitedSeats: boolean;
+  seats: number;
+}): string[] {
+  const messages: string[] = [];
+  if (!values.title.trim()) messages.push('Title is required.');
+  if (!values.orgId) messages.push('Customer is required.');
+  if (!values.activationDate) messages.push('Start date is required.');
+  if (!values.expiryDate) messages.push('Expiry date is required.');
+  if (!values.unlimitedSeats && values.seats < 1) messages.push('Seats is required.');
+  return messages;
+}
+
 /** Whether the current status allows the product to be launched directly from App Hub. */
 export function isLaunchable(status: ProductStatus) {
   return status === 'active';

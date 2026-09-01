@@ -1,6 +1,6 @@
 import axiosInstance from '@app/config/AxiosInstance';
 import type { ApiError, ApiResponse } from '@app/pages/types/CommonTypes';
-import type { ProductInputPayload, ProductSaveInputPayload } from '../types/productTypes';
+import type { ProductInputPayload, ProductLicenseInputPayload, ProductSaveInputPayload } from '../types/productTypes';
 
 const controller = 'Products';
 
@@ -38,6 +38,17 @@ export const getLicenseDetails = async (productId: number): Promise<ApiResponse>
   } catch (error: unknown) {
     const err = error as ApiError;
     throw err.response?.data?.statusMessage || err.message || 'Failed to fetch license details';
+  }
+};
+
+export const createLicense = async (payload: ProductLicenseInputPayload): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.post<ApiResponse>(`${controller}/CreateLicense`, payload);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to create license';
   }
 };
 
