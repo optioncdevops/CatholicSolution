@@ -20,22 +20,22 @@ const DashboardPage = lazy(() =>
   import("@/modules/DashboardPage").then((m) => ({ default: m.DashboardPage })),
 );
 const ProductsListPage = lazy(() =>
-  import("@/modules/applications/ProductsListPage").then((m) => ({
+  import("@/modules/Products/pages/ProductsListPage").then((m) => ({
     default: m.ProductsListPage,
   })),
 );
 const ProductDetailPage = lazy(() =>
-  import("@/modules/applications/ProductDetailPage").then((m) => ({
+  import("@/modules/Products/pages/partials/ProductDetailPage").then((m) => ({
     default: m.ProductDetailPage,
   })),
 );
 const ProductEditPage = lazy(() =>
-  import("@/modules/applications/ProductEditPage").then((m) => ({
+  import("@/modules/Products/pages/partials/ProductEditPage").then((m) => ({
     default: m.ProductEditPage,
   })),
 );
 const CreateInvoicePage = lazy(() =>
-  import("@/modules/applications/CreateInvoicePage").then((m) => ({
+  import("@/modules/Products/pages/partials/CreateInvoicePage").then((m) => ({
     default: m.CreateInvoicePage,
   })),
 );
