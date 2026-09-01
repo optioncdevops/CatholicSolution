@@ -151,6 +151,13 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .animate-rise { animation: rise 0.32s cubic-bezier(.2,.8,.2,1) both; }
 
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.admin-toast-progress { animation-name: toast-progress; animation-timing-function: linear; animation-fill-mode: forwards; }
+
 @media (min-width: 1280px) {
   .dashboard-content { padding-top: 1.75rem; }
 }

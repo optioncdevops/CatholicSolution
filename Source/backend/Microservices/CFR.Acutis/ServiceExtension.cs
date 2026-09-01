@@ -1,11 +1,14 @@
 ﻿using CFR.AcutisInfrastructure.Interfaces.AcutisAuthentication;
 using CFR.AcutisInfrastructure.Interfaces.Administration;
 using CFR.AcutisInfrastructure.Interfaces.Profile;
+using CFR.AcutisInfrastructure.Interfaces.Organization;
 using CFR.AcutisInfrastructure.Repositorys.AcutisAuthentication;
 using CFR.AcutisInfrastructure.Repositorys.Administration;
+using CFR.AcutisInfrastructure.Repositorys.Organization;
 using CFR.AcutisInfrastructure.Repositorys.Profile;
 using CFR.AcutisService.Service.AcutisAuthentication;
 using CFR.AcutisService.Service.Administration;
+using CFR.AcutisService.Service.Organization;
 using CFR.AcutisService.Service.Profile;
 using CFR.CommonService.Interfaces;
 using CFR.CommonService.Service;
@@ -49,6 +52,10 @@ namespace CFR.Acutis
             // Self-service profile / change-password
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IProfileRepository, ProfileRepository>();
+
+            // Organization
+            services.AddScoped<IOrganizationService, OrganizationService>();
+            services.AddScoped<IOrganizationRepository, OrganizationRepository>();
 
             return services;
         }

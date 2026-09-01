@@ -74,5 +74,16 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string AccessRequestCrud = "[request].[AccessRequest_CRUD]";
         }
+
+        /// <summary>
+        /// Stored procedure names for Organization features.
+        /// </summary>
+        public class Organization
+        {
+            /// <summary>
+            /// Organization list, get by id, and update operations.
+            /// </summary>
+            public const string OrganizationCrud = "[dbo].[Acutis_Organization_CRUD]";
+        }
     }
 }

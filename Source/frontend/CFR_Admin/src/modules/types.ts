@@ -58,6 +58,26 @@ export interface Organization {
   contactPhone: string;
   /** Subscription/access expiry date — drives {@link CustomerAccessStatus}. */
   expiryDate: string;
+  /** Registered/legal business name, when different from the everyday display name. */
+  legalName?: string;
+  /** Business type / industry classification, e.g. "Education", "Parish". */
+  industry?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  /** IANA timezone id, e.g. "America/Chicago". */
+  timezone?: string;
+  /** Preferred language/region, e.g. "en-US". */
+  locale?: string;
+  /** ISO 4217 currency code, e.g. "USD". */
+  currency?: string;
+  /** Logo image URL or local object-URL preview — prototype only, never uploaded anywhere. */
+  logoUrl?: string;
+  /** Brand accent color (hex), used for lightweight visual identity — prototype only. */
+  brandColor?: string;
 }
 
 export type UserRole = 'owner' | 'admin' | 'member';
@@ -139,16 +159,4 @@ export interface License {
   status: LicenseStatus;
   /** Optional note shown to the customer alongside the license, e.g. onboarding instructions. */
   customMessage?: string;
-}
-
-/** The single Masters reference list — billable line items available when creating a
- * license. Managed under Administration → Masters; never deleted, only activated/deactivated. */
-export interface InvoiceItem {
-  id: string;
-  title: string;
-  description: string;
-  defaultAmount: number;
-  active: boolean;
-  /** Product this item is billed under — every license item belongs to exactly one product. */
-  appId: string;
 }
