@@ -153,7 +153,7 @@ namespace CFR.AcutisService.Service.Administration
         /// Purpose: Let an admin preview a template in their own inbox before saving it.
         /// Request Flow: EmailTemplatesController -> EmailTemplatesService.SendTestEmailAsync() -> ISMTPMailService.SendMailAsync().
         /// Validation Details: Subject, body, and recipient address are required.
-        /// Business Logic: Merges sample placeholder values for the given template code with SMTPMailService.FormatMailContent, then sends via ISMTPMailService.
+        /// Business Logic: Sends the editor subject and body as written via ISMTPMailService. Merge tags are not filled with demo values.
         /// Repository Interaction: None.
         /// Response Details: MSResultArgs indicating whether the mail server accepted the message.
         /// </remarks>
@@ -171,11 +171,7 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                var sampleValues = EmailTemplateSampleData.ForTemplateCode(input.TemplateCode);
-                string mergedSubject = SMTPMailService.FormatMailContent(input.Subject, sampleValues);
-                string mergedBody = SMTPMailService.FormatMailContent(input.Body, sampleValues);
-
-                bool sent = await mailService.SendMailAsync(mergedSubject, mergedBody, input.ToAddress);
+                bool sent = await mailService.SendMailAsync(input.Subject, input.Body, input.ToAddress);
                 if (!sent)
                 {
                     result.StatusCode = ErrorCodes.Failed;

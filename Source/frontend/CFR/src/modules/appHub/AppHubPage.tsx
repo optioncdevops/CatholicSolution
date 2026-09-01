@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppDetailsModal } from '@shared/app/components/AppDetailsModal';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
@@ -6,9 +6,10 @@ import { ProfileMenu } from '@shared/app/components/ProfileMenu';
 import { SectionHeading } from '@shared/app/components/SectionHeading';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { BellIcon, SearchIcon } from '@shared/app/components/UiIcons';
-import { availableApps, futureApps, yourApps } from '@shared/app/config/appCatalog';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import type { CatalogApp } from '@shared/app/types/app';
+import { getProducts } from '@/modules/products/services/productsService';
+import { mergeHubProducts } from '@/modules/products/utils/productsHelpers';
 import { AppCard } from './AppCard';
 import { RequestInterestModal } from './RequestInterestModal';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
@@ -22,13 +23,50 @@ function greeting(firstName: string) {
 }
 
 export function AppHubPage() {
+  //#region Hooks
   const { showToast } = useToast();
-  const { firstName } = useCurrentUser();
+  const { firstName, user } = useCurrentUser();
+  //#endregion
+
+  //#region States
   const [query, setQuery] = useState('');
   const [selectedApp, setSelectedApp] = useState<CatalogApp | null>(null);
   const [requestedApp, setRequestedApp] = useState<CatalogApp | null>(null);
+  const [requestedAppIds, setRequestedAppIds] = useState<string[]>([]);
+  const [apps, setApps] = useState<CatalogApp[]>([]);
+  const [loading, setLoading] = useState(true);
+  //#endregion
+
+  //#region Functions
+  const loadProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getProducts(user.email);
+      const statusCode = Number(response?.statusCode ?? 200);
+      const resultData = statusCode === 204 ? [] : (response?.resultData ?? response?.ResultData);
+      setApps(mergeHubProducts(resultData));
+    } catch (error) {
+      console.error('Error loading products:', error);
+      showToast(typeof error === 'string' ? error : 'Failed to load products.');
+      setApps(mergeHubProducts([]));
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast, user.email]);
+  //#endregion
+
+  //#region Effects
+  useEffect(() => {
+    void loadProducts();
+  }, [loadProducts]);
+  //#endregion
+
+  //#region Functions
   const normalized = query.trim().toLowerCase();
-  const filter = (apps: CatalogApp[]) => normalized ? apps.filter((app) => [app.name, app.description, app.category, ...app.keywords].join(' ').toLowerCase().includes(normalized)) : apps;
+  const filter = (items: CatalogApp[]) => (normalized ? items.filter((app) => [app.name, app.description, app.category, ...app.keywords].join(' ').toLowerCase().includes(normalized)) : items);
+  const yourApps = useMemo(() => apps.filter((app) => app.hubSection === 'your'), [apps]);
+  const availableApps = useMemo(() => apps.filter((app) => app.hubSection === 'available'), [apps]);
+  const futureApps = useMemo(() => apps.filter((app) => app.hubSection === 'future'), [apps]);
   const groups = [
     {
       title: 'Your Apps',
@@ -59,9 +97,26 @@ export function AppHubPage() {
     },
   ];
   const visibleCount = groups.reduce((total, group) => total + group.apps.length, 0);
-  /* Hero summary mirrors the rendered sections; totals come from the same catalog collections. */
   const summary = groups.map((group) => ({ title: group.title, total: group.total }));
+  //#endregion
 
+  //#region Handlers
+  const openRequestModal = useCallback((app: CatalogApp) => {
+    if (requestedAppIds.includes(app.id)) return;
+    setSelectedApp(null);
+    setRequestedApp(app);
+  }, [requestedAppIds]);
+
+  const closeRequestModal = useCallback(() => {
+    setRequestedApp(null);
+  }, []);
+
+  const handleRequestSubmitted = useCallback((app: CatalogApp) => {
+    setRequestedAppIds((current) => (current.includes(app.id) ? current : [...current, app.id]));
+  }, []);
+  //#endregion
+
+  //#region Render
   return (
     <main className="hub-page">
       <SolutionHead solutionId="platform" pageTitle="App Hub" />
@@ -117,24 +172,38 @@ export function AppHubPage() {
           </div>
         ) : null}
         <div className="hub-sections-stack">
-          {groups.map((group) => (
+          {loading ? (
+            <div className="hub-empty-state">Loading apps…</div>
+          ) : groups.map((group) => (
             <section key={group.title} className={`hub-section-panel hub-section-panel--${group.variant}`}>
               <SectionHeading title={group.title} count={group.count} />
               <p className="hub-section-panel__note">{group.note}</p>
               {group.apps.length ? (
                 <div className="hub-app-grid">
-                  {group.apps.map((app) => <AppCard key={app.id} app={app} onDetails={setSelectedApp} onRequest={setRequestedApp} hidePrimaryAction={group.hidePrimaryAction} actionMode={group.actionMode} statusMode={group.statusMode} />)}
+                  {group.apps.map((app) => (
+                    <AppCard
+                      key={app.id}
+                      app={app}
+                      onDetails={setSelectedApp}
+                      onRequest={openRequestModal}
+                      hidePrimaryAction={group.hidePrimaryAction}
+                      actionMode={group.actionMode}
+                      statusMode={group.statusMode}
+                      alreadyRequested={requestedAppIds.includes(app.id)}
+                    />
+                  ))}
                 </div>
               ) : (
-                <div className="hub-empty-state">No {group.title.toLowerCase()} match “{query}”.</div>
+                <div className="hub-empty-state">{normalized ? `No ${group.title.toLowerCase()} match “${query}”.` : `No ${group.title.toLowerCase()} yet.`}</div>
               )}
             </section>
           ))}
         </div>
       </section>
       <Footer />
-      <AppDetailsModal app={selectedApp} onClose={() => setSelectedApp(null)} onRequest={(requested) => { setSelectedApp(null); setRequestedApp(requested); }} />
-      <RequestInterestModal app={requestedApp} onClose={() => setRequestedApp(null)} />
+      <AppDetailsModal app={selectedApp} onClose={() => setSelectedApp(null)} onRequest={openRequestModal} />
+      <RequestInterestModal app={requestedApp} onClose={closeRequestModal} onSubmitted={handleRequestSubmitted} />
     </main>
   );
+  //#endregion
 }

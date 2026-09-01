@@ -15,7 +15,7 @@ import { confirmAction } from '../../../lib/confirm';
 import { getEmailTemplates, saveEmailTemplate, sendTestEmail } from '../services/emailTemplatesService';
 import type { EmailTemplateApiItem, EmailTemplateFormValues } from '../types/emailTemplatesTypes';
 import {
-  EMAIL_TEMPLATE_VARIABLES, getUnsupportedPlaceholders, normalizeEmailTemplatesList, renderSample, templateDescription, templateDisplayLabel,
+  EMAIL_TEMPLATE_VARIABLES, getUnsupportedPlaceholders, normalizeEmailTemplatesList, templateDescription, templateDisplayLabel,
 } from '../utils/emailTemplatesHelpers';
 import { validateEmailTemplate } from '../validator/EmailTemplatesValidator';
 
@@ -335,7 +335,6 @@ function EmailTemplatesPage() {
               <div className="flex flex-col gap-2 p-4">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Live Preview</p>
-                  <Badge tone="info">Sample data</Badge>
                 </div>
                 <div className="admin-email-preview-shell">
                   <div
@@ -344,28 +343,24 @@ function EmailTemplatesPage() {
                   >
                     <div className="admin-email-preview-card__meta">
                       <div className="admin-email-preview-card__meta-row">
-                        <span className="admin-email-preview-card__meta-label">From</span>
-                        <span className="admin-email-preview-card__meta-value">Catholic Solution &lt;no-reply@catholicsolution.org&gt;</span>
-                      </div>
-                      <div className="admin-email-preview-card__meta-row">
                         <span className="admin-email-preview-card__meta-label">To</span>
-                        <span className="admin-email-preview-card__meta-value">{storedAuthEmail ?? 'you@example.org'}</span>
+                        <span className="admin-email-preview-card__meta-value">{storedAuthEmail || '—'}</span>
                       </div>
                     </div>
-                    <p className="admin-email-preview-card__subject">{renderSample(template.templateCode, draft.subject) || 'Untitled subject'}</p>
+                    <p className="admin-email-preview-card__subject">{draft.subject || 'Untitled subject'}</p>
                     {draft.body ? (
                       // The body is the actual HTML this template sends (SMTPMailService sends IsBodyHtml=true) —
                       // rendering it here, not as escaped text, is what makes the preview match the real email.
                       // Content is the signed-in admin's own draft, rendered back to themselves; no other user's input reaches this.
-                      <div className="admin-email-preview-card__body" dangerouslySetInnerHTML={{ __html: renderSample(template.templateCode, draft.body) }} />
+                      <div className="admin-email-preview-card__body" dangerouslySetInnerHTML={{ __html: draft.body }} />
                     ) : (
-                      <p className="px-4 pb-4 text-xs italic text-[var(--text-faint)]">Start typing the body to see it rendered here with sample data.</p>
+                      <p className="px-4 pb-4 text-xs italic text-[var(--text-faint)]">Start typing the body to see it rendered here.</p>
                     )}
                   </div>
                 </div>
                 <p className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
                   <CheckCircle2 size={12} className="shrink-0" aria-hidden="true" />
-                  Shown with sample data — "Send Test" sends this content for real to your own inbox.
+                  Preview shows the template as written. Merge tags stay as placeholders until a real send fills them in.
                 </p>
               </div>
             </div>
