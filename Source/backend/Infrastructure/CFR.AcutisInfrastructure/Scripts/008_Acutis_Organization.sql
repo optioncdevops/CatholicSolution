@@ -2,7 +2,7 @@
 -- Organization list/get/create/update CRUD against the existing [core].[Organization] table,
 -- extended with Website / ContactPerson / ContactPhone (idempotent ALTER — safe to re-run on an
 -- already up-to-date database), plus real user/product data sourced from the existing
--- [auth].[OrganizationUser] / [auth].[AuthUser] and [lic].[OrganizationProduct] / [core].[Product]
+-- [auth].[OrganizationUser] / [auth].[User] and [lic].[OrganizationProduct] / [core].[Product]
 -- link tables.
 -- OrgId is NOT an IDENTITY column (matches the MAX+1 pattern already used for
 -- auth.AcutisRole and adm.EmailTemplate in this codebase) — Create assigns the next value itself.
@@ -158,14 +158,14 @@ BEGIN
     IF @ActionId = 5
     BEGIN
         SELECT
-            au.[AuthUserId],
+            au.[UserId] AS [AuthUserId],
             au.[Email],
             au.[FirstName],
             au.[LastName],
             ou.[MemberStatus],
             ou.[CreatedDate] AS [LinkedDate]
         FROM [auth].[OrganizationUser] AS ou
-        INNER JOIN [auth].[AuthUser] AS au ON au.[AuthUserId] = ou.[AuthUserId]
+        INNER JOIN [auth].[User] AS au ON au.[UserId] = ou.[AuthUserId]
         WHERE ou.[OrgId] = @OrgId
           AND ou.[IsDeleted] = 0
           AND au.[IsDeleted] = 0

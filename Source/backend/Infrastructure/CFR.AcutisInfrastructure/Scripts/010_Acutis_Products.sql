@@ -55,8 +55,8 @@ BEGIN
                         INNER JOIN [auth].[OrganizationUser] ou
                             ON ou.[OrgId] = op.[OrgId]
                            AND ou.[IsDeleted] = 0
-                        INNER JOIN [auth].[AuthUser] au
-                            ON au.[AuthUserId] = ou.[AuthUserId]
+                        INNER JOIN [auth].[User] au
+                            ON au.[UserId] = ou.[AuthUserId]
                            AND au.[IsDeleted] = 0
                            AND au.[IsActive] = 1
                         WHERE op.[ProductId] = p.[ProductId]
@@ -70,8 +70,8 @@ BEGIN
                         INNER JOIN [auth].[OrganizationUser] ou
                             ON ou.[OrganizationUserId] = upa.[OrganizationUserId]
                            AND ou.[IsDeleted] = 0
-                        INNER JOIN [auth].[AuthUser] au
-                            ON au.[AuthUserId] = ou.[AuthUserId]
+                        INNER JOIN [auth].[User] au
+                            ON au.[UserId] = ou.[AuthUserId]
                            AND au.[IsDeleted] = 0
                            AND au.[IsActive] = 1
                         WHERE upa.[ProductId] = p.[ProductId]
