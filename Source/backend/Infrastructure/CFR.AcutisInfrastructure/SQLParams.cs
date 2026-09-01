@@ -282,6 +282,11 @@ namespace CFR.AcutisInfrastructure
             public const string UpdatedBy = nameof(UpdatedBy);
 
             /// <summary>
+            /// Product identifier, used when assigning/removing a product for an organization.
+            /// </summary>
+            public const string ProductId = nameof(ProductId);
+
+            /// <summary>
             /// Stored procedure output / return value.
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);

@@ -124,9 +124,9 @@ function EmailTemplatesPage() {
   //#region Handlers
   const handleSave = async () => {
     if (!template) return;
-    const validationError = validateEmailTemplate(draft.subject, draft.body);
-    if (validationError) {
-      showToast(validationError, 'error');
+    const validationErrors = validateEmailTemplate(draft.subject, draft.body);
+    if (validationErrors.length > 0) {
+      showToast(validationErrors, 'error');
       return;
     }
 

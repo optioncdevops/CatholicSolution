@@ -55,7 +55,12 @@ namespace CFR.Common
         public const string ProfileUpdated = "Profile updated successfully.";
         public const string PasswordChanged = "Password changed successfully.";
         public const string OrganizationUpdated = "Organization updated successfully.";
+        public const string OrganizationCreated = "Organization created successfully.";
         public const string OrganizationNotFound = "Organization not found.";
+        public const string ProductAlreadyAssigned = "This product is already assigned to the organization.";
+        public const string ProductAssigned = "Product assigned successfully.";
+        public const string ProductNotAssigned = "This product is not assigned to the organization.";
+        public const string ProductRemoved = "Product removed successfully.";
     }
 
     public static class SerilogErrorMessages
@@ -87,6 +92,12 @@ namespace CFR.Common
             public const string FetchOrganizationsFailed = "Error while fetching organizations";
             public const string FetchOrganizationByIdFailed = "Error while fetching organization {OrgId}";
             public const string UpdateOrganizationFailed = "Error while updating organization {OrgId}";
+            public const string CreateOrganizationFailed = "Error while creating organization";
+            public const string FetchOrganizationUsersFailed = "Error while fetching users for organization {OrgId}";
+            public const string FetchOrganizationProductsFailed = "Error while fetching products for organization {OrgId}";
+            public const string FetchAssignableProductsFailed = "Error while fetching assignable products for organization {OrgId}";
+            public const string AssignOrganizationProductFailed = "Error while assigning product for organization {OrgId}";
+            public const string RemoveOrganizationProductFailed = "Error while removing product for organization {OrgId}";
         }
     }
 }

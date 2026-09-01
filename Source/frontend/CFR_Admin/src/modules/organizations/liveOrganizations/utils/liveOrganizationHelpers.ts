@@ -11,8 +11,10 @@ export const normalizeLiveOrganization = (resultData: unknown): LiveOrganization
 };
 
 // Single source of truth for the real status vocabulary core.Organization.OrgStatus supports —
-// shared by the edit form's dropdown and the list page's status filter so they can never drift.
+// shared by the profile form's dropdown and the list page's status filter so they can never
+// drift. Matches the tone map StatusBadge already ships for kind="organization".
 export const ORG_STATUS_OPTIONS: Array<{ id: string; value: string }> = [
   { id: 'active', value: 'Active' },
-  { id: 'inactive', value: 'Inactive' },
+  { id: 'trial', value: 'Trial' },
+  { id: 'suspended', value: 'Suspended' },
 ];
