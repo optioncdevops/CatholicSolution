@@ -61,6 +61,11 @@ namespace CFR.Common
         public const string ProductAssigned = "Product assigned successfully.";
         public const string ProductNotAssigned = "This product is not assigned to the organization.";
         public const string ProductRemoved = "Product removed successfully.";
+        public const string ExistAccessRequest = "A pending access request for this product already exists.";
+        public const string AccessRequestProductNotFound = "The requested product is not available.";
+        public const string AccessRequestMemberNotFound = "No member account was found for this email.";
+        public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
+        public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
     }
 
     public static class SerilogErrorMessages
@@ -90,14 +95,20 @@ namespace CFR.Common
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
             public const string ChangePasswordFailed = "Error while changing password for user {UserId}";
             public const string FetchOrganizationsFailed = "Error while fetching organizations";
-            public const string FetchOrganizationByIdFailed = "Error while fetching organization {OrgId}";
-            public const string UpdateOrganizationFailed = "Error while updating organization {OrgId}";
+            public const string FetchOrganizationByIdFailed = "Error while fetching organization {OrganizationId}";
+            public const string FetchAccessRequestsFailed = "Error while fetching access requests";
+            public const string FetchOrganizationUsersFailed = "Error while fetching organization users";
+            public const string FetchAccessRequestByIdFailed = "Error while fetching access request {RequestId}";
+            public const string FetchProductsFailed = "Error while fetching products";
+            public const string FetchOrganizationProductsFailed = "Error while fetching organization products";
+            public const string SaveAccessRequestFailed = "Error while saving access request";
+            public const string FetchAssignableProductsFailed = "Error while fetching assignable products";
+            public const string UpdateAccessRequestStatusFailed = "Error while updating access request status";
             public const string CreateOrganizationFailed = "Error while creating organization";
-            public const string FetchOrganizationUsersFailed = "Error while fetching users for organization {OrgId}";
-            public const string FetchOrganizationProductsFailed = "Error while fetching products for organization {OrgId}";
-            public const string FetchAssignableProductsFailed = "Error while fetching assignable products for organization {OrgId}";
-            public const string AssignOrganizationProductFailed = "Error while assigning product for organization {OrgId}";
-            public const string RemoveOrganizationProductFailed = "Error while removing product for organization {OrgId}";
+            public const string SendAccessRequestEmailFailed = "Error while sending access request email";
+            public const string AssignOrganizationProductFailed = "Error while assigning product to organization";
+            public const string RemoveOrganizationProductFailed = "Error while removing product from organization";
+            public const string UpdateOrganizationFailed = "Error while updating organization";
         }
     }
 }

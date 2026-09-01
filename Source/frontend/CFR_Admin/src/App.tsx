@@ -11,6 +11,7 @@ import { usersRoutes } from '@/modules/users';
 import { userRolesRoutes } from '@/modules/administration/userRoles';
 import { emailTemplatesRoutes } from '@/modules/administration/emailTemplates';
 import { organizationsRoutes } from '@/modules/organizations';
+import { requestsRoutes } from '@/modules/requests';
 
 // Route-level code splitting — each admin page (and the ported dataTable/formControls code it
 // pulls in) loads as its own chunk on first visit instead of one 2MB+ bundle up front.
@@ -19,7 +20,6 @@ const ProductsListPage = lazy(() => import('@/modules/applications/ProductsListP
 const ProductDetailPage = lazy(() => import('@/modules/applications/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })));
 const ProductEditPage = lazy(() => import('@/modules/applications/ProductEditPage').then((m) => ({ default: m.ProductEditPage })));
 const CreateInvoicePage = lazy(() => import('@/modules/applications/CreateInvoicePage').then((m) => ({ default: m.CreateInvoicePage })));
-const RequestsInboxPage = lazy(() => import('@/modules/requests/RequestsInboxPage').then((m) => ({ default: m.RequestsInboxPage })));
 const RightsPage = lazy(() => import('@/modules/administration/RightsPage').then((m) => ({ default: m.RightsPage })));
 // Dev-only component reference — see the removal note at the top of either sample page file.
 const SampleAddPage = lazy(() => import('@/modules/sample/SampleAddPage').then((m) => ({ default: m.SampleAddPage })));
@@ -49,7 +49,7 @@ export default function App() {
           {organizationsRoutes}
           {usersRoutes}
           {userRolesRoutes}
-          <Route path="/admin/requests" element={<RequestsInboxPage />} />
+          {requestsRoutes}
           <Route path="/admin/administration-rights" element={<RightsPage />} />
           {emailTemplatesRoutes}
           {/* Dev-only — see the removal note at the top of SampleAddPage.tsx / SampleViewPage.tsx. */}
