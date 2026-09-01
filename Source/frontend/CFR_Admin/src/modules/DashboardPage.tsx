@@ -13,7 +13,7 @@ import { StatusBadge } from '@app/components/Badge';
 import { EntityAvatar } from '@app/components/EntityAvatar';
 import { Dropdown } from '@app/components/formControls';
 import { formatDate, formatRelativeDate, daysSince } from './utils/formatDate';
-import { getProductWarnings } from './applications/productValidation';
+import { getProductWarnings } from './Products';
 import type { AdminApplication } from './types';
 
 type DashboardStatus = 'loading' | 'ready' | 'error';
@@ -162,7 +162,7 @@ export function DashboardPage() {
             <CommonButton variant="headerSecondary" iconLeft={<RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />} onClick={handleRefresh} disabled={refreshing || status === 'loading'}>
               {refreshing ? 'Refreshing…' : 'Refresh'}
             </CommonButton>
-            <CommonButton variant="headerSecondary" iconLeft={<Package size={14} />} onClick={() => navigate('/admin/applications')}>Manage Products</CommonButton>
+            <CommonButton variant="headerSecondary" iconLeft={<Package size={14} />} onClick={() => navigate('/admin/products')}>Manage Products</CommonButton>
           </div>
         )}
       />
@@ -247,7 +247,7 @@ export function DashboardPage() {
                     </thead>
                     <tbody>
                       {productHealthRows.map((app: AdminApplication) => (
-                        <tr key={app.id} className="cursor-pointer" onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                        <tr key={app.id} className="cursor-pointer" onClick={() => navigate(`/admin/products/${app.id}`)}>
                           <td>
                             <span className="flex items-center gap-2.5 font-bold text-[var(--text-primary)]">
                               <span className="grid size-7 shrink-0 place-items-center rounded-lg text-xs text-white" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>

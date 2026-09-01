@@ -3,16 +3,24 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
 import { cn } from '@app/utilities/cn';
 import { StatusBadge } from '@app/components/Badge';
-import type { AdminApplication } from '../types';
+import type { AdminApplication } from '@/modules/types';
+import { resolveProductLogoUrl } from '../../utils/productHelpers';
 
-/** An uploaded logo is stored as a data URL; anything else (an emoji) renders as text. */
+/** An uploaded logo is stored as a path or URL; anything else (an emoji) renders as text. */
 function isImageIcon(icon: string): boolean {
-  return icon.startsWith('data:') || /^https?:\/\//.test(icon);
+  if (!icon) return false;
+  return (
+    icon.startsWith('data:') ||
+    icon.startsWith('blob:') ||
+    icon.startsWith('/') ||
+    /^https?:\/\//i.test(icon)
+  );
 }
 
 function ProductIcon({ icon, gradient }: { icon: string; gradient: string }) {
   if (isImageIcon(icon)) {
-    return <img src={icon} alt="" className="size-9 shrink-0 rounded-lg object-cover" aria-hidden="true" />;
+    const resolved = resolveProductLogoUrl(icon) || icon;
+    return <img src={resolved} alt="" className="size-9 shrink-0 rounded-lg object-cover" aria-hidden="true" />;
   }
   return (
     <span className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white" style={{ background: gradient }} aria-hidden="true">
@@ -23,18 +31,12 @@ function ProductIcon({ icon, gradient }: { icon: string; gradient: string }) {
 
 interface ProductCardProps {
   app: Pick<AdminApplication, 'name' | 'category' | 'icon' | 'gradient' | 'description' | 'status'>;
-  /** When set, the icon/name/subtitle link to the product's view page and the card gets the
-   * hover-lift affordance; omit for a static preview (edit form, view-page preview panel). */
   linkTo?: string;
-  /** Data-quality warning count — only meaningful for the linked list-card usage. */
   warningCount?: number;
-  /** Divider + footer content (e.g. customer count and row actions), list-card only. */
   footer?: ReactNode;
   className?: string;
 }
 
-/** The one product card layout — used by the Products list, and reused as the static preview
- * in the product view/edit pages so every "what does this product look like" surface matches. */
 export function ProductCard({ app, linkTo, warningCount = 0, footer, className }: ProductCardProps) {
   const identity = (
     <>
@@ -70,10 +72,10 @@ export function ProductCard({ app, linkTo, warningCount = 0, footer, className }
       <p className="admin-product-card__description">{app.description || 'No description yet.'}</p>
 
       {footer ? (
-        <>
+        <div className="mt-auto">
           <div className="admin-product-card__divider" />
           {footer}
-        </>
+        </div>
       ) : null}
     </article>
   );

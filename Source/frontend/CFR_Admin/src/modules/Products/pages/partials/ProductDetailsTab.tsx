@@ -1,6 +1,6 @@
-import { formatDate } from '../utils/formatDate';
+import { formatDate } from '@/modules/utils/formatDate';
 import { ProductCard } from './ProductCard';
-import type { AdminApplication } from '../types';
+import type { AdminApplication } from '@/modules/types';
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -24,7 +24,6 @@ function WebsiteUrlFact({ url }: { url: string }) {
   );
 }
 
-/** One consolidated panel instead of five separate cards — same information, less chrome. */
 export function ProductDetailsTab({ app }: { app: AdminApplication }) {
   return (
     <section className="admin-panel-card">

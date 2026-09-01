@@ -1,5 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
-import type { ProductWarning } from './productValidation';
+import type { ProductWarning } from '../../validator/productValidation';
 
 export function ProductWarningsBanner({ warnings }: { warnings: ProductWarning[] }) {
   if (warnings.length === 0) return null;
