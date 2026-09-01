@@ -65,7 +65,13 @@ namespace CFR.CommonService
         {
             public const string GetOrganizations = nameof(GetOrganizations);
             public const string GetOrganizationById = nameof(GetOrganizationById);
+            public const string CreateOrganization = nameof(CreateOrganization);
             public const string UpdateOrganization = nameof(UpdateOrganization);
+            public const string GetOrganizationUsers = nameof(GetOrganizationUsers);
+            public const string GetOrganizationProducts = nameof(GetOrganizationProducts);
+            public const string GetAssignableProducts = nameof(GetAssignableProducts);
+            public const string AssignOrganizationProduct = nameof(AssignOrganizationProduct);
+            public const string RemoveOrganizationProduct = nameof(RemoveOrganizationProduct);
         }
     }
 }

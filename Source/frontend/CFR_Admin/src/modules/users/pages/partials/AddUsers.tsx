@@ -106,7 +106,7 @@ const AddUsers = () => {
     const messages = Object.values(formErrors)
       .map((error) => error?.message)
       .filter((message): message is string => Boolean(message));
-    showToast(messages.join(' ') || 'Please fill in the required fields.');
+    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
 
   const onSubmit = async (values: UsersFormValues) => {

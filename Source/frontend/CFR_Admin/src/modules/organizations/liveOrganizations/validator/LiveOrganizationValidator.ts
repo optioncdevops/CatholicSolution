@@ -1,4 +1,3 @@
-import { FIELD_REQUIRED } from '@app/validation/validationMessages';
 import type { LiveOrganizationFormValues } from '../types/liveOrganizationTypes';
 
 export const liveOrganizationDefaultValues: LiveOrganizationFormValues = {
@@ -12,7 +11,7 @@ export const liveOrganizationDefaultValues: LiveOrganizationFormValues = {
 
 export const liveOrganizationRules = {
   orgName: {
-    required: FIELD_REQUIRED,
+    required: 'Organization name is required.',
   },
   contactEmail: {
     pattern: {
@@ -24,6 +23,12 @@ export const liveOrganizationRules = {
     pattern: {
       value: /^[a-z0-9-]+(\.[a-z0-9-]+)+([/?#].*)?$/i,
       message: 'Enter a valid domain, e.g. example.org.',
+    },
+  },
+  contactPhone: {
+    pattern: {
+      value: /^[+()\d][\d\s().-]{6,19}$/,
+      message: 'Enter a valid phone number.',
     },
   },
 };

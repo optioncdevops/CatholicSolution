@@ -1,35 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Pencil } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Eye, Pencil, Plus } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { CommonIconButton } from '@app/components/buttons';
-import { Badge } from '@app/components/Badge';
+import { CommonButton, CommonIconButton } from '@app/components/buttons';
+import { StatusBadge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate } from '../utils/formatDate';
-import LiveOrganizationFormModal from './liveOrganizations/pages/partials/LiveOrganizationFormModal';
 import { getLiveOrganizations } from './liveOrganizations';
 import type { LiveOrganizationApiItem } from './liveOrganizations';
 import { normalizeLiveOrganizationsList, ORG_STATUS_OPTIONS } from './liveOrganizations';
 
 const STATUS_FILTER_PARAM = 'status';
 
-function titleCase(value: string): string {
-  return value.length === 0 ? value : value.charAt(0).toUpperCase() + value.slice(1);
-}
-
 export function OrganizationsListPage() {
   //#region Hooks
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   //#endregion
 
   //#region States
   const [rows, setRows] = useState<LiveOrganizationApiItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingOrg, setEditingOrg] = useState<LiveOrganizationApiItem | null>(null);
   //#endregion
 
   // The active status filter lives in the URL (?status=active), not local state — this makes the
@@ -44,20 +38,6 @@ export function OrganizationsListPage() {
       return params;
     }, { replace: true });
   }, [setSearchParams]);
-
-  //#region Functions
-  const load = useCallback(async () => {
-    try {
-      const { resultData, statusCode } = await getLiveOrganizations();
-      setRows(statusCode === 204 ? [] : normalizeLiveOrganizationsList(resultData));
-    } catch (error) {
-      console.error('Error loading organizations:', error);
-      showToast('Failed to load organizations.', 'error');
-      setRows([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast]);
   //#endregion
 
   //#region Effects
@@ -84,24 +64,35 @@ export function OrganizationsListPage() {
   //#endregion
 
   //#region Handlers
-  const handleOpenEdit = (org: LiveOrganizationApiItem) => {
-    setEditingOrg(org);
-    setFormOpen(true);
-  };
+  const handleView = useCallback((org: LiveOrganizationApiItem) => {
+    navigate(`/admin/organizations/${org.orgId}`);
+  }, [navigate]);
 
-  const handleCloseForm = () => {
-    setFormOpen(false);
-    setEditingOrg(null);
-  };
+  const handleEdit = useCallback((org: LiveOrganizationApiItem) => {
+    navigate(`/admin/organizations/${org.orgId}`, { state: { edit: true } });
+  }, [navigate]);
   //#endregion
 
-  // Filter options are the real, fixed status vocabulary core.Organization.OrgStatus supports
-  // (shared with the edit dropdown) — not "whatever happens to exist in the current data" — so
-  // e.g. "Inactive" is always selectable even when every org currently loaded is active.
   const filteredRows = useMemo(
     () => (statusFilter === 'all' ? rows : rows.filter((org) => org.orgStatus === statusFilter)),
     [rows, statusFilter],
   );
+
+  // Filter chips are data-driven — only statuses actually present in the loaded organizations
+  // show up, each with a live count, rather than a fixed always-shown vocabulary. Falls back to
+  // a title-cased label for any status not in the known ORG_STATUS_OPTIONS lookup.
+  const statusFilterOptions = useMemo(() => {
+    const labelById = new Map(ORG_STATUS_OPTIONS.map((option) => [option.id, option.value]));
+    const counts = new Map<string, number>();
+    rows.forEach((org) => counts.set(org.orgStatus, (counts.get(org.orgStatus) ?? 0) + 1));
+    return Array.from(counts.entries())
+      .map(([id, count]) => ({
+        id,
+        value: labelById.get(id) ?? (id.charAt(0).toUpperCase() + id.slice(1)),
+        count,
+      }))
+      .sort((a, b) => a.value.localeCompare(b.value));
+  }, [rows]);
 
   //#region Columns
   const columns: DataTableColumn<LiveOrganizationApiItem>[] = useMemo(() => [
@@ -109,11 +100,14 @@ export function OrganizationsListPage() {
       id: 'actions',
       header: 'Actions',
       pinLeft: true,
-      width: '4rem',
+      width: '5rem',
       excludeFromExport: true,
       sortable: false,
       cell: (org) => (
-        <CommonIconButton aria-label={`Edit ${org.orgName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleOpenEdit(org)} />
+        <div className="flex items-center gap-0.5">
+          <CommonIconButton aria-label={`View ${org.orgName}`} tooltip="View" icon={<Eye size={14} />} onClick={() => handleView(org)} />
+          <CommonIconButton aria-label={`Edit ${org.orgName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleEdit(org)} />
+        </div>
       ),
     },
     {
@@ -139,14 +133,9 @@ export function OrganizationsListPage() {
       cell: (org) => <span className="text-[var(--text-secondary)]">{org.contactPhone || '—'}</span>,
     },
     {
-      id: 'contactEmail', header: 'Contact Email',
-      value: (org) => org.contactEmail ?? '',
-      cell: (org) => <span className="text-[var(--text-secondary)]">{org.contactEmail || '—'}</span>,
-    },
-    {
       id: 'status', header: 'Status',
       value: (org) => org.orgStatus,
-      cell: (org) => <Badge tone={org.orgStatus === 'active' ? 'success' : 'neutral'}>{titleCase(org.orgStatus)}</Badge>,
+      cell: (org) => <StatusBadge status={org.orgStatus} kind="organization" />,
     },
     {
       id: 'userCount', header: 'Users',
@@ -159,17 +148,20 @@ export function OrganizationsListPage() {
       cell: (org) => <span className="text-[var(--text-secondary)]">{org.productCount}</span>,
     },
     {
-      id: 'updatedDate', header: 'Last Updated',
-      value: (org) => org.updatedDate ?? org.insertedDate,
-      cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.updatedDate ?? org.insertedDate)}</span>,
+      id: 'insertedDate', header: 'Created On',
+      value: (org) => org.insertedDate,
+      cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.insertedDate)}</span>,
     },
-  ], []);
+  ], [handleView, handleEdit]);
   //#endregion
 
   //#region Render
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title="Organizations" />
+      <PanelHeader
+        title="Organizations"
+        action={<CommonButton variant="headerSecondary" size="sm" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/organizations/add')}>Add Organization</CommonButton>}
+      />
 
       {!loading ? (
         <div role="group" aria-label="Filter organizations by status" className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
@@ -181,20 +173,17 @@ export function OrganizationsListPage() {
           >
             All Statuses ({rows.length})
           </button>
-          {ORG_STATUS_OPTIONS.map((option) => {
-            const count = rows.filter((org) => org.orgStatus === option.id).length;
-            return (
-              <button
-                key={option.id}
-                type="button"
-                aria-pressed={statusFilter === option.id}
-                onClick={() => setStatusFilter(option.id)}
-                className={`admin-filter-chip ${statusFilter === option.id ? 'admin-filter-chip--active' : ''}`}
-              >
-                {option.value} ({count})
-              </button>
-            );
-          })}
+          {statusFilterOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              aria-pressed={statusFilter === option.id}
+              onClick={() => setStatusFilter(option.id)}
+              className={`admin-filter-chip ${statusFilter === option.id ? 'admin-filter-chip--active' : ''}`}
+            >
+              {option.value} ({option.count})
+            </button>
+          ))}
         </div>
       ) : null}
 
@@ -205,14 +194,13 @@ export function OrganizationsListPage() {
           data={filteredRows}
           columns={columns}
           getRowId={(org) => String(org.orgId)}
-          onRowClick={(org) => handleOpenEdit(org)}
+          onRowClick={(org) => handleView(org)}
+          initialSort={[{ id: 'insertedDate', desc: true }]}
           exportFileName="catholic-solutions-organizations"
           exportTitle="Catholic Solutions — Organizations"
           emptyMessage="No organizations found."
         />
       )}
-
-      <LiveOrganizationFormModal open={formOpen} organization={editingOrg} onClose={handleCloseForm} onSaved={load} />
     </div>
   );
   //#endregion
