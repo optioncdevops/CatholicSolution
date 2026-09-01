@@ -356,18 +356,6 @@ namespace CFR.AcutisInfrastructure
         /// <summary>
         /// Parameters for Product stored procedures.
         /// </summary>
-        public static class ProductParams
-        {
-            /// <summary>
-            /// CRUD action identifier.
-            /// </summary>
-            public const string ActionId = "@ActionId";
-
-            /// <summary>
-            /// Member email used to decide Your Apps vs Available Apps.
-            /// </summary>
-            public const string RequesterEmail = "@RequesterEmail";
-        }
 
         /// <summary>
         /// Parameters for Products stored procedures and queries.

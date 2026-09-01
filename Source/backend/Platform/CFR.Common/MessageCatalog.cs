@@ -111,7 +111,6 @@ namespace CFR.Common
             public const string AssignOrganizationProductFailed = "Error while assigning product to organization";
             public const string RemoveOrganizationProductFailed = "Error while removing product from organization";
             public const string UpdateOrganizationFailed = "Error while updating organization";
-            public const string FetchProductsFailed = "Error while fetching products";
             public const string FetchProductByIdFailed = "Error while fetching product {ProductId}";
             public const string FetchProductLicensesFailed = "Error while fetching product licenses for {ProductId}";
             public const string SaveProductFailed = "Error while saving product";
