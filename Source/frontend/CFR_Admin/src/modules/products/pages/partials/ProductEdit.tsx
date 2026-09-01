@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
@@ -14,15 +14,17 @@ import type {
 } from "../../types/productTypes";
 import { ProductForm } from "./ProductForm";
 import {
-  deriveProductStatus,
-  getProductTheme,
+  DEFAULT_PRODUCT_ICON,
+  PRODUCTS_PATHS,
+  parseProductIdFromState,
+  toAdminApplication,
 } from "../../utils/productHelpers";
 import type { AdminApplication } from "@/modules/types";
 
-export function ProductEditPage() {
+const ProductEdit = () => {
   //#region Hooks
-  const { appId, productId } = useParams();
-  const id = productId ?? appId;
+  const location = useLocation();
+  const productId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { showToast } = useToast();
   //#endregion
@@ -41,59 +43,42 @@ export function ProductEditPage() {
   //#endregion
 
   //#region Functions
+  const goToDetails = (id: number) => {
+    navigate(PRODUCTS_PATHS.details, { state: { productId: id } });
+  };
+
   const loadProduct = useCallback(async () => {
-    if (!id) {
+    if (!productId) {
       setLoading(false);
       return;
     }
 
-    const numericId = Number(id);
-    if (!isNaN(numericId) && numericId > 0) {
-      try {
-        const res = await getProductById(numericId);
-        if (res.resultData) {
-          const item = res.resultData as ProductApiItem;
-          const theme = getProductTheme(item.productName, item.subCategoryName);
-          const initialForm: AdminApplication = {
-            id: String(item.productId),
-            name: item.productName,
-            shortName: item.productName,
-            category: item.subCategoryName || "General",
-            icon: item.logoUrl || theme.icon,
-            gradient: theme.gradient,
-            description: item.prodDescription || "",
-            features: item.features ?? [],
-            productionUrl: item.externalPageUrl || "",
-            ownership: "first-party",
-            deploymentModel: "external-saas",
-            licenseType: item.defaultAccessDays === 0 ? "free" : "licensed",
-            navigationTarget: "same-tab",
-            status: deriveProductStatus(item),
-            registryRef: `reg_app_${String(item.productId).padStart(4, "0")}`,
-            sourceLocation: `SaaS_Apps/${item.productName.toLowerCase().replace(/\s+/g, "-")}`,
-            updatedAt: item.updatedDate || item.createdDate,
-          };
-          setProduct(item);
-          setForm(initialForm);
-          setOriginalForm(initialForm);
-        } else {
-          setProduct(null);
-          setForm(null);
-          setOriginalForm(null);
-        }
-      } catch (err) {
-        console.error("Error fetching product for edit:", err);
-        showToast("Failed to load product.", "error");
+    try {
+      const res = await getProductById(productId);
+      if (res.resultData) {
+        const item = res.resultData as ProductApiItem;
+        const initialForm = toAdminApplication(item);
+        setProduct(item);
+        setForm(initialForm);
+        setOriginalForm(initialForm);
+        setLogoFile(null);
+        setLogoRemoved(false);
+        setTouched(false);
+      } else {
         setProduct(null);
         setForm(null);
         setOriginalForm(null);
-      } finally {
-        setLoading(false);
       }
-    } else {
+    } catch (err) {
+      console.error("Error fetching product for edit:", err);
+      showToast("Failed to load product.", "error");
+      setProduct(null);
+      setForm(null);
+      setOriginalForm(null);
+    } finally {
       setLoading(false);
     }
-  }, [id, showToast]);
+  }, [productId, showToast]);
 
   const update = <K extends keyof AdminApplication>(
     key: K,
@@ -111,8 +96,7 @@ export function ProductEditPage() {
       update("icon", localUrl);
     } else {
       setLogoRemoved(true);
-      const theme = getProductTheme(form?.name || "", form?.category || "");
-      update("icon", theme.icon);
+      update("icon", DEFAULT_PRODUCT_ICON);
     }
   };
 
@@ -129,7 +113,11 @@ export function ProductEditPage() {
       });
       if (!confirmed) return;
     }
-    navigate(`/admin/products/${id}`);
+    if (productId) {
+      goToDetails(productId);
+      return;
+    }
+    navigate(PRODUCTS_PATHS.list);
   };
 
   const handleSave = async () => {
@@ -137,7 +125,10 @@ export function ProductEditPage() {
     if (!form || !product) return;
 
     const errors = validateProductForm(form);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      showToast(Object.values(errors).join("\n"), "error");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -169,7 +160,7 @@ export function ProductEditPage() {
 
       await updateProduct(payload);
       showToast(`${form.name} updated successfully.`);
-      navigate(`/admin/products/${id}`);
+      goToDetails(product.productId);
     } catch (err) {
       console.error("Error saving product:", err);
       showToast(typeof err === "string" ? err : "Failed to update product", "error");
@@ -181,9 +172,17 @@ export function ProductEditPage() {
 
   //#region Effects
   useEffect(() => {
+    if (!productId) {
+      navigate(PRODUCTS_PATHS.list, { replace: true });
+      return;
+    }
     void loadProduct();
-  }, [loadProduct]);
+  }, [productId, loadProduct, navigate]);
   //#endregion
+
+  if (!productId) {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -197,7 +196,7 @@ export function ProductEditPage() {
   if (!product || !form) {
     return (
       <div className="admin-reveal flex flex-col items-center justify-center gap-3 py-16 text-center">
-        <span className="text-4xl">📦</span>
+        <span className="text-4xl">{DEFAULT_PRODUCT_ICON}</span>
         <h2 className="text-lg font-bold text-[var(--text-primary)]">
           Product Not Found
         </h2>
@@ -207,7 +206,7 @@ export function ProductEditPage() {
         <CommonButton
           variant="outline"
           size="sm"
-          onClick={() => navigate("/admin/products")}
+          onClick={() => navigate(PRODUCTS_PATHS.list)}
         >
           Back to Products
         </CommonButton>
@@ -263,6 +262,6 @@ export function ProductEditPage() {
       </form>
     </div>
   );
-}
+};
 
-export default ProductEditPage;
+export default ProductEdit;

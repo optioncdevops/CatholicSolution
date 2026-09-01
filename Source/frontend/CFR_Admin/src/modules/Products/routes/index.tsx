@@ -1,20 +1,42 @@
-import { lazy } from 'react';
-import { Navigate, Route } from 'react-router-dom';
+import { lazy } from "react";
+import { Navigate, Route } from "react-router-dom";
+import { PRODUCTS_PATHS } from "../utils/productHelpers";
 
-const ProductsListPage = lazy(() => import('../pages/ProductsListPage'));
-const ProductDetailPage = lazy(() => import('../pages/partials/ProductDetailPage'));
-const ProductEditPage = lazy(() => import('../pages/partials/ProductEditPage'));
-const CreateInvoicePage = lazy(() => import('../pages/partials/CreateInvoicePage'));
+const ProductList = lazy(() => import("../pages/ProductList"));
+const ProductDetails = lazy(() => import("../pages/ProductDetails"));
+const ProductEdit = lazy(() => import("../pages/partials/ProductEdit"));
+const AddLicense = lazy(() => import("../pages/partials/AddLicense"));
 
 export const productsRoutes = (
   <>
-    <Route path="/admin/products" element={<ProductsListPage />} />
-    <Route path="/admin/products/:productId" element={<ProductDetailPage />} />
-    <Route path="/admin/products/:productId/edit" element={<ProductEditPage />} />
-    <Route path="/admin/products/:productId/invoices/create" element={<CreateInvoicePage />} />
+    <Route path={PRODUCTS_PATHS.list} element={<ProductList />} />
+    <Route path={PRODUCTS_PATHS.details} element={<ProductDetails />} />
+    <Route path={PRODUCTS_PATHS.edit} element={<ProductEdit />} />
+    <Route path={PRODUCTS_PATHS.addLicense} element={<AddLicense />} />
 
-    {/* Legacy path redirect */}
-    <Route path="/admin/applications" element={<Navigate to="/admin/products" replace />} />
-    <Route path="/admin/applications/:appId" element={<Navigate to="/admin/products" replace />} />
+    <Route
+      path="/admin/applications"
+      element={<Navigate to={PRODUCTS_PATHS.list} replace />}
+    />
+    <Route
+      path="/admin/applications/:appId"
+      element={<Navigate to={PRODUCTS_PATHS.list} replace />}
+    />
+    <Route
+      path="/admin/applications/:appId/edit"
+      element={<Navigate to={PRODUCTS_PATHS.list} replace />}
+    />
+    <Route
+      path="/admin/products/:productId/edit"
+      element={<Navigate to={PRODUCTS_PATHS.list} replace />}
+    />
+    <Route
+      path="/admin/products/:productId/invoices/create"
+      element={<Navigate to={PRODUCTS_PATHS.list} replace />}
+    />
+    <Route
+      path="/admin/products/:productId"
+      element={<Navigate to={PRODUCTS_PATHS.list} replace />}
+    />
   </>
 );

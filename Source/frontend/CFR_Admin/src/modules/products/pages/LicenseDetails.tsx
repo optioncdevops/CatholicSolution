@@ -9,9 +9,10 @@ import {
   type DataTableColumn,
 } from "@app/components/dataTable/DataTable";
 import { formatDate, effectiveLicenseStatus } from "@/modules/utils/formatDate";
-import { getLicenseDetails } from "../../services/productService";
-import type { ProductLicenseApiItem } from "../../types/productTypes";
-import { InvoiceDetailModal } from "./InvoiceDetailModal";
+import { getLicenseDetails } from "../services/productService";
+import type { ProductLicenseApiItem } from "../types/productTypes";
+import { InvoiceDetailModal } from "./partials/InvoiceDetailModal";
+import { PRODUCTS_PATHS } from "../utils/productHelpers";
 import type {
   AdminApplication,
   EffectiveLicenseStatus,
@@ -48,7 +49,7 @@ export interface LiveProductLicense {
   remarks?: string | null;
 }
 
-export function ProductInvoiceDetailsTab({ app }: { app: AdminApplication }) {
+export function LicenseDetails({ app }: { app: AdminApplication }) {
   //#region Hooks
   const navigate = useNavigate();
   //#endregion
@@ -254,7 +255,7 @@ export function ProductInvoiceDetailsTab({ app }: { app: AdminApplication }) {
         <CommonButton
           variant="primary"
           iconLeft={<Plus size={14} />}
-          onClick={() => navigate(`/admin/products/${app.id}/invoices/create`)}
+          onClick={() => navigate(PRODUCTS_PATHS.addLicense, { state: { productId: Number(app.id) } })}
         >
           Create License
         </CommonButton>

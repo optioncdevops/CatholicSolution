@@ -1,3 +1,7 @@
+export interface ProductLocationState {
+  productId: number;
+}
+
 export interface ProductApiItem {
   productId: number;
   productName: string;

@@ -7,7 +7,7 @@ import { StatusBadge } from '@app/components/Badge';
 import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate, effectiveLicenseStatus } from '@/modules/utils/formatDate';
-import { InvoiceDetailModal } from './InvoiceDetailModal';
+import { InvoiceDetailModal } from './partials/InvoiceDetailModal';
 import type { AdminApplication, EffectiveLicenseStatus, License } from '@/modules/types';
 
 const STATUS_FILTERS: Array<{ id: EffectiveLicenseStatus | 'all'; label: string }> = [
@@ -18,7 +18,7 @@ const STATUS_FILTERS: Array<{ id: EffectiveLicenseStatus | 'all'; label: string 
   { id: 'suspended', label: 'Suspended' },
 ];
 
-export function ProductInvoiceHistoryTab({ app }: { app: AdminApplication }) {
+export function LicenseHistory({ app }: { app: AdminApplication }) {
   const { licenses, organizations, getOrganization } = useAdminData();
   const [customerFilter, setCustomerFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<EffectiveLicenseStatus | 'all'>('all');

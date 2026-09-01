@@ -91,9 +91,9 @@ export function ProductForm({ form, errors, touched, onUpdate, onLogoFileChange 
     <section className="admin-panel-card">
       <div className="flex flex-col divide-y divide-[var(--line-soft)]">
         <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
-          <InputField label="Product Name" required value={form.name} onChange={(event) => onUpdate('name', event.target.value)} error={touched ? errors.name : undefined} />
-          <InputField label="Short Name" value={form.shortName} onChange={(event) => onUpdate('shortName', event.target.value)} />
-          <InputField label="Product Subtitle" required value={form.category} onChange={(event) => onUpdate('category', event.target.value)} error={touched ? errors.category : undefined} />
+          <InputField label="Product Name" required placeholder="Enter product name" autoFocus value={form.name} onChange={(event) => onUpdate('name', event.target.value)} error={touched ? errors.name : undefined} />
+          <InputField label="Short Name" placeholder="Enter short name" value={form.shortName} onChange={(event) => onUpdate('shortName', event.target.value)} />
+          <InputField label="Product Subtitle" required placeholder="Enter product subtitle" value={form.category} onChange={(event) => onUpdate('category', event.target.value)} error={touched ? errors.category : undefined} />
           <InputField
             label="Production URL"
             value={form.productionUrl}

@@ -14,8 +14,10 @@ import type {
   ProductInputPayload,
 } from "../types/productTypes";
 import {
+  DEFAULT_PRODUCT_GRADIENT,
+  DEFAULT_PRODUCT_ICON,
+  PRODUCTS_PATHS,
   deriveProductStatus,
-  getProductTheme,
   normalizeProductList,
   resolveProductLogoUrl,
 } from "../utils/productHelpers";
@@ -40,7 +42,7 @@ const SORT_OPTIONS = [
 
 type SortOption = (typeof SORT_OPTIONS)[number]["id"];
 
-export function ProductsListPage() {
+const ProductList = () => {
   //#region Hooks
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -74,6 +76,14 @@ export function ProductsListPage() {
       setLoading(false);
     }
   }, [showToast]);
+
+  const goToDetails = (productId: number) => {
+    navigate(PRODUCTS_PATHS.details, { state: { productId } });
+  };
+
+  const goToEdit = (productId: number) => {
+    navigate(PRODUCTS_PATHS.edit, { state: { productId } });
+  };
 
   const handleConfirmStatus = async (status: ProductStatus) => {
     if (!selectedProduct) return;
@@ -124,7 +134,6 @@ export function ProductsListPage() {
           item.subCategoryName ?? "",
           item.prodDescription ?? "",
           item.externalPageUrl ?? "",
-          String(item.productId),
         ]
           .join(" ")
           .toLowerCase()
@@ -160,7 +169,7 @@ export function ProductsListPage() {
           hideLabel
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name, ID, subtitle, domain"
+          placeholder="Search by name, subtitle, domain"
           startIcon={<Search size={13} />}
           className="min-h-8 text-xs placeholder:text-xs"
           wrapperClassName="min-w-[200px] max-w-xs shrink-0"
@@ -228,11 +237,8 @@ export function ProductsListPage() {
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProducts.map((item) => {
-            const theme = getProductTheme(
-              item.productName,
-              item.subCategoryName,
-            );
             const status = deriveProductStatus(item);
+            const logoSrc = resolveProductLogoUrl(item.logoUrl);
 
             return (
               <article
@@ -245,18 +251,18 @@ export function ProductsListPage() {
 
                 <div
                   className="flex cursor-pointer items-center gap-2.5 pr-16 transition-opacity hover:opacity-90"
-                  onClick={() => navigate(`/admin/products/${item.productId}`)}
+                  onClick={() => goToDetails(item.productId)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
-                      navigate(`/admin/products/${item.productId}`);
+                      goToDetails(item.productId);
                     }
                   }}
                 >
-                  {item.logoUrl ? (
+                  {logoSrc ? (
                     <img
-                      src={resolveProductLogoUrl(item.logoUrl) || item.logoUrl}
+                      src={logoSrc}
                       alt=""
                       className="size-9 shrink-0 rounded-lg object-cover"
                       aria-hidden="true"
@@ -264,10 +270,10 @@ export function ProductsListPage() {
                   ) : (
                     <span
                       className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white"
-                      style={{ background: theme.gradient }}
+                      style={{ background: DEFAULT_PRODUCT_GRADIENT }}
                       aria-hidden="true"
                     >
-                      {theme.icon}
+                      {DEFAULT_PRODUCT_ICON}
                     </span>
                   )}
                   <div className="min-w-0">
@@ -306,17 +312,13 @@ export function ProductsListPage() {
                         aria-label={`View ${item.productName}`}
                         tooltip="View"
                         icon={<Eye size={14} />}
-                        onClick={() =>
-                          navigate(`/admin/products/${item.productId}`)
-                        }
+                        onClick={() => goToDetails(item.productId)}
                       />
                       <CommonIconButton
                         aria-label={`Edit ${item.productName}`}
                         tooltip="Edit"
                         icon={<Pencil size={14} />}
-                        onClick={() =>
-                          navigate(`/admin/products/${item.productId}/edit`)
-                        }
+                        onClick={() => goToEdit(item.productId)}
                       />
                       <CommonIconButton
                         aria-label={`Change status for ${item.productName}`}
@@ -344,14 +346,8 @@ export function ProductsListPage() {
             name: selectedProduct.productName,
             shortName: selectedProduct.productName,
             category: selectedProduct.subCategoryName || "General",
-            icon: getProductTheme(
-              selectedProduct.productName,
-              selectedProduct.subCategoryName,
-            ).icon,
-            gradient: getProductTheme(
-              selectedProduct.productName,
-              selectedProduct.subCategoryName,
-            ).gradient,
+            icon: resolveProductLogoUrl(selectedProduct.logoUrl) || DEFAULT_PRODUCT_ICON,
+            gradient: DEFAULT_PRODUCT_GRADIENT,
             description: selectedProduct.prodDescription || "",
             status: deriveProductStatus(selectedProduct),
             features: [],
@@ -378,6 +374,6 @@ export function ProductsListPage() {
     </div>
   );
   //#endregion
-}
+};
 
-export default ProductsListPage;
+export default ProductList;

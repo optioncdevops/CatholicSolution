@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -8,6 +8,7 @@ import { CommonCheckbox, DatePicker, Dropdown, InputField, MandatoryIndicator, R
 import { useAdminData } from '@/modules/AdminDataContext';
 import { confirmAction } from '@/modules/lib/confirm';
 import type { License, LicenseStatus } from '@/modules/types';
+import { PRODUCTS_PATHS, parseProductIdFromState } from '../../utils/productHelpers';
 
 const STATUS_OPTIONS: Array<{ id: LicenseStatus; value: string }> = [
   { id: 'active', value: 'Active' },
@@ -21,15 +22,24 @@ function inDays(days: number): string {
   return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
 }
 
-export function CreateInvoicePage() {
-  const { appId, productId } = useParams();
-  const id = productId ?? appId;
+const AddLicense = () => {
+  //#region Hooks
+  const location = useLocation();
+  const productId = parseProductIdFromState(location.state);
+  const id = productId ? String(productId) : undefined;
   const navigate = useNavigate();
   const { getApplication, organizations, addLicense } = useAdminData();
   const { showToast } = useToast();
+  //#endregion
 
   const app = id ? getApplication(id) : undefined;
-  const licenseTabPath = `/admin/products/${id}`;
+  const goToDetails = () => {
+    if (productId) {
+      navigate(PRODUCTS_PATHS.details, { state: { productId } });
+      return;
+    }
+    navigate(PRODUCTS_PATHS.list);
+  };
 
   const productCustomers = organizations.filter((org) => org.appIds.includes(id ?? ''));
 
@@ -43,7 +53,7 @@ export function CreateInvoicePage() {
   const [customMessage, setCustomMessage] = useState('');
   const [touched, setTouched] = useState(false);
 
-  if (!app || !id) return <Navigate to="/admin/products" replace />;
+  if (!app || !id) return <Navigate to={PRODUCTS_PATHS.list} replace />;
 
   const hasErrors = !title.trim() || !orgId || !startDate || !expiryDate || (!unlimitedSeats && seats < 1);
 
@@ -57,7 +67,7 @@ export function CreateInvoicePage() {
       });
       if (!confirmed) return;
     }
-    navigate(licenseTabPath);
+    goToDetails();
   };
 
   const handleSubmit = () => {
@@ -75,7 +85,7 @@ export function CreateInvoicePage() {
     };
     addLicense(license);
     showToast('License created (prototype only, not persisted)');
-    navigate(licenseTabPath);
+    goToDetails();
   };
 
   return (
@@ -165,4 +175,4 @@ export function CreateInvoicePage() {
   );
 }
 
-export default CreateInvoicePage;
+export default AddLicense;

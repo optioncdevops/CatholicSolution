@@ -25,10 +25,15 @@ const STATUS_FILTERS: Array<{ id: EffectiveStatus | 'all'; label: string; dot?: 
   { id: 'expired', label: 'Expired', dot: 'var(--error)' },
 ];
 
-export function ProductCustomersTab({ app }: { app: AdminApplication }) {
+export function CustomerDetails({ app }: { app: AdminApplication }) {
+  //#region Hooks
   const { organizations, users } = useAdminData();
   const navigate = useNavigate();
+  //#endregion
+
+  //#region States
   const [statusFilter, setStatusFilter] = useState<EffectiveStatus | 'all'>('all');
+  //#endregion
 
   const userCountFor = useCallback((orgId: string) => users.filter((user) => user.orgId === orgId).length, [users]);
 
