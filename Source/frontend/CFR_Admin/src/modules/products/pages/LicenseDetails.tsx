@@ -40,7 +40,6 @@ export interface LiveProductLicense {
   licenseNumber: string;
   licenseKey: string;
   licenseType: string;
-  seats: string | number;
   startDate: string;
   expiryDate: string;
   status: EffectiveLicenseStatus;
@@ -110,7 +109,6 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
         licenseNumber: `LIC-${String(lic.licenseId).padStart(5, "0")}`,
         licenseKey: `LIC-${lic.orgId}-${lic.productId}-${String(lic.licenseId).padStart(4, "0")}`,
         licenseType: lic.licenseType || "Subscription",
-        seats: lic.maxUsers != null ? lic.maxUsers : "Unlimited",
         startDate: lic.activationDate || "",
         expiryDate: lic.expiryDate || "",
         status: effective,
@@ -147,7 +145,6 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
               orgId: lic.customerCode,
               appId: app.id,
               title: `${app.name} — ${lic.licenseType}`,
-              seats: typeof lic.seats === "number" ? lic.seats : undefined,
               startDate: lic.startDate,
               expiryDate: lic.expiryDate,
               status: lic.status === "active" ? "active" : "suspended",
@@ -180,32 +177,12 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
       ),
     },
     {
-      id: "licenseNumber",
-      header: "License #",
-      value: (lic) => lic.licenseNumber,
-      cell: (lic) => (
-        <span className="font-mono text-xs text-[var(--text-secondary)]">
-          {lic.licenseNumber}
-        </span>
-      ),
-    },
-    {
       id: "licenseType",
       header: "License Type",
       value: (lic) => lic.licenseType,
       cell: (lic) => (
         <span className="capitalize text-xs font-semibold text-[var(--text-secondary)]">
           {lic.licenseType}
-        </span>
-      ),
-    },
-    {
-      id: "seats",
-      header: "Seats",
-      value: (lic) => String(lic.seats),
-      cell: (lic) => (
-        <span className="font-bold text-[var(--text-primary)]">
-          {lic.seats}
         </span>
       ),
     },
@@ -255,7 +232,11 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
         <CommonButton
           variant="primary"
           iconLeft={<Plus size={14} />}
-          onClick={() => navigate(PRODUCTS_PATHS.addLicense, { state: { productId: Number(app.id) } })}
+          onClick={() =>
+            navigate(PRODUCTS_PATHS.addLicense(app.name || app.id), {
+              state: { productId: Number(app.id) },
+            })
+          }
         >
           Create License
         </CommonButton>

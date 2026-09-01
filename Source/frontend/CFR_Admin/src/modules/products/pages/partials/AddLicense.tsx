@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import {
-  CommonCheckbox,
   DatePicker,
   Dropdown,
   InputField,
@@ -15,9 +14,14 @@ import {
 import { confirmAction } from '@/modules/lib/confirm';
 import { getLiveOrganizations } from '@/modules/organizations/liveOrganizations/services/liveOrganizationsService';
 import type { LiveOrganizationApiItem } from '@/modules/organizations/liveOrganizations/types/liveOrganizationTypes';
-import { createLicense, getProductById } from '../../services/productService';
+import { createLicense, getProductById, getProducts } from '../../services/productService';
 import type { ProductApiItem } from '../../types/productTypes';
-import { PRODUCTS_PATHS, parseProductIdFromState } from '../../utils/productHelpers';
+import {
+  PRODUCTS_PATHS,
+  normalizeProductList,
+  parseProductIdFromState,
+  toProductSlug,
+} from '../../utils/productHelpers';
 import { validateLicenseForm } from '../../validator/productValidation';
 
 const STATUS_OPTIONS = [
@@ -36,7 +40,8 @@ function inDays(days: number): string {
 const AddLicense = () => {
   //#region Hooks
   const location = useLocation();
-  const productId = parseProductIdFromState(location.state);
+  const params = useParams<{ slug?: string }>();
+  const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { showToast } = useToast();
   //#endregion
@@ -49,8 +54,6 @@ const AddLicense = () => {
   const [title, setTitle] = useState('');
   const [orgId, setOrgId] = useState('');
   const [licenseStatus, setLicenseStatus] = useState('Active');
-  const [unlimitedSeats, setUnlimitedSeats] = useState(false);
-  const [seats, setSeats] = useState(10);
   const [activationDate, setActivationDate] = useState(today());
   const [expiryDate, setExpiryDate] = useState(inDays(365));
   const [customMessage, setCustomMessage] = useState('');
@@ -59,21 +62,43 @@ const AddLicense = () => {
 
   //#region Functions
   const goToDetails = () => {
-    if (productId) {
-      navigate(PRODUCTS_PATHS.details, { state: { productId } });
+    const slug = toProductSlug(product?.productName) || String(product?.productId || stateProductId || '');
+    if (slug) {
+      navigate(PRODUCTS_PATHS.details(slug), { state: { productId: product?.productId || stateProductId } });
       return;
     }
     navigate(PRODUCTS_PATHS.list);
   };
 
   const loadPage = useCallback(async () => {
-    if (!productId) {
-      setLoading(false);
-      return;
-    }
-
+    setLoading(true);
     try {
-      const [productRes, orgRes] = await Promise.all([getProductById(productId), getLiveOrganizations()]);
+      let resolvedId = stateProductId;
+
+      if (!resolvedId && params.slug) {
+        const numeric = Number(params.slug);
+        if (Number.isInteger(numeric) && numeric > 0) {
+          resolvedId = numeric;
+        } else {
+          const listRes = await getProducts();
+          const items = normalizeProductList(listRes.resultData);
+          const found = items.find(
+            (p) => toProductSlug(p.productName) === params.slug || String(p.productId) === params.slug,
+          );
+          if (found) {
+            resolvedId = found.productId;
+          }
+        }
+      }
+
+      if (!resolvedId) {
+        setLoading(false);
+        setProduct(null);
+        setOrganizations([]);
+        return;
+      }
+
+      const [productRes, orgRes] = await Promise.all([getProductById(resolvedId), getLiveOrganizations()]);
       const loadedProduct = (productRes.resultData as ProductApiItem | null) ?? null;
       const loadedOrgs = orgRes.statusCode === 204 || !Array.isArray(orgRes.resultData)
         ? []
@@ -94,17 +119,13 @@ const AddLicense = () => {
     } finally {
       setLoading(false);
     }
-  }, [productId, showToast]);
+  }, [stateProductId, params.slug, showToast]);
   //#endregion
 
   //#region Effects
   useEffect(() => {
-    if (!productId) {
-      navigate(PRODUCTS_PATHS.list, { replace: true });
-      return;
-    }
     void loadPage();
-  }, [productId, loadPage, navigate]);
+  }, [loadPage]);
   //#endregion
 
   if (!productId) {
@@ -150,8 +171,6 @@ const AddLicense = () => {
       orgId,
       activationDate,
       expiryDate,
-      unlimitedSeats,
-      seats,
     });
     if (messages.length > 0) {
       showToast(messages, 'error');
@@ -160,14 +179,13 @@ const AddLicense = () => {
 
     setSaving(true);
     try {
-      const seatNote = unlimitedSeats ? 'Unlimited seats (site license).' : `${seats} seats.`;
-      const remarks = [title.trim(), seatNote, customMessage.trim()].filter(Boolean).join('\n');
+      const remarks = [title.trim(), customMessage.trim()].filter(Boolean).join('\n');
       await createLicense({
         licenseId: 0,
         organizationProductId: 0,
         orgId: Number(orgId),
         productId,
-        licenseType: unlimitedSeats ? 'Site' : 'Subscription',
+        licenseType: 'Subscription',
         activationDate,
         expiryDate,
         licenseStatus,
@@ -208,7 +226,7 @@ const AddLicense = () => {
             <div className="flex flex-col divide-y divide-[var(--line-soft)]">
               <div>
                 <div className="admin-panel-card__header"><h2 className="panel-title">License Details</h2></div>
-                <div className="grid gap-2.5 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-2.5 p-3 sm:grid-cols-2">
                   <InputField
                     label="Title"
                     required
@@ -217,7 +235,6 @@ const AddLicense = () => {
                     value={title}
                     onChange={(event) => { setTitle(event.target.value); setTouched(true); }}
                     error={touched && !title.trim() ? 'Title is required.' : undefined}
-                    wrapperClassName="lg:col-span-3"
                   />
                   <Dropdown
                     label="Customer"
@@ -233,6 +250,9 @@ const AddLicense = () => {
                     clearable={false}
                     error={touched && !orgId ? 'Customer is required.' : undefined}
                   />
+                </div>
+
+                <div className="grid gap-2.5 p-3 pt-0 sm:grid-cols-3">
                   <Dropdown
                     label="Status"
                     required
@@ -243,24 +263,6 @@ const AddLicense = () => {
                     searchable={false}
                     clearable={false}
                   />
-                  <div className="flex flex-col gap-1.5">
-                    <InputField
-                      label="Seats"
-                      required
-                      type="number"
-                      min={1}
-                      placeholder="Enter seats"
-                      value={seats}
-                      disabled={unlimitedSeats}
-                      onChange={(event) => { setSeats(Math.max(1, Number(event.target.value) || 1)); setTouched(true); }}
-                      error={touched && !unlimitedSeats && seats < 1 ? 'Seats is required.' : undefined}
-                    />
-                    <CommonCheckbox
-                      label="Unlimited seats (site license)"
-                      checked={unlimitedSeats}
-                      onCheckedChange={(checked) => { setUnlimitedSeats(checked); setTouched(true); }}
-                    />
-                  </div>
                   <DatePicker
                     label="Start Date"
                     required

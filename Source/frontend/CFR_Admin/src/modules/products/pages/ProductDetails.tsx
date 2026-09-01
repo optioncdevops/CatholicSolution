@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Pencil, RefreshCw } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -7,7 +7,7 @@ import { CommonButton } from '@app/components/buttons';
 import { Tabs, TabPanel } from '@app/components/Tabs';
 import { useAdminData } from '@/modules/AdminDataContext';
 import { getProductWarnings } from '../validator/productValidation';
-import { getProductById, updateProduct } from '../services/productService';
+import { getProductById, getProducts, updateProduct } from '../services/productService';
 import type { ProductApiItem, ProductInputPayload } from '../types/productTypes';
 import { ProductWarningsBanner } from './partials/ProductWarningsBanner';
 import { ProductStatusDialog } from './partials/ProductStatusDialog';
@@ -19,16 +19,19 @@ import {
   DEFAULT_PRODUCT_GRADIENT,
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
+  normalizeProductList,
   parseProductIdFromState,
   resolveProductLogoUrl,
   toAdminApplication,
+  toProductSlug,
 } from '../utils/productHelpers';
 import type { ProductStatus } from '@/modules/types';
 
 const ProductDetails = () => {
   //#region Hooks
   const location = useLocation();
-  const productId = parseProductIdFromState(location.state);
+  const params = useParams<{ slug?: string }>();
+  const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { organizations } = useAdminData();
   const { showToast } = useToast();
@@ -44,13 +47,32 @@ const ProductDetails = () => {
 
   //#region Functions
   const loadProduct = useCallback(async () => {
-    if (!productId) {
-      setLoading(false);
-      return;
-    }
-
+    setLoading(true);
     try {
-      const res = await getProductById(productId);
+      let resolvedId = stateProductId;
+
+      if (!resolvedId && params.slug) {
+        const numeric = Number(params.slug);
+        if (Number.isInteger(numeric) && numeric > 0) {
+          resolvedId = numeric;
+        } else {
+          const listRes = await getProducts();
+          const items = normalizeProductList(listRes.resultData);
+          const found = items.find(
+            (p) => toProductSlug(p.productName) === params.slug || String(p.productId) === params.slug,
+          );
+          if (found) {
+            resolvedId = found.productId;
+          }
+        }
+      }
+
+      if (!resolvedId) {
+        setProduct(null);
+        return;
+      }
+
+      const res = await getProductById(resolvedId);
       if (res.resultData) {
         setProduct(res.resultData as ProductApiItem);
       } else {
@@ -63,7 +85,7 @@ const ProductDetails = () => {
     } finally {
       setLoading(false);
     }
-  }, [productId, showToast]);
+  }, [stateProductId, params.slug, showToast]);
 
   const handleConfirmStatus = async (status: ProductStatus) => {
     if (!product) return;
@@ -92,17 +114,9 @@ const ProductDetails = () => {
 
   //#region Effects
   useEffect(() => {
-    if (!productId) {
-      navigate(PRODUCTS_PATHS.list, { replace: true });
-      return;
-    }
     void loadProduct();
-  }, [productId, loadProduct, navigate]);
+  }, [loadProduct]);
   //#endregion
-
-  if (!productId) {
-    return null;
-  }
 
   if (loading) {
     return (
@@ -128,6 +142,7 @@ const ProductDetails = () => {
   const logoSrc = resolveProductLogoUrl(product.logoUrl);
   const warnings = getProductWarnings(app, [app]);
   const customerCount = organizations.filter((org) => org.appIds.includes(app.id)).length;
+  const slug = toProductSlug(product.productName) || String(product.productId);
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -157,7 +172,7 @@ const ProductDetails = () => {
             <CommonButton
               variant="headerSecondary"
               iconLeft={<Pencil size={14} />}
-              onClick={() => navigate(PRODUCTS_PATHS.edit, { state: { productId: product.productId } })}
+              onClick={() => navigate(PRODUCTS_PATHS.edit(slug), { state: { productId: product.productId } })}
             >
               Edit
             </CommonButton>

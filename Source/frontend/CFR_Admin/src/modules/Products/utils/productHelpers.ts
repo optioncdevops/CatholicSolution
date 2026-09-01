@@ -1,11 +1,23 @@
 import type { ProductApiItem, ProductLocationState } from '../types/productTypes';
 import type { AdminApplication, ProductStatus } from '@/modules/types';
 
+export function toProductSlug(name: string | null | undefined): string {
+  if (!name || typeof name !== 'string') return '';
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
 export const PRODUCTS_PATHS = {
   list: '/admin/products',
-  details: '/admin/product-details',
-  edit: '/admin/edit-products',
-  addLicense: '/admin/add-product-license',
+  details: (slugOrId?: string | number) =>
+    slugOrId ? `/admin/products/${toProductSlug(String(slugOrId)) || slugOrId}` : '/admin/products',
+  edit: (slugOrId?: string | number) =>
+    slugOrId ? `/admin/products/${toProductSlug(String(slugOrId)) || slugOrId}/edit` : '/admin/products/edit',
+  addLicense: (slugOrId?: string | number) =>
+    slugOrId ? `/admin/products/${toProductSlug(String(slugOrId)) || slugOrId}/add-license` : '/admin/products/add-license',
 } as const;
 
 export const DEFAULT_PRODUCT_ICON = '📦';

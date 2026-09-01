@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
@@ -7,7 +7,12 @@ import { CommonButton } from "@app/components/buttons";
 import { MandatoryIndicator } from "@app/components/formControls";
 import { confirmAction } from "@/modules/lib/confirm";
 import { validateProductForm } from "../../validator/productValidation";
-import { getProductById, updateProduct, uploadProductLogo } from "../../services/productService";
+import {
+  getProductById,
+  getProducts,
+  updateProduct,
+  uploadProductLogo,
+} from "../../services/productService";
 import type {
   ProductApiItem,
   ProductInputPayload,
@@ -16,15 +21,18 @@ import { ProductForm } from "./ProductForm";
 import {
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
+  normalizeProductList,
   parseProductIdFromState,
   toAdminApplication,
+  toProductSlug,
 } from "../../utils/productHelpers";
 import type { AdminApplication } from "@/modules/types";
 
 const ProductEdit = () => {
   //#region Hooks
   const location = useLocation();
-  const productId = parseProductIdFromState(location.state);
+  const params = useParams<{ slug?: string }>();
+  const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { showToast } = useToast();
   //#endregion
@@ -43,18 +51,41 @@ const ProductEdit = () => {
   //#endregion
 
   //#region Functions
-  const goToDetails = (id: number) => {
-    navigate(PRODUCTS_PATHS.details, { state: { productId: id } });
+  const goToDetails = (id: number, name?: string) => {
+    const slug = toProductSlug(name || product?.productName) || String(id);
+    navigate(PRODUCTS_PATHS.details(slug), { state: { productId: id } });
   };
 
   const loadProduct = useCallback(async () => {
-    if (!productId) {
-      setLoading(false);
-      return;
-    }
-
+    setLoading(true);
     try {
-      const res = await getProductById(productId);
+      let resolvedId = stateProductId;
+
+      if (!resolvedId && params.slug) {
+        const numeric = Number(params.slug);
+        if (Number.isInteger(numeric) && numeric > 0) {
+          resolvedId = numeric;
+        } else {
+          const listRes = await getProducts();
+          const items = normalizeProductList(listRes.resultData);
+          const found = items.find(
+            (p) => toProductSlug(p.productName) === params.slug || String(p.productId) === params.slug,
+          );
+          if (found) {
+            resolvedId = found.productId;
+          }
+        }
+      }
+
+      if (!resolvedId) {
+        setLoading(false);
+        setProduct(null);
+        setForm(null);
+        setOriginalForm(null);
+        return;
+      }
+
+      const res = await getProductById(resolvedId);
       if (res.resultData) {
         const item = res.resultData as ProductApiItem;
         const initialForm = toAdminApplication(item);
@@ -78,7 +109,7 @@ const ProductEdit = () => {
     } finally {
       setLoading(false);
     }
-  }, [productId, showToast]);
+  }, [stateProductId, params.slug, showToast]);
 
   const update = <K extends keyof AdminApplication>(
     key: K,
@@ -160,7 +191,7 @@ const ProductEdit = () => {
 
       await updateProduct(payload);
       showToast(`${form.name} updated successfully.`);
-      goToDetails(product.productId);
+      goToDetails(product.productId, form.name);
     } catch (err) {
       console.error("Error saving product:", err);
       showToast(typeof err === "string" ? err : "Failed to update product", "error");
@@ -172,17 +203,9 @@ const ProductEdit = () => {
 
   //#region Effects
   useEffect(() => {
-    if (!productId) {
-      navigate(PRODUCTS_PATHS.list, { replace: true });
-      return;
-    }
     void loadProduct();
-  }, [productId, loadProduct, navigate]);
+  }, [loadProduct]);
   //#endregion
-
-  if (!productId) {
-    return null;
-  }
 
   if (loading) {
     return (

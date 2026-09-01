@@ -20,6 +20,7 @@ import {
   deriveProductStatus,
   normalizeProductList,
   resolveProductLogoUrl,
+  toProductSlug,
 } from "../utils/productHelpers";
 import { ProductStatusDialog } from "./partials/ProductStatusDialog";
 import type { ProductStatus } from "@/modules/types";
@@ -77,12 +78,14 @@ const ProductList = () => {
     }
   }, [showToast]);
 
-  const goToDetails = (productId: number) => {
-    navigate(PRODUCTS_PATHS.details, { state: { productId } });
+  const goToDetails = (item: ProductApiItem) => {
+    const slug = toProductSlug(item.productName) || String(item.productId);
+    navigate(PRODUCTS_PATHS.details(slug), { state: { productId: item.productId } });
   };
 
-  const goToEdit = (productId: number) => {
-    navigate(PRODUCTS_PATHS.edit, { state: { productId } });
+  const goToEdit = (item: ProductApiItem) => {
+    const slug = toProductSlug(item.productName) || String(item.productId);
+    navigate(PRODUCTS_PATHS.edit(slug), { state: { productId: item.productId } });
   };
 
   const handleConfirmStatus = async (status: ProductStatus) => {
@@ -251,12 +254,12 @@ const ProductList = () => {
 
                 <div
                   className="flex cursor-pointer items-center gap-2.5 pr-16 transition-opacity hover:opacity-90"
-                  onClick={() => goToDetails(item.productId)}
+                  onClick={() => goToDetails(item)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
-                      goToDetails(item.productId);
+                      goToDetails(item);
                     }
                   }}
                 >
@@ -312,13 +315,13 @@ const ProductList = () => {
                         aria-label={`View ${item.productName}`}
                         tooltip="View"
                         icon={<Eye size={14} />}
-                        onClick={() => goToDetails(item.productId)}
+                        onClick={() => goToDetails(item)}
                       />
                       <CommonIconButton
                         aria-label={`Edit ${item.productName}`}
                         tooltip="Edit"
                         icon={<Pencil size={14} />}
-                        onClick={() => goToEdit(item.productId)}
+                        onClick={() => goToEdit(item)}
                       />
                       <CommonIconButton
                         aria-label={`Change status for ${item.productName}`}
