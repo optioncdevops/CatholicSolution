@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { CommonButton } from '@app/components/buttons';
 import { InputField, TextareaField, RadioGroup, ProfileImageUpload } from '@app/components/formControls';
 import { ProductCard } from './ProductCard';
-import type { AdminApplication, ProductLicenseType, ProductNavigationTarget } from '../types';
-import type { ProductFormErrors } from './productValidation';
+import type { AdminApplication, ProductLicenseType, ProductNavigationTarget } from '@/modules/types';
+import type { ProductFormErrors } from '../../validator/productValidation';
+import { resolveProductLogoUrl } from '../../utils/productHelpers';
 
 const LICENSE_TYPE_OPTIONS: Array<{ id: ProductLicenseType; value: string }> = [
   { id: 'free', value: 'Free' },
@@ -14,6 +15,11 @@ const NAVIGATION_OPTIONS: Array<{ id: ProductNavigationTarget; value: string }> 
   { id: 'same-tab', value: 'Same Tab' },
   { id: 'new-tab', value: 'New Tab' },
 ];
+
+function isImageIcon(icon: string): boolean {
+  if (!icon) return false;
+  return icon.startsWith('data:') || icon.startsWith('blob:') || icon.startsWith('/') || /^https?:\/\//i.test(icon);
+}
 
 function TagList({ label, values, draft, onDraftChange, onAdd, onRemove }: {
   label: string;
@@ -56,10 +62,10 @@ interface ProductFormProps {
   errors: ProductFormErrors;
   touched: boolean;
   onUpdate: <K extends keyof AdminApplication>(key: K, value: AdminApplication[K]) => void;
+  onLogoFileChange?: (file: File | null) => void;
 }
 
-/** One consolidated panel, mirroring ProductDetailsTab's layout — same sections, editable. */
-export function ProductForm({ form, errors, touched, onUpdate }: ProductFormProps) {
+export function ProductForm({ form, errors, touched, onUpdate, onLogoFileChange }: ProductFormProps) {
   const [featureDraft, setFeatureDraft] = useState('');
 
   const addFeature = () => {
@@ -71,11 +77,15 @@ export function ProductForm({ form, errors, touched, onUpdate }: ProductFormProp
   const removeFeature = (value: string) => onUpdate('features', form.features.filter((item) => item !== value));
 
   const handleLogoChange = (file: File | null) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { if (typeof reader.result === 'string') onUpdate('icon', reader.result); };
-    reader.readAsDataURL(file);
+    if (onLogoFileChange) {
+      onLogoFileChange(file);
+    } else if (file) {
+      const localUrl = URL.createObjectURL(file);
+      onUpdate('icon', localUrl);
+    }
   };
+
+  const previewUrl = resolveProductLogoUrl(form.icon) || (isImageIcon(form.icon) ? form.icon : undefined);
 
   return (
     <section className="admin-panel-card">
@@ -116,8 +126,9 @@ export function ProductForm({ form, errors, touched, onUpdate }: ProductFormProp
             <ProfileImageUpload
               label="Product Logo"
               onFileChange={handleLogoChange}
+              removable
               fallbackInitials={form.icon.length <= 2 ? form.icon : undefined}
-              initialPreviewUrl={form.icon.startsWith('data:') || /^https?:\/\//.test(form.icon) ? form.icon : undefined}
+              initialPreviewUrl={previewUrl}
             />
             <ProductCard app={form} className="max-w-xs" />
           </div>

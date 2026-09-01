@@ -2,14 +2,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { CommonIconButton } from '@app/components/buttons';
-import { useAdminData } from '../AdminDataContext';
+import { useAdminData } from '@/modules/AdminDataContext';
 import { StatusBadge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
-import { formatDate, accessStatusOf } from '../utils/formatDate';
-import type { AdminApplication, Organization, OrganizationStatus } from '../types';
+import { formatDate, accessStatusOf } from '@/modules/utils/formatDate';
+import type { AdminApplication, Organization, OrganizationStatus } from '@/modules/types';
 
-/** The one status this tab shows and filters by — access takes priority over the account
- * plan/status once it's expiring or expired, since that's the more urgent signal. */
 type EffectiveStatus = OrganizationStatus | 'expiring-soon' | 'expired';
 
 function effectiveStatusOf(org: Organization): EffectiveStatus {

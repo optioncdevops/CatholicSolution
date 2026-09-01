@@ -1,9 +1,9 @@
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { CommonButton } from '@app/components/buttons';
 import { StatusBadge } from '@app/components/Badge';
-import { confirmAction } from '../lib/confirm';
-import { STATUS_IMPACT } from './productValidation';
-import type { AdminApplication, ProductStatus } from '../types';
+import { confirmAction } from '@/modules/lib/confirm';
+import { STATUS_IMPACT } from '../../validator/productValidation';
+import type { AdminApplication, ProductStatus } from '@/modules/types';
 
 const STATUS_OPTIONS: ProductStatus[] = ['active', 'inactive', 'coming-soon'];
 

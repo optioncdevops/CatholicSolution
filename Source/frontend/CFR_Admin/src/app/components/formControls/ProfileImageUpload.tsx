@@ -152,9 +152,22 @@ export function ProfileImageUpload({
     }
 
     if (existingPreviewUrl) {
+      const fileName =
+        existingPreviewUrl.split("/").pop()?.split("?")[0] || "profile-image.png";
+      const ext = fileName.includes(".")
+        ? fileName.slice(fileName.lastIndexOf(".")).toLowerCase()
+        : ".png";
+      const mimeType =
+        ext === ".png"
+          ? "image/png"
+          : ext === ".webp"
+            ? "image/webp"
+            : ext === ".svg"
+              ? "image/svg+xml"
+              : "image/jpeg";
       return [
         {
-          file: new File([], "profile-image"),
+          file: new File([], fileName, { type: mimeType }),
           url: existingPreviewUrl,
           isImage: true,
         },
