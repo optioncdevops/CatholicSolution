@@ -7,10 +7,10 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { StatusBadge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
-import { formatDate } from '../utils/formatDate';
-import { getLiveOrganizations } from './liveOrganizations';
-import type { LiveOrganizationApiItem } from './liveOrganizations';
-import { normalizeLiveOrganizationsList, ORG_STATUS_OPTIONS } from './liveOrganizations';
+import { formatDate } from '../../utils/formatDate';
+import { getOrganizations } from '../services/organizationsService';
+import type { OrganizationApiItem } from '../types/organizationTypes';
+import { normalizeOrganizationsList, ORG_STATUS_OPTIONS } from '../utils/organizationHelpers';
 
 const STATUS_FILTER_PARAM = 'status';
 
@@ -22,7 +22,7 @@ export function OrganizationsListPage() {
   //#endregion
 
   //#region States
-  const [rows, setRows] = useState<LiveOrganizationApiItem[]>([]);
+  const [rows, setRows] = useState<OrganizationApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   //#endregion
 
@@ -45,9 +45,9 @@ export function OrganizationsListPage() {
     let cancelled = false;
     void (async () => {
       try {
-        const { resultData, statusCode } = await getLiveOrganizations();
+        const { resultData, statusCode } = await getOrganizations();
         if (cancelled) return;
-        setRows(statusCode === 204 ? [] : normalizeLiveOrganizationsList(resultData));
+        setRows(statusCode === 204 ? [] : normalizeOrganizationsList(resultData));
       } catch (error) {
         if (cancelled) return;
         console.error('Error loading organizations:', error);
@@ -64,11 +64,11 @@ export function OrganizationsListPage() {
   //#endregion
 
   //#region Handlers
-  const handleView = useCallback((org: LiveOrganizationApiItem) => {
+  const handleView = useCallback((org: OrganizationApiItem) => {
     navigate(`/admin/organizations/${org.orgId}`);
   }, [navigate]);
 
-  const handleEdit = useCallback((org: LiveOrganizationApiItem) => {
+  const handleEdit = useCallback((org: OrganizationApiItem) => {
     navigate(`/admin/organizations/${org.orgId}`, { state: { edit: true } });
   }, [navigate]);
   //#endregion
@@ -78,26 +78,30 @@ export function OrganizationsListPage() {
     [rows, statusFilter],
   );
 
-  // Filter chips are data-driven — only statuses actually present in the loaded organizations
-  // show up, each with a live count, rather than a fixed always-shown vocabulary. Ordered to
-  // match ORG_STATUS_OPTIONS' natural lifecycle order (Active -> Trial -> Suspended), not
-  // alphabetically, with any status outside that known vocabulary appended at the end.
+  // Filter chips always show the full real status vocabulary (Active/Trial/Suspended) with a
+  // live count each — including zero — rather than hiding a status just because no organization
+  // currently has it. Any status outside that known vocabulary (shouldn't happen given the
+  // service-layer allow-list, but defensively) is appended at the end.
   const statusFilterOptions = useMemo(() => {
-    const orderById = new Map(ORG_STATUS_OPTIONS.map((option, index) => [option.id, index]));
-    const labelById = new Map(ORG_STATUS_OPTIONS.map((option) => [option.id, option.value]));
     const counts = new Map<string, number>();
     rows.forEach((org) => counts.set(org.orgStatus, (counts.get(org.orgStatus) ?? 0) + 1));
-    return Array.from(counts.entries())
-      .map(([id, count]) => ({
-        id,
-        value: labelById.get(id) ?? (id.charAt(0).toUpperCase() + id.slice(1)),
-        count,
-      }))
-      .sort((a, b) => (orderById.get(a.id) ?? ORG_STATUS_OPTIONS.length) - (orderById.get(b.id) ?? ORG_STATUS_OPTIONS.length));
+
+    const known = ORG_STATUS_OPTIONS.map((option) => ({
+      id: option.id,
+      value: option.value,
+      count: counts.get(option.id) ?? 0,
+    }));
+
+    const knownIds = new Set(ORG_STATUS_OPTIONS.map((option) => option.id));
+    const unknown = Array.from(counts.entries())
+      .filter(([id]) => !knownIds.has(id))
+      .map(([id, count]) => ({ id, value: id.charAt(0).toUpperCase() + id.slice(1), count }));
+
+    return [...known, ...unknown];
   }, [rows]);
 
   //#region Columns
-  const columns: DataTableColumn<LiveOrganizationApiItem>[] = useMemo(() => [
+  const columns: DataTableColumn<OrganizationApiItem>[] = useMemo(() => [
     {
       id: 'actions',
       header: 'Actions',

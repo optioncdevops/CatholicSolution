@@ -46,8 +46,25 @@ function RequestsListPage() {
 
   //#region Effects
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { resultData, statusCode } = await getAccessRequests();
+        if (cancelled) return;
+        setRows(statusCode === 204 ? [] : normalizeAccessRequestList(resultData));
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Error loading access requests:', error);
+        showToast(typeof error === 'string' ? error : 'Failed to load access requests.', 'error');
+        setRows([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showToast]);
   //#endregion
 
   //#region Columns

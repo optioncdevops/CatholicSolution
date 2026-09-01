@@ -1,13 +1,13 @@
-import type { LiveOrganizationApiItem } from '../types/liveOrganizationTypes';
+import type { OrganizationApiItem } from '../types/organizationTypes';
 
-export const normalizeLiveOrganizationsList = (resultData: unknown): LiveOrganizationApiItem[] => {
+export const normalizeOrganizationsList = (resultData: unknown): OrganizationApiItem[] => {
   if (!Array.isArray(resultData)) return [];
-  return resultData as LiveOrganizationApiItem[];
+  return resultData as OrganizationApiItem[];
 };
 
-export const normalizeLiveOrganization = (resultData: unknown): LiveOrganizationApiItem | null => {
+export const normalizeOrganization = (resultData: unknown): OrganizationApiItem | null => {
   if (!resultData || typeof resultData !== 'object') return null;
-  return resultData as LiveOrganizationApiItem;
+  return resultData as OrganizationApiItem;
 };
 
 // Single source of truth for the real status vocabulary core.Organization.OrgStatus supports —

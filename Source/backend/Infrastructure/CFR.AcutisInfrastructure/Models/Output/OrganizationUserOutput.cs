@@ -6,33 +6,22 @@ namespace CFR.AcutisInfrastructure.Models.Output
 {
     /// <summary>
     /// Output DTO mapped from stored procedure StoredProc.Organization.OrganizationCrud (ActionId 5).
-    /// Holds one user linked to an organization via auth.OrganizationUser + auth.AuthUser.
+    /// Holds one user linked to an organization via auth.OrganizationUser + auth.User.
     /// </summary>
     public class OrganizationUserOutput
     {
         /// <summary>
-        /// Gets or sets the linked user's identifier (auth.AuthUser.AuthUserId).
+        /// Gets or sets the linked user's identifier (auth.User.CFRUserId).
         /// </summary>
         [JsonPropertyName("authUserId")]
         public long AuthUserId { get; set; }
 
         /// <summary>
-        /// Gets or sets the user's email address.
+        /// Gets or sets the user's email address. auth.User has no name columns, so email is the
+        /// only identifying field available for a linked user.
         /// </summary>
         [JsonPropertyName("email")]
         public string? Email { get; set; }
-
-        /// <summary>
-        /// Gets or sets the user's first name.
-        /// </summary>
-        [JsonPropertyName("firstName")]
-        public string? FirstName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the user's last name.
-        /// </summary>
-        [JsonPropertyName("lastName")]
-        public string? LastName { get; set; }
 
         /// <summary>
         /// Gets or sets the membership status for this organization link.

@@ -1,4 +1,4 @@
-export interface LiveOrganizationApiItem {
+export interface OrganizationApiItem {
   orgId: number;
   orgName: string;
   orgStatus: string;
@@ -12,7 +12,7 @@ export interface LiveOrganizationApiItem {
   productCount: number;
 }
 
-export interface LiveOrganizationFormValues {
+export interface OrganizationFormValues {
   orgName: string;
   orgStatus: string;
   contactEmail: string;
@@ -21,7 +21,7 @@ export interface LiveOrganizationFormValues {
   contactPhone: string;
 }
 
-export interface UpdateLiveOrganizationPayload {
+export interface UpdateOrganizationPayload {
   orgId: number;
   orgName: string;
   orgStatus: string;
@@ -31,7 +31,7 @@ export interface UpdateLiveOrganizationPayload {
   contactPhone: string;
 }
 
-export interface CreateLiveOrganizationPayload {
+export interface CreateOrganizationPayload {
   orgName: string;
   orgStatus: string;
   contactEmail: string;
@@ -40,16 +40,14 @@ export interface CreateLiveOrganizationPayload {
   contactPhone: string;
 }
 
-export interface LiveOrganizationUserApiItem {
+export interface OrganizationUserApiItem {
   authUserId: number;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
   memberStatus: string | null;
   linkedDate: string;
 }
 
-export interface LiveOrganizationProductApiItem {
+export interface OrganizationProductApiItem {
   productId: number;
   productName: string;
   subCategoryName: string | null;
@@ -65,7 +63,7 @@ export interface AssignableProductApiItem {
   subCategoryName: string | null;
 }
 
-export interface AssignLiveOrganizationProductPayload {
+export interface AssignOrganizationProductPayload {
   orgId: number;
   productId: number;
 }

@@ -97,18 +97,18 @@ namespace CFR.Common
             public const string FetchOrganizationsFailed = "Error while fetching organizations";
             public const string FetchOrganizationByIdFailed = "Error while fetching organization {OrganizationId}";
             public const string FetchAccessRequestsFailed = "Error while fetching access requests";
-            public const string FetchOrganizationUsersFailed = "Error while fetching organization users";
+            public const string FetchOrganizationUsersFailed = "Error while fetching organization users for organization {OrgId}";
             public const string FetchAccessRequestByIdFailed = "Error while fetching access request {RequestId}";
             public const string FetchProductsFailed = "Error while fetching products";
-            public const string FetchOrganizationProductsFailed = "Error while fetching organization products";
+            public const string FetchOrganizationProductsFailed = "Error while fetching organization products for organization {OrgId}";
             public const string SaveAccessRequestFailed = "Error while saving access request";
-            public const string FetchAssignableProductsFailed = "Error while fetching assignable products";
-            public const string UpdateAccessRequestStatusFailed = "Error while updating access request status";
+            public const string FetchAssignableProductsFailed = "Error while fetching assignable products for organization {OrgId}";
+            public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string CreateOrganizationFailed = "Error while creating organization";
-            public const string SendAccessRequestEmailFailed = "Error while sending access request email";
-            public const string AssignOrganizationProductFailed = "Error while assigning product to organization";
-            public const string RemoveOrganizationProductFailed = "Error while removing product from organization";
-            public const string UpdateOrganizationFailed = "Error while updating organization";
+            public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
+            public const string AssignOrganizationProductFailed = "Error while assigning product to organization {OrgId}";
+            public const string RemoveOrganizationProductFailed = "Error while removing product from organization {OrgId}";
+            public const string UpdateOrganizationFailed = "Error while updating organization {OrgId}";
         }
     }
 }
