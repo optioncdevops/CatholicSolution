@@ -28,13 +28,21 @@ export function resolveMenuIcon(name?: string): ComponentType<{ size?: number }>
   return ICON_MAP[pascal] ?? Settings;
 }
 
+export function normalizeMenuPath(path?: string): string {
+  if (!path) return '/admin';
+  if (path === '/admin/applications') return '/admin/products';
+  return path;
+}
+
 export function splitAdminMenus(menuItems: AcutisMenuItem[] | undefined): {
   topItems: AcutisMenuItem[];
   administration: AcutisMenuItem | undefined;
 } {
   const items = Array.isArray(menuItems) ? menuItems : [];
   const administration = items.find((item) => item.sessionKey === 'Administration' || (item.links?.length ?? 0) > 0);
-  const topItems = items.filter((item) => item !== administration);
+  const topItems = items
+    .filter((item) => item !== administration)
+    .map((item) => ({ ...item, path: normalizeMenuPath(item.path) }));
   return { topItems, administration };
 }
 
@@ -43,7 +51,7 @@ export function toDropdownItems(links: AcutisSubMenuItem[] | undefined): Array<{
   return links
     .filter((link) => Boolean(link.path))
     .map((link) => ({
-      to: link.path,
+      to: normalizeMenuPath(link.path),
       label: link.label,
       icon: resolveMenuIcon(link.icon),
     }));

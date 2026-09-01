@@ -1,12 +1,9 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using System.Text.Json.Serialization;
-
 namespace CFR.AcutisInfrastructure.Models.Output
 {
     /// <summary>
-    /// Output DTO mapped from stored procedure StoredProc.Administration.ProductsCrud.
-    /// Holds one hub product row returned to the service and controller.
+    /// Output model representing a product from Core.Product.
     /// </summary>
     public class ProductOutput
     {
@@ -14,60 +11,90 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// Gets or sets the product identifier.
         /// </summary>
         [JsonPropertyName("productId")]
-        public string ProductId { get; set; } = string.Empty;
+        public int ProductId { get; set; }
 
         /// <summary>
-        /// Gets or sets the product display name.
+        /// Gets or sets the full product name.
         /// </summary>
         [JsonPropertyName("productName")]
         public string ProductName { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the product category / subtitle.
+        /// Gets or sets the sub category name.
         /// </summary>
-        [JsonPropertyName("category")]
-        public string Category { get; set; } = string.Empty;
+        [JsonPropertyName("subCategoryName")]
+        public string? SubCategoryName { get; set; }
 
         /// <summary>
         /// Gets or sets the product description.
         /// </summary>
-        [JsonPropertyName("description")]
-        public string Description { get; set; } = string.Empty;
+        [JsonPropertyName("prodDescription")]
+        public string? ProdDescription { get; set; }
 
         /// <summary>
-        /// Gets or sets the launch URL (prod environment, else ExternalPageUrl).
+        /// Gets or sets the external page URL.
         /// </summary>
-        [JsonPropertyName("externalUrl")]
-        public string ExternalUrl { get; set; } = string.Empty;
+        [JsonPropertyName("externalPageUrl")]
+        public string? ExternalPageUrl { get; set; }
 
         /// <summary>
-        /// Gets or sets pipe-delimited feature names from the stored procedure. Not returned to the client.
+        /// Gets or sets the default access days.
         /// </summary>
-        [JsonIgnore]
-        public string FeatureNames { get; set; } = string.Empty;
+        [JsonPropertyName("defaultAccessDays")]
+        public int DefaultAccessDays { get; set; }
 
         /// <summary>
-        /// Gets or sets the feature list shown on App Hub cards.
+        /// Gets or sets the relative path or URL of the product logo.
+        /// </summary>
+        [JsonPropertyName("logoUrl")]
+        public string? LogoUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the active status flag.
+        /// </summary>
+        [JsonPropertyName("isActive")]
+        public bool IsActive { get; set; }
+
+        /// <summary>
+        /// Gets or sets the availability flag.
+        /// </summary>
+        [JsonPropertyName("isAvailable")]
+        public bool IsAvailable { get; set; }
+
+        /// <summary>
+        /// Gets or sets the record creation date.
+        /// </summary>
+        [JsonPropertyName("createdDate")]
+        public DateTime CreatedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user identifier who inserted the record.
+        /// </summary>
+        [JsonPropertyName("insertedBy")]
+        public long? InsertedBy { get; set; }
+
+        /// <summary>
+        /// Gets or sets the record last updated date.
+        /// </summary>
+        [JsonPropertyName("updatedDate")]
+        public DateTime? UpdatedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user identifier who last updated the record.
+        /// </summary>
+        [JsonPropertyName("updatedBy")]
+        public long? UpdatedBy { get; set; }
+
+        /// <summary>
+        /// Gets or sets the deleted flag.
+        /// </summary>
+        [JsonPropertyName("isDeleted")]
+        public bool IsDeleted { get; set; }
+
+        /// <summary>
+        /// Gets or sets the list of feature names for this product.
         /// </summary>
         [JsonPropertyName("features")]
         public List<string> Features { get; set; } = [];
-
-        /// <summary>
-        /// Gets or sets the App Hub section: your, available, or future.
-        /// </summary>
-        [JsonPropertyName("hubSection")]
-        public string HubSection { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets or sets the active flag. 1 = active, 0 = inactive.
-        /// </summary>
-        [JsonPropertyName("isActive")]
-        public int IsActive { get; set; }
-
-        /// <summary>
-        /// Gets or sets the available-for-request flag. 1 = available, 0 = not available.
-        /// </summary>
-        [JsonPropertyName("isAvailable")]
-        public int IsAvailable { get; set; }
     }
 }

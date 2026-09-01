@@ -356,17 +356,87 @@ namespace CFR.AcutisInfrastructure
         /// <summary>
         /// Parameters for Product stored procedures.
         /// </summary>
+
+        /// <summary>
+        /// Parameters for Products stored procedures and queries.
+        /// </summary>
         public static class ProductParams
         {
             /// <summary>
-            /// CRUD action identifier.
+            /// CRUD action identifier for stored procedure operations.
             /// </summary>
-            public const string ActionId = "@ActionId";
+            public const string ActionId = nameof(ActionId);
 
             /// <summary>
-            /// Member email used to decide Your Apps vs Available Apps.
+            /// Product identifier.
             /// </summary>
-            public const string RequesterEmail = "@RequesterEmail";
+            public const string ProductId = nameof(ProductId);
+
+            /// <summary>
+            /// Full product name.
+            /// </summary>
+            public const string ProductName = nameof(ProductName);
+
+            /// <summary>
+            /// Sub-category or subtitle name.
+            /// </summary>
+            public const string SubCategoryName = nameof(SubCategoryName);
+
+            /// <summary>
+            /// Product description.
+            /// </summary>
+            public const string ProdDescription = nameof(ProdDescription);
+
+            /// <summary>
+            /// External application or website URL.
+            /// </summary>
+            public const string ExternalPageUrl = nameof(ExternalPageUrl);
+
+            /// <summary>
+            /// Default access duration in days.
+            /// </summary>
+            public const string DefaultAccessDays = nameof(DefaultAccessDays);
+
+            /// <summary>
+            /// Relative path or URL to the product logo image.
+            /// </summary>
+            public const string LogoUrl = nameof(LogoUrl);
+
+            /// <summary>
+            /// Pipe-delimited list of product features.
+            /// </summary>
+            public const string Features = nameof(Features);
+
+            /// <summary>
+            /// Active status flag: 1 = active, 0 = inactive.
+            /// </summary>
+            public const string IsActive = nameof(IsActive);
+
+            /// <summary>
+            /// Availability flag: 1 = available, 0 = coming soon.
+            /// </summary>
+            public const string IsAvailable = nameof(IsAvailable);
+
+            /// <summary>
+            /// Logged-in user identifier for audit columns (ICurrentUserService.UserId).
+            /// </summary>
+            public const string UserId = nameof(UserId);
+
+            /// <summary>
+            /// Logged-in user who inserted the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string InsertedBy = nameof(InsertedBy);
+
+            /// <summary>
+            /// Logged-in user who updated the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string UpdatedBy = nameof(UpdatedBy);
+
+            /// <summary>
+            /// Output return value from the stored procedure.
+            /// </summary>
+            public const string ReturnValue = nameof(ReturnValue);
         }
     }
 }
+

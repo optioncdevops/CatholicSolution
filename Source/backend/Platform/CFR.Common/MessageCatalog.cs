@@ -66,6 +66,8 @@ namespace CFR.Common
         public const string AccessRequestMemberNotFound = "No member account was found for this email.";
         public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
         public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
+        public const string ExistProduct = "A product with this name already exists.";
+        public const string ProductNotFound = "Product not found.";
     }
 
     public static class SerilogErrorMessages
@@ -105,10 +107,16 @@ namespace CFR.Common
             public const string FetchAssignableProductsFailed = "Error while fetching assignable products for organization {OrgId}";
             public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string CreateOrganizationFailed = "Error while creating organization";
-            public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
-            public const string AssignOrganizationProductFailed = "Error while assigning product to organization {OrgId}";
-            public const string RemoveOrganizationProductFailed = "Error while removing product from organization {OrgId}";
-            public const string UpdateOrganizationFailed = "Error while updating organization {OrgId}";
+            public const string SendAccessRequestEmailFailed = "Error while sending access request email";
+            public const string AssignOrganizationProductFailed = "Error while assigning product to organization";
+            public const string RemoveOrganizationProductFailed = "Error while removing product from organization";
+            public const string UpdateOrganizationFailed = "Error while updating organization";
+            public const string FetchProductByIdFailed = "Error while fetching product {ProductId}";
+            public const string FetchProductLicensesFailed = "Error while fetching product licenses for {ProductId}";
+            public const string SaveProductFailed = "Error while saving product";
+            public const string UpdateProductFailed = "Error while updating product {ProductId}";
+            public const string DeleteProductFailed = "Error while deleting product {ProductId}";
+            public const string UploadProductLogoFailed = "Error while uploading product logo";
         }
     }
 }

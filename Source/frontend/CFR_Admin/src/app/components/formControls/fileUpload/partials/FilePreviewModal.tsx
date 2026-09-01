@@ -5,7 +5,6 @@ import {
   CommonIconButton,
 } from "@app/components/buttons";
 import {
-  themeCardSurfaceClass,
   themeFormControlTextClass,
 } from "@designSystem/theme/styles/componentStyle";
 import { cn } from "@app/utilities/cn";
@@ -95,14 +94,17 @@ export function FilePreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-[9999]"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="File preview"
+      onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/50" aria-hidden />
-      <div className="relative z-10 flex h-full w-full flex-col overflow-hidden">
-        <div className="flex h-14 items-center justify-between border-b border-white/15 bg-[var(--primary)] px-4">
+      <div
+        className="relative z-10 flex flex-col w-full max-w-xl max-h-[85vh] rounded-2xl overflow-hidden bg-[var(--surface)] border border-[var(--line)] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex h-13 items-center justify-between border-b border-white/15 bg-[var(--primary)] px-4 py-2.5">
           <div className="min-w-0">
             <p
               className={cn(
@@ -123,14 +125,14 @@ export function FilePreviewModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-white/80 hover:bg-white/15 hover:text-white"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white/80 hover:bg-white/15 hover:text-white"
             aria-label="Close preview"
           >
             <AppIcon name="x" size={18} />
           </button>
         </div>
 
-        <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-black/70 px-4 py-6">
+        <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-[var(--surface-muted)] min-h-[260px] max-h-[50vh] p-3">
           <FilePreviewRenderer
             item={item}
             zoom={zoom}
@@ -139,108 +141,106 @@ export function FilePreviewModal({
           />
 
           {hasNav ? (
-            <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4">
+            <div className="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3">
               <CommonIconButton
                 aria-label="Previous file"
                 type="button"
-                size="lg"
+                size="md"
                 iconName="chevronLeft"
                 onClick={goPrev}
                 disabled={atFirst}
                 variant="primary"
                 tone="solid"
-                className="pointer-events-auto h-12 w-12 rounded-full border border-white/15 shadow-2xl"
+                className="pointer-events-auto h-10 w-10 rounded-full border border-white/15 shadow-xl"
               />
               <CommonIconButton
                 aria-label="Next file"
                 type="button"
-                size="lg"
+                size="md"
                 iconName="chevronRight"
                 onClick={goNext}
                 disabled={atLast}
                 variant="primary"
                 tone="solid"
-                className="pointer-events-auto h-12 w-12 rounded-full border border-white/15 shadow-2xl"
+                className="pointer-events-auto h-10 w-10 rounded-full border border-white/15 shadow-xl"
               />
             </div>
           ) : null}
+        </div>
 
-          <div
-            className={`absolute bottom-4 left-1/2 z-20 max-w-[calc(100vw-2rem)] -translate-x-1/2 p-2 backdrop-blur ${themeCardSurfaceClass}`}
-          >
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <CommonIconButton
-                aria-label="Zoom out"
-                type="button"
-                iconName="searchX"
-                onClick={() => { setZoom((z) => Math.max(0.5, z - 0.25)); }}
-                disabled={!zoomEnabled}
-              />
-              <span className="min-w-12 text-center text-xs font-medium text-[var(--text-muted)]">
-                {zoomPercent}%
+        <div className="border-t border-[var(--line-soft)] bg-[var(--surface)] p-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+            <CommonIconButton
+              aria-label="Zoom out"
+              type="button"
+              iconName="searchX"
+              onClick={() => { setZoom((z) => Math.max(0.5, z - 0.25)); }}
+              disabled={!zoomEnabled}
+            />
+            <span className="min-w-10 text-center text-xs font-medium text-[var(--text-muted)]">
+              {zoomPercent}%
+            </span>
+            <CommonIconButton
+              aria-label="Zoom in"
+              type="button"
+              iconName="search"
+              onClick={() => { setZoom((z) => Math.min(3, z + 0.25)); }}
+              disabled={!zoomEnabled}
+            />
+            <CommonButton
+              {...BUTTON_PRESETS.cancel}
+              type="button"
+              size="sm"
+              onClick={() => { setViewMode("fit"); }}
+              disabled={!zoomEnabled}
+            >
+              <span className="inline-flex items-center gap-1">
+                <AppIcon name="minimize" size={14} />
+                Fit
               </span>
-              <CommonIconButton
-                aria-label="Zoom in"
-                type="button"
-                iconName="search"
-                onClick={() => { setZoom((z) => Math.min(3, z + 0.25)); }}
-                disabled={!zoomEnabled}
-              />
+            </CommonButton>
+            <CommonButton
+              {...BUTTON_PRESETS.cancel}
+              type="button"
+              size="sm"
+              onClick={() => { setViewMode("actual"); }}
+              disabled={!zoomEnabled}
+            >
+              <span className="inline-flex items-center gap-1">
+                <AppIcon name="expand" size={14} />
+                Actual
+              </span>
+            </CommonButton>
+            <CommonButton
+              {...BUTTON_PRESETS.cancel}
+              type="button"
+              size="sm"
+              onClick={() => {
+                setZoom(1);
+                setViewMode("fit");
+              }}
+              disabled={!zoomEnabled}
+            >
+              Reset
+            </CommonButton>
+            {onRemoveCurrent ? (
               <CommonButton
-                {...BUTTON_PRESETS.cancel}
+                {...BUTTON_PRESETS.delete}
                 type="button"
                 size="sm"
-                onClick={() => { setViewMode("fit"); }}
-                disabled={!zoomEnabled}
+                onClick={() => { onRemoveCurrent(safeIndex); }}
               >
-                <span className="inline-flex items-center gap-1">
-                  <AppIcon name="minimize" size={14} />
-                  Fit
-                </span>
+                Remove
               </CommonButton>
-              <CommonButton
-                {...BUTTON_PRESETS.cancel}
-                type="button"
-                size="sm"
-                onClick={() => { setViewMode("actual"); }}
-                disabled={!zoomEnabled}
-              >
-                <span className="inline-flex items-center gap-1">
-                  <AppIcon name="expand" size={14} />
-                  Actual
-                </span>
-              </CommonButton>
-              <CommonButton
-                {...BUTTON_PRESETS.cancel}
-                type="button"
-                size="sm"
-                onClick={() => {
-                  setZoom(1);
-                  setViewMode("fit");
-                }}
-                disabled={!zoomEnabled}
-              >
-                Reset
-              </CommonButton>
-              {onRemoveCurrent ? (
-                <CommonButton
-                  {...BUTTON_PRESETS.delete}
-                  type="button"
-                  size="sm"
-                  onClick={() => { onRemoveCurrent(safeIndex); }}
-                >
-                  Remove
-                </CommonButton>
-              ) : null}
-              <CommonButton
-                {...BUTTON_PRESETS.cancel}
-                type="button"
-                size="sm"
-                onClick={onClose}
-              >
-                Close
-              </CommonButton>
-            </div>
+            ) : null}
+            <CommonButton
+              {...BUTTON_PRESETS.cancel}
+              type="button"
+              size="sm"
+              onClick={onClose}
+            >
+              Close
+            </CommonButton>
           </div>
         </div>
       </div>

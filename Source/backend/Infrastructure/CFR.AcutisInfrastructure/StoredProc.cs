@@ -1,4 +1,4 @@
-﻿// Copyright (c) OptionC. All rights reserved.
+// Copyright (c) OptionC. All rights reserved.
 
 namespace CFR.AcutisInfrastructure
 {
@@ -84,6 +84,22 @@ namespace CFR.AcutisInfrastructure
             /// Organization list, get by id, and update operations.
             /// </summary>
             public const string OrganizationCrud = "[dbo].[Acutis_Organization_CRUD]";
+        }
+
+        /// <summary>
+        /// Stored procedure names for Products features.
+        /// </summary>
+        public class Products
+        {
+            /// <summary>
+            /// Products list, get by id, save (insert/update), and soft-delete operations.
+            /// </summary>
+            public const string ProductsCrud = "[dbo].[Acutis_Products_CRUD]";
+
+            /// <summary>
+            /// Retrieves product license records by ProductId from lic.License and lic.OrganizationProduct.
+            /// </summary>
+            public const string ProductLicensesGetByProductId = "[dbo].[Acutis_ProductLicenses_GetByProductId]";
         }
     }
 }

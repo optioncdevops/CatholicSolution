@@ -34,6 +34,16 @@ builder.Services.DisableAuthenticationPolicy(builder.Environment);
 
 builder.Services.AddEndpointsApiExplorer();
 
+if (string.IsNullOrEmpty(builder.Environment.WebRootPath))
+{
+    builder.Environment.WebRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+}
+var uploadsDirectory = Path.Combine(builder.Environment.WebRootPath, "uploads", "products");
+if (!Directory.Exists(uploadsDirectory))
+{
+    _ = Directory.CreateDirectory(uploadsDirectory);
+}
+
 var app = builder.Build();
 
 app.UseCommonAppSetup(SwaggerModuleDoc.CFRAcutis, app.Services.GetRequiredService<IOptions<SwaggerGenOptions>>().Value);
