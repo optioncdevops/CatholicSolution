@@ -10,6 +10,7 @@ import { AdminShell } from '@/modules/components/AdminShell';
 import { usersRoutes } from '@/modules/users';
 import { userRolesRoutes } from '@/modules/administration/userRoles';
 import { emailTemplatesRoutes } from '@/modules/administration/emailTemplates';
+import { requestsRoutes } from '@/modules/requests';
 
 // Route-level code splitting — each admin page (and the ported dataTable/formControls code it
 // pulls in) loads as its own chunk on first visit instead of one 2MB+ bundle up front.
@@ -20,7 +21,6 @@ const ProductEditPage = lazy(() => import('@/modules/applications/ProductEditPag
 const CreateInvoicePage = lazy(() => import('@/modules/applications/CreateInvoicePage').then((m) => ({ default: m.CreateInvoicePage })));
 const OrganizationsListPage = lazy(() => import('@/modules/organizations/OrganizationsListPage').then((m) => ({ default: m.OrganizationsListPage })));
 const OrganizationDetailPage = lazy(() => import('@/modules/organizations/OrganizationDetailPage').then((m) => ({ default: m.OrganizationDetailPage })));
-const RequestsInboxPage = lazy(() => import('@/modules/requests/RequestsInboxPage').then((m) => ({ default: m.RequestsInboxPage })));
 const RightsPage = lazy(() => import('@/modules/administration/RightsPage').then((m) => ({ default: m.RightsPage })));
 const InvoiceItemsPage = lazy(() => import('@/modules/administration/InvoiceItemsPage').then((m) => ({ default: m.InvoiceItemsPage })));
 // Dev-only component reference — see the removal note at the top of either sample page file.
@@ -52,7 +52,7 @@ export default function App() {
           <Route path="/admin/organizations/:orgId" element={<OrganizationDetailPage />} />
           {usersRoutes}
           {userRolesRoutes}
-          <Route path="/admin/requests" element={<RequestsInboxPage />} />
+          {requestsRoutes}
           <Route path="/admin/administration-rights" element={<RightsPage />} />
           {emailTemplatesRoutes}
           <Route path="/admin/administration-invoice-items" element={<InvoiceItemsPage />} />

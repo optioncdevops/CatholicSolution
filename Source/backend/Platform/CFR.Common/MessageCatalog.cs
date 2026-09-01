@@ -54,6 +54,11 @@ namespace CFR.Common
         public const string InvalidCurrentPassword = "Your current password is incorrect.";
         public const string ProfileUpdated = "Profile updated successfully.";
         public const string PasswordChanged = "Password changed successfully.";
+        public const string ExistAccessRequest = "A pending access request for this product already exists.";
+        public const string AccessRequestProductNotFound = "The requested product is not available.";
+        public const string AccessRequestMemberNotFound = "No member account was found for this email.";
+        public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
+        public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
     }
 
     public static class SerilogErrorMessages
@@ -82,6 +87,12 @@ namespace CFR.Common
             public const string FetchProfileFailed = "Error while fetching profile for user {UserId}";
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
             public const string ChangePasswordFailed = "Error while changing password for user {UserId}";
+            public const string FetchAccessRequestsFailed = "Error while fetching access requests";
+            public const string FetchAccessRequestByIdFailed = "Error while fetching access request {AccessRequestId}";
+            public const string SaveAccessRequestFailed = "Error while saving access request";
+            public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for {AccessRequestId}";
+            public const string SendAccessRequestEmailFailed = "Error while sending access request email {TemplateCode} for request {AccessRequestId}";
+            public const string FetchProductsFailed = "Error while fetching hub products";
         }
     }
 }

@@ -41,6 +41,10 @@ namespace CFR.Acutis
             services.AddScoped<IUserRolesRepository, UserRolesRepository>();
             services.AddScoped<IEmailTemplatesService, EmailTemplatesService>();
             services.AddScoped<IEmailTemplatesRepository, EmailTemplatesRepository>();
+            services.AddScoped<IAccessRequestService, AccessRequestService>();
+            services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
+            services.AddScoped<IProductsService, ProductsService>();
+            services.AddScoped<IProductsRepository, ProductsRepository>();
 
             // Self-service profile / change-password
             services.AddScoped<IProfileService, ProfileService>();

@@ -38,6 +38,14 @@ namespace CFR.AcutisService.Service.Administration
                     ["AppName"] = "Matt Money",
                     ["Note"] = "Please confirm your role at the organization before we can proceed.",
                 },
+                "AccessRequested" => new Dictionary<string, string>
+                {
+                    ["RequesterName"] = "Jordan Hale",
+                    ["RequesterEmail"] = "jordan.hale@example.org",
+                    ["OrganizationName"] = "St. Mary's Parish",
+                    ["AppName"] = "Matt Money",
+                    ["ReviewLink"] = "https://example.org/admin/requests",
+                },
                 _ => [],
             };
         }

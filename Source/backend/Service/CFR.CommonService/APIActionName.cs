@@ -52,6 +52,11 @@ namespace CFR.CommonService
             public const string GetEmailTemplateById = nameof(GetEmailTemplateById);
             public const string SaveEmailTemplate = nameof(SaveEmailTemplate);
             public const string SendTestEmail = nameof(SendTestEmail);
+            public const string GetAccessRequests = nameof(GetAccessRequests);
+            public const string GetAccessRequestById = nameof(GetAccessRequestById);
+            public const string SaveAccessRequest = nameof(SaveAccessRequest);
+            public const string UpdateAccessRequestStatus = nameof(UpdateAccessRequestStatus);
+            public const string GetProducts = nameof(GetProducts);
         }
 
         public static class API_Profile

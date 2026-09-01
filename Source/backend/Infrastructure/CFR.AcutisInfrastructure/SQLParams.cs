@@ -1,4 +1,4 @@
-﻿// Copyright (c) OptionC. All rights reserved.
+// Copyright (c) OptionC. All rights reserved.
 
 namespace CFR.AcutisInfrastructure
 {
@@ -229,6 +229,83 @@ namespace CFR.AcutisInfrastructure
             /// Stored procedure output / return value.
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);
+        }
+
+        /// <summary>
+        /// Parameters for Access Request stored procedures.
+        /// </summary>
+        public static class AccessRequestParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = "@ActionId";
+
+            /// <summary>
+            /// Access request identifier.
+            /// </summary>
+            public const string AccessRequestId = "@AccessRequestId";
+
+            /// <summary>
+            /// core.Product.ProductId when the client sends a numeric identifier.
+            /// </summary>
+            public const string ProductId = "@ProductId";
+
+            /// <summary>
+            /// Product display name used to resolve core.Product when ProductId is not numeric.
+            /// </summary>
+            public const string ProductName = "@ProductName";
+
+            /// <summary>
+            /// Requester email used to resolve auth.AuthUser.
+            /// </summary>
+            public const string RequesterEmail = "@RequesterEmail";
+
+            /// <summary>
+            /// Optional comment on submit.
+            /// </summary>
+            public const string Comment = "@Comment";
+
+            /// <summary>
+            /// Request status value.
+            /// </summary>
+            public const string Status = "@Status";
+
+            /// <summary>
+            /// Optional reviewer note.
+            /// </summary>
+            public const string Note = "@Note";
+
+            /// <summary>
+            /// Logged-in user who created the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string InsertedBy = "@InsertedBy";
+
+            /// <summary>
+            /// Logged-in user who last updated the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string UpdatedBy = "@UpdatedBy";
+
+            /// <summary>
+            /// Stored procedure output / return value.
+            /// </summary>
+            public const string ReturnValue = "@ReturnValue";
+        }
+
+        /// <summary>
+        /// Parameters for Product stored procedures.
+        /// </summary>
+        public static class ProductParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>
+            /// Member email used to decide Your Apps vs Available Apps.
+            /// </summary>
+            public const string RequesterEmail = nameof(RequesterEmail);
         }
     }
 }
