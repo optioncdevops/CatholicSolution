@@ -18,20 +18,26 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
     { token: '[AppName]', label: 'Application name' },
     { token: '[Note]', label: 'Reviewer note' },
   ],
+  AccessRequested: [
+    { token: '[RequesterName]', label: 'Requester name' },
+    { token: '[RequesterEmail]', label: 'Requester email' },
+    { token: '[OrganizationName]', label: 'Organization name' },
+    { token: '[AppName]', label: 'Application name' },
+    { token: '[ReviewLink]', label: 'Admin review link' },
+  ],
 };
 
-// Mirrors backend EmailTemplateSampleData.ForTemplateCode — keep both in sync so the live
-// preview shown here matches what "Send Test" actually merges and sends server-side.
-const SAMPLE_VALUES: Record<string, Record<string, string>> = {
-  PasswordReset: { FirstName: 'Jordan', ResetLink: 'https://example.org/reset-password?token=sample-token', ExpiryMinutes: '30' },
-  Welcome: { FirstName: 'Jordan' },
-  AccessApproved: { FirstName: 'Jordan', AppName: 'Matt Money' },
-  AccessInfo: { FirstName: 'Jordan', AppName: 'Matt Money', Note: 'Please confirm your role at the organization before we can proceed.' },
-};
-
-export const renderSample = (templateCode: string, text: string): string => {
-  const values = SAMPLE_VALUES[templateCode] ?? {};
-  return text.replace(/\[(\w+)\]/g, (match, key: string) => values[key] ?? match);
+// Flags any [Token] in the subject/body that isn't one of this template's known merge tags —
+// SMTPMailService.FormatMailContent leaves unknown tokens untouched, so they'd reach the recipient literally.
+export const getUnsupportedPlaceholders = (templateCode: string, subject: string, body: string): string[] => {
+  const allowed = new Set((EMAIL_TEMPLATE_VARIABLES[templateCode] ?? []).map((variable) => variable.token));
+  const found = new Set<string>();
+  for (const text of [subject, body]) {
+    for (const match of text.match(/\[\w+\]/g) ?? []) {
+      if (!allowed.has(match)) found.add(match);
+    }
+  }
+  return Array.from(found);
 };
 
 export const normalizeEmailTemplatesList = (resultData: unknown): EmailTemplateApiItem[] => {
@@ -45,6 +51,7 @@ export const templateDisplayLabel = (templateCode: string): string => {
     case 'Welcome': return 'Welcome Email';
     case 'AccessApproved': return 'Access Approved';
     case 'AccessInfo': return 'More Information Needed';
+    case 'AccessRequested': return 'New Access Request';
     default: return templateCode;
   }
 };
@@ -55,6 +62,7 @@ export const templateDescription = (templateCode: string): string => {
     case 'Welcome': return 'Sent when a new account is provisioned.';
     case 'AccessApproved': return 'Sent when an access request is approved.';
     case 'AccessInfo': return 'Sent when a reviewer requests more detail on a request.';
+    case 'AccessRequested': return 'Sent to admins when a member submits an access request.';
     default: return '';
   }
 };

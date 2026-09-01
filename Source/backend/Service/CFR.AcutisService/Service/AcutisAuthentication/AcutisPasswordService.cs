@@ -171,8 +171,11 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
             };
 
             var template = await emailTemplatesRepository.GetEmailTemplateByCodeAsync(PasswordResetTemplateCode);
-            string subject = template?.Subject ?? "Reset your CFR Acutis password";
-            string body = template?.Body ?? "<p>Hello [FirstName],</p><p>Use the link below to reset your CFR Acutis password. This link expires in [ExpiryMinutes] minutes and can only be used once.</p><p><a href=\"[ResetLink]\">[ResetLink]</a></p>";
+            string subject = template?.Subject ?? "Reset your Catholic Solutions password";
+            // Fallback kept in sync with the PasswordReset seed in 006_Acutis_EmailTemplates.sql —
+            // this only fires when the admin-configurable template row is missing entirely.
+            string body = template?.Body
+                ?? "<div style=\"font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#0f172a;\"><h1 style=\"margin:0 0 6px;font-size:20px;font-weight:800;color:#0f172a;\">Reset your password</h1><p style=\"margin:0 0 20px;font-size:13px;color:#64748b;\">Hi [FirstName], we received a request to reset the password on your Catholic Solutions account.</p><p style=\"margin:0 0 26px;font-size:14px;line-height:1.7;color:#1e293b;\">Click the button below to choose a new password. For your security, this link can only be used once.</p><div style=\"text-align:center;margin:0 0 26px;\"><a href=\"[ResetLink]\" style=\"display:inline-block;padding:14px 34px;background-color:#1d4ed8;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;\">Reset Password</a></div><div style=\"background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin:0 0 22px;\"><p style=\"margin:0;font-size:12.5px;color:#1d4ed8;font-weight:700;\">This link expires in [ExpiryMinutes] minutes and can only be used once.</p></div><p style=\"margin:0 0 4px;font-size:12px;color:#94a3b8;\">If the button above doesn't work, copy and paste this link into your browser:</p><p style=\"margin:0 0 22px;font-size:12px;word-break:break-all;\"><a href=\"[ResetLink]\" style=\"color:#1d4ed8;\">[ResetLink]</a></p><p style=\"margin:0;font-size:12px;color:#94a3b8;line-height:1.6;\">If you didn't request this, you can safely ignore this email. Your password will stay the same.</p></div>";
 
             string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
             string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);

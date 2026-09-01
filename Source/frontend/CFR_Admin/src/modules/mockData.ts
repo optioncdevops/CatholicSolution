@@ -1,5 +1,5 @@
 import type {
-  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, License, LicenseStatus, InvoiceItem, Organization,
+  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, License, LicenseStatus, Organization,
 } from './types';
 
 export const MOCK_ROLES: AdminRole[] = [
@@ -104,56 +104,89 @@ export const MOCK_ORGANIZATIONS: Organization[] = [
     id: 'org-holy-family', name: 'Holy Family Academy', domain: 'holyfamilyacademy.edu', plan: 'growth', status: 'active',
     appIds: ['optionc-school', 'matt-money', 'arc-alerts'], createdAt: '2025-01-14T09:32:00',
     code: 'CUST-1001', primaryContact: 'Daniel Costa', contactEmail: 'daniel.costa@holyfamilyacademy.edu', contactPhone: '(312) 555-0101', expiryDate: '2027-01-14',
+    legalName: 'Holy Family Academy, Inc.', industry: 'education',
+    addressLine1: '4820 W Belmont Ave', city: 'Chicago', state: 'IL', country: 'US', postalCode: '60641',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD', brandColor: '#1E3A8A',
   },
   {
     id: 'org-st-anne', name: 'St. Anne Parish', domain: 'stanneparish.org', plan: 'starter', status: 'active',
     appIds: ['optionc-parish'], createdAt: '2025-02-27T14:05:00',
     code: 'CUST-1002', primaryContact: 'Rosa Walsh', contactEmail: 'rosa.walsh@stanneparish.org', contactPhone: '(312) 555-0102', expiryDate: '2026-09-05',
+    legalName: 'St. Anne Roman Catholic Parish', industry: 'parish-diocese',
+    addressLine1: '1112 Elm St', city: 'Evanston', state: 'IL', country: 'US', postalCode: '60201',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD', brandColor: '#7C2D12',
   },
   {
     id: 'org-sacred-heart', name: 'Sacred Heart Diocese', domain: 'sacredheartdiocese.org', plan: 'enterprise', status: 'active',
     appIds: ['optionc-school', 'optionc-parish', 'matt-money', 'arc-alerts'], createdAt: '2024-11-03T08:47:00',
     code: 'CUST-1003', primaryContact: 'Thomas Walsh', contactEmail: 'thomas.walsh@sacredheartdiocese.org', contactPhone: '(312) 555-0103', expiryDate: '2027-11-03',
+    legalName: 'Diocese of Sacred Heart', industry: 'parish-diocese',
+    addressLine1: '200 E Wacker Dr', addressLine2: 'Suite 1400', city: 'Chicago', state: 'IL', country: 'US', postalCode: '60601',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD', brandColor: '#166534',
   },
   {
     id: 'org-st-jude', name: 'St. Jude School', domain: 'stjudeschool.edu', plan: 'growth', status: 'trial',
     appIds: ['optionc-school'], createdAt: '2026-06-19T11:20:00',
     code: 'CUST-1004', primaryContact: 'Grace Bennett', contactEmail: 'grace.bennett@stjudeschool.edu', contactPhone: '(312) 555-0104', expiryDate: '2026-09-19',
+    legalName: 'St. Jude School', industry: 'education',
+    addressLine1: '77 Maple Ave', city: 'Naperville', state: 'IL', country: 'US', postalCode: '60540',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD', brandColor: '#B91C1C',
   },
   {
     id: 'org-our-lady', name: 'Our Lady of Grace', domain: 'ourladyofgrace.org', plan: 'starter', status: 'active',
     appIds: ['optionc-parish', 'matt-money'], createdAt: '2025-05-08T16:10:00',
     code: 'CUST-1005', primaryContact: 'Miguel Sullivan', contactEmail: 'miguel.sullivan@ourladyofgrace.org', contactPhone: '(312) 555-0105', expiryDate: '2026-07-08',
+    legalName: 'Our Lady of Grace Parish', industry: 'parish-diocese',
+    addressLine1: '930 Cedar Ln', city: 'Aurora', state: 'IL', country: 'US', postalCode: '60506',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD',
   },
   {
     id: 'org-st-benedict', name: "St. Benedict's College Prep", domain: 'stbenedictprep.edu', plan: 'enterprise', status: 'suspended',
     appIds: ['optionc-school', 'matt-money'], createdAt: '2024-08-30T10:55:00',
     code: 'CUST-1006', primaryContact: 'Sofia Reyes', contactEmail: 'sofia.reyes@stbenedictprep.edu', contactPhone: '(312) 555-0106', expiryDate: '2025-08-30',
+    legalName: "St. Benedict's College Preparatory School", industry: 'education',
+    addressLine1: '540 Lakeshore Dr', city: 'Milwaukee', state: 'WI', country: 'US', postalCode: '53202',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD', brandColor: '#5B21B6',
   },
   {
     id: 'org-immaculate', name: 'Immaculate Conception Parish', domain: 'immaculateconception.org', plan: 'starter', status: 'trial',
     appIds: [], createdAt: '2026-08-01T13:40:00',
     code: 'CUST-1007', primaryContact: 'Priya Nair', contactEmail: 'priya.nair@immaculateconception.org', contactPhone: '(312) 555-0107', expiryDate: '2026-11-01',
+    legalName: 'Immaculate Conception Roman Catholic Parish', industry: 'parish-diocese',
+    addressLine1: '15 Church St', city: 'Joliet', state: 'IL', country: 'US', postalCode: '60432',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD',
   },
   {
     id: 'org-st-marys', name: "St. Mary's Academy", domain: 'stmarysacademy.edu', plan: 'growth', status: 'active',
     appIds: ['optionc-school', 'catholic-content'], createdAt: '2025-03-21T09:15:00',
     code: 'CUST-1008', primaryContact: 'Lucas Moreau', contactEmail: 'lucas.moreau@stmarysacademy.edu', contactPhone: '(312) 555-0108', expiryDate: '2027-03-21',
+    legalName: "St. Mary's Academy of the Sacred Heart", industry: 'education',
+    addressLine1: '88 Riverside Rd', city: 'Rockford', state: 'IL', country: 'US', postalCode: '61101',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD', brandColor: '#0F766E',
   },
   {
     id: 'org-divine-mercy', name: 'Divine Mercy Parish', domain: 'divinemercyparish.org', plan: 'starter', status: 'active',
     appIds: ['optionc-parish', 'support-center'], createdAt: '2025-09-12T15:25:00',
     code: 'CUST-1009', primaryContact: 'Teresa Chen', contactEmail: 'teresa.chen@divinemercyparish.org', contactPhone: '(312) 555-0109', expiryDate: '2026-12-12',
+    legalName: 'Divine Mercy Roman Catholic Parish', industry: 'parish-diocese',
+    addressLine1: '412 Oakwood Ave', city: 'Peoria', state: 'IL', country: 'US', postalCode: '61602',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD',
   },
   {
     id: 'org-guardian-angels', name: 'Guardian Angels School', domain: 'guardianangels.edu', plan: 'enterprise', status: 'trial',
     appIds: ['optionc-school', 'matt-money', 'unified-directory'], createdAt: '2026-07-05T12:00:00',
     code: 'CUST-1010', primaryContact: 'Marcus Okafor', contactEmail: 'marcus.okafor@guardianangels.edu', contactPhone: '(312) 555-0110', expiryDate: '2026-10-05',
+    legalName: 'Guardian Angels School', industry: 'education',
+    addressLine1: '61 Birchwood Ct', city: 'Schaumburg', state: 'IL', country: 'US', postalCode: '60173',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD', brandColor: '#D97706',
   },
   {
     id: 'org-sfx-mission', name: 'St. Francis Xavier Mission', domain: 'sfxmission.org', plan: 'starter', status: 'suspended',
     appIds: ['optionc-parish'], createdAt: '2024-12-02T17:30:00',
     code: 'CUST-1011', primaryContact: 'Julia Santos', contactEmail: 'julia.santos@sfxmission.org', contactPhone: '(312) 555-0111', expiryDate: '2025-12-02',
+    legalName: 'St. Francis Xavier Mission', industry: 'nonprofit',
+    addressLine1: '9 Mission Way', city: 'Springfield', state: 'IL', country: 'US', postalCode: '62701',
+    timezone: 'America/Chicago', locale: 'en-US', currency: 'USD',
   },
 ];
 
@@ -321,64 +354,3 @@ function seededLicenses(): License[] {
 }
 
 export const MOCK_LICENSES: License[] = seededLicenses();
-
-// ── Masters (reference data) ────────────────────────────────────────
-// A single master: the catalog of billable line items offered when creating a license.
-
-export const MOCK_INVOICE_ITEMS: InvoiceItem[] = [
-  // OptionC School
-  { id: 'item-legacy-migration', title: 'Legacy data migration (retired)', description: 'One-time migration from a discontinued legacy system.', defaultAmount: 299, active: false, appId: 'optionc-school' },
-  { id: 'item-optionc-sis-import', title: 'Student Records Import', description: 'Bulk import of existing student and enrollment records.', defaultAmount: 349, active: true, appId: 'optionc-school' },
-  { id: 'item-optionc-parent-portal', title: 'Parent Portal Setup', description: 'One-time configuration of the parent portal for a new school year.', defaultAmount: 129, active: true, appId: 'optionc-school' },
-  { id: 'item-optionc-gradebook-training', title: 'Gradebook Training Session', description: 'Live training for staff on gradebook and report card workflows.', defaultAmount: 99, active: true, appId: 'optionc-school' },
-  { id: 'item-optionc-report-cards', title: 'Report Card Printing Service', description: 'Bulk printing and mailing of report cards each term.', defaultAmount: 179, active: true, appId: 'optionc-school' },
-
-  // Parish Hub
-  { id: 'item-subscription', title: 'Subscription fee', description: 'Recurring monthly or annual product subscription charge.', defaultAmount: 249, active: true, appId: 'optionc-parish' },
-  { id: 'item-parish-branding', title: 'Custom Branding Package', description: 'Parish-specific logo, color theme, and certificate templates.', defaultAmount: 129, active: true, appId: 'optionc-parish' },
-  { id: 'item-parish-sacrament-cert', title: 'Sacrament Certificate Pack', description: 'Printed certificate stock for baptism, confirmation, and marriage records.', defaultAmount: 59, active: true, appId: 'optionc-parish' },
-  { id: 'item-parish-mass-intentions', title: 'Mass Intention Scheduling Add-on', description: 'Extended intention scheduling with bulletin export.', defaultAmount: 69, active: true, appId: 'optionc-parish' },
-  { id: 'item-parish-family-import', title: 'Family Directory Import', description: 'Bulk import of existing family and household records.', defaultAmount: 149, active: true, appId: 'optionc-parish' },
-
-  // Matt Money
-  { id: 'item-mattmoney-processing', title: 'Transaction Processing Fee', description: 'Per-transaction processing fee for online giving and payments.', defaultAmount: 29, active: true, appId: 'matt-money' },
-  { id: 'item-mattmoney-donation-portal', title: 'Online Donation Portal Setup', description: 'One-time configuration of the online giving/donation portal.', defaultAmount: 199, active: true, appId: 'matt-money' },
-  { id: 'item-mattmoney-reconciliation', title: 'Auto-Reconcile Add-on', description: 'Monthly automatic bank reconciliation service.', defaultAmount: 49, active: true, appId: 'matt-money' },
-  { id: 'item-mattmoney-tuition-plan', title: 'Tuition Payment Plan Setup', description: 'Configuration of installment tuition billing plans.', defaultAmount: 89, active: true, appId: 'matt-money' },
-  { id: 'item-mattmoney-statement', title: 'Year-End Giving Statements', description: 'Generation and mailing of annual donation statements.', defaultAmount: 119, active: true, appId: 'matt-money' },
-
-  // ArcAlerts
-  { id: 'item-arcalerts-sms', title: 'SMS Alert Bundle', description: 'Additional block of outbound SMS alert credits.', defaultAmount: 59, active: true, appId: 'arc-alerts' },
-  { id: 'item-arcalerts-voice', title: 'Voicemail Alert Bundle', description: 'Additional block of outbound voicemail alert minutes.', defaultAmount: 49, active: true, appId: 'arc-alerts' },
-  { id: 'item-arcalerts-email', title: 'Email Alert Bundle', description: 'Additional block of outbound email alert credits.', defaultAmount: 19, active: true, appId: 'arc-alerts' },
-  { id: 'item-arcalerts-templates', title: 'Custom Alert Template Design', description: 'Design of branded emergency notification templates.', defaultAmount: 99, active: true, appId: 'arc-alerts' },
-  { id: 'item-arcalerts-setup', title: 'Emergency Contact Import', description: 'Bulk import of staff, parent, and parishioner contact lists.', defaultAmount: 129, active: true, appId: 'arc-alerts' },
-
-  // Catholic Content
-  { id: 'item-setup', title: 'Setup & onboarding', description: 'One-time implementation and onboarding fee.', defaultAmount: 199, active: true, appId: 'catholic-content' },
-  { id: 'item-content-workbook-pack', title: 'Grade-Level Workbook Pack', description: 'Printable workbook bundle for one grade level.', defaultAmount: 39, active: true, appId: 'catholic-content' },
-  { id: 'item-content-video-library', title: 'Video Library Add-on', description: 'Expanded access to the full faith-based video library.', defaultAmount: 79, active: true, appId: 'catholic-content' },
-  { id: 'item-content-custom-curriculum', title: 'Custom Curriculum Build', description: 'Custom-tagged content collection built for a parish curriculum.', defaultAmount: 199, active: true, appId: 'catholic-content' },
-  { id: 'item-content-coloring-set', title: 'Coloring Page Seasonal Set', description: 'Liturgical-season coloring page bundle.', defaultAmount: 19, active: true, appId: 'catholic-content' },
-
-  // Unified Directory
-  { id: 'item-training', title: 'Staff training session', description: 'Live training session for organization staff.', defaultAmount: 149, active: true, appId: 'unified-directory' },
-  { id: 'item-directory-report', title: 'Annual Directory Report', description: 'Formatted yearly export of the full member and group directory.', defaultAmount: 89, active: true, appId: 'unified-directory' },
-  { id: 'item-directory-group-setup', title: 'Group Structure Setup', description: 'Configuration of ministry/department group hierarchy.', defaultAmount: 99, active: true, appId: 'unified-directory' },
-  { id: 'item-directory-sso', title: 'SaaS App Access Provisioning', description: 'Bulk provisioning of app access across the directory.', defaultAmount: 149, active: true, appId: 'unified-directory' },
-  { id: 'item-directory-cleanup', title: 'Directory Data Cleanup', description: 'One-time deduplication and cleanup of member records.', defaultAmount: 129, active: true, appId: 'unified-directory' },
-
-  // Support Center
-  { id: 'item-support', title: 'Priority support add-on', description: 'Upgraded response-time support plan.', defaultAmount: 79, active: true, appId: 'support-center' },
-  { id: 'item-support-priority-queue', title: 'Priority Ticket Queue', description: 'Upgraded queue placement for faster ticket response.', defaultAmount: 59, active: true, appId: 'support-center' },
-  { id: 'item-support-onboarding', title: 'Support Onboarding Session', description: 'Guided walkthrough of the ticket inbox and routing rules.', defaultAmount: 89, active: true, appId: 'support-center' },
-  { id: 'item-support-integration', title: 'Product Routing Configuration', description: 'Custom ticket routing rules across multiple products.', defaultAmount: 119, active: true, appId: 'support-center' },
-  { id: 'item-support-history-export', title: 'Conversation History Export', description: 'One-time export of historical ticket conversations.', defaultAmount: 49, active: true, appId: 'support-center' },
-
-  // AI Lesson Plan Generator
-  { id: 'item-storage', title: 'Additional storage', description: 'Extra document/media storage allotment.', defaultAmount: 39, active: true, appId: 'ai-lesson-plan' },
-  { id: 'item-lessonplan-bulk-credits', title: 'AI Drafting Credit Pack', description: 'Additional block of AI lesson-draft generations.', defaultAmount: 29, active: true, appId: 'ai-lesson-plan' },
-  { id: 'item-lessonplan-templates', title: 'Custom Lesson Template Pack', description: 'Branded lesson plan templates for a diocese.', defaultAmount: 79, active: true, appId: 'ai-lesson-plan' },
-  { id: 'item-lessonplan-training', title: 'Teacher Onboarding Session', description: 'Live training for staff on the lesson planning workflow.', defaultAmount: 99, active: true, appId: 'ai-lesson-plan' },
-  { id: 'item-lessonplan-review', title: 'Curriculum Alignment Review', description: 'Review pass checking generated lessons against a curriculum standard.', defaultAmount: 149, active: true, appId: 'ai-lesson-plan' },
-];

@@ -27,8 +27,6 @@ export function InvoiceDetailModal({ invoice, onClose }: { invoice: License | nu
           <DetailField label="Customer" value={org?.name ?? invoice.orgId} />
           <DetailField label="Customer code" value={org?.code ?? '—'} />
           <DetailField label="Product" value={app?.name ?? invoice.appId} />
-          <DetailField label="License key" value={invoice.licenseKey} />
-          <DetailField label="Seats" value={invoice.seats ? String(invoice.seats) : 'Unlimited'} />
           <DetailField label="Start date" value={formatDate(invoice.startDate)} />
           <DetailField label="Expiry date" value={formatDate(invoice.expiryDate)} />
         </div>

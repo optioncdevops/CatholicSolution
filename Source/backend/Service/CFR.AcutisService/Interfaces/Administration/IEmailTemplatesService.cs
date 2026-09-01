@@ -68,7 +68,7 @@ namespace CFR.AcutisService.Interfaces.Administration
         /// Purpose: Let an admin preview a template in their own inbox before saving it.
         /// Request Flow: EmailTemplatesController -> IEmailTemplatesService.SendTestEmailAsync() -> ISMTPMailService.SendMailAsync().
         /// Validation Details: Subject, body, and recipient address are required.
-        /// Business Logic: Merges sample placeholder values for the given template code with SMTPMailService.FormatMailContent, then sends via ISMTPMailService.
+        /// Business Logic: Sends the editor subject and body as written via ISMTPMailService. Merge tags are not filled with demo values.
         /// Repository Interaction: None — does not touch the Email Templates table.
         /// Response Details: MSResultArgs indicating whether the mail server accepted the message.
         /// </remarks>

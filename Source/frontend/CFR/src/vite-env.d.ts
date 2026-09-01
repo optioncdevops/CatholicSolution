@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_APP_SWITCHER_URL: string;
   readonly VITE_APP_HUB_URL: string;
+  readonly VITE_APP_REST_API_BASE_URL?: string;
 }
 
 interface ImportMeta { readonly env: ImportMetaEnv }

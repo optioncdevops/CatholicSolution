@@ -53,6 +53,37 @@ namespace CFR.AcutisInfrastructure
             /// Email templates list, get by id, get by code, and save operations.
             /// </summary>
             public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates_CRUD]";
+
+            /// <summary>
+            /// App Hub product list from core.Product.
+            /// ActionId 4=hub list.
+            /// </summary>
+            public const string ProductsCrud = "[dbo].[Acutis_Products_CRUD]";
+        }
+
+        /// <summary>
+        /// Stored procedure names for the request schema.
+        /// </summary>
+        public class Requests
+        {
+            /// <summary>
+            /// Access request list, get, save, status, and product-matched email recipient operations against [request] tables.
+            /// ActionId 1=save, 2=status update, 3=get by id, 4=list, 5=recipients by product.
+            /// Header RequestStatus: 1=pending, 2=in_review, 3=completed, 4=cancelled.
+            /// Line LineStatus: 1=pending, 2=approved, 3=rejected.
+            /// </summary>
+            public const string AccessRequestCrud = "[request].[AccessRequest_CRUD]";
+        }
+
+        /// <summary>
+        /// Stored procedure names for Organization features.
+        /// </summary>
+        public class Organization
+        {
+            /// <summary>
+            /// Organization list, get by id, and update operations.
+            /// </summary>
+            public const string OrganizationCrud = "[dbo].[Acutis_Organization_CRUD]";
         }
 
         /// <summary>

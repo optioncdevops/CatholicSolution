@@ -11,6 +11,7 @@ interface AppCardProps {
   actionMode?: 'launch' | 'request';
   /** 'upcoming' presents the card as a roadmap product, derived from its catalog status. */
   statusMode?: 'catalog' | 'upcoming';
+  alreadyRequested?: boolean;
 }
 
 type CardMode = 'launchable' | 'external' | 'unavailable' | 'catalog';
@@ -22,7 +23,7 @@ function resolveMode(app: CatalogApp, hasDestination: boolean): CardMode {
 }
 
 
-export function AppCard({ app, onDetails, onRequest, hidePrimaryAction = false, actionMode = 'launch', statusMode = 'catalog' }: AppCardProps) {
+export function AppCard({ app, onDetails, onRequest, hidePrimaryAction = false, actionMode = 'launch', statusMode = 'catalog', alreadyRequested = false }: AppCardProps) {
   const destination = resolveAppDestination(app);
   const mode = resolveMode(app, Boolean(destination));
   const requestMode = actionMode === 'request';
@@ -46,7 +47,11 @@ export function AppCard({ app, onDetails, onRequest, hidePrimaryAction = false, 
     else window.location.assign(target);
   };
   const openDetails = (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); onDetails(app); };
-  const requestApp = (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); onRequest(app); };
+  const requestApp = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    if (alreadyRequested) return;
+    onRequest(app);
+  };
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(); }
@@ -103,8 +108,8 @@ export function AppCard({ app, onDetails, onRequest, hidePrimaryAction = false, 
       </div>
       <div className={`hub-card-actions ${workspaceCard ? 'hub-card-actions--launchable' : 'hub-card-actions--catalog'}`}>
         {showPrimaryAction ? <a href={target} target={destination?.target} rel={destination?.rel} onClick={(event) => event.stopPropagation()} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>{actionVerb}</span><span aria-hidden="true">{openInNewTab ? '↗' : '→'}</span></a> : null}
-        {showCatalogAction ? <button type="button" onClick={requestApp} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>Request app</span><span aria-hidden="true">→</span></button> : null}
-        {showRequestAction ? <button type="button" onClick={requestApp} className="hub-card-action hub-card-action--request" aria-label={`Request access to ${app.name}`}><span aria-hidden="true">✚</span><span>Request access</span></button> : null}
+        {showCatalogAction ? <button type="button" onClick={requestApp} disabled={alreadyRequested} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>{alreadyRequested ? 'Requested' : 'Request app'}</span><span aria-hidden="true">→</span></button> : null}
+        {showRequestAction ? <button type="button" onClick={requestApp} disabled={alreadyRequested} className="hub-card-action hub-card-action--request" aria-label={alreadyRequested ? `Access already requested for ${app.name}` : `Request access to ${app.name}`}><span aria-hidden="true">{alreadyRequested ? '✓' : '✚'}</span><span>{alreadyRequested ? 'Requested' : 'Request access'}</span></button> : null}
         {mode === 'unavailable' ? <span className="hub-card-action hub-card-action--muted">Coming soon</span> : null}
         {deploymentPending ? <span className="hub-card-action hub-card-action--muted">Deployment pending</span> : null}
         <button type="button" onClick={openDetails} className="hub-card-action hub-card-action--secondary-on-light"><span aria-hidden="true">ⓘ</span><span>Details</span></button>

@@ -232,6 +232,144 @@ namespace CFR.AcutisInfrastructure
         }
 
         /// <summary>
+        /// Parameters for Organization stored procedures.
+        /// </summary>
+        public static class OrganizationParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>
+            /// Organization identifier.
+            /// </summary>
+            public const string OrgId = nameof(OrgId);
+
+            /// <summary>
+            /// Organization display name.
+            /// </summary>
+            public const string OrgName = nameof(OrgName);
+
+            /// <summary>
+            /// Organization status value.
+            /// </summary>
+            public const string OrgStatus = nameof(OrgStatus);
+
+            /// <summary>
+            /// Organization contact email address.
+            /// </summary>
+            public const string ContactEmail = nameof(ContactEmail);
+
+            /// <summary>
+            /// Organization website URL.
+            /// </summary>
+            public const string Website = nameof(Website);
+
+            /// <summary>
+            /// Primary contact person's name.
+            /// </summary>
+            public const string ContactPerson = nameof(ContactPerson);
+
+            /// <summary>
+            /// Primary contact phone number.
+            /// </summary>
+            public const string ContactPhone = nameof(ContactPhone);
+
+            /// <summary>
+            /// Logged-in user who last updated the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string UpdatedBy = nameof(UpdatedBy);
+
+            /// <summary>
+            /// Product identifier, used when assigning/removing a product for an organization.
+            /// </summary>
+            public const string ProductId = nameof(ProductId);
+
+            /// <summary>
+            /// Stored procedure output / return value.
+            /// </summary>
+            public const string ReturnValue = nameof(ReturnValue);
+        }
+
+        /// <summary>
+        /// Parameters for Access Request stored procedures.
+        /// </summary>
+        public static class AccessRequestParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = "@ActionId";
+
+            /// <summary>
+            /// Access request identifier.
+            /// </summary>
+            public const string AccessRequestId = "@AccessRequestId";
+
+            /// <summary>
+            /// core.Product.ProductId when the client sends a numeric identifier.
+            /// </summary>
+            public const string ProductId = "@ProductId";
+
+            /// <summary>
+            /// Product display name used to resolve core.Product when ProductId is not numeric.
+            /// </summary>
+            public const string ProductName = "@ProductName";
+
+            /// <summary>
+            /// Requester email used to resolve auth.AuthUser.
+            /// </summary>
+            public const string RequesterEmail = "@RequesterEmail";
+
+            /// <summary>
+            /// Optional comment on submit.
+            /// </summary>
+            public const string Comment = "@Comment";
+
+            /// <summary>
+            /// Request status value.
+            /// </summary>
+            public const string Status = "@Status";
+
+            /// <summary>
+            /// Optional reviewer note.
+            /// </summary>
+            public const string Note = "@Note";
+
+            /// <summary>
+            /// Logged-in user who created the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string InsertedBy = "@InsertedBy";
+
+            /// <summary>
+            /// Logged-in user who last updated the row (ICurrentUserService.UserId).
+            /// </summary>
+            public const string UpdatedBy = "@UpdatedBy";
+
+            /// <summary>
+            /// Stored procedure output / return value.
+            /// </summary>
+            public const string ReturnValue = "@ReturnValue";
+        }
+
+        /// <summary>
+        /// Parameters for Product stored procedures.
+        /// </summary>
+        public static class ProductParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = "@ActionId";
+
+            /// <summary>
+            /// Member email used to decide Your Apps vs Available Apps.
+            /// </summary>
+            public const string RequesterEmail = "@RequesterEmail";
+        }
+
+        /// <summary>
         /// Parameters for Products stored procedures and queries.
         /// </summary>
         public static class ProductParams

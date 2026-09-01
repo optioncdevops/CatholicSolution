@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RotateCcw, Save, Search, Send, Settings } from 'lucide-react';
+import {
+  AlertTriangle, CheckCircle2, KeyRound, Mail, MailCheck, MailQuestion, RotateCcw, Save, Search, Send, Settings, Sparkles, Wand2,
+} from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
+import { Badge } from '@app/components/Badge';
 import { InputField } from '@app/components/formControls';
 // The ported formControls Input/TextareaField don't forward a ref to the underlying element,
 // which the merge-tag "insert at cursor" feature below needs — keep the local ref-forwarding ones.
@@ -11,8 +14,17 @@ import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 import { confirmAction } from '../../../lib/confirm';
 import { getEmailTemplates, saveEmailTemplate, sendTestEmail } from '../services/emailTemplatesService';
 import type { EmailTemplateApiItem, EmailTemplateFormValues } from '../types/emailTemplatesTypes';
-import { EMAIL_TEMPLATE_VARIABLES, normalizeEmailTemplatesList, renderSample, templateDescription, templateDisplayLabel } from '../utils/emailTemplatesHelpers';
+import {
+  EMAIL_TEMPLATE_VARIABLES, getUnsupportedPlaceholders, normalizeEmailTemplatesList, templateDescription, templateDisplayLabel,
+} from '../utils/emailTemplatesHelpers';
 import { validateEmailTemplate } from '../validator/EmailTemplatesValidator';
+
+const TEMPLATE_ICON: Record<string, typeof Mail> = {
+  PasswordReset: KeyRound,
+  Welcome: Sparkles,
+  AccessApproved: MailCheck,
+  AccessInfo: MailQuestion,
+};
 
 function EmailTemplatesPage() {
   //#region Hooks
@@ -76,6 +88,12 @@ function EmailTemplatesPage() {
   const template = useMemo(() => templates.find((item) => item.templateId === selectedId) ?? null, [templates, selectedId]);
   const draft = (template ? drafts[template.templateId] : undefined) ?? { subject: '', body: '' };
   const isDirty = Boolean(template) && (draft.subject !== template!.subject || draft.body !== template!.body);
+  const storedAuthEmail = getStoredAcutisAuth()?.resultData?.user?.eMail;
+
+  const unsupportedPlaceholders = useMemo(
+    () => (template ? getUnsupportedPlaceholders(template.templateCode, draft.subject, draft.body) : []),
+    [template, draft.subject, draft.body],
+  );
 
   const filteredTemplates = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -106,9 +124,9 @@ function EmailTemplatesPage() {
   //#region Handlers
   const handleSave = async () => {
     if (!template) return;
-    const validationError = validateEmailTemplate(draft.subject, draft.body);
-    if (validationError) {
-      showToast(validationError, 'error');
+    const validationErrors = validateEmailTemplate(draft.subject, draft.body);
+    if (validationErrors.length > 0) {
+      showToast(validationErrors, 'error');
       return;
     }
 
@@ -146,7 +164,7 @@ function EmailTemplatesPage() {
 
   const handleSendTest = async () => {
     if (!template) return;
-    const toAddress = getStoredAcutisAuth()?.resultData?.user?.eMail;
+    const toAddress = storedAuthEmail;
     if (!toAddress) {
       showToast('Sign in again to send a test email to your account address.', 'error');
       return;
@@ -170,18 +188,20 @@ function EmailTemplatesPage() {
   };
 
   const handleMailSettings = () => {
-    showToast('Mail settings would open here (not yet built).');
+    showToast('Mail Settings is a prototype placeholder — there is no SMTP configuration screen yet.');
   };
   //#endregion
 
   //#region Render
+  const TemplateIcon = template ? TEMPLATE_ICON[template.templateCode] ?? Mail : Mail;
+
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader title="Email Templates" />
 
-      <div className="grid gap-4 lg:grid-cols-[16rem_1fr] lg:items-start">
+      <div className="admin-email-shell">
         <section className="admin-panel-card overflow-hidden">
-          <div className="border-b border-[var(--line-soft)] p-2.5">
+          <div className="admin-email-search-wrap">
             <InputField
               label="Search templates" hideLabel
               value={search}
@@ -191,47 +211,84 @@ function EmailTemplatesPage() {
               className="min-h-8 text-xs placeholder:text-xs"
             />
           </div>
-          <ul className="flex flex-col gap-0.5 p-1.5">
+          <div className="admin-email-list">
             {loading ? (
-              <li className="px-2 py-3 text-center text-xs text-[var(--text-muted)]">Loading templates…</li>
+              Array.from({ length: 4 }).map((_, index) => <div key={index} className="admin-skeleton h-12 w-full rounded-[var(--radius-control)]" />)
             ) : filteredTemplates.length === 0 ? (
-              <li className="px-2 py-3 text-center text-xs text-[var(--text-muted)]">No templates match "{search}".</li>
+              <div className="flex flex-col items-center gap-1.5 px-3 py-8 text-center">
+                <Search size={18} className="text-[var(--text-faint)]" aria-hidden="true" />
+                <p className="text-xs font-bold text-[var(--text-secondary)]">No templates match "{search}"</p>
+                <p className="text-[0.6875rem] text-[var(--text-faint)]">Try a different name or clear the search.</p>
+              </div>
             ) : filteredTemplates.map((item) => {
               const itemDraft = drafts[item.templateId];
               const edited = Boolean(itemDraft) && (itemDraft.subject !== item.subject || itemDraft.body !== item.body);
+              const ItemIcon = TEMPLATE_ICON[item.templateCode] ?? Mail;
+              const isActive = item.templateId === selectedId;
               return (
-                <li key={item.templateId}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(item.templateId)}
-                    className={`admin-email-template-item ${item.templateId === selectedId ? 'admin-email-template-item--active' : ''}`}
-                  >
+                <button
+                  key={item.templateId}
+                  type="button"
+                  onClick={() => setSelectedId(item.templateId)}
+                  aria-current={isActive ? 'true' : undefined}
+                  className={`admin-email-template-item ${isActive ? 'admin-email-template-item--active' : ''}`}
+                >
+                  <span className="admin-email-template-item__icon" aria-hidden="true"><ItemIcon size={15} /></span>
+                  <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5">
-                      <span className="truncate">{templateDisplayLabel(item.templateCode)}</span>
+                      <span className="admin-email-template-item__title truncate">{templateDisplayLabel(item.templateCode)}</span>
                       {edited ? <span className="admin-email-template-item__dot" title="Edited, not saved" aria-label="Edited, not saved" /> : null}
                     </span>
-                    <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{templateDescription(item.templateCode)}</span>
-                  </button>
-                </li>
+                    <span className="admin-email-template-item__desc">{templateDescription(item.templateCode)}</span>
+                  </span>
+                </button>
               );
             })}
-          </ul>
+          </div>
         </section>
 
         {template ? (
           <section className="admin-panel-card">
-            <div className="admin-panel-card__header">
-              <div className="min-w-0">
-                <h2 className="panel-title truncate">{templateDisplayLabel(template.templateCode)}</h2>
-                <p className="panel-subtitle truncate">{templateDescription(template.templateCode)}</p>
+            <div className="admin-panel-card__header flex-wrap">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="admin-email-template-item__icon" aria-hidden="true"><TemplateIcon size={16} /></span>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="panel-title truncate">{templateDisplayLabel(template.templateCode)}</h2>
+                    <Badge tone={template.status === 'active' ? 'success' : 'neutral'}>{template.status}</Badge>
+                  </div>
+                  <p className="panel-subtitle truncate">{templateDescription(template.templateCode)}</p>
+                </div>
               </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-                <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty || saving}>Reset</CommonButton>
-                <CommonButton variant="outline" size="sm" iconLeft={<Settings size={13} />} onClick={handleMailSettings}>Mail Settings</CommonButton>
-                <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={() => void handleSendTest()} disabled={sendingTest}>{sendingTest ? 'Sending…' : 'Send Test'}</CommonButton>
-                <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={() => void handleSave()} disabled={!isDirty || saving}>{saving ? 'Saving…' : 'Save'}</CommonButton>
+
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <span className={`admin-status-chip ${isDirty ? 'admin-status-chip--dirty' : 'admin-status-chip--saved'}`}>
+                  <span className="admin-status-chip__dot" aria-hidden="true" />
+                  {isDirty ? 'Unsaved changes' : 'All changes saved'}
+                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty || saving}>Reset</CommonButton>
+                  <CommonButton
+                    variant="outline" size="sm" iconLeft={<Settings size={13} />} onClick={handleMailSettings}
+                    tooltip="Prototype only — no SMTP settings screen is wired up yet."
+                  >
+                    Mail Settings
+                  </CommonButton>
+                  <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={() => void handleSendTest()} disabled={sendingTest}>{sendingTest ? 'Sending…' : 'Send Test'}</CommonButton>
+                  <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={() => void handleSave()} disabled={!isDirty || saving}>{saving ? 'Saving…' : 'Save'}</CommonButton>
+                </div>
               </div>
             </div>
+
+            {unsupportedPlaceholders.length > 0 ? (
+              <div role="alert" className="mx-4 mt-3 flex items-start gap-2 rounded-[var(--radius-panel)] border border-[var(--warning)] bg-[var(--warning-bg)] p-3">
+                <AlertTriangle size={14} className="mt-0.5 shrink-0 text-[var(--warning)]" aria-hidden="true" />
+                <p className="text-xs font-semibold text-[var(--warning)]">
+                  Unsupported placeholder{unsupportedPlaceholders.length > 1 ? 's' : ''} detected: {unsupportedPlaceholders.map((token) => <code key={token} className="mx-0.5">{token}</code>)}.
+                  {' '}These aren't merge tags for this template and will be sent to recipients exactly as typed.
+                </p>
+              </div>
+            ) : null}
 
             <div className="grid gap-0 divide-y divide-[var(--line-soft)] xl:grid-cols-2 xl:divide-x xl:divide-y-0">
               <div className="flex flex-col gap-3 p-4">
@@ -241,6 +298,8 @@ function EmailTemplatesPage() {
                   value={draft.subject}
                   onChange={(event) => updateField('subject', event.target.value)}
                   onFocus={() => { activeFieldRef.current = 'subject'; }}
+                  placeholder="Enter the email subject line"
+                  hint="Shown as the message subject line — keep it short and specific."
                 />
                 <TextareaField
                   label="Body"
@@ -249,20 +308,24 @@ function EmailTemplatesPage() {
                   value={draft.body}
                   onChange={(event) => updateField('body', event.target.value)}
                   onFocus={() => { activeFieldRef.current = 'body'; }}
-                  hint="Use the merge tags below to personalize the subject or body — click one to insert it at your cursor."
+                  placeholder="Enter the email body"
+                  hint="Supports inline-styled HTML (buttons, links, layout) as well as plain text. Use the merge tags below to personalize the subject or body — click one to insert it at your cursor."
                 />
                 <div>
-                  <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Merge Tags</p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">
+                    <Wand2 size={12} aria-hidden="true" /> Insert Variable
+                  </p>
+                  <div className="admin-email-tag-group">
                     {(EMAIL_TEMPLATE_VARIABLES[template.templateCode] ?? []).map((variable) => (
                       <button
                         key={variable.token}
                         type="button"
                         onClick={() => insertVariable(variable.token)}
                         className="admin-email-template-tag"
-                        title={`Insert ${variable.label}`}
+                        title={`Insert ${variable.label} at the cursor`}
                       >
-                        {variable.token}
+                        <code>{variable.token}</code>
+                        {variable.label}
                       </button>
                     ))}
                   </div>
@@ -270,16 +333,35 @@ function EmailTemplatesPage() {
               </div>
 
               <div className="flex flex-col gap-2 p-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Live Preview</p>
-                <div className="admin-email-preview">
-                  <p className="admin-email-preview__subject">{renderSample(template.templateCode, draft.subject) || 'Untitled subject'}</p>
-                  {draft.body ? (
-                    <pre className="admin-email-preview__body">{renderSample(template.templateCode, draft.body)}</pre>
-                  ) : (
-                    <p className="text-xs italic text-[var(--text-faint)]">Start typing the body to see it rendered here with sample data.</p>
-                  )}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Live Preview</p>
                 </div>
-                <p className="text-xs text-[var(--text-faint)]">Shown with sample data — "Send Test" sends this content for real to your own inbox.</p>
+                <div className="admin-email-preview-shell">
+                  <div
+                    className="admin-email-preview-card"
+                    onClick={(event) => { if ((event.target as HTMLElement).closest('a')) event.preventDefault(); }}
+                  >
+                    <div className="admin-email-preview-card__meta">
+                      <div className="admin-email-preview-card__meta-row">
+                        <span className="admin-email-preview-card__meta-label">To</span>
+                        <span className="admin-email-preview-card__meta-value">{storedAuthEmail || '—'}</span>
+                      </div>
+                    </div>
+                    <p className="admin-email-preview-card__subject">{draft.subject || 'Untitled subject'}</p>
+                    {draft.body ? (
+                      // The body is the actual HTML this template sends (SMTPMailService sends IsBodyHtml=true) —
+                      // rendering it here, not as escaped text, is what makes the preview match the real email.
+                      // Content is the signed-in admin's own draft, rendered back to themselves; no other user's input reaches this.
+                      <div className="admin-email-preview-card__body" dangerouslySetInnerHTML={{ __html: draft.body }} />
+                    ) : (
+                      <p className="px-4 pb-4 text-xs italic text-[var(--text-faint)]">Start typing the body to see it rendered here.</p>
+                    )}
+                  </div>
+                </div>
+                <p className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
+                  <CheckCircle2 size={12} className="shrink-0" aria-hidden="true" />
+                  Preview shows the template as written. Merge tags stay as placeholders until a real send fills them in.
+                </p>
               </div>
             </div>
           </section>

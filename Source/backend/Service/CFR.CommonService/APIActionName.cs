@@ -52,6 +52,11 @@ namespace CFR.CommonService
             public const string GetEmailTemplateById = nameof(GetEmailTemplateById);
             public const string SaveEmailTemplate = nameof(SaveEmailTemplate);
             public const string SendTestEmail = nameof(SendTestEmail);
+            public const string GetAccessRequests = nameof(GetAccessRequests);
+            public const string GetAccessRequestById = nameof(GetAccessRequestById);
+            public const string SaveAccessRequest = nameof(SaveAccessRequest);
+            public const string UpdateAccessRequestStatus = nameof(UpdateAccessRequestStatus);
+            public const string GetProducts = nameof(GetProducts);
         }
 
         public static class API_Profile
@@ -59,6 +64,19 @@ namespace CFR.CommonService
             public const string GetProfile = nameof(GetProfile);
             public const string UpdateProfile = nameof(UpdateProfile);
             public const string ChangePassword = nameof(ChangePassword);
+        }
+
+        public static class API_Organization
+        {
+            public const string GetOrganizations = nameof(GetOrganizations);
+            public const string GetOrganizationById = nameof(GetOrganizationById);
+            public const string CreateOrganization = nameof(CreateOrganization);
+            public const string UpdateOrganization = nameof(UpdateOrganization);
+            public const string GetOrganizationUsers = nameof(GetOrganizationUsers);
+            public const string GetOrganizationProducts = nameof(GetOrganizationProducts);
+            public const string GetAssignableProducts = nameof(GetAssignableProducts);
+            public const string AssignOrganizationProduct = nameof(AssignOrganizationProduct);
+            public const string RemoveOrganizationProduct = nameof(RemoveOrganizationProduct);
         }
 
         public static class API_Product

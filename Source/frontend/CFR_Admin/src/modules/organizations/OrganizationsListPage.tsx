@@ -1,102 +1,207 @@
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Eye, Pencil, Plus } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { CommonButton } from '@app/components/buttons';
-import { useAdminData } from '../AdminDataContext';
+import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { StatusBadge } from '@app/components/Badge';
-import { EntityAvatar } from '@app/components/EntityAvatar';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
-import { formatDateTime } from '../utils/formatDate';
-import { OrganizationFormModal, type NewOrganizationValue } from './OrganizationFormModal';
-import type { Organization, OrganizationStatus } from '../types';
+import { formatDate } from '../utils/formatDate';
+import { getLiveOrganizations } from './liveOrganizations';
+import type { LiveOrganizationApiItem } from './liveOrganizations';
+import { normalizeLiveOrganizationsList, ORG_STATUS_OPTIONS } from './liveOrganizations';
 
-const STATUS_FILTERS: Array<{ id: OrganizationStatus | 'all'; label: string }> = [
-  { id: 'all', label: 'All statuses' }, { id: 'active', label: 'Active' }, { id: 'trial', label: 'Trial' }, { id: 'suspended', label: 'Suspended' },
-];
+const STATUS_FILTER_PARAM = 'status';
 
 export function OrganizationsListPage() {
-  const { organizations, users, addOrganization } = useAdminData();
+  //#region Hooks
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState<OrganizationStatus | 'all'>('all');
-  const [addOpen, setAddOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  //#endregion
 
-  const rows = useMemo(() => organizations
-    .filter((org) => statusFilter === 'all' || org.status === statusFilter),
-  [organizations, statusFilter]);
+  //#region States
+  const [rows, setRows] = useState<LiveOrganizationApiItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  //#endregion
 
-  const userCount = (orgId: string) => users.filter((user) => user.orgId === orgId).length;
+  // The active status filter lives in the URL (?status=active), not local state — this makes the
+  // filtered view bookmarkable/shareable and keeps it intact across a refresh or back-navigation,
+  // matching how production admin tools (Stripe, Linear, etc.) treat list filters.
+  const statusFilter = searchParams.get(STATUS_FILTER_PARAM) ?? 'all';
+  const setStatusFilter = useCallback((next: string) => {
+    setSearchParams((current) => {
+      const params = new URLSearchParams(current);
+      if (next === 'all') params.delete(STATUS_FILTER_PARAM);
+      else params.set(STATUS_FILTER_PARAM, next);
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
+  //#endregion
 
-  const handleCreate = (value: NewOrganizationValue) => {
-    addOrganization(value);
-    setAddOpen(false);
-    showToast(`${value.name} added ✓ (prototype only, not persisted)`);
-  };
+  //#region Effects
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { resultData, statusCode } = await getLiveOrganizations();
+        if (cancelled) return;
+        setRows(statusCode === 204 ? [] : normalizeLiveOrganizationsList(resultData));
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Error loading organizations:', error);
+        showToast('Failed to load organizations.', 'error');
+        setRows([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showToast]);
+  //#endregion
 
-  const columns: DataTableColumn<Organization>[] = [
+  //#region Handlers
+  const handleView = useCallback((org: LiveOrganizationApiItem) => {
+    navigate(`/admin/organizations/${org.orgId}`);
+  }, [navigate]);
+
+  const handleEdit = useCallback((org: LiveOrganizationApiItem) => {
+    navigate(`/admin/organizations/${org.orgId}`, { state: { edit: true } });
+  }, [navigate]);
+  //#endregion
+
+  const filteredRows = useMemo(
+    () => (statusFilter === 'all' ? rows : rows.filter((org) => org.orgStatus === statusFilter)),
+    [rows, statusFilter],
+  );
+
+  // Filter chips are data-driven — only statuses actually present in the loaded organizations
+  // show up, each with a live count, rather than a fixed always-shown vocabulary. Falls back to
+  // a title-cased label for any status not in the known ORG_STATUS_OPTIONS lookup.
+  const statusFilterOptions = useMemo(() => {
+    const labelById = new Map(ORG_STATUS_OPTIONS.map((option) => [option.id, option.value]));
+    const counts = new Map<string, number>();
+    rows.forEach((org) => counts.set(org.orgStatus, (counts.get(org.orgStatus) ?? 0) + 1));
+    return Array.from(counts.entries())
+      .map(([id, count]) => ({
+        id,
+        value: labelById.get(id) ?? (id.charAt(0).toUpperCase() + id.slice(1)),
+        count,
+      }))
+      .sort((a, b) => a.value.localeCompare(b.value));
+  }, [rows]);
+
+  //#region Columns
+  const columns: DataTableColumn<LiveOrganizationApiItem>[] = useMemo(() => [
     {
-      id: 'name', header: 'Organization', pinLeft: true, width: '14rem',
-      value: (org) => org.name,
+      id: 'actions',
+      header: 'Actions',
+      pinLeft: true,
+      width: '5rem',
+      excludeFromExport: true,
+      sortable: false,
       cell: (org) => (
-        <Link to={`/admin/organizations/${org.id}`} className="flex items-center gap-2.5 font-bold text-[var(--text-primary)] hover:underline">
-          <EntityAvatar name={org.name} />
-          <span>{org.name}</span>
-        </Link>
+        <div className="flex items-center gap-0.5">
+          <CommonIconButton aria-label={`View ${org.orgName}`} tooltip="View" icon={<Eye size={14} />} onClick={() => handleView(org)} />
+          <CommonIconButton aria-label={`Edit ${org.orgName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleEdit(org)} />
+        </div>
       ),
     },
     {
-      id: 'website', header: 'Website', width: '12rem', value: (org) => org.domain,
-      cell: (org) => <a href={`https://${org.domain}`} target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] hover:underline" onClick={(event) => event.stopPropagation()}>{org.domain}</a>,
+      id: 'orgName', header: 'Organization', width: '14rem',
+      value: (org) => org.orgName,
+      cell: (org) => <span className="font-bold text-[var(--text-primary)]">{org.orgName}</span>,
     },
-    { id: 'primaryContact', header: 'Contact Person', value: (org) => org.primaryContact, cell: (org) => <span className="text-[var(--text-secondary)]">{org.primaryContact}</span> },
-    { id: 'contactPhone', header: 'Contact Number', value: (org) => org.contactPhone, cell: (org) => <span className="text-[var(--text-secondary)]">{org.contactPhone}</span> },
-    { id: 'status', header: 'Status', value: (org) => org.status, cell: (org) => <StatusBadge status={org.status} kind="organization" /> },
-    { id: 'users', header: 'Users', value: (org) => userCount(org.id), cell: (org) => <span className="text-[var(--text-secondary)]">{userCount(org.id)}</span> },
-    { id: 'apps', header: 'Products', value: (org) => org.appIds.length, cell: (org) => <span className="text-[var(--text-secondary)]">{org.appIds.length}</span> },
-    { id: 'createdAt', header: 'Created On', value: (org) => org.createdAt, cell: (org) => <span className="text-[var(--text-muted)]">{formatDateTime(org.createdAt)}</span> },
-  ];
+    {
+      id: 'website', header: 'Website', width: '12rem',
+      value: (org) => org.website ?? '',
+      cell: (org) => (org.website
+        ? <a href={/^https?:\/\//i.test(org.website) ? org.website : `https://${org.website}`} target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] hover:underline" onClick={(event) => event.stopPropagation()}>{org.website}</a>
+        : <span className="text-[var(--text-faint)]">—</span>),
+    },
+    {
+      id: 'contactPerson', header: 'Contact Person',
+      value: (org) => org.contactPerson ?? '',
+      cell: (org) => <span className="text-[var(--text-secondary)]">{org.contactPerson || '—'}</span>,
+    },
+    {
+      id: 'contactPhone', header: 'Contact Number',
+      value: (org) => org.contactPhone ?? '',
+      cell: (org) => <span className="text-[var(--text-secondary)]">{org.contactPhone || '—'}</span>,
+    },
+    {
+      id: 'status', header: 'Status',
+      value: (org) => org.orgStatus,
+      cell: (org) => <StatusBadge status={org.orgStatus} kind="organization" />,
+    },
+    {
+      id: 'userCount', header: 'Users',
+      value: (org) => org.userCount,
+      cell: (org) => <span className="text-[var(--text-secondary)]">{org.userCount}</span>,
+    },
+    {
+      id: 'productCount', header: 'Products',
+      value: (org) => org.productCount,
+      cell: (org) => <span className="text-[var(--text-secondary)]">{org.productCount}</span>,
+    },
+    {
+      id: 'insertedDate', header: 'Created On',
+      value: (org) => org.insertedDate,
+      cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.insertedDate)}</span>,
+    },
+  ], [handleView, handleEdit]);
+  //#endregion
 
+  //#region Render
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="Organizations"
-        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => setAddOpen(true)}>Add Organization</CommonButton>}
+        action={<CommonButton variant="headerSecondary" size="sm" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/organizations/add')}>Add Organization</CommonButton>}
       />
 
-      <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
-        {STATUS_FILTERS.map((filter) => {
-          const count = filter.id === 'all' ? organizations.length : organizations.filter((org) => org.status === filter.id).length;
-          return (
+      {!loading ? (
+        <div role="group" aria-label="Filter organizations by status" className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
+          <button
+            type="button"
+            aria-pressed={statusFilter === 'all'}
+            onClick={() => setStatusFilter('all')}
+            className={`admin-filter-chip ${statusFilter === 'all' ? 'admin-filter-chip--active' : ''}`}
+          >
+            All Statuses ({rows.length})
+          </button>
+          {statusFilterOptions.map((option) => (
             <button
-              key={filter.id}
+              key={option.id}
               type="button"
-              onClick={() => setStatusFilter(filter.id)}
-              className={`admin-filter-chip ${statusFilter === filter.id ? 'admin-filter-chip--active' : ''}`}
+              aria-pressed={statusFilter === option.id}
+              onClick={() => setStatusFilter(option.id)}
+              className={`admin-filter-chip ${statusFilter === option.id ? 'admin-filter-chip--active' : ''}`}
             >
-              {filter.label} ({count})
+              {option.value} ({option.count})
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : null}
 
-      {rows.length === 0 ? (
-        <EmptyState icon="🏢" title="No organizations found" description="Try a different status filter." />
+      {!loading && filteredRows.length === 0 ? (
+        <EmptyState icon="🏢" title="No organizations found" description="Organizations will appear here once they exist in the database." />
       ) : (
         <DataTable
-          data={rows}
+          data={filteredRows}
           columns={columns}
-          getRowId={(org) => org.id}
-          onRowClick={(org) => navigate(`/admin/organizations/${org.id}`)}
+          getRowId={(org) => String(org.orgId)}
+          onRowClick={(org) => handleView(org)}
+          initialSort={[{ id: 'insertedDate', desc: true }]}
           exportFileName="catholic-solutions-organizations"
           exportTitle="Catholic Solutions — Organizations"
           emptyMessage="No organizations found."
         />
       )}
-
-      <OrganizationFormModal open={addOpen} onClose={() => setAddOpen(false)} onCreate={handleCreate} />
     </div>
   );
+  //#endregion
 }

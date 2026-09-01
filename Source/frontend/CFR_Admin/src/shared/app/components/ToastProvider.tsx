@@ -1,59 +1,64 @@
-import { createContext, useCallback, useContext, useMemo, type CSSProperties, type PropsWithChildren, type ReactElement } from 'react';
+import { createContext, useCallback, useContext, useMemo, type CSSProperties, type PropsWithChildren } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
 export type ToastVariant = 'success' | 'error';
 
-type ToastContextValue = { showToast: (message: string, variant?: ToastVariant) => void };
+type ToastContextValue = { showToast: (message: string | string[], variant?: ToastVariant) => void };
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const VARIANT_TONE: Record<ToastVariant, { icon: string; color: string; background: string }> = {
-  success: { icon: '✓', color: 'var(--success, #047857)', background: 'var(--success-bg, #ecfdf5)' },
-  error: { icon: '!', color: 'var(--danger, #b91c1c)', background: 'var(--danger-bg, #fef2f2)' },
+const DEFAULT_DURATION = 3800;
+
+const VARIANT_TONE: Record<ToastVariant, { label: string; background: string }> = {
+  success: { label: 'Success', background: '#16a34a' },
+  error: { label: 'Error', background: 'var(--error, #dc2626)' },
 };
 
-const BASE_TOAST_STYLE: CSSProperties = {
-  background: 'var(--surface, #fff)',
-  color: 'var(--text-primary, #12233f)',
-  border: '1px solid var(--line, #e2e8f0)',
-  borderRadius: '0.7rem',
-  padding: '0.65rem 0.9rem',
-  fontSize: '0.8125rem',
-  fontWeight: 650,
+const BANNER_STYLE: CSSProperties = {
+  position: 'relative',
+  overflow: 'hidden',
+  color: '#fff',
+  borderRadius: '0.5rem',
+  padding: '0.85rem 1rem 1rem',
+  minWidth: '18rem',
+  maxWidth: '24rem',
   fontFamily: 'var(--font-body, Inter, ui-sans-serif, system-ui, sans-serif)',
-  boxShadow: '0 12px 32px -8px rgba(15,23,42,.18), 0 2px 6px rgba(15,23,42,.06)',
-  maxWidth: '22rem',
+  boxShadow: '0 12px 32px -8px rgba(15,23,42,.28), 0 2px 6px rgba(15,23,42,.12)',
 };
 
-function toastIcon(variant: ToastVariant): ReactElement {
+function ToastBanner({ variant, messages, duration, onDismiss }: { variant: ToastVariant; messages: string[]; duration: number; onDismiss: () => void }) {
   const tone = VARIANT_TONE[variant];
   return (
-    <span
-      aria-hidden="true"
-      style={{
-        display: 'inline-flex', width: '1.35rem', height: '1.35rem', flexShrink: 0,
-        borderRadius: '999px', background: tone.background, color: tone.color,
-        alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800,
-      }}
-    >
-      {tone.icon}
-    </span>
+    <div role={variant === 'error' ? 'alert' : 'status'} aria-live={variant === 'error' ? 'assertive' : 'polite'} style={{ ...BANNER_STYLE, background: tone.background }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+        <span style={{ fontSize: '0.8125rem', fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase' }}>{tone.label}</span>
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Dismiss"
+          style={{ background: 'transparent', border: 'none', color: '#fff', opacity: 0.85, cursor: 'pointer', lineHeight: 1, fontSize: '1rem', padding: 0 }}
+        >
+          ×
+        </button>
+      </div>
+      <ul style={{ margin: '0.4rem 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+        {messages.map((message, index) => (
+          <li key={index} style={{ fontSize: '0.8125rem', fontWeight: 600, lineHeight: 1.5 }}>{message}</li>
+        ))}
+      </ul>
+      <div
+        aria-hidden="true"
+        className="admin-toast-progress"
+        style={{ position: 'absolute', left: 0, bottom: 0, height: '3px', background: 'rgba(255,255,255,.55)', animationDuration: `${duration}ms` }}
+      />
+    </div>
   );
 }
 
-function toastStyle(variant: ToastVariant): CSSProperties {
-  return { ...BASE_TOAST_STYLE, borderLeft: `3px solid ${VARIANT_TONE[variant].color}` };
-}
-
 export function ToastProvider({ children }: PropsWithChildren) {
-  const showToast = useCallback((message: string, variant?: ToastVariant) => {
-    const cleanMessage = message.replace(/\s*✓\s*$/, '').trim();
-    const resolvedVariant: ToastVariant =
-      variant !== undefined
-        ? variant
-        : /^(failed|error|unable|invalid|cannot|could not)/i.test(cleanMessage)
-          ? 'error'
-          : 'success';
-    toast(cleanMessage, { icon: toastIcon(resolvedVariant), style: toastStyle(resolvedVariant) });
+  const showToast = useCallback((message: string | string[], variant: ToastVariant = 'success') => {
+    const messages = (Array.isArray(message) ? message : [message]).filter(Boolean);
+    const duration = variant === 'error' ? 4500 : DEFAULT_DURATION;
+    toast.custom((t) => <ToastBanner variant={variant} messages={messages} duration={duration} onDismiss={() => toast.dismiss(t.id)} />, { duration });
   }, []);
 
   const value = useMemo(() => ({ showToast }), [showToast]);
@@ -61,16 +66,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <Toaster
-        position="top-right"
-        gutter={10}
-        containerStyle={{ top: 16, right: 16 }}
-        toastOptions={{
-          duration: 3200,
-          icon: toastIcon('success'),
-          style: toastStyle('success'),
-        }}
-      />
+      <Toaster position="top-right" gutter={10} containerStyle={{ top: 16, right: 16 }} />
     </ToastContext.Provider>
   );
 }

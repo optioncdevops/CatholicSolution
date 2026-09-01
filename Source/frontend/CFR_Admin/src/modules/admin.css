@@ -431,74 +431,177 @@
   .swal2-show, .swal2-hide { animation: none !important; }
 }
 
+.admin-email-shell {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 1024px) {
+  .admin-email-shell { grid-template-columns: 17.5rem 1fr; align-items: start; }
+}
+
+.admin-email-search-wrap { padding: 0.65rem; border-bottom: 1px solid var(--line-soft); }
+
+.admin-email-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.4rem;
+  max-height: 34rem;
+  overflow-y: auto;
+}
+
 .admin-email-template-item {
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
   width: 100%;
   border-radius: var(--radius-control);
   border: 1px solid transparent;
-  padding: 0.6rem 0.75rem;
+  padding: 0.55rem 0.65rem;
   text-align: left;
-  font-size: 0.8125rem;
-  font-weight: 750;
-  color: var(--text-primary);
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 .admin-email-template-item:hover { background: var(--hover); }
 .admin-email-template-item--active {
-  background: var(--surface-muted);
-  border-color: var(--line);
+  background: linear-gradient(180deg, var(--surface-muted) 0%, var(--surface) 100%);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-soft);
+}
+.admin-email-template-item__icon {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  background: var(--primary-muted, var(--surface-muted));
+  color: var(--primary);
+}
+.admin-email-template-item--active .admin-email-template-item__icon { background: var(--primary); color: #fff; }
+.admin-email-template-item__title {
+  font-size: 0.8125rem;
+  font-weight: 750;
+  color: var(--text-primary);
+}
+.admin-email-template-item__desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 0.15rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-muted);
 }
 .admin-email-template-item__dot {
   display: inline-block;
   width: 0.4rem;
   height: 0.4rem;
+  flex-shrink: 0;
   border-radius: 999px;
   background: var(--warning);
 }
 
+/* Generic "unsaved changes" / "all changes saved" pill — shared by any edit-in-place screen
+   (Email Templates, Organization Profile, ...), not specific to one feature. */
+.admin-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.admin-status-chip--saved { background: var(--success-bg); color: var(--success); }
+.admin-status-chip--dirty { background: var(--warning-bg); color: var(--warning); }
+.admin-status-chip__dot { width: 0.4rem; height: 0.4rem; border-radius: 999px; background: currentColor; flex-shrink: 0; }
+
 .admin-email-template-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   border-radius: 999px;
   border: 1px dashed var(--line-strong);
   background: var(--surface-muted);
-  padding: 0.3rem 0.7rem;
+  padding: 0.35rem 0.7rem 0.35rem 0.6rem;
   font-size: 0.6875rem;
-  font-weight: 800;
-  font-family: var(--admin-font-family, monospace);
+  font-weight: 700;
   color: var(--text-secondary);
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
 }
 .admin-email-template-tag:hover {
   background: var(--hover);
   border-color: var(--primary);
   color: var(--primary);
+  transform: translateY(-1px);
+}
+.admin-email-template-tag code {
+  font-family: var(--admin-font-family, monospace);
+  font-weight: 800;
+  color: var(--primary);
 }
 
-.admin-email-preview {
+.admin-email-preview-shell {
   border-radius: var(--radius-panel);
   border: 1px solid var(--line);
   background: var(--surface-muted);
-  padding: 1rem;
+  padding: 0.85rem;
 }
-.admin-email-preview__meta {
+.admin-email-preview-card {
+  border-radius: calc(var(--radius-panel) - 4px);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.admin-email-preview-card__meta {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding-bottom: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 0.3rem;
+  padding: 0.8rem 1rem;
   border-bottom: 1px solid var(--line-soft);
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  background: var(--surface-muted);
 }
-.admin-email-preview__subject {
+.admin-email-preview-card__meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.6875rem;
+}
+.admin-email-preview-card__meta-label {
+  flex-shrink: 0;
+  width: 2.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+}
+.admin-email-preview-card__meta-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-weight: 650;
+}
+.admin-email-preview-card__subject {
+  padding: 0.9rem 1rem 0;
   font-size: 0.9375rem;
   font-weight: 800;
   color: var(--text-primary);
-  margin-bottom: 0.6rem;
 }
-.admin-email-preview__body {
+.admin-email-preview-card__body {
+  padding: 0.75rem 1rem 1.1rem;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
   font-family: inherit;
   font-size: 0.8125rem;
-  line-height: 1.6;
+  line-height: 1.65;
   color: var(--text-secondary);
 }
+/* The body renders the template's own HTML (buttons, links) verbatim so the preview matches the
+   real email — cursor:default keeps it from reading as a live/clickable app control. */
+.admin-email-preview-card__body a { cursor: default; }

@@ -1,9 +1,9 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import {
-  MOCK_ACTIVITY, MOCK_APPLICATIONS, MOCK_INVOICE_ITEMS, MOCK_LICENSES, MOCK_ORGANIZATIONS, MOCK_REQUESTS, MOCK_ROLES, MOCK_USERS,
+  MOCK_ACTIVITY, MOCK_APPLICATIONS, MOCK_LICENSES, MOCK_ORGANIZATIONS, MOCK_REQUESTS, MOCK_ROLES, MOCK_USERS,
 } from './mockData';
 import type {
-  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, License, InvoiceItem, Organization,
+  AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, License, Organization,
   ProductStatus, RequestStatus, UserStatus,
 } from './types';
 
@@ -19,7 +19,6 @@ interface AdminDataContextValue {
   activity: ActivityItem[];
   roles: AdminRole[];
   licenses: License[];
-  invoiceItems: InvoiceItem[];
   getApplication: (id: string) => AdminApplication | undefined;
   getOrganization: (id: string) => Organization | undefined;
   getUser: (id: string) => AdminUser | undefined;
@@ -32,6 +31,8 @@ interface AdminDataContextValue {
   grantUserAccess: (userId: string, appId: string) => void;
   revokeUserAccess: (userId: string, appId: string) => void;
   addOrganization: (org: Omit<Organization, 'id' | 'createdAt' | 'code' | 'appIds'>) => void;
+  /** Updates an existing organization's profile fields (identity, contact, address, preferences, branding). */
+  updateOrganization: (org: Organization) => void;
   assignOrgApp: (orgId: string, appId: string) => void;
   removeOrgApp: (orgId: string, appId: string) => void;
   resolveRequest: (id: string, status: RequestStatus, note?: string) => void;
@@ -44,10 +45,6 @@ interface AdminDataContextValue {
   /** Issues a new license to a customer/product. This is the only license mutation —
    * licenses otherwise stay read-only once issued. */
   addLicense: (license: Omit<License, 'id' | 'licenseNumber' | 'licenseKey'>) => void;
-  addInvoiceItem: (item: Omit<InvoiceItem, 'id'>) => void;
-  updateInvoiceItem: (item: InvoiceItem) => void;
-  /** Toggles the active/inactive lifecycle flag on an invoice item — masters are never deleted. */
-  toggleInvoiceItemActive: (id: string) => void;
   logActivity: (message: string, kind: ActivityItem['kind']) => void;
 }
 
@@ -61,7 +58,6 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [activity, setActivity] = useState<ActivityItem[]>(MOCK_ACTIVITY);
   const [roles, setRoles] = useState<AdminRole[]>(MOCK_ROLES);
   const [licenses, setLicenses] = useState<License[]>(MOCK_LICENSES);
-  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>(MOCK_INVOICE_ITEMS);
 
   const logActivity = (message: string, kind: ActivityItem['kind']) => {
     setActivity((current) => [
@@ -78,7 +74,6 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     activity,
     roles,
     licenses,
-    invoiceItems,
     getApplication: (id) => applications.find((app) => app.id === id),
     getOrganization: (id) => organizations.find((org) => org.id === id),
     getUser: (id) => users.find((user) => user.id === id),
@@ -125,6 +120,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       const code = `CUST-${1000 + organizations.length + 1}`;
       setOrganizations((current) => [...current, { ...org, id, code, appIds: [], createdAt: new Date().toISOString() }]);
       logActivity(`Added organization "${org.name}"`, 'organization');
+    },
+    updateOrganization: (org) => {
+      setOrganizations((current) => current.map((item) => (item.id === org.id ? org : item)));
+      logActivity(`Updated organization profile for "${org.name}"`, 'organization');
     },
     assignOrgApp: (orgId, appId) => {
       setOrganizations((current) => current.map((org) => (
@@ -192,22 +191,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       const app = applications.find((item) => item.id === license.appId);
       logActivity(`Issued license LIC-2026-${sequence} for ${org?.name ?? license.orgId} · ${app?.name ?? license.appId}`, 'application');
     },
-    addInvoiceItem: (item) => {
-      const id = `item-${Date.now()}-${Math.round(Math.random() * 1000)}`;
-      setInvoiceItems((current) => [...current, { ...item, id }]);
-      logActivity(`Added license item "${item.title}"`, 'application');
-    },
-    updateInvoiceItem: (item) => {
-      setInvoiceItems((current) => current.map((existing) => (existing.id === item.id ? item : existing)));
-      logActivity(`Updated license item "${item.title}"`, 'application');
-    },
-    toggleInvoiceItemActive: (id) => {
-      const item = invoiceItems.find((existing) => existing.id === id);
-      setInvoiceItems((current) => current.map((existing) => (existing.id === id ? { ...existing, active: !existing.active } : existing)));
-      if (item) logActivity(`${item.active ? 'Deactivated' : 'Activated'} license item "${item.title}"`, 'application');
-    },
     logActivity,
-  }), [applications, organizations, users, requests, activity, roles, licenses, invoiceItems]);
+  }), [applications, organizations, users, requests, activity, roles, licenses]);
 
   return <AdminDataContext.Provider value={value}>{children}</AdminDataContext.Provider>;
 }
