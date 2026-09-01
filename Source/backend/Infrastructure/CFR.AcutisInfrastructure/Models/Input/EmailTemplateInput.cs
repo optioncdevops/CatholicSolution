@@ -52,7 +52,7 @@ namespace CFR.AcutisInfrastructure.Models.Input
     public class SendTestEmailInput
     {
         /// <summary>
-        /// Gets or sets the template code identifying which sample merge-tag values to use (e.g. "PasswordReset").
+        /// Gets or sets the template code of the editor template being tested (e.g. "PasswordReset").
         /// </summary>
         [Required]
         [JsonPropertyName("templateCode")]

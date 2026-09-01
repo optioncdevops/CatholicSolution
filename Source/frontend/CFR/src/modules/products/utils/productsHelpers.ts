@@ -11,8 +11,6 @@ const FALLBACK_GRADIENTS = [
   'linear-gradient(135deg,#C2410C,#FB923C)',
 ];
 
-const FALLBACK_ICONS = ['📦', '🧩', '🗂️', '🛠️', '✨', '🔔'];
-
 const HUB_SECTIONS: HubSectionValue[] = ['your', 'available', 'future'];
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
@@ -109,7 +107,7 @@ export const toCatalogApp = (row: HubProductApiItem): CatalogApp => {
     shortName: catalog?.shortName ?? productName,
     category: pickString(source, 'category', 'Category', 'SubCategoryName') || catalog?.category || '',
     description: pickString(source, 'description', 'Description', 'ProdDescription') || catalog?.description || '',
-    icon: catalog?.icon ?? FALLBACK_ICONS[hashIndex(seed, FALLBACK_ICONS.length)],
+    icon: catalog?.icon || pickString(source, 'icon', 'Icon'),
     gradient: catalog?.gradient ?? FALLBACK_GRADIENTS[hashIndex(seed, FALLBACK_GRADIENTS.length)],
     keywords: catalog?.keywords ?? [productName, pickString(source, 'category', 'Category')].filter(Boolean),
     features: features.length > 0 ? features : (catalog?.features ?? []),

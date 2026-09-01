@@ -1,8 +1,8 @@
 export const GATEWAY_ACUTIS_API_PATH = '/acutis/api/v1/';
-export const API_BASE_URL = import.meta.env.VITE_APP_REST_API_BASE_URL || 'https://localhost:5050';
+export const API_BASE_URL = import.meta.env.VITE_APP_REST_API_BASE_URL;
 
 function resolveUrl(endpoint: string): string {
-  const origin = String(API_BASE_URL).replace(/\/+$/, '') || 'https://localhost:5050';
+  const origin = String(API_BASE_URL).replace(/\/+$/, '');
   return `${origin}${GATEWAY_ACUTIS_API_PATH}${endpoint.replace(/^\/+/, '')}`;
 }
 
@@ -49,7 +49,7 @@ async function parseResponse(response: Response): Promise<any> {
 }
 
 export async function getApi(endpoint: string, params?: Record<string, string>): Promise<any> {
-  const url = new URL(resolveUrl(endpoint), 'https://localhost:5050');
+  const url = new URL(resolveUrl(endpoint));
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value) url.searchParams.append(key, value);
@@ -67,7 +67,7 @@ export async function getApi(endpoint: string, params?: Record<string, string>):
 }
 
 export async function postApi(endpoint: string, payload: any): Promise<any> {
-  const url = new URL(resolveUrl(endpoint), 'https://localhost:5050').toString();
+  const url = new URL(resolveUrl(endpoint)).toString();
 
   const response = await fetch(url, {
     method: 'POST',

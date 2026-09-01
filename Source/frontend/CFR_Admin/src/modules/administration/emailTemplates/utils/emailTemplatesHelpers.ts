@@ -27,27 +27,6 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
   ],
 };
 
-// Mirrors backend EmailTemplateSampleData.ForTemplateCode — keep both in sync so the live
-// preview shown here matches what "Send Test" actually merges and sends server-side.
-const SAMPLE_VALUES: Record<string, Record<string, string>> = {
-  PasswordReset: { FirstName: 'Jordan', ResetLink: 'https://example.org/reset-password?token=sample-token', ExpiryMinutes: '30' },
-  Welcome: { FirstName: 'Jordan' },
-  AccessApproved: { FirstName: 'Jordan', AppName: 'Matt Money' },
-  AccessInfo: { FirstName: 'Jordan', AppName: 'Matt Money', Note: 'Please confirm your role at the organization before we can proceed.' },
-  AccessRequested: {
-    RequesterName: 'Jordan Hale',
-    RequesterEmail: 'jordan.hale@example.org',
-    OrganizationName: "St. Mary's Parish",
-    AppName: 'Matt Money',
-    ReviewLink: 'https://example.org/admin/requests',
-  },
-};
-
-export const renderSample = (templateCode: string, text: string): string => {
-  const values = SAMPLE_VALUES[templateCode] ?? {};
-  return text.replace(/\[(\w+)\]/g, (match, key: string) => values[key] ?? match);
-};
-
 // Flags any [Token] in the subject/body that isn't one of this template's known merge tags —
 // SMTPMailService.FormatMailContent leaves unknown tokens untouched, so they'd reach the recipient literally.
 export const getUnsupportedPlaceholders = (templateCode: string, subject: string, body: string): string[] => {
