@@ -9,16 +9,16 @@ import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataT
 import { confirmAction } from '@/modules/lib/confirm';
 import { formatDate } from '@/modules/utils/formatDate';
 import {
-  assignLiveOrganizationProduct,
-  getAssignableLiveOrganizationProducts,
-  removeLiveOrganizationProduct,
-} from '../../services/liveOrganizationsService';
-import type { AssignableProductApiItem, LiveOrganizationProductApiItem } from '../../types/liveOrganizationTypes';
+  assignOrganizationProduct,
+  getAssignableOrganizationProducts,
+  removeOrganizationProduct,
+} from '../../services/organizationsService';
+import type { AssignableProductApiItem, OrganizationProductApiItem } from '../../types/organizationTypes';
 
 type OrganizationProductsPanelProps = {
   orgId: number;
   orgName: string;
-  products: LiveOrganizationProductApiItem[];
+  products: OrganizationProductApiItem[];
   onChanged: () => Promise<void> | void;
 };
 
@@ -39,7 +39,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
     let cancelled = false;
     void (async () => {
       try {
-        const { resultData, statusCode } = await getAssignableLiveOrganizationProducts(orgId);
+        const { resultData, statusCode } = await getAssignableOrganizationProducts(orgId);
         if (cancelled) return;
         setAssignableProducts(statusCode === 204 || !Array.isArray(resultData) ? [] : resultData as AssignableProductApiItem[]);
       } catch (error) {
@@ -59,7 +59,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
     const product = assignableProducts.find((item) => String(item.productId) === selectedProductId);
     setAssigning(true);
     try {
-      await assignLiveOrganizationProduct({ orgId, productId: Number(selectedProductId) });
+      await assignOrganizationProduct({ orgId, productId: Number(selectedProductId) });
       showToast(`${product?.productName ?? 'Product'} assigned to ${orgName}.`, 'success');
       setSelectedProductId('');
       await onChanged();
@@ -71,7 +71,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
     }
   };
 
-  const handleRemove = async (product: LiveOrganizationProductApiItem) => {
+  const handleRemove = async (product: OrganizationProductApiItem) => {
     const confirmed = await confirmAction({
       title: 'Remove this product?',
       description: `${orgName} will lose access to ${product.productName}.`,
@@ -82,7 +82,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
 
     setRemovingProductId(product.productId);
     try {
-      await removeLiveOrganizationProduct(orgId, product.productId);
+      await removeOrganizationProduct(orgId, product.productId);
       showToast(`${product.productName} removed from ${orgName}.`, 'success');
       await onChanged();
     } catch (error) {
@@ -95,7 +95,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
   //#endregion
 
   //#region Columns
-  const columns: DataTableColumn<LiveOrganizationProductApiItem>[] = [
+  const columns: DataTableColumn<OrganizationProductApiItem>[] = [
     {
       id: 'productName', header: 'Product', width: '14rem',
       value: (product) => product.productName,
