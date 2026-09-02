@@ -62,10 +62,11 @@ const AddLicense = () => {
   //#endregion
 
   //#region Functions
-  const goToDetails = () => {
-    const slug = toProductSlug(product?.productName) || String(product?.productId || stateProductId || '');
-    if (slug) {
-      navigate(PRODUCTS_PATHS.details(slug), { state: { productId: product?.productId || stateProductId } });
+  const goToLicenseDetails = () => {
+    const productId = product?.productId || stateProductId;
+    const slug = toProductSlug(product?.productName) || String(productId || '');
+    if (slug && productId) {
+      navigate(PRODUCTS_PATHS.details(slug), { state: { productId, tab: 'invoice-details' } });
       return;
     }
     navigate(PRODUCTS_PATHS.list);
@@ -158,7 +159,7 @@ const AddLicense = () => {
       });
       if (!confirmed) return;
     }
-    goToDetails();
+    goToLicenseDetails();
   };
 
   const productId = product.productId;
@@ -194,7 +195,7 @@ const AddLicense = () => {
         throw res.statusMessage || 'Failed to create license.';
       }
       showToast('License added successfully.', 'success');
-      goToDetails();
+      goToLicenseDetails();
     } catch (error) {
       console.error('Error creating license:', error);
       showToast(typeof error === 'string' ? error : 'Failed to create license.', 'error');

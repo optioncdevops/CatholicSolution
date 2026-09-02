@@ -1,5 +1,8 @@
+export type ProductDetailsTab = 'details' | 'customers' | 'invoice-details' | 'invoice-history';
+
 export interface ProductLocationState {
   productId: number;
+  tab?: ProductDetailsTab;
 }
 
 export interface ProductContactUser {

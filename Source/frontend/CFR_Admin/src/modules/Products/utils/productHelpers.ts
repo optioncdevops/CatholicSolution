@@ -1,4 +1,4 @@
-import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState } from '../types/productTypes';
+import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
 import { effectiveLicenseStatus } from '@/modules/utils/formatDate';
 
@@ -59,6 +59,21 @@ export function normalizeProductContactUsers(resultData: unknown): ProductContac
       return { userId, fullName: fullName || eMail || `User ${userId}`, eMail, isActive };
     })
     .filter((row): row is ProductContactUser => row != null);
+}
+
+export const PRODUCT_DETAILS_TABS = ['details', 'customers', 'invoice-details', 'invoice-history'] as const;
+
+export function parseProductTabFromState(state: unknown): ProductDetailsTab | null {
+  if (!state || typeof state !== 'object') {
+    return null;
+  }
+
+  const tab = (state as ProductLocationState).tab;
+  if (typeof tab !== 'string') {
+    return null;
+  }
+
+  return (PRODUCT_DETAILS_TABS as readonly string[]).includes(tab) ? (tab as ProductDetailsTab) : null;
 }
 
 export function parseProductIdFromState(state: unknown): number | null {

@@ -277,7 +277,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
           iconLeft={<Plus size={14} />}
           onClick={() =>
             navigate(PRODUCTS_PATHS.addLicense(app.name || app.id), {
-              state: { productId: Number(app.id) },
+              state: { productId: Number(app.id), tab: 'invoice-details' },
             })
           }
         >

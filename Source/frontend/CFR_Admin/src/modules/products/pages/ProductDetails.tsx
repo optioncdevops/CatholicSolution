@@ -24,6 +24,7 @@ import {
   normalizeProductApiItem,
   normalizeProductCustomerList,
   parseProductIdFromState,
+  parseProductTabFromState,
   resolveProductLogoUrl,
   toAdminApplication,
   toProductSlug,
@@ -262,7 +263,7 @@ const ProductDetails = () => {
   //#region States
   const [product, setProduct] = useState<ProductApiItem | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState<string>(parseProductTabFromState(location.state) ?? 'details');
   const [changingStatus, setChangingStatus] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<ProductStatus | null>(null);
   const [customerCount, setCustomerCount] = useState(0);
@@ -341,6 +342,13 @@ const ProductDetails = () => {
   useEffect(() => {
     void loadProduct();
   }, [loadProduct]);
+
+  useEffect(() => {
+    const tab = parseProductTabFromState(location.state);
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!product?.productId) {
