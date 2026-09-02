@@ -129,7 +129,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
     {
       id: 'customer',
       header: 'Customer',
-      minWidth: '18rem',
+      width: '18rem',
       value: (row) => row.customer,
       cell: (row) => <span className="font-bold text-[var(--text-primary)]">{row.customer}</span>,
     },

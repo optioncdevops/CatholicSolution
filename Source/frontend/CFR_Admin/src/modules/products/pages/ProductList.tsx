@@ -82,7 +82,7 @@ function ProductStatusDialog({
       footer={(
         <>
           <CommonButton variant="outline" onClick={onClose}>Cancel</CommonButton>
-          <CommonButton variant="primary" disabled={!pendingStatus || pendingStatus === app.status} onClick={() => void commitStatusChange()}>Continue</CommonButton>
+          <CommonButton variant="primary" disabled={!pendingStatus || pendingStatus === app?.status} onClick={() => void commitStatusChange()}>Continue</CommonButton>
         </>
       )}
     >

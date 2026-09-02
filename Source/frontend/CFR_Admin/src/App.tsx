@@ -14,16 +14,8 @@ import { organizationsRoutes } from "@/modules/organizations";
 import { requestsRoutes } from "@/modules/requests";
 import { productsRoutes } from "@/modules/products";
 
-// Route-level code splitting — each admin page (and the ported dataTable/formControls code it
-// pulls in) loads as its own chunk on first visit instead of one 2MB+ bundle up front.
 const DashboardPage = lazy(() =>
   import("@/modules/DashboardPage").then((m) => ({ default: m.DashboardPage })),
-);
-
-const OrganizationDetailPage = lazy(() =>
-  import("@/modules/organizations/OrganizationDetailPage").then((m) => ({
-    default: m.OrganizationDetailPage,
-  })),
 );
 const RightsPage = lazy(() =>
   import("@/modules/administration/RightsPage").then((m) => ({

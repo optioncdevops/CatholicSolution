@@ -85,7 +85,7 @@ export function CustomerDetails({
       cell: (org) => <CommonIconButton aria-label={`View ${org.name}`} tooltip="View" icon={<Eye size={15} />} onClick={() => navigate(`/admin/organizations/${org.id}`)} />,
     },
     {
-      id: 'name', header: 'Organization', minWidth: '16rem', value: (org) => org.name,
+      id: 'name', header: 'Organization', width: '16rem', value: (org) => org.name,
       cell: (org) => (
         <Link to={`/admin/organizations/${org.id}`} className="block min-w-0 truncate font-bold text-[var(--text-primary)] hover:underline" onClick={(event) => event.stopPropagation()}>
           {org.name}

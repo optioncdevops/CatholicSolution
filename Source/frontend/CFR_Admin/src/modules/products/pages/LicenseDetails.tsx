@@ -207,7 +207,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     {
       id: "customer",
       header: "Customer",
-      minWidth: "18rem",
+      width: "18rem",
       value: (lic) => lic.customer,
       cell: (lic) => (
         <span className="font-bold text-[var(--text-primary)]">
