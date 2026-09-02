@@ -1,7 +1,7 @@
 -- Copyright (c) OptionC. All rights reserved.
 -- CRUD for [core].[Product] and [lic].[License] / [lic].[OrganizationProduct].
--- ActionId 1: Product GET All
--- ActionId 2: Product GET by ID
+-- ActionId 1: Product GET All (CustomerCount = distinct OrgId, same filters as ActionId 5)
+-- ActionId 2: Product GET by ID (CustomerCount = distinct OrgId, same filters as ActionId 5)
 -- ActionId 3: Product PUT (Update)
 -- ActionId 4: Product Check Name
 -- ActionId 5: License GET All
@@ -77,6 +77,15 @@ BEGIN
             p.[LogoUrl],
             p.[IsActive],
             p.[IsAvailable],
+            (
+                SELECT COUNT(DISTINCT op.[OrgId])
+                FROM [lic].[OrganizationProduct] AS op
+                INNER JOIN [core].[Product] AS prod ON prod.[ProductId] = op.[ProductId]
+                INNER JOIN [core].[Organization] AS o ON o.[OrgId] = op.[OrgId]
+                WHERE op.[ProductId] = p.[ProductId]
+                  AND op.[IsDeleted] = 0
+                  AND prod.[IsDeleted] = 0
+            ) AS [CustomerCount],
             p.[CreatedDate],
             p.[InsertedBy],
             p.[UpdatedDate],
@@ -104,6 +113,15 @@ BEGIN
             p.[LogoUrl],
             p.[IsActive],
             p.[IsAvailable],
+            (
+                SELECT COUNT(DISTINCT op.[OrgId])
+                FROM [lic].[OrganizationProduct] AS op
+                INNER JOIN [core].[Product] AS prod ON prod.[ProductId] = op.[ProductId]
+                INNER JOIN [core].[Organization] AS o ON o.[OrgId] = op.[OrgId]
+                WHERE op.[ProductId] = p.[ProductId]
+                  AND op.[IsDeleted] = 0
+                  AND prod.[IsDeleted] = 0
+            ) AS [CustomerCount],
             p.[CreatedDate],
             p.[InsertedBy],
             p.[UpdatedDate],

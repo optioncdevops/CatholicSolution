@@ -24,6 +24,17 @@ export const PRODUCTS_PATHS = {
 export const DEFAULT_PRODUCT_ICON = '📦';
 export const DEFAULT_PRODUCT_GRADIENT = 'linear-gradient(135deg,#1E3A8A,#3B82F6)';
 
+export function toProductCustomerCount(value: unknown): number {
+  const raw = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+  if (!Number.isFinite(raw) || raw < 0) return 0;
+  return Math.trunc(raw);
+}
+
+export function formatProductCustomerCount(count: number): string {
+  const n = toProductCustomerCount(count);
+  return n === 1 ? '1 customer' : `${n} customers`;
+}
+
 export function parseProductIdFromState(state: unknown): number | null {
   if (!state || typeof state !== 'object') {
     return null;
@@ -54,11 +65,12 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
   if (!resultData || typeof resultData !== 'object') {
     return null;
   }
-  const item = resultData as ProductApiItem & { LogoUrl?: string | null };
+  const item = resultData as ProductApiItem & { LogoUrl?: string | null; CustomerCount?: number };
   const logoUrl = pickProductLogoUrl(item);
   return {
     ...item,
     logoUrl,
+    customerCount: toProductCustomerCount(item.customerCount ?? item.CustomerCount),
   };
 }
 

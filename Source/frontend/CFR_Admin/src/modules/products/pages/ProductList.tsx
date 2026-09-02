@@ -21,6 +21,7 @@ import {
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
   deriveProductStatus,
+  formatProductCustomerCount,
   normalizeProductList,
   resolveProductLogoUrl,
   toProductSlug,
@@ -40,7 +41,7 @@ const SORT_OPTIONS = [
   { id: "default", label: "Default (DB Order)" },
   { id: "name", label: "Name (A–Z)" },
   { id: "updated", label: "Recently Updated" },
-  { id: "access", label: "Access Days" },
+  { id: "customers", label: "Most Customers" },
 ] as const;
 
 type SortOption = (typeof SORT_OPTIONS)[number]["id"];
@@ -219,8 +220,8 @@ const ProductList = () => {
     const sorted = [...filtered];
     if (sortBy === "name") {
       sorted.sort((a, b) => a.productName.localeCompare(b.productName));
-    } else if (sortBy === "access") {
-      sorted.sort((a, b) => b.defaultAccessDays - a.defaultAccessDays);
+    } else if (sortBy === "customers") {
+      sorted.sort((a, b) => b.customerCount - a.customerCount);
     } else if (sortBy === "updated") {
       sorted.sort((a, b) => {
         const dateA = a.updatedDate || a.createdDate;
@@ -374,9 +375,7 @@ const ProductList = () => {
 
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
                     <Building2 size={13} className="text-[var(--text-faint)]" />
-                    {item.defaultAccessDays === 0
-                      ? "Free access"
-                      : `${item.defaultAccessDays} days access`}
+                    {formatProductCustomerCount(item.customerCount)}
                   </span>
 
                   <div className="admin-product-card__footer">

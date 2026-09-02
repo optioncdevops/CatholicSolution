@@ -12,6 +12,7 @@ export interface ProductApiItem {
   logoUrl?: string | null;
   isActive: boolean;
   isAvailable: boolean;
+  customerCount: number;
   features?: string[];
   createdDate: string;
   insertedBy: number | null;

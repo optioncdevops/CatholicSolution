@@ -19,9 +19,9 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         /// Purpose: Retrieve all product records from the Core.Product database table.
         /// Request Flow: IProductsService -> ProductsRepository.GetProductsListAsync() -> Database.
         /// Validation Details: None.
-        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 1.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 1, then sets CustomerCount from ActionId 5 grouped by OrgId (same as GetProductCustomersAsync).
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
-        /// Response Details: Returns a list of ProductOutput records.
+        /// Response Details: Returns a list of ProductOutput records with customer counts matching the Customers tab.
         /// </remarks>
         /// <returns>A list of product output records.</returns>
         public async Task<List<ProductOutput>> GetProductsListAsync()
@@ -29,7 +29,16 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.ProductParams.ActionId, 1, DbType.Int32);
             var result = await dapperHandler.QueryAsync<ProductOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
-            return result.ToList();
+            var products = result.ToList();
+            var licenses = await GetLicenseDetailsAsync(0);
+            var customerCounts = licenses
+                .GroupBy(item => item.ProductId)
+                .ToDictionary(group => group.Key, group => group.GroupBy(item => item.OrgId).Count());
+            foreach (var product in products)
+            {
+                product.CustomerCount = customerCounts.GetValueOrDefault(product.ProductId);
+            }
+            return products;
         }
 
         /// <summary>
@@ -39,7 +48,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         /// Purpose: Retrieve a single product record and its associated features from the database.
         /// Request Flow: IProductsService -> ProductsRepository.GetProductByIdAsync() -> Database.
         /// Validation Details: ProductId parameter mapping.
-        /// Business Logic: Reads two result sets (Product details and features list) using ActionId 2.
+        /// Business Logic: Reads two result sets (Product details and features list) using ActionId 2, then sets CustomerCount from ActionId 5 grouped by OrgId (same as GetProductCustomersAsync).
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
         /// Response Details: Returns ProductOutput with Features or null.
         /// </remarks>
@@ -56,6 +65,8 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             {
                 var features = (await multi.ReadAsync<string>()).ToList();
                 product.Features = features;
+                var licenses = await GetLicenseDetailsAsync(productId);
+                product.CustomerCount = licenses.GroupBy(item => item.OrgId).Count();
             }
             return product;
         }

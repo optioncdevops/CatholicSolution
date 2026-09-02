@@ -18,9 +18,9 @@ namespace CFR.AcutisInfrastructure.Interfaces.Products
         /// Purpose: Fetch the list of all products from Core.Product table.
         /// Request Flow: IProductsService -> IProductsRepository.GetProductsListAsync() -> SQL Database.
         /// Validation Details: None.
-        /// Business Logic: Reads product dataset using StoredProc.Products.ProductsCrud (ActionId 1).
+        /// Business Logic: Reads product dataset using StoredProc.Products.ProductsCrud (ActionId 1) and CustomerCount from ActionId 5 grouped by OrgId.
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
-        /// Response Details: Returns a list of ProductOutput records.
+        /// Response Details: Returns a list of ProductOutput records with Customers-tab customer counts.
         /// </remarks>
         /// <returns>A list of product output records.</returns>
         Task<List<ProductOutput>> GetProductsListAsync();
@@ -32,7 +32,7 @@ namespace CFR.AcutisInfrastructure.Interfaces.Products
         /// Purpose: Fetch a single product by its primary key along with features.
         /// Request Flow: IProductsService -> IProductsRepository.GetProductByIdAsync() -> SQL Database.
         /// Validation Details: ProductId parameter mapping.
-        /// Business Logic: Reads matching product row and features list using ActionId 2.
+        /// Business Logic: Reads matching product row and features list using ActionId 2, then CustomerCount from ActionId 5 grouped by OrgId.
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
         /// Response Details: Returns ProductOutput or null if not found.
         /// </remarks>

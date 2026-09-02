@@ -62,6 +62,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public bool IsAvailable { get; set; }
 
         /// <summary>
+        /// Gets or sets the number of organizations assigned to this product.
+        /// </summary>
+        [JsonPropertyName("customerCount")]
+        public int CustomerCount { get; set; }
+
+        /// <summary>
         /// Gets or sets the record creation date.
         /// </summary>
         [JsonPropertyName("createdDate")]
