@@ -1,6 +1,8 @@
 // Copyright (c) OptionC. All rights reserved.
 
-namespace CFR.Acutis.Controllers.Products
+using Microsoft.AspNetCore.Http;
+
+namespace CFR.AcutisInfrastructure.Models.Input
 {
     /// <summary>
     /// Multipart form payload for uploading a product logo image.

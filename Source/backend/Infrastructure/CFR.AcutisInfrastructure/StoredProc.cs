@@ -87,11 +87,24 @@ namespace CFR.AcutisInfrastructure
         {
             /// <summary>
             /// Products and License unified CRUD operations.
-            /// ActionId 1=product list (CustomerCount from ActionId 5 distinct OrgId), 2=product get by id (same CustomerCount), 3=product update, 4=product check name,
-            /// ActionId 5=license list, 6=license get by id, 7=license create, 8=license update,
-            /// ActionId 9=product customers from [core].[Organization].
             /// </summary>
             public const string ProductsCrud = "[dbo].[Acutis_Products_CRUD]";
+
+            /// <summary>
+            /// Action identifiers for [dbo].[Acutis_Products_CRUD].
+            /// </summary>
+            public enum Action
+            {
+                GetList = 1,
+                GetById = 2,
+                Update = 3,
+                CheckNameExists = 4,
+                GetLicenses = 5,
+                GetLicenseById = 6,
+                CreateLicense = 7,
+                UpdateLicense = 8,
+                GetCustomers = 9
+            }
         }
     }
 }

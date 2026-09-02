@@ -13,13 +13,13 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         #region GET Methods
 
         /// <summary>
-        /// Fetches all active products using StoredProc.Products.ProductsCrud (ActionId 1).
+        /// Fetches all active products using StoredProc.Products.ProductsCrud (StoredProc.Products.Action.GetList).
         /// </summary>
         /// <remarks>
         /// Purpose: Retrieve all product records from the Core.Product database table.
         /// Request Flow: IProductsService -> ProductsRepository.GetProductsListAsync() -> Database.
         /// Validation Details: None.
-        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 1, then sets CustomerCount from ActionId 5 grouped by OrgId (same as GetProductCustomersAsync).
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with StoredProc.Products.Action.GetList, then sets CustomerCount from StoredProc.Products.Action.GetLicenses grouped by OrgId (same as GetProductCustomersAsync).
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
         /// Response Details: Returns a list of ProductOutput records with customer counts matching the Customers tab.
         /// </remarks>
@@ -27,7 +27,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<List<ProductOutput>> GetProductsListAsync()
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, 1, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)StoredProc.Products.Action.GetList, DbType.Int32);
             var result = await dapperHandler.QueryAsync<ProductOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             var products = result.ToList();
             var licenses = await GetLicenseDetailsAsync(0);
@@ -42,13 +42,13 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         }
 
         /// <summary>
-        /// Fetches one product by identifier along with its active features using StoredProc.Products.ProductsCrud (ActionId 2).
+        /// Fetches one product by identifier along with its active features using StoredProc.Products.ProductsCrud (StoredProc.Products.Action.GetById).
         /// </summary>
         /// <remarks>
         /// Purpose: Retrieve a single product record and its associated features from the database.
         /// Request Flow: IProductsService -> ProductsRepository.GetProductByIdAsync() -> Database.
         /// Validation Details: ProductId parameter mapping.
-        /// Business Logic: Reads two result sets (Product details and features list) using ActionId 2, then sets CustomerCount from ActionId 5 grouped by OrgId (same as GetProductCustomersAsync).
+        /// Business Logic: Reads two result sets (Product details and features list) using StoredProc.Products.Action.GetById, then sets CustomerCount from StoredProc.Products.Action.GetLicenses grouped by OrgId (same as GetProductCustomersAsync).
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
         /// Response Details: Returns ProductOutput with Features or null.
         /// </remarks>
@@ -57,7 +57,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<ProductOutput?> GetProductByIdAsync(int productId)
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, 2, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)StoredProc.Products.Action.GetById, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
             using var multi = await dapperHandler.QueryMultipleAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             var product = (await multi.ReadAsync<ProductOutput>()).FirstOrDefault();
@@ -72,13 +72,13 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         }
 
         /// <summary>
-        /// Checks whether a product with the specified name already exists (ActionId 4).
+        /// Checks whether a product with the specified name already exists (StoredProc.Products.Action.CheckNameExists).
         /// </summary>
         /// <remarks>
         /// Purpose: Validate product name uniqueness.
         /// Request Flow: IProductsService -> ProductsRepository.CheckProductNameExistsAsync() -> Database.
         /// Validation Details: Binds ProductName and ProductId parameters.
-        /// Business Logic: Executes duplicate check query with ActionId 4.
+        /// Business Logic: Executes duplicate check query with StoredProc.Products.Action.CheckNameExists.
         /// Repository Interaction: Executes SQL check or SP validation.
         /// Response Details: Returns true if duplicate exists; otherwise false.
         /// </remarks>
@@ -88,20 +88,20 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<bool> CheckProductNameExistsAsync(string productName, int productId)
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, 4, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)StoredProc.Products.Action.CheckNameExists, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductName, productName.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
             return await dapperHandler.ExecuteScalarAsync<bool>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
         }
 
         /// <summary>
-        /// Fetches license records for a specific product using StoredProc.Products.ProductsCrud (ActionId 5).
+        /// Fetches license records for a specific product using StoredProc.Products.ProductsCrud (StoredProc.Products.Action.GetLicenses).
         /// </summary>
         /// <remarks>
         /// Purpose: Retrieve all active license rows for a product from lic.License and lic.OrganizationProduct.
         /// Request Flow: IProductsService -> ProductsRepository.GetLicenseDetailsAsync() -> Database.
         /// Validation Details: ProductId parameter mapping.
-        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 5.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with StoredProc.Products.Action.GetLicenses.
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
         /// Response Details: Returns a list of ProductLicenseOutput records.
         /// </remarks>
@@ -110,20 +110,20 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<List<ProductLicenseOutput>> GetLicenseDetailsAsync(int productId)
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, 5, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)StoredProc.Products.Action.GetLicenses, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
             var result = await dapperHandler.QueryAsync<ProductLicenseOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             return result.ToList();
         }
 
         /// <summary>
-        /// Fetches one license by identifier using StoredProc.Products.ProductsCrud (ActionId 6).
+        /// Fetches one license by identifier using StoredProc.Products.ProductsCrud (StoredProc.Products.Action.GetLicenseById).
         /// </summary>
         /// <remarks>
         /// Purpose: Retrieve a single license record by LicenseId.
         /// Request Flow: IProductsService -> ProductsRepository.GetLicenseByIdAsync() -> Database.
         /// Validation Details: LicenseId parameter mapping.
-        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 6.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with StoredProc.Products.Action.GetLicenseById.
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
         /// Response Details: Returns ProductLicenseOutput or null.
         /// </remarks>
@@ -132,62 +132,31 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<ProductLicenseOutput?> GetLicenseByIdAsync(long licenseId)
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, 6, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)StoredProc.Products.Action.GetLicenseById, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.LicenseId, licenseId, DbType.Int64);
             return await dapperHandler.QueryFirstOrDefaultAsync<ProductLicenseOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
         }
 
         /// <summary>
-        /// Fetches product customers from [core].[Organization] using StoredProc.Products.ProductsCrud (ActionId 9).
+        /// Fetches product customers from [core].[Organization] using StoredProc.Products.ProductsCrud (StoredProc.Products.Action.GetCustomers).
         /// </summary>
         /// <remarks>
-        /// Purpose: Retrieve only organizations assigned to this product, with user counts from [auth].[OrganizationUser]/[auth].[AuthUser].
+        /// Purpose: Retrieve organizations assigned to this product, with the latest license fields and user counts.
         /// Request Flow: IProductsService -> ProductsRepository.GetProductCustomersAsync() -> Database.
-        /// Validation Details: ProductId selects [lic].[OrganizationProduct] rows for this product.
-        /// Business Logic: Reads product assignments via ProductsCrud (ActionId 5) and organization/user details via OrganizationCrud (ActionId 1).
-        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud and StoredProc.Organization.OrganizationCrud.
-        /// Response Details: Returns a list of ProductCustomerOutput records for this product only.
+        /// Validation Details: ProductId parameter mapping.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with StoredProc.Products.Action.GetCustomers.
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
+        /// Response Details: Returns a list of ProductCustomerOutput records.
         /// </remarks>
         /// <param name="productId">Product identifier.</param>
         /// <returns>A list of product customer records.</returns>
         public async Task<List<ProductCustomerOutput>> GetProductCustomersAsync(int productId)
         {
-            var organizationParameters = new DynamicParameters();
-            organizationParameters.Add(DBParameterName.OrganizationParams.ActionId, 1, DbType.Int32);
-            var organizations = await dapperHandler.QueryAsync<OrganizationOutput>(StoredProc.Organization.OrganizationCrud, organizationParameters, CommandType.StoredProcedure);
-
-            var licenseParameters = new DynamicParameters();
-            licenseParameters.Add(DBParameterName.ProductParams.ActionId, 5, DbType.Int32);
-            licenseParameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
-            var licenses = await dapperHandler.QueryAsync<ProductLicenseOutput>(StoredProc.Products.ProductsCrud, licenseParameters, CommandType.StoredProcedure);
-
-            return licenses
-                .GroupBy(item => item.OrgId)
-                .Select(group =>
-                {
-                    var license = group.OrderByDescending(item => item.CreatedDate).First();
-                    var organization = organizations.FirstOrDefault(item => item.OrgId == license.OrgId);
-                    return new ProductCustomerOutput
-                    {
-                        OrgId = license.OrgId,
-                        OrgName = organization?.OrgName ?? license.OrgName,
-                        OrgStatus = organization?.OrgStatus ?? string.Empty,
-                        ContactEmail = organization?.ContactEmail,
-                        Website = organization?.Website,
-                        ContactPerson = organization?.ContactPerson,
-                        ContactPhone = organization?.ContactPhone,
-                        InsertedDate = organization?.InsertedDate ?? license.CreatedDate,
-                        UpdatedDate = organization?.UpdatedDate,
-                        UserCount = organization?.UserCount ?? 0,
-                        OrgCode = $"ORG-{license.OrgId}",
-                        StartDate = license.ActivationDate,
-                        ExpiryDate = license.ExpiryDate,
-                        LicenseType = license.LicenseType,
-                        LicenseStatus = license.LicenseStatus ?? organization?.OrgStatus
-                    };
-                })
-                .OrderBy(item => item.OrgName)
-                .ToList();
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)StoredProc.Products.Action.GetCustomers, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
+            var result = await dapperHandler.QueryAsync<ProductCustomerOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
+            return result.ToList();
         }
 
         #endregion GET Methods
@@ -195,13 +164,13 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         #region POST Methods
 
         /// <summary>
-        /// Creates a new license using StoredProc.Products.ProductsCrud (ActionId 7).
+        /// Creates a new license using StoredProc.Products.ProductsCrud (StoredProc.Products.Action.CreateLicense).
         /// </summary>
         /// <remarks>
         /// Purpose: Create organization product link if missing and insert license record.
         /// Request Flow: IProductsService -> ProductsRepository.CreateLicenseAsync() -> Database.
         /// Validation Details: Parameter mapping from ProductLicenseInput.
-        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 7.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with StoredProc.Products.Action.CreateLicense.
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
         /// Response Details: Returns created LicenseId, -95 when the assignment cannot be created, or -99 when an active or upcoming license already exists.
         /// </remarks>
@@ -217,7 +186,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             }
 
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, 7, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)StoredProc.Products.Action.CreateLicense, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.OrganizationProductId, input.OrganizationProductId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.OrgId, input.OrgId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.ProductId, input.ProductId, DbType.Int32);
@@ -238,13 +207,13 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         #region PUT Methods
 
         /// <summary>
-        /// Updates an existing product using StoredProc.Products.ProductsCrud (ActionId 3).
+        /// Updates an existing product using StoredProc.Products.ProductsCrud (StoredProc.Products.Action.Update).
         /// </summary>
         /// <remarks>
         /// Purpose: Update editable fields and stamp UpdatedDate/UpdatedBy.
         /// Request Flow: IProductsService -> ProductsRepository.UpdateProductAsync() -> Database.
         /// Validation Details: Parameter mapping from ProductInput.
-        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 3 and ProductId > 0.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with StoredProc.Products.Action.Update and ProductId > 0.
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
         /// Response Details: Returns updated ProductId, -95 if not found, or -99 on duplicate name.
         /// </remarks>
@@ -254,7 +223,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         {
             ArgumentNullException.ThrowIfNull(input);
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, 3, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)StoredProc.Products.Action.Update, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, input.ProductId, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductName, input.ProductName.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.SubCategoryName, input.SubCategoryName?.Trim(), DbType.String);
@@ -276,13 +245,13 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         }
 
         /// <summary>
-        /// Updates an existing license using StoredProc.Products.ProductsCrud (ActionId 8).
+        /// Updates an existing license using StoredProc.Products.ProductsCrud (StoredProc.Products.Action.UpdateLicense).
         /// </summary>
         /// <remarks>
         /// Purpose: Update editable license fields and stamp UpdatedDate/UpdatedBy.
         /// Request Flow: IProductsService -> ProductsRepository.UpdateLicenseAsync() -> Database.
         /// Validation Details: Parameter mapping from ProductLicenseInput.
-        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 8 and LicenseId > 0.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with StoredProc.Products.Action.UpdateLicense and LicenseId > 0.
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
         /// Response Details: Returns updated LicenseId, -95 if not found.
         /// </remarks>
@@ -292,7 +261,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         {
             ArgumentNullException.ThrowIfNull(input);
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, 8, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)StoredProc.Products.Action.UpdateLicense, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.LicenseId, input.LicenseId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.LicenseType, input.LicenseType?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.ActivationDate, input.ActivationDate, DbType.DateTime2);
