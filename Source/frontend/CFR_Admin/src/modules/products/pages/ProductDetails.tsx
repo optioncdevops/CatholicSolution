@@ -201,12 +201,12 @@ function Fact({ label, value }: { label: string; value: string }) {
 
 function WebsiteUrlFact({ url }: { url: string }) {
   return (
-    <div className="min-w-0">
+    <div className="min-w-0 sm:col-span-2">
       <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Website URL</p>
       {url.trim() ? (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="mt-0.5 block truncate text-[0.8125rem] font-bold text-[var(--primary)] hover:underline">{url}</a>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="mt-0.5 block break-all text-[0.8125rem] font-bold text-[var(--primary)] hover:underline" title={url}>{url}</a>
       ) : (
-        <p className="mt-0.5 truncate text-[0.8125rem] font-bold text-[var(--text-primary)]">Not configured</p>
+        <p className="mt-0.5 text-[0.8125rem] font-bold text-[var(--text-primary)]">Not configured</p>
       )}
     </div>
   );

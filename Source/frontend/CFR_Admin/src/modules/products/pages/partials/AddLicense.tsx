@@ -15,10 +15,11 @@ import { confirmAction } from '@/modules/lib/confirm';
 import { getOrganizations } from '@/modules/organizations/services/organizationsService';
 import type { OrganizationApiItem } from '@/modules/organizations/types/organizationTypes';
 import { normalizeOrganizationsList } from '@/modules/organizations/utils/organizationHelpers';
-import { createLicense, getProductById, getProducts } from '../../services/productService';
-import type { ProductApiItem } from '../../types/productTypes';
+import { createLicense, getLicenseDetails, getProductById, getProducts } from '../../services/productService';
+import type { ProductApiItem, ProductLicenseApiItem } from '../../types/productTypes';
 import {
   PRODUCTS_PATHS,
+  customerHasActiveLicense,
   normalizeProductList,
   parseProductIdFromState,
   toProductSlug,
@@ -179,6 +180,15 @@ const AddLicense = () => {
 
     setSaving(true);
     try {
+      const existingRes = await getLicenseDetails(productId);
+      const existingLicenses = Array.isArray(existingRes.resultData)
+        ? (existingRes.resultData as ProductLicenseApiItem[])
+        : [];
+      if (customerHasActiveLicense(existingLicenses, Number(orgId))) {
+        showToast('A license for this customer already exists.', 'error');
+        return;
+      }
+
       const remarks = [title.trim(), customMessage.trim()].filter(Boolean).join('\n').slice(0, 500);
       const normalizedStatus = licenseStatus.toLowerCase() === 'suspended' ? 'suspended' : 'active';
       const res = await createLicense({

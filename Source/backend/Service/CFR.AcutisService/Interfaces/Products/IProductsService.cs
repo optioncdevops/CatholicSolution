@@ -128,9 +128,9 @@ namespace CFR.AcutisService.Interfaces.Products
         /// Purpose: Create organization product assignment and create license record.
         /// Request Flow: ProductsController -> IProductsService.CreateLicenseAsync() -> IProductsRepository.CreateLicenseAsync().
         /// Validation Details: OrgId and ProductId must be greater than zero (or OrganizationProductId > 0).
-        /// Business Logic: Inserts new license row and returns created LicenseId.
+        /// Business Logic: Inserts a new license unless an active or upcoming license already exists for the customer.
         /// Repository Interaction: Calls IProductsRepository.CreateLicenseAsync().
-        /// Response Details: MSResultArgs containing the created LicenseId.
+        /// Response Details: MSResultArgs containing the created LicenseId, or Conflict when a license already exists.
         /// </remarks>
         /// <param name="input">Input DTO containing new license details.</param>
         /// <returns>MSResultArgs containing the created LicenseId.</returns>

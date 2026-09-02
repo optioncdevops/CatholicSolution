@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Plus } from "lucide-react";
 import { EmptyState } from "@shared/app/components/EmptyState";
+import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton, CommonIconButton } from "@app/components/buttons";
 import { StatusBadge } from "@app/components/Badge";
 import {
@@ -14,12 +15,11 @@ import { BaseModal } from "@app/components/modal/BaseModal";
 import { useAdminData } from "@/modules/AdminDataContext";
 import { getLicenseDetails } from "../services/productService";
 import type { ProductLicenseApiItem } from "../types/productTypes";
-import { PRODUCTS_PATHS } from "../utils/productHelpers";
+import { PRODUCTS_PATHS, isLicenseUpcoming, toLicenseDetailsRows } from "../utils/productHelpers";
 import type {
   AdminApplication,
   EffectiveLicenseStatus,
   License,
-  LicenseStatus,
 } from "@/modules/types";
 
 export function InvoiceDetailModal({ invoice, onClose }: { invoice: License | null; onClose: () => void }) {
@@ -65,8 +65,6 @@ const STATUS_FILTERS: Array<{
   { id: "all", label: "All statuses" },
   { id: "active", label: "Active" },
   { id: "expiring-soon", label: "Expiring soon" },
-  { id: "expired", label: "Expired" },
-  { id: "suspended", label: "Suspended" },
 ];
 
 export interface LiveProductLicense {
@@ -89,6 +87,7 @@ export interface LiveProductLicense {
 export function LicenseDetails({ app }: { app: AdminApplication }) {
   //#region Hooks
   const navigate = useNavigate();
+  const { showToast } = useToast();
   //#endregion
 
   //#region States
@@ -114,6 +113,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
         }
       } catch (err) {
         console.error("Error fetching product licenses:", err);
+        showToast(typeof err === "string" ? err : "Failed to load licenses.", "error");
         setDbLicenses([]);
       } finally {
         setLoading(false);
@@ -121,7 +121,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     } else {
       setLoading(false);
     }
-  }, [app.id]);
+  }, [app.id, showToast]);
   //#endregion
 
   //#region Effects
@@ -131,13 +131,10 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
   //#endregion
 
   const mappedLicenses: LiveProductLicense[] = useMemo(() => {
-    return dbLicenses.map((lic) => {
-      const normalizedStatus: LicenseStatus =
-        lic.licenseStatus?.toLowerCase() === "active" ? "active" : "suspended";
-      const effective = effectiveLicenseStatus(
-        normalizedStatus,
-        lic.expiryDate || "",
-      );
+    return toLicenseDetailsRows(dbLicenses).map((lic) => {
+      const effective = isLicenseUpcoming(lic)
+        ? "active"
+        : effectiveLicenseStatus("active", lic.expiryDate || "");
       return {
         id: String(lic.licenseId),
         licenseId: lic.licenseId,
@@ -149,7 +146,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
         licenseType: lic.licenseType || "Subscription",
         startDate: lic.activationDate || "",
         expiryDate: lic.expiryDate || "",
-        status: effective,
+        status: effective === "expired" || effective === "suspended" ? "active" : effective,
         rawStatus: lic.licenseStatus,
         assignStatus: lic.assignStatus,
         remarks: lic.remarks,
@@ -158,9 +155,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
   }, [dbLicenses]);
 
   const rows = useMemo(() => {
-    return mappedLicenses
-      .filter((lic) => statusFilter === "all" || lic.status === statusFilter)
-      .sort((a, b) => b.startDate.localeCompare(a.startDate));
+    return mappedLicenses.filter((lic) => statusFilter === "all" || lic.status === statusFilter);
   }, [mappedLicenses, statusFilter]);
 
   const columns: DataTableColumn<LiveProductLicense>[] = [
@@ -308,7 +303,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
         <EmptyState
           icon="🔑"
           title="No licenses found"
-          description="Try a different status filter."
+          description="Create a license or try a different status filter."
         />
       ) : (
         <DataTable

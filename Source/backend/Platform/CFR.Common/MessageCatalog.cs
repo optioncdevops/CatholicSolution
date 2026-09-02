@@ -67,6 +67,7 @@ namespace CFR.Common
         public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
         public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
         public const string ExistProduct = "A product with this name already exists.";
+        public const string ExistLicense = "A license for this customer already exists.";
         public const string ProductNotFound = "Product not found.";
         public const string ProductLogoFileRequired = "File is empty or not provided.";
         public const string ProductLogoFileTooLarge = "File size cannot exceed 2 MB.";

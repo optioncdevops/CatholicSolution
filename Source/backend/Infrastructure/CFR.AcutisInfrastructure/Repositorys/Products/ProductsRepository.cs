@@ -203,7 +203,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         /// Validation Details: Parameter mapping from ProductLicenseInput.
         /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 7.
         /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
-        /// Response Details: Returns created LicenseId or negative status code.
+        /// Response Details: Returns created LicenseId, -95 when the assignment cannot be created, or -99 when an active or upcoming license already exists.
         /// </remarks>
         /// <param name="input">Input DTO containing new license details.</param>
         /// <returns>Created LicenseId or negative error code.</returns>

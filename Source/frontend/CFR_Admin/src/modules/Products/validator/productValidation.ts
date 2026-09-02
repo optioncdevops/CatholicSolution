@@ -13,6 +13,25 @@ function hostnameOf(url: string): string | null {
   }
 }
 
+function protocolOf(url: string): string | null {
+  try {
+    return new URL(url).protocol;
+  } catch {
+    return null;
+  }
+}
+
+function firstPartyHostname(): string | null {
+  const configured = import.meta.env.VITE_APP_HUB_URL || import.meta.env.VITE_APP_REST_API_BASE_URL;
+  if (configured) {
+    return hostnameOf(configured);
+  }
+  if (typeof window !== 'undefined') {
+    return window.location.hostname.toLowerCase();
+  }
+  return null;
+}
+
 /**
  * Non-blocking data-quality and lifecycle warnings for a product, evaluated against the
  * full catalog (needed for the duplicate-domain check). Pure function — no side effects.
@@ -28,7 +47,7 @@ export function getProductWarnings(app: AdminApplication, allApplications: Admin
     if (!hostname) {
       warnings.push({ id: 'invalid-url', message: 'Production URL is not a valid web address.' });
     } else {
-      if (url.startsWith('http://')) {
+      if (import.meta.env.PROD && protocolOf(url) === 'http:') {
         warnings.push({ id: 'non-https', message: 'Production URL is not HTTPS.' });
       }
       const duplicate = allApplications.find((other) => other.id !== app.id && hostnameOf((other.productionUrl ?? '').trim()) === hostname);
@@ -42,8 +61,9 @@ export function getProductWarnings(app: AdminApplication, allApplications: Admin
     warnings.push({ id: 'missing-description', message: 'Missing description.' });
   }
 
-  if (app.ownership === 'partner' && hostnameOf(url)?.endsWith('optioncapp.com')) {
-    warnings.push({ id: 'partner-first-party-domain', message: 'Marked as a partner product but hosted on a first-party (optioncapp.com) domain.' });
+  const firstParty = firstPartyHostname();
+  if (app.ownership === 'partner' && firstParty && hostnameOf(url)?.endsWith(firstParty)) {
+    warnings.push({ id: 'partner-first-party-domain', message: 'Marked as a partner product but hosted on a first-party domain.' });
   }
 
   return warnings;
@@ -65,7 +85,7 @@ export function validateProductForm(form: Partial<AdminApplication>): ProductFor
         return false;
       }
     })();
-    if (!isValidUrl) errors.productionUrl = 'Enter a valid URL, e.g. https://app.optioncapp.com.';
+    if (!isValidUrl) errors.productionUrl = 'Enter a valid URL.';
   }
   return errors;
 }

@@ -324,9 +324,9 @@ namespace CFR.AcutisService.Service.Products
         /// Purpose: Create new license record.
         /// Request Flow: ProductsController -> ProductsService.CreateLicenseAsync() -> IProductsRepository.CreateLicenseAsync().
         /// Validation Details: OrgId and ProductId must be positive (or OrganizationProductId > 0).
-        /// Business Logic: Inserts new license row and returns created LicenseId.
+        /// Business Logic: Inserts a new license unless an active or upcoming license already exists for the customer.
         /// Repository Interaction: Calls IProductsRepository.CreateLicenseAsync.
-        /// Response Details: MSResultArgs containing the created LicenseId.
+        /// Response Details: MSResultArgs containing the created LicenseId, or Conflict when a license already exists.
         /// </remarks>
         /// <param name="input">Input DTO containing new license details.</param>
         /// <returns>MSResultArgs containing the created LicenseId.</returns>
@@ -347,6 +347,13 @@ namespace CFR.AcutisService.Service.Products
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = "Invalid Organization or Product for license creation.";
+                    return result;
+                }
+
+                if (createdId == -99)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.ExistLicense;
                     return result;
                 }
 

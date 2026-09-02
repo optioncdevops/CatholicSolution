@@ -187,6 +187,62 @@ export function toProductCustomerRow(item: ProductCustomerApiItem): ProductCusto
   };
 }
 
+function licenseTimestamp(item: ProductLicenseApiItem): string {
+  return item.createdDate || item.activationDate || '';
+}
+
+function isNewerLicense(candidate: ProductLicenseApiItem, current: ProductLicenseApiItem): boolean {
+  const candidateStamp = licenseTimestamp(candidate);
+  const currentStamp = licenseTimestamp(current);
+  if (candidateStamp !== currentStamp) return candidateStamp > currentStamp;
+  return candidate.licenseId > current.licenseId;
+}
+
+export function isLicenseSuspended(item: ProductLicenseApiItem): boolean {
+  const licenseStatus = String(item.licenseStatus ?? '').trim().toLowerCase();
+  const assignStatus = String(item.assignStatus ?? '').trim().toLowerCase();
+  return licenseStatus === 'suspended' || licenseStatus === 'cancelled' || assignStatus === 'suspended' || assignStatus === 'revoked';
+}
+
+export function isLicenseUpcoming(item: ProductLicenseApiItem): boolean {
+  const start = item.activationDate;
+  if (!start) return false;
+  const startDate = new Date(start);
+  if (Number.isNaN(startDate.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return startDate.getTime() > today.getTime();
+}
+
+export function isActiveOrUpcomingLicense(item: ProductLicenseApiItem): boolean {
+  if (Number(item.licenseId) <= 0 || isLicenseSuspended(item)) return false;
+  if (isLicenseUpcoming(item)) return true;
+  const effective = effectiveLicenseStatus('active', item.expiryDate || '');
+  return effective === 'active' || effective === 'expiring-soon';
+}
+
+export function toLicenseDetailsRows(items: ProductLicenseApiItem[]): ProductLicenseApiItem[] {
+  const licenses = items.filter((item) => Number(item.licenseId) > 0);
+  const latestByOrg = new Map<number, ProductLicenseApiItem>();
+  for (const item of licenses) {
+    const existing = latestByOrg.get(item.orgId);
+    if (!existing || isNewerLicense(item, existing)) {
+      latestByOrg.set(item.orgId, item);
+    }
+  }
+  return [...latestByOrg.values()]
+    .filter(isActiveOrUpcomingLicense)
+    .sort((left, right) => {
+      if (isNewerLicense(left, right)) return -1;
+      if (isNewerLicense(right, left)) return 1;
+      return 0;
+    });
+}
+
+export function customerHasActiveLicense(items: ProductLicenseApiItem[], orgId: number): boolean {
+  return toLicenseDetailsRows(items).some((item) => item.orgId === orgId);
+}
+
 export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLicenseHistoryRow[] {
   const licenses = items.filter((item) => Number(item.licenseId) > 0);
   const currentByOrg = new Map<number, number>();

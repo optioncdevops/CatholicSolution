@@ -272,7 +272,7 @@ BEGIN
           AND (@OrgId = 0 OR op.[OrgId] = @OrgId)
           AND op.[IsDeleted] = 0
           AND p.[IsDeleted] = 0
-        ORDER BY op.[CreatedDate] DESC;
+        ORDER BY ISNULL(l.[CreatedDate], op.[CreatedDate]) DESC, ISNULL(l.[LicenseId], 0) DESC;
 
         RETURN 0;
     END
@@ -365,6 +365,26 @@ BEGIN
         IF ISNULL(@OrganizationProductId, 0) = 0
         BEGIN
             SET @ReturnValue = -95;
+            RETURN @ReturnValue;
+        END
+
+        IF EXISTS (
+            SELECT 1
+            FROM [lic].[License] AS l
+            INNER JOIN [lic].[OrganizationProduct] AS op
+                ON op.[OrganizationProductId] = l.[OrganizationProductId]
+            WHERE op.[OrganizationProductId] = @OrganizationProductId
+              AND op.[IsDeleted] = 0
+              AND LOWER(ISNULL(l.[LicenseStatus], N'active')) NOT IN (N'cancelled', N'expired')
+              AND LOWER(ISNULL(op.[AssignStatus], N'active')) NOT IN (N'suspended', N'revoked')
+              AND (
+                    CAST(ISNULL(l.[ActivationDate], SYSUTCDATETIME()) AS DATE) > CAST(SYSUTCDATETIME() AS DATE)
+                 OR l.[ExpiryDate] IS NULL
+                 OR CAST(l.[ExpiryDate] AS DATE) >= CAST(SYSUTCDATETIME() AS DATE)
+              )
+        )
+        BEGIN
+            SET @ReturnValue = -99;
             RETURN @ReturnValue;
         END
 

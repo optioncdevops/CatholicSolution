@@ -205,6 +205,7 @@ namespace CFR.Acutis.Controllers.Products
         /// <returns>Standardized success or failure response.</returns>
         /// <response code="200">Successfully created the license.</response>
         /// <response code="400">Invalid request payload.</response>
+        /// <response code="409">An active or upcoming license already exists for this customer.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpPost]
         [ActionName(API_Product.CreateLicense)]
