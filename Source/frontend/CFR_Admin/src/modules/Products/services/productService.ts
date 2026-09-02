@@ -28,6 +28,19 @@ export const getProductById = async (productId: number): Promise<ApiResponse> =>
   }
 };
 
+export const getProductCustomers = async (productId: number): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductCustomers`, {
+      params: { productId },
+    });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to fetch product customers';
+  }
+};
+
 export const getLicenseDetails = async (productId: number): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetLicenseDetails`, {

@@ -105,6 +105,29 @@ namespace CFR.Acutis.Controllers.Products
             return ApiResultArgs(await service.GetLicenseByIdAsync(licenseId), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves product customers from [core].[Organization] for a specific product.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch organizations assigned to the product for the Customers tab.
+        /// Request Flow: Client API GET -> ProductsController.GetProductCustomers() -> IProductsService.GetProductCustomersAsync() -> Database.
+        /// Validation Details: Query parameter binding maps productId.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IProductsService.GetProductCustomersAsync().
+        /// Response Details: Standard API result enclosing List of ProductCustomerOutput with status 200, 400, or 500.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <returns>A consistent API response containing the product customer records.</returns>
+        /// <response code="200">Successfully fetched product customers.</response>
+        /// <response code="400">Invalid product identifier.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(nameof(GetProductCustomers))]
+        public async Task<IActionResult> GetProductCustomers(int productId)
+        {
+            return ApiResultArgs(await service.GetProductCustomersAsync(productId), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
 
         #region POST Methods

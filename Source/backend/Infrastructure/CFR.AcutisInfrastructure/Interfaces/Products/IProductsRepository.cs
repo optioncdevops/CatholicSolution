@@ -86,6 +86,21 @@ namespace CFR.AcutisInfrastructure.Interfaces.Products
         /// <returns>Matching license or null if not found.</returns>
         Task<ProductLicenseOutput?> GetLicenseByIdAsync(long licenseId);
 
+        /// <summary>
+        /// Retrieves product customers from [core].[Organization] using StoredProc.Products.ProductsCrud (ActionId 9).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch organizations assigned to a product for the Customers tab.
+        /// Request Flow: IProductsService -> IProductsRepository.GetProductCustomersAsync() -> SQL Database.
+        /// Validation Details: ProductId parameter mapping.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 9.
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
+        /// Response Details: Returns a list of ProductCustomerOutput records.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <returns>A list of product customer records.</returns>
+        Task<List<ProductCustomerOutput>> GetProductCustomersAsync(int productId);
+
         #endregion GET Methods
 
         #region POST Methods

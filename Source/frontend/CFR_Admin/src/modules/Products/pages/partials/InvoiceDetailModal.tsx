@@ -24,8 +24,8 @@ export function InvoiceDetailModal({ invoice, onClose }: { invoice: License | nu
           ) : null}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <DetailField label="Customer" value={org?.name ?? invoice.orgId} />
-          <DetailField label="Customer code" value={org?.code ?? '—'} />
+          <DetailField label="Customer" value={org?.name ?? invoice.title?.split('—')[0]?.trim() ?? invoice.orgId} />
+          <DetailField label="Customer code" value={org?.code ?? (invoice.orgId ? `ORG-${invoice.orgId}` : '—')} />
           <DetailField label="Product" value={app?.name ?? invoice.appId} />
           <DetailField label="Start date" value={formatDate(invoice.startDate)} />
           <DetailField label="Expiry date" value={formatDate(invoice.expiryDate)} />
@@ -36,7 +36,6 @@ export function InvoiceDetailModal({ invoice, onClose }: { invoice: License | nu
             <div className="text-sm text-[var(--text-secondary)]" dangerouslySetInnerHTML={{ __html: invoice.customMessage }} />
           </div>
         ) : null}
-        <p className="text-xs text-[var(--text-faint)]">Preview only — this prototype has no real license provisioning system.</p>
       </div>
     </BaseModal>
   );

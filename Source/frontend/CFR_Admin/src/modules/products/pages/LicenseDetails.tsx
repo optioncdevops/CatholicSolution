@@ -158,6 +158,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     {
       id: "customerCode",
       header: "Customer Code",
+      width: "12rem",
       value: (lic) => lic.customerCode,
       cell: (lic) => (
         <span className="font-mono text-xs text-[var(--text-secondary)]">
@@ -168,7 +169,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     {
       id: "customer",
       header: "Customer",
-      width: "14rem",
+      minWidth: "18rem",
       value: (lic) => lic.customer,
       cell: (lic) => (
         <span className="font-bold text-[var(--text-primary)]">
@@ -179,6 +180,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     {
       id: "licenseType",
       header: "License Type",
+      width: "9.5rem",
       value: (lic) => lic.licenseType,
       cell: (lic) => (
         <span className="capitalize text-xs font-semibold text-[var(--text-secondary)]">
@@ -189,6 +191,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     {
       id: "startDate",
       header: "Start Date",
+      width: "8.5rem",
       value: (lic) => lic.startDate,
       cell: (lic) => (
         <span className="text-[var(--text-muted)]">
@@ -199,6 +202,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     {
       id: "expiryDate",
       header: "Expiry Date",
+      width: "8.5rem",
       value: (lic) => lic.expiryDate,
       cell: (lic) => (
         <span className="text-[var(--text-muted)]">
@@ -209,6 +213,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     {
       id: "status",
       header: "Status",
+      width: "7.5rem",
       value: (lic) => lic.status,
       cell: (lic) => <StatusBadge status={lic.status} kind="license" />,
     },

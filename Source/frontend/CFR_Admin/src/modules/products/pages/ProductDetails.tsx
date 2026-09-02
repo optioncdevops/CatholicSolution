@@ -5,9 +5,8 @@ import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Tabs, TabPanel } from '@app/components/Tabs';
-import { useAdminData } from '@/modules/AdminDataContext';
 import { getProductWarnings } from '../validator/productValidation';
-import { getProductById, getProducts, updateProduct } from '../services/productService';
+import { getProductById, getProductCustomers, getProducts, updateProduct } from '../services/productService';
 import type { ProductApiItem, ProductInputPayload } from '../types/productTypes';
 import { ProductWarningsBanner } from './partials/ProductWarningsBanner';
 import { ProductStatusDialog } from './partials/ProductStatusDialog';
@@ -20,6 +19,7 @@ import {
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
   normalizeProductList,
+  normalizeProductCustomerList,
   parseProductIdFromState,
   resolveProductLogoUrl,
   toAdminApplication,
@@ -33,7 +33,6 @@ const ProductDetails = () => {
   const params = useParams<{ slug?: string }>();
   const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
-  const { organizations } = useAdminData();
   const { showToast } = useToast();
   //#endregion
 
@@ -43,6 +42,7 @@ const ProductDetails = () => {
   const [activeTab, setActiveTab] = useState('details');
   const [changingStatus, setChangingStatus] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<ProductStatus | null>(null);
+  const [customerCount, setCustomerCount] = useState(0);
   //#endregion
 
   //#region Functions
@@ -116,6 +116,30 @@ const ProductDetails = () => {
   useEffect(() => {
     void loadProduct();
   }, [loadProduct]);
+
+  useEffect(() => {
+    if (!product?.productId) {
+      setCustomerCount(0);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await getProductCustomers(product.productId);
+        if (cancelled) return;
+        setCustomerCount(normalizeProductCustomerList(res.resultData).length);
+      } catch {
+        if (!cancelled) {
+          setCustomerCount(0);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.productId]);
   //#endregion
 
   if (loading) {
@@ -141,7 +165,6 @@ const ProductDetails = () => {
   const app = toAdminApplication(product);
   const logoSrc = resolveProductLogoUrl(product.logoUrl);
   const warnings = getProductWarnings(app, [app]);
-  const customerCount = organizations.filter((org) => org.appIds.includes(app.id)).length;
   const slug = toProductSlug(product.productName) || String(product.productId);
 
   return (
@@ -198,7 +221,7 @@ const ProductDetails = () => {
       </TabPanel>
 
       <TabPanel id="customers" activeId={activeTab}>
-        <CustomerDetails app={app} />
+        <CustomerDetails app={app} onCountChange={setCustomerCount} />
       </TabPanel>
 
       <TabPanel id="invoice-details" activeId={activeTab}>

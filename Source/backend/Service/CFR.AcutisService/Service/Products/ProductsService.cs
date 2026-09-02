@@ -169,6 +169,44 @@ namespace CFR.AcutisService.Service.Products
             return result;
         }
 
+        /// <summary>
+        /// Retrieves product customers from [core].[Organization] for a specific product.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch organization rows assigned to the product for the Customers tab.
+        /// Request Flow: ProductsController -> ProductsService.GetProductCustomersAsync() -> IProductsRepository.GetProductCustomersAsync().
+        /// Validation Details: ProductId must be greater than zero.
+        /// Business Logic: Wraps the typed customer list in MSResultArgs.
+        /// Repository Interaction: Calls IProductsRepository.GetProductCustomersAsync().
+        /// Response Details: MSResultArgs containing List of ProductCustomerOutput.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <returns>MSResultArgs containing the product customer records list.</returns>
+        public async Task<MSResultArgs> GetProductCustomersAsync(int productId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (productId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                var data = await repository.GetProductCustomersAsync(productId);
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchOrganizationsFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion GET Methods
 
         #region POST Methods

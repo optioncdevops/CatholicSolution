@@ -1,16 +1,19 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { CommonIconButton } from '@app/components/buttons';
-import { useAdminData } from '@/modules/AdminDataContext';
+import { useToast } from '@shared/app/components/ToastProvider';
 import { StatusBadge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate, accessStatusOf } from '@/modules/utils/formatDate';
-import type { AdminApplication, Organization, OrganizationStatus } from '@/modules/types';
+import { getProductCustomers } from '../services/productService';
+import type { ProductCustomerRow } from '../types/productTypes';
+import { normalizeProductCustomerList, toProductCustomerRow } from '../utils/productHelpers';
+import type { AdminApplication, OrganizationStatus } from '@/modules/types';
 
 type EffectiveStatus = OrganizationStatus | 'expiring-soon' | 'expired';
 
-function effectiveStatusOf(org: Organization): EffectiveStatus {
+function effectiveStatusOf(org: ProductCustomerRow): EffectiveStatus {
   const access = accessStatusOf(org.expiryDate);
   if (access === 'expired' || access === 'expiring-soon') return access;
   return org.status;
@@ -25,46 +28,78 @@ const STATUS_FILTERS: Array<{ id: EffectiveStatus | 'all'; label: string; dot?: 
   { id: 'expired', label: 'Expired', dot: 'var(--error)' },
 ];
 
-export function CustomerDetails({ app }: { app: AdminApplication }) {
+export function CustomerDetails({
+  app,
+  onCountChange,
+}: {
+  app: AdminApplication;
+  onCountChange?: (count: number) => void;
+}) {
   //#region Hooks
-  const { organizations, users } = useAdminData();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   //#endregion
 
   //#region States
   const [statusFilter, setStatusFilter] = useState<EffectiveStatus | 'all'>('all');
+  const [productCustomers, setProductCustomers] = useState<ProductCustomerRow[]>([]);
   //#endregion
 
-  const userCountFor = useCallback((orgId: string) => users.filter((user) => user.orgId === orgId).length, [users]);
+  //#region Functions
+  const loadCustomers = useCallback(async () => {
+    const productId = Number(app.id);
+    if (!Number.isInteger(productId) || productId <= 0) {
+      setProductCustomers([]);
+      onCountChange?.(0);
+      return;
+    }
 
-  const productCustomers = useMemo(() => organizations.filter((org) => org.appIds.includes(app.id)), [organizations, app.id]);
+    try {
+      const res = await getProductCustomers(productId);
+      const rows = normalizeProductCustomerList(res.resultData).map(toProductCustomerRow);
+      setProductCustomers(rows);
+      onCountChange?.(rows.length);
+    } catch (err) {
+      console.error('Error fetching product customers:', err);
+      showToast(typeof err === 'string' ? err : 'Failed to load customers.', 'error');
+      setProductCustomers([]);
+      onCountChange?.(0);
+    }
+  }, [app.id, onCountChange, showToast]);
 
   const customers = useMemo(() => productCustomers
     .filter((org) => statusFilter === 'all' || effectiveStatusOf(org) === statusFilter)
     .sort((a, b) => a.name.localeCompare(b.name)),
   [productCustomers, statusFilter]);
+  //#endregion
 
-  const columns: DataTableColumn<Organization>[] = [
+  //#region Effects
+  useEffect(() => {
+    void loadCustomers();
+  }, [loadCustomers]);
+  //#endregion
+
+  const columns: DataTableColumn<ProductCustomerRow>[] = [
     {
       id: 'actions', header: 'Actions', pinLeft: true, width: '4rem', excludeFromExport: true,
       cell: (org) => <CommonIconButton aria-label={`View ${org.name}`} tooltip="View" icon={<Eye size={15} />} onClick={() => navigate(`/admin/organizations/${org.id}`)} />,
     },
     {
-      id: 'name', header: 'Organization', width: '14rem', value: (org) => org.name,
+      id: 'name', header: 'Organization', minWidth: '16rem', value: (org) => org.name,
       cell: (org) => (
         <Link to={`/admin/organizations/${org.id}`} className="block min-w-0 truncate font-bold text-[var(--text-primary)] hover:underline" onClick={(event) => event.stopPropagation()}>
           {org.name}
         </Link>
       ),
     },
-    { id: 'customerName', header: 'Customer Name', width: '12rem', value: (org) => org.primaryContact, cell: (org) => <span className="text-[var(--text-secondary)]">{org.primaryContact}</span> },
-    { id: 'code', header: 'Code', value: (org) => org.code, cell: (org) => <span className="font-mono text-xs text-[var(--text-secondary)]">{org.code}</span> },
-    { id: 'email', header: 'Email', value: (org) => org.contactEmail, cell: (org) => <span className="text-[var(--text-secondary)]">{org.contactEmail}</span> },
-    { id: 'users', header: 'Users', value: (org) => userCountFor(org.id), cell: (org) => <span className="text-[var(--text-secondary)]">{userCountFor(org.id)}</span> },
-    { id: 'start', header: 'Start Date', value: (org) => org.createdAt, cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.createdAt)}</span> },
-    { id: 'expiry', header: 'Expiry Date', value: (org) => org.expiryDate, cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.expiryDate)}</span> },
+    { id: 'customerName', header: 'Customer Name', width: '13rem', value: (org) => org.primaryContact, cell: (org) => <span className="text-[var(--text-secondary)]">{org.primaryContact}</span> },
+    { id: 'code', header: 'Code', width: '12rem', value: (org) => org.code, cell: (org) => <span className="font-mono text-xs text-[var(--text-secondary)]">{org.code}</span> },
+    { id: 'email', header: 'Email', width: '16rem', value: (org) => org.contactEmail, cell: (org) => <span className="text-[var(--text-secondary)]">{org.contactEmail}</span> },
+    { id: 'users', header: 'Users', width: '5.5rem', value: (org) => org.userCount, cell: (org) => <span className="text-[var(--text-secondary)]">{org.userCount}</span> },
+    { id: 'start', header: 'Start Date', width: '8.5rem', value: (org) => org.createdAt, cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.createdAt)}</span> },
+    { id: 'expiry', header: 'Expiry Date', width: '8.5rem', value: (org) => org.expiryDate, cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.expiryDate)}</span> },
     {
-      id: 'status', header: 'Status', value: (org) => effectiveStatusOf(org),
+      id: 'status', header: 'Status', width: '7.5rem', value: (org) => effectiveStatusOf(org),
       cell: (org) => {
         const status = effectiveStatusOf(org);
         return status === 'expired' || status === 'expiring-soon'

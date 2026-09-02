@@ -88,7 +88,8 @@ namespace CFR.AcutisInfrastructure
             /// <summary>
             /// Products and License unified CRUD operations.
             /// ActionId 1=product list, 2=product get by id, 3=product update, 4=product check name,
-            /// ActionId 5=license list, 6=license get by id, 7=license create, 8=license update.
+            /// ActionId 5=license list, 6=license get by id, 7=license create, 8=license update,
+            /// ActionId 9=product customers from [core].[Organization].
             /// </summary>
             public const string ProductsCrud = "[dbo].[Acutis_Products_CRUD]";
         }

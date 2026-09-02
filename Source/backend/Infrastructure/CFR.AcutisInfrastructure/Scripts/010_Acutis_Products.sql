@@ -8,6 +8,7 @@
 -- ActionId 6: License GET by ID
 -- ActionId 7: License POST (Create)
 -- ActionId 8: License PUT (Update)
+-- ActionId 9: Product customers from [core].[Organization]
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -373,6 +374,68 @@ BEGIN
 
         SET @ReturnValue = CAST(@LicenseId AS INT);
         RETURN @ReturnValue;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 9: Product customers from [core].[Organization]
+    ---------------------------------------------------------------------------
+    IF @ActionId = 9
+    BEGIN
+        SELECT
+            o.[OrgId],
+            o.[OrgName],
+            o.[OrgStatus],
+            ISNULL(NULLIF(LTRIM(RTRIM(o.[ContactEmail])), N''), u.[UserEmail]) AS [ContactEmail],
+            o.[Website],
+            ISNULL(NULLIF(LTRIM(RTRIM(o.[ContactPerson])), N''), u.[UserFullName]) AS [ContactPerson],
+            o.[ContactPhone],
+            o.[InsertedDate],
+            o.[UpdatedDate],
+            (
+                SELECT COUNT(*)
+                FROM [auth].[OrganizationUser] AS ou
+                INNER JOIN [auth].[AuthUser] AS au ON au.[AuthUserId] = ou.[AuthUserId]
+                WHERE ou.[OrgId] = o.[OrgId]
+                  AND ou.[IsDeleted] = 0
+                  AND au.[IsDeleted] = 0
+            ) AS [UserCount],
+            CONCAT(N'ORG-', o.[OrgId]) AS [OrgCode],
+            ISNULL(l.[ActivationDate], ISNULL(op.[CreatedDate], o.[InsertedDate])) AS [StartDate],
+            l.[ExpiryDate],
+            l.[LicenseType],
+            ISNULL(l.[LicenseStatus], ISNULL(op.[AssignStatus], o.[OrgStatus])) AS [LicenseStatus]
+        FROM [core].[Organization] AS o
+        INNER JOIN [lic].[OrganizationProduct] AS op
+            ON op.[OrgId] = o.[OrgId]
+           AND op.[ProductId] = @ProductId
+           AND op.[IsDeleted] = 0
+        OUTER APPLY
+        (
+            SELECT TOP (1)
+                l2.[ActivationDate],
+                l2.[ExpiryDate],
+                l2.[LicenseType],
+                l2.[LicenseStatus]
+            FROM [lic].[License] AS l2
+            WHERE l2.[OrganizationProductId] = op.[OrganizationProductId]
+            ORDER BY l2.[CreatedDate] DESC
+        ) AS l
+        OUTER APPLY
+        (
+            SELECT TOP (1)
+                LTRIM(RTRIM(CONCAT(ISNULL(au.[FirstName], N''), N' ', ISNULL(au.[LastName], N'')))) AS [UserFullName],
+                au.[Email] AS [UserEmail]
+            FROM [auth].[OrganizationUser] AS ou
+            INNER JOIN [auth].[AuthUser] AS au ON au.[AuthUserId] = ou.[AuthUserId]
+            WHERE ou.[OrgId] = o.[OrgId]
+              AND ou.[IsDeleted] = 0
+              AND au.[IsDeleted] = 0
+            ORDER BY ou.[CreatedDate]
+        ) AS u
+        WHERE o.[IsDeleted] = 0
+        ORDER BY o.[OrgName];
+
+        RETURN 0;
     END
 END
 GO

@@ -72,6 +72,21 @@ namespace CFR.AcutisService.Interfaces.Products
         /// <returns>MSResultArgs containing the license record.</returns>
         Task<MSResultArgs> GetLicenseByIdAsync(long licenseId);
 
+        /// <summary>
+        /// Retrieves product customers from [core].[Organization] for a specific product.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch organization rows assigned to the product for the Customers tab.
+        /// Request Flow: ProductsController -> IProductsService.GetProductCustomersAsync() -> IProductsRepository.GetProductCustomersAsync().
+        /// Validation Details: ProductId must be greater than zero.
+        /// Business Logic: Wraps the typed customer list in MSResultArgs.
+        /// Repository Interaction: Calls IProductsRepository.GetProductCustomersAsync().
+        /// Response Details: MSResultArgs containing List of ProductCustomerOutput.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <returns>MSResultArgs containing the product customer records list.</returns>
+        Task<MSResultArgs> GetProductCustomersAsync(int productId);
+
         #endregion GET Methods
 
         #region POST Methods

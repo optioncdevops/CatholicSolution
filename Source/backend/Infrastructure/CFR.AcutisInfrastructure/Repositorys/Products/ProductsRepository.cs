@@ -126,6 +126,59 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             return await dapperHandler.QueryFirstOrDefaultAsync<ProductLicenseOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
         }
 
+        /// <summary>
+        /// Fetches product customers from [core].[Organization] using StoredProc.Products.ProductsCrud (ActionId 9).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Retrieve only organizations assigned to this product, with user counts from [auth].[OrganizationUser]/[auth].[AuthUser].
+        /// Request Flow: IProductsService -> ProductsRepository.GetProductCustomersAsync() -> Database.
+        /// Validation Details: ProductId selects [lic].[OrganizationProduct] rows for this product.
+        /// Business Logic: Reads product assignments via ProductsCrud (ActionId 5) and organization/user details via OrganizationCrud (ActionId 1).
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud and StoredProc.Organization.OrganizationCrud.
+        /// Response Details: Returns a list of ProductCustomerOutput records for this product only.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <returns>A list of product customer records.</returns>
+        public async Task<List<ProductCustomerOutput>> GetProductCustomersAsync(int productId)
+        {
+            var organizationParameters = new DynamicParameters();
+            organizationParameters.Add(DBParameterName.OrganizationParams.ActionId, 1, DbType.Int32);
+            var organizations = await dapperHandler.QueryAsync<OrganizationOutput>(StoredProc.Organization.OrganizationCrud, organizationParameters, CommandType.StoredProcedure);
+
+            var licenseParameters = new DynamicParameters();
+            licenseParameters.Add(DBParameterName.ProductParams.ActionId, 5, DbType.Int32);
+            licenseParameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
+            var licenses = await dapperHandler.QueryAsync<ProductLicenseOutput>(StoredProc.Products.ProductsCrud, licenseParameters, CommandType.StoredProcedure);
+
+            return licenses
+                .GroupBy(item => item.OrgId)
+                .Select(group =>
+                {
+                    var license = group.OrderByDescending(item => item.CreatedDate).First();
+                    var organization = organizations.FirstOrDefault(item => item.OrgId == license.OrgId);
+                    return new ProductCustomerOutput
+                    {
+                        OrgId = license.OrgId,
+                        OrgName = organization?.OrgName ?? license.OrgName,
+                        OrgStatus = organization?.OrgStatus ?? string.Empty,
+                        ContactEmail = organization?.ContactEmail,
+                        Website = organization?.Website,
+                        ContactPerson = organization?.ContactPerson,
+                        ContactPhone = organization?.ContactPhone,
+                        InsertedDate = organization?.InsertedDate ?? license.CreatedDate,
+                        UpdatedDate = organization?.UpdatedDate,
+                        UserCount = organization?.UserCount ?? 0,
+                        OrgCode = $"ORG-{license.OrgId}",
+                        StartDate = license.ActivationDate,
+                        ExpiryDate = license.ExpiryDate,
+                        LicenseType = license.LicenseType,
+                        LicenseStatus = license.LicenseStatus ?? organization?.OrgStatus
+                    };
+                })
+                .OrderBy(item => item.OrgName)
+                .ToList();
+        }
+
         #endregion GET Methods
 
         #region POST Methods

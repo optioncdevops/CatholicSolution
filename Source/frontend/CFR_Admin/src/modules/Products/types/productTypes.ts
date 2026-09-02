@@ -49,6 +49,35 @@ export interface ProductLicenseInputPayload {
   remarks?: string;
 }
 
+export interface ProductCustomerApiItem {
+  orgId: number;
+  orgName: string;
+  orgStatus: string;
+  contactEmail?: string | null;
+  contactPerson?: string | null;
+  contactPhone?: string | null;
+  insertedDate: string;
+  updatedDate?: string | null;
+  userCount: number;
+  orgCode?: string | null;
+  startDate?: string | null;
+  expiryDate?: string | null;
+  licenseType?: string | null;
+  licenseStatus?: string | null;
+}
+
+export interface ProductCustomerRow {
+  id: string;
+  name: string;
+  primaryContact: string;
+  code: string;
+  contactEmail: string;
+  userCount: number;
+  createdAt: string;
+  expiryDate: string;
+  status: 'active' | 'trial' | 'suspended';
+}
+
 export interface ProductLicenseApiItem {
   licenseId: number;
   organizationProductId: number;
@@ -65,5 +94,19 @@ export interface ProductLicenseApiItem {
   issuedBy?: number | null;
   remarks?: string | null;
   createdDate?: string | null;
+}
+
+export interface ProductLicenseHistoryRow {
+  id: string;
+  licenseId: number;
+  orgId: string;
+  customerCode: string;
+  customer: string;
+  startDate: string;
+  expiryDate: string;
+  term: 'Current' | 'Past';
+  status: 'active' | 'expiring-soon' | 'expired' | 'suspended';
+  rawStatus: string;
+  remarks?: string | null;
 }
 
