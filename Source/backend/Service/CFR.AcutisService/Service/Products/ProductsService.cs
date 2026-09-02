@@ -7,7 +7,7 @@ namespace CFR.AcutisService.Service.Products
     /// Repository Responsibility:
     /// - Invokes IProductsRepository for database querying on Core.Product.
     /// </summary>
-    public class ProductsService(IProductsRepository repository, IWebHostEnvironment environment, ILogger<ProductsService> logger): IProductsService
+    public class ProductsService(IProductsRepository repository, IFileHandlerService fileHandler, IConfiguration configuration, ILogger<ProductsService> logger): IProductsService
     {
         #region GET Methods
 
@@ -177,12 +177,12 @@ namespace CFR.AcutisService.Service.Products
         /// Validates and saves an uploaded product logo image (JPG or PNG, max 2MB).
         /// </summary>
         /// <remarks>
-        /// Purpose: Store product logo safely and return relative accessible URL.
-        /// Request Flow: ProductsController -> ProductsService.UploadProductLogoAsync() -> Storage.
+        /// Purpose: Store product logo under wwwroot/Acutis/Attachment/Products via IFileHandlerService.
+        /// Request Flow: ProductsController -> ProductsService.UploadProductLogoAsync() -> IFileHandlerService.
         /// Validation Details: File is required, max 2 MB, extensions .jpg/.jpeg/.png only.
-        /// Business Logic: Generates collision-proof filename and saves to storage location.
+        /// Business Logic: Saves using AppStrings:GatewayRoot + AppSettings:ProductLogoPath.
         /// Repository Interaction: None (file storage only).
-        /// Response Details: MSResultArgs containing relative URL path (/uploads/products/{fileName}).
+        /// Response Details: MSResultArgs containing relative URL path (/Acutis/Attachment/Products/{fileName}).
         /// </remarks>
         /// <param name="file">Uploaded image file from multipart form data.</param>
         /// <returns>MSResultArgs containing relative accessible URL path.</returns>
@@ -215,15 +215,11 @@ namespace CFR.AcutisService.Service.Products
                     return result;
                 }
 
-                var uniqueFileName = $"prod_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
-                var targetPath = Path.Combine(GetUploadsDirectory(), uniqueFileName);
-
-                using (var stream = new FileStream(targetPath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                result.ResultData = $"/uploads/products/{uniqueFileName}";
+                string relativeDirectory = GetProductLogoRelativePath();
+                string savedPath = fileHandler.SaveUniqueFile(file, relativeDirectory, $"prod_{Guid.NewGuid():N}");
+                string fileName = Path.GetFileName(savedPath);
+                result.ResultData = $"/{relativeDirectory.Replace('\\', '/').Trim('/')}/{fileName}";
+                await Task.CompletedTask;
             }
             catch (Exception ex)
             {
@@ -414,18 +410,10 @@ namespace CFR.AcutisService.Service.Products
 
         #region Private Helper Methods
 
-        private string GetUploadsDirectory()
+        private string GetProductLogoRelativePath()
         {
-            string webRoot = !string.IsNullOrWhiteSpace(environment.WebRootPath)
-                ? environment.WebRootPath
-                : Path.Combine(environment.ContentRootPath, "wwwroot");
-
-            string uploadsDir = Path.Combine(webRoot, "uploads", "products");
-            if (!Directory.Exists(uploadsDir))
-            {
-                _ = Directory.CreateDirectory(uploadsDir);
-            }
-            return uploadsDir;
+            string relativePath = configuration["AppSettings:ProductLogoPath"] ?? string.Empty;
+            return string.IsNullOrWhiteSpace(relativePath) ? Path.Combine("Acutis", "Attachment", "Products") : relativePath;
         }
 
         private void TryDeleteLocalFile(string? relativeUrl)
@@ -438,11 +426,7 @@ namespace CFR.AcutisService.Service.Products
                 }
 
                 string fileName = Path.GetFileName(relativeUrl);
-                string filePath = Path.Combine(GetUploadsDirectory(), fileName);
-                if (File.Exists(filePath))
-                {
-                    File.Delete(filePath);
-                }
+                _ = fileHandler.DeleteFile(Path.Combine(GetProductLogoRelativePath(), fileName));
             }
             catch (Exception ex)
             {

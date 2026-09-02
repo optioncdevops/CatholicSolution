@@ -120,7 +120,7 @@ namespace CFR.Acutis.Controllers.Products
         /// Service Interaction: Calls IProductsService.UploadProductLogoAsync(file).
         /// Response Details: Standard API result enclosing relative file URL path.
         /// </remarks>
-        /// <param name="file">The uploaded image file.</param>
+        /// <param name="form">Multipart form containing the logo image file.</param>
         /// <returns>A consistent API response containing the relative URL path of the saved logo.</returns>
         /// <response code="200">Successfully uploaded the product logo.</response>
         /// <response code="400">Invalid image file or size exceeds 2 MB.</response>
@@ -128,9 +128,9 @@ namespace CFR.Acutis.Controllers.Products
         [HttpPost]
         [ActionName(API_Product.UploadProductLogo)]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadProductLogo(IFormFile file)
+        public async Task<IActionResult> UploadProductLogo([FromForm] ProductLogoUploadForm form)
         {
-            return ApiResultArgs(await service.UploadProductLogoAsync(file), APIHttpType.HttpPost);
+            return ApiResultArgs(await service.UploadProductLogoAsync(form.File), APIHttpType.HttpPost);
         }
 
         /// <summary>

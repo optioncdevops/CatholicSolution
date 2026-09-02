@@ -90,15 +90,23 @@ export const deleteProduct = async (productId: number): Promise<ApiResponse> => 
 export const uploadProductLogo = async (file: File): Promise<string> => {
   try {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('File', file);
     const response = await axiosInstance.post<ApiResponse<string>>(
       `${controller}/UploadProductLogo`,
       formData,
       {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
+        transformRequest: [
+          (data, headers) => {
+            if (headers && typeof headers.set === 'function') {
+              headers.set('Content-Type', false);
+            } else if (headers) {
+              delete headers['Content-Type'];
+              delete headers['content-type'];
+            }
+            return data;
+          },
+        ],
+      },
     );
     return response.data.resultData || '';
   } catch (error: unknown) {

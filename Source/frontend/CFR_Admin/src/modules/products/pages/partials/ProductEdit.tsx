@@ -144,8 +144,8 @@ const ProductEdit = () => {
       });
       if (!confirmed) return;
     }
-    if (productId) {
-      goToDetails(productId);
+    if (product) {
+      goToDetails(product.productId);
       return;
     }
     navigate(PRODUCTS_PATHS.list);

@@ -59,8 +59,10 @@ export function resolveProductLogoUrl(logoUrl: string | null | undefined): strin
   }
   const apiBase = String(import.meta.env.VITE_APP_REST_API_BASE_URL ?? '').replace(/\/+$/, '');
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  const finalPath = cleanPath.startsWith('/acutis') ? cleanPath : `/acutis${cleanPath}`;
-  return `${apiBase}${finalPath}`;
+  if (cleanPath.startsWith('/acutis/')) {
+    return `${apiBase}${cleanPath}`;
+  }
+  return `${apiBase}/acutis${cleanPath}`;
 }
 
 export function toAdminApplication(item: ProductApiItem): AdminApplication {

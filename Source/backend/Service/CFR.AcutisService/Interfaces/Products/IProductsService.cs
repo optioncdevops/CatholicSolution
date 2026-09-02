@@ -85,7 +85,7 @@ namespace CFR.AcutisService.Interfaces.Products
         /// Validation Details: File is required, max 2 MB, extensions .jpg/.jpeg/.png only.
         /// Business Logic: Generates unique filename and saves to storage location.
         /// Repository Interaction: None (file storage only).
-        /// Response Details: MSResultArgs containing relative URL path (/uploads/products/{fileName}).
+        /// Response Details: MSResultArgs containing relative URL path (/Acutis/Attachment/Products/{fileName}).
         /// </remarks>
         /// <param name="file">Uploaded image file from multipart form data.</param>
         /// <returns>MSResultArgs containing relative accessible URL path.</returns>
