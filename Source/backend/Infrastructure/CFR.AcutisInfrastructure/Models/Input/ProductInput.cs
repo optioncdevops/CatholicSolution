@@ -51,6 +51,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string? LogoUrl { get; set; }
 
         /// <summary>
+        /// Gets or sets the product contact person name. Null leaves the stored value unchanged; empty string clears it.
+        /// </summary>
+        [JsonPropertyName("contactPerson")]
+        public string? ContactPerson { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the product is active.
         /// </summary>
         [JsonPropertyName("isActive")]

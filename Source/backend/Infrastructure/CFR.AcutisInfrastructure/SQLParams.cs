@@ -403,6 +403,11 @@ namespace CFR.AcutisInfrastructure
             public const string LogoUrl = nameof(LogoUrl);
 
             /// <summary>
+            /// Acutis user display name stored as the product contact person. Empty string clears the contact.
+            /// </summary>
+            public const string ContactPerson = nameof(ContactPerson);
+
+            /// <summary>
             /// Pipe-delimited list of product features.
             /// </summary>
             public const string Features = nameof(Features);

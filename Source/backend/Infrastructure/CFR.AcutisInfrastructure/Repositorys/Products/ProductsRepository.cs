@@ -262,6 +262,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             parameters.Add(DBParameterName.ProductParams.ExternalPageUrl, input.ExternalPageUrl?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.DefaultAccessDays, input.DefaultAccessDays, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.LogoUrl, input.LogoUrl?.Trim(), DbType.String);
+            parameters.Add(DBParameterName.ProductParams.ContactPerson, input.ContactPerson is null ? DBNull.Value : input.ContactPerson, DbType.String);
             string? updateFeatures = input.Features != null && input.Features.Count > 0
                 ? string.Join("|", input.Features.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()))
                 : null;

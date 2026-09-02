@@ -2,6 +2,13 @@ export interface ProductLocationState {
   productId: number;
 }
 
+export interface ProductContactUser {
+  userId: number;
+  fullName: string;
+  eMail: string;
+  isActive: number;
+}
+
 export interface ProductApiItem {
   productId: number;
   productName: string;
@@ -13,6 +20,7 @@ export interface ProductApiItem {
   isActive: boolean;
   isAvailable: boolean;
   customerCount: number;
+  contactPerson: string | null;
   features?: string[];
   createdDate: string;
   insertedBy: number | null;
@@ -28,6 +36,7 @@ export interface ProductSaveInputPayload {
   externalPageUrl?: string | null;
   defaultAccessDays: number;
   logoUrl?: string | null;
+  contactPerson?: string | null;
   features?: string[];
   isActive: boolean;
   isAvailable: boolean;

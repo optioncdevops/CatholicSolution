@@ -1,4 +1,4 @@
-import type { ProductApiItem, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState } from '../types/productTypes';
+import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
 import { effectiveLicenseStatus } from '@/modules/utils/formatDate';
 
@@ -35,6 +35,32 @@ export function formatProductCustomerCount(count: number): string {
   return n === 1 ? '1 customer' : `${n} customers`;
 }
 
+export function toProductContactUserId(value: unknown): number | null {
+  const raw = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
+  if (!Number.isInteger(raw) || raw <= 0) return null;
+  return raw;
+}
+
+export function toProductContactPersonName(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+export function normalizeProductContactUsers(resultData: unknown): ProductContactUser[] {
+  if (!Array.isArray(resultData)) return [];
+  return resultData
+    .map((row) => {
+      if (!row || typeof row !== 'object') return null;
+      const item = row as ProductContactUser & { FullName?: string; EMail?: string; UserId?: number; IsActive?: number };
+      const userId = toProductContactUserId(item.userId ?? item.UserId);
+      if (!userId) return null;
+      const fullName = toProductContactPersonName(item.fullName ?? item.FullName);
+      const eMail = typeof item.eMail === 'string' ? item.eMail : typeof item.EMail === 'string' ? item.EMail : '';
+      const isActive = Number(item.isActive ?? item.IsActive) === 1 ? 1 : 0;
+      return { userId, fullName: fullName || eMail || `User ${userId}`, eMail, isActive };
+    })
+    .filter((row): row is ProductContactUser => row != null);
+}
+
 export function parseProductIdFromState(state: unknown): number | null {
   if (!state || typeof state !== 'object') {
     return null;
@@ -65,12 +91,17 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
   if (!resultData || typeof resultData !== 'object') {
     return null;
   }
-  const item = resultData as ProductApiItem & { LogoUrl?: string | null; CustomerCount?: number };
+  const item = resultData as ProductApiItem & {
+    LogoUrl?: string | null;
+    CustomerCount?: number;
+    ContactPerson?: string | null;
+  };
   const logoUrl = pickProductLogoUrl(item);
   return {
     ...item,
     logoUrl,
     customerCount: toProductCustomerCount(item.customerCount ?? item.CustomerCount),
+    contactPerson: toProductContactPersonName(item.contactPerson ?? item.ContactPerson) || null,
   };
 }
 
@@ -278,5 +309,7 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     registryRef: `reg_app_${String(item.productId).padStart(4, '0')}`,
     sourceLocation: `SaaS_Apps/${productName.toLowerCase().replace(/\s+/g, '-')}`,
     updatedAt: item.updatedDate || item.createdDate,
+    contactUserId: '',
+    contactPersonName: item.contactPerson || '',
   };
 }

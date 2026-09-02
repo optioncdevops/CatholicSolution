@@ -221,12 +221,13 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
           <p className="text-[0.8125rem] leading-6 text-[var(--text-secondary)]">{app.description || 'No description yet.'}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-5 gap-y-3 p-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
           <Fact label="Product Subtitle" value={app.category} />
           <Fact label="Status" value={app.status.replace('-', ' ')} />
           <WebsiteUrlFact url={app.productionUrl} />
           <Fact label="License Type" value={app.licenseType} />
           <Fact label="Last updated" value={formatDate(app.updatedAt)} />
+          <Fact label="Contact Person" value={app.contactPersonName || ''} />
         </div>
 
         <div className="p-4">
@@ -322,6 +323,7 @@ const ProductDetails = () => {
         defaultAccessDays: product.defaultAccessDays,
         isActive: status === 'active',
         isAvailable: status !== 'coming-soon',
+        contactPerson: product.contactPerson,
       };
       await updateProduct(payload);
       await loadProduct();

@@ -62,6 +62,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public bool IsAvailable { get; set; }
 
         /// <summary>
+        /// Gets or sets the product contact person name from [auth].[AcutisUser].
+        /// </summary>
+        [JsonPropertyName("contactPerson")]
+        public string? ContactPerson { get; set; }
+
+        /// <summary>
         /// Gets or sets the number of organizations assigned to this product.
         /// </summary>
         [JsonPropertyName("customerCount")]

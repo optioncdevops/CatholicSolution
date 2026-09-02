@@ -1,22 +1,24 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton } from "@app/components/buttons";
-import { InputField, MandatoryIndicator, ProfileImageUpload, RadioGroup, TextareaField } from "@app/components/formControls";
+import { InputField, MandatoryIndicator, ProfileImageUpload, RadioGroup, TextareaField, Dropdown } from "@app/components/formControls";
 import { StatusBadge } from "@app/components/Badge";
 import { cn } from "@app/utilities/cn";
 import { confirmAction } from "@/modules/lib/confirm";
 import { validateProductForm, type ProductFormErrors } from "../../validator/productValidation";
 import {
   getProductById,
+  getProductContactUsers,
   getProducts,
   updateProduct,
   uploadProductLogo,
 } from "../../services/productService";
 import type {
   ProductApiItem,
+  ProductContactUser,
   ProductInputPayload,
 } from "../../types/productTypes";
 import {
@@ -24,6 +26,7 @@ import {
   PRODUCTS_PATHS,
   normalizeProductList,
   normalizeProductApiItem,
+  normalizeProductContactUsers,
   parseProductIdFromState,
   resolveProductLogoUrl,
   toStoredProductLogoPath,
@@ -155,16 +158,27 @@ function ProductForm({
   form,
   errors,
   touched,
+  contactUsers,
   onUpdate,
   onLogoFileChange,
 }: {
   form: AdminApplication;
   errors: ProductFormErrors;
   touched: boolean;
+  contactUsers: ProductContactUser[];
   onUpdate: <K extends keyof AdminApplication>(key: K, value: AdminApplication[K]) => void;
   onLogoFileChange?: (file: File | null) => void;
 }) {
   const [featureDraft, setFeatureDraft] = useState("");
+
+  const contactOptions = useMemo(() => {
+    return contactUsers
+      .filter((user) => user.isActive === 1 || String(user.userId) === form.contactUserId)
+      .map((user) => ({
+        id: String(user.userId),
+        value: user.fullName,
+      }));
+  }, [contactUsers, form.contactUserId]);
 
   const addFeature = () => {
     const value = featureDraft.trim();
@@ -210,6 +224,20 @@ function ProductForm({
             options={NAVIGATION_OPTIONS}
             value={form.navigationTarget}
             onValueChange={(value) => onUpdate("navigationTarget", value as ProductNavigationTarget)}
+          />
+          <Dropdown
+            label="Contact Person"
+            placeholder="Select contact person"
+            searchable
+            clearable
+            value={form.contactUserId ?? ""}
+            onValueChange={(value) => {
+              const contactUserId = value ?? "";
+              const selected = contactUsers.find((user) => String(user.userId) === contactUserId);
+              onUpdate("contactUserId", contactUserId);
+              onUpdate("contactPersonName", selected?.fullName ?? "");
+            }}
+            options={contactOptions}
           />
         </div>
 
@@ -258,6 +286,7 @@ const ProductEdit = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [contactUsers, setContactUsers] = useState<ProductContactUser[]>([]);
   //#endregion
 
   //#region Functions
@@ -414,6 +443,7 @@ const ProductEdit = () => {
         features: form.features,
         isActive: form.status === "active",
         isAvailable: form.status !== "coming-soon",
+        contactPerson: form.contactPersonName?.trim() || '',
       };
 
       await updateProduct(payload);
@@ -432,6 +462,30 @@ const ProductEdit = () => {
   useEffect(() => {
     void loadProduct();
   }, [loadProduct]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await getProductContactUsers();
+        setContactUsers(res.statusCode === 204 ? [] : normalizeProductContactUsers(res.resultData));
+      } catch (error) {
+        console.error("Error loading contact persons:", error);
+        showToast(typeof error === "string" ? error : "Failed to load contact persons.", "error");
+        setContactUsers([]);
+      }
+    })();
+  }, [showToast]);
+
+  useEffect(() => {
+    const bindContactUser = (current: AdminApplication | null) => {
+      if (!current?.contactPersonName || current.contactUserId) return current;
+      const match = contactUsers.find((user) => user.fullName === current.contactPersonName);
+      if (!match) return current;
+      return { ...current, contactUserId: String(match.userId) };
+    };
+    setForm((current) => bindContactUser(current));
+    setOriginalForm((current) => bindContactUser(current));
+  }, [contactUsers]);
   //#endregion
 
   if (loading) {
@@ -492,6 +546,7 @@ const ProductEdit = () => {
           form={form}
           errors={errors}
           touched={touched}
+          contactUsers={contactUsers}
           onUpdate={update}
           onLogoFileChange={handleLogoFileChange}
         />

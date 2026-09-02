@@ -13,6 +13,15 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = N'core' AND TABLE_NAME = N'Product' AND COLUMN_NAME = N'ContactPerson'
+)
+BEGIN
+    ALTER TABLE [core].[Product] ADD [ContactPerson] NVARCHAR(200) NULL;
+END
+GO
+
 IF OBJECT_ID(N'[dbo].[Acutis_Products_CRUD]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[Acutis_Products_CRUD];
 GO
@@ -27,6 +36,7 @@ CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
     @ExternalPageUrl NVARCHAR(500) = NULL,
     @DefaultAccessDays INT = 365,
     @LogoUrl NVARCHAR(500) = NULL,
+    @ContactPerson NVARCHAR(200) = NULL,
     @Features NVARCHAR(MAX) = NULL,
     @IsActive BIT = 1,
     @IsAvailable BIT = 1,
@@ -77,6 +87,7 @@ BEGIN
             p.[LogoUrl],
             p.[IsActive],
             p.[IsAvailable],
+            p.[ContactPerson],
             (
                 SELECT COUNT(DISTINCT op.[OrgId])
                 FROM [lic].[OrganizationProduct] AS op
@@ -113,6 +124,7 @@ BEGIN
             p.[LogoUrl],
             p.[IsActive],
             p.[IsAvailable],
+            p.[ContactPerson],
             (
                 SELECT COUNT(DISTINCT op.[OrgId])
                 FROM [lic].[OrganizationProduct] AS op
@@ -175,6 +187,11 @@ BEGIN
             [ExternalPageUrl] = @ExternalPageUrl,
             [DefaultAccessDays] = @DefaultAccessDays,
             [LogoUrl] = @LogoUrl,
+            [ContactPerson] = CASE
+                WHEN @ContactPerson IS NULL THEN [ContactPerson]
+                WHEN LTRIM(RTRIM(@ContactPerson)) = N'' THEN NULL
+                ELSE @ContactPerson
+            END,
             [IsActive] = @IsActive,
             [IsAvailable] = @IsAvailable,
             [UpdatedDate] = SYSUTCDATETIME(),

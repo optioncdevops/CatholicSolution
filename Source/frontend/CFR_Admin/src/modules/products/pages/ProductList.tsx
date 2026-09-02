@@ -174,6 +174,7 @@ const ProductList = () => {
         defaultAccessDays: selectedProduct.defaultAccessDays,
         isActive: status === "active",
         isAvailable: status !== "coming-soon",
+        contactPerson: selectedProduct.contactPerson,
       };
       await updateProduct(payload);
       showToast(
