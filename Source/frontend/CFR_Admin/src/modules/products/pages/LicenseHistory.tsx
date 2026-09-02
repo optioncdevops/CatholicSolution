@@ -9,7 +9,7 @@ import { formatDate } from '@/modules/utils/formatDate';
 import { getLicenseDetails } from '../services/productService';
 import type { ProductLicenseApiItem, ProductLicenseHistoryRow } from '../types/productTypes';
 import { toLicenseHistoryRows } from '../utils/productHelpers';
-import { InvoiceDetailModal } from './partials/InvoiceDetailModal';
+import { InvoiceDetailModal } from './LicenseDetails';
 import type { AdminApplication, EffectiveLicenseStatus, License } from '@/modules/types';
 
 const STATUS_FILTERS: Array<{ id: EffectiveLicenseStatus | 'all'; label: string }> = [

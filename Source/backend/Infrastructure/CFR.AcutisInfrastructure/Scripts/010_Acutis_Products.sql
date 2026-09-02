@@ -39,7 +39,7 @@ CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
     @ExpiryDate DATETIME2 = NULL,
     @LicenseStatus NVARCHAR(50) = NULL,
     @AssignStatus NVARCHAR(50) = NULL,
-    @Remarks NVARCHAR(500) = NULL,
+    @Remarks NVARCHAR(MAX) = NULL,
     -- Audit & Output Parameters
     @InsertedBy BIGINT = NULL,
     @UpdatedBy BIGINT = NULL,
@@ -276,30 +276,58 @@ BEGIN
     ---------------------------------------------------------------------------
     IF @ActionId = 7
     BEGIN
-        IF @OrganizationProductId = 0 AND @OrgId > 0 AND @ProductId > 0
+        IF ISNULL(@OrganizationProductId, 0) = 0 AND @OrgId > 0 AND @ProductId > 0
         BEGIN
-            SELECT @OrganizationProductId = [OrganizationProductId]
+            SELECT @OrganizationProductId = ISNULL([OrganizationProductId], 0)
             FROM [lic].[OrganizationProduct]
             WHERE [OrgId] = @OrgId
               AND [ProductId] = @ProductId
               AND [IsDeleted] = 0;
 
-            IF @OrganizationProductId = 0
+            IF ISNULL(@OrganizationProductId, 0) = 0
             BEGIN
                 INSERT INTO [lic].[OrganizationProduct]
                 (
-                    [OrgId], [ProductId], [AssignStatus], [CreatedDate], [IsDeleted]
+                    [OrgId],
+                    [ProductId],
+                    [AssignStatus],
+                    [AssignedBy],
+                    [ActiveStartDate],
+                    [ActiveEndDate],
+                    [CreatedDate],
+                    [InsertedBy],
+                    [IsDeleted]
                 )
                 VALUES
                 (
-                    @OrgId, @ProductId, ISNULL(@AssignStatus, N'active'), SYSUTCDATETIME(), 0
+                    @OrgId,
+                    @ProductId,
+                    CASE LOWER(ISNULL(@AssignStatus, N'active'))
+                        WHEN N'suspended' THEN N'suspended'
+                        WHEN N'revoked' THEN N'revoked'
+                        ELSE N'active'
+                    END,
+                    @InsertedBy,
+                    ISNULL(@ActivationDate, SYSUTCDATETIME()),
+                    ISNULL(@ExpiryDate, DATEADD(YEAR, 1, SYSUTCDATETIME())),
+                    SYSUTCDATETIME(),
+                    @InsertedBy,
+                    0
                 );
 
                 SET @OrganizationProductId = SCOPE_IDENTITY();
+                IF ISNULL(@OrganizationProductId, 0) = 0
+                BEGIN
+                    SELECT @OrganizationProductId = [OrganizationProductId]
+                    FROM [lic].[OrganizationProduct]
+                    WHERE [OrgId] = @OrgId
+                      AND [ProductId] = @ProductId
+                      AND [IsDeleted] = 0;
+                END
             END
         END
 
-        IF @OrganizationProductId = 0
+        IF ISNULL(@OrganizationProductId, 0) = 0
         BEGIN
             SET @ReturnValue = -95;
             RETURN @ReturnValue;
@@ -320,10 +348,18 @@ BEGIN
         VALUES
         (
             @OrganizationProductId,
-            ISNULL(@LicenseType, N'licensed'),
-            ISNULL(@ActivationDate, SYSUTCDATETIME()),
-            @ExpiryDate,
-            ISNULL(@LicenseStatus, N'active'),
+            CASE LOWER(ISNULL(@LicenseType, N'subscription'))
+                WHEN N'trial' THEN N'trial'
+                WHEN N'perpetual' THEN N'perpetual'
+                ELSE N'subscription'
+            END,
+            CAST(ISNULL(@ActivationDate, SYSUTCDATETIME()) AS DATE),
+            CAST(@ExpiryDate AS DATE),
+            CASE LOWER(ISNULL(@LicenseStatus, N'active'))
+                WHEN N'expired' THEN N'expired'
+                WHEN N'cancelled' THEN N'cancelled'
+                ELSE N'active'
+            END,
             @InsertedBy,
             @Remarks,
             SYSUTCDATETIME(),
@@ -331,7 +367,14 @@ BEGIN
         );
 
         SET @LicenseId = SCOPE_IDENTITY();
-        SET @ReturnValue = CAST(@LicenseId AS INT);
+        IF ISNULL(@LicenseId, 0) = 0
+        BEGIN
+            SELECT @LicenseId = MAX([LicenseId])
+            FROM [lic].[License]
+            WHERE [OrganizationProductId] = @OrganizationProductId;
+        END
+
+        SET @ReturnValue = CAST(ISNULL(@LicenseId, 0) AS INT);
         RETURN @ReturnValue;
     END
 

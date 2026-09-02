@@ -25,8 +25,8 @@ import {
 import { validateLicenseForm } from '../../validator/productValidation';
 
 const STATUS_OPTIONS = [
-  { id: 'Active', value: 'Active' },
-  { id: 'Suspended', value: 'Suspended' },
+  { id: 'active', value: 'Active' },
+  { id: 'suspended', value: 'Suspended' },
 ];
 
 function today(): string {
@@ -53,7 +53,7 @@ const AddLicense = () => {
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
   const [orgId, setOrgId] = useState('');
-  const [licenseStatus, setLicenseStatus] = useState('Active');
+  const [licenseStatus, setLicenseStatus] = useState('active');
   const [activationDate, setActivationDate] = useState(today());
   const [expiryDate, setExpiryDate] = useState(inDays(365));
   const [customMessage, setCustomMessage] = useState('');
@@ -128,10 +128,6 @@ const AddLicense = () => {
   }, [loadPage]);
   //#endregion
 
-  if (!productId) {
-    return null;
-  }
-
   if (loading) {
     return (
       <div className="admin-reveal flex flex-col gap-4" aria-busy="true">
@@ -164,6 +160,8 @@ const AddLicense = () => {
     goToDetails();
   };
 
+  const productId = product.productId;
+
   const handleSubmit = async () => {
     setTouched(true);
     const messages = validateLicenseForm({
@@ -179,19 +177,21 @@ const AddLicense = () => {
 
     setSaving(true);
     try {
-      const remarks = [title.trim(), customMessage.trim()].filter(Boolean).join('\n');
-      await createLicense({
-        licenseId: 0,
-        organizationProductId: 0,
+      const remarks = [title.trim(), customMessage.trim()].filter(Boolean).join('\n').slice(0, 500);
+      const normalizedStatus = licenseStatus.toLowerCase() === 'suspended' ? 'suspended' : 'active';
+      const res = await createLicense({
         orgId: Number(orgId),
         productId,
-        licenseType: 'Subscription',
-        activationDate,
-        expiryDate,
-        licenseStatus,
-        assignStatus: 'Active',
+        licenseType: 'subscription',
+        activationDate: `${activationDate}T00:00:00`,
+        expiryDate: `${expiryDate}T00:00:00`,
+        licenseStatus: 'active',
+        assignStatus: normalizedStatus,
         remarks: remarks || undefined,
       });
+      if (res.statusCode && res.statusCode >= 400) {
+        throw res.statusMessage || 'Failed to create license.';
+      }
       showToast('License added successfully.', 'success');
       goToDetails();
     } catch (error) {
@@ -258,7 +258,7 @@ const AddLicense = () => {
                     required
                     placeholder="Select status"
                     value={licenseStatus}
-                    onValueChange={(value) => { setLicenseStatus(value ?? 'Active'); setTouched(true); }}
+                    onValueChange={(value) => { setLicenseStatus(value ?? 'active'); setTouched(true); }}
                     options={STATUS_OPTIONS}
                     searchable={false}
                     clearable={false}

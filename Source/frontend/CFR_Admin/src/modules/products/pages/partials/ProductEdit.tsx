@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Save, X } from "lucide-react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { AlertTriangle, Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton } from "@app/components/buttons";
-import { MandatoryIndicator } from "@app/components/formControls";
+import { InputField, MandatoryIndicator, ProfileImageUpload, RadioGroup, TextareaField } from "@app/components/formControls";
+import { StatusBadge } from "@app/components/Badge";
+import { cn } from "@app/utilities/cn";
 import { confirmAction } from "@/modules/lib/confirm";
-import { validateProductForm } from "../../validator/productValidation";
+import { validateProductForm, type ProductFormErrors } from "../../validator/productValidation";
 import {
   getProductById,
   getProducts,
@@ -17,16 +19,221 @@ import type {
   ProductApiItem,
   ProductInputPayload,
 } from "../../types/productTypes";
-import { ProductForm } from "./ProductForm";
 import {
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
   normalizeProductList,
   parseProductIdFromState,
+  resolveProductLogoUrl,
   toAdminApplication,
   toProductSlug,
 } from "../../utils/productHelpers";
-import type { AdminApplication } from "@/modules/types";
+import type { AdminApplication, ProductLicenseType, ProductNavigationTarget } from "@/modules/types";
+
+const LICENSE_TYPE_OPTIONS: Array<{ id: ProductLicenseType; value: string }> = [
+  { id: "free", value: "Free" },
+  { id: "licensed", value: "Licensed" },
+];
+
+const NAVIGATION_OPTIONS: Array<{ id: ProductNavigationTarget; value: string }> = [
+  { id: "same-tab", value: "Same Tab" },
+  { id: "new-tab", value: "New Tab" },
+];
+
+function isImageIcon(icon: string): boolean {
+  if (!icon) return false;
+  return icon.startsWith("data:") || icon.startsWith("blob:") || icon.startsWith("/") || /^https?:\/\//i.test(icon);
+}
+
+function ProductIcon({ icon, gradient }: { icon: string; gradient: string }) {
+  if (isImageIcon(icon)) {
+    const resolved = resolveProductLogoUrl(icon) || icon;
+    return <img src={resolved} alt="" className="size-9 shrink-0 rounded-lg object-cover" aria-hidden="true" />;
+  }
+  return (
+    <span className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white" style={{ background: gradient }} aria-hidden="true">
+      {icon}
+    </span>
+  );
+}
+
+function ProductCard({
+  app,
+  linkTo,
+  warningCount = 0,
+  footer,
+  className,
+}: {
+  app: Pick<AdminApplication, "name" | "category" | "icon" | "gradient" | "description" | "status">;
+  linkTo?: string;
+  warningCount?: number;
+  footer?: ReactNode;
+  className?: string;
+}) {
+  const identity = (
+    <>
+      <ProductIcon icon={app.icon} gradient={app.gradient} />
+      <div className="min-w-0">
+        <span className="flex items-center gap-1.5">
+          <span className={cn("truncate text-sm font-extrabold text-[var(--text-primary)]", linkTo && "group-hover:underline")}>{app.name}</span>
+          {warningCount > 0 ? (
+            <span title={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`} aria-label={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`}>
+              <AlertTriangle size={13} className="shrink-0 text-[var(--warning)]" />
+            </span>
+          ) : null}
+        </span>
+        <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{app.category}</span>
+      </div>
+    </>
+  );
+
+  return (
+    <article className={cn("admin-product-card relative", !linkTo && "admin-product-card--static", className)}>
+      <div className="absolute right-[0.85rem] top-3">
+        <StatusBadge status={app.status} kind="application" />
+      </div>
+      <div className="flex items-center gap-2.5 pr-16">
+        {linkTo ? (
+          <Link to={linkTo} className="group flex min-w-0 items-center gap-2.5">{identity}</Link>
+        ) : (
+          <div className="flex min-w-0 items-center gap-2.5">{identity}</div>
+        )}
+      </div>
+      <p className="admin-product-card__description">{app.description || "No description yet."}</p>
+      {footer ? (
+        <div className="mt-auto">
+          <div className="admin-product-card__divider" />
+          {footer}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function TagList({ label, values, draft, onDraftChange, onAdd, onRemove }: {
+  label: string;
+  values: string[];
+  draft: string;
+  onDraftChange: (value: string) => void;
+  onAdd: () => void;
+  onRemove: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      {values.length === 0 ? (
+        <p className="text-xs text-[var(--text-muted)]">None added yet.</p>
+      ) : (
+        <ul className="flex flex-wrap gap-1.5">
+          {values.map((value) => (
+            <li key={value} className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+              {value}
+              <button type="button" onClick={() => onRemove(value)} aria-label={`Remove ${value}`} className="text-[var(--text-faint)] hover:text-[var(--error)]">✕</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={(event) => onDraftChange(event.target.value)}
+          onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onAdd(); } }}
+          placeholder={`Add ${label.toLowerCase()} and press Enter`}
+          className="flex-1 rounded-[var(--admin-control-radius)] border border-[var(--line)] px-3 py-2 text-[length:var(--admin-text-base)] text-[var(--text-primary)]"
+        />
+        <CommonButton variant="outline" size="sm" onClick={onAdd}>Add</CommonButton>
+      </div>
+    </div>
+  );
+}
+
+function ProductForm({
+  form,
+  errors,
+  touched,
+  onUpdate,
+  onLogoFileChange,
+}: {
+  form: AdminApplication;
+  errors: ProductFormErrors;
+  touched: boolean;
+  onUpdate: <K extends keyof AdminApplication>(key: K, value: AdminApplication[K]) => void;
+  onLogoFileChange?: (file: File | null) => void;
+}) {
+  const [featureDraft, setFeatureDraft] = useState("");
+
+  const addFeature = () => {
+    const value = featureDraft.trim();
+    if (!value) return;
+    onUpdate("features", [...form.features, value]);
+    setFeatureDraft("");
+  };
+  const removeFeature = (value: string) => onUpdate("features", form.features.filter((item) => item !== value));
+
+  const handleLogoChange = (file: File | null) => {
+    if (onLogoFileChange) {
+      onLogoFileChange(file);
+    } else if (file) {
+      const localUrl = URL.createObjectURL(file);
+      onUpdate("icon", localUrl);
+    }
+  };
+
+  const previewUrl = resolveProductLogoUrl(form.icon) || (isImageIcon(form.icon) ? form.icon : undefined);
+
+  return (
+    <section className="admin-panel-card">
+      <div className="flex flex-col divide-y divide-[var(--line-soft)]">
+        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <InputField label="Product Name" required placeholder="Enter product name" autoFocus value={form.name} onChange={(event) => onUpdate("name", event.target.value)} error={touched ? errors.name : undefined} />
+          <InputField label="Short Name" placeholder="Enter short name" value={form.shortName} onChange={(event) => onUpdate("shortName", event.target.value)} />
+          <InputField label="Product Subtitle" required placeholder="Enter product subtitle" value={form.category} onChange={(event) => onUpdate("category", event.target.value)} error={touched ? errors.category : undefined} />
+          <InputField
+            label="Production URL"
+            value={form.productionUrl}
+            onChange={(event) => onUpdate("productionUrl", event.target.value)}
+            placeholder="https://app.optioncapp.com"
+            error={touched ? errors.productionUrl : undefined}
+          />
+          <RadioGroup
+            label="License Type"
+            options={LICENSE_TYPE_OPTIONS}
+            value={form.licenseType}
+            onValueChange={(value) => onUpdate("licenseType", value as ProductLicenseType)}
+          />
+          <RadioGroup
+            label="Navigation Target"
+            options={NAVIGATION_OPTIONS}
+            value={form.navigationTarget}
+            onValueChange={(value) => onUpdate("navigationTarget", value as ProductNavigationTarget)}
+          />
+        </div>
+
+        <div className="p-4">
+          <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Features</p>
+          <TagList label="Features" values={form.features} draft={featureDraft} onDraftChange={setFeatureDraft} onAdd={addFeature} onRemove={removeFeature} />
+        </div>
+
+        <div className="p-4">
+          <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Product Preview</p>
+          <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
+            <ProfileImageUpload
+              label="Product Logo"
+              onFileChange={handleLogoChange}
+              removable
+              fallbackInitials={form.icon.length <= 2 ? form.icon : undefined}
+              initialPreviewUrl={previewUrl}
+            />
+            <ProductCard app={form} className="max-w-xs" />
+          </div>
+        </div>
+
+        <div className="p-4">
+          <TextareaField label="Description" value={form.description} onChange={(event) => onUpdate("description", event.target.value)} rows={3} showCharCount={false} placeholder="What does this product do?" />
+        </div>
+      </div>
+    </section>
+  );
+}
 
 const ProductEdit = () => {
   //#region Hooks
@@ -40,9 +247,7 @@ const ProductEdit = () => {
   //#region States
   const [product, setProduct] = useState<ProductApiItem | null>(null);
   const [form, setForm] = useState<AdminApplication | null>(null);
-  const [originalForm, setOriginalForm] = useState<AdminApplication | null>(
-    null,
-  );
+  const [originalForm, setOriginalForm] = useState<AdminApplication | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoRemoved, setLogoRemoved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -154,6 +359,11 @@ const ProductEdit = () => {
   const handleSave = async () => {
     setTouched(true);
     if (!form || !product) return;
+    const dirty =
+      Boolean(logoFile) ||
+      logoRemoved ||
+      JSON.stringify(form) !== JSON.stringify(originalForm);
+    if (!dirty) return;
 
     const errors = validateProductForm(form);
     if (Object.keys(errors).length > 0) {
@@ -239,6 +449,11 @@ const ProductEdit = () => {
 
   const errors = validateProductForm(form);
   const hasErrors = Object.keys(errors).length > 0;
+  const isDirty =
+    Boolean(logoFile) ||
+    logoRemoved ||
+    JSON.stringify(form) !== JSON.stringify(originalForm);
+  const canSave = isDirty && !hasErrors && !saving;
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -250,6 +465,7 @@ const ProductEdit = () => {
       <form
         onSubmit={(event) => {
           event.preventDefault();
+          if (!canSave) return;
           void handleSave();
         }}
         noValidate
@@ -277,7 +493,7 @@ const ProductEdit = () => {
             size="sm"
             iconLeft={<Save size={14} />}
             onClick={() => void handleSave()}
-            disabled={hasErrors || saving}
+            disabled={!canSave}
           >
             {saving ? "Saving..." : "Save"}
           </CommonButton>

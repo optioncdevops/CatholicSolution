@@ -3,4 +3,4 @@ export * from './services/productService';
 export * from './types/productTypes';
 export * from './utils/productHelpers';
 export * from './validator/productValidation';
-export { InvoiceDetailModal } from './pages/partials/InvoiceDetailModal';
+export { InvoiceDetailModal } from './pages/LicenseDetails';

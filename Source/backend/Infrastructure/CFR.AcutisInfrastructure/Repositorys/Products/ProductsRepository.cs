@@ -199,6 +199,12 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<long> CreateLicenseAsync(ProductLicenseInput input)
         {
             ArgumentNullException.ThrowIfNull(input);
+            string? remarks = input.Remarks?.Trim();
+            if (!string.IsNullOrEmpty(remarks) && remarks.Length > 500)
+            {
+                remarks = remarks[..500];
+            }
+
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.ProductParams.ActionId, 7, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.OrganizationProductId, input.OrganizationProductId, DbType.Int64);
@@ -209,11 +215,11 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             parameters.Add(DBParameterName.ProductParams.ExpiryDate, input.ExpiryDate, DbType.DateTime2);
             parameters.Add(DBParameterName.ProductParams.LicenseStatus, input.LicenseStatus?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.AssignStatus, input.AssignStatus?.Trim(), DbType.String);
-            parameters.Add(DBParameterName.ProductParams.Remarks, input.Remarks?.Trim(), DbType.String);
+            parameters.Add(DBParameterName.ProductParams.Remarks, remarks, DbType.String);
             parameters.Add(DBParameterName.ProductParams.InsertedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
-            return parameters.Get<int>(DBParameterName.ProductParams.ReturnValue);
+            return parameters.Get<int?>(DBParameterName.ProductParams.ReturnValue) ?? 0;
         }
 
         #endregion POST Methods
