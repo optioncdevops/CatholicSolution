@@ -9,21 +9,19 @@ import { formatDate, accessStatusOf } from '@/modules/utils/formatDate';
 import { getProductCustomers } from '../services/productService';
 import type { ProductCustomerRow } from '../types/productTypes';
 import { normalizeProductCustomerList, toProductCustomerRow } from '../utils/productHelpers';
-import type { AdminApplication, OrganizationStatus } from '@/modules/types';
+import type { AdminApplication } from '@/modules/types';
 
-type EffectiveStatus = OrganizationStatus | 'expiring-soon' | 'expired';
+type EffectiveCustomerStatus = 'active' | 'expiring-soon' | 'expired';
 
-function effectiveStatusOf(org: ProductCustomerRow): EffectiveStatus {
+function effectiveStatusOf(org: ProductCustomerRow): EffectiveCustomerStatus {
   const access = accessStatusOf(org.expiryDate);
   if (access === 'expired' || access === 'expiring-soon') return access;
-  return org.status;
+  return 'active';
 }
 
-const STATUS_FILTERS: Array<{ id: EffectiveStatus | 'all'; label: string; dot?: string }> = [
+const STATUS_FILTERS: Array<{ id: EffectiveCustomerStatus | 'all'; label: string; dot?: string }> = [
   { id: 'all', label: 'All Statuses' },
   { id: 'active', label: 'Active', dot: 'var(--success)' },
-  { id: 'trial', label: 'Trial', dot: 'var(--info)' },
-  { id: 'suspended', label: 'Suspended', dot: 'var(--text-secondary)' },
   { id: 'expiring-soon', label: 'Expiring Soon', dot: 'var(--warning)' },
   { id: 'expired', label: 'Expired', dot: 'var(--error)' },
 ];
@@ -41,7 +39,7 @@ export function CustomerDetails({
   //#endregion
 
   //#region States
-  const [statusFilter, setStatusFilter] = useState<EffectiveStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<EffectiveCustomerStatus | 'all'>('all');
   const [productCustomers, setProductCustomers] = useState<ProductCustomerRow[]>([]);
   //#endregion
 

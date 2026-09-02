@@ -1,6 +1,6 @@
 import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
-import { effectiveLicenseStatus } from '@/modules/utils/formatDate';
+import { accessStatusOf, effectiveLicenseStatus } from '@/modules/utils/formatDate';
 
 export function toProductSlug(name: string | null | undefined): string {
   if (!name || typeof name !== 'string') return '';
@@ -24,6 +24,17 @@ export const PRODUCTS_PATHS = {
 export const DEFAULT_PRODUCT_ICON = '📦';
 export const DEFAULT_PRODUCT_GRADIENT = 'linear-gradient(135deg,#1E3A8A,#3B82F6)';
 export const DEFAULT_LICENSE_STATUS: LicenseStatus = 'active';
+
+/**
+ * Formats a customer code or org ID as a pure numeric string without any "ORG-" prefix.
+ */
+export function formatCustomerCodeNumeric(codeOrId: string | number | null | undefined): string {
+  if (codeOrId == null) return '—';
+  const str = String(codeOrId).trim();
+  if (!str) return '—';
+  const clean = str.replace(/^(?:ORG[-_ ]*)+/i, '').trim();
+  return clean || str;
+}
 
 export function toProductCustomerCount(value: unknown): number {
   const raw = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
@@ -179,7 +190,7 @@ export function toProductCustomerRow(item: ProductCustomerApiItem): ProductCusto
     id: String(item.orgId),
     name: item.orgName,
     primaryContact: item.contactPerson?.trim() || '—',
-    code: item.orgCode?.trim() || `ORG-${item.orgId}`,
+    code: formatCustomerCodeNumeric(item.orgCode || item.orgId),
     contactEmail: item.contactEmail?.trim() || '—',
     userCount: item.userCount ?? 0,
     createdAt: item.startDate || item.insertedDate,
@@ -259,20 +270,18 @@ export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLic
   }
 
   return licenses.map((item) => {
-    const rawStatus = String(item.licenseStatus ?? item.assignStatus ?? '').toLowerCase();
-    const storedStatus: LicenseStatus = rawStatus === 'suspended' ? 'suspended' : 'active';
     const startDate = item.activationDate ?? item.createdDate ?? '';
     const expiryDate = item.expiryDate ?? '';
     return {
       id: String(item.licenseId),
       licenseId: item.licenseId,
       orgId: String(item.orgId),
-      customerCode: `ORG-${item.orgId}`,
+      customerCode: formatCustomerCodeNumeric(item.orgId),
       customer: item.orgName?.trim() || `Organization #${item.orgId}`,
       startDate,
       expiryDate,
       term: currentByOrg.get(item.orgId) === item.licenseId ? 'Current' : 'Past',
-      status: effectiveLicenseStatus(storedStatus, expiryDate),
+      status: accessStatusOf(expiryDate),
       rawStatus: item.licenseStatus,
       remarks: item.remarks,
     };

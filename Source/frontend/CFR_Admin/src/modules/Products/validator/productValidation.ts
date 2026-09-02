@@ -128,3 +128,6 @@ export const STATUS_IMPACT: Record<ProductStatus, string> = {
   inactive: 'The product is temporarily hidden from launch actions but stays in the registry. Existing organization assignments are preserved.',
   'coming-soon': 'The product becomes visible in App Hub as a preview with no launch action available.',
 };
+
+export const CHANGE_STATUS_DESCRIPTION =
+  'Select a new availability status for this product across the platform. Changing the status updates product visibility and launch access in App Hub.';

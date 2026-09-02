@@ -10,7 +10,7 @@ import { StatusBadge } from "@app/components/Badge";
 import { BaseModal } from "@app/components/modal/BaseModal";
 import { formatDate } from "@/modules/utils/formatDate";
 import { confirmAction } from "@/modules/lib/confirm";
-import { STATUS_IMPACT } from "../validator/productValidation";
+import { STATUS_IMPACT, CHANGE_STATUS_DESCRIPTION } from "../validator/productValidation";
 import { getProducts, updateProduct } from "../services/productService";
 import type {
   ProductApiItem,
@@ -80,15 +80,26 @@ function ProductStatusDialog({
       size="sm"
       closeOnOverlayClick={false}
       autoFocus={false}
-      footer={(
+      footer={
         <>
-          <CommonButton variant="outline" onClick={onClose}>Cancel</CommonButton>
-          <CommonButton variant="primary" disabled={!pendingStatus || pendingStatus === app?.status} onClick={() => void commitStatusChange()}>Continue</CommonButton>
+          <CommonButton variant="outline" onClick={onClose}>
+            Cancel
+          </CommonButton>
+          <CommonButton
+            variant="primary"
+            disabled={!pendingStatus || pendingStatus === app?.status}
+            onClick={() => void commitStatusChange()}
+          >
+            Continue
+          </CommonButton>
         </>
-      )}
+      }
     >
       {app ? (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3.5">
+          <p className="text-xs font-medium leading-relaxed text-[var(--text-secondary)]">
+            {CHANGE_STATUS_DESCRIPTION}
+          </p>
           <fieldset className="flex flex-col gap-2">
             <legend className="sr-only">New Status</legend>
             {STATUS_OPTIONS.map((status) => {
@@ -101,12 +112,26 @@ function ProductStatusDialog({
                   onClick={() => onSelectStatus(status)}
                   disabled={isCurrent}
                   aria-pressed={isSelected}
-                  className={`flex items-center justify-between gap-2 rounded-xl border-2 px-3.5 py-2.5 text-left transition-colors disabled:cursor-not-allowed ${
-                    isSelected || isCurrent ? "border-[var(--primary)] bg-[var(--primary-muted)]" : "border-[var(--line)] hover:bg-[var(--hover)]"
+                  className={`flex items-center justify-between gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left transition-all ${
+                    isCurrent
+                      ? "border-[var(--line-soft)] bg-[var(--surface-muted)] opacity-70 cursor-not-allowed"
+                      : isSelected
+                        ? "border-[var(--primary)] bg-[var(--primary-muted)] shadow-xs ring-2 ring-[var(--primary)]/20 cursor-pointer"
+                        : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--primary)]/60 hover:bg-[var(--hover)] cursor-pointer"
                   }`}
                 >
                   <StatusBadge status={status} kind="application" />
-                  {isCurrent ? <span className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Current</span> : null}
+                  {isCurrent ? (
+                    <span className="rounded-full border border-[var(--line-soft)] bg-[var(--surface)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                      Current
+                    </span>
+                  ) : isSelected ? (
+                    <span className="flex size-4 shrink-0 items-center justify-center rounded-full border-2 border-[var(--primary)] bg-[var(--primary)]">
+                      <span className="size-1.5 rounded-full bg-[var(--surface)]" />
+                    </span>
+                  ) : (
+                    <span className="size-4 shrink-0 rounded-full border-2 border-[var(--line-strong)]" />
+                  )}
                 </button>
               );
             })}
@@ -154,12 +179,16 @@ const ProductList = () => {
 
   const goToDetails = (item: ProductApiItem) => {
     const slug = toProductSlug(item.productName) || String(item.productId);
-    navigate(PRODUCTS_PATHS.details(slug), { state: { productId: item.productId } });
+    navigate(PRODUCTS_PATHS.details(slug), {
+      state: { productId: item.productId },
+    });
   };
 
   const goToEdit = (item: ProductApiItem) => {
     const slug = toProductSlug(item.productName) || String(item.productId);
-    navigate(PRODUCTS_PATHS.edit(slug), { state: { productId: item.productId } });
+    navigate(PRODUCTS_PATHS.edit(slug), {
+      state: { productId: item.productId },
+    });
   };
 
   const handleConfirmStatus = async (status: ProductStatus) => {
@@ -182,7 +211,10 @@ const ProductList = () => {
       );
       await load();
     } catch (error) {
-      showToast(typeof error === "string" ? error : "Failed to change status", "error");
+      showToast(
+        typeof error === "string" ? error : "Failed to change status",
+        "error",
+      );
     } finally {
       setStatusDialogOpen(false);
       setSelectedProduct(null);
@@ -316,7 +348,10 @@ const ProductList = () => {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProducts.map((item) => {
             const status = deriveProductStatus(item);
-            const logoSrc = resolveProductLogoUrl(item.logoUrl, item.updatedDate);
+            const logoSrc = resolveProductLogoUrl(
+              item.logoUrl,
+              item.updatedDate,
+            );
 
             return (
               <article
@@ -422,7 +457,9 @@ const ProductList = () => {
             name: selectedProduct.productName,
             shortName: selectedProduct.productName,
             category: selectedProduct.subCategoryName || "General",
-            icon: resolveProductLogoUrl(selectedProduct.logoUrl) || DEFAULT_PRODUCT_ICON,
+            icon:
+              resolveProductLogoUrl(selectedProduct.logoUrl) ||
+              DEFAULT_PRODUCT_ICON,
             gradient: DEFAULT_PRODUCT_GRADIENT,
             description: selectedProduct.prodDescription || "",
             status: deriveProductStatus(selectedProduct),

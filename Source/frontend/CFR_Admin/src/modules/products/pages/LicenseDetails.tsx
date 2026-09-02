@@ -9,48 +9,87 @@ import {
   DataTable,
   type DataTableColumn,
 } from "@app/components/dataTable/DataTable";
-import { formatDate, formatDaysLabel, effectiveLicenseStatus } from "@/modules/utils/formatDate";
+import {
+  formatDate,
+  formatDaysLabel,
+  effectiveLicenseStatus,
+} from "@/modules/utils/formatDate";
 import { DetailField } from "@app/components/DetailField";
 import { BaseModal } from "@app/components/modal/BaseModal";
 import { useAdminData } from "@/modules/AdminDataContext";
 import { getLicenseDetails } from "../services/productService";
 import type { ProductLicenseApiItem } from "../types/productTypes";
-import { PRODUCTS_PATHS, isLicenseUpcoming, toLicenseDetailsRows } from "../utils/productHelpers";
+import {
+  PRODUCTS_PATHS,
+  formatCustomerCodeNumeric,
+  isLicenseUpcoming,
+  toLicenseDetailsRows,
+} from "../utils/productHelpers";
 import type {
   AdminApplication,
   EffectiveLicenseStatus,
   License,
 } from "@/modules/types";
 
-export function InvoiceDetailModal({ invoice, onClose }: { invoice: License | null; onClose: () => void }) {
-  const { getOrganization, getApplication } = useAdminData();
+export function InvoiceDetailModal({
+  invoice,
+  onClose,
+}: {
+  invoice: License | null;
+  onClose: () => void;
+}) {
+  const { getOrganization } = useAdminData();
   if (!invoice) return null;
 
   const org = getOrganization(invoice.orgId);
-  const app = getApplication(invoice.appId);
   const status = effectiveLicenseStatus(invoice.status, invoice.expiryDate);
+  const customerCode = formatCustomerCodeNumeric(org?.code || invoice.orgId);
 
   return (
-    <BaseModal isOpen={Boolean(invoice)} onClose={onClose} title={invoice.title || invoice.licenseNumber} size="md">
+    <BaseModal
+      isOpen={Boolean(invoice)}
+      onClose={onClose}
+      title={invoice.title || invoice.licenseNumber}
+      size="md"
+    >
       <div className="flex flex-col gap-4">
-        {org?.name ? <p className="-mt-2 text-xs text-[var(--text-muted)]">{org.name}</p> : null}
+        {org?.name ? (
+          <p className="-mt-2 text-xs text-[var(--text-muted)]">{org.name}</p>
+        ) : null}
         <div className="flex items-center gap-2">
           <StatusBadge status={status} kind="license" />
           {status !== "suspended" && status !== "expired" ? (
-            <span className="text-xs font-semibold text-[var(--text-muted)]">{formatDaysLabel(invoice.expiryDate)}</span>
+            <span className="text-xs font-semibold text-[var(--text-muted)]">
+              {formatDaysLabel(invoice.expiryDate)}
+            </span>
           ) : null}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <DetailField label="Customer" value={org?.name ?? invoice.title?.split("—")[0]?.trim() ?? invoice.orgId} />
-          <DetailField label="Customer code" value={org?.code ?? (invoice.orgId ? `ORG-${invoice.orgId}` : "—")} />
-          <DetailField label="Product" value={app?.name ?? invoice.appId} />
-          <DetailField label="Start date" value={formatDate(invoice.startDate)} />
-          <DetailField label="Expiry date" value={formatDate(invoice.expiryDate)} />
+          <DetailField
+            label="Customer"
+            value={
+              org?.name ?? invoice.title?.split("—")[0]?.trim() ?? invoice.orgId
+            }
+          />
+          <DetailField label="Customer code" value={customerCode} />
+          <DetailField
+            label="Start date"
+            value={formatDate(invoice.startDate)}
+          />
+          <DetailField
+            label="Expiry date"
+            value={formatDate(invoice.expiryDate)}
+          />
         </div>
         {invoice.customMessage ? (
           <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] bg-[var(--surface-muted)] p-3">
-            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Message to Customer</p>
-            <div className="text-sm text-[var(--text-secondary)]" dangerouslySetInnerHTML={{ __html: invoice.customMessage }} />
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">
+              Message to Customer
+            </p>
+            <div
+              className="text-sm text-[var(--text-secondary)]"
+              dangerouslySetInnerHTML={{ __html: invoice.customMessage }}
+            />
           </div>
         ) : null}
       </div>
@@ -71,6 +110,7 @@ export interface LiveProductLicense {
   id: string;
   licenseId: number;
   organizationProductId: number;
+  orgId: number;
   customerCode: string;
   customer: string;
   licenseNumber: string;
@@ -113,7 +153,10 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
         }
       } catch (err) {
         console.error("Error fetching product licenses:", err);
-        showToast(typeof err === "string" ? err : "Failed to load licenses.", "error");
+        showToast(
+          typeof err === "string" ? err : "Failed to load licenses.",
+          "error",
+        );
         setDbLicenses([]);
       } finally {
         setLoading(false);
@@ -139,14 +182,18 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
         id: String(lic.licenseId),
         licenseId: lic.licenseId,
         organizationProductId: lic.organizationProductId,
-        customerCode: `ORG-${lic.orgId}`,
+        orgId: lic.orgId,
+        customerCode: formatCustomerCodeNumeric(lic.orgId),
         customer: lic.orgName || `Organization #${lic.orgId}`,
         licenseNumber: `LIC-${String(lic.licenseId).padStart(5, "0")}`,
         licenseKey: `LIC-${lic.orgId}-${lic.productId}-${String(lic.licenseId).padStart(4, "0")}`,
-        licenseType: lic.licenseType || "Subscription",
+        licenseType: lic.licenseType ? (lic.licenseType.charAt(0).toUpperCase() + lic.licenseType.slice(1)) : "Subscription",
         startDate: lic.activationDate || "",
         expiryDate: lic.expiryDate || "",
-        status: effective === "expired" || effective === "suspended" ? "active" : effective,
+        status:
+          effective === "expired" || effective === "suspended"
+            ? "active"
+            : effective,
         rawStatus: lic.licenseStatus,
         assignStatus: lic.assignStatus,
         remarks: lic.remarks,
@@ -155,7 +202,9 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
   }, [dbLicenses]);
 
   const rows = useMemo(() => {
-    return mappedLicenses.filter((lic) => statusFilter === "all" || lic.status === statusFilter);
+    return mappedLicenses.filter(
+      (lic) => statusFilter === "all" || lic.status === statusFilter,
+    );
   }, [mappedLicenses, statusFilter]);
 
   const columns: DataTableColumn<LiveProductLicense>[] = [
@@ -175,9 +224,9 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
               id: lic.id,
               licenseNumber: lic.licenseNumber,
               licenseKey: lic.licenseKey,
-              orgId: lic.customerCode,
+              orgId: String(lic.orgId),
               appId: app.id,
-              title: `${app.name} — ${lic.licenseType}`,
+              title: `${app.name} — ${lic.licenseType ? (lic.licenseType.charAt(0).toUpperCase() + lic.licenseType.slice(1)) : 'Subscription'}`,
               startDate: lic.startDate,
               expiryDate: lic.expiryDate,
               status: lic.status === "active" ? "active" : "suspended",
@@ -272,7 +321,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
           iconLeft={<Plus size={14} />}
           onClick={() =>
             navigate(PRODUCTS_PATHS.addLicense(app.name || app.id), {
-              state: { productId: Number(app.id), tab: 'invoice-details' },
+              state: { productId: Number(app.id), tab: "invoice-details" },
             })
           }
         >

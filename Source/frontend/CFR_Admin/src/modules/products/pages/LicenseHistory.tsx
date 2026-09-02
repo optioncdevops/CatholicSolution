@@ -12,12 +12,11 @@ import { toLicenseHistoryRows } from '../utils/productHelpers';
 import { InvoiceDetailModal } from './LicenseDetails';
 import type { AdminApplication, EffectiveLicenseStatus, License } from '@/modules/types';
 
-const STATUS_FILTERS: Array<{ id: EffectiveLicenseStatus | 'all'; label: string }> = [
+const STATUS_FILTERS: Array<{ id: 'active' | 'expiring-soon' | 'expired' | 'all'; label: string }> = [
   { id: 'all', label: 'All statuses' },
   { id: 'active', label: 'Active' },
   { id: 'expiring-soon', label: 'Expiring soon' },
   { id: 'expired', label: 'Expired' },
-  { id: 'suspended', label: 'Suspended' },
 ];
 
 export function LicenseHistory({ app }: { app: AdminApplication }) {
@@ -28,7 +27,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
   //#region States
   const [historyRows, setHistoryRows] = useState<ProductLicenseHistoryRow[]>([]);
   const [customerFilter, setCustomerFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState<EffectiveLicenseStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'expiring-soon' | 'expired' | 'all'>('all');
   const [viewingInvoice, setViewingInvoice] = useState<License | null>(null);
   //#endregion
 
@@ -80,7 +79,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
       title: `${row.customer} — ${app.name}`,
       startDate: row.startDate,
       expiryDate: row.expiryDate,
-      status: row.status === 'suspended' ? 'suspended' : 'active',
+      status: 'active',
       customMessage: row.remarks || undefined,
     });
   };
@@ -180,7 +179,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
             searchable={false}
             clearable={false}
             value={statusFilter}
-            onValueChange={(value) => setStatusFilter((value as EffectiveLicenseStatus | 'all') ?? 'all')}
+            onValueChange={(value) => setStatusFilter((value as 'active' | 'expiring-soon' | 'expired' | 'all') ?? 'all')}
             options={STATUS_FILTERS.map((filter) => ({ id: filter.id, value: filter.label }))}
             className="min-h-8"
           />

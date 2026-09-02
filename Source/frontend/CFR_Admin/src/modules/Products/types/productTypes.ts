@@ -118,7 +118,7 @@ export interface ProductLicenseHistoryRow {
   startDate: string;
   expiryDate: string;
   term: 'Current' | 'Past';
-  status: 'active' | 'expiring-soon' | 'expired' | 'suspended';
+  status: 'active' | 'expiring-soon' | 'expired';
   rawStatus: string;
   remarks?: string | null;
 }
