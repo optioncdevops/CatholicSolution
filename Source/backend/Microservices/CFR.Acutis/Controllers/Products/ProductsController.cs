@@ -106,6 +106,40 @@ namespace CFR.Acutis.Controllers.Products
         }
 
         /// <summary>
+        /// Streams a stored product logo image.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Return the uploaded product logo bytes for display in the admin UI.
+        /// Request Flow: Client GET -> ProductsController.GetProductLogo() -> IProductsService.GetProductLogoAsync() -> File storage.
+        /// Validation Details: Query parameter fileName must be a jpg/jpeg/png file name.
+        /// Business Logic: None at the controller level; delegates to the service layer and returns a file result.
+        /// Service Interaction: Calls IProductsService.GetProductLogoAsync(fileName).
+        /// Response Details: Image bytes with image/jpeg or image/png, or 404 when the file is missing.
+        /// </remarks>
+        /// <param name="fileName">Stored logo file name.</param>
+        /// <returns>The logo image file, or not found.</returns>
+        /// <response code="200">Successfully streamed the product logo.</response>
+        /// <response code="400">Invalid file name.</response>
+        /// <response code="404">Logo file was not found.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [AllowAnonymous]
+        [ActionName(nameof(GetProductLogo))]
+        [Produces("image/jpeg", "image/png")]
+        public async Task<IActionResult> GetProductLogo(string fileName)
+        {
+            var result = await service.GetProductLogoAsync(fileName);
+            if (result.ResultData is not byte[] bytes || bytes.Length == 0)
+            {
+                return NotFound();
+            }
+
+            string extension = Path.GetExtension(fileName).ToLowerInvariant();
+            string contentType = extension == ".png" ? "image/png" : "image/jpeg";
+            return File(bytes, contentType);
+        }
+
+        /// <summary>
         /// Retrieves product customers from [core].[Organization] for a specific product.
         /// </summary>
         /// <remarks>

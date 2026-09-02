@@ -44,7 +44,7 @@ export function FilePreviewModal({
   const atFirst = safeIndex <= 0;
   const atLast = safeIndex >= items.length - 1;
 
-  const previewKind = item
+  const previewKind = item?.file
     ? getFilePreviewKind(item.file, item.url, enableDocumentPreview)
     : "unsupported";
   const zoomEnabled = canPreviewZoom(previewKind);

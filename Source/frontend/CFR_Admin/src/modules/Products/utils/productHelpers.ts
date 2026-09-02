@@ -47,8 +47,20 @@ export const normalizeProductList = (resultData: unknown): ProductApiItem[] => {
   if (!Array.isArray(resultData)) {
     return [];
   }
-  return resultData as ProductApiItem[];
+  return resultData.map((item) => normalizeProductApiItem(item)).filter((item): item is ProductApiItem => item != null);
 };
+
+export function normalizeProductApiItem(resultData: unknown): ProductApiItem | null {
+  if (!resultData || typeof resultData !== 'object') {
+    return null;
+  }
+  const item = resultData as ProductApiItem & { LogoUrl?: string | null };
+  const logoUrl = pickProductLogoUrl(item);
+  return {
+    ...item,
+    logoUrl,
+  };
+}
 
 function readCustomerField(item: Record<string, unknown>, ...keys: string[]): string {
   for (const key of keys) {
@@ -152,33 +164,99 @@ export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLic
   });
 }
 
-export function resolveProductLogoUrl(logoUrl: string | null | undefined): string | null {
+const PRODUCT_LOGO_PUBLIC_DIR = '/Acutis/Attachment/Products';
+
+export function pickProductLogoUrl(item: unknown): string | null {
+  if (!item || typeof item !== 'object') {
+    return null;
+  }
+  const record = item as Record<string, unknown>;
+  const raw = record.logoUrl ?? record.LogoUrl;
+  return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
+}
+
+export function toStoredProductLogoPath(logoUrl: string | null | undefined): string | null {
+  return toPublicProductLogoPath(logoUrl);
+}
+
+export function resolveProductLogoUrl(
+  logoUrl: string | null | undefined,
+  cacheKey?: string | number | null,
+): string | null {
   if (!logoUrl || typeof logoUrl !== 'string' || !logoUrl.trim()) {
     return null;
   }
   const trimmed = logoUrl.trim();
-  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || /^https?:\/\//i.test(trimmed)) {
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
     return trimmed;
   }
+
   const apiBase = String(import.meta.env.VITE_APP_REST_API_BASE_URL ?? '').replace(/\/+$/, '');
-  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  if (cleanPath.startsWith('/acutis/')) {
-    return `${apiBase}${cleanPath}`;
+  const relativePath = toPublicProductLogoPath(trimmed);
+  if (!relativePath) {
+    return /^https?:\/\//i.test(trimmed) ? trimmed : null;
   }
-  return `${apiBase}/acutis${cleanPath}`;
+
+  const url = apiBase ? `${apiBase}${relativePath}` : relativePath;
+  if (cacheKey == null || cacheKey === '') {
+    return url;
+  }
+  return `${url}?v=${encodeURIComponent(String(cacheKey))}`;
+}
+
+function toPublicProductLogoPath(logoUrl: string | null | undefined): string | null {
+  if (!logoUrl || typeof logoUrl !== 'string' || !logoUrl.trim()) {
+    return null;
+  }
+  const trimmed = logoUrl.trim();
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+    return null;
+  }
+
+  try {
+    if (/^https?:\/\//i.test(trimmed)) {
+      const parsed = new URL(trimmed);
+      const fromQuery = parsed.searchParams.get('fileName');
+      if (fromQuery && isProductLogoFileName(fromQuery)) {
+        return `${PRODUCT_LOGO_PUBLIC_DIR}/${fromQuery}`;
+      }
+      return toPublicProductLogoPath(parsed.pathname);
+    }
+  } catch {
+    return null;
+  }
+
+  const slashPath = trimmed.replace(/\\/g, '/');
+  const folderMatch = slashPath.match(/Acutis\/Attachment\/Products\/([^/?#]+)/i);
+  if (folderMatch?.[1] && isProductLogoFileName(folderMatch[1])) {
+    return `${PRODUCT_LOGO_PUBLIC_DIR}/${folderMatch[1]}`;
+  }
+
+  const fileName = slashPath.split('/').filter(Boolean).pop() ?? '';
+  if (isProductLogoFileName(decodeURIComponent(fileName))) {
+    return `${PRODUCT_LOGO_PUBLIC_DIR}/${decodeURIComponent(fileName)}`;
+  }
+
+  return null;
+}
+
+function isProductLogoFileName(name: string): boolean {
+  return /^[\w.-]+\.(jpe?g|png)$/i.test(name);
 }
 
 export function toAdminApplication(item: ProductApiItem): AdminApplication {
-  const logoUrl = resolveProductLogoUrl(item.logoUrl) || item.logoUrl || '';
+  const storedLogo = pickProductLogoUrl(item) || item.logoUrl || '';
+  const logoUrl = resolveProductLogoUrl(storedLogo, item.updatedDate) || storedLogo;
+  const productName = item.productName || '';
   return {
     id: String(item.productId),
-    name: item.productName,
-    shortName: item.productName,
+    name: productName,
+    shortName: productName,
     category: item.subCategoryName || 'General',
     icon: logoUrl || DEFAULT_PRODUCT_ICON,
     gradient: DEFAULT_PRODUCT_GRADIENT,
     description: item.prodDescription || '',
-    features: item.features ?? [],
+    features: Array.isArray(item.features) ? item.features : [],
     productionUrl: item.externalPageUrl || '',
     ownership: 'first-party',
     deploymentModel: 'external-saas',
@@ -186,7 +264,7 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     navigationTarget: 'same-tab',
     status: deriveProductStatus(item),
     registryRef: `reg_app_${String(item.productId).padStart(4, '0')}`,
-    sourceLocation: `SaaS_Apps/${item.productName.toLowerCase().replace(/\s+/g, '-')}`,
+    sourceLocation: `SaaS_Apps/${productName.toLowerCase().replace(/\s+/g, '-')}`,
     updatedAt: item.updatedDate || item.createdDate,
   };
 }

@@ -4,6 +4,20 @@ import type { ProductInputPayload, ProductLicenseInputPayload, ProductSaveInputP
 
 const controller = 'Products';
 
+function readUploadedLogoPath(resultData: unknown): string | null {
+  if (typeof resultData === 'string' && resultData.trim()) {
+    return resultData.trim();
+  }
+  if (resultData && typeof resultData === 'object') {
+    const record = resultData as Record<string, unknown>;
+    const nested = record.resultData ?? record.ResultData;
+    if (typeof nested === 'string' && nested.trim()) {
+      return nested.trim();
+    }
+  }
+  return null;
+}
+
 export const getProducts = async (): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProducts`);
@@ -121,7 +135,11 @@ export const uploadProductLogo = async (file: File): Promise<string> => {
         ],
       },
     );
-    return response.data.resultData || '';
+    const uploadedPath = readUploadedLogoPath(response.data.resultData);
+    if (!uploadedPath) {
+      throw 'Failed to upload product logo';
+    }
+    return uploadedPath;
   } catch (error: unknown) {
     const err = error as ApiError;
     throw err.response?.data?.statusMessage || err.message || 'Failed to upload product logo';

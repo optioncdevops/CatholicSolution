@@ -12,8 +12,9 @@ import {
   RichTextEditor,
 } from '@app/components/formControls';
 import { confirmAction } from '@/modules/lib/confirm';
-import { getLiveOrganizations } from '@/modules/organizations/liveOrganizations/services/liveOrganizationsService';
-import type { LiveOrganizationApiItem } from '@/modules/organizations/liveOrganizations/types/liveOrganizationTypes';
+import { getOrganizations } from '@/modules/organizations/services/organizationsService';
+import type { OrganizationApiItem } from '@/modules/organizations/types/organizationTypes';
+import { normalizeOrganizationsList } from '@/modules/organizations/utils/organizationHelpers';
 import { createLicense, getProductById, getProducts } from '../../services/productService';
 import type { ProductApiItem } from '../../types/productTypes';
 import {
@@ -48,7 +49,7 @@ const AddLicense = () => {
 
   //#region States
   const [product, setProduct] = useState<ProductApiItem | null>(null);
-  const [organizations, setOrganizations] = useState<LiveOrganizationApiItem[]>([]);
+  const [organizations, setOrganizations] = useState<OrganizationApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
@@ -98,11 +99,11 @@ const AddLicense = () => {
         return;
       }
 
-      const [productRes, orgRes] = await Promise.all([getProductById(resolvedId), getLiveOrganizations()]);
+      const [productRes, orgRes] = await Promise.all([getProductById(resolvedId), getOrganizations()]);
       const loadedProduct = (productRes.resultData as ProductApiItem | null) ?? null;
-      const loadedOrgs = orgRes.statusCode === 204 || !Array.isArray(orgRes.resultData)
+      const loadedOrgs = orgRes.statusCode === 204
         ? []
-        : orgRes.resultData as LiveOrganizationApiItem[];
+        : normalizeOrganizationsList(orgRes.resultData);
       setProduct(loadedProduct);
       setOrganizations(loadedOrgs);
       if (loadedProduct) {

@@ -73,6 +73,21 @@ namespace CFR.AcutisService.Interfaces.Products
         Task<MSResultArgs> GetLicenseByIdAsync(long licenseId);
 
         /// <summary>
+        /// Retrieves a product logo image from local storage.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Stream a previously uploaded product logo so the admin UI can display it in an img tag.
+        /// Request Flow: ProductsController -> IProductsService.GetProductLogoAsync() -> File storage.
+        /// Validation Details: fileName must be a jpg/jpeg/png name with no path segments.
+        /// Business Logic: Reads bytes from AppStrings:GatewayRoot or ApplicationFilePath:Doc_BasePath.
+        /// Repository Interaction: None (file storage only).
+        /// Response Details: MSResultArgs containing the image byte array.
+        /// </remarks>
+        /// <param name="fileName">Stored logo file name.</param>
+        /// <returns>MSResultArgs containing the image bytes.</returns>
+        Task<MSResultArgs> GetProductLogoAsync(string fileName);
+
+        /// <summary>
         /// Retrieves product customers from [core].[Organization] for a specific product.
         /// </summary>
         /// <remarks>

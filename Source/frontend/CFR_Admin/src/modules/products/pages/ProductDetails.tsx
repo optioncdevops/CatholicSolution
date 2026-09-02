@@ -21,6 +21,7 @@ import {
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
   normalizeProductList,
+  normalizeProductApiItem,
   normalizeProductCustomerList,
   parseProductIdFromState,
   resolveProductLogoUrl,
@@ -36,7 +37,10 @@ function isImageIcon(icon: string): boolean {
 
 function ProductIcon({ icon, gradient }: { icon: string; gradient: string }) {
   if (isImageIcon(icon)) {
-    const resolved = resolveProductLogoUrl(icon) || icon;
+    const resolved =
+      icon.startsWith('data:') || icon.startsWith('blob:') || /^https?:\/\//i.test(icon)
+        ? icon
+        : resolveProductLogoUrl(icon) || icon;
     return <img src={resolved} alt="" className="size-9 shrink-0 rounded-lg object-cover" aria-hidden="true" />;
   }
   return (
@@ -291,8 +295,9 @@ const ProductDetails = () => {
       }
 
       const res = await getProductById(resolvedId);
-      if (res.resultData) {
-        setProduct(res.resultData as ProductApiItem);
+      const item = normalizeProductApiItem(res.resultData);
+      if (item) {
+        setProduct(item);
       } else {
         setProduct(null);
       }
@@ -381,7 +386,7 @@ const ProductDetails = () => {
   }
 
   const app = toAdminApplication(product);
-  const logoSrc = resolveProductLogoUrl(product.logoUrl);
+  const logoSrc = resolveProductLogoUrl(product.logoUrl, product.updatedDate);
   const warnings = getProductWarnings(app, [app]);
   const slug = toProductSlug(product.productName) || String(product.productId);
 

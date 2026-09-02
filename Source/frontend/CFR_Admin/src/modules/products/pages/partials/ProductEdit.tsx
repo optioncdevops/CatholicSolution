@@ -23,8 +23,10 @@ import {
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
   normalizeProductList,
+  normalizeProductApiItem,
   parseProductIdFromState,
   resolveProductLogoUrl,
+  toStoredProductLogoPath,
   toAdminApplication,
   toProductSlug,
 } from "../../utils/productHelpers";
@@ -47,7 +49,10 @@ function isImageIcon(icon: string): boolean {
 
 function ProductIcon({ icon, gradient }: { icon: string; gradient: string }) {
   if (isImageIcon(icon)) {
-    const resolved = resolveProductLogoUrl(icon) || icon;
+    const resolved =
+      icon.startsWith("data:") || icon.startsWith("blob:") || /^https?:\/\//i.test(icon)
+        ? icon
+        : resolveProductLogoUrl(icon) || icon;
     return <img src={resolved} alt="" className="size-9 shrink-0 rounded-lg object-cover" aria-hidden="true" />;
   }
   return (
@@ -164,10 +169,10 @@ function ProductForm({
   const addFeature = () => {
     const value = featureDraft.trim();
     if (!value) return;
-    onUpdate("features", [...form.features, value]);
+    onUpdate("features", [...(form.features ?? []), value]);
     setFeatureDraft("");
   };
-  const removeFeature = (value: string) => onUpdate("features", form.features.filter((item) => item !== value));
+  const removeFeature = (value: string) => onUpdate("features", (form.features ?? []).filter((item) => item !== value));
 
   const handleLogoChange = (file: File | null) => {
     if (onLogoFileChange) {
@@ -210,7 +215,7 @@ function ProductForm({
 
         <div className="p-4">
           <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Features</p>
-          <TagList label="Features" values={form.features} draft={featureDraft} onDraftChange={setFeatureDraft} onAdd={addFeature} onRemove={removeFeature} />
+          <TagList label="Features" values={form.features ?? []} draft={featureDraft} onDraftChange={setFeatureDraft} onAdd={addFeature} onRemove={removeFeature} />
         </div>
 
         <div className="p-4">
@@ -220,7 +225,7 @@ function ProductForm({
               label="Product Logo"
               onFileChange={handleLogoChange}
               removable
-              fallbackInitials={form.icon.length <= 2 ? form.icon : undefined}
+              fallbackInitials={(form.icon?.length ?? 0) <= 2 ? form.icon : undefined}
               initialPreviewUrl={previewUrl}
             />
             <ProductCard app={form} className="max-w-xs" />
@@ -273,9 +278,15 @@ const ProductEdit = () => {
         } else {
           const listRes = await getProducts();
           const items = normalizeProductList(listRes.resultData);
-          const found = items.find(
-            (p) => toProductSlug(p.productName) === params.slug || String(p.productId) === params.slug,
-          );
+          const slug = (params.slug ?? "").toLowerCase();
+          const found = items.find((p) => {
+            const nameSlug = toProductSlug(p.productName);
+            return (
+              nameSlug === slug ||
+              nameSlug.replace(/-/g, "_") === slug ||
+              String(p.productId) === params.slug
+            );
+          });
           if (found) {
             resolvedId = found.productId;
           }
@@ -291,8 +302,8 @@ const ProductEdit = () => {
       }
 
       const res = await getProductById(resolvedId);
-      if (res.resultData) {
-        const item = res.resultData as ProductApiItem;
+      const item = normalizeProductApiItem(res.resultData);
+      if (item) {
         const initialForm = toAdminApplication(item);
         setProduct(item);
         setForm(initialForm);
@@ -371,11 +382,17 @@ const ProductEdit = () => {
       return;
     }
 
+    if (form.icon?.startsWith("blob:") && !logoFile && !logoRemoved) {
+      showToast("Please select the product logo again before saving.", "error");
+      return;
+    }
+
     setSaving(true);
     try {
-      let finalLogoUrl: string | null | undefined = product.logoUrl;
+      let finalLogoUrl: string | null | undefined = toStoredProductLogoPath(product.logoUrl) ?? product.logoUrl;
       if (logoFile) {
-        finalLogoUrl = await uploadProductLogo(logoFile);
+        const uploadedPath = await uploadProductLogo(logoFile);
+        finalLogoUrl = toStoredProductLogoPath(uploadedPath) ?? uploadedPath;
       } else if (logoRemoved) {
         finalLogoUrl = null;
       }

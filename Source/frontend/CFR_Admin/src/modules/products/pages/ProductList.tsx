@@ -314,7 +314,7 @@ const ProductList = () => {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProducts.map((item) => {
             const status = deriveProductStatus(item);
-            const logoSrc = resolveProductLogoUrl(item.logoUrl);
+            const logoSrc = resolveProductLogoUrl(item.logoUrl, item.updatedDate);
 
             return (
               <article

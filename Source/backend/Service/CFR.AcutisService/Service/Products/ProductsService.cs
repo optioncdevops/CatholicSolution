@@ -207,6 +207,54 @@ namespace CFR.AcutisService.Service.Products
             return result;
         }
 
+        /// <summary>
+        /// Retrieves a product logo image from local storage.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Stream a previously uploaded product logo so the admin UI can display it.
+        /// Request Flow: ProductsController -> ProductsService.GetProductLogoAsync() -> IFileHandlerService.GetFile().
+        /// Validation Details: fileName must be a jpg/jpeg/png name with no directory segments.
+        /// Business Logic: Reads bytes via IFileHandlerService from AppSettings:ProductLogoPath.
+        /// Repository Interaction: None (file storage only).
+        /// Response Details: MSResultArgs containing the image byte array.
+        /// </remarks>
+        /// <param name="fileName">Stored logo file name.</param>
+        /// <returns>MSResultArgs containing the image bytes.</returns>
+        public async Task<MSResultArgs> GetProductLogoAsync(string fileName)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                string safeName = Path.GetFileName(fileName ?? string.Empty);
+                var extension = Path.GetExtension(safeName).ToLowerInvariant();
+                if (string.IsNullOrWhiteSpace(safeName) || (extension != ".jpg" && extension != ".jpeg" && extension != ".png"))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                byte[]? fileBytes = fileHandler.GetFile(GetProductLogoRelativePath(), safeName);
+                if (fileBytes == null || fileBytes.Length == 0)
+                {
+                    result.StatusCode = ErrorCodes.NoRecordFound;
+                    result.StatusMessage = ErrorMessages.NoRecordFound;
+                    return result;
+                }
+
+                result.ResultData = fileBytes;
+                await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchProductLogoFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion GET Methods
 
         #region POST Methods
@@ -232,7 +280,7 @@ namespace CFR.AcutisService.Service.Products
                 if (file == null || file.Length == 0)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = "File is empty or not provided.";
+                    result.StatusMessage = ErrorMessages.ProductLogoFileRequired;
                     return result;
                 }
 
@@ -240,7 +288,7 @@ namespace CFR.AcutisService.Service.Products
                 if (file.Length > maxFileSize)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = "File size cannot exceed 2 MB.";
+                    result.StatusMessage = ErrorMessages.ProductLogoFileTooLarge;
                     return result;
                 }
 
@@ -249,7 +297,7 @@ namespace CFR.AcutisService.Service.Products
                 if (!allowedExtensions.Contains(extension))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = "Only JPG and PNG images are allowed.";
+                    result.StatusMessage = ErrorMessages.ProductLogoInvalidType;
                     return result;
                 }
 
@@ -463,12 +511,17 @@ namespace CFR.AcutisService.Service.Products
                     return;
                 }
 
-                string fileName = Path.GetFileName(relativeUrl);
+                string fileName = Path.GetFileName(relativeUrl.Replace('\\', '/'));
+                if (string.IsNullOrWhiteSpace(fileName))
+                {
+                    return;
+                }
+
                 _ = fileHandler.DeleteFile(Path.Combine(GetProductLogoRelativePath(), fileName));
             }
             catch (Exception ex)
             {
-                AppLogger.LogError(logger, ex, "Error deleting previous product logo file {RelativeUrl}", relativeUrl);
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.DeleteProductLogoFailed, relativeUrl);
             }
         }
 
