@@ -227,18 +227,22 @@ BEGIN
             UPDATE [lic].[OrganizationProduct]
             SET [AssignStatus] = 'active',
                 [CreatedDate] = SYSUTCDATETIME(),
+                [ActiveStartDate] = SYSUTCDATETIME(),
+                [ActiveEndDate] = '9999-12-31',
                 [IsDeleted] = 0
             WHERE [OrgId] = @OrgId AND [ProductId] = @ProductId;
         END
         ELSE
         BEGIN
+            -- ActiveStartDate/ActiveEndDate are NOT NULL with no default; '9999-12-31' is the
+            -- open-ended "no defined end" sentinel until real assignment terms are tracked.
             INSERT INTO [lic].[OrganizationProduct]
             (
-                [OrgId], [ProductId], [AssignStatus], [CreatedDate], [IsDeleted]
+                [OrgId], [ProductId], [AssignStatus], [ActiveStartDate], [ActiveEndDate], [CreatedDate], [IsDeleted]
             )
             VALUES
             (
-                @OrgId, @ProductId, 'active', SYSUTCDATETIME(), 0
+                @OrgId, @ProductId, 'active', SYSUTCDATETIME(), '9999-12-31', SYSUTCDATETIME(), 0
             );
         END
 

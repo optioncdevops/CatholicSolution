@@ -391,7 +391,7 @@
 }
 
 .admin-swal-popup {
-  font-family: var(--admin-font-family);
+  font-family: var(--admin-font-family) !important;
   border-radius: var(--radius-panel);
   padding: 1.75rem 1.5rem;
   background: var(--surface) !important;
@@ -399,13 +399,14 @@
   box-shadow: var(--shadow-elevated) !important;
 }
 .admin-swal-title {
-  font-family: var(--admin-font-family-display);
+  font-family: var(--admin-font-family-display) !important;
   font-size: 1.125rem !important;
   font-weight: 800 !important;
   color: var(--text-primary) !important;
   margin-top: 0.5rem !important;
 }
 .admin-swal-text {
+  font-family: var(--admin-font-family) !important;
   font-size: 0.8125rem !important;
   line-height: 1.6;
   color: var(--text-muted) !important;
@@ -424,7 +425,7 @@
 }
 .admin-swal-popup .swal2-actions {
   margin-top: 1.5rem !important;
-  gap: 0.75rem !important;
+  gap: 0.4rem !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
