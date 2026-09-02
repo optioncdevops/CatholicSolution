@@ -68,13 +68,35 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
 
   //#region Effects
   useEffect(() => {
-    if (!accessRequestId) {
-      setDetail(null);
-      reset(accessRequestReviewDefaultValues);
-      return;
-    }
-    void loadDetail(accessRequestId);
-  }, [accessRequestId, loadDetail, reset]);
+    let cancelled = false;
+    void (async () => {
+      if (!accessRequestId) {
+        if (!cancelled) {
+          setDetail(null);
+          reset(accessRequestReviewDefaultValues);
+        }
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const { resultData } = await getAccessRequestById(accessRequestId);
+        if (cancelled) return;
+        setDetail(normalizeAccessRequest(resultData));
+        reset(accessRequestReviewDefaultValues);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Error loading access request:', error);
+        showToast(typeof error === 'string' ? error : 'Failed to load access request.', 'error');
+        setDetail(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [accessRequestId, reset, showToast]);
   //#endregion
 
   //#region Handlers
@@ -87,7 +109,7 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
     const messages = Object.values(formErrors)
       .map((error) => error?.message)
       .filter((message): message is string => Boolean(message));
-    showToast(messages.join('\n') || 'Please fill in the required fields.', 'error');
+    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
 
   const resolve = async (status: RequestStatus) => {

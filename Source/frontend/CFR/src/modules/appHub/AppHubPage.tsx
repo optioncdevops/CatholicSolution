@@ -8,8 +8,9 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { BellIcon, SearchIcon } from '@shared/app/components/UiIcons';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import type { CatalogApp } from '@shared/app/types/app';
-import { getProducts } from '@/modules/products/services/productsService';
-import { mergeHubProducts } from '@/modules/products/utils/productsHelpers';
+import { APP_CATALOG } from '@shared/app/config/appCatalog';
+import { getHubProducts } from '@/modules/requests/services/accessRequestService';
+import { productsFromHubResponse } from '@/modules/products/utils/productsHelpers';
 import { AppCard } from './AppCard';
 import { RequestInterestModal } from './RequestInterestModal';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
@@ -33,7 +34,7 @@ export function AppHubPage() {
   const [selectedApp, setSelectedApp] = useState<CatalogApp | null>(null);
   const [requestedApp, setRequestedApp] = useState<CatalogApp | null>(null);
   const [requestedAppIds, setRequestedAppIds] = useState<string[]>([]);
-  const [apps, setApps] = useState<CatalogApp[]>([]);
+  const [apps, setApps] = useState<CatalogApp[]>(() => APP_CATALOG.map((app) => ({ ...app })));
   const [loading, setLoading] = useState(true);
   //#endregion
 
@@ -41,14 +42,12 @@ export function AppHubPage() {
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getProducts(user.email);
-      const statusCode = Number(response?.statusCode ?? 200);
-      const resultData = statusCode === 204 ? [] : (response?.resultData ?? response?.ResultData);
-      setApps(mergeHubProducts(resultData));
+      const response = await getHubProducts(user.email);
+      setApps(productsFromHubResponse(response));
     } catch (error) {
       console.error('Error loading products:', error);
       showToast(typeof error === 'string' ? error : 'Failed to load products.');
-      setApps(mergeHubProducts([]));
+      setApps(productsFromHubResponse([]));
     } finally {
       setLoading(false);
     }
@@ -66,7 +65,7 @@ export function AppHubPage() {
   const filter = (items: CatalogApp[]) => (normalized ? items.filter((app) => [app.name, app.description, app.category, ...app.keywords].join(' ').toLowerCase().includes(normalized)) : items);
   const yourApps = useMemo(() => apps.filter((app) => app.hubSection === 'your'), [apps]);
   const availableApps = useMemo(() => apps.filter((app) => app.hubSection === 'available'), [apps]);
-  const futureApps = useMemo(() => apps.filter((app) => app.hubSection === 'future'), [apps]);
+  const futureApps = useMemo(() => apps.filter((app) => app.hubSection === 'future' || (app.hubSection !== 'your' && app.hubSection !== 'available')), [apps]);
   const groups = [
     {
       title: 'Your Apps',
@@ -182,7 +181,7 @@ export function AppHubPage() {
                 <div className="hub-app-grid">
                   {group.apps.map((app) => (
                     <AppCard
-                      key={app.id}
+                      key={`${app.hubSection}-${app.id}-${app.name}`}
                       app={app}
                       onDetails={setSelectedApp}
                       onRequest={openRequestModal}

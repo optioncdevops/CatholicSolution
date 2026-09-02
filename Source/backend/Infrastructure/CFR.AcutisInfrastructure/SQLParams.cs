@@ -300,57 +300,57 @@ namespace CFR.AcutisInfrastructure
             /// <summary>
             /// CRUD action identifier.
             /// </summary>
-            public const string ActionId = "@ActionId";
+            public const string ActionId = nameof(ActionId);
 
             /// <summary>
             /// Access request identifier.
             /// </summary>
-            public const string AccessRequestId = "@AccessRequestId";
+            public const string AccessRequestId = nameof(AccessRequestId);
 
             /// <summary>
             /// core.Product.ProductId when the client sends a numeric identifier.
             /// </summary>
-            public const string ProductId = "@ProductId";
+            public const string ProductId = nameof(ProductId);
 
             /// <summary>
             /// Product display name used to resolve core.Product when ProductId is not numeric.
             /// </summary>
-            public const string ProductName = "@ProductName";
+            public const string ProductName = nameof(ProductName);
 
             /// <summary>
-            /// Requester email used to resolve auth.AuthUser.
+            /// Requester email used to resolve [auth].[User].CFRUserId.
             /// </summary>
-            public const string RequesterEmail = "@RequesterEmail";
+            public const string RequesterEmail = nameof(RequesterEmail);
 
             /// <summary>
             /// Optional comment on submit.
             /// </summary>
-            public const string Comment = "@Comment";
+            public const string Comment = nameof(Comment);
 
             /// <summary>
             /// Request status value.
             /// </summary>
-            public const string Status = "@Status";
+            public const string Status = nameof(Status);
 
             /// <summary>
             /// Optional reviewer note.
             /// </summary>
-            public const string Note = "@Note";
+            public const string Note = nameof(Note);
 
             /// <summary>
             /// Logged-in user who created the row (ICurrentUserService.UserId).
             /// </summary>
-            public const string InsertedBy = "@InsertedBy";
+            public const string InsertedBy = nameof(InsertedBy);
 
             /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
-            public const string UpdatedBy = "@UpdatedBy";
+            public const string UpdatedBy = nameof(UpdatedBy);
 
             /// <summary>
             /// Stored procedure output / return value.
             /// </summary>
-            public const string ReturnValue = "@ReturnValue";
+            public const string ReturnValue = nameof(ReturnValue);
         }
 
         /// <summary>

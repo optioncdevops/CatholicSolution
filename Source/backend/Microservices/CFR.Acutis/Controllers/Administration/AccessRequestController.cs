@@ -56,6 +56,28 @@ namespace CFR.Acutis.Controllers.Administration
             return ApiResultArgs(await service.GetAccessRequestByIdAsync(accessRequestId), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves App Hub products for the signed-in member email.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Match [auth].[User] by email, join [auth].[UserProduct] for Your Apps, and return remaining [core].[Product] rows as Available or Future.
+        /// Request Flow: Client API GET -> AccessRequestController.GetHubProducts() -> IAccessRequestService.GetHubProductsAsync() -> Database.
+        /// Validation Details: Query parameter binding maps requesterEmail.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IAccessRequestService.GetHubProductsAsync().
+        /// Response Details: Standard API result enclosing List of HubProductOutput with status 200 or 500.
+        /// </remarks>
+        /// <param name="requesterEmail">Member email used to resolve [auth].[User].CFRUserId.</param>
+        /// <returns>A consistent API response containing the hub product dataset.</returns>
+        /// <response code="200">Successfully fetched hub products.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Administration.GetHubProducts)]
+        public async Task<IActionResult> GetHubProducts(string? requesterEmail)
+        {
+            return ApiResultArgs(await service.GetHubProductsAsync(requesterEmail), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
 
         #region POST Methods

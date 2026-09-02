@@ -2,18 +2,13 @@ import { EmptyState } from '@shared/app/components/EmptyState';
 import { Badge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate } from '@/modules/utils/formatDate';
-import type { LiveOrganizationUserApiItem } from '../../types/liveOrganizationTypes';
+import type { OrganizationUserApiItem } from '../../types/organizationTypes';
 
-const columns: DataTableColumn<LiveOrganizationUserApiItem>[] = [
+const columns: DataTableColumn<OrganizationUserApiItem>[] = [
   {
-    id: 'name', header: 'Name', width: '12rem',
-    value: (user) => `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
-    cell: (user) => <span className="font-bold text-[var(--text-primary)]">{`${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || '—'}</span>,
-  },
-  {
-    id: 'email', header: 'Email',
+    id: 'email', header: 'Email', width: '16rem',
     value: (user) => user.email,
-    cell: (user) => <span className="text-[var(--text-secondary)]">{user.email}</span>,
+    cell: (user) => <span className="font-bold text-[var(--text-primary)]">{user.email}</span>,
   },
   {
     id: 'memberStatus', header: 'Status',
@@ -28,7 +23,7 @@ const columns: DataTableColumn<LiveOrganizationUserApiItem>[] = [
 ];
 
 type OrganizationUsersPanelProps = {
-  users: LiveOrganizationUserApiItem[];
+  users: OrganizationUserApiItem[];
 };
 
 const OrganizationUsersPanel = ({ users }: OrganizationUsersPanelProps) => {

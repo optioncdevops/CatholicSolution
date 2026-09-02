@@ -123,6 +123,28 @@ namespace CFR.Acutis.Controllers.Organization
             return ApiResultArgs(await service.GetAssignableProductsAsync(orgId), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves the real licenses issued against an organization's assigned products.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Licenses section of the organization detail page.
+        /// Request Flow: Client API GET -> OrganizationController.GetOrganizationLicenses() -> IOrganizationService.GetOrganizationLicensesAsync() -> Database.
+        /// Validation Details: Query parameter binding maps the identifier.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IOrganizationService.GetOrganizationLicensesAsync().
+        /// Response Details: Standard API result enclosing List of OrganizationLicenseOutput with status 200 or 500.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <returns>A consistent API response containing the organization's licenses.</returns>
+        /// <response code="200">Successfully fetched the organization's licenses.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Organization.GetOrganizationLicenses)]
+        public async Task<IActionResult> GetOrganizationLicenses(long orgId)
+        {
+            return ApiResultArgs(await service.GetOrganizationLicensesAsync(orgId), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
 
         #region POST Methods

@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
@@ -14,18 +14,48 @@ import {
 import { APP_CATALOG } from '@shared/app/config/appCatalog';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
-
-const requestableApps = APP_CATALOG.filter((app) => app.status !== 'coming-soon');
+import { getProducts } from '@/modules/products/services/productsService';
+import { productsFromApiResponse } from '@/modules/products/utils/productsHelpers';
+import type { CatalogApp } from '@shared/app/types/app';
 
 const organizationTypes = ['Catholic School', 'Parish', 'Diocese / Archdiocese', 'Ministry / Nonprofit', 'Other'] as const;
 
 export function RequestAccessPage() {
   const [searchParams] = useSearchParams();
   const requestedProduct = searchParams.get('product');
-  const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : 'optionc-school';
+  const [apps, setApps] = useState<CatalogApp[]>(() => APP_CATALOG.map((app) => ({ ...app })));
+  const requestableApps = useMemo(() => apps.filter((app) => app.status !== 'coming-soon' && app.hubSection !== 'future'), [apps]);
+  const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : (requestableApps[0]?.id ?? '');
   const [submitted, setSubmitted] = useState(false);
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([initialInterest]);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(initialInterest ? [initialInterest] : []);
   const reference = useMemo(() => `CS-${new Date().getFullYear()}-REQ`, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await getProducts();
+        if (!cancelled) setApps(productsFromApiResponse(response));
+      } catch (error) {
+        console.error('Error loading products:', error);
+        if (!cancelled) setApps(productsFromApiResponse([]));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    setSelectedInterests((current) => {
+      const stillValid = current.filter((id) => requestableApps.some((app) => app.id === id));
+      if (stillValid.length > 0) return stillValid;
+      const fromQuery = requestedProduct && requestableApps.some((app) => app.id === requestedProduct)
+        ? requestedProduct
+        : requestableApps[0]?.id;
+      return fromQuery ? [fromQuery] : [];
+    });
+  }, [requestableApps, requestedProduct]);
 
   const toggleInterest = (id: string) => setSelectedInterests((current) => (
     current.includes(id) ? current.filter((value) => value !== id) : [...current, id]

@@ -100,6 +100,37 @@ namespace CFR.AcutisService.Service.Administration
             return result;
         }
 
+        /// <summary>
+        /// Retrieves App Hub products for a member email.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Return every core.Product with hubSection your / available / future from [auth].[UserProduct].
+        /// Request Flow: AccessRequestController -> AccessRequestService.GetHubProductsAsync() -> IAccessRequestRepository.GetHubProductsAsync().
+        /// Validation Details: Email is optional; a missing email returns products without a Your Apps assignment.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IAccessRequestRepository.GetHubProductsAsync().
+        /// Response Details: MSResultArgs containing List of HubProductOutput.
+        /// </remarks>
+        /// <param name="requesterEmail">Member email used to resolve [auth].[User].CFRUserId.</param>
+        /// <returns>MSResultArgs containing the hub product list.</returns>
+        public async Task<MSResultArgs> GetHubProductsAsync(string? requesterEmail)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                var data = await repository.GetHubProductsAsync(requesterEmail);
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchHubProductsFailed, requesterEmail);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion GET Methods
 
         #region POST Methods

@@ -65,7 +65,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         /// Purpose: Resolve who should receive the new-request email for this product.
         /// Request Flow: IAccessRequestService -> AccessRequestRepository.GetProductNotificationRecipientsAsync() -> Database.
         /// Validation Details: ProductId and ProductName parameter mapping.
-        /// Business Logic: Maps stored procedure rows to AccessRequestRecipientOutput.
+        /// Business Logic: Maps stored procedure rows to AccessRequestRecipientOutput from [auth].[UserProduct] joined to [auth].[User] on CFRUserId.
         /// Repository Interaction: Executes StoredProc.Requests.AccessRequestCrud with ActionId 5.
         /// Response Details: Returns a list of recipient email records.
         /// </remarks>
@@ -80,6 +80,28 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.AccessRequestParams.ProductId, parsedProductId, DbType.Int32);
             parameters.Add(DBParameterName.AccessRequestParams.ProductName, string.IsNullOrWhiteSpace(productName) ? null : productName, DbType.String);
             var result = await dapperHandler.QueryAsync<AccessRequestRecipientOutput>(StoredProc.Requests.AccessRequestCrud, parameters, CommandType.StoredProcedure);
+            return result.ToList();
+        }
+
+        /// <summary>
+        /// Fetches App Hub products using StoredProc.Requests.AccessRequestCrud.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Classify products for the App Hub from the member's [auth].[UserProduct] rows.
+        /// Request Flow: IAccessRequestService -> AccessRequestRepository.GetHubProductsAsync() -> Database.
+        /// Validation Details: RequesterEmail parameter mapping.
+        /// Business Logic: Maps stored procedure rows to HubProductOutput. Products on UserProduct are hubSection your; remaining products are available or future from IsAvailable.
+        /// Repository Interaction: Executes StoredProc.Requests.AccessRequestCrud with ActionId 6.
+        /// Response Details: Returns a list of HubProductOutput records.
+        /// </remarks>
+        /// <param name="requesterEmail">Member email used to resolve [auth].[User].CFRUserId.</param>
+        /// <returns>A list of hub product output records.</returns>
+        public async Task<List<HubProductOutput>> GetHubProductsAsync(string? requesterEmail)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.AccessRequestParams.ActionId, 6, DbType.Int32);
+            parameters.Add(DBParameterName.AccessRequestParams.RequesterEmail, string.IsNullOrWhiteSpace(requesterEmail) ? null : requesterEmail.Trim(), DbType.String);
+            var result = await dapperHandler.QueryAsync<HubProductOutput>(StoredProc.Requests.AccessRequestCrud, parameters, CommandType.StoredProcedure);
             return result.ToList();
         }
 

@@ -19,6 +19,26 @@ import { productsRoutes } from "@/modules/products";
 const DashboardPage = lazy(() =>
   import("@/modules/DashboardPage").then((m) => ({ default: m.DashboardPage })),
 );
+const ProductsListPage = lazy(() =>
+  import("@/modules/Products/pages/ProductsListPage").then((m) => ({
+    default: m.ProductsListPage,
+  })),
+);
+const ProductDetailPage = lazy(() =>
+  import("@/modules/Products/pages/partials/ProductDetailPage").then((m) => ({
+    default: m.ProductDetailPage,
+  })),
+);
+const ProductEditPage = lazy(() =>
+  import("@/modules/Products/pages/partials/ProductEditPage").then((m) => ({
+    default: m.ProductEditPage,
+  })),
+);
+const CreateInvoicePage = lazy(() =>
+  import("@/modules/Products/pages/partials/CreateInvoicePage").then((m) => ({
+    default: m.CreateInvoicePage,
+  })),
+);
 const OrganizationsListPage = lazy(() =>
   import("@/modules/organizations/OrganizationsListPage").then((m) => ({
     default: m.OrganizationsListPage,
@@ -73,14 +93,6 @@ export default function App() {
           <Route path="/admin" element={<DashboardPage />} />
           {organizationsRoutes}
           {productsRoutes}
-          <Route
-            path="/admin/organizations"
-            element={<OrganizationsListPage />}
-          />
-          <Route
-            path="/admin/organizations/:orgId"
-            element={<OrganizationDetailPage />}
-          />
           {usersRoutes}
           {userRolesRoutes}
           {requestsRoutes}
