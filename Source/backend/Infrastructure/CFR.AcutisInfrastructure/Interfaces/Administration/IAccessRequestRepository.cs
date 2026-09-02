@@ -47,7 +47,7 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         /// Purpose: Resolve AccessRequested recipients from the requested product name/id.
         /// Request Flow: IAccessRequestService -> IAccessRequestRepository.GetProductNotificationRecipientsAsync() -> SQL Database.
         /// Validation Details: ProductId and ProductName parameter mapping.
-        /// Business Logic: Matches lic.UserProductAccess and Acutis roles whose name matches the product; falls back to Platform Admin when nobody is assigned.
+        /// Business Logic: Matches [auth].[UserProduct] to [auth].[User] on CFRUserId; falls back to Platform Admin when nobody is assigned.
         /// Repository Interaction: Executes StoredProc.Requests.AccessRequestCrud with ActionId 5.
         /// Response Details: Returns a list of AccessRequestRecipientOutput records.
         /// </remarks>
@@ -55,6 +55,21 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         /// <param name="productName">Product display name used to resolve core.Product when ProductId is not numeric.</param>
         /// <returns>A list of recipient email records.</returns>
         Task<List<AccessRequestRecipientOutput>> GetProductNotificationRecipientsAsync(string productId, string productName);
+
+        /// <summary>
+        /// Retrieves App Hub products for a member email.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Classify core.Product rows as your / available / future from [auth].[UserProduct].
+        /// Request Flow: IAccessRequestService -> IAccessRequestRepository.GetHubProductsAsync() -> SQL Database.
+        /// Validation Details: RequesterEmail parameter mapping.
+        /// Business Logic: Matches [auth].[User] by email, joins [auth].[UserProduct] on CFRUserId, then [core].[Product].
+        /// Repository Interaction: Executes StoredProc.Requests.AccessRequestCrud with ActionId 6.
+        /// Response Details: Returns a list of HubProductOutput records.
+        /// </remarks>
+        /// <param name="requesterEmail">Member email used to resolve [auth].[User].CFRUserId.</param>
+        /// <returns>A list of hub product output records.</returns>
+        Task<List<HubProductOutput>> GetHubProductsAsync(string? requesterEmail);
 
         #endregion GET Methods
 

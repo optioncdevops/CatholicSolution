@@ -67,8 +67,8 @@ namespace CFR.AcutisInfrastructure
         public class Requests
         {
             /// <summary>
-            /// Access request list, get, save, status, and product-matched email recipient operations against [request] tables.
-            /// ActionId 1=save, 2=status update, 3=get by id, 4=list, 5=recipients by product.
+            /// Access request list, get, save, status, product-matched email recipient, and App Hub product operations against [request] tables.
+            /// ActionId 1=save, 2=status update, 3=get by id, 4=list, 5=recipients by product, 6=hub products by requester email.
             /// Header RequestStatus: 1=pending, 2=in_review, 3=completed, 4=cancelled.
             /// Line LineStatus: 1=pending, 2=approved, 3=rejected.
             /// </summary>

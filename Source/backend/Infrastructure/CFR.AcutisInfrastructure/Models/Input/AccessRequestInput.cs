@@ -24,7 +24,7 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string ProductName { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the requester email used to resolve auth.AuthUser.RequestedBy.
+        /// Gets or sets the requester email used to resolve [auth].[User].CFRUserId.
         /// Name and email are not stored on the request tables.
         /// </summary>
         [JsonPropertyName("requesterEmail")]

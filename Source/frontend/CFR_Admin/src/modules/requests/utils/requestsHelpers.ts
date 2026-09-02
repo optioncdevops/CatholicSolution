@@ -12,40 +12,44 @@ export const normalizeRequestStatus = (value: unknown): RequestStatus => {
 const normalizeTimeline = (value: unknown): AccessRequestTimelineApiItem[] => {
   if (!Array.isArray(value)) return [];
   return value.map((entry) => {
-    const row = entry as AccessRequestTimelineApiItem;
-    const statusRaw = String(row.status ?? '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+    const row = entry as Record<string, unknown>;
+    const statusRaw = String(row.status ?? row.Status ?? '').trim().toLowerCase().replace(/[_\s]+/g, '-');
     return {
-      status: statusRaw === 'submitted' ? 'submitted' : normalizeRequestStatus(row.status),
-      at: String(row.at ?? ''),
-      note: row.note,
-      actor: String(row.actor ?? ''),
+      status: statusRaw === 'submitted' ? 'submitted' : normalizeRequestStatus(row.status ?? row.Status),
+      at: String(row.at ?? row.At ?? ''),
+      note: row.note != null ? String(row.note) : (row.Note != null ? String(row.Note) : undefined),
+      actor: String(row.actor ?? row.Actor ?? ''),
     };
   });
 };
 
 export const normalizeAccessRequest = (resultData: unknown): AccessRequestApiItem | null => {
   if (!resultData || typeof resultData !== 'object') return null;
-  const row = resultData as AccessRequestApiItem;
-  const accessRequestId = Number(row.accessRequestId);
+  const row = resultData as Record<string, unknown>;
+  const accessRequestId = Number(row.accessRequestId ?? row.AccessRequestId);
   if (!Number.isFinite(accessRequestId) || accessRequestId <= 0) return null;
   return {
     accessRequestId,
-    organizationId: Number(row.organizationId) || 0,
-    organizationName: String(row.organizationName ?? ''),
-    requesterName: String(row.requesterName ?? ''),
-    requesterEmail: String(row.requesterEmail ?? ''),
-    productId: String(row.productId ?? ''),
-    productName: String(row.productName ?? ''),
-    status: normalizeRequestStatus(row.status),
-    submittedAt: String(row.submittedAt ?? ''),
-    timeline: normalizeTimeline(row.timeline),
-    comments: Array.isArray(row.comments) ? row.comments : [],
+    organizationId: Number(row.organizationId ?? row.OrganizationId) || 0,
+    organizationName: String(row.organizationName ?? row.OrganizationName ?? ''),
+    requesterName: String(row.requesterName ?? row.RequesterName ?? ''),
+    requesterEmail: String(row.requesterEmail ?? row.RequesterEmail ?? ''),
+    productId: String(row.productId ?? row.ProductId ?? ''),
+    productName: String(row.productName ?? row.ProductName ?? ''),
+    status: normalizeRequestStatus(row.status ?? row.Status),
+    submittedAt: String(row.submittedAt ?? row.SubmittedAt ?? ''),
+    timeline: normalizeTimeline(row.timeline ?? row.Timeline),
+    comments: Array.isArray(row.comments ?? row.Comments) ? (row.comments ?? row.Comments) as AccessRequestApiItem['comments'] : [],
   };
 };
 
 export const normalizeAccessRequestList = (resultData: unknown): AccessRequestApiItem[] => {
-  if (!Array.isArray(resultData)) return [];
-  return resultData.map((row) => normalizeAccessRequest(row)).filter((row): row is AccessRequestApiItem => row != null);
+  const list = Array.isArray(resultData)
+    ? resultData
+    : (resultData && typeof resultData === 'object' && Array.isArray((resultData as { data?: unknown }).data)
+      ? (resultData as { data: unknown[] }).data
+      : []);
+  return list.map((row) => normalizeAccessRequest(row)).filter((row): row is AccessRequestApiItem => row != null);
 };
 
 export const uniqueRequestFilterOptions = (

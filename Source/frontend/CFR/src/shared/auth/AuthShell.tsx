@@ -1,9 +1,12 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { ShieldCheckIcon, SparklesIcon } from '@shared/app/components/UiIcons';
 import { APP_CATALOG } from '@shared/app/config/appCatalog';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
+import { getProducts } from '@/modules/products/services/productsService';
+import { productsFromApiResponse } from '@/modules/products/utils/productsHelpers';
+import type { CatalogApp } from '@shared/app/types/app';
 
 interface AuthShellProps {
   children: ReactNode;
@@ -18,8 +21,26 @@ export function AuthShell({
   title = <>Welcome back to your Catholic community <span className="text-brand-gold-light">platform.</span></>,
   description = 'One secure sign-in for the school, parish, finance, communications, content, and ministry tools your organization uses every day.',
 }: AuthShellProps) {
-  const connectedApps = APP_CATALOG.filter((app) => app.kind === 'launchable');
-  const ecosystemApps = APP_CATALOG.filter((app) => app.kind !== 'launchable');
+  const [apps, setApps] = useState<CatalogApp[]>(() => APP_CATALOG.map((app) => ({ ...app })));
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await getProducts();
+        if (!cancelled) setApps(productsFromApiResponse(response));
+      } catch (error) {
+        console.error('Error loading products:', error);
+        if (!cancelled) setApps(productsFromApiResponse([]));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const connectedApps = apps.filter((app) => app.kind === 'launchable' || app.hubSection === 'your' || app.hubSection === 'available');
+  const ecosystemApps = apps.filter((app) => app.hubSection === 'future');
 
   return (
     <main className="auth-shell">
@@ -44,7 +65,7 @@ export function AuthShell({
                   <span>Connected Catholic ecosystem</span>
                   <strong id="auth-platform-showcase-title">Everything your organization runs in one place</strong>
                 </div>
-                <span className="auth-platform-showcase__count" aria-label={`${APP_CATALOG.length} solutions`}>{APP_CATALOG.length} solutions</span>
+                <span className="auth-platform-showcase__count" aria-label={`${apps.length} solutions`}>{apps.length} solutions</span>
               </div>
 
               <div className="auth-platform-showcase__panel">
