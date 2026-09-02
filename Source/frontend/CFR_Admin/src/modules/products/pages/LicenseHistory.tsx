@@ -10,7 +10,7 @@ import { getLicenseDetails } from '../services/productService';
 import type { ProductLicenseApiItem, ProductLicenseHistoryRow } from '../types/productTypes';
 import { toLicenseHistoryRows } from '../utils/productHelpers';
 import { InvoiceDetailModal } from './LicenseDetails';
-import type { AdminApplication, EffectiveLicenseStatus, License } from '@/modules/types';
+import type { AdminApplication, License } from '@/modules/types';
 
 const STATUS_FILTERS: Array<{ id: 'active' | 'expiring-soon' | 'expired' | 'all'; label: string }> = [
   { id: 'all', label: 'All statuses' },
