@@ -1,6 +1,6 @@
-import type { LiveOrganizationFormValues } from '../types/liveOrganizationTypes';
+import type { OrganizationFormValues } from '../types/organizationTypes';
 
-export const liveOrganizationDefaultValues: LiveOrganizationFormValues = {
+export const organizationDefaultValues: OrganizationFormValues = {
   orgName: '',
   orgStatus: 'active',
   contactEmail: '',
@@ -9,7 +9,7 @@ export const liveOrganizationDefaultValues: LiveOrganizationFormValues = {
   contactPhone: '',
 };
 
-export const liveOrganizationRules = {
+export const organizationRules = {
   orgName: {
     required: 'Organization name is required.',
   },

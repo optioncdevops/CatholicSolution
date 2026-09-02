@@ -2,20 +2,21 @@ import { useCallback, useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
-import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Tabs, TabPanel } from '@app/components/Tabs';
 import {
-  getLiveOrganizationById,
-  getLiveOrganizationProducts,
-  getLiveOrganizationUsers,
-} from '../services/liveOrganizationsService';
-import { normalizeLiveOrganization } from '../utils/liveOrganizationHelpers';
-import type { LiveOrganizationApiItem, LiveOrganizationProductApiItem, LiveOrganizationUserApiItem } from '../types/liveOrganizationTypes';
+  getOrganizationById,
+  getOrganizationProducts,
+  getOrganizationUsers,
+} from '../services/organizationsService';
+import { normalizeOrganization } from '../utils/organizationHelpers';
+import type { OrganizationApiItem, OrganizationProductApiItem, OrganizationUserApiItem } from '../types/organizationTypes';
 import OrganizationProfilePanel from './partials/OrganizationProfilePanel';
 import OrganizationUsersPanel from './partials/OrganizationUsersPanel';
 import OrganizationProductsPanel from './partials/OrganizationProductsPanel';
+import OrganizationRequestsPanel from './partials/OrganizationRequestsPanel';
+import OrganizationLicensesPanel from './partials/OrganizationLicensesPanel';
 
 const OrganizationDetailPage = () => {
   //#region Hooks
@@ -27,9 +28,9 @@ const OrganizationDetailPage = () => {
   //#endregion
 
   //#region States
-  const [organization, setOrganization] = useState<LiveOrganizationApiItem | null>(null);
-  const [users, setUsers] = useState<LiveOrganizationUserApiItem[]>([]);
-  const [products, setProducts] = useState<LiveOrganizationProductApiItem[]>([]);
+  const [organization, setOrganization] = useState<OrganizationApiItem | null>(null);
+  const [users, setUsers] = useState<OrganizationUserApiItem[]>([]);
+  const [products, setProducts] = useState<OrganizationProductApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
@@ -40,12 +41,12 @@ const OrganizationDetailPage = () => {
   //#region Functions
   const loadOrganization = useCallback(async () => {
     try {
-      const { resultData, statusCode } = await getLiveOrganizationById(numericOrgId);
+      const { resultData, statusCode } = await getOrganizationById(numericOrgId);
       if (statusCode === 204 || !resultData) {
         setNotFound(true);
         return;
       }
-      setOrganization(normalizeLiveOrganization(resultData));
+      setOrganization(normalizeOrganization(resultData));
     } catch (error) {
       console.error('Error loading organization:', error);
       showToast('Failed to load organization.', 'error');
@@ -55,8 +56,8 @@ const OrganizationDetailPage = () => {
 
   const loadProducts = useCallback(async () => {
     try {
-      const { resultData, statusCode } = await getLiveOrganizationProducts(numericOrgId);
-      setProducts(statusCode === 204 || !Array.isArray(resultData) ? [] : resultData as LiveOrganizationProductApiItem[]);
+      const { resultData, statusCode } = await getOrganizationProducts(numericOrgId);
+      setProducts(statusCode === 204 || !Array.isArray(resultData) ? [] : resultData as OrganizationProductApiItem[]);
     } catch (error) {
       console.error('Error loading organization products:', error);
       showToast('Failed to load products.', 'error');
@@ -79,9 +80,9 @@ const OrganizationDetailPage = () => {
       setLoading(true);
       try {
         const [orgResult, usersResult, productsResult] = await Promise.all([
-          getLiveOrganizationById(numericOrgId),
-          getLiveOrganizationUsers(numericOrgId),
-          getLiveOrganizationProducts(numericOrgId),
+          getOrganizationById(numericOrgId),
+          getOrganizationUsers(numericOrgId),
+          getOrganizationProducts(numericOrgId),
         ]);
         if (cancelled) return;
 
@@ -90,9 +91,9 @@ const OrganizationDetailPage = () => {
           return;
         }
 
-        setOrganization(normalizeLiveOrganization(orgResult.resultData));
-        setUsers(Array.isArray(usersResult.resultData) ? usersResult.resultData as LiveOrganizationUserApiItem[] : []);
-        setProducts(Array.isArray(productsResult.resultData) ? productsResult.resultData as LiveOrganizationProductApiItem[] : []);
+        setOrganization(normalizeOrganization(orgResult.resultData));
+        setUsers(Array.isArray(usersResult.resultData) ? usersResult.resultData as OrganizationUserApiItem[] : []);
+        setProducts(Array.isArray(productsResult.resultData) ? productsResult.resultData as OrganizationProductApiItem[] : []);
       } catch (error) {
         if (cancelled) return;
         console.error('Error loading organization detail:', error);
@@ -163,11 +164,11 @@ const OrganizationDetailPage = () => {
           </TabPanel>
 
           <TabPanel id="licenses" activeId={activeTab}>
-            <EmptyState icon="🔑" title="Licenses not yet available" description="License management for organizations has not been implemented in the backend yet." />
+            <OrganizationLicensesPanel orgId={numericOrgId} />
           </TabPanel>
 
           <TabPanel id="requests" activeId={activeTab}>
-            <EmptyState icon="📨" title="Requests not yet available" description="Access request tracking for organizations has not been implemented in the backend yet." />
+            <OrganizationRequestsPanel orgId={numericOrgId} />
           </TabPanel>
         </>
       ) : null}

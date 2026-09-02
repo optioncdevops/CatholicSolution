@@ -1,10 +1,10 @@
 import axiosInstance from '@app/config/AxiosInstance';
 import type { ApiError, ApiResponse } from '@app/pages/types/CommonTypes';
-import type { AssignLiveOrganizationProductPayload, CreateLiveOrganizationPayload, UpdateLiveOrganizationPayload } from '../types/liveOrganizationTypes';
+import type { AssignOrganizationProductPayload, CreateOrganizationPayload, UpdateOrganizationPayload } from '../types/organizationTypes';
 
 const controller = 'Organization';
 
-export const getLiveOrganizations = async (): Promise<ApiResponse> => {
+export const getOrganizations = async (): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetOrganizations`);
     const { statusCode, statusMessage, resultData } = response.data;
@@ -15,7 +15,7 @@ export const getLiveOrganizations = async (): Promise<ApiResponse> => {
   }
 };
 
-export const getLiveOrganizationById = async (orgId: number): Promise<ApiResponse> => {
+export const getOrganizationById = async (orgId: number): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetOrganizationById`, {
       params: { orgId },
@@ -28,7 +28,7 @@ export const getLiveOrganizationById = async (orgId: number): Promise<ApiRespons
   }
 };
 
-export const updateLiveOrganization = async (payload: UpdateLiveOrganizationPayload): Promise<ApiResponse> => {
+export const updateOrganization = async (payload: UpdateOrganizationPayload): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.put<ApiResponse>(`${controller}/UpdateOrganization`, payload);
     return response.data;
@@ -38,7 +38,7 @@ export const updateLiveOrganization = async (payload: UpdateLiveOrganizationPayl
   }
 };
 
-export const createLiveOrganization = async (payload: CreateLiveOrganizationPayload): Promise<ApiResponse> => {
+export const createOrganization = async (payload: CreateOrganizationPayload): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.post<ApiResponse>(`${controller}/CreateOrganization`, payload);
     return response.data;
@@ -48,7 +48,7 @@ export const createLiveOrganization = async (payload: CreateLiveOrganizationPayl
   }
 };
 
-export const getLiveOrganizationUsers = async (orgId: number): Promise<ApiResponse> => {
+export const getOrganizationUsers = async (orgId: number): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetOrganizationUsers`, {
       params: { orgId },
@@ -61,7 +61,7 @@ export const getLiveOrganizationUsers = async (orgId: number): Promise<ApiRespon
   }
 };
 
-export const getLiveOrganizationProducts = async (orgId: number): Promise<ApiResponse> => {
+export const getOrganizationProducts = async (orgId: number): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetOrganizationProducts`, {
       params: { orgId },
@@ -74,7 +74,7 @@ export const getLiveOrganizationProducts = async (orgId: number): Promise<ApiRes
   }
 };
 
-export const getAssignableLiveOrganizationProducts = async (orgId: number): Promise<ApiResponse> => {
+export const getAssignableOrganizationProducts = async (orgId: number): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetAssignableProducts`, {
       params: { orgId },
@@ -87,7 +87,7 @@ export const getAssignableLiveOrganizationProducts = async (orgId: number): Prom
   }
 };
 
-export const assignLiveOrganizationProduct = async (payload: AssignLiveOrganizationProductPayload): Promise<ApiResponse> => {
+export const assignOrganizationProduct = async (payload: AssignOrganizationProductPayload): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.post<ApiResponse>(`${controller}/AssignOrganizationProduct`, payload);
     return response.data;
@@ -97,7 +97,7 @@ export const assignLiveOrganizationProduct = async (payload: AssignLiveOrganizat
   }
 };
 
-export const removeLiveOrganizationProduct = async (orgId: number, productId: number): Promise<ApiResponse> => {
+export const removeOrganizationProduct = async (orgId: number, productId: number): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.delete<ApiResponse>(`${controller}/RemoveOrganizationProduct`, {
       params: { orgId, productId },
@@ -106,5 +106,18 @@ export const removeLiveOrganizationProduct = async (orgId: number, productId: nu
   } catch (error: unknown) {
     const err = error as ApiError;
     throw err.response?.data?.statusMessage || err.message || 'Failed to remove product';
+  }
+};
+
+export const getOrganizationLicenses = async (orgId: number): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetOrganizationLicenses`, {
+      params: { orgId },
+    });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to load organization licenses';
   }
 };

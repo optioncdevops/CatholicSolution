@@ -6,10 +6,10 @@ import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField, MandatoryIndicator } from '@app/components/formControls';
-import { createLiveOrganization } from '../services/liveOrganizationsService';
-import type { LiveOrganizationFormValues } from '../types/liveOrganizationTypes';
-import { ORG_STATUS_OPTIONS } from '../utils/liveOrganizationHelpers';
-import { liveOrganizationDefaultValues, liveOrganizationRules } from '../validator/LiveOrganizationValidator';
+import { createOrganization } from '../services/organizationsService';
+import type { OrganizationFormValues } from '../types/organizationTypes';
+import { ORG_STATUS_OPTIONS } from '../utils/organizationHelpers';
+import { organizationDefaultValues, organizationRules } from '../validator/OrganizationValidator';
 
 const OrganizationAddPage = () => {
   //#region Hooks
@@ -22,8 +22,8 @@ const OrganizationAddPage = () => {
   //#endregion
 
   //#region Form
-  const { control, handleSubmit } = useForm<LiveOrganizationFormValues>({
-    defaultValues: liveOrganizationDefaultValues,
+  const { control, handleSubmit } = useForm<OrganizationFormValues>({
+    defaultValues: organizationDefaultValues,
     mode: 'onChange',
   });
   //#endregion
@@ -35,17 +35,17 @@ const OrganizationAddPage = () => {
   //#endregion
 
   //#region Handlers
-  const onInvalid = (formErrors: FieldErrors<LiveOrganizationFormValues>) => {
+  const onInvalid = (formErrors: FieldErrors<OrganizationFormValues>) => {
     const messages = Object.values(formErrors)
       .map((error) => error?.message)
       .filter((message): message is string => Boolean(message));
     showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
 
-  const onSubmit = async (values: LiveOrganizationFormValues) => {
+  const onSubmit = async (values: OrganizationFormValues) => {
     setSaving(true);
     try {
-      await createLiveOrganization({
+      await createOrganization({
         orgName: values.orgName.trim(),
         orgStatus: values.orgStatus,
         contactEmail: values.contactEmail.trim(),
@@ -78,14 +78,14 @@ const OrganizationAddPage = () => {
             placeholder="Enter organization name"
             autoFocus
             required
-            rules={liveOrganizationRules.orgName}
+            rules={organizationRules.orgName}
             disabled={saving}
             wrapperClassName="sm:col-span-2"
           />
-          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={liveOrganizationRules.website} disabled={saving} />
+          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving} />
           <InputField control={control} name="contactPerson" label="Contact person" placeholder="Enter contact person" disabled={saving} />
-          <InputField control={control} name="contactPhone" label="Contact number" type="tel" placeholder="Enter contact number" rules={liveOrganizationRules.contactPhone} disabled={saving} />
-          <InputField control={control} name="contactEmail" label="Contact email" type="email" placeholder="Enter contact email" rules={liveOrganizationRules.contactEmail} disabled={saving} />
+          <InputField control={control} name="contactPhone" label="Contact number" type="tel" placeholder="Enter contact number" rules={organizationRules.contactPhone} disabled={saving} />
+          <InputField control={control} name="contactEmail" label="Contact email" type="email" placeholder="Enter contact email" rules={organizationRules.contactEmail} disabled={saving} />
           <Dropdown control={control} name="orgStatus" label="Status" searchable={false} clearable={false} options={ORG_STATUS_OPTIONS} disabled={saving} />
         </div>
 

@@ -39,16 +39,6 @@ const CreateInvoicePage = lazy(() =>
     default: m.CreateInvoicePage,
   })),
 );
-const OrganizationsListPage = lazy(() =>
-  import("@/modules/organizations/OrganizationsListPage").then((m) => ({
-    default: m.OrganizationsListPage,
-  })),
-);
-const OrganizationDetailPage = lazy(() =>
-  import("@/modules/organizations/OrganizationDetailPage").then((m) => ({
-    default: m.OrganizationDetailPage,
-  })),
-);
 const RightsPage = lazy(() =>
   import("@/modules/administration/RightsPage").then((m) => ({
     default: m.RightsPage,
@@ -106,14 +96,6 @@ export default function App() {
           />
           {organizationsRoutes}
           {productsRoutes}
-          <Route
-            path="/admin/organizations"
-            element={<OrganizationsListPage />}
-          />
-          <Route
-            path="/admin/organizations/:orgId"
-            element={<OrganizationDetailPage />}
-          />
           {usersRoutes}
           {userRolesRoutes}
           {requestsRoutes}

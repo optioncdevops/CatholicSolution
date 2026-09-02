@@ -10,8 +10,16 @@ namespace CFR.AcutisService.Service.Organization
     public class OrganizationService(
         IOrganizationRepository repository,
         ICurrentUserService currentUserService,
-        ILogger<OrganizationService> logger): IOrganizationService
+        ILogger<OrganizationService> logger) : IOrganizationService
     {
+        /// <summary>
+        /// The only OrgStatus values the Organization list/filter UI and StatusBadge tone map support.
+        /// </summary>
+        private static readonly HashSet<string> ValidOrgStatuses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "active", "trial", "suspended",
+        };
+
         #region GET Methods
 
         /// <summary>
@@ -203,6 +211,44 @@ namespace CFR.AcutisService.Service.Organization
             return result;
         }
 
+        /// <summary>
+        /// Retrieves the real licenses issued against an organization's assigned products.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Licenses section of the organization detail page.
+        /// Request Flow: OrganizationController -> OrganizationService.GetOrganizationLicensesAsync() -> IOrganizationRepository.GetOrganizationLicensesAsync().
+        /// Validation Details: Identifier must be a positive integer.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IOrganizationRepository.GetOrganizationLicensesAsync().
+        /// Response Details: MSResultArgs containing List of OrganizationLicenseOutput, or NoRecordFound.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <returns>MSResultArgs containing the licenses issued against the organization's products.</returns>
+        public async Task<MSResultArgs> GetOrganizationLicensesAsync(long orgId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (orgId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                var data = await repository.GetOrganizationLicensesAsync(orgId);
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchOrganizationLicensesFailed, orgId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion GET Methods
 
         #region POST Methods
@@ -213,7 +259,7 @@ namespace CFR.AcutisService.Service.Organization
         /// <remarks>
         /// Purpose: Add a new organization from the Add Organization page.
         /// Request Flow: OrganizationController -> OrganizationService.CreateOrganizationAsync() -> IOrganizationRepository.CreateOrganizationAsync().
-        /// Validation Details: Input DTO is required; OrgName and OrgStatus must not be empty.
+        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/trial/suspended.
         /// Business Logic: Passes the signed-in user id as InsertedBy and wraps the scalar result.
         /// Repository Interaction: Calls IOrganizationRepository.CreateOrganizationAsync().
         /// Response Details: MSResultArgs containing the new organization identifier.
@@ -225,7 +271,7 @@ namespace CFR.AcutisService.Service.Organization
             var result = new MSResultArgs();
             try
             {
-                if (input == null || string.IsNullOrWhiteSpace(input.OrgName) || string.IsNullOrWhiteSpace(input.OrgStatus))
+                if (input == null || string.IsNullOrWhiteSpace(input.OrgName) || !ValidOrgStatuses.Contains(input.OrgStatus ?? string.Empty))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
@@ -355,7 +401,7 @@ namespace CFR.AcutisService.Service.Organization
         /// <remarks>
         /// Purpose: Save changes to an organization's core identity fields.
         /// Request Flow: OrganizationController -> OrganizationService.UpdateOrganizationAsync() -> IOrganizationRepository.UpdateOrganizationAsync().
-        /// Validation Details: Input DTO is required; OrgName and OrgStatus must not be empty.
+        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/trial/suspended.
         /// Business Logic: Passes the signed-in user id as UpdatedBy and wraps the scalar result.
         /// Repository Interaction: Calls IOrganizationRepository.UpdateOrganizationAsync().
         /// Response Details: MSResultArgs containing the organization identifier, or NoRecordFound.
@@ -367,7 +413,7 @@ namespace CFR.AcutisService.Service.Organization
             var result = new MSResultArgs();
             try
             {
-                if (input == null || input.OrgId <= 0 || string.IsNullOrWhiteSpace(input.OrgName) || string.IsNullOrWhiteSpace(input.OrgStatus))
+                if (input == null || input.OrgId <= 0 || string.IsNullOrWhiteSpace(input.OrgName) || !ValidOrgStatuses.Contains(input.OrgStatus ?? string.Empty))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;

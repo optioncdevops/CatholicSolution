@@ -5,10 +5,10 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField } from '@app/components/formControls';
 import { StatusBadge } from '@app/components/Badge';
-import { updateLiveOrganization } from '../../services/liveOrganizationsService';
-import type { LiveOrganizationApiItem, LiveOrganizationFormValues } from '../../types/liveOrganizationTypes';
-import { ORG_STATUS_OPTIONS } from '../../utils/liveOrganizationHelpers';
-import { liveOrganizationRules } from '../../validator/LiveOrganizationValidator';
+import { updateOrganization } from '../../services/organizationsService';
+import type { OrganizationApiItem, OrganizationFormValues } from '../../types/organizationTypes';
+import { ORG_STATUS_OPTIONS } from '../../utils/organizationHelpers';
+import { organizationRules } from '../../validator/OrganizationValidator';
 import { formatDate } from '@/modules/utils/formatDate';
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -21,7 +21,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 type OrganizationProfilePanelProps = {
-  organization: LiveOrganizationApiItem;
+  organization: OrganizationApiItem;
   startInEdit: boolean;
   onSaved: () => Promise<void> | void;
 };
@@ -37,7 +37,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
   //#endregion
 
   //#region Form
-  const { control, handleSubmit, reset } = useForm<LiveOrganizationFormValues>({
+  const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
     defaultValues: {
       orgName: organization.orgName,
       orgStatus: organization.orgStatus,
@@ -67,17 +67,17 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
     setEditing(false);
   };
 
-  const onInvalid = (formErrors: FieldErrors<LiveOrganizationFormValues>) => {
+  const onInvalid = (formErrors: FieldErrors<OrganizationFormValues>) => {
     const messages = Object.values(formErrors)
       .map((error) => error?.message)
       .filter((message): message is string => Boolean(message));
     showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
 
-  const onSubmit = async (values: LiveOrganizationFormValues) => {
+  const onSubmit = async (values: OrganizationFormValues) => {
     setSaving(true);
     try {
-      await updateLiveOrganization({
+      await updateOrganization({
         orgId: organization.orgId,
         orgName: values.orgName.trim(),
         orgStatus: values.orgStatus,
@@ -130,11 +130,11 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
 
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4 p-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <InputField control={control} name="orgName" label="Organization name" required rules={liveOrganizationRules.orgName} disabled={saving} wrapperClassName="sm:col-span-2" />
-          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={liveOrganizationRules.website} disabled={saving} />
+          <InputField control={control} name="orgName" label="Organization name" required rules={organizationRules.orgName} disabled={saving} wrapperClassName="sm:col-span-2" />
+          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving} />
           <InputField control={control} name="contactPerson" label="Contact person" disabled={saving} />
-          <InputField control={control} name="contactPhone" label="Contact number" type="tel" rules={liveOrganizationRules.contactPhone} disabled={saving} />
-          <InputField control={control} name="contactEmail" label="Contact email" type="email" rules={liveOrganizationRules.contactEmail} disabled={saving} />
+          <InputField control={control} name="contactPhone" label="Contact number" type="tel" rules={organizationRules.contactPhone} disabled={saving} />
+          <InputField control={control} name="contactEmail" label="Contact email" type="email" rules={organizationRules.contactEmail} disabled={saving} />
           <Dropdown control={control} name="orgStatus" label="Status" searchable={false} clearable={false} options={ORG_STATUS_OPTIONS} disabled={saving} />
         </div>
 

@@ -78,6 +78,7 @@ namespace CFR.CommonService
             public const string GetAssignableProducts = nameof(GetAssignableProducts);
             public const string AssignOrganizationProduct = nameof(AssignOrganizationProduct);
             public const string RemoveOrganizationProduct = nameof(RemoveOrganizationProduct);
+            public const string GetOrganizationLicenses = nameof(GetOrganizationLicenses);
         }
 
         public static class API_Product

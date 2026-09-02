@@ -3,7 +3,7 @@
 -- extended with Website / ContactPerson / ContactPhone (idempotent ALTER — safe to re-run on an
 -- already up-to-date database), plus real user/product data sourced from the existing
 -- [auth].[OrganizationUser] / [auth].[User] and [lic].[OrganizationProduct] / [core].[Product]
--- link tables.
+-- link tables. [auth].[User] only has Email (no FirstName/LastName) and no IsDeleted column.
 -- OrgId is NOT an IDENTITY column (matches the MAX+1 pattern already used for
 -- auth.AcutisRole and adm.EmailTemplate in this codebase) — Create assigns the next value itself.
 SET ANSI_NULLS ON;
@@ -50,6 +50,7 @@ GO
 -- ActionId 7: Get products NOT yet assigned to an organization (assign dropdown source).
 -- ActionId 8: Assign a product to an organization.
 -- ActionId 9: Remove (soft-delete) a product assignment from an organization.
+-- ActionId 10: Get the real licenses issued against an organization's assigned products.
 CREATE PROCEDURE [dbo].[Acutis_Organization_CRUD]
     @ActionId INT,
     @OrgId BIGINT = 0,
@@ -158,18 +159,15 @@ BEGIN
     IF @ActionId = 5
     BEGIN
         SELECT
-            au.[UserId] AS [AuthUserId],
-            au.[Email],
-            au.[FirstName],
-            au.[LastName],
+            u.[CFRUserId] AS [AuthUserId],
+            u.[Email],
             ou.[MemberStatus],
             ou.[CreatedDate] AS [LinkedDate]
         FROM [auth].[OrganizationUser] AS ou
-        INNER JOIN [auth].[User] AS au ON au.[UserId] = ou.[AuthUserId]
+        INNER JOIN [auth].[User] AS u ON u.[CFRUserId] = ou.[AuthUserId]
         WHERE ou.[OrgId] = @OrgId
           AND ou.[IsDeleted] = 0
-          AND au.[IsDeleted] = 0
-        ORDER BY au.[FirstName], au.[LastName];
+        ORDER BY u.[Email];
         RETURN 0;
     END
 
@@ -266,6 +264,28 @@ BEGIN
 
         SET @ReturnValue = CAST(@ProductId AS INT);
         RETURN @ReturnValue;
+    END
+
+    IF @ActionId = 10
+    BEGIN
+        SELECT
+            l.[LicenseId],
+            l.[OrganizationProductId],
+            p.[ProductId],
+            p.[ProductName],
+            l.[LicenseType],
+            l.[ActivationDate],
+            l.[ExpiryDate],
+            l.[LicenseStatus],
+            l.[Remarks],
+            l.[CreatedDate]
+        FROM [lic].[License] AS l
+        INNER JOIN [lic].[OrganizationProduct] AS op ON op.[OrganizationProductId] = l.[OrganizationProductId]
+        INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
+        WHERE op.[OrgId] = @OrgId
+          AND op.[IsDeleted] = 0
+        ORDER BY l.[CreatedDate] DESC;
+        RETURN 0;
     END
 END
 GO
