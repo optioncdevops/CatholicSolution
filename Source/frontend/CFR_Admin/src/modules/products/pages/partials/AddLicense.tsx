@@ -18,6 +18,7 @@ import { normalizeOrganizationsList } from '@/modules/organizations/utils/organi
 import { createLicense, getLicenseDetails, getProductById, getProducts } from '../../services/productService';
 import type { ProductApiItem, ProductLicenseApiItem } from '../../types/productTypes';
 import {
+  DEFAULT_LICENSE_STATUS,
   PRODUCTS_PATHS,
   customerHasActiveLicense,
   normalizeProductList,
@@ -25,11 +26,6 @@ import {
   toProductSlug,
 } from '../../utils/productHelpers';
 import { validateLicenseForm } from '../../validator/productValidation';
-
-const STATUS_OPTIONS = [
-  { id: 'active', value: 'Active' },
-  { id: 'suspended', value: 'Suspended' },
-];
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -55,7 +51,6 @@ const AddLicense = () => {
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
   const [orgId, setOrgId] = useState('');
-  const [licenseStatus, setLicenseStatus] = useState('active');
   const [activationDate, setActivationDate] = useState(today());
   const [expiryDate, setExpiryDate] = useState(inDays(365));
   const [customMessage, setCustomMessage] = useState('');
@@ -190,15 +185,14 @@ const AddLicense = () => {
       }
 
       const remarks = [title.trim(), customMessage.trim()].filter(Boolean).join('\n').slice(0, 500);
-      const normalizedStatus = licenseStatus.toLowerCase() === 'suspended' ? 'suspended' : 'active';
       const res = await createLicense({
         orgId: Number(orgId),
         productId,
         licenseType: 'subscription',
         activationDate: `${activationDate}T00:00:00`,
         expiryDate: `${expiryDate}T00:00:00`,
-        licenseStatus: 'active',
-        assignStatus: normalizedStatus,
+        licenseStatus: DEFAULT_LICENSE_STATUS,
+        assignStatus: DEFAULT_LICENSE_STATUS,
         remarks: remarks || undefined,
       });
       if (res.statusCode && res.statusCode >= 400) {
@@ -264,17 +258,7 @@ const AddLicense = () => {
                   />
                 </div>
 
-                <div className="grid gap-2.5 p-3 pt-0 sm:grid-cols-3">
-                  <Dropdown
-                    label="Status"
-                    required
-                    placeholder="Select status"
-                    value={licenseStatus}
-                    onValueChange={(value) => { setLicenseStatus(value ?? 'active'); setTouched(true); }}
-                    options={STATUS_OPTIONS}
-                    searchable={false}
-                    clearable={false}
-                  />
+                <div className="grid gap-2.5 p-3 pt-0 sm:grid-cols-2">
                   <DatePicker
                     label="Start Date"
                     required

@@ -23,6 +23,7 @@ export const PRODUCTS_PATHS = {
 
 export const DEFAULT_PRODUCT_ICON = '📦';
 export const DEFAULT_PRODUCT_GRADIENT = 'linear-gradient(135deg,#1E3A8A,#3B82F6)';
+export const DEFAULT_LICENSE_STATUS: LicenseStatus = 'active';
 
 export function toProductCustomerCount(value: unknown): number {
   const raw = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
