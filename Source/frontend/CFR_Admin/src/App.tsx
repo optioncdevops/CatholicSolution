@@ -17,6 +17,9 @@ import { productsRoutes } from "@/modules/products";
 const DashboardPage = lazy(() =>
   import("@/modules/DashboardPage").then((m) => ({ default: m.DashboardPage })),
 );
+const ProfilePage = lazy(() =>
+  import("@/modules/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+);
 const RightsPage = lazy(() =>
   import("@/modules/administration/RightsPage").then((m) => ({
     default: m.RightsPage,
@@ -59,6 +62,7 @@ export default function App() {
           }
         >
           <Route path="/admin" element={<DashboardPage />} />
+          <Route path="/admin/profile" element={<ProfilePage />} />
           {organizationsRoutes}
           {productsRoutes}
           {usersRoutes}
