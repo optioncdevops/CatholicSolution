@@ -73,5 +73,11 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("features")]
         public List<string>? Features { get; set; }
+
+        /// <summary>
+        /// Gets or sets the uploaded logo image file from multipart/form-data.
+        /// </summary>
+        [JsonIgnore]
+        public IFormFile? File { get; set; }
     }
 }

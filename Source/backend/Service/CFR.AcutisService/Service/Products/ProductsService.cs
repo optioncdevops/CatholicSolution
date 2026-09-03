@@ -7,7 +7,7 @@ namespace CFR.AcutisService.Service.Products
     /// Repository Responsibility:
     /// - Invokes IProductsRepository for database querying on Core.Product.
     /// </summary>
-    public class ProductsService(IProductsRepository repository, IFileHandlerService fileHandler, IConfiguration configuration, ILogger<ProductsService> logger): IProductsService
+    public class ProductsService(IProductsRepository repository, IFileHandlerService fileHandler, ILogger<ProductsService> logger): IProductsService
     {
         #region GET Methods
 

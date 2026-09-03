@@ -16,3 +16,4 @@ global using CFR.AcutisInfrastructure.Models.Output;
 global using CFR.CommonService.Interfaces;
 global using CFR.DBEngine;
 global using System.Text.Json.Serialization;
+global using Microsoft.AspNetCore.Http;

@@ -185,9 +185,9 @@ namespace CFR.Acutis.Controllers.Products
         [HttpPost]
         [ActionName(API_Product.UploadProductLogo)]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadProductLogo([FromForm] ProductLogoUploadForm form)
+        public async Task<IActionResult> UploadProductLogo([FromForm] ProductInput form)
         {
-            return ApiResultArgs(await service.UploadProductLogoAsync(form.File), APIHttpType.HttpPost);
+            return ApiResultArgs(await service.UploadProductLogoAsync(form.File!), APIHttpType.HttpPost);
         }
 
         /// <summary>
