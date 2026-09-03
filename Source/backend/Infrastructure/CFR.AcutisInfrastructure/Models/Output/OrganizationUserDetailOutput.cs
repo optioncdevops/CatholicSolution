@@ -5,10 +5,11 @@ using System.Text.Json.Serialization;
 namespace CFR.AcutisInfrastructure.Models.Output
 {
     /// <summary>
-    /// Output DTO mapped from stored procedure StoredProc.Organization.OrganizationCrud (ActionId 5).
-    /// Holds one user linked to an organization via auth.OrganizationUser + auth.User.
+    /// Output DTO mapped from stored procedure StoredProc.Organization.OrganizationCrud (ActionId 14).
+    /// Holds one member's organization-membership detail plus their effective app access within
+    /// that organization, for the Organization Users tab's user-detail view.
     /// </summary>
-    public class OrganizationUserOutput
+    public class OrganizationUserDetailOutput
     {
         /// <summary>
         /// Gets or sets the linked user's identifier (auth.User.CFRUserId).
@@ -31,6 +32,18 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string FullName { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the organization identifier this membership belongs to.
+        /// </summary>
+        [JsonPropertyName("orgId")]
+        public long OrgId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the organization's display name.
+        /// </summary>
+        [JsonPropertyName("orgName")]
+        public string OrgName { get; set; } = string.Empty;
+
+        /// <summary>
         /// Gets or sets the membership status for this organization link.
         /// </summary>
         [JsonPropertyName("memberStatus")]
@@ -43,11 +56,11 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public DateTime LinkedDate { get; set; }
 
         /// <summary>
-        /// Gets or sets the count of distinct products this member can effectively access within
-        /// this organization (the organization has the product active AND the member has an
-        /// individual auth.UserProduct assignment for it).
+        /// Gets or sets the products this member can effectively access within this organization
+        /// (the organization has the product active AND the member has an individual auth.UserProduct
+        /// assignment for it). Populated by the repository from the stored procedure's second result set.
         /// </summary>
-        [JsonPropertyName("appCount")]
-        public int AppCount { get; set; }
+        [JsonPropertyName("apps")]
+        public List<ProductLookupOutput> Apps { get; set; } = [];
     }
 }

@@ -51,5 +51,36 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("updatedDate")]
         public DateTime? UpdatedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the accent color (hex) used for this template's button and link color at
+        /// send time. Always populated — the stored procedure substitutes the built-in default
+        /// when the row has none set.
+        /// </summary>
+        [JsonPropertyName("accentColor")]
+        public string AccentColor { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets an absolute logo image URL shown above this template's body at send time,
+        /// or null to use the shared text brand header (or no header, per microservice config).
+        /// </summary>
+        [JsonPropertyName("logoUrl")]
+        public string? LogoUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the CSS font-family stack used for this template's body at send time.
+        /// Always populated — the stored procedure substitutes the built-in default when the row
+        /// has none set.
+        /// </summary>
+        [JsonPropertyName("fontFamily")]
+        public string FontFamily { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the base body font size in pixels for this template at send time. Always
+        /// populated — the stored procedure substitutes the built-in default when the row has none
+        /// set.
+        /// </summary>
+        [JsonPropertyName("baseFontSize")]
+        public int BaseFontSize { get; set; }
     }
 }

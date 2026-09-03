@@ -3,10 +3,15 @@ import type { OrganizationFormValues } from '../types/organizationTypes';
 export const organizationDefaultValues: OrganizationFormValues = {
   orgName: '',
   orgStatus: 'active',
+  orgType: '',
   contactEmail: '',
   website: '',
   contactPerson: '',
   contactPhone: '',
+  address: '',
+  city: '',
+  state: '',
+  zip: '',
 };
 
 export const organizationRules = {
@@ -29,6 +34,12 @@ export const organizationRules = {
     pattern: {
       value: /^[+()\d][\d\s().-]{6,19}$/,
       message: 'Enter a valid phone number.',
+    },
+  },
+  zip: {
+    pattern: {
+      value: /^[A-Z0-9][A-Z0-9\s-]{2,9}$/i,
+      message: 'Enter a valid ZIP/postal code.',
     },
   },
 };

@@ -32,17 +32,18 @@ namespace CFR.AcutisService.Interfaces.Profile
         #region PUT Methods
 
         /// <summary>
-        /// Updates the signed-in user's own profile fields.
+        /// Updates the signed-in user's own profile fields, including an optional new profile
+        /// image in the same call (JPG or PNG, max 2MB) — no separate upload step.
         /// </summary>
         /// <remarks>
-        /// Purpose: Save the account owner's name and email.
-        /// Request Flow: ProfileController -> IProfileService.UpdateProfileAsync() -> IProfileRepository.UpdateProfileAsync().
-        /// Validation Details: Input DTO is required; rejects the request when no signed-in user id is available.
-        /// Business Logic: Delegates the save to the repository and wraps the result.
+        /// Purpose: Save the account owner's name, email, and profile photo together.
+        /// Request Flow: ProfileController -> IProfileService.UpdateProfileAsync() -> IProfileRepository.UpdateProfileAsync() (+ local file storage when a new image is provided).
+        /// Validation Details: Input DTO is required; rejects the request when no signed-in user id is available; a provided image must be a JPG/PNG under 2MB.
+        /// Business Logic: Resolves the profile image URL (new upload, cleared, or unchanged), deletes the previous image file when replaced/removed, then delegates the save to the repository.
         /// Repository Interaction: Calls IProfileRepository.UpdateProfileAsync().
-        /// Response Details: MSResultArgs indicating success, UnAuthorized, or Conflict when the email is already in use.
+        /// Response Details: MSResultArgs indicating success, UnAuthorized, BadRequest for an invalid image, or Conflict when the email is already in use.
         /// </remarks>
-        /// <param name="input">Input DTO containing the new profile fields.</param>
+        /// <param name="input">Input DTO containing the new profile fields and optional image.</param>
         /// <returns>MSResultArgs containing the save status.</returns>
         Task<MSResultArgs> UpdateProfileAsync(UpdateProfileInput input);
 

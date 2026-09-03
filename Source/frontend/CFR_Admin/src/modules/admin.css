@@ -391,7 +391,7 @@
 }
 
 .admin-swal-popup {
-  font-family: var(--admin-font-family);
+  font-family: var(--admin-font-family) !important;
   border-radius: var(--radius-panel);
   padding: 1.75rem 1.5rem;
   background: var(--surface) !important;
@@ -399,13 +399,14 @@
   box-shadow: var(--shadow-elevated) !important;
 }
 .admin-swal-title {
-  font-family: var(--admin-font-family-display);
+  font-family: var(--admin-font-family-display) !important;
   font-size: 1.125rem !important;
   font-weight: 800 !important;
   color: var(--text-primary) !important;
   margin-top: 0.5rem !important;
 }
 .admin-swal-text {
+  font-family: var(--admin-font-family) !important;
   font-size: 0.8125rem !important;
   line-height: 1.6;
   color: var(--text-muted) !important;
@@ -424,7 +425,7 @@
 }
 .admin-swal-popup .swal2-actions {
   margin-top: 1.5rem !important;
-  gap: 0.75rem !important;
+  gap: 0.4rem !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -605,3 +606,100 @@
 /* The body renders the template's own HTML (buttons, links) verbatim so the preview matches the
    real email — cursor:default keeps it from reading as a live/clickable app control. */
 .admin-email-preview-card__body a { cursor: default; }
+
+/* Mirrors SMTPMailService.FormatMailContent's send-time wrapper (gradient band, brand header,
+   white content card, disclaimer footer) — keep visually in sync with that method. */
+.admin-email-preview-card__envelope {
+  background: linear-gradient(90deg, rgb(180, 208, 224) 0%, rgb(221, 238, 255) 100%);
+  box-shadow: inset 0 0 20px #82b3cf;
+  padding: 1rem 1.25rem 1.25rem;
+}
+.admin-email-preview-card__brand {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #12264c;
+  letter-spacing: 0.02em;
+}
+.admin-email-preview-card__content {
+  background-color: #fff;
+  padding: 1.25rem;
+}
+.admin-email-preview-card__envelope .admin-email-preview-card__body {
+  padding: 0;
+}
+.admin-email-preview-card__disclaimer {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #808080;
+}
+.admin-email-preview-card__disclaimer span {
+  text-transform: uppercase;
+  font-size: 0.625rem;
+  font-weight: 800;
+  color: #000;
+}
+.admin-email-preview-card__disclaimer p {
+  margin: 0.2rem 0 0;
+  font-size: 0.6875rem;
+  color: #000;
+  line-height: 1.5;
+}
+.admin-email-preview-card__logo-image {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.admin-email-preview-card__logo-image img {
+  max-width: 16rem;
+  max-height: 4.5rem;
+  width: 100%;
+  height: auto;
+}
+
+/* Per-template branding controls (color/logo/font/size) shown under the merge-tag palette. */
+.admin-email-branding {
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
+  padding: 0.85rem 1rem 1rem;
+}
+.admin-email-branding__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  color: var(--text-secondary);
+}
+.admin-email-branding__color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.admin-email-branding__color-swatch {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--admin-control-radius);
+  background: none;
+  cursor: pointer;
+}
+.admin-email-branding__color-text,
+.admin-email-branding__number,
+.admin-email-branding__text {
+  min-height: 2rem;
+  border-radius: var(--admin-control-radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  padding: 0 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+.admin-email-branding__color-text { width: 100%; font-family: ui-monospace, monospace; }
+.admin-email-branding__number { width: 100%; }
+.admin-email-branding__text { width: 100%; }

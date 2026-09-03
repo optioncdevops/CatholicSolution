@@ -54,6 +54,16 @@ const OrganizationDetailPage = () => {
     }
   }, [numericOrgId, showToast]);
 
+  const loadUsers = useCallback(async () => {
+    try {
+      const { resultData, statusCode } = await getOrganizationUsers(numericOrgId);
+      setUsers(statusCode === 204 || !Array.isArray(resultData) ? [] : resultData as OrganizationUserApiItem[]);
+    } catch (error) {
+      console.error('Error loading organization users:', error);
+      showToast('Failed to load users.', 'error');
+    }
+  }, [numericOrgId, showToast]);
+
   const loadProducts = useCallback(async () => {
     try {
       const { resultData, statusCode } = await getOrganizationProducts(numericOrgId);
@@ -117,6 +127,10 @@ const OrganizationDetailPage = () => {
   const handleProductsChanged = async () => {
     await Promise.all([loadProducts(), loadOrganization()]);
   };
+
+  const handleUsersChanged = async () => {
+    await Promise.all([loadUsers(), loadOrganization()]);
+  };
   //#endregion
 
   if (notFound) return <Navigate to="/admin/organizations" replace />;
@@ -156,7 +170,7 @@ const OrganizationDetailPage = () => {
           </TabPanel>
 
           <TabPanel id="users" activeId={activeTab}>
-            <OrganizationUsersPanel users={users} />
+            <OrganizationUsersPanel orgId={numericOrgId} organization={organization} users={users} onChanged={handleUsersChanged} />
           </TabPanel>
 
           <TabPanel id="products" activeId={activeTab}>
