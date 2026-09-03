@@ -776,7 +776,7 @@ const MultiSelectInner = <TFieldValues extends FieldValues = FieldValues>({
                       type="text"
                       tabIndex={-1}
                       className={cn(
-                        "w-full bg-transparent outline-none text-slate-800 dark:text-slate-100",
+                        "w-full bg-transparent outline-none text-[var(--text-primary)] placeholder:text-[var(--text-faint)]",
                         themeFormControlTextClass,
                       )}
                       placeholder="Search..."

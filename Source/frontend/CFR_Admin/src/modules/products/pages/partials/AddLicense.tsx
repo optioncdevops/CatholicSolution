@@ -86,9 +86,10 @@ const AddLicense = () => {
         return;
       }
 
-      const [productRes, orgRes] = await Promise.all([
+      const [productRes, orgRes, licenseRes] = await Promise.all([
         getProductById(resolvedId),
         getOrganizations(),
+        getLicenseDetails(resolvedId),
       ]);
       const loadedProduct =
         (productRes.resultData as ProductApiItem | null) ?? null;
@@ -96,13 +97,21 @@ const AddLicense = () => {
         orgRes.statusCode === 204
           ? []
           : normalizeOrganizationsList(orgRes.resultData);
+      const existingLicenses = Array.isArray(licenseRes.resultData)
+        ? (licenseRes.resultData as ProductLicenseApiItem[])
+        : [];
+      const eligibleOrgs = loadedOrgs.filter(
+        (org) => !customerHasActiveLicense(existingLicenses, org.orgId)
+      );
       setProduct(loadedProduct);
-      setOrganizations(loadedOrgs);
+      setOrganizations(eligibleOrgs);
       if (loadedProduct) {
         setTitle(`${loadedProduct.productName} — License`);
       }
-      if (loadedOrgs[0]) {
-        setOrgId(String(loadedOrgs[0].orgId));
+      if (eligibleOrgs[0]) {
+        setOrgId(String(eligibleOrgs[0].orgId));
+      } else {
+        setOrgId("");
       }
     } catch (error) {
       console.error("Error loading create license page:", error);
@@ -174,6 +183,10 @@ const AddLicense = () => {
 
   const handleSubmit = async () => {
     setTouched(true);
+    if (organizations.length === 0) {
+      showToast("All customers already have an active license for this product.", "error");
+      return;
+    }
     const messages = validateLicenseForm({
       title,
       orgId,
@@ -285,8 +298,9 @@ const AddLicense = () => {
                   <Dropdown
                     label="Customer"
                     required
-                    placeholder="Select customer"
+                    placeholder={organizations.length === 0 ? "No available customers" : "Select customer"}
                     value={orgId}
+                    disabled={organizations.length === 0}
                     onValueChange={(value) => {
                       setOrgId(value ?? "");
                       setTouched(true);
@@ -364,6 +378,7 @@ const AddLicense = () => {
               iconLeft={<Save size={14} />}
               type="submit"
               loading={saving}
+              disabled={saving || organizations.length === 0}
             >
               Save
             </CommonButton>
