@@ -2,10 +2,15 @@ export interface OrganizationApiItem {
   orgId: number;
   orgName: string;
   orgStatus: string;
+  orgType: string | null;
   contactEmail: string | null;
   website: string | null;
   contactPerson: string | null;
   contactPhone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
   insertedDate: string;
   updatedDate: string | null;
   userCount: number;
@@ -15,29 +20,44 @@ export interface OrganizationApiItem {
 export interface OrganizationFormValues {
   orgName: string;
   orgStatus: string;
+  orgType: string;
   contactEmail: string;
   website: string;
   contactPerson: string;
   contactPhone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
 }
 
 export interface UpdateOrganizationPayload {
   orgId: number;
   orgName: string;
   orgStatus: string;
+  orgType: string;
   contactEmail: string;
   website: string;
   contactPerson: string;
   contactPhone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
 }
 
 export interface CreateOrganizationPayload {
   orgName: string;
   orgStatus: string;
+  orgType: string;
   contactEmail: string;
   website: string;
   contactPerson: string;
   contactPhone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
 }
 
 export interface OrganizationUserApiItem {
@@ -45,6 +65,16 @@ export interface OrganizationUserApiItem {
   email: string;
   memberStatus: string | null;
   linkedDate: string;
+}
+
+export interface LinkableUserApiItem {
+  authUserId: number;
+  email: string;
+}
+
+export interface LinkOrganizationUserPayload {
+  orgId: number;
+  authUserId: number;
 }
 
 export interface OrganizationProductApiItem {
@@ -55,6 +85,7 @@ export interface OrganizationProductApiItem {
   externalPageUrl: string | null;
   assignStatus: string | null;
   assignedDate: string;
+  expiryDate: string | null;
 }
 
 export interface AssignableProductApiItem {

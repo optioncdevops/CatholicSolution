@@ -60,6 +60,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Profile
             parameters.Add(DBParameterName.ProfileParams.FirstName, input.FirstName, DbType.String);
             parameters.Add(DBParameterName.ProfileParams.LastName, input.LastName, DbType.String);
             parameters.Add(DBParameterName.ProfileParams.Email, input.Email, DbType.String);
+            parameters.Add(DBParameterName.ProfileParams.ProfileImageUrl, input.ProfileImageUrl, DbType.String);
             parameters.Add(DBParameterName.ProfileParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Profile.ProfileCrud, parameters, CommandType.StoredProcedure);
             return parameters.Get<int>(DBParameterName.ProfileParams.ReturnValue);

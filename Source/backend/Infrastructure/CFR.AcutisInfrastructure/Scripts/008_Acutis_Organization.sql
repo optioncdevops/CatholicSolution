@@ -6,6 +6,11 @@
 -- link tables. [auth].[User] only has Email (no FirstName/LastName) and no IsDeleted column.
 -- OrgId is NOT an IDENTITY column (matches the MAX+1 pattern already used for
 -- auth.AcutisRole and adm.EmailTemplate in this codebase) — Create assigns the next value itself.
+-- auth.OrganizationUser schema confirmed via INFORMATION_SCHEMA.COLUMNS: OrganizationUserId is
+-- NOT NULL with no default (an IDENTITY PK, omitted from the INSERT below), AuthUserId/OrgId are
+-- NOT NULL with no default (required), MemberStatus defaults to 'active', CreatedDate defaults to
+-- SYSUTCDATETIME(), IsDeleted defaults to 0 — all still set explicitly here for clarity/consistency
+-- with the rest of this file. LegacyUserId/UpdatedDate/UpdatedBy are nullable and left NULL on insert.
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -37,6 +42,51 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Address'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [Address] NVARCHAR(300) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'City'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [City] NVARCHAR(100) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'State'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [State] NVARCHAR(100) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Zip'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [Zip] NVARCHAR(20) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'OrgType'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [OrgType] NVARCHAR(30) NULL;
+END
+GO
+
 IF OBJECT_ID(N'[dbo].[Acutis_Organization_CRUD]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[Acutis_Organization_CRUD];
 GO
@@ -51,17 +101,26 @@ GO
 -- ActionId 8: Assign a product to an organization.
 -- ActionId 9: Remove (soft-delete) a product assignment from an organization.
 -- ActionId 10: Get the real licenses issued against an organization's assigned products.
+-- ActionId 11: Get users NOT yet linked to an organization (link dropdown source).
+-- ActionId 12: Link a user to an organization.
+-- ActionId 13: Unlink (soft-delete) a user from an organization.
 CREATE PROCEDURE [dbo].[Acutis_Organization_CRUD]
     @ActionId INT,
     @OrgId BIGINT = 0,
     @OrgName NVARCHAR(200) = NULL,
     @OrgStatus NVARCHAR(20) = NULL,
+    @OrgType NVARCHAR(30) = NULL,
     @ContactEmail NVARCHAR(256) = NULL,
     @Website NVARCHAR(300) = NULL,
     @ContactPerson NVARCHAR(200) = NULL,
     @ContactPhone NVARCHAR(30) = NULL,
+    @Address NVARCHAR(300) = NULL,
+    @City NVARCHAR(100) = NULL,
+    @State NVARCHAR(100) = NULL,
+    @Zip NVARCHAR(20) = NULL,
     @UpdatedBy BIGINT = NULL,
     @ProductId INT = NULL,
+    @AuthUserId BIGINT = NULL,
     @ReturnValue INT = NULL OUTPUT
 AS
 BEGIN
@@ -75,10 +134,15 @@ BEGIN
             o.[OrgId],
             o.[OrgName],
             o.[OrgStatus],
+            o.[OrgType],
             o.[ContactEmail],
             o.[Website],
             o.[ContactPerson],
             o.[ContactPhone],
+            o.[Address],
+            o.[City],
+            o.[State],
+            o.[Zip],
             o.[InsertedDate],
             o.[UpdatedDate],
             (SELECT COUNT(*) FROM [auth].[OrganizationUser] AS ou WHERE ou.[OrgId] = o.[OrgId] AND ou.[IsDeleted] = 0) AS [UserCount],
@@ -95,10 +159,15 @@ BEGIN
             o.[OrgId],
             o.[OrgName],
             o.[OrgStatus],
+            o.[OrgType],
             o.[ContactEmail],
             o.[Website],
             o.[ContactPerson],
             o.[ContactPhone],
+            o.[Address],
+            o.[City],
+            o.[State],
+            o.[Zip],
             o.[InsertedDate],
             o.[UpdatedDate],
             (SELECT COUNT(*) FROM [auth].[OrganizationUser] AS ou WHERE ou.[OrgId] = o.[OrgId] AND ou.[IsDeleted] = 0) AS [UserCount],
@@ -124,10 +193,15 @@ BEGIN
         SET
             [OrgName] = @OrgName,
             [OrgStatus] = @OrgStatus,
+            [OrgType] = @OrgType,
             [ContactEmail] = @ContactEmail,
             [Website] = @Website,
             [ContactPerson] = @ContactPerson,
             [ContactPhone] = @ContactPhone,
+            [Address] = @Address,
+            [City] = @City,
+            [State] = @State,
+            [Zip] = @Zip,
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UpdatedBy
         WHERE [OrgId] = @OrgId
@@ -143,12 +217,14 @@ BEGIN
 
         INSERT INTO [core].[Organization]
         (
-            [OrgId], [OrgName], [OrgStatus], [ContactEmail], [Website], [ContactPerson], [ContactPhone],
+            [OrgId], [OrgName], [OrgStatus], [OrgType], [ContactEmail], [Website], [ContactPerson], [ContactPhone],
+            [Address], [City], [State], [Zip],
             [InsertedDate], [InsertedBy], [IsDeleted]
         )
         VALUES
         (
-            @OrgId, @OrgName, @OrgStatus, @ContactEmail, @Website, @ContactPerson, @ContactPhone,
+            @OrgId, @OrgName, @OrgStatus, @OrgType, @ContactEmail, @Website, @ContactPerson, @ContactPhone,
+            @Address, @City, @State, @Zip,
             SYSUTCDATETIME(), @UpdatedBy, 0
         );
 
@@ -180,7 +256,10 @@ BEGIN
             p.[ProdDescription],
             p.[ExternalPageUrl],
             op.[AssignStatus],
-            op.[CreatedDate] AS [AssignedDate]
+            op.[CreatedDate] AS [AssignedDate],
+            -- '9999-12-31' is the open-ended "no defined end" sentinel set at assignment time (see
+            -- ActionId 8) — surfaced as NULL ("No expiry") rather than that literal sentinel date.
+            CASE WHEN op.[ActiveEndDate] >= '9999-01-01' THEN NULL ELSE op.[ActiveEndDate] END AS [ExpiryDate]
         FROM [lic].[OrganizationProduct] AS op
         INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
         WHERE op.[OrgId] = @OrgId
@@ -290,6 +369,84 @@ BEGIN
           AND op.[IsDeleted] = 0
         ORDER BY l.[CreatedDate] DESC;
         RETURN 0;
+    END
+
+    IF @ActionId = 11
+    BEGIN
+        SELECT
+            u.[CFRUserId] AS [AuthUserId],
+            u.[Email]
+        FROM [auth].[User] AS u
+        WHERE NOT EXISTS (
+            SELECT 1 FROM [auth].[OrganizationUser] AS ou
+            WHERE ou.[OrgId] = @OrgId
+              AND ou.[AuthUserId] = u.[CFRUserId]
+              AND ou.[IsDeleted] = 0
+        )
+        ORDER BY u.[Email];
+        RETURN 0;
+    END
+
+    IF @ActionId = 12
+    BEGIN
+        IF EXISTS (
+            SELECT 1 FROM [auth].[OrganizationUser]
+            WHERE [OrgId] = @OrgId AND [AuthUserId] = @AuthUserId AND [IsDeleted] = 0
+        )
+        BEGIN
+            SET @ReturnValue = -98;
+            RETURN @ReturnValue;
+        END
+
+        IF EXISTS (
+            SELECT 1 FROM [auth].[OrganizationUser]
+            WHERE [OrgId] = @OrgId AND [AuthUserId] = @AuthUserId AND [IsDeleted] = 1
+        )
+        BEGIN
+            UPDATE [auth].[OrganizationUser]
+            SET [MemberStatus] = 'active',
+                [CreatedDate] = SYSUTCDATETIME(),
+                [UpdatedDate] = SYSUTCDATETIME(),
+                [UpdatedBy] = @UpdatedBy,
+                [IsDeleted] = 0
+            WHERE [OrgId] = @OrgId AND [AuthUserId] = @AuthUserId;
+        END
+        ELSE
+        BEGIN
+            INSERT INTO [auth].[OrganizationUser]
+            (
+                [AuthUserId], [OrgId], [MemberStatus], [CreatedDate], [InsertedBy], [IsDeleted]
+            )
+            VALUES
+            (
+                @AuthUserId, @OrgId, 'active', SYSUTCDATETIME(), @UpdatedBy, 0
+            );
+        END
+
+        SET @ReturnValue = CAST(@AuthUserId AS INT);
+        RETURN @ReturnValue;
+    END
+
+    IF @ActionId = 13
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM [auth].[OrganizationUser]
+            WHERE [OrgId] = @OrgId AND [AuthUserId] = @AuthUserId AND [IsDeleted] = 0
+        )
+        BEGIN
+            SET @ReturnValue = -99;
+            RETURN @ReturnValue;
+        END
+
+        UPDATE [auth].[OrganizationUser]
+        SET [MemberStatus] = 'inactive',
+            [UpdatedDate] = SYSUTCDATETIME(),
+            [UpdatedBy] = @UpdatedBy,
+            [IsDeleted] = 1
+        WHERE [OrgId] = @OrgId AND [AuthUserId] = @AuthUserId;
+
+        SET @ReturnValue = CAST(@AuthUserId AS INT);
+        RETURN @ReturnValue;
     END
 END
 GO

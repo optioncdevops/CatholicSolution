@@ -5,12 +5,12 @@ import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
-import { StatusBadge } from '@app/components/Badge';
+import { Badge, StatusBadge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate } from '../../utils/formatDate';
 import { getOrganizations } from '../services/organizationsService';
 import type { OrganizationApiItem } from '../types/organizationTypes';
-import { normalizeOrganizationsList, ORG_STATUS_OPTIONS } from '../utils/organizationHelpers';
+import { normalizeOrganizationsList, ORG_STATUS_OPTIONS, orgTypeLabel } from '../utils/organizationHelpers';
 
 const STATUS_FILTER_PARAM = 'status';
 
@@ -120,6 +120,11 @@ export function OrganizationsListPage() {
       id: 'orgName', header: 'Organization', width: '14rem',
       value: (org) => org.orgName,
       cell: (org) => <span className="font-bold text-[var(--text-primary)]">{org.orgName}</span>,
+    },
+    {
+      id: 'orgType', header: 'Type',
+      value: (org) => org.orgType ?? '',
+      cell: (org) => org.orgType ? <Badge tone="neutral">{orgTypeLabel(org.orgType)}</Badge> : <span className="text-[var(--text-faint)]">—</span>,
     },
     {
       id: 'website', header: 'Website', width: '12rem',

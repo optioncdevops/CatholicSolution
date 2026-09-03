@@ -11,6 +11,9 @@ export interface AcutisLoginUser {
   landingURL: string;
   lastActiveAt: string | null;
   token: string;
+  // Not part of the login response — patched in locally by updateStoredAcutisUser after the
+  // Profile page loads/saves, so the account menu avatar reflects it without a second sign-in.
+  profileImageUrl?: string | null;
 }
 
 export interface AcutisModuleRight {
@@ -81,12 +84,14 @@ export interface ProfileApiItem {
   firstName: string;
   lastName: string;
   email: string;
+  profileImageUrl: string | null;
 }
 
 export interface UpdateProfilePayload {
   firstName: string;
   lastName: string;
   email: string;
+  profileImageUrl: string | null;
 }
 
 export interface ChangePasswordPayload {

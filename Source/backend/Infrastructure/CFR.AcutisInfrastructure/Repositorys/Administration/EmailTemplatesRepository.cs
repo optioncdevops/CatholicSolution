@@ -103,6 +103,10 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.EmailTemplateParams.Subject, input.Subject, DbType.String);
             parameters.Add(DBParameterName.EmailTemplateParams.Body, input.Body, DbType.String);
             parameters.Add(DBParameterName.EmailTemplateParams.Status, input.Status, DbType.String);
+            parameters.Add(DBParameterName.EmailTemplateParams.AccentColor, input.AccentColor, DbType.String);
+            parameters.Add(DBParameterName.EmailTemplateParams.LogoUrl, input.LogoUrl, DbType.String);
+            parameters.Add(DBParameterName.EmailTemplateParams.FontFamily, input.FontFamily, DbType.String);
+            parameters.Add(DBParameterName.EmailTemplateParams.BaseFontSize, input.BaseFontSize, DbType.Int32);
             parameters.Add(DBParameterName.EmailTemplateParams.UpdatedBy, updatedBy, DbType.Int64);
             parameters.Add(DBParameterName.EmailTemplateParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Administration.EmailTemplatesCrud, parameters, CommandType.StoredProcedure);

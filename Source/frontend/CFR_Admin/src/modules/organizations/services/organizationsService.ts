@@ -1,6 +1,6 @@
 import axiosInstance from '@app/config/AxiosInstance';
 import type { ApiError, ApiResponse } from '@app/pages/types/CommonTypes';
-import type { AssignOrganizationProductPayload, CreateOrganizationPayload, UpdateOrganizationPayload } from '../types/organizationTypes';
+import type { AssignOrganizationProductPayload, CreateOrganizationPayload, LinkOrganizationUserPayload, UpdateOrganizationPayload } from '../types/organizationTypes';
 
 const controller = 'Organization';
 
@@ -106,6 +106,41 @@ export const removeOrganizationProduct = async (orgId: number, productId: number
   } catch (error: unknown) {
     const err = error as ApiError;
     throw err.response?.data?.statusMessage || err.message || 'Failed to remove product';
+  }
+};
+
+export const getLinkableUsers = async (orgId: number): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetLinkableUsers`, {
+      params: { orgId },
+    });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to load linkable users';
+  }
+};
+
+export const linkOrganizationUser = async (payload: LinkOrganizationUserPayload): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.post<ApiResponse>(`${controller}/LinkOrganizationUser`, payload);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to link user';
+  }
+};
+
+export const unlinkOrganizationUser = async (orgId: number, authUserId: number): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.delete<ApiResponse>(`${controller}/UnlinkOrganizationUser`, {
+      params: { orgId, authUserId },
+    });
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to unlink user';
   }
 };
 

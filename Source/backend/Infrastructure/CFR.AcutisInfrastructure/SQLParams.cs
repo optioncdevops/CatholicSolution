@@ -175,6 +175,26 @@ namespace CFR.AcutisInfrastructure
             public const string Status = nameof(Status);
 
             /// <summary>
+            /// Per-template accent color (hex) override for the send-time wrapper.
+            /// </summary>
+            public const string AccentColor = nameof(AccentColor);
+
+            /// <summary>
+            /// Per-template logo image URL override for the send-time wrapper.
+            /// </summary>
+            public const string LogoUrl = nameof(LogoUrl);
+
+            /// <summary>
+            /// Per-template font-family override for the send-time wrapper.
+            /// </summary>
+            public const string FontFamily = nameof(FontFamily);
+
+            /// <summary>
+            /// Per-template base body font size (pixels) override for the send-time wrapper.
+            /// </summary>
+            public const string BaseFontSize = nameof(BaseFontSize);
+
+            /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);
@@ -214,6 +234,11 @@ namespace CFR.AcutisInfrastructure
             /// User email address.
             /// </summary>
             public const string Email = nameof(Email);
+
+            /// <summary>
+            /// Relative URL of the user's uploaded profile image (e.g. /uploads/profile/{fileName}).
+            /// </summary>
+            public const string ProfileImageUrl = nameof(ProfileImageUrl);
 
             /// <summary>
             /// Current plain-text password, verified with dbo.DecryptUserPassword.
@@ -257,6 +282,11 @@ namespace CFR.AcutisInfrastructure
             public const string OrgStatus = nameof(OrgStatus);
 
             /// <summary>
+            /// Organization type (e.g. Parish, Diocese, School, Nonprofit, Business, Other).
+            /// </summary>
+            public const string OrgType = nameof(OrgType);
+
+            /// <summary>
             /// Organization contact email address.
             /// </summary>
             public const string ContactEmail = nameof(ContactEmail);
@@ -277,6 +307,26 @@ namespace CFR.AcutisInfrastructure
             public const string ContactPhone = nameof(ContactPhone);
 
             /// <summary>
+            /// Street address.
+            /// </summary>
+            public const string Address = nameof(Address);
+
+            /// <summary>
+            /// City.
+            /// </summary>
+            public const string City = nameof(City);
+
+            /// <summary>
+            /// State or province.
+            /// </summary>
+            public const string State = nameof(State);
+
+            /// <summary>
+            /// ZIP or postal code.
+            /// </summary>
+            public const string Zip = nameof(Zip);
+
+            /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);
@@ -285,6 +335,11 @@ namespace CFR.AcutisInfrastructure
             /// Product identifier, used when assigning/removing a product for an organization.
             /// </summary>
             public const string ProductId = nameof(ProductId);
+
+            /// <summary>
+            /// User identifier (auth.User.CFRUserId), used when linking/unlinking a user for an organization.
+            /// </summary>
+            public const string AuthUserId = nameof(AuthUserId);
 
             /// <summary>
             /// Stored procedure output / return value.

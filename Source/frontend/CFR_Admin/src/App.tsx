@@ -19,6 +19,9 @@ import { productsRoutes } from "@/modules/Products";
 const DashboardPage = lazy(() =>
   import("@/modules/DashboardPage").then((m) => ({ default: m.DashboardPage })),
 );
+const ProfilePage = lazy(() =>
+  import("@/modules/ProfilePage").then((m) => ({ default: m.ProfilePage })),
+);
 const ProductsListPage = lazy(() =>
   import("@/modules/Products/pages/ProductsListPage").then((m) => ({
     default: m.ProductsListPage,
@@ -81,6 +84,7 @@ export default function App() {
           }
         >
           <Route path="/admin" element={<DashboardPage />} />
+          <Route path="/admin/profile" element={<ProfilePage />} />
           <Route path="/admin/applications" element={<ProductsListPage />} />
           <Route
             path="/admin/applications/:appId"

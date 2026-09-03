@@ -62,5 +62,24 @@ namespace CFR.AcutisService.Interfaces.Profile
         Task<MSResultArgs> ChangePasswordAsync(ChangePasswordInput input);
 
         #endregion PUT Methods
+
+        #region POST Methods
+
+        /// <summary>
+        /// Validates and saves an uploaded profile image (JPG or PNG, max 2MB).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Store the signed-in user's profile image safely and return a relative accessible URL.
+        /// Request Flow: ProfileController -> IProfileService.UploadProfileImageAsync() -> Storage.
+        /// Validation Details: Rejects the request when no signed-in user id is available; file is required, max 2 MB, extensions .jpg/.jpeg/.png only.
+        /// Business Logic: Generates a collision-proof filename and saves it to storage location.
+        /// Repository Interaction: None (file storage only).
+        /// Response Details: MSResultArgs containing the relative URL path (/uploads/profile/{fileName}).
+        /// </remarks>
+        /// <param name="file">Uploaded image file from multipart form data.</param>
+        /// <returns>MSResultArgs containing the relative accessible URL path.</returns>
+        Task<MSResultArgs> UploadProfileImageAsync(IFormFile file);
+
+        #endregion POST Methods
     }
 }

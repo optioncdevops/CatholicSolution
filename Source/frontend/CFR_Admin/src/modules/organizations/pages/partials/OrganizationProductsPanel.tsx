@@ -1,19 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { CommonButton, CommonIconButton } from '@app/components/buttons';
-import { Dropdown } from '@app/components/formControls';
+import { CommonIconButton } from '@app/components/buttons';
 import { Badge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '@/modules/lib/confirm';
 import { formatDate } from '@/modules/utils/formatDate';
-import {
-  assignOrganizationProduct,
-  getAssignableOrganizationProducts,
-  removeOrganizationProduct,
-} from '../../services/organizationsService';
-import type { AssignableProductApiItem, OrganizationProductApiItem } from '../../types/organizationTypes';
+import { removeOrganizationProduct } from '../../services/organizationsService';
+import type { OrganizationProductApiItem } from '../../types/organizationTypes';
 
 type OrganizationProductsPanelProps = {
   orgId: number;
@@ -22,55 +17,18 @@ type OrganizationProductsPanelProps = {
   onChanged: () => Promise<void> | void;
 };
 
+// Assigning products from here is hidden for now — keep only view/remove until that flow is
+// revisited. removeOrganizationProduct still works so existing assignments can be revoked.
 const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: OrganizationProductsPanelProps) => {
   //#region Hooks
   const { showToast } = useToast();
   //#endregion
 
   //#region States
-  const [assignableProducts, setAssignableProducts] = useState<AssignableProductApiItem[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [assigning, setAssigning] = useState(false);
   const [removingProductId, setRemovingProductId] = useState<number | null>(null);
   //#endregion
 
-  //#region Effects
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const { resultData, statusCode } = await getAssignableOrganizationProducts(orgId);
-        if (cancelled) return;
-        setAssignableProducts(statusCode === 204 || !Array.isArray(resultData) ? [] : resultData as AssignableProductApiItem[]);
-      } catch (error) {
-        if (cancelled) return;
-        console.error('Error loading assignable products:', error);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [orgId, products]);
-  //#endregion
-
   //#region Handlers
-  const handleAssign = async () => {
-    if (!selectedProductId) return;
-    const product = assignableProducts.find((item) => String(item.productId) === selectedProductId);
-    setAssigning(true);
-    try {
-      await assignOrganizationProduct({ orgId, productId: Number(selectedProductId) });
-      showToast(`${product?.productName ?? 'Product'} assigned to ${orgName}.`, 'success');
-      setSelectedProductId('');
-      await onChanged();
-    } catch (error) {
-      console.error('Error assigning product:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to assign product.', 'error');
-    } finally {
-      setAssigning(false);
-    }
-  };
-
   const handleRemove = async (product: OrganizationProductApiItem) => {
     const confirmed = await confirmAction({
       title: 'Remove this product?',
@@ -117,6 +75,11 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
       cell: (product) => <span className="text-[var(--text-muted)]">{formatDate(product.assignedDate)}</span>,
     },
     {
+      id: 'expiryDate', header: 'Expiry Date',
+      value: (product) => product.expiryDate ?? '',
+      cell: (product) => <span className="text-[var(--text-muted)]">{product.expiryDate ? formatDate(product.expiryDate) : 'No expiry'}</span>,
+    },
+    {
       id: 'actions', header: 'Actions', width: '4rem', excludeFromExport: true, sortable: false,
       cell: (product) => (
         <CommonIconButton
@@ -135,26 +98,8 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
   //#region Render
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="w-64 shrink-0">
-          <Dropdown
-            label="Product to assign"
-            hideLabel
-            searchable={false}
-            clearable={false}
-            value={selectedProductId || undefined}
-            onValueChange={(value) => setSelectedProductId(value ?? '')}
-            options={assignableProducts.map((product) => ({ id: String(product.productId), value: product.productName }))}
-            placeholder={assignableProducts.length === 0 ? 'All products assigned' : 'Select a product to assign…'}
-            disabled={assigning || assignableProducts.length === 0}
-            className="min-h-8"
-          />
-        </div>
-        <CommonButton variant="primary" size="sm" iconLeft={<Plus size={14} />} onClick={handleAssign} loading={assigning} disabled={!selectedProductId || assigning}>Assign</CommonButton>
-      </div>
-
       {products.length === 0 ? (
-        <EmptyState icon="📦" title="No products assigned" description="Assign a product above to give this organization access." />
+        <EmptyState icon="📦" title="No products assigned" description="Products assigned to this organization will appear here." />
       ) : (
         <DataTable
           data={products}

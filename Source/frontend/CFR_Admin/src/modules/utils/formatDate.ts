@@ -19,9 +19,10 @@ export function formatDateTime(value?: string | null): string {
   return `${DISPLAY_FORMAT.format(date)}, ${DISPLAY_TIME_FORMAT.format(date)}`;
 }
 
-/** Whole days between an ISO date string and now (positive = in the past). */
+/** Whole days between an ISO date (or datetime) string and now (positive = in the past). */
 export function daysSince(value: string): number {
-  const date = new Date(`${value.trim()}T00:00:00`);
+  const trimmed = value.trim();
+  const date = new Date(trimmed.includes('T') ? trimmed : `${trimmed}T00:00:00`);
   if (Number.isNaN(date.getTime())) return Number.POSITIVE_INFINITY;
   return Math.round((Date.now() - date.getTime()) / 86_400_000);
 }

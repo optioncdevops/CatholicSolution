@@ -87,5 +87,34 @@ namespace CFR.Acutis.Controllers.Profile
         }
 
         #endregion PUT Methods
+
+        #region POST Methods
+
+        /// <summary>
+        /// Uploads the signed-in user's profile image (JPG or PNG, max 2MB).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Accepts an image file, saves it securely, and returns the accessible relative file path.
+        /// Request Flow: Client API POST -> ProfileController.UploadProfileImage() -> IProfileService.UploadProfileImageAsync() -> Storage.
+        /// Validation Details: Bound from multipart form data; validates extension (.jpg, .jpeg, .png) and size (up to 2 MB).
+        /// Business Logic: None at controller level; delegates to service layer. Does not persist the URL — the client must still call UpdateProfile with the returned URL.
+        /// Service Interaction: Calls IProfileService.UploadProfileImageAsync(file).
+        /// Response Details: Standard API result enclosing the relative file URL path.
+        /// </remarks>
+        /// <param name="file">The uploaded image file.</param>
+        /// <returns>A consistent API response containing the relative URL path of the saved image.</returns>
+        /// <response code="200">Successfully uploaded the profile image.</response>
+        /// <response code="400">Invalid image file or size exceeds 2 MB.</response>
+        /// <response code="401">No authenticated user is associated with this request.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpPost]
+        [ActionName(API_Profile.UploadProfileImage)]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadProfileImage(IFormFile file)
+        {
+            return ApiResultArgs(await service.UploadProfileImageAsync(file), APIHttpType.HttpPost);
+        }
+
+        #endregion POST Methods
     }
 }

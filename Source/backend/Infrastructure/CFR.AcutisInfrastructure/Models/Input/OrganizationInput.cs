@@ -33,6 +33,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string OrgStatus { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the organization type (e.g. Parish, Diocese, School, Nonprofit, Business, Other).
+        /// </summary>
+        [JsonPropertyName("orgType")]
+        public string? OrgType { get; set; }
+
+        /// <summary>
         /// Gets or sets the organization contact email address.
         /// </summary>
         [JsonPropertyName("contactEmail")]
@@ -55,6 +61,30 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("contactPhone")]
         public string? ContactPhone { get; set; }
+
+        /// <summary>
+        /// Gets or sets the street address.
+        /// </summary>
+        [JsonPropertyName("address")]
+        public string? Address { get; set; }
+
+        /// <summary>
+        /// Gets or sets the city.
+        /// </summary>
+        [JsonPropertyName("city")]
+        public string? City { get; set; }
+
+        /// <summary>
+        /// Gets or sets the state or province.
+        /// </summary>
+        [JsonPropertyName("state")]
+        public string? State { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ZIP or postal code.
+        /// </summary>
+        [JsonPropertyName("zip")]
+        public string? Zip { get; set; }
     }
 
     /// <summary>
@@ -78,6 +108,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string OrgStatus { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the organization type (e.g. Parish, Diocese, School, Nonprofit, Business, Other).
+        /// </summary>
+        [JsonPropertyName("orgType")]
+        public string? OrgType { get; set; }
+
+        /// <summary>
         /// Gets or sets the organization contact email address.
         /// </summary>
         [JsonPropertyName("contactEmail")]
@@ -100,6 +136,30 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("contactPhone")]
         public string? ContactPhone { get; set; }
+
+        /// <summary>
+        /// Gets or sets the street address.
+        /// </summary>
+        [JsonPropertyName("address")]
+        public string? Address { get; set; }
+
+        /// <summary>
+        /// Gets or sets the city.
+        /// </summary>
+        [JsonPropertyName("city")]
+        public string? City { get; set; }
+
+        /// <summary>
+        /// Gets or sets the state or province.
+        /// </summary>
+        [JsonPropertyName("state")]
+        public string? State { get; set; }
+
+        /// <summary>
+        /// Gets or sets the ZIP or postal code.
+        /// </summary>
+        [JsonPropertyName("zip")]
+        public string? Zip { get; set; }
     }
 
     /// <summary>
@@ -121,5 +181,26 @@ namespace CFR.AcutisInfrastructure.Models.Input
         [Required]
         [JsonPropertyName("productId")]
         public int ProductId { get; set; }
+    }
+
+    /// <summary>
+    /// Input DTO used to link a user to an organization.
+    /// Bound from the controller request body and passed to the service and repository.
+    /// </summary>
+    public class LinkOrganizationUserInput
+    {
+        /// <summary>
+        /// Gets or sets the organization identifier.
+        /// </summary>
+        [Required]
+        [JsonPropertyName("orgId")]
+        public long OrgId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user identifier to link (auth.User.CFRUserId).
+        /// </summary>
+        [Required]
+        [JsonPropertyName("authUserId")]
+        public long AuthUserId { get; set; }
     }
 }

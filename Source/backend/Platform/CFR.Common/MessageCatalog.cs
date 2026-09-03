@@ -61,6 +61,10 @@ namespace CFR.Common
         public const string ProductAssigned = "Product assigned successfully.";
         public const string ProductNotAssigned = "This product is not assigned to the organization.";
         public const string ProductRemoved = "Product removed successfully.";
+        public const string UserAlreadyLinked = "This user is already linked to the organization.";
+        public const string UserLinked = "User linked successfully.";
+        public const string UserNotLinked = "This user is not linked to the organization.";
+        public const string UserUnlinked = "User removed successfully.";
         public const string ExistAccessRequest = "A pending access request for this product already exists.";
         public const string AccessRequestProductNotFound = "The requested product is not available.";
         public const string AccessRequestMemberNotFound = "No member account was found for this email.";
@@ -96,6 +100,7 @@ namespace CFR.Common
             public const string FetchProfileFailed = "Error while fetching profile for user {UserId}";
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
             public const string ChangePasswordFailed = "Error while changing password for user {UserId}";
+            public const string UploadProfileImageFailed = "Error while uploading profile image for user {UserId}";
             public const string FetchOrganizationsFailed = "Error while fetching organizations";
             public const string FetchOrganizationByIdFailed = "Error while fetching organization {OrganizationId}";
             public const string FetchAccessRequestsFailed = "Error while fetching access requests";
@@ -112,6 +117,9 @@ namespace CFR.Common
             public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
             public const string AssignOrganizationProductFailed = "Error while assigning product to organization {OrgId}";
             public const string RemoveOrganizationProductFailed = "Error while removing product from organization {OrgId}";
+            public const string FetchLinkableUsersFailed = "Error while fetching linkable users for organization {OrgId}";
+            public const string LinkOrganizationUserFailed = "Error while linking user to organization {OrgId}";
+            public const string UnlinkOrganizationUserFailed = "Error while unlinking user from organization {OrgId}";
             public const string UpdateOrganizationFailed = "Error while updating organization {OrgId}";
             public const string FetchProductByIdFailed = "Error while fetching product {ProductId}";
             public const string FetchProductLicensesFailed = "Error while fetching product licenses for {ProductId}";

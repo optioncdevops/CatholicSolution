@@ -65,6 +65,7 @@ namespace CFR.CommonService
             public const string GetProfile = nameof(GetProfile);
             public const string UpdateProfile = nameof(UpdateProfile);
             public const string ChangePassword = nameof(ChangePassword);
+            public const string UploadProfileImage = nameof(UploadProfileImage);
         }
 
         public static class API_Organization
@@ -79,6 +80,9 @@ namespace CFR.CommonService
             public const string AssignOrganizationProduct = nameof(AssignOrganizationProduct);
             public const string RemoveOrganizationProduct = nameof(RemoveOrganizationProduct);
             public const string GetOrganizationLicenses = nameof(GetOrganizationLicenses);
+            public const string GetLinkableUsers = nameof(GetLinkableUsers);
+            public const string LinkOrganizationUser = nameof(LinkOrganizationUser);
+            public const string UnlinkOrganizationUser = nameof(UnlinkOrganizationUser);
         }
 
         public static class API_Product

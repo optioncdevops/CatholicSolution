@@ -145,6 +145,28 @@ namespace CFR.Acutis.Controllers.Organization
             return ApiResultArgs(await service.GetOrganizationLicensesAsync(orgId), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves the users not yet linked to an organization.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the link-user dropdown on the Users tab.
+        /// Request Flow: Client API GET -> OrganizationController.GetLinkableUsers() -> IOrganizationService.GetLinkableUsersAsync() -> Database.
+        /// Validation Details: Query parameter binding maps the identifier.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IOrganizationService.GetLinkableUsersAsync().
+        /// Response Details: Standard API result enclosing List of OrganizationLinkableUserOutput with status 200 or 500.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <returns>A consistent API response containing the linkable users.</returns>
+        /// <response code="200">Successfully fetched the linkable users.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Organization.GetLinkableUsers)]
+        public async Task<IActionResult> GetLinkableUsers(long orgId)
+        {
+            return ApiResultArgs(await service.GetLinkableUsersAsync(orgId), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
 
         #region POST Methods
@@ -196,6 +218,30 @@ namespace CFR.Acutis.Controllers.Organization
             return ApiResultArgs(await service.AssignOrganizationProductAsync(input), APIHttpType.HttpPost);
         }
 
+        /// <summary>
+        /// Links a user to an organization.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Add a user to an organization from the Users tab.
+        /// Request Flow: Client API POST -> OrganizationController.LinkOrganizationUser() -> IOrganizationService.LinkOrganizationUserAsync() -> Database.
+        /// Validation Details: Model binding maps LinkOrganizationUserInput from the request body.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IOrganizationService.LinkOrganizationUserAsync().
+        /// Response Details: Standard API result indicating execution status.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the organization and user identifiers.</param>
+        /// <returns>Result of the link operation.</returns>
+        /// <response code="201">Successfully linked the user.</response>
+        /// <response code="400">Invalid request.</response>
+        /// <response code="409">The user is already linked.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpPost]
+        [ActionName(API_Organization.LinkOrganizationUser)]
+        public async Task<IActionResult> LinkOrganizationUser([FromBody] LinkOrganizationUserInput input)
+        {
+            return ApiResultArgs(await service.LinkOrganizationUserAsync(input), APIHttpType.HttpPost);
+        }
+
         #endregion POST Methods
 
         #region DELETE Methods
@@ -222,6 +268,30 @@ namespace CFR.Acutis.Controllers.Organization
         public async Task<IActionResult> RemoveOrganizationProduct(long orgId, int productId)
         {
             return ApiResultArgs(await service.RemoveOrganizationProductAsync(orgId, productId), APIHttpType.HttpDelete);
+        }
+
+        /// <summary>
+        /// Unlinks a user from an organization.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Remove a user from an organization from the Users tab.
+        /// Request Flow: Client API DELETE -> OrganizationController.UnlinkOrganizationUser() -> IOrganizationService.UnlinkOrganizationUserAsync() -> Database.
+        /// Validation Details: Query parameter binding maps the identifiers.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IOrganizationService.UnlinkOrganizationUserAsync().
+        /// Response Details: Standard API result indicating execution status.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">User identifier to unlink.</param>
+        /// <returns>Result of the unlink operation.</returns>
+        /// <response code="200">Successfully unlinked the user.</response>
+        /// <response code="204">The user was not linked.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpDelete]
+        [ActionName(API_Organization.UnlinkOrganizationUser)]
+        public async Task<IActionResult> UnlinkOrganizationUser(long orgId, long authUserId)
+        {
+            return ApiResultArgs(await service.UnlinkOrganizationUserAsync(orgId, authUserId), APIHttpType.HttpDelete);
         }
 
         #endregion DELETE Methods

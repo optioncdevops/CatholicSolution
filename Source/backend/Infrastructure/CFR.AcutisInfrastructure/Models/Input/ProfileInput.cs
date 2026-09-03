@@ -31,6 +31,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         [Required]
         [JsonPropertyName("email")]
         public string Email { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the relative URL of the uploaded profile image (from UploadProfileImage), or null to clear it.
+        /// </summary>
+        [JsonPropertyName("profileImageUrl")]
+        public string? ProfileImageUrl { get; set; }
     }
 
     /// <summary>

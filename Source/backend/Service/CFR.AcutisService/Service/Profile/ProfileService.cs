@@ -16,6 +16,7 @@ namespace CFR.AcutisService.Service.Profile
     public class ProfileService(
         IProfileRepository repository,
         ICurrentUserService currentUserService,
+        IWebHostEnvironment environment,
         ILogger<ProfileService> logger): IProfileService
     {
         private const int MinimumPasswordLength = 8;
@@ -102,12 +103,20 @@ namespace CFR.AcutisService.Service.Profile
                     return result;
                 }
 
+                var existingProfile = await repository.GetProfileAsync(currentUserService.UserId);
+
                 int updatedId = await repository.UpdateProfileAsync(currentUserService.UserId, input);
                 if (updatedId == -99)
                 {
                     result.StatusCode = ErrorCodes.Conflict;
                     result.StatusMessage = ErrorMessages.ExistUser;
                     return result;
+                }
+
+                // Safely clean up the previous profile image file if it was replaced or removed.
+                if (existingProfile != null && !string.IsNullOrWhiteSpace(existingProfile.ProfileImageUrl) && !string.Equals(existingProfile.ProfileImageUrl, input.ProfileImageUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    TryDeleteLocalFile(existingProfile.ProfileImageUrl);
                 }
 
                 result.StatusMessage = ErrorMessages.ProfileUpdated;
@@ -184,5 +193,118 @@ namespace CFR.AcutisService.Service.Profile
         }
 
         #endregion PUT Methods
+
+        #region POST Methods
+
+        /// <summary>
+        /// Validates and saves an uploaded profile image (JPG or PNG, max 2MB).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Store the signed-in user's profile image safely and return a relative accessible URL.
+        /// Request Flow: ProfileController -> ProfileService.UploadProfileImageAsync() -> Storage.
+        /// Validation Details: Rejects the request when no signed-in user id is available; file is required, max 2 MB, extensions .jpg/.jpeg/.png only.
+        /// Business Logic: Generates a collision-proof filename and saves it to storage location; does not persist the URL — the caller must still call UpdateProfileAsync with the returned URL.
+        /// Repository Interaction: None (file storage only).
+        /// Response Details: MSResultArgs containing the relative URL path (/uploads/profile/{fileName}).
+        /// </remarks>
+        /// <param name="file">Uploaded image file from multipart form data.</param>
+        /// <returns>MSResultArgs containing the relative accessible URL path.</returns>
+        public async Task<MSResultArgs> UploadProfileImageAsync(IFormFile file)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (currentUserService.UserId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.UnAuthorized;
+                    result.StatusMessage = ErrorMessages.UnAuthorized;
+                    return result;
+                }
+
+                if (file == null || file.Length == 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = "File is empty or not provided.";
+                    return result;
+                }
+
+                const long maxFileSize = 2 * 1024 * 1024;
+                if (file.Length > maxFileSize)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = "File size cannot exceed 2 MB.";
+                    return result;
+                }
+
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                if (!allowedExtensions.Contains(extension))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = "Only JPG and PNG images are allowed.";
+                    return result;
+                }
+
+                var uniqueFileName = $"user_{currentUserService.UserId}_{Guid.NewGuid():N}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
+                var targetPath = Path.Combine(GetUploadsDirectory(), uniqueFileName);
+
+                using (var stream = new FileStream(targetPath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                result.ResultData = $"/uploads/profile/{uniqueFileName}";
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.UploadProfileImageFailed, currentUserService.UserId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        #endregion POST Methods
+
+        #region Private Helper Methods
+
+        private string GetUploadsDirectory()
+        {
+            string webRoot = !string.IsNullOrWhiteSpace(environment.WebRootPath)
+                ? environment.WebRootPath
+                : Path.Combine(environment.ContentRootPath, "wwwroot");
+
+            string uploadsDir = Path.Combine(webRoot, "uploads", "profile");
+            if (!Directory.Exists(uploadsDir))
+            {
+                _ = Directory.CreateDirectory(uploadsDir);
+            }
+            return uploadsDir;
+        }
+
+        private void TryDeleteLocalFile(string? relativeUrl)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(relativeUrl))
+                {
+                    return;
+                }
+
+                string fileName = Path.GetFileName(relativeUrl);
+                string filePath = Path.Combine(GetUploadsDirectory(), fileName);
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, "Error deleting previous profile image file {RelativeUrl}", relativeUrl);
+            }
+        }
+
+        #endregion Private Helper Methods
     }
 }

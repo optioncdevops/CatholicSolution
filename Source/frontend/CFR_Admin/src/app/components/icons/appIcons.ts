@@ -80,6 +80,7 @@ import {
   Undo2,
   Redo2,
   Upload,
+  User,
   X,
   XCircle,
   type LucideIcon,
@@ -181,6 +182,7 @@ export const APP_ICONS = {
   underline: Underline,
   undo2: Undo2,
   upload: Upload,
+  user: User,
   x: X,
   xCircle: XCircle,
 } satisfies Record<string, LucideIcon>;

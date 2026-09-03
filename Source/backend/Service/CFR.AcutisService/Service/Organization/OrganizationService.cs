@@ -249,6 +249,44 @@ namespace CFR.AcutisService.Service.Organization
             return result;
         }
 
+        /// <summary>
+        /// Retrieves the users not yet linked to an organization.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the link-user dropdown on the Users tab.
+        /// Request Flow: OrganizationController -> OrganizationService.GetLinkableUsersAsync() -> IOrganizationRepository.GetLinkableUsersAsync().
+        /// Validation Details: Identifier must be a positive integer.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IOrganizationRepository.GetLinkableUsersAsync().
+        /// Response Details: MSResultArgs containing List of OrganizationLinkableUserOutput, or NoRecordFound.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <returns>MSResultArgs containing the linkable users.</returns>
+        public async Task<MSResultArgs> GetLinkableUsersAsync(long orgId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (orgId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                var data = await repository.GetLinkableUsersAsync(orgId);
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchLinkableUsersFailed, orgId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion GET Methods
 
         #region POST Methods
@@ -340,6 +378,53 @@ namespace CFR.AcutisService.Service.Organization
             return result;
         }
 
+        /// <summary>
+        /// Links a user to an organization.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Add a user to an organization from the Users tab.
+        /// Request Flow: OrganizationController -> OrganizationService.LinkOrganizationUserAsync() -> IOrganizationRepository.LinkOrganizationUserAsync().
+        /// Validation Details: Input DTO is required; OrgId and AuthUserId must be positive.
+        /// Business Logic: Passes the signed-in user id as UpdatedBy; -98 from the repository means already linked.
+        /// Repository Interaction: Calls IOrganizationRepository.LinkOrganizationUserAsync().
+        /// Response Details: MSResultArgs containing the user identifier, or a conflict status when already linked.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the organization and user identifiers.</param>
+        /// <returns>MSResultArgs containing the link status.</returns>
+        public async Task<MSResultArgs> LinkOrganizationUserAsync(LinkOrganizationUserInput input)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (input == null || input.OrgId <= 0 || input.AuthUserId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                int authUserId = await repository.LinkOrganizationUserAsync(input, currentUserService.UserId);
+                if (authUserId == -98)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.UserAlreadyLinked;
+                    return result;
+                }
+
+                result.StatusCode = ErrorCodes.Created;
+                result.StatusMessage = ErrorMessages.UserLinked;
+                result.ResultData = authUserId;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.LinkOrganizationUserFailed, input?.OrgId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion POST Methods
 
         #region DELETE Methods
@@ -384,6 +469,53 @@ namespace CFR.AcutisService.Service.Organization
             catch (Exception ex)
             {
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.RemoveOrganizationProductFailed, orgId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Unlinks a user from an organization.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Remove a user from an organization from the Users tab.
+        /// Request Flow: OrganizationController -> OrganizationService.UnlinkOrganizationUserAsync() -> IOrganizationRepository.UnlinkOrganizationUserAsync().
+        /// Validation Details: OrgId and AuthUserId must be positive.
+        /// Business Logic: Passes the signed-in user id as UpdatedBy; -99 from the repository means not linked.
+        /// Repository Interaction: Calls IOrganizationRepository.UnlinkOrganizationUserAsync().
+        /// Response Details: MSResultArgs containing the user identifier, or NoRecordFound when not linked.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">User identifier to unlink.</param>
+        /// <returns>MSResultArgs containing the unlink status.</returns>
+        public async Task<MSResultArgs> UnlinkOrganizationUserAsync(long orgId, long authUserId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (orgId <= 0 || authUserId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                int removedId = await repository.UnlinkOrganizationUserAsync(orgId, authUserId, currentUserService.UserId);
+                if (removedId == -99)
+                {
+                    result.StatusCode = ErrorCodes.NoRecordFound;
+                    result.StatusMessage = ErrorMessages.UserNotLinked;
+                    return result;
+                }
+
+                result.StatusMessage = ErrorMessages.UserUnlinked;
+                result.ResultData = removedId;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.UnlinkOrganizationUserFailed, orgId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }

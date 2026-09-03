@@ -117,6 +117,22 @@ export const updateProfile = async (payload: UpdateProfilePayload): Promise<ApiR
   }
 };
 
+// Two-step flow (matches Products' UploadProductLogo): upload the file first to get a relative
+// URL, then include that URL in a subsequent updateProfile call — this endpoint does not persist it.
+export const uploadProfileImage = async (file: File): Promise<string> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axiosInstance.post<ApiResponse<string>>(`${profileController}/UploadProfileImage`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data.resultData || '';
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to upload profile image.';
+  }
+};
+
 export const changePassword = async (payload: ChangePasswordPayload): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.put<ApiResponse>(`${profileController}/ChangePassword`, payload);
