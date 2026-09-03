@@ -320,7 +320,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
           variant="primary"
           iconLeft={<Plus size={14} />}
           onClick={() =>
-            navigate(PRODUCTS_PATHS.addLicense(app.name || app.id), {
+            navigate(PRODUCTS_PATHS.addLicense, {
               state: { productId: Number(app.id), tab: "invoice-details" },
             })
           }

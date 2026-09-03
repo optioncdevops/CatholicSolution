@@ -253,7 +253,7 @@ export function DashboardPage() {
                             navigate(PRODUCTS_PATHS.list);
                             return;
                           }
-                          navigate(PRODUCTS_PATHS.details(app.name || app.id), { state: { productId } });
+                          navigate(PRODUCTS_PATHS.details, { state: { productId } });
                         }}>
                           <td>
                             <span className="flex items-center gap-2.5 font-bold text-[var(--text-primary)]">

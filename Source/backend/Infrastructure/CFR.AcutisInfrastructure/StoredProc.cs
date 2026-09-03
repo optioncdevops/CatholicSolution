@@ -89,22 +89,6 @@ namespace CFR.AcutisInfrastructure
             /// Products and License unified CRUD operations.
             /// </summary>
             public const string ProductsCrud = "[dbo].[Acutis_Products_CRUD]";
-
-            /// <summary>
-            /// Action identifiers for [dbo].[Acutis_Products_CRUD].
-            /// </summary>
-            public enum Action
-            {
-                GetList = 1,
-                GetById = 2,
-                Update = 3,
-                CheckNameExists = 4,
-                GetLicenses = 5,
-                GetLicenseById = 6,
-                CreateLicense = 7,
-                UpdateLicense = 8,
-                GetCustomers = 9
-            }
         }
     }
 }

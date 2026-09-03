@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, Pencil, RefreshCw } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
@@ -19,7 +19,6 @@ import {
 import {
   getProductById,
   getProductCustomers,
-  getProducts,
   updateProduct,
 } from "../services/productService";
 import type {
@@ -33,14 +32,12 @@ import {
   DEFAULT_PRODUCT_GRADIENT,
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
-  normalizeProductList,
   normalizeProductApiItem,
   normalizeProductCustomerList,
   parseProductIdFromState,
   parseProductTabFromState,
   resolveProductLogoUrl,
   toAdminApplication,
-  toProductSlug,
 } from "../utils/productHelpers";
 import type { AdminApplication, ProductStatus } from "@/modules/types";
 
@@ -380,7 +377,6 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
 const ProductDetails = () => {
   //#region Hooks
   const location = useLocation();
-  const params = useParams<{ slug?: string }>();
   const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -403,25 +399,7 @@ const ProductDetails = () => {
   const loadProduct = useCallback(async () => {
     setLoading(true);
     try {
-      let resolvedId = stateProductId;
-
-      if (!resolvedId && params.slug) {
-        const numeric = Number(params.slug);
-        if (Number.isInteger(numeric) && numeric > 0) {
-          resolvedId = numeric;
-        } else {
-          const listRes = await getProducts();
-          const items = normalizeProductList(listRes.resultData);
-          const found = items.find(
-            (p) =>
-              toProductSlug(p.productName) === params.slug ||
-              String(p.productId) === params.slug,
-          );
-          if (found) {
-            resolvedId = found.productId;
-          }
-        }
-      }
+      const resolvedId = stateProductId;
 
       if (!resolvedId) {
         setProduct(null);
@@ -442,7 +420,7 @@ const ProductDetails = () => {
     } finally {
       setLoading(false);
     }
-  }, [stateProductId, params.slug, showToast]);
+  }, [stateProductId, showToast]);
 
   const handleConfirmStatus = async (status: ProductStatus) => {
     if (!product) return;
@@ -545,7 +523,6 @@ const ProductDetails = () => {
   const app = toAdminApplication(product);
   const logoSrc = resolveProductLogoUrl(product.logoUrl, product.updatedDate);
   const warnings = getProductWarnings(app, [app]);
-  const slug = toProductSlug(product.productName) || String(product.productId);
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -582,7 +559,7 @@ const ProductDetails = () => {
               variant="headerSecondary"
               iconLeft={<Pencil size={14} />}
               onClick={() =>
-                navigate(PRODUCTS_PATHS.edit(slug), {
+                navigate(PRODUCTS_PATHS.edit, {
                   state: { productId: product.productId },
                 })
               }

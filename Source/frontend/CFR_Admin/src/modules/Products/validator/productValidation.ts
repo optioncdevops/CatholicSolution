@@ -95,12 +95,16 @@ export function validateLicenseForm(values: {
   orgId: string;
   activationDate: string;
   expiryDate: string;
+  customMessage?: string;
 }): string[] {
   const messages: string[] = [];
   if (!values.title.trim()) messages.push('Title is required.');
   if (!values.orgId) messages.push('Customer is required.');
   if (!values.activationDate) messages.push('Start date is required.');
   if (!values.expiryDate) messages.push('Expiry date is required.');
+  if (values.customMessage && values.customMessage.trim().length > 500) {
+    messages.push('Remarks / Custom message must not exceed 500 characters.');
+  }
   return messages;
 }
 

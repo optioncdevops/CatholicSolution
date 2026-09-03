@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
@@ -19,7 +19,6 @@ import {
   createLicense,
   getLicenseDetails,
   getProductById,
-  getProducts,
 } from "../../services/productService";
 import type {
   ProductApiItem,
@@ -30,9 +29,7 @@ import {
   PRODUCTS_PATHS,
   customerHasActiveLicense,
   formatCustomerCodeNumeric,
-  normalizeProductList,
   parseProductIdFromState,
-  toProductSlug,
 } from "../../utils/productHelpers";
 import { validateLicenseForm } from "../../validator/productValidation";
 
@@ -47,7 +44,6 @@ function inDays(days: number): string {
 const AddLicense = () => {
   //#region Hooks
   const location = useLocation();
-  const params = useParams<{ slug?: string }>();
   const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -69,9 +65,8 @@ const AddLicense = () => {
   //#region Functions
   const goToLicenseDetails = () => {
     const productId = product?.productId || stateProductId;
-    const slug = toProductSlug(product?.productName) || String(productId || "");
-    if (slug && productId) {
-      navigate(PRODUCTS_PATHS.details(slug), {
+    if (productId) {
+      navigate(PRODUCTS_PATHS.details, {
         state: { productId, tab: "invoice-details" },
       });
       return;
@@ -82,25 +77,7 @@ const AddLicense = () => {
   const loadPage = useCallback(async () => {
     setLoading(true);
     try {
-      let resolvedId = stateProductId;
-
-      if (!resolvedId && params.slug) {
-        const numeric = Number(params.slug);
-        if (Number.isInteger(numeric) && numeric > 0) {
-          resolvedId = numeric;
-        } else {
-          const listRes = await getProducts();
-          const items = normalizeProductList(listRes.resultData);
-          const found = items.find(
-            (p) =>
-              toProductSlug(p.productName) === params.slug ||
-              String(p.productId) === params.slug,
-          );
-          if (found) {
-            resolvedId = found.productId;
-          }
-        }
-      }
+      const resolvedId = stateProductId;
 
       if (!resolvedId) {
         setLoading(false);
@@ -140,7 +117,7 @@ const AddLicense = () => {
     } finally {
       setLoading(false);
     }
-  }, [stateProductId, params.slug, showToast]);
+  }, [stateProductId, showToast]);
   //#endregion
 
   //#region Effects
@@ -202,6 +179,7 @@ const AddLicense = () => {
       orgId,
       activationDate,
       expiryDate,
+      customMessage,
     });
     if (messages.length > 0) {
       showToast(messages, "error");

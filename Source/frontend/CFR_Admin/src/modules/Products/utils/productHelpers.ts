@@ -13,12 +13,9 @@ export function toProductSlug(name: string | null | undefined): string {
 
 export const PRODUCTS_PATHS = {
   list: '/admin/products',
-  details: (slugOrId?: string | number) =>
-    slugOrId ? `/admin/products/${toProductSlug(String(slugOrId)) || slugOrId}` : '/admin/products',
-  edit: (slugOrId?: string | number) =>
-    slugOrId ? `/admin/products/${toProductSlug(String(slugOrId)) || slugOrId}/edit` : '/admin/products/edit',
-  addLicense: (slugOrId?: string | number) =>
-    slugOrId ? `/admin/products/${toProductSlug(String(slugOrId)) || slugOrId}/add-license` : '/admin/products/add-license',
+  details: '/admin/products/details',
+  edit: '/admin/products/edit',
+  addLicense: '/admin/products/add-license',
 } as const;
 
 export const DEFAULT_PRODUCT_ICON = '📦';
@@ -93,7 +90,9 @@ export function parseProductIdFromState(state: unknown): number | null {
     return null;
   }
 
-  const raw = (state as ProductLocationState).productId;
+  const raw =
+    (state as ProductLocationState).productId ??
+    (state as { id?: unknown }).id;
   const productId = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : NaN;
   if (!Number.isInteger(productId) || productId <= 0) {
     return null;
@@ -132,49 +131,12 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
   };
 }
 
-function readCustomerField(item: Record<string, unknown>, ...keys: string[]): string {
-  for (const key of keys) {
-    const value = item[key];
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim();
-    }
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return String(value);
-    }
-  }
-  return '';
-}
-
 export const normalizeProductCustomerList = (resultData: unknown): ProductCustomerApiItem[] => {
-  const raw = Array.isArray(resultData)
-    ? resultData
-    : resultData && typeof resultData === 'object' && Array.isArray((resultData as { $values?: unknown[] }).$values)
-      ? (resultData as { $values: unknown[] }).$values
-      : [];
-
-  return raw
-    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object')
-    .map((item) => {
-      const orgId = Number(item.orgId ?? item.OrgId ?? 0);
-      return {
-        orgId,
-        orgName: readCustomerField(item, 'orgName', 'OrgName'),
-        orgStatus: readCustomerField(item, 'orgStatus', 'OrgStatus'),
-        contactEmail: readCustomerField(item, 'contactEmail', 'ContactEmail') || null,
-        contactPerson: readCustomerField(item, 'contactPerson', 'ContactPerson') || null,
-        contactPhone: readCustomerField(item, 'contactPhone', 'ContactPhone') || null,
-        insertedDate: readCustomerField(item, 'insertedDate', 'InsertedDate'),
-        updatedDate: readCustomerField(item, 'updatedDate', 'UpdatedDate') || null,
-        userCount: Number(item.userCount ?? item.UserCount ?? 0),
-        orgCode: readCustomerField(item, 'orgCode', 'OrgCode') || null,
-        startDate: readCustomerField(item, 'startDate', 'StartDate') || null,
-        expiryDate: readCustomerField(item, 'expiryDate', 'ExpiryDate') || null,
-        licenseType: readCustomerField(item, 'licenseType', 'LicenseType') || null,
-        licenseStatus: readCustomerField(item, 'licenseStatus', 'LicenseStatus') || null,
-      };
-    })
-    .filter((item) => Number.isInteger(item.orgId) && item.orgId > 0);
-}
+  if (!Array.isArray(resultData)) return [];
+  return (resultData as ProductCustomerApiItem[]).filter(
+    (item): item is ProductCustomerApiItem => Boolean(item && typeof item === 'object' && Number(item.orgId) > 0),
+  );
+};
 
 function toOrganizationStatus(value: string | null | undefined): OrganizationStatus {
   const normalized = String(value ?? '').trim().toLowerCase();

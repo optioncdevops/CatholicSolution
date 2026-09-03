@@ -5,6 +5,7 @@ global using System.Data;
 global using Dapper;
 
 global using CFR.AcutisInfrastructure;
+global using CFR.Common;
 global using CFR.AcutisInfrastructure.Interfaces.AcutisAuthentication;
 global using CFR.AcutisInfrastructure.Interfaces.Administration;
 global using CFR.AcutisInfrastructure.Interfaces.Organization;

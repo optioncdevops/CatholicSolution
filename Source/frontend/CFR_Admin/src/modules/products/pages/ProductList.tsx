@@ -24,7 +24,6 @@ import {
   formatProductCustomerCount,
   normalizeProductList,
   resolveProductLogoUrl,
-  toProductSlug,
 } from "../utils/productHelpers";
 import type { AdminApplication, ProductStatus } from "@/modules/types";
 
@@ -178,15 +177,13 @@ const ProductList = () => {
   }, [showToast]);
 
   const goToDetails = (item: ProductApiItem) => {
-    const slug = toProductSlug(item.productName) || String(item.productId);
-    navigate(PRODUCTS_PATHS.details(slug), {
+    navigate(PRODUCTS_PATHS.details, {
       state: { productId: item.productId },
     });
   };
 
   const goToEdit = (item: ProductApiItem) => {
-    const slug = toProductSlug(item.productName) || String(item.productId);
-    navigate(PRODUCTS_PATHS.edit(slug), {
+    navigate(PRODUCTS_PATHS.edit, {
       state: { productId: item.productId },
     });
   };

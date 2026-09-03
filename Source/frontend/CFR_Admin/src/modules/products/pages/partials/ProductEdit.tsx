@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
@@ -12,7 +12,6 @@ import { validateProductForm, type ProductFormErrors } from "../../validator/pro
 import {
   getProductById,
   getProductContactUsers,
-  getProducts,
   updateProduct,
   uploadProductLogo,
 } from "../../services/productService";
@@ -24,14 +23,12 @@ import type {
 import {
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
-  normalizeProductList,
   normalizeProductApiItem,
   normalizeProductContactUsers,
   parseProductIdFromState,
   resolveProductLogoUrl,
   toStoredProductLogoPath,
   toAdminApplication,
-  toProductSlug,
 } from "../../utils/productHelpers";
 import type { AdminApplication, ProductLicenseType, ProductNavigationTarget } from "@/modules/types";
 
@@ -271,7 +268,6 @@ function ProductForm({
 const ProductEdit = () => {
   //#region Hooks
   const location = useLocation();
-  const params = useParams<{ slug?: string }>();
   const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -290,37 +286,14 @@ const ProductEdit = () => {
   //#endregion
 
   //#region Functions
-  const goToDetails = (id: number, name?: string) => {
-    const slug = toProductSlug(name || product?.productName) || String(id);
-    navigate(PRODUCTS_PATHS.details(slug), { state: { productId: id } });
+  const goToDetails = (id: number) => {
+    navigate(PRODUCTS_PATHS.details, { state: { productId: id } });
   };
 
   const loadProduct = useCallback(async () => {
     setLoading(true);
     try {
-      let resolvedId = stateProductId;
-
-      if (!resolvedId && params.slug) {
-        const numeric = Number(params.slug);
-        if (Number.isInteger(numeric) && numeric > 0) {
-          resolvedId = numeric;
-        } else {
-          const listRes = await getProducts();
-          const items = normalizeProductList(listRes.resultData);
-          const slug = (params.slug ?? "").toLowerCase();
-          const found = items.find((p) => {
-            const nameSlug = toProductSlug(p.productName);
-            return (
-              nameSlug === slug ||
-              nameSlug.replace(/-/g, "_") === slug ||
-              String(p.productId) === params.slug
-            );
-          });
-          if (found) {
-            resolvedId = found.productId;
-          }
-        }
-      }
+      const resolvedId = stateProductId;
 
       if (!resolvedId) {
         setLoading(false);
@@ -354,7 +327,7 @@ const ProductEdit = () => {
     } finally {
       setLoading(false);
     }
-  }, [stateProductId, params.slug, showToast]);
+  }, [stateProductId, showToast]);
 
   const update = <K extends keyof AdminApplication>(
     key: K,
@@ -448,7 +421,7 @@ const ProductEdit = () => {
 
       await updateProduct(payload);
       showToast(`${form.name} updated successfully.`);
-      goToDetails(product.productId, form.name);
+      goToDetails(product.productId);
     } catch (err) {
       console.error("Error saving product:", err);
       showToast(typeof err === "string" ? err : "Failed to update product", "error");

@@ -122,7 +122,7 @@ export function OrganizationDetailPage() {
       id: 'name', header: 'Product', pinLeft: true, width: '14rem', value: (app) => app.name,
       cell: (app) => (
         <Link
-          to={PRODUCTS_PATHS.details(app.name || app.id)}
+          to={PRODUCTS_PATHS.details}
           state={{ productId: Number(app.id) }}
           className="flex min-w-0 items-center gap-2.5 hover:underline"
         >
