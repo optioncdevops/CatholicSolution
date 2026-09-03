@@ -503,10 +503,9 @@ namespace CFR.AcutisService.Service.Products
 
         #region Private Helper Methods
 
-        private string GetProductLogoRelativePath()
+        private static string GetProductLogoRelativePath()
         {
-            string relativePath = configuration["AppSettings:ProductLogoPath"] ?? string.Empty;
-            return string.IsNullOrWhiteSpace(relativePath) ? Path.Combine("Acutis", "Attachment", "Products") : relativePath;
+            return Path.Combine("Acutis", "Attachment", "Products");
         }
 
         private void TryDeleteLocalFile(string? relativeUrl)
