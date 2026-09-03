@@ -14,10 +14,13 @@ namespace CFR.AcutisService.Service.Organization
     {
         /// <summary>
         /// The only OrgStatus values the Organization list/filter UI and StatusBadge tone map support.
+        /// Matches the live CK__Organizat__OrgSt__4B0D20AB CHECK constraint on core.Organization —
+        /// confirmed against the database directly, since an earlier "trial" value was allowed
+        /// here but rejected by that constraint, surfacing as a 500 on save.
         /// </summary>
         private static readonly HashSet<string> ValidOrgStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
-            "active", "trial", "suspended",
+            "active", "inactive", "suspended",
         };
 
         #region GET Methods

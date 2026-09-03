@@ -7,7 +7,7 @@ import { Dropdown, InputField } from '@app/components/formControls';
 import { StatusBadge } from '@app/components/Badge';
 import { updateOrganization } from '../../services/organizationsService';
 import type { OrganizationApiItem, OrganizationFormValues } from '../../types/organizationTypes';
-import { composeOrganizationAddress, ORG_STATUS_OPTIONS, ORG_TYPE_OPTIONS, orgTypeLabel } from '../../utils/organizationHelpers';
+import { composeOrganizationAddress, ORG_TYPE_OPTIONS, orgTypeLabel } from '../../utils/organizationHelpers';
 import { organizationRules } from '../../validator/OrganizationValidator';
 import { formatDate } from '@/modules/utils/formatDate';
 
@@ -132,6 +132,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
           <div className="min-w-0">
             <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Status</p>
             <p className="mt-0.5"><StatusBadge status={organization.orgStatus} kind="organization" /></p>
+            <p className="mt-0.5 text-[0.625rem] text-[var(--text-faint)]">Change status from the Organizations list</p>
           </div>
           <Fact label="Address" value={composeOrganizationAddress(organization)} />
           <Fact label="Created On" value={formatDate(organization.insertedDate)} />
@@ -153,7 +154,6 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
           <InputField control={control} name="contactPerson" label="Contact person" disabled={saving} />
           <InputField control={control} name="contactPhone" label="Contact number" type="tel" rules={organizationRules.contactPhone} disabled={saving} />
           <InputField control={control} name="contactEmail" label="Contact email" type="email" rules={organizationRules.contactEmail} disabled={saving} />
-          <Dropdown control={control} name="orgStatus" label="Status" searchable={false} clearable={false} options={ORG_STATUS_OPTIONS} disabled={saving} />
           <InputField control={control} name="address" label="Address" disabled={saving} wrapperClassName="sm:col-span-2" />
           <InputField control={control} name="city" label="City" disabled={saving} />
           <InputField control={control} name="state" label="State" disabled={saving} />

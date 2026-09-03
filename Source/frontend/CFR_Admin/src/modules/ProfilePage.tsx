@@ -19,6 +19,13 @@ interface ProfileFormValues {
   email: string;
 }
 
+interface ProfileSaveOverrides {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  profileImageUrl?: string | null;
+}
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const profileRules = {
@@ -39,13 +46,11 @@ export function ProfilePage() {
   const [formError, setFormError] = useState('');
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
-  // The currently-saved image (relative URL from the server) and the pending change from
-  // ProfileImageUpload — kept apart from the RHF form since it isn't a plain text field.
+  // Source of truth for the currently-saved image (relative URL from the server) — the photo
+  // saves itself the moment it's picked/removed, so there's no separate "pending" image state.
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
-  const [imageRemoved, setImageRemoved] = useState(false);
 
-  const { control, handleSubmit, reset, formState: { isDirty } } = useForm<ProfileFormValues>({
+  const { control, handleSubmit, reset, getValues, formState: { isDirty } } = useForm<ProfileFormValues>({
     defaultValues: { firstName: user.firstName, lastName: user.lastName, email: user.email },
     mode: 'onChange',
   });
@@ -78,42 +83,24 @@ export function ProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; reset/showToast/user identity changing shouldn't reload
   }, []);
 
-  const handleImageChange = (file: File | null) => {
-    setSelectedImageFile(file);
-    setImageRemoved(!file);
-  };
-
-  const isImageDirty = Boolean(selectedImageFile) || imageRemoved;
-  const hasUnsavedChanges = isDirty || isImageDirty;
-
-  const resetAll = () => {
-    reset();
-    setSelectedImageFile(null);
-    setImageRemoved(false);
-  };
-
-  const onSubmit: SubmitHandler<ProfileFormValues> = async (values) => {
+  // Single save path for the whole page — the "Save changes" button and the photo picker
+  // (which saves itself immediately, no button click needed) both funnel through this.
+  const persistProfile = async (overrides: ProfileSaveOverrides, successMessage: string) => {
     setFormError('');
     setSaving(true);
     try {
-      let profileImageUrl = currentImageUrl;
-      if (selectedImageFile) {
-        profileImageUrl = await uploadProfileImage(selectedImageFile);
-      } else if (imageRemoved) {
-        profileImageUrl = null;
-      }
+      const values = getValues();
+      const firstName = (overrides.firstName ?? values.firstName).trim();
+      const lastName = (overrides.lastName ?? values.lastName).trim();
+      const email = (overrides.email ?? values.email).trim();
+      const profileImageUrl = 'profileImageUrl' in overrides ? overrides.profileImageUrl ?? null : currentImageUrl;
 
-      const firstName = values.firstName.trim();
-      const lastName = values.lastName.trim();
-      const email = values.email.trim();
       await updateProfile({ firstName, lastName, email, profileImageUrl });
       updateStoredAcutisUser({ firstName, lastName, eMail: email, profileImageUrl });
 
       setCurrentImageUrl(profileImageUrl);
-      setSelectedImageFile(null);
-      setImageRemoved(false);
       reset({ firstName, lastName, email });
-      showToast('Profile updated.', 'success');
+      showToast(successMessage, 'success');
     } catch (error) {
       const message = typeof error === 'string' ? error : 'Failed to update profile.';
       setFormError(message);
@@ -121,6 +108,23 @@ export function ProfilePage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleImageChange = async (file: File | null) => {
+    if (!file) {
+      await persistProfile({ profileImageUrl: null }, 'Profile photo removed.');
+      return;
+    }
+    try {
+      const uploadedUrl = await uploadProfileImage(file);
+      await persistProfile({ profileImageUrl: uploadedUrl }, 'Profile photo updated.');
+    } catch (error) {
+      showToast(typeof error === 'string' ? error : 'Failed to upload photo.', 'error');
+    }
+  };
+
+  const onSubmit: SubmitHandler<ProfileFormValues> = async (values) => {
+    await persistProfile(values, 'Profile updated.');
   };
 
   return (
@@ -134,10 +138,10 @@ export function ProfilePage() {
           <ProfileImageUpload
             label=""
             disabled={loading || saving}
-            onFileChange={handleImageChange}
+            onFileChange={(file) => void handleImageChange(file)}
             initialPreviewUrl={resolveProfileImageUrl(currentImageUrl) ?? undefined}
             fallbackInitials={initials}
-            helperText="JPG or PNG, up to 2MB."
+            helperText="JPG or PNG, up to 2MB — saves automatically."
           />
           <div className="flex flex-col items-center gap-1.5 border-t border-[var(--line-soft)] pt-4">
             <span className="text-sm font-bold text-[var(--text-primary)]">{user.name}</span>
@@ -196,14 +200,14 @@ export function ProfilePage() {
             {formError ? <p className="text-xs font-semibold text-[var(--error)]">{formError}</p> : null}
 
             <div className="flex items-center justify-end gap-3 border-t border-[var(--line-soft)] pt-4">
-              {hasUnsavedChanges && !saving ? (
+              {isDirty && !saving ? (
                 <span className="mr-auto text-xs font-semibold text-[var(--warning)]">You have unsaved changes</span>
               ) : null}
-              <CommonButton type="button" variant="outline" disabled={saving || !hasUnsavedChanges} onClick={resetAll}>
+              <CommonButton type="button" variant="outline" disabled={saving || !isDirty} onClick={() => reset()}>
                 Cancel
               </CommonButton>
-              <CommonButton type="submit" variant="primary" loading={saving} disabled={saving || loading || !hasUnsavedChanges}>
-                Save changes
+              <CommonButton type="submit" variant="primary" loading={saving} disabled={saving || loading || !isDirty}>
+                Save
               </CommonButton>
             </div>
           </div>

@@ -12,10 +12,13 @@ export const normalizeOrganization = (resultData: unknown): OrganizationApiItem 
 
 // Single source of truth for the real status vocabulary core.Organization.OrgStatus supports —
 // shared by the profile form's dropdown and the list page's status filter so they can never
-// drift. Matches the tone map StatusBadge already ships for kind="organization".
+// drift. Matches the tone map StatusBadge already ships for kind="organization". Confirmed
+// against the live CK__Organizat__OrgSt__4B0D20AB CHECK constraint, which allows exactly these
+// three values — 'trial' was an earlier, unverified guess and is not actually permitted by the
+// database (attempting to save it fails the constraint and surfaces as a 500).
 export const ORG_STATUS_OPTIONS: Array<{ id: string; value: string }> = [
   { id: 'active', value: 'Active' },
-  { id: 'trial', value: 'Trial' },
+  { id: 'inactive', value: 'Inactive' },
   { id: 'suspended', value: 'Suspended' },
 ];
 
