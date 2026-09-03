@@ -65,7 +65,6 @@ namespace CFR.CommonService
             public const string GetProfile = nameof(GetProfile);
             public const string UpdateProfile = nameof(UpdateProfile);
             public const string ChangePassword = nameof(ChangePassword);
-            public const string UploadProfileImage = nameof(UploadProfileImage);
         }
 
         public static class API_Organization

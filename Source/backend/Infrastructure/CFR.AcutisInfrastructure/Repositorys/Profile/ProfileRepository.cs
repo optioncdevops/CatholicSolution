@@ -50,8 +50,9 @@ namespace CFR.AcutisInfrastructure.Repositorys.Profile
         /// </remarks>
         /// <param name="userId">Signed-in user identifier.</param>
         /// <param name="input">Input DTO containing the new profile fields.</param>
+        /// <param name="profileImageUrl">The resolved profile image URL to save (already uploaded, cleared, or left unchanged by the service layer), or null.</param>
         /// <returns>Scalar result of the update stored procedure.</returns>
-        public async Task<int> UpdateProfileAsync(long userId, UpdateProfileInput input)
+        public async Task<int> UpdateProfileAsync(long userId, UpdateProfileInput input, string? profileImageUrl)
         {
             ArgumentNullException.ThrowIfNull(input);
             var parameters = new DynamicParameters();
@@ -60,7 +61,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Profile
             parameters.Add(DBParameterName.ProfileParams.FirstName, input.FirstName, DbType.String);
             parameters.Add(DBParameterName.ProfileParams.LastName, input.LastName, DbType.String);
             parameters.Add(DBParameterName.ProfileParams.Email, input.Email, DbType.String);
-            parameters.Add(DBParameterName.ProfileParams.ProfileImageUrl, input.ProfileImageUrl, DbType.String);
+            parameters.Add(DBParameterName.ProfileParams.ProfileImageUrl, profileImageUrl, DbType.String);
             parameters.Add(DBParameterName.ProfileParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Profile.ProfileCrud, parameters, CommandType.StoredProcedure);
             return parameters.Get<int>(DBParameterName.ProfileParams.ReturnValue);

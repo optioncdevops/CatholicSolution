@@ -8,7 +8,7 @@ import { ChangePasswordModal } from '@shared/app/components/ChangePasswordModal'
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useCurrentUser } from '@shared/app/context/UserContext';
-import { getProfile, updateProfile, updateStoredAcutisUser, uploadProfileImage } from '@shared/auth/services/authService';
+import { getProfile, updateProfile, updateStoredAcutisUser } from '@shared/auth/services/authService';
 import { resolveProfileImageUrl } from '@shared/auth/profileImage';
 import type { ProfileApiItem } from '@shared/auth/types/authTypes';
 import { formatDateTime } from './utils/formatDate';
@@ -23,7 +23,8 @@ interface ProfileSaveOverrides {
   firstName?: string;
   lastName?: string;
   email?: string;
-  profileImageUrl?: string | null;
+  profileImage?: File;
+  removeProfileImage?: boolean;
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -84,7 +85,9 @@ export function ProfilePage() {
   }, []);
 
   // Single save path for the whole page — the "Save changes" button and the photo picker
-  // (which saves itself immediately, no button click needed) both funnel through this.
+  // (which saves itself immediately, no button click needed) both funnel through this. The
+  // image and the other fields are sent together in one multipart request; the resolved image
+  // URL comes back from a follow-up GetProfile since UpdateProfile only returns a status.
   const persistProfile = async (overrides: ProfileSaveOverrides, successMessage: string) => {
     setFormError('');
     setSaving(true);
@@ -93,11 +96,13 @@ export function ProfilePage() {
       const firstName = (overrides.firstName ?? values.firstName).trim();
       const lastName = (overrides.lastName ?? values.lastName).trim();
       const email = (overrides.email ?? values.email).trim();
-      const profileImageUrl = 'profileImageUrl' in overrides ? overrides.profileImageUrl ?? null : currentImageUrl;
 
-      await updateProfile({ firstName, lastName, email, profileImageUrl });
+      await updateProfile({ firstName, lastName, email, profileImage: overrides.profileImage, removeProfileImage: overrides.removeProfileImage });
+
+      const { resultData } = await getProfile();
+      const profileImageUrl = (resultData as ProfileApiItem | undefined)?.profileImageUrl ?? null;
+
       updateStoredAcutisUser({ firstName, lastName, eMail: email, profileImageUrl });
-
       setCurrentImageUrl(profileImageUrl);
       reset({ firstName, lastName, email });
       showToast(successMessage, 'success');
@@ -112,15 +117,10 @@ export function ProfilePage() {
 
   const handleImageChange = async (file: File | null) => {
     if (!file) {
-      await persistProfile({ profileImageUrl: null }, 'Profile photo removed.');
+      await persistProfile({ removeProfileImage: true }, 'Profile photo removed.');
       return;
     }
-    try {
-      const uploadedUrl = await uploadProfileImage(file);
-      await persistProfile({ profileImageUrl: uploadedUrl }, 'Profile photo updated.');
-    } catch (error) {
-      showToast(typeof error === 'string' ? error : 'Failed to upload photo.', 'error');
-    }
+    await persistProfile({ profileImage: file }, 'Profile photo updated.');
   };
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (values) => {

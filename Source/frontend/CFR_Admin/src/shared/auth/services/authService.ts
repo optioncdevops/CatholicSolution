@@ -107,29 +107,26 @@ export const getProfile = async (): Promise<ApiResponse> => {
   }
 };
 
+// Single multipart request: name/email and an optional new image (or a remove flag) are saved
+// together server-side — no separate upload-then-save round trip.
 export const updateProfile = async (payload: UpdateProfilePayload): Promise<ApiResponse> => {
   try {
-    const response = await axiosInstance.put<ApiResponse>(`${profileController}/UpdateProfile`, payload);
+    const formData = new FormData();
+    formData.append('firstName', payload.firstName);
+    formData.append('lastName', payload.lastName);
+    formData.append('email', payload.email);
+    if (payload.profileImage) {
+      formData.append('profileImage', payload.profileImage);
+    } else if (payload.removeProfileImage) {
+      formData.append('removeProfileImage', 'true');
+    }
+    const response = await axiosInstance.put<ApiResponse>(`${profileController}/UpdateProfile`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   } catch (error: unknown) {
     const err = error as ApiError;
     throw err.response?.data?.statusMessage || err.message || 'Failed to update profile.';
-  }
-};
-
-// Two-step flow (matches Products' UploadProductLogo): upload the file first to get a relative
-// URL, then include that URL in a subsequent updateProfile call — this endpoint does not persist it.
-export const uploadProfileImage = async (file: File): Promise<string> => {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await axiosInstance.post<ApiResponse<string>>(`${profileController}/UploadProfileImage`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return response.data.resultData || '';
-  } catch (error: unknown) {
-    const err = error as ApiError;
-    throw err.response?.data?.statusMessage || err.message || 'Failed to upload profile image.';
   }
 };
 

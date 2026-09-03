@@ -91,7 +91,10 @@ export interface UpdateProfilePayload {
   firstName: string;
   lastName: string;
   email: string;
-  profileImageUrl: string | null;
+  // New image to upload, or undefined to leave the current image unchanged.
+  profileImage?: File;
+  // True to clear the current image; ignored when profileImage is also provided.
+  removeProfileImage?: boolean;
 }
 
 export interface ChangePasswordPayload {
