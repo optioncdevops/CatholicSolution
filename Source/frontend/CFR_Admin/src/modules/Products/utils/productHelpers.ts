@@ -37,6 +37,17 @@ export function formatCustomerCodeNumeric(codeOrId: string | number | null | und
   return clean ? `CUST-${clean}` : str;
 }
 
+/**
+ * Formats a customer code or org ID as a pure integer string without any "CUST-" or "ORG-" prefix.
+ */
+export function formatCustomerCodeAsInteger(codeOrId: string | number | null | undefined): string {
+  if (codeOrId == null) return '—';
+  const str = String(codeOrId).trim();
+  if (!str) return '—';
+  const clean = str.replace(/^(?:CUST|ORG)[-_ ]*/i, '').replace(/[^\d]/g, '').trim();
+  return clean || str;
+}
+
 export function toProductCustomerCount(value: unknown): number {
   const raw = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
   if (!Number.isFinite(raw) || raw < 0) return 0;

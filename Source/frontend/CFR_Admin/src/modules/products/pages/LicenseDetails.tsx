@@ -21,6 +21,7 @@ import { getLicenseDetails } from "../services/productService";
 import type { ProductLicenseApiItem } from "../types/productTypes";
 import {
   PRODUCTS_PATHS,
+  formatCustomerCodeAsInteger,
   formatCustomerCodeNumeric,
   isLicenseUpcoming,
   toLicenseDetailsRows,
@@ -44,7 +45,7 @@ export function InvoiceDetailModal({
 
   const org = getOrganization(invoice.orgId);
   const status = effectiveLicenseStatus(invoice.status, invoice.expiryDate);
-  const customerCode = formatCustomerCodeNumeric(org?.code || invoice.orgId);
+  const customerCode = formatCustomerCodeAsInteger(invoice.orgId || org?.code);
 
   return (
     <BaseModal
