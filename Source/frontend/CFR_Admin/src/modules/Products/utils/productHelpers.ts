@@ -1,6 +1,6 @@
 import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
-import { accessStatusOf, effectiveLicenseStatus } from '@/modules/utils/formatDate';
+import { accessStatusOf, daysUntil, effectiveLicenseStatus, formatDateTime } from '@/modules/utils/formatDate';
 export * from './productFilters';
 
 export function toProductSlug(name: string | null | undefined): string {
@@ -180,7 +180,7 @@ export function toProductCustomerRow(item: ProductCustomerApiItem): ProductCusto
     id: String(item.orgId),
     name: item.orgName,
     primaryContact: item.contactPerson?.trim() || '—',
-    code: formatCustomerCodeNumeric(item.orgCode || item.orgId),
+    code: formatCustomerCodeAsInteger(item.orgCode || item.orgId),
     contactEmail: item.contactEmail?.trim() || '—',
     userCount: Number(item.userCount ?? (item as unknown as { UserCount?: unknown }).UserCount ?? 0),
     createdAt: item.startDate || item.insertedDate,
@@ -262,14 +262,32 @@ export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLic
   return licenses.map((item) => {
     const startDate = item.activationDate ?? item.createdDate ?? '';
     const expiryDate = item.expiryDate ?? '';
+    const days = expiryDate ? daysUntil(expiryDate) : null;
+    const isOverdue = days !== null && days < 0;
+    const paymentStatus: 'paid' | 'overdue' | 'suspended' = isOverdue
+      ? 'overdue'
+      : item.licenseStatus === 'suspended'
+        ? 'suspended'
+        : 'paid';
+    const paidOn = isOverdue
+      ? null
+      : item.activationDate
+        ? formatDateTime(item.activationDate)
+        : item.createdDate
+          ? formatDateTime(item.createdDate)
+          : null;
+
     return {
       id: String(item.licenseId),
       licenseId: item.licenseId,
       orgId: String(item.orgId),
-      customerCode: formatCustomerCodeNumeric(item.orgId),
+      customerCode: formatCustomerCodeAsInteger(item.orgId),
       customer: item.orgName?.trim() || `Organization #${item.orgId}`,
       startDate,
       expiryDate,
+      days,
+      paidOn,
+      paymentStatus,
       term: currentByOrg.get(item.orgId) === item.licenseId ? 'Current' : 'Past',
       status: accessStatusOf(expiryDate),
       rawStatus: item.licenseStatus,

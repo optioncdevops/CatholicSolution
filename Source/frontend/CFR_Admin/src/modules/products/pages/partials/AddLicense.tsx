@@ -184,7 +184,7 @@ const AddLicense = () => {
   const handleSubmit = async () => {
     setTouched(true);
     if (organizations.length === 0) {
-      showToast("All customers already have an active license for this product.", "error");
+      showToast("All organizations already have an active license for this product.", "error");
       return;
     }
     const messages = validateLicenseForm({
@@ -206,7 +206,7 @@ const AddLicense = () => {
         ? (existingRes.resultData as ProductLicenseApiItem[])
         : [];
       if (customerHasActiveLicense(existingLicenses, Number(orgId))) {
-        showToast("A license for this customer already exists.", "error");
+        showToast("A license for this organization already exists.", "error");
         return;
       }
 
@@ -250,7 +250,7 @@ const AddLicense = () => {
       {organizations.length === 0 ? (
         <section className="admin-panel-card p-4">
           <p className="text-sm text-[var(--text-muted)]">
-            This product has no customers to license yet — assign it to an
+            This product has no organizations to license yet — assign it to an
             organization first.
           </p>
           <div className="mt-3">
@@ -296,9 +296,9 @@ const AddLicense = () => {
                     }
                   />
                   <Dropdown
-                    label="Customer"
+                    label="Organization"
                     required
-                    placeholder={organizations.length === 0 ? "No available customers" : "Select customer"}
+                    placeholder={organizations.length === 0 ? "No available organizations" : "Select organization"}
                     value={orgId}
                     disabled={organizations.length === 0}
                     onValueChange={(value) => {
@@ -312,7 +312,7 @@ const AddLicense = () => {
                     searchable
                     clearable={false}
                     error={
-                      touched && !orgId ? "Customer is required." : undefined
+                      touched && !orgId ? "Organization is required." : undefined
                     }
                   />
                 </div>

@@ -74,6 +74,7 @@ export function CustomerDetails({
       id: 'actions', header: 'Actions', pinLeft: true, width: '4rem', excludeFromExport: true,
       cell: (org) => <CommonIconButton aria-label={`View ${org.name}`} tooltip="View" icon={<Eye size={15} />} onClick={() => navigate(`/admin/organizations/${org.id}`)} />,
     },
+    { id: 'code', header: 'Code', width: '10rem', value: (org) => org.code, cell: (org) => <span className="font-mono text-xs text-[var(--text-secondary)]">{org.code}</span> },
     {
       id: 'name', header: 'Organization', width: '16rem', value: (org) => org.name,
       cell: (org) => (
@@ -82,8 +83,7 @@ export function CustomerDetails({
         </Link>
       ),
     },
-    { id: 'customerName', header: 'Customer Name', width: '13rem', value: (org) => org.primaryContact, cell: (org) => <span className="text-[var(--text-secondary)]">{org.primaryContact}</span> },
-    { id: 'code', header: 'Code', width: '12rem', value: (org) => org.code, cell: (org) => <span className="font-mono text-xs text-[var(--text-secondary)]">{org.code}</span> },
+    { id: 'customerName', header: 'Contact Name', width: '13rem', value: (org) => org.primaryContact, cell: (org) => <span className="text-[var(--text-secondary)]">{org.primaryContact}</span> },
     { id: 'email', header: 'Email', width: '16rem', value: (org) => org.contactEmail, cell: (org) => <span className="text-[var(--text-secondary)]">{org.contactEmail}</span> },
     { id: 'users', header: 'Users', width: '5.5rem', value: (org) => org.userCount, cell: (org) => <span className="text-[var(--text-secondary)]">{org.userCount}</span> },
     { id: 'start', header: 'Start Date', width: '8.5rem', value: (org) => org.createdAt, cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.createdAt)}</span> },

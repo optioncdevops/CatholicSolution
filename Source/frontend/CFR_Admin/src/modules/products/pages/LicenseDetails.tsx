@@ -5,13 +5,16 @@ import { EmptyState } from "@shared/app/components/EmptyState";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton, CommonIconButton } from "@app/components/buttons";
 import { StatusBadge } from "@app/components/Badge";
+import { Dropdown } from "@app/components/formControls";
 import {
   DataTable,
   type DataTableColumn,
 } from "@app/components/dataTable/DataTable";
 import {
   formatDate,
+  formatDateTime,
   formatDaysLabel,
+  daysUntil,
   effectiveLicenseStatus,
 } from "@/modules/utils/formatDate";
 import { DetailField } from "@app/components/DetailField";
@@ -22,14 +25,11 @@ import type { ProductLicenseApiItem } from "../types/productTypes";
 import {
   PRODUCTS_PATHS,
   formatCustomerCodeAsInteger,
-  formatCustomerCodeNumeric,
-  isLicenseUpcoming,
   toLicenseDetailsRows,
 } from "../utils/productHelpers";
-import { LICENSE_DETAILS_STATUS_FILTERS } from "../utils/productFilters";
+import { LICENSE_DETAILS_STATUS_FILTERS, InvoiceStatusBadge } from "../utils/productFilters";
 import type {
   AdminApplication,
-  EffectiveLicenseStatus,
   License,
 } from "@/modules/types";
 
@@ -98,7 +98,6 @@ export function InvoiceDetailModal({
     </BaseModal>
   );
 }
-
 export interface LiveProductLicense {
   id: string;
   licenseId: number;
@@ -111,7 +110,9 @@ export interface LiveProductLicense {
   licenseType: string;
   startDate: string;
   expiryDate: string;
-  status: EffectiveLicenseStatus;
+  days: number | null;
+  paidOn: string | null;
+  status: string;
   rawStatus: string;
   assignStatus?: string | null;
   remarks?: string | null;
@@ -126,9 +127,8 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
   //#region States
   const [dbLicenses, setDbLicenses] = useState<ProductLicenseApiItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<
-    EffectiveLicenseStatus | "all"
-  >("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [timeFilter, setTimeFilter] = useState("all");
   const [viewingInvoice, setViewingInvoice] = useState<License | null>(null);
   //#endregion
 
@@ -168,25 +168,39 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
 
   const mappedLicenses: LiveProductLicense[] = useMemo(() => {
     return toLicenseDetailsRows(dbLicenses).map((lic) => {
-      const effective = isLicenseUpcoming(lic)
-        ? "active"
-        : effectiveLicenseStatus("active", lic.expiryDate || "");
+      const days = lic.expiryDate ? daysUntil(lic.expiryDate) : null;
+      const isOverdue = days !== null && days < 0;
+      const isExpiringSoon = days !== null && days >= 0 && days <= 30;
+      const status = isOverdue
+        ? "overdue"
+        : isExpiringSoon
+          ? "expiring-soon"
+          : lic.licenseStatus === "suspended"
+            ? "suspended"
+            : "paid";
+      const paidOn = isOverdue
+        ? null
+        : lic.activationDate
+          ? formatDateTime(lic.activationDate)
+          : lic.createdDate
+            ? formatDateTime(lic.createdDate)
+            : null;
+
       return {
         id: String(lic.licenseId),
         licenseId: lic.licenseId,
         organizationProductId: lic.organizationProductId,
         orgId: lic.orgId,
-        customerCode: formatCustomerCodeNumeric(lic.orgId),
+        customerCode: formatCustomerCodeAsInteger(lic.orgId),
         customer: lic.orgName || `Organization #${lic.orgId}`,
         licenseNumber: `LIC-${String(lic.licenseId).padStart(5, "0")}`,
         licenseKey: `LIC-${lic.orgId}-${lic.productId}-${String(lic.licenseId).padStart(4, "0")}`,
         licenseType: lic.licenseType ? (lic.licenseType.charAt(0).toUpperCase() + lic.licenseType.slice(1)) : "Subscription",
         startDate: lic.activationDate || "",
         expiryDate: lic.expiryDate || "",
-        status:
-          effective === "expired" || effective === "suspended"
-            ? "active"
-            : effective,
+        days,
+        paidOn,
+        status,
         rawStatus: lic.licenseStatus,
         assignStatus: lic.assignStatus,
         remarks: lic.remarks,
@@ -195,10 +209,32 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
   }, [dbLicenses]);
 
   const rows = useMemo(() => {
-    return mappedLicenses.filter(
-      (lic) => statusFilter === "all" || lic.status === statusFilter,
-    );
-  }, [mappedLicenses, statusFilter]);
+    return mappedLicenses.filter((lic) => {
+      if (statusFilter !== "all" && lic.status !== statusFilter) {
+        return false;
+      }
+      if (timeFilter === "all") return true;
+
+      const dateStr = lic.startDate || lic.expiryDate;
+      if (!dateStr) return true;
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return true;
+
+      const now = new Date();
+      const diffDays = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+
+      if (timeFilter === "last-30-days") {
+        return diffDays >= 0 && diffDays <= 30;
+      }
+      if (timeFilter === "last-90-days") {
+        return diffDays >= 0 && diffDays <= 90;
+      }
+      if (timeFilter === "last-180-days") {
+        return diffDays >= 0 && diffDays <= 180;
+      }
+      return true;
+    });
+  }, [mappedLicenses, statusFilter, timeFilter]);
 
   const columns: DataTableColumn<LiveProductLicense>[] = [
     {
@@ -232,7 +268,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     },
     {
       id: "customerCode",
-      header: "Customer Code",
+      header: "Organization Code",
       width: "12rem",
       value: (lic) => lic.customerCode,
       cell: (lic) => (
@@ -243,7 +279,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     },
     {
       id: "customer",
-      header: "Customer",
+      header: "Organization",
       width: "18rem",
       value: (lic) => lic.customer,
       cell: (lic) => (
@@ -286,11 +322,36 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
       ),
     },
     {
+      id: "days",
+      header: "Days",
+      width: "6rem",
+      value: (lic) => lic.days ?? "",
+      cell: (lic) => {
+        if (lic.days === null) return <span className="text-[var(--text-muted)]">—</span>;
+        return (
+          <span className={lic.days < 0 ? "font-bold text-rose-600 dark:text-rose-400" : "text-[var(--text-secondary)]"}>
+            {lic.days}
+          </span>
+        );
+      },
+    },
+    {
+      id: "paidOn",
+      header: "Paid On",
+      width: "13rem",
+      value: (lic) => lic.paidOn ?? "Not paid yet",
+      cell: (lic) => (
+        <span className={lic.paidOn ? "text-xs text-[var(--text-secondary)]" : "text-xs text-[var(--text-muted)]"}>
+          {lic.paidOn ?? "Not paid yet"}
+        </span>
+      ),
+    },
+    {
       id: "status",
       header: "Status",
       width: "7.5rem",
       value: (lic) => lic.status,
-      cell: (lic) => <StatusBadge status={lic.status} kind="license" />,
+      cell: (lic) => <InvoiceStatusBadge status={lic.status} />,
     },
   ];
 
@@ -307,19 +368,39 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-semibold text-[var(--text-muted)]">
-          {rows.length} license{rows.length === 1 ? "" : "s"}
+          {rows.length} invoice{rows.length === 1 ? "" : "s"}
         </p>
-        <CommonButton
-          variant="primary"
-          iconLeft={<Plus size={14} />}
-          onClick={() =>
-            navigate(PRODUCTS_PATHS.addLicense, {
-              state: { productId: Number(app.id), tab: "invoice-details" },
-            })
-          }
-        >
-          Create License
-        </CommonButton>
+        <div className="flex items-center gap-2">
+          <div className="w-36">
+            <Dropdown
+              label="Time Filter"
+              hideLabel
+              placeholder="All Time"
+              searchable={false}
+              clearable={false}
+              options={[
+                { id: "last-30-days", value: "Last 30 Days" },
+                { id: "last-90-days", value: "Last 90 Days" },
+                { id: "last-180-days", value: "Last 180 Days" },
+                { id: "all", value: "All Time" },
+              ]}
+              value={timeFilter}
+              onValueChange={(val) => setTimeFilter(val ?? "all")}
+              className="min-h-8"
+            />
+          </div>
+          <CommonButton
+            variant="primary"
+            iconLeft={<Plus size={14} />}
+            onClick={() =>
+              navigate(PRODUCTS_PATHS.addLicense, {
+                state: { productId: Number(app.id), tab: "invoice-details" },
+              })
+            }
+          >
+            Create Invoice
+          </CommonButton>
+        </div>
       </div>
 
       <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">

@@ -1,5 +1,5 @@
+import { Badge } from '@app/components/Badge';
 import type {
-  EffectiveLicenseStatus,
   ProductLicenseType,
   ProductNavigationTarget,
   ProductStatus,
@@ -54,27 +54,27 @@ export const CUSTOMER_STATUS_FILTERS: Array<{
  * License status filter pills for the Invoice Details tab.
  */
 export const LICENSE_DETAILS_STATUS_FILTERS: Array<{
-  id: EffectiveLicenseStatus | 'all';
+  id: string;
   label: string;
 }> = [
-  { id: 'all', label: 'All statuses' },
-  { id: 'active', label: 'Active' },
-  { id: 'expiring-soon', label: 'Expiring soon' },
+  { id: 'all', label: 'All Statuses' },
+  { id: 'paid', label: 'Paid' },
+  { id: 'overdue', label: 'Overdue' },
+  { id: 'expiring-soon', label: 'Expiring Soon' },
 ];
 
 /**
  * License history status filter options for the License History tab.
  */
-export type LicenseHistoryStatusFilter = 'all' | 'active' | 'expiring-soon' | 'expired';
+export type LicenseHistoryStatusFilter = 'all' | 'paid' | 'overdue' | 'active' | 'expiring-soon' | 'expired';
 
 export const LICENSE_HISTORY_STATUS_FILTERS: Array<{
   id: LicenseHistoryStatusFilter;
   label: string;
 }> = [
-  { id: 'all', label: 'All statuses' },
-  { id: 'active', label: 'Active' },
-  { id: 'expiring-soon', label: 'Expiring soon' },
-  { id: 'expired', label: 'Expired' },
+  { id: 'all', label: 'Paid & Unpaid' },
+  { id: 'paid', label: 'Paid' },
+  { id: 'overdue', label: 'Overdue' },
 ];
 
 /**
@@ -89,3 +89,22 @@ export const PRODUCT_NAVIGATION_OPTIONS: Array<{ id: ProductNavigationTarget; va
   { id: 'same-tab', value: 'Same Tab' },
   { id: 'new-tab', value: 'New Tab' },
 ];
+
+/**
+ * Status badge for Invoices in Invoice Details and Invoice History tabs.
+ */
+export function InvoiceStatusBadge({ status }: { status: string }) {
+  if (status === 'paid') {
+    return <Badge tone="success">Paid</Badge>;
+  }
+  if (status === 'overdue') {
+    return <Badge tone="danger">Overdue</Badge>;
+  }
+  if (status === 'expiring-soon') {
+    return <Badge tone="warning">Expiring Soon</Badge>;
+  }
+  if (status === 'suspended') {
+    return <Badge tone="danger">Suspended</Badge>;
+  }
+  return <Badge tone="neutral">{status}</Badge>;
+}

@@ -2,14 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Eye } from 'lucide-react';
 import { CommonIconButton } from '@app/components/buttons';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { StatusBadge } from '@app/components/Badge';
 import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { formatDate } from '@/modules/utils/formatDate';
 import { getLicenseDetails } from '../services/productService';
 import type { ProductLicenseApiItem, ProductLicenseHistoryRow } from '../types/productTypes';
 import { toLicenseHistoryRows } from '../utils/productHelpers';
-import { LICENSE_HISTORY_STATUS_FILTERS, type LicenseHistoryStatusFilter } from '../utils/productFilters';
+import { LICENSE_HISTORY_STATUS_FILTERS, InvoiceStatusBadge, type LicenseHistoryStatusFilter } from '../utils/productFilters';
 import { InvoiceDetailModal } from './LicenseDetails';
 import type { AdminApplication, License } from '@/modules/types';
 
@@ -50,7 +49,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
       unique.set(row.orgId, row.customer);
     }
     return [
-      { id: 'all', value: 'All Customers' },
+      { id: 'all', value: 'All Organizations' },
       ...[...unique.entries()]
         .sort((left, right) => left[1].localeCompare(right[1]))
         .map(([id, value]) => ({ id, value })),
@@ -59,7 +58,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
 
   const rows = useMemo(() => historyRows
     .filter((row) => customerFilter === 'all' || row.orgId === customerFilter)
-    .filter((row) => statusFilter === 'all' || row.status === statusFilter)
+    .filter((row) => statusFilter === 'all' || row.paymentStatus === statusFilter)
     .sort((left, right) => right.startDate.localeCompare(left.startDate)),
   [historyRows, customerFilter, statusFilter]);
 
@@ -102,26 +101,15 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
       ),
     },
     {
-      id: 'term',
-      header: 'Term',
-      width: '6.5rem',
-      value: (row) => row.term,
-      cell: (row) => (
-        row.term === 'Current'
-          ? <span className="font-bold text-[var(--success)]">Current</span>
-          : <span className="text-[var(--text-faint)]">Past</span>
-      ),
-    },
-    {
       id: 'customerCode',
-      header: 'Customer Code',
+      header: 'Organization Code',
       width: '12rem',
       value: (row) => row.customerCode,
       cell: (row) => <span className="font-mono text-xs text-[var(--text-secondary)]">{row.customerCode}</span>,
     },
     {
       id: 'customer',
-      header: 'Customer',
+      header: 'Organization',
       width: '18rem',
       value: (row) => row.customer,
       cell: (row) => <span className="font-bold text-[var(--text-primary)]">{row.customer}</span>,
@@ -141,11 +129,22 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
       cell: (row) => <span className="text-[var(--text-muted)]">{row.expiryDate ? formatDate(row.expiryDate) : '—'}</span>,
     },
     {
+      id: 'paidOn',
+      header: 'Paid On',
+      width: '13rem',
+      value: (row) => row.paidOn ?? 'Not paid yet',
+      cell: (row) => (
+        <span className={row.paidOn ? 'text-xs text-[var(--text-secondary)]' : 'text-xs text-[var(--text-muted)]'}>
+          {row.paidOn ?? 'Not paid yet'}
+        </span>
+      ),
+    },
+    {
       id: 'status',
       header: 'Status',
       width: '7.5rem',
-      value: (row) => row.status,
-      cell: (row) => <StatusBadge status={row.status} kind="license" />,
+      value: (row) => row.paymentStatus,
+      cell: (row) => <InvoiceStatusBadge status={row.paymentStatus} />,
     },
   ];
 
@@ -154,9 +153,9 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
       <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
         <div className="w-48 shrink-0">
           <Dropdown
-            label="Customer"
+            label="Organization"
             hideLabel
-            placeholder="Select customer"
+            placeholder="Select organization"
             searchable={false}
             clearable={false}
             value={customerFilter}

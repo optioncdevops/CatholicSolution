@@ -578,9 +578,9 @@ const ProductDetails = () => {
         onChange={setActiveTab}
         tabs={[
           { id: "details", label: "Product Details" },
-          { id: "customers", label: "Customers", count: customerCount },
-          { id: "invoice-details", label: "License Details" },
-          { id: "invoice-history", label: "License History" },
+          { id: "customers", label: "Organizations", count: customerCount },
+          { id: "invoice-details", label: "Invoice Details" },
+          { id: "invoice-history", label: "Invoice History" },
         ]}
       />
 
