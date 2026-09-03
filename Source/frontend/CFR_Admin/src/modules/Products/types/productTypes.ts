@@ -19,6 +19,7 @@ export interface ProductApiItem {
   prodDescription: string | null;
   externalPageUrl: string | null;
   defaultAccessDays: number;
+  logoName?: string | null;
   logoUrl?: string | null;
   isActive: boolean;
   productStatus?: number | null;
@@ -38,6 +39,7 @@ export interface ProductSaveInputPayload {
   prodDescription?: string | null;
   externalPageUrl?: string | null;
   defaultAccessDays: number;
+  logoName?: string | null;
   logoUrl?: string | null;
   contactPerson?: string | null;
   features?: string[];

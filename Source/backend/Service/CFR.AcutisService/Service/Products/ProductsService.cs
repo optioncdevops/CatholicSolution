@@ -302,9 +302,17 @@ namespace CFR.AcutisService.Service.Products
                 }
 
                 string relativeDirectory = GetProductLogoRelativePath();
-                string savedPath = fileHandler.SaveUniqueFile(file, relativeDirectory, $"prod_{Guid.NewGuid():N}");
+                string rawName = Path.GetFileNameWithoutExtension(file.FileName);
+                string safeName = string.Concat(rawName.Select(c => char.IsLetterOrDigit(c) || c == '_' || c == '-' ? c : '_')).Trim('_');
+                if (string.IsNullOrWhiteSpace(safeName))
+                {
+                    safeName = "logo";
+                }
+
+                string uniquePrefix = $"{safeName}_{Guid.NewGuid().ToString("N")[..8]}";
+                string savedPath = fileHandler.SaveUniqueFile(file, relativeDirectory, uniquePrefix);
                 string fileName = Path.GetFileName(savedPath);
-                result.ResultData = $"/{relativeDirectory.Replace('\\', '/').Trim('/')}/{fileName}";
+                result.ResultData = fileName;
                 await Task.CompletedTask;
             }
             catch (Exception ex)
@@ -405,13 +413,25 @@ namespace CFR.AcutisService.Service.Products
                     return result;
                 }
 
+                string? candidateLogo = !string.IsNullOrWhiteSpace(input.LogoName) ? input.LogoName : input.LogoUrl;
+                string? cleanLogo = !string.IsNullOrWhiteSpace(candidateLogo)
+                    ? Path.GetFileName(candidateLogo.Trim().Replace('\\', '/'))
+                    : null;
+                input.LogoName = cleanLogo;
+                input.LogoUrl = cleanLogo;
+
                 var existingProduct = await repository.GetProductByIdAsync(input.ProductId);
                 if (existingProduct != null)
                 {
                     input.SubCategoryName ??= existingProduct.SubCategoryName;
                     input.ProdDescription ??= existingProduct.ProdDescription;
                     input.ExternalPageUrl ??= existingProduct.ExternalPageUrl;
-                    input.LogoUrl ??= existingProduct.LogoUrl;
+                    string? existingLogo = !string.IsNullOrWhiteSpace(existingProduct.LogoName) ? existingProduct.LogoName : existingProduct.LogoUrl;
+                    if (cleanLogo == null && existingLogo != null)
+                    {
+                        input.LogoName = Path.GetFileName(existingLogo.Replace('\\', '/'));
+                        input.LogoUrl = input.LogoName;
+                    }
                     input.ContactPerson ??= existingProduct.ContactPerson;
                     if (input.DefaultAccessDays <= 0)
                     {
@@ -442,9 +462,12 @@ namespace CFR.AcutisService.Service.Products
                 }
 
                 // Safely clean up previous logo file if it was replaced or removed
-                if (existingProduct != null && !string.IsNullOrWhiteSpace(existingProduct.LogoUrl) && !string.Equals(existingProduct.LogoUrl, input.LogoUrl, StringComparison.OrdinalIgnoreCase))
+                string? prevLogo = existingProduct != null
+                    ? (!string.IsNullOrWhiteSpace(existingProduct.LogoName) ? existingProduct.LogoName : existingProduct.LogoUrl)
+                    : null;
+                if (!string.IsNullOrWhiteSpace(prevLogo) && !string.Equals(Path.GetFileName(prevLogo), input.LogoName, StringComparison.OrdinalIgnoreCase))
                 {
-                    TryDeleteLocalFile(existingProduct.LogoUrl);
+                    TryDeleteLocalFile(prevLogo);
                 }
 
                 result.ResultData = input.ProductId;

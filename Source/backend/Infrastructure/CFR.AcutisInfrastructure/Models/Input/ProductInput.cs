@@ -45,6 +45,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public int DefaultAccessDays { get; set; } = 365;
 
         /// <summary>
+        /// Gets or sets the product logo file name.
+        /// </summary>
+        [JsonPropertyName("logoName")]
+        public string? LogoName { get; set; }
+
+        /// <summary>
         /// Gets or sets the relative path or URL of the product logo image.
         /// </summary>
         [JsonPropertyName("logoUrl")]

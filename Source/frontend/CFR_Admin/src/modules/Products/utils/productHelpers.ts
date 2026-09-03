@@ -146,6 +146,7 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
     prodDescription: (item.prodDescription ?? item.ProdDescription ?? null) as string | null,
     externalPageUrl: (item.externalPageUrl ?? item.ExternalPageUrl ?? null) as string | null,
     defaultAccessDays: Number(item.defaultAccessDays ?? item.DefaultAccessDays ?? 0),
+    logoName: (item.logoName ?? item.LogoName ?? item.logoUrl ?? item.LogoUrl ?? null) as string | null,
     logoUrl: pickProductLogoUrl(item as unknown as ProductApiItem),
     isActive: Boolean(item.isActive ?? item.IsActive ?? false),
     productStatus: item.productStatus != null
@@ -308,12 +309,18 @@ export function pickProductLogoUrl(item: unknown): string | null {
     return null;
   }
   const record = item as Record<string, unknown>;
-  const raw = record.logoUrl ?? record.LogoUrl;
+  const raw = record.logoName ?? record.LogoName ?? record.logoUrl ?? record.LogoUrl;
   return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
 }
 
+export function toStoredProductLogoFileName(logoUrl: string | null | undefined): string | null {
+  if (!logoUrl || typeof logoUrl !== 'string' || !logoUrl.trim()) return null;
+  const trimmed = logoUrl.trim().replace(/\\/g, '/');
+  return trimmed.split('/').filter(Boolean).pop() ?? null;
+}
+
 export function toStoredProductLogoPath(logoUrl: string | null | undefined): string | null {
-  return toPublicProductLogoPath(logoUrl);
+  return toStoredProductLogoFileName(logoUrl);
 }
 
 export function resolveProductLogoUrl(

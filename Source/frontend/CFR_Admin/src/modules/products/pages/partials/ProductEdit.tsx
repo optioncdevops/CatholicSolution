@@ -413,12 +413,12 @@ const ProductEdit = () => {
 
     setSaving(true);
     try {
-      let finalLogoUrl: string | null | undefined = toStoredProductLogoPath(product.logoUrl) ?? product.logoUrl;
+      let finalLogoName: string | null | undefined = product.logoName ?? toStoredProductLogoPath(product.logoUrl) ?? product.logoUrl;
       if (logoFile) {
         const uploadedPath = await uploadProductLogo(logoFile);
-        finalLogoUrl = toStoredProductLogoPath(uploadedPath) ?? uploadedPath;
+        finalLogoName = toStoredProductLogoPath(uploadedPath) ?? uploadedPath;
       } else if (logoRemoved) {
-        finalLogoUrl = null;
+        finalLogoName = null;
       }
 
       const defaultAccessDays =
@@ -434,7 +434,8 @@ const ProductEdit = () => {
         prodDescription: form.description?.trim() || null,
         externalPageUrl: form.productionUrl?.trim() || null,
         defaultAccessDays,
-        logoUrl: finalLogoUrl,
+        logoName: finalLogoName,
+        logoUrl: finalLogoName,
         features: form.features,
         isActive: form.status !== "inactive",
         productStatus: form.status === "active" ? 1 : form.status === "coming-soon" ? 2 : null,

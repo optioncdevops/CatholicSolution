@@ -13,15 +13,6 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = N'core' AND TABLE_NAME = N'Product' AND COLUMN_NAME = N'ContactPerson'
-)
-BEGIN
-    ALTER TABLE [core].[Product] ADD [ContactPerson] NVARCHAR(200) NULL;
-END
-GO
-
 IF OBJECT_ID(N'[dbo].[Acutis_Products_CRUD]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[Acutis_Products_CRUD];
 GO
@@ -35,7 +26,7 @@ CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
     @ProdDescription NVARCHAR(MAX) = NULL,
     @ExternalPageUrl NVARCHAR(500) = NULL,
     @DefaultAccessDays INT = 365,
-    @LogoUrl NVARCHAR(500) = NULL,
+    @LogoName NVARCHAR(500) = NULL,
     @ContactPerson NVARCHAR(200) = NULL,
     @Features NVARCHAR(MAX) = NULL,
     @IsActive BIT = 1,
@@ -65,7 +56,7 @@ BEGIN
     SET @SubCategoryName = NULLIF(LTRIM(RTRIM(@SubCategoryName)), N'');
     SET @ProdDescription = NULLIF(LTRIM(RTRIM(@ProdDescription)), N'');
     SET @ExternalPageUrl = NULLIF(LTRIM(RTRIM(@ExternalPageUrl)), N'');
-    SET @LogoUrl = NULLIF(LTRIM(RTRIM(@LogoUrl)), N'');
+    SET @LogoName = NULLIF(LTRIM(RTRIM(@LogoName)), N'');
     SET @LicenseType = NULLIF(LTRIM(RTRIM(@LicenseType)), N'');
     SET @LicenseStatus = NULLIF(LTRIM(RTRIM(@LicenseStatus)), N'');
     SET @AssignStatus = NULLIF(LTRIM(RTRIM(@AssignStatus)), N'');
@@ -84,7 +75,8 @@ BEGIN
             p.[ProdDescription],
             p.[ExternalPageUrl],
             ISNULL(p.[DefaultAccessDays], 365) AS [DefaultAccessDays],
-            p.[LogoUrl],
+            p.[LogoName],
+            p.[LogoName] AS [LogoUrl],
             p.[IsActive],
             p.[ProductStatus],
             p.[ContactPerson],
@@ -121,7 +113,8 @@ BEGIN
             p.[ProdDescription],
             p.[ExternalPageUrl],
             ISNULL(p.[DefaultAccessDays], 365) AS [DefaultAccessDays],
-            p.[LogoUrl],
+            p.[LogoName],
+            p.[LogoName] AS [LogoUrl],
             p.[IsActive],
             p.[ProductStatus],
             p.[ContactPerson],
@@ -186,7 +179,7 @@ BEGIN
             [ProdDescription] = ISNULL(@ProdDescription, [ProdDescription]),
             [ExternalPageUrl] = ISNULL(@ExternalPageUrl, [ExternalPageUrl]),
             [DefaultAccessDays] = ISNULL(@DefaultAccessDays, [DefaultAccessDays]),
-            [LogoUrl] = ISNULL(@LogoUrl, [LogoUrl]),
+            [LogoName] = ISNULL(@LogoName, [LogoName]),
             [ContactPerson] = CASE
                 WHEN @ContactPerson IS NULL THEN [ContactPerson]
                 WHEN LTRIM(RTRIM(@ContactPerson)) = N'' THEN NULL

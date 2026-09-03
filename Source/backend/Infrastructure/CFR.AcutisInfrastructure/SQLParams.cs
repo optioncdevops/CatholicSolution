@@ -398,8 +398,9 @@ namespace CFR.AcutisInfrastructure
             public const string DefaultAccessDays = nameof(DefaultAccessDays);
 
             /// <summary>
-            /// Relative path or URL to the product logo image.
+            /// File name or relative path to the product logo image.
             /// </summary>
+            public const string LogoName = nameof(LogoName);
             public const string LogoUrl = nameof(LogoUrl);
 
             /// <summary>
