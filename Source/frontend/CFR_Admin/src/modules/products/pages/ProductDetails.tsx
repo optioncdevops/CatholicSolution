@@ -39,6 +39,7 @@ import {
   resolveProductLogoUrl,
   toAdminApplication,
 } from "../utils/productHelpers";
+import { PRODUCT_MODAL_STATUS_OPTIONS } from "../utils/productFilters";
 import type { AdminApplication, ProductStatus } from "@/modules/types";
 
 function isImageIcon(icon: string): boolean {
@@ -184,7 +185,7 @@ function ProductWarningsBanner({ warnings }: { warnings: ProductWarning[] }) {
   );
 }
 
-const STATUS_OPTIONS: ProductStatus[] = ["active", "inactive", "coming-soon"];
+
 
 function ProductStatusDialog({
   app,
@@ -240,7 +241,7 @@ function ProductStatusDialog({
           </p>
           <fieldset className="flex flex-col gap-2">
             <legend className="sr-only">New Status</legend>
-            {STATUS_OPTIONS.map((status) => {
+            {PRODUCT_MODAL_STATUS_OPTIONS.map((status) => {
               const isCurrent = status === app.status;
               const isSelected = pendingStatus === status;
               return (

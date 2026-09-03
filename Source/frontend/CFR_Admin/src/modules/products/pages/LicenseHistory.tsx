@@ -9,15 +9,9 @@ import { formatDate } from '@/modules/utils/formatDate';
 import { getLicenseDetails } from '../services/productService';
 import type { ProductLicenseApiItem, ProductLicenseHistoryRow } from '../types/productTypes';
 import { toLicenseHistoryRows } from '../utils/productHelpers';
+import { LICENSE_HISTORY_STATUS_FILTERS, type LicenseHistoryStatusFilter } from '../utils/productFilters';
 import { InvoiceDetailModal } from './LicenseDetails';
 import type { AdminApplication, License } from '@/modules/types';
-
-const STATUS_FILTERS: Array<{ id: 'active' | 'expiring-soon' | 'expired' | 'all'; label: string }> = [
-  { id: 'all', label: 'All statuses' },
-  { id: 'active', label: 'Active' },
-  { id: 'expiring-soon', label: 'Expiring soon' },
-  { id: 'expired', label: 'Expired' },
-];
 
 export function LicenseHistory({ app }: { app: AdminApplication }) {
   //#region Hooks
@@ -27,7 +21,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
   //#region States
   const [historyRows, setHistoryRows] = useState<ProductLicenseHistoryRow[]>([]);
   const [customerFilter, setCustomerFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState<'active' | 'expiring-soon' | 'expired' | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<LicenseHistoryStatusFilter>('all');
   const [viewingInvoice, setViewingInvoice] = useState<License | null>(null);
   //#endregion
 
@@ -179,8 +173,8 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
             searchable={false}
             clearable={false}
             value={statusFilter}
-            onValueChange={(value) => setStatusFilter((value as 'active' | 'expiring-soon' | 'expired' | 'all') ?? 'all')}
-            options={STATUS_FILTERS.map((filter) => ({ id: filter.id, value: filter.label }))}
+            onValueChange={(value) => setStatusFilter((value as LicenseHistoryStatusFilter) ?? 'all')}
+            options={LICENSE_HISTORY_STATUS_FILTERS.map((filter) => ({ id: filter.id, value: filter.label }))}
             className="min-h-8"
           />
         </div>

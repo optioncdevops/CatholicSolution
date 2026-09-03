@@ -30,17 +30,13 @@ import {
   toStoredProductLogoPath,
   toAdminApplication,
 } from "../../utils/productHelpers";
+import {
+  PRODUCT_LICENSE_TYPE_OPTIONS,
+  PRODUCT_NAVIGATION_OPTIONS,
+} from "../../utils/productFilters";
 import type { AdminApplication, ProductLicenseType, ProductNavigationTarget } from "@/modules/types";
 
-const LICENSE_TYPE_OPTIONS: Array<{ id: ProductLicenseType; value: string }> = [
-  { id: "free", value: "Free" },
-  { id: "licensed", value: "Licensed" },
-];
 
-const NAVIGATION_OPTIONS: Array<{ id: ProductNavigationTarget; value: string }> = [
-  { id: "same-tab", value: "Same Tab" },
-  { id: "new-tab", value: "New Tab" },
-];
 
 function isImageIcon(icon: string): boolean {
   if (!icon) return false;
@@ -212,13 +208,13 @@ function ProductForm({
           />
           <RadioGroup
             label="License Type"
-            options={LICENSE_TYPE_OPTIONS}
+            options={PRODUCT_LICENSE_TYPE_OPTIONS}
             value={form.licenseType}
             onValueChange={(value) => onUpdate("licenseType", value as ProductLicenseType)}
           />
           <RadioGroup
             label="Navigation Target"
-            options={NAVIGATION_OPTIONS}
+            options={PRODUCT_NAVIGATION_OPTIONS}
             value={form.navigationTarget}
             onValueChange={(value) => onUpdate("navigationTarget", value as ProductNavigationTarget)}
           />

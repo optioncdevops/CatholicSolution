@@ -1,6 +1,7 @@
 import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
 import { accessStatusOf, effectiveLicenseStatus } from '@/modules/utils/formatDate';
+export * from './productFilters';
 
 export function toProductSlug(name: string | null | undefined): string {
   if (!name || typeof name !== 'string') return '';

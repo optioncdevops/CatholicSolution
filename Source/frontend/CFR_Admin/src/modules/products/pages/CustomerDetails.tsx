@@ -9,22 +9,14 @@ import { formatDate, accessStatusOf } from '@/modules/utils/formatDate';
 import { getProductCustomers } from '../services/productService';
 import type { ProductCustomerRow } from '../types/productTypes';
 import { normalizeProductCustomerList, toProductCustomerRow } from '../utils/productHelpers';
+import { CUSTOMER_STATUS_FILTERS, type EffectiveCustomerStatus } from '../utils/productFilters';
 import type { AdminApplication } from '@/modules/types';
-
-type EffectiveCustomerStatus = 'active' | 'expiring-soon' | 'expired';
 
 function effectiveStatusOf(org: ProductCustomerRow): EffectiveCustomerStatus {
   const access = accessStatusOf(org.expiryDate);
   if (access === 'expired' || access === 'expiring-soon') return access;
   return 'active';
 }
-
-const STATUS_FILTERS: Array<{ id: EffectiveCustomerStatus | 'all'; label: string; dot?: string }> = [
-  { id: 'all', label: 'All Statuses' },
-  { id: 'active', label: 'Active', dot: 'var(--success)' },
-  { id: 'expiring-soon', label: 'Expiring Soon', dot: 'var(--warning)' },
-  { id: 'expired', label: 'Expired', dot: 'var(--error)' },
-];
 
 export function CustomerDetails({
   app,
@@ -110,7 +102,7 @@ export function CustomerDetails({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
-        {STATUS_FILTERS.map((filter) => {
+        {CUSTOMER_STATUS_FILTERS.map((filter) => {
           const count = filter.id === 'all' ? productCustomers.length : productCustomers.filter((org) => effectiveStatusOf(org) === filter.id).length;
           return (
             <button

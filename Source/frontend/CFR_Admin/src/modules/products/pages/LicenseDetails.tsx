@@ -25,6 +25,7 @@ import {
   isLicenseUpcoming,
   toLicenseDetailsRows,
 } from "../utils/productHelpers";
+import { LICENSE_DETAILS_STATUS_FILTERS } from "../utils/productFilters";
 import type {
   AdminApplication,
   EffectiveLicenseStatus,
@@ -96,15 +97,6 @@ export function InvoiceDetailModal({
     </BaseModal>
   );
 }
-
-const STATUS_FILTERS: Array<{
-  id: EffectiveLicenseStatus | "all";
-  label: string;
-}> = [
-  { id: "all", label: "All statuses" },
-  { id: "active", label: "Active" },
-  { id: "expiring-soon", label: "Expiring soon" },
-];
 
 export interface LiveProductLicense {
   id: string;
@@ -330,7 +322,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
       </div>
 
       <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
-        {STATUS_FILTERS.map((filter) => {
+        {LICENSE_DETAILS_STATUS_FILTERS.map((filter) => {
           const count =
             filter.id === "all"
               ? mappedLicenses.length

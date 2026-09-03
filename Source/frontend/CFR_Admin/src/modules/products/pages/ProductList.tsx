@@ -25,27 +25,16 @@ import {
   normalizeProductList,
   resolveProductLogoUrl,
 } from "../utils/productHelpers";
+import {
+  PRODUCT_STATUS_FILTERS,
+  PRODUCT_SORT_OPTIONS,
+  PRODUCT_MODAL_STATUS_OPTIONS,
+  type ProductStatusFilter,
+  type ProductSortOption,
+} from "../utils/productFilters";
 import type { AdminApplication, ProductStatus } from "@/modules/types";
 
-type ProductStatusFilter = "all" | "active" | "inactive" | "coming-soon";
 
-const STATUS_FILTERS: Array<{ id: ProductStatusFilter; label: string }> = [
-  { id: "all", label: "All Statuses" },
-  { id: "active", label: "Active" },
-  { id: "inactive", label: "Inactive" },
-  { id: "coming-soon", label: "Coming Soon" },
-];
-
-const SORT_OPTIONS = [
-  { id: "default", label: "Default (DB Order)" },
-  { id: "name", label: "Name (A–Z)" },
-  { id: "updated", label: "Recently Updated" },
-  { id: "customers", label: "Most Customers" },
-] as const;
-
-type SortOption = (typeof SORT_OPTIONS)[number]["id"];
-
-const STATUS_OPTIONS: ProductStatus[] = ["active", "inactive", "coming-soon"];
 
 function ProductStatusDialog({
   app,
@@ -101,7 +90,7 @@ function ProductStatusDialog({
           </p>
           <fieldset className="flex flex-col gap-2">
             <legend className="sr-only">New Status</legend>
-            {STATUS_OPTIONS.map((status) => {
+            {PRODUCT_MODAL_STATUS_OPTIONS.map((status) => {
               const isCurrent = status === app.status;
               const isSelected = pendingStatus === status;
               return (
@@ -152,7 +141,7 @@ const ProductList = () => {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("default");
+  const [sortBy, setSortBy] = useState<ProductSortOption>("default");
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductApiItem | null>(
     null,
@@ -283,7 +272,7 @@ const ProductList = () => {
         />
 
         <div className="flex shrink-0 flex-nowrap gap-1.5">
-          {STATUS_FILTERS.map((filter) => {
+          {PRODUCT_STATUS_FILTERS.map((filter) => {
             const count =
               filter.id === "all"
                 ? products.length
@@ -311,9 +300,9 @@ const ProductList = () => {
             clearable={false}
             value={sortBy}
             onValueChange={(value) =>
-              setSortBy((value as SortOption) ?? "default")
+              setSortBy((value as ProductSortOption) ?? "default")
             }
-            options={SORT_OPTIONS.map((option) => ({
+            options={PRODUCT_SORT_OPTIONS.map((option) => ({
               id: option.id,
               value: option.label,
             }))}
