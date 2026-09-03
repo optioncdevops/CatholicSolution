@@ -21,7 +21,7 @@ export interface ProductApiItem {
   defaultAccessDays: number;
   logoUrl?: string | null;
   isActive: boolean;
-  isAvailable: boolean;
+  productStatus?: number | null;
   customerCount: number;
   contactPerson: string | null;
   features?: string[];
@@ -42,7 +42,7 @@ export interface ProductSaveInputPayload {
   contactPerson?: string | null;
   features?: string[];
   isActive: boolean;
-  isAvailable: boolean;
+  productStatus?: number | null;
 }
 
 export interface ProductInputPayload extends ProductSaveInputPayload {

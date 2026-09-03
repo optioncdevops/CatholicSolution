@@ -13,5 +13,4 @@ export interface HubProductApiItem {
   features?: string[];
   hubSection?: HubSectionValue;
   isActive: boolean | number;
-  isAvailable: boolean | number;
 }

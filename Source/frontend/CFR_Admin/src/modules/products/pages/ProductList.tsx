@@ -180,6 +180,8 @@ const ProductList = () => {
   const handleConfirmStatus = async (status: ProductStatus) => {
     if (!selectedProduct) return;
     try {
+      const isActive = status !== "inactive";
+      const productStatus = status === "active" ? 1 : status === "coming-soon" ? 2 : null;
       const payload: ProductInputPayload = {
         productId: selectedProduct.productId,
         productName: selectedProduct.productName,
@@ -187,8 +189,8 @@ const ProductList = () => {
         prodDescription: selectedProduct.prodDescription,
         externalPageUrl: selectedProduct.externalPageUrl,
         defaultAccessDays: selectedProduct.defaultAccessDays,
-        isActive: status === "active",
-        isAvailable: status !== "coming-soon",
+        isActive,
+        productStatus,
         contactPerson: selectedProduct.contactPerson,
       };
       await updateProduct(payload);

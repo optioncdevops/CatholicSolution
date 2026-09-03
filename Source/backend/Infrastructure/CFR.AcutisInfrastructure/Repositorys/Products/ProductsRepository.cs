@@ -231,7 +231,10 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
                 : null;
             parameters.Add(DBParameterName.ProductParams.Features, updateFeatures, DbType.String);
             parameters.Add(DBParameterName.ProductParams.IsActive, input.IsActive, DbType.Boolean);
-            parameters.Add(DBParameterName.ProductParams.IsAvailable, input.IsAvailable, DbType.Boolean);
+            object productStatusParam = !input.IsActive || !input.ProductStatus.HasValue
+                ? (!input.IsActive ? DBNull.Value : (object)1)
+                : (object)input.ProductStatus.Value;
+            parameters.Add(DBParameterName.ProductParams.ProductStatus, productStatusParam, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);

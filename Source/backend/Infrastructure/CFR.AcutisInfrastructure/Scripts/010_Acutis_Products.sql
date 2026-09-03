@@ -39,7 +39,7 @@ CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
     @ContactPerson NVARCHAR(200) = NULL,
     @Features NVARCHAR(MAX) = NULL,
     @IsActive BIT = 1,
-    @IsAvailable BIT = 1,
+    @ProductStatus INT = NULL,
     -- License Parameters
     @LicenseId BIGINT = 0,
     @OrganizationProductId BIGINT = 0,
@@ -86,7 +86,7 @@ BEGIN
             ISNULL(p.[DefaultAccessDays], 365) AS [DefaultAccessDays],
             p.[LogoUrl],
             p.[IsActive],
-            p.[IsAvailable],
+            p.[ProductStatus],
             p.[ContactPerson],
             (
                 SELECT COUNT(DISTINCT op.[OrgId])
@@ -123,7 +123,7 @@ BEGIN
             ISNULL(p.[DefaultAccessDays], 365) AS [DefaultAccessDays],
             p.[LogoUrl],
             p.[IsActive],
-            p.[IsAvailable],
+            p.[ProductStatus],
             p.[ContactPerson],
             (
                 SELECT COUNT(DISTINCT op.[OrgId])
@@ -182,20 +182,25 @@ BEGIN
         UPDATE [core].[Product]
         SET
             [ProductName] = ISNULL(@ProductName, [ProductName]),
-            [SubCategoryName] = @SubCategoryName,
-            [ProdDescription] = @ProdDescription,
-            [ExternalPageUrl] = @ExternalPageUrl,
-            [DefaultAccessDays] = @DefaultAccessDays,
-            [LogoUrl] = @LogoUrl,
+            [SubCategoryName] = ISNULL(@SubCategoryName, [SubCategoryName]),
+            [ProdDescription] = ISNULL(@ProdDescription, [ProdDescription]),
+            [ExternalPageUrl] = ISNULL(@ExternalPageUrl, [ExternalPageUrl]),
+            [DefaultAccessDays] = ISNULL(@DefaultAccessDays, [DefaultAccessDays]),
+            [LogoUrl] = ISNULL(@LogoUrl, [LogoUrl]),
             [ContactPerson] = CASE
                 WHEN @ContactPerson IS NULL THEN [ContactPerson]
                 WHEN LTRIM(RTRIM(@ContactPerson)) = N'' THEN NULL
                 ELSE @ContactPerson
             END,
-            [IsActive] = @IsActive,
-            [IsAvailable] = @IsAvailable,
+            [IsActive] = ISNULL(@IsActive, [IsActive]),
+            [ProductStatus] = CASE
+                WHEN @IsActive = 0 THEN NULL
+                WHEN @ProductStatus = 2 THEN 2
+                WHEN @ProductStatus = 1 THEN 1
+                ELSE [ProductStatus]
+            END,
             [UpdatedDate] = SYSUTCDATETIME(),
-            [UpdatedBy] = @UpdatedBy
+            [UpdatedBy] = ISNULL(@UpdatedBy, [UpdatedBy])
         WHERE [ProductId] = @ProductId;
 
         IF @Features IS NOT NULL

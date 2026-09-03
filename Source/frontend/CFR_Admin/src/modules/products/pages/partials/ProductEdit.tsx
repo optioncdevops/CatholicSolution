@@ -436,8 +436,8 @@ const ProductEdit = () => {
         defaultAccessDays,
         logoUrl: finalLogoUrl,
         features: form.features,
-        isActive: form.status === "active",
-        isAvailable: form.status !== "coming-soon",
+        isActive: form.status !== "inactive",
+        productStatus: form.status === "active" ? 1 : form.status === "coming-soon" ? 2 : null,
         contactPerson: form.contactPersonName?.trim() || form.contactUserId?.trim() || "",
       };
 

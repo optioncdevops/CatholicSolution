@@ -117,8 +117,9 @@ export function parseProductIdFromState(state: unknown): number | null {
 }
 
 export function deriveProductStatus(item: ProductApiItem): ProductStatus {
-  if (!item.isAvailable) return 'coming-soon';
-  return item.isActive ? 'active' : 'inactive';
+  if (!item.isActive || item.productStatus == null) return 'inactive';
+  if (item.productStatus === 2) return 'coming-soon';
+  return 'active';
 }
 
 export const normalizeProductList = (resultData: unknown): ProductApiItem[] => {
@@ -146,8 +147,12 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
     externalPageUrl: (item.externalPageUrl ?? item.ExternalPageUrl ?? null) as string | null,
     defaultAccessDays: Number(item.defaultAccessDays ?? item.DefaultAccessDays ?? 0),
     logoUrl: pickProductLogoUrl(item as unknown as ProductApiItem),
-    isActive: Boolean(item.isActive ?? item.IsActive ?? true),
-    isAvailable: Boolean(item.isAvailable ?? item.IsAvailable ?? true),
+    isActive: Boolean(item.isActive ?? item.IsActive ?? false),
+    productStatus: item.productStatus != null
+      ? Number(item.productStatus)
+      : item.ProductStatus != null
+        ? Number(item.ProductStatus)
+        : null,
     customerCount: toProductCustomerCount((item.customerCount ?? item.CustomerCount) as number),
     contactPerson: toProductContactPersonName((item.contactPerson ?? item.ContactPerson) as string) || null,
     features,

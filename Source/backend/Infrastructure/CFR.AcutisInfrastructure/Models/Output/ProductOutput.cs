@@ -56,10 +56,10 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public bool IsActive { get; set; }
 
         /// <summary>
-        /// Gets or sets the availability flag.
+        /// Gets or sets the product status: 1 = Active, 2 = Coming Soon, null = Inactive.
         /// </summary>
-        [JsonPropertyName("isAvailable")]
-        public bool IsAvailable { get; set; }
+        [JsonPropertyName("productStatus")]
+        public int? ProductStatus { get; set; }
 
         /// <summary>
         /// Gets or sets the product contact person name from [auth].[AcutisUser].

@@ -426,6 +426,8 @@ const ProductDetails = () => {
   const handleConfirmStatus = async (status: ProductStatus) => {
     if (!product) return;
     try {
+      const isActive = status !== "inactive";
+      const productStatus = status === "active" ? 1 : status === "coming-soon" ? 2 : null;
       const payload: ProductInputPayload = {
         productId: product.productId,
         productName: product.productName,
@@ -433,8 +435,8 @@ const ProductDetails = () => {
         prodDescription: product.prodDescription,
         externalPageUrl: product.externalPageUrl,
         defaultAccessDays: product.defaultAccessDays,
-        isActive: status === "active",
-        isAvailable: status !== "coming-soon",
+        isActive,
+        productStatus,
         contactPerson: product.contactPerson,
       };
       await updateProduct(payload);

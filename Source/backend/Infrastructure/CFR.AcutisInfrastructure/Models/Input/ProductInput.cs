@@ -63,10 +63,10 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public bool IsActive { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether the product is available.
+        /// Gets or sets the product status: 1 = Active, 2 = Coming Soon, 3 = Inactive.
         /// </summary>
-        [JsonPropertyName("isAvailable")]
-        public bool IsAvailable { get; set; } = true;
+        [JsonPropertyName("productStatus")]
+        public int? ProductStatus { get; set; }
 
         /// <summary>
         /// Gets or sets the product feature list.

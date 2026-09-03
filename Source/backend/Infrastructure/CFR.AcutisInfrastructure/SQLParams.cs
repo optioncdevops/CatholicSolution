@@ -418,9 +418,9 @@ namespace CFR.AcutisInfrastructure
             public const string IsActive = nameof(IsActive);
 
             /// <summary>
-            /// Availability flag: 1 = available, 0 = coming soon.
+            /// Product status flag: 1 = Active, 2 = Coming Soon, 3 = Inactive.
             /// </summary>
-            public const string IsAvailable = nameof(IsAvailable);
+            public const string ProductStatus = nameof(ProductStatus);
 
             /// <summary>
             /// License identifier.
