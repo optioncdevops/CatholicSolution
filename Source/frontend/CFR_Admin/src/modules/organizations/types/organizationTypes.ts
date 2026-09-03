@@ -67,16 +67,6 @@ export interface OrganizationUserApiItem {
   linkedDate: string;
 }
 
-export interface LinkableUserApiItem {
-  authUserId: number;
-  email: string;
-}
-
-export interface LinkOrganizationUserPayload {
-  orgId: number;
-  authUserId: number;
-}
-
 export interface OrganizationProductApiItem {
   productId: number;
   productName: string;

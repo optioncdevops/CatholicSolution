@@ -61,8 +61,6 @@ namespace CFR.Common
         public const string ProductAssigned = "Product assigned successfully.";
         public const string ProductNotAssigned = "This product is not assigned to the organization.";
         public const string ProductRemoved = "Product removed successfully.";
-        public const string UserAlreadyLinked = "This user is already linked to the organization.";
-        public const string UserLinked = "User linked successfully.";
         public const string UserNotLinked = "This user is not linked to the organization.";
         public const string UserUnlinked = "User removed successfully.";
         public const string ExistAccessRequest = "A pending access request for this product already exists.";
@@ -117,8 +115,6 @@ namespace CFR.Common
             public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
             public const string AssignOrganizationProductFailed = "Error while assigning product to organization {OrgId}";
             public const string RemoveOrganizationProductFailed = "Error while removing product from organization {OrgId}";
-            public const string FetchLinkableUsersFailed = "Error while fetching linkable users for organization {OrgId}";
-            public const string LinkOrganizationUserFailed = "Error while linking user to organization {OrgId}";
             public const string UnlinkOrganizationUserFailed = "Error while unlinking user from organization {OrgId}";
             public const string UpdateOrganizationFailed = "Error while updating organization {OrgId}";
             public const string FetchProductByIdFailed = "Error while fetching product {ProductId}";

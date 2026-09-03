@@ -100,21 +100,6 @@ namespace CFR.AcutisInfrastructure.Interfaces.Organization
         /// <returns>A list of licenses issued against the organization's products.</returns>
         Task<List<OrganizationLicenseOutput>> GetOrganizationLicensesAsync(long orgId);
 
-        /// <summary>
-        /// Retrieves the users not yet linked to an organization.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Populate the link-user dropdown on the Users tab.
-        /// Request Flow: IOrganizationService -> IOrganizationRepository.GetLinkableUsersAsync() -> SQL Database.
-        /// Validation Details: OrgId parameter mapping.
-        /// Business Logic: Directly retrieves rows without manipulation.
-        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud with ActionId 11.
-        /// Response Details: Returns a list of OrganizationLinkableUserOutput records.
-        /// </remarks>
-        /// <param name="orgId">Organization identifier.</param>
-        /// <returns>A list of users not yet linked to the organization.</returns>
-        Task<List<OrganizationLinkableUserOutput>> GetLinkableUsersAsync(long orgId);
-
         #endregion GET Methods
 
         #region POST Methods
@@ -150,22 +135,6 @@ namespace CFR.AcutisInfrastructure.Interfaces.Organization
         /// <param name="updatedBy">Logged-in user identifier performing the assignment.</param>
         /// <returns>Scalar result of the assign stored procedure.</returns>
         Task<int> AssignOrganizationProductAsync(AssignOrganizationProductInput input, long? updatedBy);
-
-        /// <summary>
-        /// Links a user to an organization.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Add a user to an organization from the Users tab.
-        /// Request Flow: IOrganizationService -> IOrganizationRepository.LinkOrganizationUserAsync() -> SQL Database.
-        /// Validation Details: Parameter names match stored procedure arguments.
-        /// Business Logic: Executes StoredProc.Organization.OrganizationCrud with ActionId 12.
-        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud.
-        /// Response Details: Returns the scalar integer result (the user id, or -98 when already linked).
-        /// </remarks>
-        /// <param name="input">Input DTO containing the organization and user identifiers.</param>
-        /// <param name="updatedBy">Logged-in user identifier performing the link.</param>
-        /// <returns>Scalar result of the link stored procedure.</returns>
-        Task<int> LinkOrganizationUserAsync(LinkOrganizationUserInput input, long? updatedBy);
 
         #endregion POST Methods
 

@@ -101,9 +101,8 @@ GO
 -- ActionId 8: Assign a product to an organization.
 -- ActionId 9: Remove (soft-delete) a product assignment from an organization.
 -- ActionId 10: Get the real licenses issued against an organization's assigned products.
--- ActionId 11: Get users NOT yet linked to an organization (link dropdown source).
--- ActionId 12: Link a user to an organization.
--- ActionId 13: Unlink (soft-delete) a user from an organization.
+-- ActionId 13: Unlink (soft-delete) a user from an organization. Linking a user is not
+-- supported here — a user's org membership is only ever created outside this procedure.
 CREATE PROCEDURE [dbo].[Acutis_Organization_CRUD]
     @ActionId INT,
     @OrgId BIGINT = 0,
@@ -369,62 +368,6 @@ BEGIN
           AND op.[IsDeleted] = 0
         ORDER BY l.[CreatedDate] DESC;
         RETURN 0;
-    END
-
-    IF @ActionId = 11
-    BEGIN
-        SELECT
-            u.[CFRUserId] AS [AuthUserId],
-            u.[Email]
-        FROM [auth].[User] AS u
-        WHERE NOT EXISTS (
-            SELECT 1 FROM [auth].[OrganizationUser] AS ou
-            WHERE ou.[OrgId] = @OrgId
-              AND ou.[AuthUserId] = u.[CFRUserId]
-              AND ou.[IsDeleted] = 0
-        )
-        ORDER BY u.[Email];
-        RETURN 0;
-    END
-
-    IF @ActionId = 12
-    BEGIN
-        IF EXISTS (
-            SELECT 1 FROM [auth].[OrganizationUser]
-            WHERE [OrgId] = @OrgId AND [AuthUserId] = @AuthUserId AND [IsDeleted] = 0
-        )
-        BEGIN
-            SET @ReturnValue = -98;
-            RETURN @ReturnValue;
-        END
-
-        IF EXISTS (
-            SELECT 1 FROM [auth].[OrganizationUser]
-            WHERE [OrgId] = @OrgId AND [AuthUserId] = @AuthUserId AND [IsDeleted] = 1
-        )
-        BEGIN
-            UPDATE [auth].[OrganizationUser]
-            SET [MemberStatus] = 'active',
-                [CreatedDate] = SYSUTCDATETIME(),
-                [UpdatedDate] = SYSUTCDATETIME(),
-                [UpdatedBy] = @UpdatedBy,
-                [IsDeleted] = 0
-            WHERE [OrgId] = @OrgId AND [AuthUserId] = @AuthUserId;
-        END
-        ELSE
-        BEGIN
-            INSERT INTO [auth].[OrganizationUser]
-            (
-                [AuthUserId], [OrgId], [MemberStatus], [CreatedDate], [InsertedBy], [IsDeleted]
-            )
-            VALUES
-            (
-                @AuthUserId, @OrgId, 'active', SYSUTCDATETIME(), @UpdatedBy, 0
-            );
-        END
-
-        SET @ReturnValue = CAST(@AuthUserId AS INT);
-        RETURN @ReturnValue;
     END
 
     IF @ActionId = 13

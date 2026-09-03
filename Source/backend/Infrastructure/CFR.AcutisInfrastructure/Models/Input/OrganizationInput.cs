@@ -182,25 +182,4 @@ namespace CFR.AcutisInfrastructure.Models.Input
         [JsonPropertyName("productId")]
         public int ProductId { get; set; }
     }
-
-    /// <summary>
-    /// Input DTO used to link a user to an organization.
-    /// Bound from the controller request body and passed to the service and repository.
-    /// </summary>
-    public class LinkOrganizationUserInput
-    {
-        /// <summary>
-        /// Gets or sets the organization identifier.
-        /// </summary>
-        [Required]
-        [JsonPropertyName("orgId")]
-        public long OrgId { get; set; }
-
-        /// <summary>
-        /// Gets or sets the user identifier to link (auth.User.CFRUserId).
-        /// </summary>
-        [Required]
-        [JsonPropertyName("authUserId")]
-        public long AuthUserId { get; set; }
-    }
 }

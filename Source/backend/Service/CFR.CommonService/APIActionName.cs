@@ -80,8 +80,6 @@ namespace CFR.CommonService
             public const string AssignOrganizationProduct = nameof(AssignOrganizationProduct);
             public const string RemoveOrganizationProduct = nameof(RemoveOrganizationProduct);
             public const string GetOrganizationLicenses = nameof(GetOrganizationLicenses);
-            public const string GetLinkableUsers = nameof(GetLinkableUsers);
-            public const string LinkOrganizationUser = nameof(LinkOrganizationUser);
             public const string UnlinkOrganizationUser = nameof(UnlinkOrganizationUser);
         }
 

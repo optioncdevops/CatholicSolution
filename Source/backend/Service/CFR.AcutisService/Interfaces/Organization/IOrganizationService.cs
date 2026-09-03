@@ -102,21 +102,6 @@ namespace CFR.AcutisService.Interfaces.Organization
         /// <returns>MSResultArgs containing the licenses issued against the organization's products.</returns>
         Task<MSResultArgs> GetOrganizationLicensesAsync(long orgId);
 
-        /// <summary>
-        /// Retrieves the users not yet linked to an organization.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Populate the link-user dropdown on the Users tab.
-        /// Request Flow: OrganizationController -> IOrganizationService.GetLinkableUsersAsync() -> IOrganizationRepository.GetLinkableUsersAsync().
-        /// Validation Details: Identifier must be a positive integer.
-        /// Business Logic: Wraps the typed list in MSResultArgs.
-        /// Repository Interaction: Calls IOrganizationRepository.GetLinkableUsersAsync().
-        /// Response Details: MSResultArgs containing List of OrganizationLinkableUserOutput, or NoRecordFound.
-        /// </remarks>
-        /// <param name="orgId">Organization identifier.</param>
-        /// <returns>MSResultArgs containing the linkable users.</returns>
-        Task<MSResultArgs> GetLinkableUsersAsync(long orgId);
-
         #endregion GET Methods
 
         #region POST Methods
@@ -150,21 +135,6 @@ namespace CFR.AcutisService.Interfaces.Organization
         /// <param name="input">Input DTO containing the organization and product identifiers.</param>
         /// <returns>MSResultArgs containing the assign status.</returns>
         Task<MSResultArgs> AssignOrganizationProductAsync(AssignOrganizationProductInput input);
-
-        /// <summary>
-        /// Links a user to an organization.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Add a user to an organization from the Users tab.
-        /// Request Flow: OrganizationController -> IOrganizationService.LinkOrganizationUserAsync() -> IOrganizationRepository.LinkOrganizationUserAsync().
-        /// Validation Details: Input DTO is required; OrgId and AuthUserId must be positive.
-        /// Business Logic: Passes the signed-in user id as UpdatedBy; -98 from the repository means already linked.
-        /// Repository Interaction: Calls IOrganizationRepository.LinkOrganizationUserAsync().
-        /// Response Details: MSResultArgs containing the user identifier, or a conflict status when already linked.
-        /// </remarks>
-        /// <param name="input">Input DTO containing the organization and user identifiers.</param>
-        /// <returns>MSResultArgs containing the link status.</returns>
-        Task<MSResultArgs> LinkOrganizationUserAsync(LinkOrganizationUserInput input);
 
         #endregion POST Methods
 

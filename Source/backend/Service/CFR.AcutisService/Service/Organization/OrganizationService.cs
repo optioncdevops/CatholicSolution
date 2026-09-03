@@ -252,44 +252,6 @@ namespace CFR.AcutisService.Service.Organization
             return result;
         }
 
-        /// <summary>
-        /// Retrieves the users not yet linked to an organization.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Populate the link-user dropdown on the Users tab.
-        /// Request Flow: OrganizationController -> OrganizationService.GetLinkableUsersAsync() -> IOrganizationRepository.GetLinkableUsersAsync().
-        /// Validation Details: Identifier must be a positive integer.
-        /// Business Logic: Wraps the typed list in MSResultArgs.
-        /// Repository Interaction: Calls IOrganizationRepository.GetLinkableUsersAsync().
-        /// Response Details: MSResultArgs containing List of OrganizationLinkableUserOutput, or NoRecordFound.
-        /// </remarks>
-        /// <param name="orgId">Organization identifier.</param>
-        /// <returns>MSResultArgs containing the linkable users.</returns>
-        public async Task<MSResultArgs> GetLinkableUsersAsync(long orgId)
-        {
-            var result = new MSResultArgs();
-            try
-            {
-                if (orgId <= 0)
-                {
-                    result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = ErrorMessages.BadRequest;
-                    return result;
-                }
-
-                var data = await repository.GetLinkableUsersAsync(orgId);
-                result.ResultData = data ?? [];
-            }
-            catch (Exception ex)
-            {
-                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchLinkableUsersFailed, orgId);
-                result.StatusCode = ErrorCodes.InternalServerError;
-                result.StatusMessage = ErrorMessages.InternalServerError;
-            }
-
-            return result;
-        }
-
         #endregion GET Methods
 
         #region POST Methods
@@ -300,7 +262,7 @@ namespace CFR.AcutisService.Service.Organization
         /// <remarks>
         /// Purpose: Add a new organization from the Add Organization page.
         /// Request Flow: OrganizationController -> OrganizationService.CreateOrganizationAsync() -> IOrganizationRepository.CreateOrganizationAsync().
-        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/trial/suspended.
+        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/inactive/suspended.
         /// Business Logic: Passes the signed-in user id as InsertedBy and wraps the scalar result.
         /// Repository Interaction: Calls IOrganizationRepository.CreateOrganizationAsync().
         /// Response Details: MSResultArgs containing the new organization identifier.
@@ -374,53 +336,6 @@ namespace CFR.AcutisService.Service.Organization
             catch (Exception ex)
             {
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.AssignOrganizationProductFailed, input?.OrgId);
-                result.StatusCode = ErrorCodes.InternalServerError;
-                result.StatusMessage = ErrorMessages.InternalServerError;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Links a user to an organization.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Add a user to an organization from the Users tab.
-        /// Request Flow: OrganizationController -> OrganizationService.LinkOrganizationUserAsync() -> IOrganizationRepository.LinkOrganizationUserAsync().
-        /// Validation Details: Input DTO is required; OrgId and AuthUserId must be positive.
-        /// Business Logic: Passes the signed-in user id as UpdatedBy; -98 from the repository means already linked.
-        /// Repository Interaction: Calls IOrganizationRepository.LinkOrganizationUserAsync().
-        /// Response Details: MSResultArgs containing the user identifier, or a conflict status when already linked.
-        /// </remarks>
-        /// <param name="input">Input DTO containing the organization and user identifiers.</param>
-        /// <returns>MSResultArgs containing the link status.</returns>
-        public async Task<MSResultArgs> LinkOrganizationUserAsync(LinkOrganizationUserInput input)
-        {
-            var result = new MSResultArgs();
-            try
-            {
-                if (input == null || input.OrgId <= 0 || input.AuthUserId <= 0)
-                {
-                    result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = ErrorMessages.BadRequest;
-                    return result;
-                }
-
-                int authUserId = await repository.LinkOrganizationUserAsync(input, currentUserService.UserId);
-                if (authUserId == -98)
-                {
-                    result.StatusCode = ErrorCodes.Conflict;
-                    result.StatusMessage = ErrorMessages.UserAlreadyLinked;
-                    return result;
-                }
-
-                result.StatusCode = ErrorCodes.Created;
-                result.StatusMessage = ErrorMessages.UserLinked;
-                result.ResultData = authUserId;
-            }
-            catch (Exception ex)
-            {
-                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.LinkOrganizationUserFailed, input?.OrgId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
@@ -536,7 +451,7 @@ namespace CFR.AcutisService.Service.Organization
         /// <remarks>
         /// Purpose: Save changes to an organization's core identity fields.
         /// Request Flow: OrganizationController -> OrganizationService.UpdateOrganizationAsync() -> IOrganizationRepository.UpdateOrganizationAsync().
-        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/trial/suspended.
+        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/inactive/suspended.
         /// Business Logic: Passes the signed-in user id as UpdatedBy and wraps the scalar result.
         /// Repository Interaction: Calls IOrganizationRepository.UpdateOrganizationAsync().
         /// Response Details: MSResultArgs containing the organization identifier, or NoRecordFound.
