@@ -39,5 +39,11 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("profileImageUrl")]
         public string? ProfileImageUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contact/phone number, or null when not set.
+        /// </summary>
+        [JsonPropertyName("contactNumber")]
+        public string? ContactNumber { get; set; }
     }
 }

@@ -74,6 +74,7 @@ namespace CFR.CommonService
             public const string CreateOrganization = nameof(CreateOrganization);
             public const string UpdateOrganization = nameof(UpdateOrganization);
             public const string GetOrganizationUsers = nameof(GetOrganizationUsers);
+            public const string GetOrganizationUserDetail = nameof(GetOrganizationUserDetail);
             public const string GetOrganizationProducts = nameof(GetOrganizationProducts);
             public const string GetAssignableProducts = nameof(GetAssignableProducts);
             public const string AssignOrganizationProduct = nameof(AssignOrganizationProduct);

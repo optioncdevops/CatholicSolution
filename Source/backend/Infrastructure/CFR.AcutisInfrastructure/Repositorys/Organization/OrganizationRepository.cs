@@ -76,6 +76,33 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
         }
 
         /// <summary>
+        /// Fetches one member's organization-membership detail plus effective app access using StoredProc.Organization.OrganizationCrud.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Organization Users tab's user-detail view.
+        /// Request Flow: IOrganizationService -> OrganizationRepository.GetOrganizationUserDetailAsync() -> Database.
+        /// Validation Details: OrgId/AuthUserId parameter mapping.
+        /// Business Logic: Reads the membership header row, then the effective-app-access rows, and assigns the list onto the header.
+        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud with ActionId 14.
+        /// Response Details: Returns an OrganizationUserDetailOutput record, or null when not found.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">Member identifier.</param>
+        /// <returns>The matching membership detail, or null when not found.</returns>
+        public async Task<OrganizationUserDetailOutput?> GetOrganizationUserDetailAsync(long orgId, long authUserId)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.OrganizationParams.ActionId, 14, DbType.Int32);
+            parameters.Add(DBParameterName.OrganizationParams.OrgId, orgId, DbType.Int64);
+            parameters.Add(DBParameterName.OrganizationParams.AuthUserId, authUserId, DbType.Int64);
+            using var grid = await dapperHandler.QueryMultipleAsync(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
+            var detail = (await grid.ReadAsync<OrganizationUserDetailOutput>()).FirstOrDefault();
+            if (detail == null) return null;
+            detail.Apps = (await grid.ReadAsync<ProductLookupOutput>()).AsList();
+            return detail;
+        }
+
+        /// <summary>
         /// Fetches the real products assigned to an organization using StoredProc.Organization.OrganizationCrud.
         /// </summary>
         /// <remarks>

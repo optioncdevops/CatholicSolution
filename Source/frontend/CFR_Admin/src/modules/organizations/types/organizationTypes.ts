@@ -63,8 +63,27 @@ export interface CreateOrganizationPayload {
 export interface OrganizationUserApiItem {
   authUserId: number;
   email: string;
+  fullName: string;
   memberStatus: string | null;
   linkedDate: string;
+  appCount: number;
+}
+
+export interface OrganizationUserAppApiItem {
+  productId: number;
+  productName: string;
+  subCategoryName: string | null;
+}
+
+export interface OrganizationUserDetailApiItem {
+  authUserId: number;
+  email: string;
+  fullName: string;
+  orgId: number;
+  orgName: string;
+  memberStatus: string | null;
+  linkedDate: string;
+  apps: OrganizationUserAppApiItem[];
 }
 
 export interface OrganizationProductApiItem {

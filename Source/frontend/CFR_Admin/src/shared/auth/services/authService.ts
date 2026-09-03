@@ -115,6 +115,9 @@ export const updateProfile = async (payload: UpdateProfilePayload): Promise<ApiR
     formData.append('firstName', payload.firstName);
     formData.append('lastName', payload.lastName);
     formData.append('email', payload.email);
+    if (payload.contactNumber) {
+      formData.append('contactNumber', payload.contactNumber);
+    }
     if (payload.profileImage) {
       formData.append('profileImage', payload.profileImage);
     } else if (payload.removeProfileImage) {

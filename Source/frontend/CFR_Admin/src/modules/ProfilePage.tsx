@@ -17,12 +17,14 @@ interface ProfileFormValues {
   firstName: string;
   lastName: string;
   email: string;
+  contactNumber: string;
 }
 
 interface ProfileSaveOverrides {
   firstName?: string;
   lastName?: string;
   email?: string;
+  contactNumber?: string;
   profileImage?: File;
   removeProfileImage?: boolean;
 }
@@ -33,6 +35,9 @@ const profileRules = {
   firstName: { required: 'First name is required.' },
   lastName: { required: 'Last name is required.' },
   email: { required: 'Email is required.', pattern: { value: EMAIL_PATTERN, message: 'Enter a valid email address.' } },
+  contactNumber: {
+    pattern: { value: /^[+()\d][\d\s().-]{6,19}$/, message: 'Enter a valid contact number.' },
+  },
 };
 
 const SECTION_CLASS = 'rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)]';
@@ -52,7 +57,7 @@ export function ProfilePage() {
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
 
   const { control, handleSubmit, reset, getValues, formState: { isDirty } } = useForm<ProfileFormValues>({
-    defaultValues: { firstName: user.firstName, lastName: user.lastName, email: user.email },
+    defaultValues: { firstName: user.firstName, lastName: user.lastName, email: user.email, contactNumber: '' },
     mode: 'onChange',
   });
 
@@ -68,6 +73,7 @@ export function ProfilePage() {
           firstName: profile.firstName ?? user.firstName,
           lastName: profile.lastName ?? user.lastName,
           email: profile.email ?? user.email,
+          contactNumber: profile.contactNumber ?? '',
         });
         setCurrentImageUrl(profile.profileImageUrl ?? null);
       } catch (error) {
@@ -96,15 +102,16 @@ export function ProfilePage() {
       const firstName = (overrides.firstName ?? values.firstName).trim();
       const lastName = (overrides.lastName ?? values.lastName).trim();
       const email = (overrides.email ?? values.email).trim();
+      const contactNumber = (overrides.contactNumber ?? values.contactNumber).trim();
 
-      await updateProfile({ firstName, lastName, email, profileImage: overrides.profileImage, removeProfileImage: overrides.removeProfileImage });
+      await updateProfile({ firstName, lastName, email, contactNumber, profileImage: overrides.profileImage, removeProfileImage: overrides.removeProfileImage });
 
       const { resultData } = await getProfile();
       const profileImageUrl = (resultData as ProfileApiItem | undefined)?.profileImageUrl ?? null;
 
       updateStoredAcutisUser({ firstName, lastName, eMail: email, profileImageUrl });
       setCurrentImageUrl(profileImageUrl);
-      reset({ firstName, lastName, email });
+      reset({ firstName, lastName, email, contactNumber });
       showToast(successMessage, 'success');
     } catch (error) {
       const message = typeof error === 'string' ? error : 'Failed to update profile.';
@@ -164,7 +171,7 @@ export function ProfilePage() {
           <div className={`${SECTION_CLASS} flex flex-col gap-5 p-6`}>
             <span className={SECTION_TITLE_CLASS}>Personal Information</span>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
               <InputField
                 control={control}
                 name="firstName"
@@ -173,6 +180,7 @@ export function ProfilePage() {
                 disabled={loading || saving}
                 required
                 startIcon={<AppIcon name="user" size="controlField" decorative />}
+                wrapperClassName="md:col-span-4"
               />
               <InputField
                 control={control}
@@ -182,33 +190,47 @@ export function ProfilePage() {
                 disabled={loading || saving}
                 required
                 startIcon={<AppIcon name="user" size="controlField" decorative />}
+                wrapperClassName="md:col-span-4"
+              />
+              <InputField
+                control={control}
+                name="contactNumber"
+                type="tel"
+                label="Contact number"
+                placeholder="Enter contact number"
+                rules={profileRules.contactNumber}
+                disabled={loading || saving}
+                startIcon={<AppIcon name="phone" size="controlField" decorative />}
+                wrapperClassName="md:col-span-4"
+              />
+              <InputField
+                control={control}
+                name="email"
+                type="email"
+                label="Email address"
+                rules={profileRules.email}
+                disabled={loading || saving}
+                required
+                startIcon={<AppIcon name="mail" size="controlField" decorative />}
+                helperText="Used for sign-in and notifications from Catholic Solutions."
+                wrapperClassName="md:col-span-4"
               />
             </div>
 
-            <InputField
-              control={control}
-              name="email"
-              type="email"
-              label="Email address"
-              rules={profileRules.email}
-              disabled={loading || saving}
-              required
-              startIcon={<AppIcon name="mail" size="controlField" decorative />}
-              helperText="Used for sign-in and notifications from Catholic Solutions."
-            />
-
             {formError ? <p className="text-xs font-semibold text-[var(--error)]">{formError}</p> : null}
 
-            <div className="flex items-center justify-end gap-3 border-t border-[var(--line-soft)] pt-4">
+            <div className="flex flex-col items-center gap-2 border-t border-[var(--line-soft)] pt-4">
               {isDirty && !saving ? (
-                <span className="mr-auto text-xs font-semibold text-[var(--warning)]">You have unsaved changes</span>
+                <span className="text-xs font-semibold text-[var(--warning)]">You have unsaved changes</span>
               ) : null}
-              <CommonButton type="button" variant="outline" disabled={saving || !isDirty} onClick={() => reset()}>
-                Cancel
-              </CommonButton>
-              <CommonButton type="submit" variant="primary" loading={saving} disabled={saving || loading || !isDirty}>
-                Save
-              </CommonButton>
+              <div className="flex items-center justify-center gap-3">
+                <CommonButton type="button" variant="outline" disabled={saving || !isDirty} onClick={() => reset()}>
+                  Cancel
+                </CommonButton>
+                <CommonButton type="submit" variant="primary" loading={saving} disabled={saving || loading || !isDirty}>
+                  Save
+                </CommonButton>
+              </div>
             </div>
           </div>
 

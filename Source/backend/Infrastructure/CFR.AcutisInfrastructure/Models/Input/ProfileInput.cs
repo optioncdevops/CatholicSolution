@@ -32,6 +32,11 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string Email { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the contact/phone number, or null to leave it unset.
+        /// </summary>
+        public string? ContactNumber { get; set; }
+
+        /// <summary>
         /// Gets or sets a new profile image to save (JPG or PNG, max 2MB), or null to leave the
         /// current image unchanged (unless <see cref="RemoveProfileImage"/> is set).
         /// </summary>

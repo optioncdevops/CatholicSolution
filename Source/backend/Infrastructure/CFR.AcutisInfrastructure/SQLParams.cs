@@ -241,6 +241,11 @@ namespace CFR.AcutisInfrastructure
             public const string ProfileImageUrl = nameof(ProfileImageUrl);
 
             /// <summary>
+            /// User contact/phone number.
+            /// </summary>
+            public const string ContactNumber = nameof(ContactNumber);
+
+            /// <summary>
             /// Current plain-text password, verified with dbo.DecryptUserPassword.
             /// </summary>
             public const string CurrentPassword = nameof(CurrentPassword);

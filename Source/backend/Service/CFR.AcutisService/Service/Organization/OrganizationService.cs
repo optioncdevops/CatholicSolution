@@ -139,6 +139,52 @@ namespace CFR.AcutisService.Service.Organization
         }
 
         /// <summary>
+        /// Retrieves one member's organization-membership detail plus their effective app access.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Organization Users tab's user-detail view.
+        /// Request Flow: OrganizationController -> OrganizationService.GetOrganizationUserDetailAsync() -> IOrganizationRepository.GetOrganizationUserDetailAsync().
+        /// Validation Details: OrgId and AuthUserId must be positive.
+        /// Business Logic: Wraps the typed record in MSResultArgs.
+        /// Repository Interaction: Calls IOrganizationRepository.GetOrganizationUserDetailAsync().
+        /// Response Details: MSResultArgs containing OrganizationUserDetailOutput, or NoRecordFound.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">Member identifier.</param>
+        /// <returns>MSResultArgs containing the membership detail.</returns>
+        public async Task<MSResultArgs> GetOrganizationUserDetailAsync(long orgId, long authUserId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (orgId <= 0 || authUserId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                var data = await repository.GetOrganizationUserDetailAsync(orgId, authUserId);
+                if (data == null)
+                {
+                    result.StatusCode = ErrorCodes.NoRecordFound;
+                    result.StatusMessage = ErrorMessages.UserNotLinked;
+                    return result;
+                }
+
+                result.ResultData = data;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchOrganizationUserDetailFailed, orgId, authUserId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Retrieves the real products assigned to an organization.
         /// </summary>
         /// <remarks>

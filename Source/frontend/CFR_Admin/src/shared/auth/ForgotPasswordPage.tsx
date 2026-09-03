@@ -53,7 +53,7 @@ export function ForgotPasswordPage() {
             <span className="admin-auth-success__icon"><CheckIcon size={22} /></span>
             <span className="admin-auth-card__kicker">Recovery Requested</span>
             <h2>Check Your Email</h2>
-            <p>We&apos;ve sent a secure password reset link to <strong>{submittedEmail}</strong>. It expires after a short period and can only be used once.</p>
+            <p>A secure password reset link has been sent to <strong>{submittedEmail}</strong>. For your security, the link will expire after a limited time and can only be used once.</p>
             <div className="admin-auth-success__actions">
               <Link to={loginTarget} className="admin-auth-submit admin-auth-submit--link">
                 Return to Sign In <ArrowRightIcon size={15} />
@@ -70,7 +70,7 @@ export function ForgotPasswordPage() {
               <span className="admin-auth-card__mark"><ShieldCheckIcon size={20} /></span>
               <span className="admin-auth-card__kicker">Account Recovery</span>
               <h1 className="admin-auth-card__title">Forgot Your Password?</h1>
-              <p className="admin-auth-card__description">Enter The Email Address Associated With Your Account. We&apos;ll Send You A Link To Reset Your Password.</p>
+              <p className="admin-auth-card__description">Enter the email address associated with your account. We&apos;ll send you a link to reset your password.</p>
             </div>
             <form onSubmit={submit} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">

@@ -19,7 +19,12 @@ GO
 -- ActionId 3: Get by AccessRequestId (header, timeline, comments).
 -- ActionId 4: Get list.
 -- ActionId 5: Recipients for the AccessRequested email, matched by product name/id.
--- ActionId 6: App Hub products. [auth].[User] by email -> [auth].[UserProduct] -> [core].[Product].
+-- ActionId 6: App Hub products. [auth].[User] by email -> [auth].[UserProduct] -> [core].[Product],
+-- gated by [lic].[OrganizationProduct] so a user only sees "your" for a product their
+-- organization currently has active — CFR Admin's Organization > Products tab (Activate/
+-- Deactivate) is the source of truth for organization-level access, not [auth].[UserProduct]
+-- alone. Deactivating a product for the organization removes it from every member's Your Apps
+-- immediately, even though their individual [auth].[UserProduct] row is untouched.
 CREATE PROCEDURE [request].[AccessRequest_CRUD]
     @ActionId INT,
     @AccessRequestId BIGINT = 0,
@@ -544,8 +549,8 @@ BEGIN
         RETURN 0;
     END
 
-    -- App Hub: products assigned to the member (Your Apps) plus every other core.Product
-    -- as Available (IsAvailable = 1) or Future.
+    -- App Hub: products assigned to the member AND currently active for their organization
+    -- (Your Apps) plus every other core.Product as Available (IsAvailable = 1) or Future.
     IF @ActionId = 6
     BEGIN
         DECLARE @HubUserId BIGINT = NULL;
@@ -575,9 +580,15 @@ BEGIN
         LEFT JOIN (
             SELECT DISTINCT up.[ProductId]
             FROM [auth].[UserProduct] up
+            INNER JOIN [lic].[OrganizationProduct] op
+                ON op.[OrgId] = up.[OrgId]
+               AND op.[ProductId] = up.[ProductId]
+               AND op.[IsDeleted] = 0
+               AND op.[AssignStatus] = N'active'
             WHERE @HubUserId IS NOT NULL
               AND up.[CFRUserId] = @HubUserId
               AND ISNULL(up.[IsDeleted], 0) = 0
+              AND up.[OrgId] IS NOT NULL
         ) assigned
             ON assigned.[ProductId] = p.[ProductId]
         WHERE p.[IsDeleted] = 0

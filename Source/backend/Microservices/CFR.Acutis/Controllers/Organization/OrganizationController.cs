@@ -102,6 +102,30 @@ namespace CFR.Acutis.Controllers.Organization
         }
 
         /// <summary>
+        /// Retrieves one member's organization-membership detail plus their effective app access.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Organization Users tab's user-detail view.
+        /// Request Flow: Client API GET -> OrganizationController.GetOrganizationUserDetail() -> IOrganizationService.GetOrganizationUserDetailAsync() -> Database.
+        /// Validation Details: Query parameter binding maps the identifiers.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IOrganizationService.GetOrganizationUserDetailAsync().
+        /// Response Details: Standard API result enclosing OrganizationUserDetailOutput with status 200, 204, or 500.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">Member identifier.</param>
+        /// <returns>A consistent API response containing the membership detail.</returns>
+        /// <response code="200">Successfully fetched the membership detail.</response>
+        /// <response code="204">The member is not linked to this organization.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Organization.GetOrganizationUserDetail)]
+        public async Task<IActionResult> GetOrganizationUserDetail(long orgId, long authUserId)
+        {
+            return ApiResultArgs(await service.GetOrganizationUserDetailAsync(orgId, authUserId), APIHttpType.HttpGet);
+        }
+
+        /// <summary>
         /// Retrieves the products not yet assigned to an organization.
         /// </summary>
         /// <remarks>

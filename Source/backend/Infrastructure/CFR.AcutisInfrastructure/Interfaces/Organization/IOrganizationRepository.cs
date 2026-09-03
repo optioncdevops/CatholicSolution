@@ -56,6 +56,22 @@ namespace CFR.AcutisInfrastructure.Interfaces.Organization
         Task<List<OrganizationUserOutput>> GetOrganizationUsersAsync(long orgId);
 
         /// <summary>
+        /// Retrieves one member's organization-membership detail plus their effective app access.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Organization Users tab's user-detail view.
+        /// Request Flow: IOrganizationService -> IOrganizationRepository.GetOrganizationUserDetailAsync() -> SQL Database.
+        /// Validation Details: OrgId/AuthUserId parameter mapping.
+        /// Business Logic: Reads the membership header result set, then the effective-app-access result set, and combines them.
+        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud with ActionId 14.
+        /// Response Details: Returns an OrganizationUserDetailOutput record, or null when not found.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">Member identifier.</param>
+        /// <returns>The matching membership detail, or null when not found.</returns>
+        Task<OrganizationUserDetailOutput?> GetOrganizationUserDetailAsync(long orgId, long authUserId);
+
+        /// <summary>
         /// Retrieves the real products assigned to an organization.
         /// </summary>
         /// <remarks>

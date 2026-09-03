@@ -61,6 +61,19 @@ export const getOrganizationUsers = async (orgId: number): Promise<ApiResponse> 
   }
 };
 
+export const getOrganizationUserDetail = async (orgId: number, authUserId: number): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetOrganizationUserDetail`, {
+      params: { orgId, authUserId },
+    });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to load user detail';
+  }
+};
+
 export const getOrganizationProducts = async (orgId: number): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetOrganizationProducts`, {

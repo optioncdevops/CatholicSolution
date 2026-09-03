@@ -14,12 +14,21 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = N'auth' AND TABLE_NAME = N'AcutisUser' AND COLUMN_NAME = N'ContactNumber'
+)
+BEGIN
+    ALTER TABLE [auth].[AcutisUser] ADD [ContactNumber] NVARCHAR(30) NULL;
+END
+GO
+
 IF OBJECT_ID(N'[dbo].[Acutis_Profile_CRUD]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[Acutis_Profile_CRUD];
 GO
 
 -- ActionId 1: Get the signed-in user's profile.
--- ActionId 2: Update the signed-in user's FirstName/LastName/Email/ProfileImageUrl.
+-- ActionId 2: Update the signed-in user's FirstName/LastName/Email/ProfileImageUrl/ContactNumber.
 -- ActionId 3: Change the signed-in user's password after verifying the current one.
 CREATE PROCEDURE [dbo].[Acutis_Profile_CRUD]
     @ActionId INT,
@@ -28,6 +37,7 @@ CREATE PROCEDURE [dbo].[Acutis_Profile_CRUD]
     @LastName NVARCHAR(100) = NULL,
     @Email NVARCHAR(256) = NULL,
     @ProfileImageUrl NVARCHAR(500) = NULL,
+    @ContactNumber NVARCHAR(30) = NULL,
     @CurrentPassword NVARCHAR(200) = NULL,
     @NewPassword NVARCHAR(200) = NULL,
     @ReturnValue INT = NULL OUTPUT
@@ -43,7 +53,8 @@ BEGIN
             u.[FirstName],
             u.[LastName],
             u.[Email],
-            u.[ProfileImageUrl]
+            u.[ProfileImageUrl],
+            u.[ContactNumber]
         FROM [auth].[AcutisUser] AS u
         WHERE u.[UserId] = @UserId
           AND u.[IsDeleted] = 0;
@@ -69,6 +80,7 @@ BEGIN
             [LastName] = @LastName,
             [Email] = @Email,
             [ProfileImageUrl] = @ProfileImageUrl,
+            [ContactNumber] = @ContactNumber,
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UserId
         WHERE [UserId] = @UserId

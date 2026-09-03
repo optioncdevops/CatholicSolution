@@ -95,14 +95,22 @@ GO
 -- ActionId 2: Get one organization by OrgId.
 -- ActionId 3: Update an organization's identity and contact fields.
 -- ActionId 4: Create a new organization.
--- ActionId 5: Get the real users linked to an organization.
--- ActionId 6: Get the real products assigned to an organization.
--- ActionId 7: Get products NOT yet assigned to an organization (assign dropdown source).
--- ActionId 8: Assign a product to an organization.
--- ActionId 9: Remove (soft-delete) a product assignment from an organization.
+-- ActionId 5: Get the real users linked to an organization (with a best-effort display name and
+-- per-member effective app count within this organization).
+-- ActionId 6: Get every product ever mapped to an organization (active AND inactive), so the
+-- Products/Apps tab can show Inactive mappings with an Activate action instead of hiding them.
+-- ActionId 7: Get products with no mapping row at all for this organization (assign dropdown
+-- source) — a previously-deactivated product is intentionally excluded here; reactivating it
+-- goes through ActionId 8 (Activate) from the unified list, not through this "assign new" list.
+-- ActionId 8: Assign (or reactivate/"Activate") a product for an organization.
+-- ActionId 9: Deactivate (soft-delete) a product assignment from an organization. The mapping
+-- row is kept (IsDeleted = 1, AssignStatus = 'inactive') so history/expiry data is preserved and
+-- ActionId 8 can reactivate it later — this is never a hard delete.
 -- ActionId 10: Get the real licenses issued against an organization's assigned products.
 -- ActionId 13: Unlink (soft-delete) a user from an organization. Linking a user is not
 -- supported here — a user's org membership is only ever created outside this procedure.
+-- ActionId 14: Get one member's organization-membership detail plus their effective app access
+-- within this organization, for the Organization Users tab's user-detail view.
 CREATE PROCEDURE [dbo].[Acutis_Organization_CRUD]
     @ActionId INT,
     @OrgId BIGINT = 0,
@@ -233,21 +241,49 @@ BEGIN
 
     IF @ActionId = 5
     BEGIN
+        -- auth.User has no name columns; a best-effort display name is pulled from the most
+        -- recent auth.UserProduct row for this member (same OUTER APPLY pattern already used in
+        -- request.AccessRequest_CRUD), falling back to Email when the member has no product rows
+        -- yet. AppCount only counts products the ORGANIZATION currently has active (lic.OrganizationProduct)
+        -- AND that this specific member is individually assigned (auth.UserProduct) — same
+        -- org-aware gate as the App Hub's "Your Apps" (request.AccessRequest_CRUD ActionId 6).
         SELECT
             u.[CFRUserId] AS [AuthUserId],
             u.[Email],
+            COALESCE(NULLIF(LTRIM(RTRIM(ISNULL(upn.[FirstName], N'') + N' ' + ISNULL(upn.[LastName], N''))), N''), u.[Email]) AS [FullName],
             ou.[MemberStatus],
-            ou.[CreatedDate] AS [LinkedDate]
+            ou.[CreatedDate] AS [LinkedDate],
+            (
+                SELECT COUNT(DISTINCT up.[ProductId])
+                FROM [auth].[UserProduct] AS up
+                INNER JOIN [lic].[OrganizationProduct] AS op
+                    ON op.[OrgId] = @OrgId
+                   AND op.[ProductId] = up.[ProductId]
+                   AND op.[IsDeleted] = 0
+                   AND op.[AssignStatus] = N'active'
+                WHERE up.[CFRUserId] = u.[CFRUserId]
+                  AND up.[OrgId] = @OrgId
+                  AND ISNULL(up.[IsDeleted], 0) = 0
+            ) AS [AppCount]
         FROM [auth].[OrganizationUser] AS ou
         INNER JOIN [auth].[User] AS u ON u.[CFRUserId] = ou.[AuthUserId]
+        OUTER APPLY (
+            SELECT TOP (1) up2.[FirstName], up2.[LastName]
+            FROM [auth].[UserProduct] AS up2
+            WHERE up2.[CFRUserId] = u.[CFRUserId]
+              AND ISNULL(up2.[IsDeleted], 0) = 0
+            ORDER BY up2.[CFRUserDetailId]
+        ) AS upn
         WHERE ou.[OrgId] = @OrgId
           AND ou.[IsDeleted] = 0
-        ORDER BY u.[Email];
+        ORDER BY [FullName];
         RETURN 0;
     END
 
     IF @ActionId = 6
     BEGIN
+        -- No [op].[IsDeleted] filter here (unlike ActionId 7) — a deactivated mapping must still
+        -- show up in this list, as Inactive, so the admin can Activate it again from the same row.
         SELECT
             p.[ProductId],
             p.[ProductName],
@@ -262,7 +298,6 @@ BEGIN
         FROM [lic].[OrganizationProduct] AS op
         INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
         WHERE op.[OrgId] = @OrgId
-          AND op.[IsDeleted] = 0
           AND p.[IsDeleted] = 0
         ORDER BY p.[ProductName];
         RETURN 0;
@@ -280,7 +315,6 @@ BEGIN
               SELECT 1 FROM [lic].[OrganizationProduct] AS op
               WHERE op.[OrgId] = @OrgId
                 AND op.[ProductId] = p.[ProductId]
-                AND op.[IsDeleted] = 0
           )
         ORDER BY p.[ProductName];
         RETURN 0;
@@ -390,6 +424,53 @@ BEGIN
 
         SET @ReturnValue = CAST(@AuthUserId AS INT);
         RETURN @ReturnValue;
+    END
+
+    IF @ActionId = 14
+    BEGIN
+        -- Two result sets: (1) the membership header, (2) the member's effective app access within
+        -- THIS organization — a product only counts as effective access when the organization has
+        -- it active (lic.OrganizationProduct) AND the member has an individual assignment row
+        -- (auth.UserProduct), same org-aware rule the App Hub uses for "Your Apps".
+        SELECT
+            u.[CFRUserId] AS [AuthUserId],
+            u.[Email],
+            COALESCE(NULLIF(LTRIM(RTRIM(ISNULL(upn.[FirstName], N'') + N' ' + ISNULL(upn.[LastName], N''))), N''), u.[Email]) AS [FullName],
+            ou.[OrgId],
+            o.[OrgName],
+            ou.[MemberStatus],
+            ou.[CreatedDate] AS [LinkedDate]
+        FROM [auth].[OrganizationUser] AS ou
+        INNER JOIN [auth].[User] AS u ON u.[CFRUserId] = ou.[AuthUserId]
+        INNER JOIN [core].[Organization] AS o ON o.[OrgId] = ou.[OrgId]
+        OUTER APPLY (
+            SELECT TOP (1) up2.[FirstName], up2.[LastName]
+            FROM [auth].[UserProduct] AS up2
+            WHERE up2.[CFRUserId] = u.[CFRUserId]
+              AND ISNULL(up2.[IsDeleted], 0) = 0
+            ORDER BY up2.[CFRUserDetailId]
+        ) AS upn
+        WHERE ou.[OrgId] = @OrgId
+          AND ou.[AuthUserId] = @AuthUserId
+          AND ou.[IsDeleted] = 0;
+
+        SELECT DISTINCT
+            p.[ProductId],
+            p.[ProductName],
+            p.[SubCategoryName]
+        FROM [auth].[UserProduct] AS up
+        INNER JOIN [lic].[OrganizationProduct] AS op
+            ON op.[OrgId] = @OrgId
+           AND op.[ProductId] = up.[ProductId]
+           AND op.[IsDeleted] = 0
+           AND op.[AssignStatus] = N'active'
+        INNER JOIN [core].[Product] AS p ON p.[ProductId] = up.[ProductId] AND p.[IsDeleted] = 0
+        WHERE up.[CFRUserId] = @AuthUserId
+          AND up.[OrgId] = @OrgId
+          AND ISNULL(up.[IsDeleted], 0) = 0
+        ORDER BY p.[ProductName];
+
+        RETURN 0;
     END
 END
 GO

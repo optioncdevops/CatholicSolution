@@ -102,6 +102,7 @@ namespace CFR.Common
             public const string FetchOrganizationByIdFailed = "Error while fetching organization {OrganizationId}";
             public const string FetchAccessRequestsFailed = "Error while fetching access requests";
             public const string FetchOrganizationUsersFailed = "Error while fetching organization users for organization {OrgId}";
+            public const string FetchOrganizationUserDetailFailed = "Error while fetching organization user detail for organization {OrgId}, user {AuthUserId}";
             public const string FetchAccessRequestByIdFailed = "Error while fetching access request {RequestId}";
             public const string FetchHubProductsFailed = "Error while fetching App Hub products for {RequesterEmail}";
             public const string FetchProductsFailed = "Error while fetching products";

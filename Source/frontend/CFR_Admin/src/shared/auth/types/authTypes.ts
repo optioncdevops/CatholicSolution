@@ -84,6 +84,7 @@ export interface ProfileApiItem {
   firstName: string;
   lastName: string;
   email: string;
+  contactNumber: string | null;
   profileImageUrl: string | null;
 }
 
@@ -91,6 +92,7 @@ export interface UpdateProfilePayload {
   firstName: string;
   lastName: string;
   email: string;
+  contactNumber?: string;
   // New image to upload, or undefined to leave the current image unchanged.
   profileImage?: File;
   // True to clear the current image; ignored when profileImage is also provided.
