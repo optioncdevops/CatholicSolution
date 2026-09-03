@@ -51,5 +51,11 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("assignedDate")]
         public DateTime AssignedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets when this product assignment expires, or null when it has no defined end.
+        /// </summary>
+        [JsonPropertyName("expiryDate")]
+        public DateTime? ExpiryDate { get; set; }
     }
 }

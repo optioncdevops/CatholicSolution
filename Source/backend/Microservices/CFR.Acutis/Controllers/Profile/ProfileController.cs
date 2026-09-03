@@ -41,24 +41,27 @@ namespace CFR.Acutis.Controllers.Profile
         #region PUT Methods
 
         /// <summary>
-        /// Updates the signed-in user's own profile fields.
+        /// Updates the signed-in user's own profile fields, including an optional new profile
+        /// image in the same call (JPG or PNG, max 2MB) — no separate upload step.
         /// </summary>
         /// <remarks>
-        /// Purpose: Save the account owner's name and email.
-        /// Request Flow: Client API PUT -> ProfileController.UpdateProfile() -> IProfileService.UpdateProfileAsync() -> Database.
-        /// Validation Details: Model binding maps UpdateProfileInput from the request body.
+        /// Purpose: Save the account owner's name, email, and profile photo together.
+        /// Request Flow: Client API PUT -> ProfileController.UpdateProfile() -> IProfileService.UpdateProfileAsync() -> Database (+ local file storage).
+        /// Validation Details: Bound from multipart form data; a provided image must be a JPG/PNG under 2MB.
         /// Business Logic: None at the controller level; delegates to the service layer.
         /// Service Interaction: Calls IProfileService.UpdateProfileAsync().
         /// Response Details: Standard API result indicating execution status.
         /// </remarks>
-        /// <param name="input">Input DTO containing the new profile fields.</param>
+        /// <param name="input">Input DTO containing the new profile fields and optional image.</param>
         /// <returns>Result of the update operation.</returns>
         /// <response code="200">Successfully updated the profile.</response>
+        /// <response code="400">Invalid image file or size exceeds 2 MB.</response>
         /// <response code="409">Another account already uses this email address.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpPut]
         [ActionName(API_Profile.UpdateProfile)]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileInput input)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileInput input)
         {
             return ApiResultArgs(await service.UpdateProfileAsync(input), APIHttpType.HttpPut);
         }

@@ -1,36 +1,27 @@
-import type { FormEvent, RefObject } from 'react';
+import type { FormEvent } from 'react';
+import type { UseFormRegisterReturn } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { ArrowRightIcon, EyeIcon, EyeOffIcon, LockIcon, MailIcon, AlertTriangleIcon } from '@shared/app/components/UiIcons';
 import { Brand } from '@shared/app/components/Brand';
 
-interface FieldErrors {
-  email?: string;
-  password?: string;
-}
-
 interface AdminLoginCardProps {
-  email: string;
-  onEmailChange: (value: string) => void;
-  password: string;
-  onPasswordChange: (value: string) => void;
+  emailRegister: UseFormRegisterReturn<'email'>;
+  passwordRegister: UseFormRegisterReturn<'password'>;
   showPassword: boolean;
   onToggleShowPassword: () => void;
-  onSubmit: (event: FormEvent) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   submitting: boolean;
+  canSubmit: boolean;
   formError: string | null;
-  fieldErrors: FieldErrors;
-  emailRef: RefObject<HTMLInputElement | null>;
-  passwordRef: RefObject<HTMLInputElement | null>;
+  emailError?: string;
+  passwordError?: string;
   forgotHref: string;
 }
 
 export function AdminLoginCard({
-  email, onEmailChange, password, onPasswordChange, showPassword, onToggleShowPassword,
-  onSubmit, submitting, formError, fieldErrors,
-  emailRef, passwordRef, forgotHref,
+  emailRegister, passwordRegister, showPassword, onToggleShowPassword,
+  onSubmit, submitting, canSubmit, formError, emailError, passwordError, forgotHref,
 }: AdminLoginCardProps) {
-  const canSubmit = email.trim().length > 0 && password.length > 0 && !submitting;
-
   return (
     <section className="admin-auth-card">
       <div className="admin-auth-card__header">
@@ -53,18 +44,16 @@ export function AdminLoginCard({
           <div className="admin-auth-input-wrap">
             <span className="admin-auth-input-icon"><MailIcon size={15} /></span>
             <input
-              ref={emailRef}
               id="admin-email"
               type="email"
-              value={email}
-              onChange={(event) => onEmailChange(event.target.value)}
               className="admin-auth-input"
               autoComplete="email"
-              aria-invalid={Boolean(fieldErrors.email)}
-              aria-describedby={fieldErrors.email ? 'admin-email-error' : undefined}
+              aria-invalid={Boolean(emailError)}
+              aria-describedby={emailError ? 'admin-email-error' : undefined}
+              {...emailRegister}
             />
           </div>
-          {fieldErrors.email ? <p id="admin-email-error" className="admin-auth-field-error">{fieldErrors.email}</p> : null}
+          {emailError ? <p id="admin-email-error" className="admin-auth-field-error">{emailError}</p> : null}
         </div>
 
         <div className="admin-auth-field">
@@ -75,15 +64,13 @@ export function AdminLoginCard({
           <div className="admin-auth-input-wrap">
             <span className="admin-auth-input-icon"><LockIcon size={15} /></span>
             <input
-              ref={passwordRef}
               id="admin-password"
               type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(event) => onPasswordChange(event.target.value)}
               className="admin-auth-input admin-auth-input--with-action"
               autoComplete="current-password"
-              aria-invalid={Boolean(fieldErrors.password)}
-              aria-describedby={fieldErrors.password ? 'admin-password-error' : undefined}
+              aria-invalid={Boolean(passwordError)}
+              aria-describedby={passwordError ? 'admin-password-error' : undefined}
+              {...passwordRegister}
             />
             <button
               type="button"
@@ -94,7 +81,7 @@ export function AdminLoginCard({
               {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
             </button>
           </div>
-          {fieldErrors.password ? <p id="admin-password-error" className="admin-auth-field-error">{fieldErrors.password}</p> : null}
+          {passwordError ? <p id="admin-password-error" className="admin-auth-field-error">{passwordError}</p> : null}
         </div>
 
         <button type="submit" className="admin-auth-submit" disabled={!canSubmit}>

@@ -1,5 +1,9 @@
 import type { EmailTemplateApiItem, EmailTemplateVariable } from '../types/emailTemplatesTypes';
 
+// Every send path resolves [AccentColor] from the template's own AccentColor field (or the
+// built-in default), regardless of template code, so it's available to insert everywhere.
+const ACCENT_COLOR_VARIABLE: EmailTemplateVariable = { token: '[AccentColor]', label: 'Accent color' };
+
 // Merge-tag syntax is [Placeholder] to match the backend's SMTPMailService.FormatMailContent,
 // which is the same helper every email in this system (including password reset) merges through.
 export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> = {
@@ -7,16 +11,19 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
     { token: '[FirstName]', label: 'First name' },
     { token: '[ResetLink]', label: 'Reset link' },
     { token: '[ExpiryMinutes]', label: 'Link expiry (minutes)' },
+    ACCENT_COLOR_VARIABLE,
   ],
-  Welcome: [{ token: '[FirstName]', label: 'First name' }],
+  Welcome: [{ token: '[FirstName]', label: 'First name' }, ACCENT_COLOR_VARIABLE],
   AccessApproved: [
     { token: '[FirstName]', label: 'First name' },
     { token: '[AppName]', label: 'Application name' },
+    ACCENT_COLOR_VARIABLE,
   ],
   AccessInfo: [
     { token: '[FirstName]', label: 'First name' },
     { token: '[AppName]', label: 'Application name' },
     { token: '[Note]', label: 'Reviewer note' },
+    ACCENT_COLOR_VARIABLE,
   ],
   AccessRequested: [
     { token: '[RequesterName]', label: 'Requester name' },
@@ -24,6 +31,7 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
     { token: '[OrganizationName]', label: 'Organization name' },
     { token: '[AppName]', label: 'Application name' },
     { token: '[ReviewLink]', label: 'Admin review link' },
+    ACCENT_COLOR_VARIABLE,
   ],
 };
 
@@ -39,6 +47,19 @@ export const getUnsupportedPlaceholders = (templateCode: string, subject: string
   }
   return Array.from(found);
 };
+
+// Web-safe stacks only — HTML email clients don't reliably load custom web fonts.
+export const EMAIL_FONT_FAMILY_OPTIONS: Array<{ id: string; value: string }> = [
+  { id: 'Verdana, Arial, Helvetica, sans-serif', value: 'Verdana' },
+  { id: "'Segoe UI', Helvetica, Arial, sans-serif", value: 'Segoe UI' },
+  { id: 'Arial, Helvetica, sans-serif', value: 'Arial' },
+  { id: "Georgia, 'Times New Roman', serif", value: 'Georgia' },
+  { id: "'Trebuchet MS', Helvetica, sans-serif", value: 'Trebuchet MS' },
+];
+
+export const DEFAULT_EMAIL_FONT_FAMILY = EMAIL_FONT_FAMILY_OPTIONS[0].id;
+export const DEFAULT_EMAIL_ACCENT_COLOR = '#1d4ed8';
+export const DEFAULT_EMAIL_BASE_FONT_SIZE = 13;
 
 export const normalizeEmailTemplatesList = (resultData: unknown): EmailTemplateApiItem[] => {
   if (!Array.isArray(resultData)) return [];

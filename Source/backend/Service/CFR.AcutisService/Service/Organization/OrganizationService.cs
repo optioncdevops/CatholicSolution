@@ -14,10 +14,13 @@ namespace CFR.AcutisService.Service.Organization
     {
         /// <summary>
         /// The only OrgStatus values the Organization list/filter UI and StatusBadge tone map support.
+        /// Matches the live CK__Organizat__OrgSt__4B0D20AB CHECK constraint on core.Organization —
+        /// confirmed against the database directly, since an earlier "trial" value was allowed
+        /// here but rejected by that constraint, surfacing as a 500 on save.
         /// </summary>
         private static readonly HashSet<string> ValidOrgStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
-            "active", "trial", "suspended",
+            "active", "inactive", "suspended",
         };
 
         #region GET Methods
@@ -128,6 +131,52 @@ namespace CFR.AcutisService.Service.Organization
             catch (Exception ex)
             {
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchOrganizationUsersFailed, orgId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieves one member's organization-membership detail plus their effective app access.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Organization Users tab's user-detail view.
+        /// Request Flow: OrganizationController -> OrganizationService.GetOrganizationUserDetailAsync() -> IOrganizationRepository.GetOrganizationUserDetailAsync().
+        /// Validation Details: OrgId and AuthUserId must be positive.
+        /// Business Logic: Wraps the typed record in MSResultArgs.
+        /// Repository Interaction: Calls IOrganizationRepository.GetOrganizationUserDetailAsync().
+        /// Response Details: MSResultArgs containing OrganizationUserDetailOutput, or NoRecordFound.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">Member identifier.</param>
+        /// <returns>MSResultArgs containing the membership detail.</returns>
+        public async Task<MSResultArgs> GetOrganizationUserDetailAsync(long orgId, long authUserId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (orgId <= 0 || authUserId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                var data = await repository.GetOrganizationUserDetailAsync(orgId, authUserId);
+                if (data == null)
+                {
+                    result.StatusCode = ErrorCodes.NoRecordFound;
+                    result.StatusMessage = ErrorMessages.UserNotLinked;
+                    return result;
+                }
+
+                result.ResultData = data;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchOrganizationUserDetailFailed, orgId, authUserId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
@@ -259,7 +308,7 @@ namespace CFR.AcutisService.Service.Organization
         /// <remarks>
         /// Purpose: Add a new organization from the Add Organization page.
         /// Request Flow: OrganizationController -> OrganizationService.CreateOrganizationAsync() -> IOrganizationRepository.CreateOrganizationAsync().
-        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/trial/suspended.
+        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/inactive/suspended.
         /// Business Logic: Passes the signed-in user id as InsertedBy and wraps the scalar result.
         /// Repository Interaction: Calls IOrganizationRepository.CreateOrganizationAsync().
         /// Response Details: MSResultArgs containing the new organization identifier.
@@ -391,6 +440,53 @@ namespace CFR.AcutisService.Service.Organization
             return result;
         }
 
+        /// <summary>
+        /// Unlinks a user from an organization.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Remove a user from an organization from the Users tab.
+        /// Request Flow: OrganizationController -> OrganizationService.UnlinkOrganizationUserAsync() -> IOrganizationRepository.UnlinkOrganizationUserAsync().
+        /// Validation Details: OrgId and AuthUserId must be positive.
+        /// Business Logic: Passes the signed-in user id as UpdatedBy; -99 from the repository means not linked.
+        /// Repository Interaction: Calls IOrganizationRepository.UnlinkOrganizationUserAsync().
+        /// Response Details: MSResultArgs containing the user identifier, or NoRecordFound when not linked.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">User identifier to unlink.</param>
+        /// <returns>MSResultArgs containing the unlink status.</returns>
+        public async Task<MSResultArgs> UnlinkOrganizationUserAsync(long orgId, long authUserId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (orgId <= 0 || authUserId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                int removedId = await repository.UnlinkOrganizationUserAsync(orgId, authUserId, currentUserService.UserId);
+                if (removedId == -99)
+                {
+                    result.StatusCode = ErrorCodes.NoRecordFound;
+                    result.StatusMessage = ErrorMessages.UserNotLinked;
+                    return result;
+                }
+
+                result.StatusMessage = ErrorMessages.UserUnlinked;
+                result.ResultData = removedId;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.UnlinkOrganizationUserFailed, orgId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion DELETE Methods
 
         #region PUT Methods
@@ -401,7 +497,7 @@ namespace CFR.AcutisService.Service.Organization
         /// <remarks>
         /// Purpose: Save changes to an organization's core identity fields.
         /// Request Flow: OrganizationController -> OrganizationService.UpdateOrganizationAsync() -> IOrganizationRepository.UpdateOrganizationAsync().
-        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/trial/suspended.
+        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/inactive/suspended.
         /// Business Logic: Passes the signed-in user id as UpdatedBy and wraps the scalar result.
         /// Repository Interaction: Calls IOrganizationRepository.UpdateOrganizationAsync().
         /// Response Details: MSResultArgs containing the organization identifier, or NoRecordFound.

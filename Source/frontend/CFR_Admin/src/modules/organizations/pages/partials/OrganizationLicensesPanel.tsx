@@ -9,6 +9,15 @@ import type { OrganizationLicenseApiItem } from '../../types/organizationTypes';
 
 type EffectiveStatus = 'active' | 'suspended' | 'expiring-soon' | 'expired';
 
+// Sort rank for the Status column — active/expiring-soon licenses first, expired/suspended
+// (effectively unusable) ones last, so the table reads newest/current-first by default.
+const STATUS_RANK: Record<EffectiveStatus, number> = {
+  active: 0,
+  'expiring-soon': 1,
+  suspended: 2,
+  expired: 3,
+};
+
 const STATUS_FILTERS: Array<{ id: EffectiveStatus | 'all'; label: string }> = [
   { id: 'all', label: 'All statuses' },
   { id: 'active', label: 'Active' },
@@ -92,7 +101,7 @@ const OrganizationLicensesPanel = ({ orgId }: OrganizationLicensesPanelProps) =>
     },
     {
       id: 'status', header: 'Status',
-      value: (license) => statusOf(license),
+      value: (license) => STATUS_RANK[statusOf(license)],
       cell: (license) => <StatusBadge status={statusOf(license)} kind="license" />,
     },
     {
@@ -132,7 +141,7 @@ const OrganizationLicensesPanel = ({ orgId }: OrganizationLicensesPanelProps) =>
           data={filteredRows}
           columns={columns}
           getRowId={(license) => String(license.licenseId)}
-          initialSort={[{ id: 'activationDate', desc: true }]}
+          initialSort={[{ id: 'status', desc: false }]}
           exportFileName="organization-licenses"
           exportTitle="Organization — Licenses"
           emptyMessage="No licenses found."

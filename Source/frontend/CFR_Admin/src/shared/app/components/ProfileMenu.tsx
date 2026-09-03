@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '@shared/app/context/UserContext';
-import { AccountModals, type AccountModal } from './AccountModals';
+import { resolveProfileImageUrl } from '@shared/auth/profileImage';
+import { ChangePasswordModal } from './ChangePasswordModal';
 import { ChevronDownIcon, LockIcon, LogOutIcon, UserIcon } from './UiIcons';
 import { useAuth } from '@shared/auth/AuthProvider';
 import { buildCentralLogoutUrl } from '@shared/auth/centralAuth';
@@ -16,9 +17,10 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
   const { user, initials } = useCurrentUser();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [modal, setModal] = useState<AccountModal>(null);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
+  const avatarImageUrl = resolveProfileImageUrl(user.profileImageUrl);
 
   useEffect(() => {
     const closeOutside = (event: MouseEvent) => {
@@ -34,11 +36,6 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
       document.removeEventListener('keydown', closeEscape);
     };
   }, []);
-
-  const openModal = (next: Exclude<AccountModal, null>) => {
-    setOpen(false);
-    setModal(next);
-  };
 
   const handleSignOut = () => {
     setOpen(false);
@@ -67,7 +64,9 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
           className={`profile-menu__trigger ${open ? 'profile-menu__trigger--open' : ''}`}
           title={user.name}
         >
-          <span className="profile-menu__avatar" style={gradient ? { background: gradient } : undefined} aria-hidden="true">{initials}</span>
+          <span className="profile-menu__avatar" style={gradient ? { background: gradient } : undefined} aria-hidden="true">
+            {avatarImageUrl ? <img src={avatarImageUrl} alt="" /> : initials}
+          </span>
           <span className="profile-menu__trigger-copy">
             <span>{user.name}</span>
             <small>{user.roleName || 'Account'}</small>
@@ -78,7 +77,9 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
         {open ? (
           <div id={menuId} role="menu" className="profile-menu__panel" aria-label="Account menu">
             <div className="profile-menu__summary" style={gradient ? { '--profile-accent': gradient } as CSSProperties : undefined}>
-              <span className="profile-menu__summary-avatar" style={gradient ? { background: gradient } : undefined} aria-hidden="true">{initials}</span>
+              <span className="profile-menu__summary-avatar" style={gradient ? { background: gradient } : undefined} aria-hidden="true">
+                {avatarImageUrl ? <img src={avatarImageUrl} alt="" /> : initials}
+              </span>
               <div>
                 <span className="profile-menu__eyebrow">Signed in as</span>
                 <p>{user.name}</p>
@@ -87,14 +88,14 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
             </div>
 
             <div className="profile-menu__actions">
-              <button type="button" role="menuitem" onClick={() => openModal('profile')}>
+              <button type="button" role="menuitem" onClick={() => { setOpen(false); navigate('/admin/profile'); }}>
                 <span aria-hidden="true"><UserIcon size={16} /></span>
                 <div>
                   <strong>Profile</strong>
                   <small>Personal and contact details</small>
                 </div>
               </button>
-              <button type="button" role="menuitem" onClick={() => openModal('password')}>
+              <button type="button" role="menuitem" onClick={() => { setOpen(false); setPasswordModalOpen(true); }}>
                 <span aria-hidden="true"><LockIcon size={16} /></span>
                 <div>
                   <strong>Change password</strong>
@@ -111,7 +112,7 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
           </div>
         ) : null}
       </div>
-      <AccountModals modal={modal} onClose={() => setModal(null)} />
+      <ChangePasswordModal open={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} />
     </>
   );
 }
