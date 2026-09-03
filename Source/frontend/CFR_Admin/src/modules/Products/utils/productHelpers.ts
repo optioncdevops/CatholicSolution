@@ -24,14 +24,17 @@ export const DEFAULT_PRODUCT_GRADIENT = 'linear-gradient(135deg,#1E3A8A,#3B82F6)
 export const DEFAULT_LICENSE_STATUS: LicenseStatus = 'active';
 
 /**
- * Formats a customer code or org ID as a pure numeric string without any "ORG-" prefix.
+ * Formats a customer code or org ID in standard "CUST-XXXX" format.
  */
 export function formatCustomerCodeNumeric(codeOrId: string | number | null | undefined): string {
   if (codeOrId == null) return '—';
   const str = String(codeOrId).trim();
   if (!str) return '—';
+  if (/^CUST-/i.test(str)) {
+    return str.toUpperCase();
+  }
   const clean = str.replace(/^(?:ORG[-_ ]*)+/i, '').trim();
-  return clean || str;
+  return clean ? `CUST-${clean}` : str;
 }
 
 export function toProductCustomerCount(value: unknown): number {
@@ -118,17 +121,30 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
   if (!resultData || typeof resultData !== 'object') {
     return null;
   }
-  const item = resultData as ProductApiItem & {
-    LogoUrl?: string | null;
-    CustomerCount?: number;
-    ContactPerson?: string | null;
-  };
-  const logoUrl = pickProductLogoUrl(item);
+  const item = resultData as Record<string, unknown>;
+  const rawFeatures = item.features ?? item.Features;
+  const features = Array.isArray(rawFeatures)
+    ? rawFeatures.map(String).filter(Boolean)
+    : [];
+
   return {
-    ...item,
-    logoUrl,
-    customerCount: toProductCustomerCount(item.customerCount ?? item.CustomerCount),
-    contactPerson: toProductContactPersonName(item.contactPerson ?? item.ContactPerson) || null,
+    productId: Number(item.productId ?? item.ProductId ?? 0),
+    productName: String(item.productName ?? item.ProductName ?? ''),
+    subCategoryName: (item.subCategoryName ?? item.SubCategoryName ?? null) as string | null,
+    prodDescription: (item.prodDescription ?? item.ProdDescription ?? null) as string | null,
+    externalPageUrl: (item.externalPageUrl ?? item.ExternalPageUrl ?? null) as string | null,
+    defaultAccessDays: Number(item.defaultAccessDays ?? item.DefaultAccessDays ?? 0),
+    logoUrl: pickProductLogoUrl(item as unknown as ProductApiItem),
+    isActive: Boolean(item.isActive ?? item.IsActive ?? true),
+    isAvailable: Boolean(item.isAvailable ?? item.IsAvailable ?? true),
+    customerCount: toProductCustomerCount((item.customerCount ?? item.CustomerCount) as number),
+    contactPerson: toProductContactPersonName((item.contactPerson ?? item.ContactPerson) as string) || null,
+    features,
+    createdDate: String(item.createdDate ?? item.CreatedDate ?? ''),
+    insertedBy: item.insertedBy != null ? Number(item.insertedBy) : item.InsertedBy != null ? Number(item.InsertedBy) : null,
+    updatedDate: item.updatedDate ? String(item.updatedDate) : item.UpdatedDate ? String(item.UpdatedDate) : null,
+    updatedBy: item.updatedBy != null ? Number(item.updatedBy) : item.UpdatedBy != null ? Number(item.UpdatedBy) : null,
+    isDeleted: Boolean(item.isDeleted ?? item.IsDeleted ?? false),
   };
 }
 
@@ -155,7 +171,7 @@ export function toProductCustomerRow(item: ProductCustomerApiItem): ProductCusto
     primaryContact: item.contactPerson?.trim() || '—',
     code: formatCustomerCodeNumeric(item.orgCode || item.orgId),
     contactEmail: item.contactEmail?.trim() || '—',
-    userCount: item.userCount ?? 0,
+    userCount: Number(item.userCount ?? (item as unknown as { UserCount?: unknown }).UserCount ?? 0),
     createdAt: item.startDate || item.insertedDate,
     expiryDate: item.expiryDate || '',
     status: toOrganizationStatus(statusSource),
@@ -339,7 +355,7 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     id: String(item.productId),
     name: productName,
     shortName: productName,
-    category: item.subCategoryName || 'General',
+    category: item.subCategoryName || '',
     icon: logoUrl || DEFAULT_PRODUCT_ICON,
     gradient: DEFAULT_PRODUCT_GRADIENT,
     description: item.prodDescription || '',
@@ -353,7 +369,37 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     registryRef: `reg_app_${String(item.productId).padStart(4, '0')}`,
     sourceLocation: `SaaS_Apps/${productName.toLowerCase().replace(/\s+/g, '-')}`,
     updatedAt: item.updatedDate || item.createdDate,
-    contactUserId: '',
+    contactUserId: item.contactPerson || '',
     contactPersonName: item.contactPerson || '',
+  };
+}
+
+export function resolveContactUser(
+  app: AdminApplication,
+  users: ProductContactUser[]
+): AdminApplication {
+  const rawContact = (app.contactPersonName || app.contactUserId || '').trim();
+  if (!rawContact) return app;
+
+  const lower = rawContact.toLowerCase();
+  const match = users.find(
+    (u) =>
+      String(u.userId) === rawContact ||
+      u.fullName.trim().toLowerCase() === lower ||
+      (u.eMail && u.eMail.trim().toLowerCase() === lower)
+  );
+
+  if (match) {
+    return {
+      ...app,
+      contactUserId: String(match.userId),
+      contactPersonName: match.fullName,
+    };
+  }
+
+  return {
+    ...app,
+    contactUserId: app.contactUserId || rawContact,
+    contactPersonName: app.contactPersonName || rawContact,
   };
 }

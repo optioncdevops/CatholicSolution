@@ -29,6 +29,7 @@ import {
   resolveProductLogoUrl,
   toStoredProductLogoPath,
   toAdminApplication,
+  resolveContactUser,
 } from "../../utils/productHelpers";
 import {
   PRODUCT_LICENSE_TYPE_OPTIONS,
@@ -165,13 +166,23 @@ function ProductForm({
   const [featureDraft, setFeatureDraft] = useState("");
 
   const contactOptions = useMemo(() => {
-    return contactUsers
+    const list = contactUsers
       .filter((user) => user.isActive === 1 || String(user.userId) === form.contactUserId)
       .map((user) => ({
         id: String(user.userId),
         value: user.fullName,
       }));
-  }, [contactUsers, form.contactUserId]);
+
+    const activeId = form.contactUserId || form.contactPersonName || "";
+    if (activeId && !list.some((opt) => opt.id === activeId || opt.value.toLowerCase() === activeId.toLowerCase())) {
+      list.unshift({
+        id: activeId,
+        value: form.contactPersonName || activeId,
+      });
+    }
+
+    return list;
+  }, [contactUsers, form.contactUserId, form.contactPersonName]);
 
   const addFeature = () => {
     const value = featureDraft.trim();
@@ -223,12 +234,16 @@ function ProductForm({
             placeholder="Select contact person"
             searchable
             clearable
-            value={form.contactUserId ?? ""}
+            value={form.contactUserId || form.contactPersonName || ""}
             onValueChange={(value) => {
-              const contactUserId = value ?? "";
-              const selected = contactUsers.find((user) => String(user.userId) === contactUserId);
-              onUpdate("contactUserId", contactUserId);
-              onUpdate("contactPersonName", selected?.fullName ?? "");
+              const selectedValue = value ?? "";
+              const selected = contactUsers.find(
+                (user) =>
+                  String(user.userId) === selectedValue ||
+                  user.fullName.trim().toLowerCase() === selectedValue.trim().toLowerCase()
+              );
+              onUpdate("contactUserId", selected ? String(selected.userId) : selectedValue);
+              onUpdate("contactPersonName", selected?.fullName ?? selectedValue);
             }}
             options={contactOptions}
           />
@@ -299,10 +314,21 @@ const ProductEdit = () => {
         return;
       }
 
-      const res = await getProductById(resolvedId);
+      const [res, usersRes] = await Promise.all([
+        getProductById(resolvedId),
+        getProductContactUsers().catch((err) => {
+          console.error("Error loading contact persons:", err);
+          return { statusCode: 500, statusMessage: "error", resultData: [] };
+        }),
+      ]);
+
+      const loadedUsers =
+        usersRes.statusCode === 204 ? [] : normalizeProductContactUsers(usersRes.resultData);
+      setContactUsers(loadedUsers);
+
       const item = normalizeProductApiItem(res.resultData);
       if (item) {
-        const initialForm = toAdminApplication(item);
+        const initialForm = resolveContactUser(toAdminApplication(item), loadedUsers);
         setProduct(item);
         setForm(initialForm);
         setOriginalForm(initialForm);
@@ -412,7 +438,7 @@ const ProductEdit = () => {
         features: form.features,
         isActive: form.status === "active",
         isAvailable: form.status !== "coming-soon",
-        contactPerson: form.contactPersonName?.trim() || '',
+        contactPerson: form.contactPersonName?.trim() || form.contactUserId?.trim() || "",
       };
 
       await updateProduct(payload);
@@ -431,30 +457,6 @@ const ProductEdit = () => {
   useEffect(() => {
     void loadProduct();
   }, [loadProduct]);
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await getProductContactUsers();
-        setContactUsers(res.statusCode === 204 ? [] : normalizeProductContactUsers(res.resultData));
-      } catch (error) {
-        console.error("Error loading contact persons:", error);
-        showToast(typeof error === "string" ? error : "Failed to load contact persons.", "error");
-        setContactUsers([]);
-      }
-    })();
-  }, [showToast]);
-
-  useEffect(() => {
-    const bindContactUser = (current: AdminApplication | null) => {
-      if (!current?.contactPersonName || current.contactUserId) return current;
-      const match = contactUsers.find((user) => user.fullName === current.contactPersonName);
-      if (!match) return current;
-      return { ...current, contactUserId: String(match.userId) };
-    };
-    setForm((current) => bindContactUser(current));
-    setOriginalForm((current) => bindContactUser(current));
-  }, [contactUsers]);
   //#endregion
 
   if (loading) {

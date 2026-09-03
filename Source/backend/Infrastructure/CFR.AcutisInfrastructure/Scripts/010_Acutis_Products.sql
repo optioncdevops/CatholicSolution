@@ -489,11 +489,24 @@ BEGIN
             o.[ContactPhone],
             o.[InsertedDate],
             o.[UpdatedDate],
-            (
-                SELECT COUNT(*)
-                FROM [auth].[OrganizationUser] AS ou
-                WHERE ou.[OrgId] = o.[OrgId]
-                  AND ou.[IsDeleted] = 0
+            COALESCE(
+                NULLIF(
+                    (
+                        SELECT COUNT(DISTINCT up.[CFRUserId])
+                        FROM [auth].[UserProduct] AS up
+                        WHERE up.[OrgId] = o.[OrgId]
+                          AND up.[ProductId] = op.[ProductId]
+                          AND ISNULL(up.[IsDeleted], 0) = 0
+                    ),
+                    0
+                ),
+                (
+                    SELECT COUNT(*)
+                    FROM [auth].[OrganizationUser] AS ou
+                    WHERE ou.[OrgId] = o.[OrgId]
+                      AND ou.[IsDeleted] = 0
+                ),
+                0
             ) AS [UserCount],
             CONCAT(N'ORG-', o.[OrgId]) AS [OrgCode],
             ISNULL(l.[ActivationDate], ISNULL(op.[CreatedDate], o.[InsertedDate])) AS [StartDate],
