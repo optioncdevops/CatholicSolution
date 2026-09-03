@@ -12,35 +12,13 @@ import { userRolesRoutes } from "@/modules/administration/userRoles";
 import { emailTemplatesRoutes } from "@/modules/administration/emailTemplates";
 import { organizationsRoutes } from "@/modules/organizations";
 import { requestsRoutes } from "@/modules/requests";
-import { productsRoutes } from "@/modules/Products";
+import { productsRoutes } from "@/modules/products";
 
-// Route-level code splitting — each admin page (and the ported dataTable/formControls code it
-// pulls in) loads as its own chunk on first visit instead of one 2MB+ bundle up front.
 const DashboardPage = lazy(() =>
   import("@/modules/DashboardPage").then((m) => ({ default: m.DashboardPage })),
 );
 const ProfilePage = lazy(() =>
   import("@/modules/ProfilePage").then((m) => ({ default: m.ProfilePage })),
-);
-const ProductsListPage = lazy(() =>
-  import("@/modules/Products/pages/ProductsListPage").then((m) => ({
-    default: m.ProductsListPage,
-  })),
-);
-const ProductDetailPage = lazy(() =>
-  import("@/modules/Products/pages/partials/ProductDetailPage").then((m) => ({
-    default: m.ProductDetailPage,
-  })),
-);
-const ProductEditPage = lazy(() =>
-  import("@/modules/Products/pages/partials/ProductEditPage").then((m) => ({
-    default: m.ProductEditPage,
-  })),
-);
-const CreateInvoicePage = lazy(() =>
-  import("@/modules/Products/pages/partials/CreateInvoicePage").then((m) => ({
-    default: m.CreateInvoicePage,
-  })),
 );
 const RightsPage = lazy(() =>
   import("@/modules/administration/RightsPage").then((m) => ({
@@ -85,19 +63,6 @@ export default function App() {
         >
           <Route path="/admin" element={<DashboardPage />} />
           <Route path="/admin/profile" element={<ProfilePage />} />
-          <Route path="/admin/applications" element={<ProductsListPage />} />
-          <Route
-            path="/admin/applications/:appId"
-            element={<ProductDetailPage />}
-          />
-          <Route
-            path="/admin/applications/:appId/edit"
-            element={<ProductEditPage />}
-          />
-          <Route
-            path="/admin/applications/:appId/invoices/create"
-            element={<CreateInvoicePage />}
-          />
           {organizationsRoutes}
           {productsRoutes}
           {usersRoutes}

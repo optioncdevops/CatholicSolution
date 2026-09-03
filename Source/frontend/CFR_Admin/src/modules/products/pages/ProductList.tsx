@@ -4,43 +4,133 @@ import { Building2, Eye, Pencil, RefreshCw, Search } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { EmptyState } from "@shared/app/components/EmptyState";
 import { useToast } from "@shared/app/components/ToastProvider";
-import { CommonIconButton } from "@app/components/buttons";
+import { CommonButton, CommonIconButton } from "@app/components/buttons";
 import { InputField, Dropdown } from "@app/components/formControls";
 import { StatusBadge } from "@app/components/Badge";
+import { BaseModal } from "@app/components/modal/BaseModal";
 import { formatDate } from "@/modules/utils/formatDate";
+import { confirmAction } from "@/modules/lib/confirm";
+import { STATUS_IMPACT, CHANGE_STATUS_DESCRIPTION } from "../validator/productValidation";
 import { getProducts, updateProduct } from "../services/productService";
 import type {
   ProductApiItem,
   ProductInputPayload,
 } from "../types/productTypes";
 import {
+  DEFAULT_PRODUCT_GRADIENT,
+  DEFAULT_PRODUCT_ICON,
+  PRODUCTS_PATHS,
   deriveProductStatus,
-  getProductTheme,
+  formatProductCustomerCount,
   normalizeProductList,
   resolveProductLogoUrl,
 } from "../utils/productHelpers";
-import { ProductStatusDialog } from "./partials/ProductStatusDialog";
-import type { ProductStatus } from "@/modules/types";
+import {
+  PRODUCT_STATUS_FILTERS,
+  PRODUCT_SORT_OPTIONS,
+  PRODUCT_MODAL_STATUS_OPTIONS,
+  type ProductStatusFilter,
+  type ProductSortOption,
+} from "../utils/productFilters";
+import type { AdminApplication, ProductStatus } from "@/modules/types";
 
-type ProductStatusFilter = "all" | "active" | "inactive" | "coming-soon";
 
-const STATUS_FILTERS: Array<{ id: ProductStatusFilter; label: string }> = [
-  { id: "all", label: "All Statuses" },
-  { id: "active", label: "Active" },
-  { id: "inactive", label: "Inactive" },
-  { id: "coming-soon", label: "Coming Soon" },
-];
 
-const SORT_OPTIONS = [
-  { id: "default", label: "Default (DB Order)" },
-  { id: "name", label: "Name (A–Z)" },
-  { id: "updated", label: "Recently Updated" },
-  { id: "access", label: "Access Days" },
-] as const;
+function ProductStatusDialog({
+  app,
+  onClose,
+  onConfirm,
+  pendingStatus,
+  onSelectStatus,
+}: {
+  app: AdminApplication | null;
+  onClose: () => void;
+  onConfirm: (status: ProductStatus) => void;
+  pendingStatus: ProductStatus | null;
+  onSelectStatus: (status: ProductStatus | null) => void;
+}) {
+  const commitStatusChange = async () => {
+    if (!pendingStatus) return;
+    const confirmed = await confirmAction({
+      title: `Set status to "${pendingStatus.replace("-", " ")}"?`,
+      description: STATUS_IMPACT[pendingStatus],
+      confirmLabel: "Confirm status change",
+      tone: pendingStatus === "inactive" ? "danger" : "primary",
+    });
+    if (confirmed) onConfirm(pendingStatus);
+  };
 
-type SortOption = (typeof SORT_OPTIONS)[number]["id"];
+  return (
+    <BaseModal
+      isOpen={Boolean(app)}
+      onClose={onClose}
+      title={app ? `Change Status — ${app.name}` : ""}
+      size="sm"
+      closeOnOverlayClick={false}
+      autoFocus={false}
+      footer={
+        <>
+          <CommonButton variant="outline" onClick={onClose}>
+            Cancel
+          </CommonButton>
+          <CommonButton
+            variant="primary"
+            disabled={!pendingStatus || pendingStatus === app?.status}
+            onClick={() => void commitStatusChange()}
+          >
+            Continue
+          </CommonButton>
+        </>
+      }
+    >
+      {app ? (
+        <div className="flex flex-col gap-3.5">
+          <p className="text-xs font-medium leading-relaxed text-[var(--text-secondary)]">
+            {CHANGE_STATUS_DESCRIPTION}
+          </p>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="sr-only">New Status</legend>
+            {PRODUCT_MODAL_STATUS_OPTIONS.map((status) => {
+              const isCurrent = status === app.status;
+              const isSelected = pendingStatus === status;
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => onSelectStatus(status)}
+                  disabled={isCurrent}
+                  aria-pressed={isSelected}
+                  className={`flex items-center justify-between gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left transition-all ${
+                    isCurrent
+                      ? "border-[var(--line-soft)] bg-[var(--surface-muted)] opacity-70 cursor-not-allowed"
+                      : isSelected
+                        ? "border-[var(--primary)] bg-[var(--primary-muted)] shadow-xs ring-2 ring-[var(--primary)]/20 cursor-pointer"
+                        : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--primary)]/60 hover:bg-[var(--hover)] cursor-pointer"
+                  }`}
+                >
+                  <StatusBadge status={status} kind="application" />
+                  {isCurrent ? (
+                    <span className="rounded-full border border-[var(--line-soft)] bg-[var(--surface)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                      Current
+                    </span>
+                  ) : isSelected ? (
+                    <span className="flex size-4 shrink-0 items-center justify-center rounded-full border-2 border-[var(--primary)] bg-[var(--primary)]">
+                      <span className="size-1.5 rounded-full bg-[var(--surface)]" />
+                    </span>
+                  ) : (
+                    <span className="size-4 shrink-0 rounded-full border-2 border-[var(--line-strong)]" />
+                  )}
+                </button>
+              );
+            })}
+          </fieldset>
+        </div>
+      ) : null}
+    </BaseModal>
+  );
+}
 
-export function ProductsListPage() {
+const ProductList = () => {
   //#region Hooks
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -51,7 +141,7 @@ export function ProductsListPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>("all");
-  const [sortBy, setSortBy] = useState<SortOption>("default");
+  const [sortBy, setSortBy] = useState<ProductSortOption>("default");
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductApiItem | null>(
     null,
@@ -75,9 +165,23 @@ export function ProductsListPage() {
     }
   }, [showToast]);
 
+  const goToDetails = (item: ProductApiItem) => {
+    navigate(PRODUCTS_PATHS.details, {
+      state: { productId: item.productId },
+    });
+  };
+
+  const goToEdit = (item: ProductApiItem) => {
+    navigate(PRODUCTS_PATHS.edit, {
+      state: { productId: item.productId },
+    });
+  };
+
   const handleConfirmStatus = async (status: ProductStatus) => {
     if (!selectedProduct) return;
     try {
+      const isActive = status !== "inactive";
+      const productStatus = status === "active" ? 1 : status === "coming-soon" ? 2 : null;
       const payload: ProductInputPayload = {
         productId: selectedProduct.productId,
         productName: selectedProduct.productName,
@@ -85,8 +189,9 @@ export function ProductsListPage() {
         prodDescription: selectedProduct.prodDescription,
         externalPageUrl: selectedProduct.externalPageUrl,
         defaultAccessDays: selectedProduct.defaultAccessDays,
-        isActive: status === "active",
-        isAvailable: status !== "coming-soon",
+        isActive,
+        productStatus,
+        contactPerson: selectedProduct.contactPerson,
       };
       await updateProduct(payload);
       showToast(
@@ -94,7 +199,10 @@ export function ProductsListPage() {
       );
       await load();
     } catch (error) {
-      showToast(typeof error === "string" ? error : "Failed to change status", "error");
+      showToast(
+        typeof error === "string" ? error : "Failed to change status",
+        "error",
+      );
     } finally {
       setStatusDialogOpen(false);
       setSelectedProduct(null);
@@ -124,7 +232,6 @@ export function ProductsListPage() {
           item.subCategoryName ?? "",
           item.prodDescription ?? "",
           item.externalPageUrl ?? "",
-          String(item.productId),
         ]
           .join(" ")
           .toLowerCase()
@@ -134,8 +241,8 @@ export function ProductsListPage() {
     const sorted = [...filtered];
     if (sortBy === "name") {
       sorted.sort((a, b) => a.productName.localeCompare(b.productName));
-    } else if (sortBy === "access") {
-      sorted.sort((a, b) => b.defaultAccessDays - a.defaultAccessDays);
+    } else if (sortBy === "customers") {
+      sorted.sort((a, b) => b.customerCount - a.customerCount);
     } else if (sortBy === "updated") {
       sorted.sort((a, b) => {
         const dateA = a.updatedDate || a.createdDate;
@@ -160,14 +267,14 @@ export function ProductsListPage() {
           hideLabel
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by name, ID, subtitle, domain"
+          placeholder="Search by name, subtitle, domain"
           startIcon={<Search size={13} />}
           className="min-h-8 text-xs placeholder:text-xs"
           wrapperClassName="min-w-[200px] max-w-xs shrink-0"
         />
 
         <div className="flex shrink-0 flex-nowrap gap-1.5">
-          {STATUS_FILTERS.map((filter) => {
+          {PRODUCT_STATUS_FILTERS.map((filter) => {
             const count =
               filter.id === "all"
                 ? products.length
@@ -195,9 +302,9 @@ export function ProductsListPage() {
             clearable={false}
             value={sortBy}
             onValueChange={(value) =>
-              setSortBy((value as SortOption) ?? "default")
+              setSortBy((value as ProductSortOption) ?? "default")
             }
-            options={SORT_OPTIONS.map((option) => ({
+            options={PRODUCT_SORT_OPTIONS.map((option) => ({
               id: option.id,
               value: option.label,
             }))}
@@ -228,11 +335,11 @@ export function ProductsListPage() {
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredProducts.map((item) => {
-            const theme = getProductTheme(
-              item.productName,
-              item.subCategoryName,
-            );
             const status = deriveProductStatus(item);
+            const logoSrc = resolveProductLogoUrl(
+              item.logoUrl,
+              item.updatedDate,
+            );
 
             return (
               <article
@@ -245,18 +352,18 @@ export function ProductsListPage() {
 
                 <div
                   className="flex cursor-pointer items-center gap-2.5 pr-16 transition-opacity hover:opacity-90"
-                  onClick={() => navigate(`/admin/products/${item.productId}`)}
+                  onClick={() => goToDetails(item)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
-                      navigate(`/admin/products/${item.productId}`);
+                      goToDetails(item);
                     }
                   }}
                 >
-                  {item.logoUrl ? (
+                  {logoSrc ? (
                     <img
-                      src={resolveProductLogoUrl(item.logoUrl) || item.logoUrl}
+                      src={logoSrc}
                       alt=""
                       className="size-9 shrink-0 rounded-lg object-cover"
                       aria-hidden="true"
@@ -264,10 +371,10 @@ export function ProductsListPage() {
                   ) : (
                     <span
                       className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white"
-                      style={{ background: theme.gradient }}
+                      style={{ background: DEFAULT_PRODUCT_GRADIENT }}
                       aria-hidden="true"
                     >
-                      {theme.icon}
+                      {DEFAULT_PRODUCT_ICON}
                     </span>
                   )}
                   <div className="min-w-0">
@@ -292,9 +399,7 @@ export function ProductsListPage() {
 
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
                     <Building2 size={13} className="text-[var(--text-faint)]" />
-                    {item.defaultAccessDays === 0
-                      ? "Free access"
-                      : `${item.defaultAccessDays} days access`}
+                    {formatProductCustomerCount(item.customerCount)}
                   </span>
 
                   <div className="admin-product-card__footer">
@@ -306,17 +411,13 @@ export function ProductsListPage() {
                         aria-label={`View ${item.productName}`}
                         tooltip="View"
                         icon={<Eye size={14} />}
-                        onClick={() =>
-                          navigate(`/admin/products/${item.productId}`)
-                        }
+                        onClick={() => goToDetails(item)}
                       />
                       <CommonIconButton
                         aria-label={`Edit ${item.productName}`}
                         tooltip="Edit"
                         icon={<Pencil size={14} />}
-                        onClick={() =>
-                          navigate(`/admin/products/${item.productId}/edit`)
-                        }
+                        onClick={() => goToEdit(item)}
                       />
                       <CommonIconButton
                         aria-label={`Change status for ${item.productName}`}
@@ -324,7 +425,7 @@ export function ProductsListPage() {
                         icon={<RefreshCw size={14} />}
                         onClick={() => {
                           setSelectedProduct(item);
-                          setPendingStatus(status);
+                          setPendingStatus(null);
                           setStatusDialogOpen(true);
                         }}
                       />
@@ -344,14 +445,10 @@ export function ProductsListPage() {
             name: selectedProduct.productName,
             shortName: selectedProduct.productName,
             category: selectedProduct.subCategoryName || "General",
-            icon: getProductTheme(
-              selectedProduct.productName,
-              selectedProduct.subCategoryName,
-            ).icon,
-            gradient: getProductTheme(
-              selectedProduct.productName,
-              selectedProduct.subCategoryName,
-            ).gradient,
+            icon:
+              resolveProductLogoUrl(selectedProduct.logoUrl) ||
+              DEFAULT_PRODUCT_ICON,
+            gradient: DEFAULT_PRODUCT_GRADIENT,
             description: selectedProduct.prodDescription || "",
             status: deriveProductStatus(selectedProduct),
             features: [],
@@ -378,6 +475,6 @@ export function ProductsListPage() {
     </div>
   );
   //#endregion
-}
+};
 
-export default ProductsListPage;
+export default ProductList;
