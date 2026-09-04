@@ -5,7 +5,6 @@ import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonIconButton } from '@app/components/buttons';
 import { StatusBadge } from '@app/components/Badge';
-import { EntityAvatar } from '@app/components/EntityAvatar';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '@/modules/lib/confirm';
 import { formatDate } from '@/modules/utils/formatDate';
@@ -24,10 +23,9 @@ const columns = (
       <button
         type="button"
         onClick={() => onView(user)}
-        className="flex min-w-0 items-center gap-2.5 text-left hover:underline"
+        className="min-w-0 text-left hover:underline"
         aria-label={`View ${user.fullName || user.email}`}
       >
-        <EntityAvatar name={user.fullName || user.email} size={28} />
         <span className="truncate font-bold text-[var(--text-primary)]">{user.fullName || user.email}</span>
       </button>
     ),

@@ -115,6 +115,7 @@ namespace CFR.Common
             public const string FetchAssignableProductsFailed = "Error while fetching assignable products for organization {OrgId}";
             public const string FetchOrganizationLicensesFailed = "Error while fetching licenses for organization {OrgId}";
             public const string FetchAllLicensesFailed = "Error while fetching licenses across all organizations";
+            public const string FetchProductAssignmentSummaryFailed = "Error while fetching product assignment summary";
             public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string CreateOrganizationFailed = "Error while creating organization";
             public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";

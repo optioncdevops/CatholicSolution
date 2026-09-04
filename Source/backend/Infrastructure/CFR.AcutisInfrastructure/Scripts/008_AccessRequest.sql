@@ -568,12 +568,15 @@ BEGIN
             p.[SubCategoryName],
             p.[ProdDescription],
             p.[ExternalPageUrl],
-            p.[LogoUrl],
+            p.[LogoName] AS [LogoUrl],
             p.[IsActive],
-            p.[IsAvailable],
+            -- core.Product no longer has an IsAvailable column (dropped when dev_products
+            -- introduced ProductStatus: 1 = Active, 2 = Coming Soon, NULL = Inactive) — "available"
+            -- now means ProductStatus = 1, matching Acutis_Products_CRUD's own use of ProductStatus.
+            CAST(CASE WHEN p.[ProductStatus] = 1 THEN 1 ELSE 0 END AS BIT) AS [IsAvailable],
             CASE
                 WHEN assigned.[ProductId] IS NOT NULL THEN N'your'
-                WHEN p.[IsAvailable] = 1 THEN N'available'
+                WHEN p.[ProductStatus] = 1 THEN N'available'
                 ELSE N'future'
             END AS [HubSection]
         FROM [core].[Product] p
@@ -595,7 +598,7 @@ BEGIN
         ORDER BY
             CASE
                 WHEN assigned.[ProductId] IS NOT NULL THEN 0
-                WHEN p.[IsAvailable] = 1 THEN 1
+                WHEN p.[ProductStatus] = 1 THEN 1
                 ELSE 2
             END,
             p.[ProductName];

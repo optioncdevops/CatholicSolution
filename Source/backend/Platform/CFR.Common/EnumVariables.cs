@@ -139,7 +139,10 @@ namespace CFR.Common
             UpdateLicense = 8,
 
             [Description("Fetch customers linked to a product")]
-            GetCustomers = 9
+            GetCustomers = 9,
+
+            [Description("Fetch per-product organization assignment counts")]
+            GetAssignmentSummary = 10
         }
 
 
