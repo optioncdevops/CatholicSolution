@@ -174,7 +174,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<List<ProductAssignmentSummaryOutput>> GetProductAssignmentSummaryAsync()
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.GetAssignmentSummary, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.TEN, DbType.Int32);
             var result = await dapperHandler.QueryAsync<ProductAssignmentSummaryOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             return result.ToList();
         }
