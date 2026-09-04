@@ -23,8 +23,8 @@ import { normalizeOrganizationsList } from './organizations/utils/organizationHe
 import type { LicenseSummaryApiItem, OrganizationApiItem } from './organizations/types/organizationTypes';
 import { getUsers, normalizeUsersList } from './users';
 import type { UsersApiItem } from './users';
-import { getProductAssignmentSummary, getProducts, normalizeProductList, PRODUCTS_PATHS } from './Products';
-import type { ProductApiItem, ProductAssignmentSummaryApiItem } from './Products';
+import { getProductAssignmentSummary, getProducts, normalizeProductList, PRODUCTS_PATHS } from './products';
+import type { ProductApiItem, ProductAssignmentSummaryApiItem } from './products';
 import { getAccessRequests, normalizeAccessRequestList, updateAccessRequestStatus } from './requests';
 import type { AccessRequestApiItem, RequestStatus } from './requests';
 import RequestReviewModal from './requests/pages/partials/RequestReviewModal';

@@ -5,15 +5,11 @@ import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton } from "@app/components/buttons";
 import { Tabs, TabPanel } from "@app/components/Tabs";
-import { BaseModal } from "@app/components/modal/BaseModal";
 import { StatusBadge } from "@app/components/Badge";
 import { cn } from "@app/utilities/cn";
 import { formatDate } from "@/modules/utils/formatDate";
-import { confirmAction } from "@/modules/lib/confirm";
 import {
   getProductWarnings,
-  STATUS_IMPACT,
-  CHANGE_STATUS_DESCRIPTION,
   type ProductWarning,
 } from "../validator/productValidation";
 import {
@@ -39,8 +35,8 @@ import {
   resolveProductLogoUrl,
   toAdminApplication,
 } from "../utils/productHelpers";
-import { PRODUCT_MODAL_STATUS_OPTIONS } from "../utils/productFilters";
 import type { AdminApplication, ProductStatus } from "@/modules/types";
+import { ProductStatusModal } from "./partials/ProductStatusModal";
 
 function isImageIcon(icon: string): boolean {
   if (!icon) return false;
@@ -186,101 +182,6 @@ function ProductWarningsBanner({ warnings }: { warnings: ProductWarning[] }) {
 }
 
 
-
-function ProductStatusDialog({
-  app,
-  onClose,
-  onConfirm,
-  pendingStatus,
-  onSelectStatus,
-}: {
-  app: AdminApplication | null;
-  onClose: () => void;
-  onConfirm: (status: ProductStatus) => void;
-  pendingStatus: ProductStatus | null;
-  onSelectStatus: (status: ProductStatus | null) => void;
-}) {
-  const commitStatusChange = async () => {
-    if (!pendingStatus) return;
-    const confirmed = await confirmAction({
-      title: `Set status to "${pendingStatus.replace("-", " ")}"?`,
-      description: STATUS_IMPACT[pendingStatus],
-      confirmLabel: "Confirm status change",
-      tone: pendingStatus === "inactive" ? "danger" : "primary",
-    });
-    if (confirmed) onConfirm(pendingStatus);
-  };
-
-  return (
-    <BaseModal
-      isOpen={Boolean(app)}
-      onClose={onClose}
-      title={app ? `Change Status — ${app.name}` : ""}
-      size="sm"
-      closeOnOverlayClick={false}
-      autoFocus={false}
-      footer={
-        <>
-          <CommonButton variant="outline" onClick={onClose}>
-            Cancel
-          </CommonButton>
-          <CommonButton
-            variant="primary"
-            disabled={!pendingStatus || pendingStatus === app?.status}
-            onClick={() => void commitStatusChange()}
-          >
-            Continue
-          </CommonButton>
-        </>
-      }
-    >
-      {app ? (
-        <div className="flex flex-col gap-3.5">
-          <p className="text-xs font-medium leading-relaxed text-[var(--text-secondary)]">
-            {CHANGE_STATUS_DESCRIPTION}
-          </p>
-          <fieldset className="flex flex-col gap-2">
-            <legend className="sr-only">New Status</legend>
-            {PRODUCT_MODAL_STATUS_OPTIONS.map((status) => {
-              const isCurrent = status === app.status;
-              const isSelected = pendingStatus === status;
-              return (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => onSelectStatus(status)}
-                  disabled={isCurrent}
-                  aria-pressed={isSelected}
-                  className={`flex items-center justify-between gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left transition-all ${
-                    isCurrent
-                      ? "border-[var(--line-soft)] bg-[var(--surface-muted)] opacity-70 cursor-not-allowed"
-                      : isSelected
-                        ? "border-[var(--primary)] bg-[var(--primary-muted)] shadow-xs ring-2 ring-[var(--primary)]/20 cursor-pointer"
-                        : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--primary)]/60 hover:bg-[var(--hover)] cursor-pointer"
-                  }`}
-                >
-                  <StatusBadge status={status} kind="application" />
-                  {isCurrent ? (
-                    <span className="rounded-full border border-[var(--line-soft)] bg-[var(--surface)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                      Current
-                    </span>
-                  ) : isSelected ? (
-                    <span className="flex size-4 shrink-0 items-center justify-center rounded-full border-2 border-[var(--primary)] bg-[var(--primary)]">
-                      <span className="size-1.5 rounded-full bg-[var(--surface)]" />
-                    </span>
-                  ) : (
-                    <span className="size-4 shrink-0 rounded-full border-2 border-[var(--line-strong)]" />
-                  )}
-                </button>
-              );
-            })}
-          </fieldset>
-        </div>
-      ) : null}
-    </BaseModal>
-  );
-}
-
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
@@ -295,20 +196,27 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 function WebsiteUrlFact({ url }: { url: string }) {
+  const trimmed = (url ?? "").trim();
+  const href = trimmed
+    ? /^https?:\/\//i.test(trimmed)
+      ? trimmed.replace(/^http:\/\//i, "https://")
+      : `https://${trimmed}`
+    : "";
+
   return (
     <div className="min-w-0 sm:col-span-2">
       <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
         Website URL
       </p>
-      {url.trim() ? (
+      {trimmed ? (
         <a
-          href={url}
+          href={href}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-0.5 block break-all text-[0.8125rem] font-bold text-[var(--primary)] hover:underline"
-          title={url}
+          title={href}
         >
-          {url}
+          {href}
         </a>
       ) : (
         <p className="mt-0.5 text-[0.8125rem] font-bold text-[var(--text-primary)]">
@@ -333,11 +241,12 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-5 gap-y-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
           <Fact label="Product Subtitle" value={app.category} />
           <Fact label="Status" value={app.status.replace("-", " ")} />
           <WebsiteUrlFact url={app.productionUrl} />
           <Fact label="License Type" value={app.licenseType} />
+          <Fact label="Navigation Target" value={app.navigationTarget === "new-tab" ? "New Tab" : "Same Tab"} />
           <Fact label="Last updated" value={formatDate(app.updatedAt)} />
           <Fact label="Contact Person" value={app.contactPersonName || ""} />
         </div>
@@ -427,7 +336,8 @@ const ProductDetails = () => {
     if (!product) return;
     try {
       const isActive = status !== "inactive";
-      const productStatus = status === "active" ? 1 : status === "coming-soon" ? 2 : null;
+      const productStatus =
+        status === "active" ? 1 : status === "coming-soon" ? 2 : null;
       const payload: ProductInputPayload = {
         productId: product.productId,
         productName: product.productName,
@@ -435,9 +345,11 @@ const ProductDetails = () => {
         prodDescription: product.prodDescription,
         externalPageUrl: product.externalPageUrl,
         defaultAccessDays: product.defaultAccessDays,
+        licenseType: product.licenseType,
+        navigationTarget: product.navigationTarget,
         isActive,
         productStatus,
-        contactPerson: product.contactPerson,
+        contactUserId: product.contactUserId,
       };
       await updateProduct(payload);
       await loadProduct();
@@ -602,7 +514,7 @@ const ProductDetails = () => {
         <LicenseHistory app={app} />
       </TabPanel>
 
-      <ProductStatusDialog
+      <ProductStatusModal
         app={changingStatus ? app : null}
         pendingStatus={pendingStatus}
         onSelectStatus={setPendingStatus}
