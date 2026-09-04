@@ -414,10 +414,6 @@ namespace CFR.AcutisInfrastructure
         }
 
         /// <summary>
-        /// Parameters for Product stored procedures.
-        /// </summary>
-
-        /// <summary>
         /// Parameters for Products stored procedures and queries.
         /// </summary>
         public static class ProductParams
@@ -461,7 +457,6 @@ namespace CFR.AcutisInfrastructure
             /// File name or relative path to the product logo image.
             /// </summary>
             public const string LogoName = nameof(LogoName);
-            public const string LogoUrl = nameof(LogoUrl);
 
             /// <summary>
             /// Contact [auth].[AcutisUser] identifier. Null leaves the stored value unchanged; 0 clears it.

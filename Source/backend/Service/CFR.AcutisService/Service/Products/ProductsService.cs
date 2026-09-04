@@ -354,7 +354,7 @@ namespace CFR.AcutisService.Service.Products
                 if (createdId == -95)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = "Invalid Organization or Product for license creation.";
+                    result.StatusMessage = ErrorMessages.InvalidLicenseOrgProduct;
                     return result;
                 }
 
@@ -511,7 +511,7 @@ namespace CFR.AcutisService.Service.Products
                 if (updatedId == -95)
                 {
                     result.StatusCode = ErrorCodes.NotFound;
-                    result.StatusMessage = "License not found.";
+                    result.StatusMessage = ErrorMessages.LicenseNotFound;
                     return result;
                 }
 

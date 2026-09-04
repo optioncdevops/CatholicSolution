@@ -3,15 +3,6 @@ import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus
 import { accessStatusOf, daysUntil, effectiveLicenseStatus, formatDateTime } from '@/modules/utils/formatDate';
 export * from './productFilters';
 
-export function toProductSlug(name: string | null | undefined): string {
-  if (!name || typeof name !== 'string') return '';
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
 export const PRODUCTS_PATHS = {
   list: '/admin/products',
   details: '/admin/products/details',

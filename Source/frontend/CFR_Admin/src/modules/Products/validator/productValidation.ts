@@ -99,25 +99,6 @@ export function validateLicenseForm(values: {
   return messages;
 }
 
-/** Whether the current status allows the product to be launched directly from App Hub. */
-export function isLaunchable(status: ProductStatus) {
-  return status === 'active';
-}
-
-export type ProductActionKind = 'launch' | 'preview-only' | 'unavailable';
-
-/**
- * The one correct App Hub action per status — derived, not stored, so an invalid combination
- * (e.g. an Inactive product exposing a Launch button) can't exist in the UI.
- */
-export function resolveProductAction(status: ProductStatus): { kind: ProductActionKind; label: string } {
-  switch (status) {
-    case 'active': return { kind: 'launch', label: 'Launch' };
-    case 'coming-soon': return { kind: 'preview-only', label: 'Coming soon' };
-    case 'inactive': return { kind: 'unavailable', label: 'Unavailable' };
-  }
-}
-
 export const STATUS_IMPACT: Record<ProductStatus, string> = {
   active: 'The product becomes launchable and appears as active in App Hub.',
   inactive: 'The product is temporarily hidden from launch actions but stays in the registry. Existing organization assignments are preserved.',

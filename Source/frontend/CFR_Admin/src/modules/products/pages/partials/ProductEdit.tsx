@@ -342,7 +342,7 @@ function ProductForm({
             label="Production URL"
             value={form.productionUrl}
             onChange={(event) => onUpdate("productionUrl", event.target.value)}
-            placeholder="https://app.optioncapp.com"
+            placeholder="Enter production URL"
             error={touched ? errors.productionUrl : undefined}
           />
           <RadioGroup

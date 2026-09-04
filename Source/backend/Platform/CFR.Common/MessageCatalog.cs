@@ -71,6 +71,8 @@ namespace CFR.Common
         public const string ExistProduct = "A product with this name already exists.";
         public const string ExistLicense = "A license for this customer already exists.";
         public const string ProductNotFound = "Product not found.";
+        public const string LicenseNotFound = "License not found.";
+        public const string InvalidLicenseOrgProduct = "Invalid Organization or Product for license creation.";
         public const string ProductLogoFileRequired = "File is empty or not provided.";
         public const string ProductLogoFileTooLarge = "File size cannot exceed 2 MB.";
         public const string ProductLogoInvalidType = "Only JPG and PNG images are allowed.";

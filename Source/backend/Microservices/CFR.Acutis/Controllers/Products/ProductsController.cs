@@ -124,7 +124,7 @@ namespace CFR.Acutis.Controllers.Products
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet]
         [AllowAnonymous]
-        [ActionName(nameof(GetProductLogo))]
+        [ActionName(API_Product.GetProductLogo)]
         [Produces("image/jpeg", "image/png")]
         public async Task<IActionResult> GetProductLogo(string fileName)
         {
@@ -156,7 +156,7 @@ namespace CFR.Acutis.Controllers.Products
         /// <response code="400">Invalid product identifier.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet]
-        [ActionName(nameof(GetProductCustomers))]
+        [ActionName(API_Product.GetProductCustomers)]
         public async Task<IActionResult> GetProductCustomers(int productId)
         {
             return ApiResultArgs(await service.GetProductCustomersAsync(productId), APIHttpType.HttpGet);

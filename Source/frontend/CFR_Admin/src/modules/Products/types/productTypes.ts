@@ -36,7 +36,9 @@ export interface ProductApiItem {
   isDeleted: boolean;
 }
 
-export interface ProductSaveInputPayload {
+
+export interface ProductInputPayload {
+  productId: number;
   productName: string;
   subCategoryName?: string | null;
   prodDescription?: string | null;
@@ -50,10 +52,6 @@ export interface ProductSaveInputPayload {
   productStatus?: number | null;
   licenseType?: string | null;
   navigationTarget?: string | null;
-}
-
-export interface ProductInputPayload extends ProductSaveInputPayload {
-  productId: number;
 }
 
 export interface ProductLicenseInputPayload {
