@@ -710,7 +710,7 @@ export function DashboardPage() {
                             <Cell key={segment.key} fill={segment.color} />
                           ))}
                         </Pie>
-                        <RechartsTooltip content={<ChartTooltip />} />
+                        <RechartsTooltip content={ChartTooltip} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="pointer-events-none absolute inset-0 grid place-items-center text-center" aria-hidden="true">
@@ -771,7 +771,7 @@ export function DashboardPage() {
                         <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} vertical={false} />
                         <XAxis dataKey="name" tick={CHART_AXIS_TICK} axisLine={{ stroke: CHART_GRID_STROKE }} tickLine={false} />
                         <YAxis allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} width={28} />
-                        <RechartsTooltip content={<ChartTooltip />} cursor={{ fill: 'var(--hover)' }} />
+                        <RechartsTooltip content={ChartTooltip} cursor={{ fill: 'var(--hover)' }} />
                         <Legend
                           onClick={(entry) => toggleRequestSeries(String(entry.dataKey))}
                           formatter={(value) => <span className={hiddenRequestSeries.has(value) ? 'text-[var(--text-faint)] line-through' : 'text-[var(--text-secondary)]'}>{value}</span>}
@@ -907,7 +907,7 @@ export function DashboardPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} vertical={false} />
                       <XAxis dataKey="name" tick={CHART_AXIS_TICK} axisLine={{ stroke: CHART_GRID_STROKE }} tickLine={false} />
                       <YAxis allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} width={28} />
-                      <RechartsTooltip content={<ChartTooltip />} cursor={{ fill: 'var(--hover)' }} />
+                      <RechartsTooltip content={ChartTooltip} cursor={{ fill: 'var(--hover)' }} />
                       <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
                       <Area type="monotone" dataKey="Cumulative Total" stroke={CHART_STATUS_COLORS.primary} fill={CHART_STATUS_COLORS.primary} fillOpacity={0.12} strokeWidth={2} isAnimationActive={false} />
                       <Bar dataKey="New This Period" fill={CHART_STATUS_COLORS.success} barSize={10} radius={[2, 2, 0, 0]} isAnimationActive={false} />
@@ -935,14 +935,17 @@ export function DashboardPage() {
                     data={sortedAssignments} layout="vertical"
                     margin={{ top: 4, right: 16, left: 4, bottom: 0 }}
                     onClick={(state) => {
-                      const payload = state?.activePayload?.[0]?.payload as { productId: number } | undefined;
-                      if (payload) navigate(PRODUCTS_PATHS.details, { state: { productId: payload.productId } });
+                      // Recharts v3 dropped `activePayload` from the chart-level onClick event —
+                      // the clicked row is looked up by `activeIndex` into the same data array instead.
+                      const index = typeof state?.activeIndex === 'number' ? state.activeIndex : undefined;
+                      const row = index !== undefined ? sortedAssignments[index] : undefined;
+                      if (row) navigate(PRODUCTS_PATHS.details, { state: { productId: row.productId } });
                     }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} horizontal={false} />
                     <XAxis type="number" allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} />
                     <YAxis type="category" dataKey="name" tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} width={110} />
-                    <RechartsTooltip content={<ChartTooltip />} cursor={{ fill: 'var(--hover)' }} />
+                    <RechartsTooltip content={ChartTooltip} cursor={{ fill: 'var(--hover)' }} />
                     <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
                     <Bar dataKey="Active" stackId="access" fill={CHART_STATUS_COLORS.success} cursor="pointer" />
                     <Bar dataKey="Inactive" stackId="access" fill={CHART_STATUS_COLORS.neutral} cursor="pointer" radius={[0, 3, 3, 0]} />
@@ -1047,7 +1050,7 @@ export function DashboardPage() {
                     <BarChart data={licenseHealthData} layout="vertical" margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
                       <XAxis type="number" hide />
                       <YAxis type="category" dataKey="name" hide />
-                      <RechartsTooltip content={<ChartTooltip />} cursor={{ fill: 'var(--hover)' }} />
+                      <RechartsTooltip content={ChartTooltip} cursor={{ fill: 'var(--hover)' }} />
                       <Bar dataKey="Active" stackId="health" fill={CHART_STATUS_COLORS.success} barSize={28} radius={[3, 0, 0, 3]} />
                       <Bar dataKey="Expiring Soon" stackId="health" fill={CHART_STATUS_COLORS.warning} barSize={28} />
                       <Bar dataKey="Expired" stackId="health" fill={CHART_STATUS_COLORS.danger} barSize={28} />
