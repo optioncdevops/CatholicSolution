@@ -7,11 +7,11 @@
  *   npm run sync:app-switcher-manifest
  *
  * Produces two static JSON files under public/integrations/app-switcher/v1/:
- *  - manifest.json      production destinations (each app's externalUrl)
- *  - manifest.dev.json  local-dev destinations (each app's own Vite dev server)
+ *  - manifest.json      partner destinations (each app's catalog externalUrl)
+ *  - manifest.dev.json  same destinations; only appHubHref uses the local hub
  *
- * Both are served as-is by Vite's public/ handling in every mode, so the
- * hosted switcher script never depends on a build-time macro or bundler step.
+ * Product SSO launch URLs come from [core].[ProductEnvironment].BaseUrl after login,
+ * not from this static file. Both files are served as-is by Vite's public/ handling.
  */
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
@@ -20,23 +20,6 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 const outDir = path.join(root, 'public', 'integrations', 'app-switcher', 'v1');
-
-/**
- * Local dev-server origins for the independently deployed products. Ports match
- * each product's own VITE_DEV_PORT in SaaS_Apps/<project>/.env.development.
- * Kept in sync by hand with src/shared/platform/navigation/solutionNavigation.ts
- * in cfr and cfr-admin (which resolve the same set for in-app navigation).
- */
-const developmentAppOrigins = {
-  'optionc-school': 'http://localhost:4002',
-  'matt-money': 'http://localhost:4003',
-  'arc-alerts': 'http://localhost:4004',
-  'optionc-parish': 'http://localhost:4005',
-  'catholic-content': 'http://localhost:4006',
-  'unified-directory': 'http://localhost:4007',
-  'support-center': 'http://localhost:4009',
-  'ai-lesson-plan': 'http://localhost:4010',
-};
 
 const PRODUCTION_PLATFORM_ORIGIN = 'https://cfr.optioncapp.com';
 const DEVELOPMENT_PLATFORM_ORIGIN = 'http://localhost:4001';
@@ -57,9 +40,7 @@ export function buildManifest(apps, { allowLocalhost, appHubHref }) {
     if (seen.has(app.id)) throw new Error(`Duplicate app id "${app.id}" in registry — refusing to publish an ambiguous manifest.`);
     seen.add(app.id);
 
-    const href = allowLocalhost && developmentAppOrigins[app.id]
-      ? developmentAppOrigins[app.id]
-      : app.externalUrl;
+    const href = app.externalUrl;
     if (!href) throw new Error(`App "${app.id}" is launcher-enabled but has no destination URL.`);
     assertApprovedOrigin(href, { allowLocalhost });
 

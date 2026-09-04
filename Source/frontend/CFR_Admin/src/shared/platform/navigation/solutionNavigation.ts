@@ -28,28 +28,11 @@ function resolveSafeHttpUrl(value?: string) {
 }
 
 /**
- * Local dev-server origins for the independently deployed products, so App Hub launches
- * the app running on this machine instead of its production domain while developing locally.
- * Ports match each product's own `VITE_DEV_PORT` in SaaS_Apps/<project>/.env.development.
- */
-const developmentAppOrigins: Record<string, string> = {
-  'optionc-school': 'http://localhost:4002',
-  'matt-money': 'http://localhost:4003',
-  'arc-alerts': 'http://localhost:4004',
-  'optionc-parish': 'http://localhost:4005',
-  'catholic-content': 'http://localhost:4006',
-  'unified-directory': 'http://localhost:4007',
-  'support-center': 'http://localhost:4009',
-  'ai-lesson-plan': 'http://localhost:4010',
-};
-
-/**
- * Canonical App Hub launch resolver. Every product outside CFR is independently deployed
- * and is reached only through its centrally approved catalog destination.
+ * Canonical App Hub launch resolver. Destination comes from [core].[ProductEnvironment].BaseUrl
+ * (mapped onto CatalogApp.externalUrl), not from hardcoded localhost product ports.
  */
 export function resolveAppDestination(app: CatalogApp): AppDestination | null {
-  const devOrigin = environment.mode === 'development' ? developmentAppOrigins[app.id] : undefined;
-  const href = devOrigin ? normalizedOrigin(devOrigin) : resolveSafeHttpUrl(app.externalUrl);
+  const href = resolveSafeHttpUrl(app.externalUrl);
   if (!href) return null;
 
   const openInNewTab = app.navigationTarget === 'new-tab';

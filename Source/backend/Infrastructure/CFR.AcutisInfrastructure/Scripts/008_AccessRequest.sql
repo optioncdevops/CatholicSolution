@@ -549,8 +549,8 @@ BEGIN
         RETURN 0;
     END
 
-    -- App Hub: products assigned to the member AND currently active for their organization
-    -- (Your Apps) plus every other core.Product as Available (IsAvailable = 1) or Future.
+    -- App Hub: products assigned to the member (Your Apps) plus every other core.Product
+    -- as Available (ProductStatus = 1) or Future (ProductStatus = 2).
     IF @ActionId = 6
     BEGIN
         DECLARE @HubUserId BIGINT = NULL;
@@ -570,9 +570,6 @@ BEGIN
             p.[ExternalPageUrl],
             p.[LogoName] AS [LogoUrl],
             p.[IsActive],
-            -- core.Product no longer has an IsAvailable column (dropped when dev_products
-            -- introduced ProductStatus: 1 = Active, 2 = Coming Soon, NULL = Inactive) — "available"
-            -- now means ProductStatus = 1, matching Acutis_Products_CRUD's own use of ProductStatus.
             CAST(CASE WHEN p.[ProductStatus] = 1 THEN 1 ELSE 0 END AS BIT) AS [IsAvailable],
             CASE
                 WHEN assigned.[ProductId] IS NOT NULL THEN N'your'

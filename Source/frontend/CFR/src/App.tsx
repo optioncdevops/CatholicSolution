@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { LoginPage } from '@/modules/authentication/LoginPage';
 import { RequestAccessPage } from '@/modules/authentication/RequestAccessPage';
-import { AppHubPage } from '@/modules/appHub/AppHubPage';
+import { productlaunchRoutes } from '@/modules/productlaunch';
 import { CentralLogoutPage } from '@shared/auth/CentralLogoutPage';
 import { ForgotPasswordPage } from '@shared/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '@shared/auth/ResetPasswordPage';
@@ -17,7 +17,7 @@ export default function App() {
       <Route path="/request-access" element={<RequestAccessPage />} />
       <Route path="/" element={<Navigate to="/login?entry=platform" replace />} />
       <Route element={<ProtectedRoute />}>
-        <Route path="/apps" element={<AppHubPage />} />
+        {productlaunchRoutes}
       </Route>
       <Route path="*" element={<Navigate to="/apps" replace />} />
     </Routes>

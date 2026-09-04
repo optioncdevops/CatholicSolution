@@ -71,6 +71,13 @@ namespace CFR.Common
         public const string ExistProduct = "A product with this name already exists.";
         public const string ExistLicense = "A license for this customer already exists.";
         public const string ProductNotFound = "Product not found.";
+        public const string ProductDisabled = "This product is not available.";
+        public const string ProductNotAssignedToUser = "This product is not assigned to the current user.";
+        public const string ExternalPageUrlMissing = "This product does not have a launch URL configured.";
+        public const string InvalidAuthorizationCode = "The authorization code is invalid.";
+        public const string ExpiredAuthorizationCode = "The authorization code has expired.";
+        public const string AuthorizationCodeUsed = "The authorization code has already been used.";
+        public const string AuthorizationCodeProductMismatch = "The authorization code does not belong to this product.";
         public const string ProductLogoFileRequired = "File is empty or not provided.";
         public const string ProductLogoFileTooLarge = "File size cannot exceed 2 MB.";
         public const string ProductLogoInvalidType = "Only JPG and PNG images are allowed.";
@@ -132,6 +139,14 @@ namespace CFR.Common
             public const string UploadProductLogoFailed = "Error while uploading product logo";
             public const string FetchProductLogoFailed = "Error while fetching product logo";
             public const string DeleteProductLogoFailed = "Error deleting previous product logo file {RelativeUrl}";
+        }
+
+        public static class PortalLogMessages
+        {
+            public const string LoginAuthenticationFailed = "Error while authenticating Portal login for {UserName}";
+            public const string FetchAssignedProductsFailed = "Error while fetching assigned products for user {UserId}";
+            public const string LaunchProductFailed = "Error while launching product {ProductId} for user {UserId}";
+            public const string ExchangeTokenFailed = "Error while exchanging SSO authorization code for product {ProductId}";
         }
     }
 }

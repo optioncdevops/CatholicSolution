@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 import { environment } from '@shared/platform/config/environment';
 import { canRedirectToExternalIdentityProvider, clearPreviewSession, createPreviewSession, hasPreviewSession } from './centralAuth';
+import { clearPortalSession } from '@app/config/appPortalClient';
+import { loginPortal } from '@/modules/authentication/services/portalAuthService';
 
 export interface SignInRequest {
   email: string;
@@ -68,12 +70,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (environment.authMode === 'sso') {
         return redirectToIdentityProvider(request) ? 'redirected' : 'unavailable';
       }
+      if (request.provider === 'password') {
+        await loginPortal(request.email, request.password ?? '');
+      }
       createPreviewSession(Boolean(request.remember));
       setAuthenticated(true);
       sessionSync()?.postMessage('signed-in');
       return 'authenticated';
     },
     signOut() {
+      clearPortalSession();
       clearPreviewSession();
       setAuthenticated(false);
       sessionSync()?.postMessage('signed-out');
