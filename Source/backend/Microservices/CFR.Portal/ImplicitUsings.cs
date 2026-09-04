@@ -1,0 +1,18 @@
+global using CFR.Portal;
+global using CFR.PortalInfrastructure.Models.Input;
+global using CFR.PortalInfrastructure.Models.Output;
+global using CFR.PortalService.Interfaces.Authentication;
+global using CFR.PortalService.Interfaces.CFRLaunch;
+global using CFR.Base;
+global using CFR.Common;
+global using CFR.CommonService;
+global using CFR.DBEngine;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.Extensions.Options;
+global using Swashbuckle.AspNetCore.SwaggerGen;
+global using System.Reflection;
+global using System.Resources;
+global using System.Text;
+global using static CFR.Common.Constant;
+global using static CFR.CommonService.APIActionName;

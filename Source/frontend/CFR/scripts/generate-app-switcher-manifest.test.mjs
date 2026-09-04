@@ -31,10 +31,9 @@ test('buildManifest resolves production hrefs to each app externalUrl', () => {
   assert.equal(manifest.apps[1].target, 'new-tab');
 });
 
-test('buildManifest resolves dev hrefs to localhost, not production', () => {
+test('buildManifest keeps catalog externalUrl in the dev manifest', () => {
   const manifest = buildManifest(sampleApps, { allowLocalhost: true, appHubHref: 'http://localhost:4001/apps' });
-  assert.equal(manifest.apps[0].href, 'http://localhost:4002');
-  // Partner app with no local dev server keeps its real external URL even in dev.
+  assert.equal(manifest.apps[0].href, 'https://optionc-sms.optioncapp.com');
   assert.equal(manifest.apps[1].href, 'https://berchmans.app');
 });
 

@@ -11,7 +11,6 @@ import {
   ShieldCheckIcon,
   UserIcon,
 } from '@shared/app/components/UiIcons';
-import { APP_CATALOG } from '@shared/app/config/appCatalog';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { getProducts } from '@/modules/products/services/productsService';
@@ -23,7 +22,7 @@ const organizationTypes = ['Catholic School', 'Parish', 'Diocese / Archdiocese',
 export function RequestAccessPage() {
   const [searchParams] = useSearchParams();
   const requestedProduct = searchParams.get('product');
-  const [apps, setApps] = useState<CatalogApp[]>(() => APP_CATALOG.map((app) => ({ ...app })));
+  const [apps, setApps] = useState<CatalogApp[]>([]);
   const requestableApps = useMemo(() => apps.filter((app) => app.status !== 'coming-soon' && app.hubSection !== 'future'), [apps]);
   const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : (requestableApps[0]?.id ?? '');
   const [submitted, setSubmitted] = useState(false);

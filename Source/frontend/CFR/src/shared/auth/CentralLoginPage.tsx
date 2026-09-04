@@ -46,19 +46,23 @@ export function CentralLoginPage() {
   }, [completeCentralReturn, interactiveSignInCompleted, isAuthenticated, requiresInteractiveSignIn]);
 
   const completeSignIn = async (provider: 'password' | 'google' | 'microsoft') => {
-    const result = await signIn({
-      email,
-      password,
-      remember,
-      provider,
-      clientId,
-      returnUrl: toAbsoluteReturnUrl(destination),
-    });
-    if (result === 'authenticated') {
-      setInteractiveSignInCompleted(true);
-      showToast(clientId === 'platform' ? 'Signed in to Catholic Solutions' : clientId === 'cfr-admin' ? 'Signed in to CFRAdmin' : `Signed in. Returning to ${client.name}`);
-    } else if (result === 'unavailable') {
-      showToast('The configured identity service is unavailable. Please contact your administrator.');
+    try {
+      const result = await signIn({
+        email,
+        password,
+        remember,
+        provider,
+        clientId,
+        returnUrl: toAbsoluteReturnUrl(destination),
+      });
+      if (result === 'authenticated') {
+        setInteractiveSignInCompleted(true);
+        showToast(clientId === 'platform' ? 'Signed in to Catholic Solutions' : clientId === 'cfr-admin' ? 'Signed in to CFRAdmin' : `Signed in. Returning to ${client.name}`);
+      } else if (result === 'unavailable') {
+        showToast('The configured identity service is unavailable. Please contact your administrator.');
+      }
+    } catch (error) {
+      showToast(typeof error === 'string' ? error : 'Invalid email or password.');
     }
   };
 
