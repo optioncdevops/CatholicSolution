@@ -57,10 +57,10 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string? LogoUrl { get; set; }
 
         /// <summary>
-        /// Gets or sets the product contact person name. Null leaves the stored value unchanged; empty string clears it.
+        /// Gets or sets the contact [auth].[AcutisUser] identifier. Null leaves the stored value unchanged; 0 clears it.
         /// </summary>
-        [JsonPropertyName("contactPerson")]
-        public string? ContactPerson { get; set; }
+        [JsonPropertyName("contactUserId")]
+        public long? ContactUserId { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the product is active.
@@ -73,6 +73,18 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("productStatus")]
         public int? ProductStatus { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product license type: 'free' or 'licensed'.
+        /// </summary>
+        [JsonPropertyName("licenseType")]
+        public string? LicenseType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the navigation target: 'same-tab' or 'new-tab'.
+        /// </summary>
+        [JsonPropertyName("navigationTarget")]
+        public string? NavigationTarget { get; set; }
 
         /// <summary>
         /// Gets or sets the product feature list.

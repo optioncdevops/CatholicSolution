@@ -7,7 +7,9 @@ export interface ProductWarning {
 
 function hostnameOf(url: string): string | null {
   try {
-    return new URL(url).hostname.toLowerCase();
+    const trimmed = url.trim();
+    const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    return new URL(normalized).hostname.toLowerCase();
   } catch {
     return null;
   }
@@ -22,9 +24,9 @@ function protocolOf(url: string): string | null {
 }
 
 function firstPartyHostname(): string | null {
-  const configured = import.meta.env.VITE_APP_HUB_URL || import.meta.env.VITE_APP_REST_API_BASE_URL;
-  if (configured) {
-    return hostnameOf(configured);
+  const hubUrl = import.meta.env.VITE_APP_HUB_URL;
+  if (hubUrl) {
+    return hostnameOf(hubUrl);
   }
   if (typeof window !== 'undefined') {
     return window.location.hostname.toLowerCase();
@@ -76,17 +78,6 @@ export function validateProductForm(form: Partial<AdminApplication>): ProductFor
   const errors: ProductFormErrors = {};
   if (!form.name?.trim()) errors.name = 'Product name is required.';
   if (!form.category?.trim()) errors.category = 'Subtitle is required.';
-  if (form.productionUrl?.trim()) {
-    const isValidUrl = (() => {
-      try {
-        const url = new URL(form.productionUrl.trim());
-        return url.protocol === 'http:' || url.protocol === 'https:';
-      } catch {
-        return false;
-      }
-    })();
-    if (!isValidUrl) errors.productionUrl = 'Enter a valid URL.';
-  }
   return errors;
 }
 

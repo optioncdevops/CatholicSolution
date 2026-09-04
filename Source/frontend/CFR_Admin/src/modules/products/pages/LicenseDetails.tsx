@@ -100,8 +100,6 @@ export function InvoiceDetailModal({
 }
 export interface LiveProductLicense {
   id: string;
-  licenseId: number;
-  organizationProductId: number;
   orgId: number;
   customerCode: string;
   customer: string;
@@ -113,8 +111,6 @@ export interface LiveProductLicense {
   days: number | null;
   paidOn: string | null;
   status: string;
-  rawStatus: string;
-  assignStatus?: string | null;
   remarks?: string | null;
 }
 
@@ -188,8 +184,6 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
 
       return {
         id: String(lic.licenseId),
-        licenseId: lic.licenseId,
-        organizationProductId: lic.organizationProductId,
         orgId: lic.orgId,
         customerCode: formatCustomerCodeAsInteger(lic.orgId),
         customer: lic.orgName || `Organization #${lic.orgId}`,
@@ -201,8 +195,6 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
         days,
         paidOn,
         status,
-        rawStatus: lic.licenseStatus,
-        assignStatus: lic.assignStatus,
         remarks: lic.remarks,
       };
     });

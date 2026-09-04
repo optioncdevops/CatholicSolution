@@ -27,7 +27,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<List<ProductOutput>> GetProductsListAsync()
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.GetList, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.ONE, DbType.Int32);
             var result = await dapperHandler.QueryAsync<ProductOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             var products = result.ToList();
             var licenses = await GetLicenseDetailsAsync(0);
@@ -57,7 +57,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<ProductOutput?> GetProductByIdAsync(int productId)
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.GetById, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.TWO, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
             using var multi = await dapperHandler.QueryMultipleAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             var product = (await multi.ReadAsync<ProductOutput>()).FirstOrDefault();
@@ -88,7 +88,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<bool> CheckProductNameExistsAsync(string productName, int productId)
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.CheckNameExists, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.FOUR, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductName, productName.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
             return await dapperHandler.ExecuteScalarAsync<bool>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
@@ -110,7 +110,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<List<ProductLicenseOutput>> GetLicenseDetailsAsync(int productId)
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.GetLicenses, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.FIVE, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
             var result = await dapperHandler.QueryAsync<ProductLicenseOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             return result.ToList();
@@ -132,7 +132,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<ProductLicenseOutput?> GetLicenseByIdAsync(long licenseId)
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.GetLicenseById, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.SIX, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.LicenseId, licenseId, DbType.Int64);
             return await dapperHandler.QueryFirstOrDefaultAsync<ProductLicenseOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
         }
@@ -153,7 +153,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         public async Task<List<ProductCustomerOutput>> GetProductCustomersAsync(int productId)
         {
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.GetCustomers, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.NINE, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
             var result = await dapperHandler.QueryAsync<ProductCustomerOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             return result.ToList();
@@ -180,7 +180,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         {
             ArgumentNullException.ThrowIfNull(input);
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.CreateLicense, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.SEVEN, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.OrganizationProductId, input.OrganizationProductId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.OrgId, input.OrgId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.ProductId, input.ProductId, DbType.Int32);
@@ -217,7 +217,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         {
             ArgumentNullException.ThrowIfNull(input);
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.Update, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.THREE, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, input.ProductId, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductName, input.ProductName.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.SubCategoryName, input.SubCategoryName?.Trim(), DbType.String);
@@ -225,7 +225,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             parameters.Add(DBParameterName.ProductParams.ExternalPageUrl, input.ExternalPageUrl?.Trim(), DbType.String);
             string? logo = !string.IsNullOrWhiteSpace(input.LogoName) ? input.LogoName.Trim() : input.LogoUrl?.Trim();
             parameters.Add(DBParameterName.ProductParams.LogoName, logo, DbType.String);
-            parameters.Add(DBParameterName.ProductParams.ContactPerson, input.ContactPerson is null ? DBNull.Value : input.ContactPerson, DbType.String);
+            parameters.Add(DBParameterName.ProductParams.ContactUserId, input.ContactUserId is null ? DBNull.Value : input.ContactUserId.Value, DbType.Int64);
             string? updateFeatures = input.Features != null && input.Features.Count > 0
                 ? string.Join("|", input.Features.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()))
                 : null;
@@ -235,6 +235,8 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
                 ? (!input.IsActive ? DBNull.Value : (object)1)
                 : (object)input.ProductStatus.Value;
             parameters.Add(DBParameterName.ProductParams.ProductStatus, productStatusParam, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.LicenseType, string.IsNullOrWhiteSpace(input.LicenseType) ? DBNull.Value : input.LicenseType.Trim(), DbType.String);
+            parameters.Add(DBParameterName.ProductParams.NavigationTarget, string.IsNullOrWhiteSpace(input.NavigationTarget) ? DBNull.Value : input.NavigationTarget.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
@@ -258,7 +260,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         {
             ArgumentNullException.ThrowIfNull(input);
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.UpdateLicense, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.EIGHT, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.LicenseId, input.LicenseId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.LicenseType, input.LicenseType?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.ActivationDate, input.ActivationDate, DbType.DateTime2);

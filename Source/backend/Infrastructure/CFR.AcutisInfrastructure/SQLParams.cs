@@ -464,9 +464,9 @@ namespace CFR.AcutisInfrastructure
             public const string LogoUrl = nameof(LogoUrl);
 
             /// <summary>
-            /// Acutis user display name stored as the product contact person. Empty string clears the contact.
+            /// Contact [auth].[AcutisUser] identifier. Null leaves the stored value unchanged; 0 clears it.
             /// </summary>
-            public const string ContactPerson = nameof(ContactPerson);
+            public const string ContactUserId = nameof(ContactUserId);
 
             /// <summary>
             /// Pipe-delimited list of product features.
@@ -482,6 +482,11 @@ namespace CFR.AcutisInfrastructure
             /// Product status flag: 1 = Active, 2 = Coming Soon, 3 = Inactive.
             /// </summary>
             public const string ProductStatus = nameof(ProductStatus);
+
+            /// <summary>
+            /// Navigation target for launching the product: same-tab or new-tab.
+            /// </summary>
+            public const string NavigationTarget = nameof(NavigationTarget);
 
             /// <summary>
             /// License identifier.

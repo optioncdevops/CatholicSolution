@@ -23,7 +23,10 @@ export interface ProductApiItem {
   logoUrl?: string | null;
   isActive: boolean;
   productStatus?: number | null;
+  licenseType?: string | null;
+  navigationTarget?: string | null;
   customerCount: number;
+  contactUserId: number | null;
   contactPerson: string | null;
   features?: string[];
   createdDate: string;
@@ -41,10 +44,12 @@ export interface ProductSaveInputPayload {
   defaultAccessDays: number;
   logoName?: string | null;
   logoUrl?: string | null;
-  contactPerson?: string | null;
+  contactUserId?: number | null;
   features?: string[];
   isActive: boolean;
   productStatus?: number | null;
+  licenseType?: string | null;
+  navigationTarget?: string | null;
 }
 
 export interface ProductInputPayload extends ProductSaveInputPayload {

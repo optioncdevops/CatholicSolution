@@ -27,10 +27,11 @@ CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
     @ExternalPageUrl NVARCHAR(500) = NULL,
     @DefaultAccessDays INT = 365,
     @LogoName NVARCHAR(500) = NULL,
-    @ContactPerson NVARCHAR(200) = NULL,
+    @ContactUserId BIGINT = NULL,
     @Features NVARCHAR(MAX) = NULL,
     @IsActive BIT = 1,
     @ProductStatus INT = NULL,
+    @NavigationTarget NVARCHAR(50) = NULL,
     -- License Parameters
     @LicenseId BIGINT = 0,
     @OrganizationProductId BIGINT = 0,
@@ -58,6 +59,7 @@ BEGIN
     SET @ExternalPageUrl = NULLIF(LTRIM(RTRIM(@ExternalPageUrl)), N'');
     SET @LogoName = NULLIF(LTRIM(RTRIM(@LogoName)), N'');
     SET @LicenseType = NULLIF(LTRIM(RTRIM(@LicenseType)), N'');
+    SET @NavigationTarget = NULLIF(LTRIM(RTRIM(@NavigationTarget)), N'');
     SET @LicenseStatus = NULLIF(LTRIM(RTRIM(@LicenseStatus)), N'');
     SET @AssignStatus = NULLIF(LTRIM(RTRIM(@AssignStatus)), N'');
     SET @Remarks = NULLIF(LTRIM(RTRIM(@Remarks)), N'');
@@ -79,7 +81,10 @@ BEGIN
             p.[LogoName] AS [LogoUrl],
             p.[IsActive],
             p.[ProductStatus],
-            p.[ContactPerson],
+            p.[LicenseType],
+            p.[NavigationTarget],
+            p.[ContactUserId],
+            NULLIF(LTRIM(RTRIM(ISNULL(cu.[FirstName], N'') + N' ' + ISNULL(cu.[LastName], N''))), N'') AS [ContactPerson],
             (
                 SELECT COUNT(DISTINCT op.[OrgId])
                 FROM [lic].[OrganizationProduct] AS op
@@ -95,6 +100,9 @@ BEGIN
             p.[UpdatedBy],
             p.[IsDeleted]
         FROM [core].[Product] AS p
+        LEFT JOIN [auth].[AcutisUser] AS cu
+            ON cu.[UserId] = p.[ContactUserId]
+           AND cu.[IsDeleted] = 0
         WHERE p.[IsDeleted] = 0
         ORDER BY p.[ProductName];
 
@@ -117,7 +125,10 @@ BEGIN
             p.[LogoName] AS [LogoUrl],
             p.[IsActive],
             p.[ProductStatus],
-            p.[ContactPerson],
+            p.[LicenseType],
+            p.[NavigationTarget],
+            p.[ContactUserId],
+            NULLIF(LTRIM(RTRIM(ISNULL(cu.[FirstName], N'') + N' ' + ISNULL(cu.[LastName], N''))), N'') AS [ContactPerson],
             (
                 SELECT COUNT(DISTINCT op.[OrgId])
                 FROM [lic].[OrganizationProduct] AS op
@@ -133,6 +144,9 @@ BEGIN
             p.[UpdatedBy],
             p.[IsDeleted]
         FROM [core].[Product] AS p
+        LEFT JOIN [auth].[AcutisUser] AS cu
+            ON cu.[UserId] = p.[ContactUserId]
+           AND cu.[IsDeleted] = 0
         WHERE p.[ProductId] = @ProductId
           AND p.[IsDeleted] = 0;
 
@@ -161,6 +175,15 @@ BEGIN
             RETURN @ReturnValue;
         END
 
+        IF @ContactUserId IS NOT NULL AND @ContactUserId > 0 AND NOT EXISTS (
+            SELECT 1 FROM [auth].[AcutisUser]
+            WHERE [UserId] = @ContactUserId AND [IsDeleted] = 0
+        )
+        BEGIN
+            SET @ReturnValue = -95;
+            RETURN @ReturnValue;
+        END
+
         IF @ProductName IS NOT NULL AND EXISTS (
             SELECT 1 FROM [core].[Product]
             WHERE LOWER(LTRIM(RTRIM([ProductName]))) = LOWER(@ProductName)
@@ -180,10 +203,21 @@ BEGIN
             [ExternalPageUrl] = ISNULL(@ExternalPageUrl, [ExternalPageUrl]),
             [DefaultAccessDays] = ISNULL(@DefaultAccessDays, [DefaultAccessDays]),
             [LogoName] = ISNULL(@LogoName, [LogoName]),
+            [ContactUserId] = CASE
+                WHEN @ContactUserId IS NULL THEN [ContactUserId]
+                WHEN @ContactUserId = 0 THEN NULL
+                ELSE @ContactUserId
+            END,
             [ContactPerson] = CASE
-                WHEN @ContactPerson IS NULL THEN [ContactPerson]
-                WHEN LTRIM(RTRIM(@ContactPerson)) = N'' THEN NULL
-                ELSE @ContactPerson
+                WHEN @ContactUserId IS NULL THEN [ContactPerson]
+                WHEN @ContactUserId = 0 THEN NULL
+                ELSE
+                (
+                    SELECT NULLIF(LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))), N'')
+                    FROM [auth].[AcutisUser] AS u
+                    WHERE u.[UserId] = @ContactUserId
+                      AND u.[IsDeleted] = 0
+                )
             END,
             [IsActive] = ISNULL(@IsActive, [IsActive]),
             [ProductStatus] = CASE
@@ -192,6 +226,8 @@ BEGIN
                 WHEN @ProductStatus = 1 THEN 1
                 ELSE [ProductStatus]
             END,
+            [LicenseType] = ISNULL(@LicenseType, [LicenseType]),
+            [NavigationTarget] = ISNULL(@NavigationTarget, [NavigationTarget]),
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = ISNULL(@UpdatedBy, [UpdatedBy])
         WHERE [ProductId] = @ProductId;

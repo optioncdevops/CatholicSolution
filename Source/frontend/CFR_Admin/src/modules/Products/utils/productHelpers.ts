@@ -154,7 +154,10 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
       : item.ProductStatus != null
         ? Number(item.ProductStatus)
         : null,
+    licenseType: (item.licenseType ?? item.LicenseType ?? null) as string | null,
+    navigationTarget: (item.navigationTarget ?? item.NavigationTarget ?? null) as string | null,
     customerCount: toProductCustomerCount((item.customerCount ?? item.CustomerCount) as number),
+    contactUserId: toProductContactUserId(item.contactUserId ?? item.ContactUserId),
     contactPerson: toProductContactPersonName((item.contactPerson ?? item.ContactPerson) as string) || null,
     features,
     createdDate: String(item.createdDate ?? item.CreatedDate ?? ''),
@@ -404,13 +407,17 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     productionUrl: item.externalPageUrl || '',
     ownership: 'first-party',
     deploymentModel: 'external-saas',
-    licenseType: item.defaultAccessDays === 0 ? 'free' : 'licensed',
-    navigationTarget: 'same-tab',
+    licenseType: (item.licenseType === 'free' || item.licenseType === 'licensed')
+      ? item.licenseType
+      : 'licensed',
+    navigationTarget: (item.navigationTarget === 'new-tab' || item.navigationTarget === 'same-tab')
+      ? item.navigationTarget
+      : 'same-tab',
     status: deriveProductStatus(item),
     registryRef: `reg_app_${String(item.productId).padStart(4, '0')}`,
     sourceLocation: `SaaS_Apps/${productName.toLowerCase().replace(/\s+/g, '-')}`,
     updatedAt: item.updatedDate || item.createdDate,
-    contactUserId: item.contactPerson || '',
+    contactUserId: item.contactUserId != null ? String(item.contactUserId) : '',
     contactPersonName: item.contactPerson || '',
   };
 }
@@ -419,15 +426,15 @@ export function resolveContactUser(
   app: AdminApplication,
   users: ProductContactUser[]
 ): AdminApplication {
-  const rawContact = (app.contactPersonName || app.contactUserId || '').trim();
-  if (!rawContact) return app;
+  const contactUserId = toProductContactUserId(app.contactUserId);
+  const rawName = (app.contactPersonName || '').trim();
+  if (!contactUserId && !rawName) return app;
 
-  const lower = rawContact.toLowerCase();
+  const lower = rawName.toLowerCase();
   const match = users.find(
     (u) =>
-      String(u.userId) === rawContact ||
-      u.fullName.trim().toLowerCase() === lower ||
-      (u.eMail && u.eMail.trim().toLowerCase() === lower)
+      (contactUserId != null && u.userId === contactUserId) ||
+      (lower && u.fullName.trim().toLowerCase() === lower)
   );
 
   if (match) {
@@ -440,7 +447,7 @@ export function resolveContactUser(
 
   return {
     ...app,
-    contactUserId: app.contactUserId || rawContact,
-    contactPersonName: app.contactPersonName || rawContact,
+    contactUserId: app.contactUserId || (contactUserId != null ? String(contactUserId) : ''),
+    contactPersonName: app.contactPersonName || rawName,
   };
 }

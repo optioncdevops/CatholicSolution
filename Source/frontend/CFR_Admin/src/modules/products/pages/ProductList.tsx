@@ -10,7 +10,10 @@ import { StatusBadge } from "@app/components/Badge";
 import { BaseModal } from "@app/components/modal/BaseModal";
 import { formatDate } from "@/modules/utils/formatDate";
 import { confirmAction } from "@/modules/lib/confirm";
-import { STATUS_IMPACT, CHANGE_STATUS_DESCRIPTION } from "../validator/productValidation";
+import {
+  STATUS_IMPACT,
+  CHANGE_STATUS_DESCRIPTION,
+} from "../validator/productValidation";
 import { getProducts, updateProduct } from "../services/productService";
 import type {
   ProductApiItem,
@@ -33,8 +36,6 @@ import {
   type ProductSortOption,
 } from "../utils/productFilters";
 import type { AdminApplication, ProductStatus } from "@/modules/types";
-
-
 
 function ProductStatusDialog({
   app,
@@ -181,7 +182,8 @@ const ProductList = () => {
     if (!selectedProduct) return;
     try {
       const isActive = status !== "inactive";
-      const productStatus = status === "active" ? 1 : status === "coming-soon" ? 2 : null;
+      const productStatus =
+        status === "active" ? 1 : status === "coming-soon" ? 2 : null;
       const payload: ProductInputPayload = {
         productId: selectedProduct.productId,
         productName: selectedProduct.productName,
@@ -189,9 +191,11 @@ const ProductList = () => {
         prodDescription: selectedProduct.prodDescription,
         externalPageUrl: selectedProduct.externalPageUrl,
         defaultAccessDays: selectedProduct.defaultAccessDays,
+        licenseType: selectedProduct.licenseType,
+        navigationTarget: selectedProduct.navigationTarget,
         isActive,
         productStatus,
-        contactPerson: selectedProduct.contactPerson,
+        contactUserId: selectedProduct.contactUserId,
       };
       await updateProduct(payload);
       showToast(

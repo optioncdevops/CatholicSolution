@@ -185,8 +185,6 @@ function ProductWarningsBanner({ warnings }: { warnings: ProductWarning[] }) {
   );
 }
 
-
-
 function ProductStatusDialog({
   app,
   onClose,
@@ -295,20 +293,27 @@ function Fact({ label, value }: { label: string; value: string }) {
 }
 
 function WebsiteUrlFact({ url }: { url: string }) {
+  const trimmed = (url ?? "").trim();
+  const href = trimmed
+    ? /^https?:\/\//i.test(trimmed)
+      ? trimmed.replace(/^http:\/\//i, "https://")
+      : `https://${trimmed}`
+    : "";
+
   return (
     <div className="min-w-0 sm:col-span-2">
       <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
         Website URL
       </p>
-      {url.trim() ? (
+      {trimmed ? (
         <a
-          href={url}
+          href={href}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-0.5 block break-all text-[0.8125rem] font-bold text-[var(--primary)] hover:underline"
-          title={url}
+          title={href}
         >
-          {url}
+          {href}
         </a>
       ) : (
         <p className="mt-0.5 text-[0.8125rem] font-bold text-[var(--text-primary)]">
@@ -333,11 +338,12 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-5 gap-y-3 p-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
           <Fact label="Product Subtitle" value={app.category} />
           <Fact label="Status" value={app.status.replace("-", " ")} />
           <WebsiteUrlFact url={app.productionUrl} />
           <Fact label="License Type" value={app.licenseType} />
+          <Fact label="Navigation Target" value={app.navigationTarget === "new-tab" ? "New Tab" : "Same Tab"} />
           <Fact label="Last updated" value={formatDate(app.updatedAt)} />
           <Fact label="Contact Person" value={app.contactPersonName || ""} />
         </div>
@@ -427,7 +433,8 @@ const ProductDetails = () => {
     if (!product) return;
     try {
       const isActive = status !== "inactive";
-      const productStatus = status === "active" ? 1 : status === "coming-soon" ? 2 : null;
+      const productStatus =
+        status === "active" ? 1 : status === "coming-soon" ? 2 : null;
       const payload: ProductInputPayload = {
         productId: product.productId,
         productName: product.productName,
@@ -435,9 +442,11 @@ const ProductDetails = () => {
         prodDescription: product.prodDescription,
         externalPageUrl: product.externalPageUrl,
         defaultAccessDays: product.defaultAccessDays,
+        licenseType: product.licenseType,
+        navigationTarget: product.navigationTarget,
         isActive,
         productStatus,
-        contactPerson: product.contactPerson,
+        contactUserId: product.contactUserId,
       };
       await updateProduct(payload);
       await loadProduct();

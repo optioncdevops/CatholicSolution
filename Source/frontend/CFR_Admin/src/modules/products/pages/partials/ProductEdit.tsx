@@ -1,14 +1,30 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton } from "@app/components/buttons";
-import { InputField, MandatoryIndicator, ProfileImageUpload, RadioGroup, TextareaField, Dropdown } from "@app/components/formControls";
+import {
+  InputField,
+  MandatoryIndicator,
+  ProfileImageUpload,
+  RadioGroup,
+  TextareaField,
+  Dropdown,
+} from "@app/components/formControls";
 import { StatusBadge } from "@app/components/Badge";
 import { cn } from "@app/utilities/cn";
 import { confirmAction } from "@/modules/lib/confirm";
-import { validateProductForm, type ProductFormErrors } from "../../validator/productValidation";
+import {
+  validateProductForm,
+  type ProductFormErrors,
+} from "../../validator/productValidation";
 import {
   getProductById,
   getProductContactUsers,
@@ -30,30 +46,51 @@ import {
   toStoredProductLogoPath,
   toAdminApplication,
   resolveContactUser,
+  toProductContactUserId,
 } from "../../utils/productHelpers";
 import {
   PRODUCT_LICENSE_TYPE_OPTIONS,
   PRODUCT_NAVIGATION_OPTIONS,
 } from "../../utils/productFilters";
-import type { AdminApplication, ProductLicenseType, ProductNavigationTarget } from "@/modules/types";
-
-
+import type {
+  AdminApplication,
+  ProductLicenseType,
+  ProductNavigationTarget,
+} from "@/modules/types";
 
 function isImageIcon(icon: string): boolean {
   if (!icon) return false;
-  return icon.startsWith("data:") || icon.startsWith("blob:") || icon.startsWith("/") || /^https?:\/\//i.test(icon);
+  return (
+    icon.startsWith("data:") ||
+    icon.startsWith("blob:") ||
+    icon.startsWith("/") ||
+    /^https?:\/\//i.test(icon)
+  );
 }
 
 function ProductIcon({ icon, gradient }: { icon: string; gradient: string }) {
   if (isImageIcon(icon)) {
     const resolved =
-      icon.startsWith("data:") || icon.startsWith("blob:") || /^https?:\/\//i.test(icon)
+      icon.startsWith("data:") ||
+      icon.startsWith("blob:") ||
+      /^https?:\/\//i.test(icon)
         ? icon
         : resolveProductLogoUrl(icon) || icon;
-    return <img src={resolved} alt="" className="size-9 shrink-0 rounded-lg object-cover" aria-hidden="true" />;
+    return (
+      <img
+        src={resolved}
+        alt=""
+        className="size-9 shrink-0 rounded-lg object-cover"
+        aria-hidden="true"
+      />
+    );
   }
   return (
-    <span className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white" style={{ background: gradient }} aria-hidden="true">
+    <span
+      className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white"
+      style={{ background: gradient }}
+      aria-hidden="true"
+    >
       {icon}
     </span>
   );
@@ -66,7 +103,10 @@ function ProductCard({
   footer,
   className,
 }: {
-  app: Pick<AdminApplication, "name" | "category" | "icon" | "gradient" | "description" | "status">;
+  app: Pick<
+    AdminApplication,
+    "name" | "category" | "icon" | "gradient" | "description" | "status"
+  >;
   linkTo?: string;
   warningCount?: number;
   footer?: ReactNode;
@@ -77,31 +117,56 @@ function ProductCard({
       <ProductIcon icon={app.icon} gradient={app.gradient} />
       <div className="min-w-0">
         <span className="flex items-center gap-1.5">
-          <span className={cn("truncate text-sm font-extrabold text-[var(--text-primary)]", linkTo && "group-hover:underline")}>{app.name}</span>
+          <span
+            className={cn(
+              "truncate text-sm font-extrabold text-[var(--text-primary)]",
+              linkTo && "group-hover:underline",
+            )}
+          >
+            {app.name}
+          </span>
           {warningCount > 0 ? (
-            <span title={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`} aria-label={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`}>
-              <AlertTriangle size={13} className="shrink-0 text-[var(--warning)]" />
+            <span
+              title={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`}
+              aria-label={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`}
+            >
+              <AlertTriangle
+                size={13}
+                className="shrink-0 text-[var(--warning)]"
+              />
             </span>
           ) : null}
         </span>
-        <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{app.category}</span>
+        <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">
+          {app.category}
+        </span>
       </div>
     </>
   );
 
   return (
-    <article className={cn("admin-product-card relative", !linkTo && "admin-product-card--static", className)}>
+    <article
+      className={cn(
+        "admin-product-card relative",
+        !linkTo && "admin-product-card--static",
+        className,
+      )}
+    >
       <div className="absolute right-[0.85rem] top-3">
         <StatusBadge status={app.status} kind="application" />
       </div>
       <div className="flex items-center gap-2.5 pr-16">
         {linkTo ? (
-          <Link to={linkTo} className="group flex min-w-0 items-center gap-2.5">{identity}</Link>
+          <Link to={linkTo} className="group flex min-w-0 items-center gap-2.5">
+            {identity}
+          </Link>
         ) : (
           <div className="flex min-w-0 items-center gap-2.5">{identity}</div>
         )}
       </div>
-      <p className="admin-product-card__description">{app.description || "No description yet."}</p>
+      <p className="admin-product-card__description">
+        {app.description || "No description yet."}
+      </p>
       {footer ? (
         <div className="mt-auto">
           <div className="admin-product-card__divider" />
@@ -112,7 +177,14 @@ function ProductCard({
   );
 }
 
-function TagList({ label, values, draft, onDraftChange, onAdd, onRemove }: {
+function TagList({
+  label,
+  values,
+  draft,
+  onDraftChange,
+  onAdd,
+  onRemove,
+}: {
   label: string;
   values: string[];
   draft: string;
@@ -127,9 +199,19 @@ function TagList({ label, values, draft, onDraftChange, onAdd, onRemove }: {
       ) : (
         <ul className="flex flex-wrap gap-1.5">
           {values.map((value) => (
-            <li key={value} className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+            <li
+              key={value}
+              className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)]"
+            >
               {value}
-              <button type="button" onClick={() => onRemove(value)} aria-label={`Remove ${value}`} className="text-[var(--text-faint)] hover:text-[var(--error)]">✕</button>
+              <button
+                type="button"
+                onClick={() => onRemove(value)}
+                aria-label={`Remove ${value}`}
+                className="text-[var(--text-faint)] hover:text-[var(--error)]"
+              >
+                ✕
+              </button>
             </li>
           ))}
         </ul>
@@ -138,11 +220,18 @@ function TagList({ label, values, draft, onDraftChange, onAdd, onRemove }: {
         <input
           value={draft}
           onChange={(event) => onDraftChange(event.target.value)}
-          onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onAdd(); } }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onAdd();
+            }
+          }}
           placeholder={`Add ${label.toLowerCase()} and press Enter`}
           className="flex-1 rounded-[var(--admin-control-radius)] border border-[var(--line)] px-3 py-2 text-[length:var(--admin-text-base)] text-[var(--text-primary)]"
         />
-        <CommonButton variant="outline" size="sm" onClick={onAdd}>Add</CommonButton>
+        <CommonButton variant="outline" size="sm" onClick={onAdd}>
+          Add
+        </CommonButton>
       </div>
     </div>
   );
@@ -160,21 +249,34 @@ function ProductForm({
   errors: ProductFormErrors;
   touched: boolean;
   contactUsers: ProductContactUser[];
-  onUpdate: <K extends keyof AdminApplication>(key: K, value: AdminApplication[K]) => void;
+  onUpdate: <K extends keyof AdminApplication>(
+    key: K,
+    value: AdminApplication[K],
+  ) => void;
   onLogoFileChange?: (file: File | null) => void;
 }) {
   const [featureDraft, setFeatureDraft] = useState("");
 
   const contactOptions = useMemo(() => {
     const list = contactUsers
-      .filter((user) => user.isActive === 1 || String(user.userId) === form.contactUserId)
+      .filter(
+        (user) =>
+          user.isActive === 1 || String(user.userId) === form.contactUserId,
+      )
       .map((user) => ({
         id: String(user.userId),
         value: user.fullName,
       }));
 
     const activeId = form.contactUserId || form.contactPersonName || "";
-    if (activeId && !list.some((opt) => opt.id === activeId || opt.value.toLowerCase() === activeId.toLowerCase())) {
+    if (
+      activeId &&
+      !list.some(
+        (opt) =>
+          opt.id === activeId ||
+          opt.value.toLowerCase() === activeId.toLowerCase(),
+      )
+    ) {
       list.unshift({
         id: activeId,
         value: form.contactPersonName || activeId,
@@ -190,7 +292,11 @@ function ProductForm({
     onUpdate("features", [...(form.features ?? []), value]);
     setFeatureDraft("");
   };
-  const removeFeature = (value: string) => onUpdate("features", (form.features ?? []).filter((item) => item !== value));
+  const removeFeature = (value: string) =>
+    onUpdate(
+      "features",
+      (form.features ?? []).filter((item) => item !== value),
+    );
 
   const handleLogoChange = (file: File | null) => {
     if (onLogoFileChange) {
@@ -201,15 +307,37 @@ function ProductForm({
     }
   };
 
-  const previewUrl = resolveProductLogoUrl(form.icon) || (isImageIcon(form.icon) ? form.icon : undefined);
+  const previewUrl =
+    resolveProductLogoUrl(form.icon) ||
+    (isImageIcon(form.icon) ? form.icon : undefined);
 
   return (
     <section className="admin-panel-card">
       <div className="flex flex-col divide-y divide-[var(--line-soft)]">
         <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
-          <InputField label="Product Name" required placeholder="Enter product name" autoFocus value={form.name} onChange={(event) => onUpdate("name", event.target.value)} error={touched ? errors.name : undefined} />
-          <InputField label="Short Name" placeholder="Enter short name" value={form.shortName} onChange={(event) => onUpdate("shortName", event.target.value)} />
-          <InputField label="Product Subtitle" required placeholder="Enter product subtitle" value={form.category} onChange={(event) => onUpdate("category", event.target.value)} error={touched ? errors.category : undefined} />
+          <InputField
+            label="Product Name"
+            required
+            placeholder="Enter product name"
+            autoFocus
+            value={form.name}
+            onChange={(event) => onUpdate("name", event.target.value)}
+            error={touched ? errors.name : undefined}
+          />
+          <InputField
+            label="Short Name"
+            placeholder="Enter short name"
+            value={form.shortName}
+            onChange={(event) => onUpdate("shortName", event.target.value)}
+          />
+          <InputField
+            label="Product Subtitle"
+            required
+            placeholder="Enter product subtitle"
+            value={form.category}
+            onChange={(event) => onUpdate("category", event.target.value)}
+            error={touched ? errors.category : undefined}
+          />
           <InputField
             label="Production URL"
             value={form.productionUrl}
@@ -221,13 +349,17 @@ function ProductForm({
             label="License Type"
             options={PRODUCT_LICENSE_TYPE_OPTIONS}
             value={form.licenseType}
-            onValueChange={(value) => onUpdate("licenseType", value as ProductLicenseType)}
+            onValueChange={(value) =>
+              onUpdate("licenseType", value as ProductLicenseType)
+            }
           />
           <RadioGroup
             label="Navigation Target"
             options={PRODUCT_NAVIGATION_OPTIONS}
             value={form.navigationTarget}
-            onValueChange={(value) => onUpdate("navigationTarget", value as ProductNavigationTarget)}
+            onValueChange={(value) =>
+              onUpdate("navigationTarget", value as ProductNavigationTarget)
+            }
           />
           <Dropdown
             label="Contact Person"
@@ -240,28 +372,48 @@ function ProductForm({
               const selected = contactUsers.find(
                 (user) =>
                   String(user.userId) === selectedValue ||
-                  user.fullName.trim().toLowerCase() === selectedValue.trim().toLowerCase()
+                  user.fullName.trim().toLowerCase() ===
+                    selectedValue.trim().toLowerCase(),
               );
-              onUpdate("contactUserId", selected ? String(selected.userId) : selectedValue);
-              onUpdate("contactPersonName", selected?.fullName ?? selectedValue);
+              onUpdate(
+                "contactUserId",
+                selected ? String(selected.userId) : selectedValue,
+              );
+              onUpdate(
+                "contactPersonName",
+                selected?.fullName ?? selectedValue,
+              );
             }}
             options={contactOptions}
           />
         </div>
 
         <div className="p-4">
-          <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Features</p>
-          <TagList label="Features" values={form.features ?? []} draft={featureDraft} onDraftChange={setFeatureDraft} onAdd={addFeature} onRemove={removeFeature} />
+          <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
+            Features
+          </p>
+          <TagList
+            label="Features"
+            values={form.features ?? []}
+            draft={featureDraft}
+            onDraftChange={setFeatureDraft}
+            onAdd={addFeature}
+            onRemove={removeFeature}
+          />
         </div>
 
         <div className="p-4">
-          <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Product Preview</p>
+          <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
+            Product Preview
+          </p>
           <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
             <ProfileImageUpload
               label="Product Logo"
               onFileChange={handleLogoChange}
               removable
-              fallbackInitials={(form.icon?.length ?? 0) <= 2 ? form.icon : undefined}
+              fallbackInitials={
+                (form.icon?.length ?? 0) <= 2 ? form.icon : undefined
+              }
               initialPreviewUrl={previewUrl}
             />
             <ProductCard app={form} className="max-w-xs" />
@@ -269,7 +421,14 @@ function ProductForm({
         </div>
 
         <div className="p-4">
-          <TextareaField label="Description" value={form.description} onChange={(event) => onUpdate("description", event.target.value)} rows={3} showCharCount={false} placeholder="What does this product do?" />
+          <TextareaField
+            label="Description"
+            value={form.description}
+            onChange={(event) => onUpdate("description", event.target.value)}
+            rows={3}
+            showCharCount={false}
+            placeholder="What does this product do?"
+          />
         </div>
       </div>
     </section>
@@ -287,7 +446,9 @@ const ProductEdit = () => {
   //#region States
   const [product, setProduct] = useState<ProductApiItem | null>(null);
   const [form, setForm] = useState<AdminApplication | null>(null);
-  const [originalForm, setOriginalForm] = useState<AdminApplication | null>(null);
+  const [originalForm, setOriginalForm] = useState<AdminApplication | null>(
+    null,
+  );
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoRemoved, setLogoRemoved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -323,12 +484,17 @@ const ProductEdit = () => {
       ]);
 
       const loadedUsers =
-        usersRes.statusCode === 204 ? [] : normalizeProductContactUsers(usersRes.resultData);
+        usersRes.statusCode === 204
+          ? []
+          : normalizeProductContactUsers(usersRes.resultData);
       setContactUsers(loadedUsers);
 
       const item = normalizeProductApiItem(res.resultData);
       if (item) {
-        const initialForm = resolveContactUser(toAdminApplication(item), loadedUsers);
+        const initialForm = resolveContactUser(
+          toAdminApplication(item),
+          loadedUsers,
+        );
         setProduct(item);
         setForm(initialForm);
         setOriginalForm(initialForm);
@@ -413,7 +579,10 @@ const ProductEdit = () => {
 
     setSaving(true);
     try {
-      let finalLogoName: string | null | undefined = product.logoName ?? toStoredProductLogoPath(product.logoUrl) ?? product.logoUrl;
+      let finalLogoName: string | null | undefined =
+        product.logoName ??
+        toStoredProductLogoPath(product.logoUrl) ??
+        product.logoUrl;
       if (logoFile) {
         const uploadedPath = await uploadProductLogo(logoFile);
         finalLogoName = toStoredProductLogoPath(uploadedPath) ?? uploadedPath;
@@ -422,11 +591,9 @@ const ProductEdit = () => {
       }
 
       const defaultAccessDays =
-        form.licenseType === "free"
-          ? 0
-          : product.defaultAccessDays > 0
-            ? product.defaultAccessDays
-            : 365;
+        product.defaultAccessDays > 0
+          ? product.defaultAccessDays
+          : 365;
       const payload: ProductInputPayload = {
         productId: product.productId,
         productName: form.name.trim(),
@@ -434,12 +601,19 @@ const ProductEdit = () => {
         prodDescription: form.description?.trim() || null,
         externalPageUrl: form.productionUrl?.trim() || null,
         defaultAccessDays,
+        licenseType: form.licenseType,
+        navigationTarget: form.navigationTarget,
         logoName: finalLogoName,
         logoUrl: finalLogoName,
         features: form.features,
         isActive: form.status !== "inactive",
-        productStatus: form.status === "active" ? 1 : form.status === "coming-soon" ? 2 : null,
-        contactPerson: form.contactPersonName?.trim() || form.contactUserId?.trim() || "",
+        productStatus:
+          form.status === "active"
+            ? 1
+            : form.status === "coming-soon"
+              ? 2
+              : null,
+        contactUserId: toProductContactUserId(form.contactUserId) ?? 0,
       };
 
       await updateProduct(payload);
@@ -447,7 +621,10 @@ const ProductEdit = () => {
       goToDetails(product.productId);
     } catch (err) {
       console.error("Error saving product:", err);
-      showToast(typeof err === "string" ? err : "Failed to update product", "error");
+      showToast(
+        typeof err === "string" ? err : "Failed to update product",
+        "error",
+      );
     } finally {
       setSaving(false);
     }

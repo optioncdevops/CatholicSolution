@@ -432,7 +432,7 @@ namespace CFR.AcutisService.Service.Products
                         input.LogoName = Path.GetFileName(existingLogo.Replace('\\', '/'));
                         input.LogoUrl = input.LogoName;
                     }
-                    input.ContactPerson ??= existingProduct.ContactPerson;
+                    input.ContactUserId ??= existingProduct.ContactUserId;
                     if (input.DefaultAccessDays <= 0)
                     {
                         input.DefaultAccessDays = existingProduct.DefaultAccessDays > 0 ? existingProduct.DefaultAccessDays : 365;
