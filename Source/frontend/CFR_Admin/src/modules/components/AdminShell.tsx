@@ -9,6 +9,7 @@ import {
 import { createPortal } from "react-dom";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Bell, ChevronDown, Settings } from "lucide-react";
+import { AppLoader } from "@shared/app/components/AppLoader";
 import { Brand } from "@shared/app/components/Brand";
 import { Footer } from "@shared/app/components/Footer";
 import { ProfileMenu } from "@shared/app/components/ProfileMenu";
@@ -259,16 +260,7 @@ export function AdminShell() {
 
       <main className={`flex-1 py-4 ${CONTAINER}`}>
         <div className="admin-page-card">
-          <Suspense
-            fallback={
-              <div className="grid min-h-[40vh] place-items-center">
-                <div
-                  className="size-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"
-                  aria-label="Loading"
-                />
-              </div>
-            }
-          >
+          <Suspense fallback={<AppLoader label="Loading page" caption="Loading…" />}>
             <Outlet />
           </Suspense>
         </div>

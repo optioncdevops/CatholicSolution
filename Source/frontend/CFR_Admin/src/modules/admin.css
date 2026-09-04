@@ -103,8 +103,23 @@
 }
 @keyframes admin-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
 
+/* Branded loading ring for AppLoader — the in-app Suspense-boundary counterpart to index.html's
+   boot preloader, using the same gold-on-navy accent language on a light surface. */
+.app-loader-ring {
+  position: relative;
+  display: inline-block;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 2.5px solid var(--line-strong);
+  border-top-color: var(--secondary);
+  animation: admin-loader-spin 800ms linear infinite;
+}
+
+@keyframes admin-loader-spin { to { transform: rotate(360deg); } }
+
 @media (prefers-reduced-motion: reduce) {
-  .admin-reveal, .admin-reveal-stagger > *, .admin-skeleton { animation: none !important; }
+  .admin-reveal, .admin-reveal-stagger > *, .admin-skeleton, .app-loader-ring { animation: none !important; }
 }
 
 /* The whole page body is one framed card — the title strip is its top region, not a

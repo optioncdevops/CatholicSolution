@@ -99,8 +99,8 @@ export function ResetPasswordPage() {
           <div className="admin-auth-success" aria-live="polite">
             <span className="admin-auth-success__icon"><CheckIcon size={22} /></span>
             <span className="admin-auth-card__kicker">Password Updated</span>
-            <h2>Your Password Is Ready</h2>
-            <p>Your password has been successfully updated. Please sign in again using your new password.</p>
+            <h2>Password Successfully Updated</h2>
+            <p>Your password has been changed successfully. Please sign in again using your new password.</p>
             <Link to={loginTarget} className="admin-auth-submit admin-auth-submit--link">
               Continue to Sign In <ArrowRightIcon size={15} />
             </Link>
