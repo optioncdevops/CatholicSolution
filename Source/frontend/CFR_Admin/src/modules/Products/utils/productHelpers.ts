@@ -268,9 +268,16 @@ export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLic
     }
   }
 
-  return licenses.map((item) => {
+  const usedInvoiceNumbers = new Set<string>();
+  return licenses.map((item, index) => {
     const startDate = item.activationDate ?? item.createdDate ?? '';
     const expiryDate = item.expiryDate ?? '';
+    const invoiceNumber = formatInvoiceNumber(
+      startDate,
+      item.licenseId,
+      usedInvoiceNumbers,
+      index,
+    );
     const days = expiryDate ? daysUntil(expiryDate) : null;
     const isOverdue = days !== null && days < 0;
     const paymentStatus: 'paid' | 'overdue' | 'suspended' = isOverdue
@@ -289,6 +296,7 @@ export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLic
     return {
       id: String(item.licenseId),
       licenseId: item.licenseId,
+      invoiceNumber,
       orgId: String(item.orgId),
       customerCode: formatCustomerCodeAsInteger(item.orgId),
       customer: item.orgName?.trim() || `Organization #${item.orgId}`,
@@ -450,4 +458,53 @@ export function resolveContactUser(
     contactUserId: app.contactUserId || (contactUserId != null ? String(contactUserId) : ''),
     contactPersonName: app.contactPersonName || rawName,
   };
+}
+
+/**
+ * Extracts a 4-digit start year from a date string, falling back to the current year.
+ */
+export function extractStartYear(dateStr: string | null | undefined): string {
+  if (!dateStr || typeof dateStr !== 'string') {
+    return String(new Date().getFullYear());
+  }
+  const match = dateStr.match(/\b(20\d{2}|19\d{2})\b/);
+  if (match) {
+    return match[1];
+  }
+  const d = new Date(dateStr);
+  if (!Number.isNaN(d.getFullYear())) {
+    return String(d.getFullYear());
+  }
+  return String(new Date().getFullYear());
+}
+
+/**
+ * Formats a unique invoice number in the format INV-{StartYear}-{UniqueSerialNumber}.
+ * Example: INV-2026-00263
+ * Guarantees no duplicate values even across edge-cases via an optional usedNumbers Set.
+ */
+export function formatInvoiceNumber(
+  startDate: string | null | undefined,
+  licenseId: number | string,
+  usedNumbers?: Set<string>,
+  fallbackIndex?: number,
+): string {
+  const year = extractStartYear(startDate);
+  const idNum = Number(licenseId);
+  let serial =
+    !Number.isNaN(idNum) && idNum > 0
+      ? idNum
+      : fallbackIndex != null
+        ? fallbackIndex + 1
+        : 1;
+
+  let candidate = `INV-${year}-${String(serial).padStart(5, '0')}`;
+  if (usedNumbers) {
+    while (usedNumbers.has(candidate)) {
+      serial++;
+      candidate = `INV-${year}-${String(serial).padStart(5, '0')}`;
+    }
+    usedNumbers.add(candidate);
+  }
+  return candidate;
 }

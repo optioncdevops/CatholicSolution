@@ -119,6 +119,7 @@ export interface ProductLicenseApiItem {
 export interface ProductLicenseHistoryRow {
   id: string;
   licenseId: number;
+  invoiceNumber: string;
   orgId: string;
   customerCode: string;
   customer: string;
