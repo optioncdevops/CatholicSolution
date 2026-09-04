@@ -101,18 +101,22 @@ export function AppHubPage() {
 
   //#region Handlers
   const openRequestModal = useCallback((app: CatalogApp) => {
-    if (requestedAppIds.includes(app.id)) return;
+    if (requestedAppIds.includes(app.id)) {
+      showToast(`You have already requested access to ${app.name}.`);
+      return;
+    }
     setSelectedApp(null);
     setRequestedApp(app);
-  }, [requestedAppIds]);
+  }, [requestedAppIds, showToast]);
 
   const closeRequestModal = useCallback(() => {
     setRequestedApp(null);
   }, []);
 
-  const handleRequestSubmitted = useCallback((app: CatalogApp) => {
+  const handleRequestSubmitted = useCallback((app: CatalogApp, message?: string) => {
     setRequestedAppIds((current) => (current.includes(app.id) ? current : [...current, app.id]));
-  }, []);
+    showToast(message || `Your access request for ${app.name} has been sent.`);
+  }, [showToast]);
   //#endregion
 
   //#region Render

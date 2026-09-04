@@ -143,6 +143,7 @@ export const toCatalogApp = (row: HubProductApiItem): CatalogApp | null => {
     launcherEnabled: isYourApps,
     externalUrl: pickString(source, 'externalUrl', 'ExternalUrl', 'externalPageUrl', 'ExternalPageUrl') || catalog?.externalUrl,
     navigationTarget: catalog?.navigationTarget ?? 'same-tab',
+    contactEmail: pickString(source, 'contactEmail', 'ContactEmail') || catalog?.contactEmail,
   };
 };
 

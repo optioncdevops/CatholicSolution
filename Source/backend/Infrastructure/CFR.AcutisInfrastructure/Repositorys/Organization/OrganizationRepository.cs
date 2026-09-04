@@ -170,6 +170,10 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             parameters.Add(DBParameterName.OrganizationParams.Website, input.Website, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPerson, input.ContactPerson, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPhone, input.ContactPhone, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.Address, input.Address, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.City, input.City, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.State, input.State, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.Zip, input.Zip, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.UpdatedBy, insertedBy, DbType.Int64);
             parameters.Add(DBParameterName.OrganizationParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
@@ -264,6 +268,10 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             parameters.Add(DBParameterName.OrganizationParams.Website, input.Website, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPerson, input.ContactPerson, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPhone, input.ContactPhone, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.Address, input.Address, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.City, input.City, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.State, input.State, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.Zip, input.Zip, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.UpdatedBy, updatedBy, DbType.Int64);
             parameters.Add(DBParameterName.OrganizationParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);

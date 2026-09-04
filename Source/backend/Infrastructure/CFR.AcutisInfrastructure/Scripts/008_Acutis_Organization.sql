@@ -37,6 +37,42 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Address'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [Address] NVARCHAR(300) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'City'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [City] NVARCHAR(100) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'State'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [State] NVARCHAR(50) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Zip'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [Zip] NVARCHAR(20) NULL;
+END
+GO
+
 IF OBJECT_ID(N'[dbo].[Acutis_Organization_CRUD]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[Acutis_Organization_CRUD];
 GO
@@ -60,6 +96,10 @@ CREATE PROCEDURE [dbo].[Acutis_Organization_CRUD]
     @Website NVARCHAR(300) = NULL,
     @ContactPerson NVARCHAR(200) = NULL,
     @ContactPhone NVARCHAR(30) = NULL,
+    @Address NVARCHAR(300) = NULL,
+    @City NVARCHAR(100) = NULL,
+    @State NVARCHAR(50) = NULL,
+    @Zip NVARCHAR(20) = NULL,
     @UpdatedBy BIGINT = NULL,
     @ProductId INT = NULL,
     @ReturnValue INT = NULL OUTPUT
@@ -79,6 +119,10 @@ BEGIN
             o.[Website],
             o.[ContactPerson],
             o.[ContactPhone],
+            o.[Address],
+            o.[City],
+            o.[State],
+            o.[Zip],
             o.[InsertedDate],
             o.[UpdatedDate],
             (SELECT COUNT(*) FROM [auth].[OrganizationUser] AS ou WHERE ou.[OrgId] = o.[OrgId] AND ou.[IsDeleted] = 0) AS [UserCount],
@@ -99,6 +143,10 @@ BEGIN
             o.[Website],
             o.[ContactPerson],
             o.[ContactPhone],
+            o.[Address],
+            o.[City],
+            o.[State],
+            o.[Zip],
             o.[InsertedDate],
             o.[UpdatedDate],
             (SELECT COUNT(*) FROM [auth].[OrganizationUser] AS ou WHERE ou.[OrgId] = o.[OrgId] AND ou.[IsDeleted] = 0) AS [UserCount],
@@ -128,6 +176,10 @@ BEGIN
             [Website] = @Website,
             [ContactPerson] = @ContactPerson,
             [ContactPhone] = @ContactPhone,
+            [Address] = @Address,
+            [City] = @City,
+            [State] = @State,
+            [Zip] = @Zip,
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UpdatedBy
         WHERE [OrgId] = @OrgId
@@ -144,11 +196,13 @@ BEGIN
         INSERT INTO [core].[Organization]
         (
             [OrgId], [OrgName], [OrgStatus], [ContactEmail], [Website], [ContactPerson], [ContactPhone],
+            [Address], [City], [State], [Zip],
             [InsertedDate], [InsertedBy], [IsDeleted]
         )
         VALUES
         (
             @OrgId, @OrgName, @OrgStatus, @ContactEmail, @Website, @ContactPerson, @ContactPhone,
+            @Address, @City, @State, @Zip,
             SYSUTCDATETIME(), @UpdatedBy, 0
         );
 

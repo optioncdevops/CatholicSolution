@@ -6,6 +6,10 @@ export interface OrganizationApiItem {
   website: string | null;
   contactPerson: string | null;
   contactPhone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
   insertedDate: string;
   updatedDate: string | null;
   userCount: number;
@@ -19,6 +23,10 @@ export interface OrganizationFormValues {
   website: string;
   contactPerson: string;
   contactPhone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
 }
 
 export interface UpdateOrganizationPayload {
@@ -29,6 +37,10 @@ export interface UpdateOrganizationPayload {
   website: string;
   contactPerson: string;
   contactPhone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
 }
 
 export interface CreateOrganizationPayload {
@@ -38,6 +50,10 @@ export interface CreateOrganizationPayload {
   website: string;
   contactPerson: string;
   contactPhone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
 }
 
 export interface OrganizationUserApiItem {

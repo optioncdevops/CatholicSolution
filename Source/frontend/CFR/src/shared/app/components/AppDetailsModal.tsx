@@ -62,24 +62,7 @@ export function AppDetailsModal({ app, onClose, onRequest }: AppDetailsModalProp
         <div className="max-h-[68vh] overflow-y-auto p-5 sm:p-6">
           <p id="app-modal-description" className="text-sm leading-7 text-slate-600">{app.description}</p>
           {app.features.length ? <div className="mt-5"><p className="metric-label text-slate-400">Key features</p><div className="mt-2.5 flex flex-wrap gap-2">{app.features.map((feature) => <span key={feature} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600">{feature}</span>)}</div></div> : null}
-          {app.stats.length ? <div className="mt-5"><p className="metric-label text-slate-400">At a glance</p><div className="mt-2.5 grid gap-2 sm:grid-cols-2">{app.stats.map((stat) => <div key={`${stat.value}-${stat.label}`} className="rounded-xl border border-slate-200 bg-slate-50 p-3.5"><div className="font-display text-base font-extrabold text-slate-900">{stat.value}</div><div className="mt-1 text-[11px] font-semibold text-slate-500">{stat.label}</div></div>)}</div></div> : null}
 
-          {details ? (
-            <>
-              <button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs font-extrabold text-violet-700 hover:border-violet-200 hover:bg-violet-50">
-                {expanded ? 'Show less details' : 'Show more details'} <span className={`transition-transform ${expanded ? 'rotate-180' : ''}`}>⌄</span>
-              </button>
-              {expanded ? (
-                <div className="pt-5">
-                  <p className="text-[13px] leading-6 text-slate-600">{details.longDescription}</p>
-                  <div className="mt-5"><p className="metric-label text-slate-400">What's included</p><div className="mt-2 grid gap-2">{details.included.map((item) => <div key={item} className="flex gap-2 text-xs leading-5 text-slate-600"><span className="font-extrabold text-emerald-600">✓</span><span>{item}</span></div>)}</div></div>
-                  <div className="mt-5"><p className="metric-label text-slate-400">Works well with</p><div className="mt-2 flex flex-wrap gap-2">{details.integrations.map((item) => <span key={item} className="rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-brand-navy">{item}</span>)}</div></div>
-                  {details.activity?.length ? <div className="mt-5"><p className="metric-label text-slate-400">Recent activity</p><div className="mt-2 divide-y divide-slate-100">{details.activity.map((item) => <div key={item.title} className="flex gap-3 py-2.5"><span className="mt-1.5 size-2 shrink-0 rounded-full bg-emerald-500" /><span><strong className="block text-xs text-slate-700">{item.title}</strong>{item.meta ? <span className="mt-0.5 block text-[11px] text-slate-400">{item.meta}</span> : null}</span></div>)}</div></div> : null}
-                  {details.steps?.length ? <div className="mt-5"><p className="metric-label text-slate-400">Getting started</p><div className="mt-2 divide-y divide-slate-100">{details.steps.map((step, index) => <div key={step} className="flex gap-3 py-2.5"><span className="mt-1.5 size-2 shrink-0 rounded-full bg-violet-600" /><strong className="text-xs leading-5 text-slate-700">{index + 1}. {step}</strong></div>)}</div></div> : null}
-                </div>
-              ) : null}
-            </>
-          ) : null}
         </div>
 
         <footer className="flex flex-wrap items-center gap-3 border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-6">

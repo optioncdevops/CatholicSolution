@@ -7,6 +7,10 @@ export const organizationDefaultValues: OrganizationFormValues = {
   website: '',
   contactPerson: '',
   contactPhone: '',
+  address: '',
+  city: '',
+  state: '',
+  zip: '',
 };
 
 export const organizationRules = {
@@ -29,6 +33,12 @@ export const organizationRules = {
     pattern: {
       value: /^[+()\d][\d\s().-]{6,19}$/,
       message: 'Enter a valid phone number.',
+    },
+  },
+  zip: {
+    pattern: {
+      value: /^\d{5}(?:-\d{4})?$/,
+      message: 'Enter a valid ZIP code.',
     },
   },
 };

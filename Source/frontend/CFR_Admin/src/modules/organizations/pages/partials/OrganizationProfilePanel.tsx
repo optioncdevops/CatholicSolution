@@ -45,6 +45,10 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
       website: organization.website ?? '',
       contactPerson: organization.contactPerson ?? '',
       contactPhone: organization.contactPhone ?? '',
+      address: organization.address ?? '',
+      city: organization.city ?? '',
+      state: organization.state ?? '',
+      zip: organization.zip ?? '',
     },
     mode: 'onChange',
   });
@@ -59,6 +63,10 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
       website: organization.website ?? '',
       contactPerson: organization.contactPerson ?? '',
       contactPhone: organization.contactPhone ?? '',
+      address: organization.address ?? '',
+      city: organization.city ?? '',
+      state: organization.state ?? '',
+      zip: organization.zip ?? '',
     });
     setEditing(true);
   };
@@ -85,6 +93,10 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
         website: values.website.trim(),
         contactPerson: values.contactPerson.trim(),
         contactPhone: values.contactPhone.trim(),
+        address: values.address.trim(),
+        city: values.city.trim(),
+        state: values.state.trim(),
+        zip: values.zip.trim(),
       });
       showToast(`${values.orgName.trim()} updated.`, 'success');
       setEditing(false);
@@ -113,6 +125,10 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
           <Fact label="Contact Person" value={organization.contactPerson ?? ''} />
           <Fact label="Contact Number" value={organization.contactPhone ?? ''} />
           <Fact label="Contact Email" value={organization.contactEmail ?? ''} />
+          <Fact label="Address" value={organization.address ?? ''} />
+          <Fact label="City" value={organization.city ?? ''} />
+          <Fact label="State" value={organization.state ?? ''} />
+          <Fact label="ZIP" value={organization.zip ?? ''} />
           <div className="min-w-0">
             <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Status</p>
             <p className="mt-0.5"><StatusBadge status={organization.orgStatus} kind="organization" /></p>
@@ -135,6 +151,10 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
           <InputField control={control} name="contactPerson" label="Contact person" disabled={saving} />
           <InputField control={control} name="contactPhone" label="Contact number" type="tel" rules={organizationRules.contactPhone} disabled={saving} />
           <InputField control={control} name="contactEmail" label="Contact email" type="email" rules={organizationRules.contactEmail} disabled={saving} />
+          <InputField control={control} name="address" label="Address" placeholder="Street address" disabled={saving} wrapperClassName="sm:col-span-2" />
+          <InputField control={control} name="city" label="City" disabled={saving} />
+          <InputField control={control} name="state" label="State" disabled={saving} />
+          <InputField control={control} name="zip" label="ZIP" placeholder="12345" rules={organizationRules.zip} disabled={saving} />
           <Dropdown control={control} name="orgStatus" label="Status" searchable={false} clearable={false} options={ORG_STATUS_OPTIONS} disabled={saving} />
         </div>
 

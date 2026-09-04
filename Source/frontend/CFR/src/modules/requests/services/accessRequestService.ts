@@ -17,9 +17,14 @@ export const getHubProducts = async (requesterEmail: string): Promise<any> => {
   }
 };
 
-export const saveAccessRequest = async (value: SaveAccessRequestPayload): Promise<any> => {
+export const saveAccessRequest = async (value: SaveAccessRequestPayload): Promise<string> => {
   try {
-    return await postApi(`${controller}/SaveAccessRequest`, value);
+    const response = await postApi(`${controller}/SaveAccessRequest`, value);
+    const statusCode = Number(response?.statusCode ?? 200);
+    if (statusCode >= 400) {
+      throw String(response?.statusMessage || 'Failed to submit access request');
+    }
+    return response?.statusMessage || 'Success';
   } catch (error: unknown) {
     if (typeof error === 'string') throw error;
     throw 'Failed to submit access request';

@@ -62,5 +62,17 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("hubSection")]
         public string HubSection { get; set; } = "future";
+
+        /// <summary>
+        /// Gets or sets the features as a comma-separated string.
+        /// </summary>
+        [JsonPropertyName("features")]
+        public string? Features { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contact person's email address if found.
+        /// </summary>
+        [JsonPropertyName("contactEmail")]
+        public string? ContactEmail { get; set; }
     }
 }

@@ -39,6 +39,7 @@ export interface CatalogApp {
   statusLabel: string;
   statusDetail?: string;
   details?: AppExtendedDetails;
+  contactEmail?: string;
   /** App Hub ownership/discovery state. This is the only section-classification field. */
   hubSection: AppHubSection;
   /** Business applications are deployed outside this repository on independently managed domains. */

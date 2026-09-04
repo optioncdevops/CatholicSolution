@@ -8,6 +8,7 @@ import {
   BuildingIcon,
   CheckIcon,
   MailIcon,
+  MapPinIcon,
   ShieldCheckIcon,
   UserIcon,
 } from '@shared/app/components/UiIcons';
@@ -18,6 +19,7 @@ import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 const requestableApps = APP_CATALOG.filter((app) => app.status !== 'coming-soon');
 
 const organizationTypes = ['Catholic School', 'Parish', 'Diocese / Archdiocese', 'Ministry / Nonprofit', 'Other'] as const;
+const usStates = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'] as const;
 
 export function RequestAccessPage() {
   const [searchParams] = useSearchParams();
@@ -62,7 +64,10 @@ export function RequestAccessPage() {
                   <Field icon={<UserIcon size={16} />} label="Last Name" name="lastName" placeholder="Lapp" autoComplete="family-name" required />
                   <SelectField label="Organization Type" name="organizationType" options={organizationTypes} required />
                   <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required />
-                  
+                  <Field icon={<MapPinIcon size={16} />} label="Address" name="address" placeholder="Street address" autoComplete="street-address" required />
+                  <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required />
+                  <SelectField label="State" name="state" options={usStates} required />
+                  <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required />
                   <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required />
                  
                   
@@ -163,5 +168,6 @@ function Field({ label, name, type = 'text', placeholder, autoComplete, required
 }
 
 function SelectField({ label, name, options, required }: { label: string; name: string; options: readonly string[]; required?: boolean }) {
-  return <div><label className="auth-label" htmlFor={name}>{label}{required && <span className="ml-1 text-rose-600">*</span>}</label><select id={name} name={name} required={required} defaultValue="" className="auth-input auth-input--plain mt-2"><option value="" disabled>Select organization type</option>{options.map((option) => <option key={option}>{option}</option>)}</select></div>;
+  const placeholder = name === 'state' ? 'Select state' : 'Select organization type';
+  return <div><label className="auth-label" htmlFor={name}>{label}{required && <span className="ml-1 text-rose-600">*</span>}</label><select id={name} name={name} required={required} defaultValue="" className="auth-input auth-input--plain mt-2"><option value="" disabled>{placeholder}</option>{options.map((option) => <option key={option}>{option}</option>)}</select></div>;
 }

@@ -99,6 +99,7 @@ namespace CFR.Acutis.Controllers.Administration
         /// <response code="409">A pending request for this product already exists.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpPost]
+        [AllowAnonymous]
         [ActionName(API_Administration.SaveAccessRequest)]
         public async Task<IActionResult> SaveAccessRequest([FromBody] AccessRequestInput input)
         {

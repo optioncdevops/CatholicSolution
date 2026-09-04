@@ -141,7 +141,7 @@ namespace CFR.AcutisService.Service.Administration
         /// <remarks>
         /// Purpose: Insert request, product, status history, and optional comment rows, then email admins.
         /// Request Flow: AccessRequestController -> AccessRequestService.SaveAccessRequestAsync() -> IAccessRequestRepository.SaveAccessRequestAsync().
-        /// Validation Details: Input DTO is required; product name or id and requester email are required.
+        /// Validation Details: Input DTO is required. Member saves need a product and requester email. Public portal saves also need name, organization, and address fields.
         /// Business Logic: Delegates insert to the repository, maps duplicate results to Conflict, then sends the AccessRequested template to users matched to the product. Mail failure does not fail the save.
         /// Repository Interaction: Calls IAccessRequestRepository.SaveAccessRequestAsync(), IAccessRequestRepository.GetProductNotificationRecipientsAsync(), and IEmailTemplatesRepository.GetEmailTemplateByCodeAsync().
         /// Response Details: MSResultArgs containing the access request identifier, or Conflict.
@@ -153,7 +153,42 @@ namespace CFR.AcutisService.Service.Administration
             var result = new MSResultArgs();
             try
             {
-                if (input == null || (string.IsNullOrWhiteSpace(input.ProductName) && string.IsNullOrWhiteSpace(input.ProductId)))
+                if (input == null)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                bool isPublicRequest = !string.IsNullOrWhiteSpace(input.OrganizationName);
+                bool hasProduct = !string.IsNullOrWhiteSpace(input.ProductName)
+                    || !string.IsNullOrWhiteSpace(input.ProductId)
+                    || (input.Products != null && input.Products.Count > 0);
+
+                if (!hasProduct)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                if (isPublicRequest
+                    && (string.IsNullOrWhiteSpace(input.FirstName)
+                        || string.IsNullOrWhiteSpace(input.LastName)
+                        || string.IsNullOrWhiteSpace(input.RequesterEmail)
+                        || string.IsNullOrWhiteSpace(input.OrganizationType)
+                        || string.IsNullOrWhiteSpace(input.Address)
+                        || string.IsNullOrWhiteSpace(input.City)
+                        || string.IsNullOrWhiteSpace(input.State)
+                        || string.IsNullOrWhiteSpace(input.Zip)))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                if (!isPublicRequest && string.IsNullOrWhiteSpace(input.RequesterEmail)
+                    && string.IsNullOrWhiteSpace(input.ProductName) && string.IsNullOrWhiteSpace(input.ProductId))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
@@ -189,6 +224,13 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                if (savedId == -93)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
                 if (savedId <= 0)
                 {
                     result.StatusCode = ErrorCodes.Failed;
@@ -197,7 +239,7 @@ namespace CFR.AcutisService.Service.Administration
                 }
 
                 result.ResultData = savedId;
-                await NotifyAdminsOfNewRequestAsync(savedId);
+                await NotifyAdminsOfNewRequestAsync(savedId, input.SendToEmail);
             }
             catch (Exception ex)
             {
@@ -273,7 +315,7 @@ namespace CFR.AcutisService.Service.Administration
         /// <summary>
         /// Emails users matched to the requested product that a new access request needs review, using the AccessRequested template.
         /// </summary>
-        private async Task NotifyAdminsOfNewRequestAsync(int accessRequestId)
+        private async Task NotifyAdminsOfNewRequestAsync(int accessRequestId, string? sendToEmail = null)
         {
             try
             {
@@ -284,6 +326,18 @@ namespace CFR.AcutisService.Service.Administration
                 }
 
                 var recipients = await GetProductRecipientAddressesAsync(request.ProductId, request.ProductName);
+                if (!string.IsNullOrWhiteSpace(sendToEmail))
+                {
+                    var parsedEmails = sendToEmail.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var parsedEmail in parsedEmails)
+                    {
+                        if (!string.IsNullOrWhiteSpace(parsedEmail))
+                        {
+                            recipients.Add(parsedEmail.Trim());
+                        }
+                    }
+                }
+
                 if (recipients.Count == 0)
                 {
                     logger.LogWarning("No users matched product {ProductName} for AccessRequested email on request {AccessRequestId}.", request.ProductName, accessRequestId);
@@ -291,13 +345,16 @@ namespace CFR.AcutisService.Service.Administration
                 }
 
                 var placeholders = BuildRequestPlaceholders(request, note: null);
+                placeholders["AdditionalInfo"] = request.Comments.FirstOrDefault()?.Comment ?? "None provided";
+                placeholders["SendToEmail"] = sendToEmail ?? "Default Admins";
+
                 await SendTemplatedEmailAsync(
                     AccessRequestedTemplateCode,
                     accessRequestId,
-                    string.Join(';', recipients),
+                    string.Join(';', recipients.Distinct(StringComparer.OrdinalIgnoreCase)),
                     placeholders,
                     $"New access request for {request.ProductName}",
-                    "<p>A member has requested access and needs an admin review.</p><p><strong>Requester:</strong> [RequesterName] ([RequesterEmail])</p><p><strong>Organization:</strong> [OrganizationName]</p><p><strong>Application:</strong> [AppName]</p><p><a href=\"[ReviewLink]\">Review this request</a></p>");
+                    "<p>A member has requested access and needs an admin review.</p><p><strong>Requester:</strong> [RequesterName] ([RequesterEmail])</p><p><strong>Organization:</strong> [OrganizationName]</p><p><strong>Application:</strong> [AppName]</p><p><strong>Reason:</strong> [AdditionalInfo]</p><p><strong>Send To:</strong> [SendToEmail]</p><p><a href=\"[ReviewLink]\">Review this request</a></p>");
             }
             catch (Exception ex)
             {

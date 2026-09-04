@@ -116,8 +116,8 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         /// Purpose: Insert AccessRequest, AccessRequestProduct, AccessRequestStatusHistory, and optional AccessRequestComment.
         /// Request Flow: IAccessRequestService -> AccessRequestRepository.SaveAccessRequestAsync() -> Database.
         /// Validation Details: Parameter names match stored procedure arguments.
-        /// Business Logic: Binds AccessRequestInput, resolves ProductId as INT when numeric, and stamps InsertedBy.
-        /// Repository Interaction: Executes StoredProc.Requests.AccessRequestCrud with ActionId 1.
+        /// Business Logic: Binds AccessRequestInput, resolves ProductId as INT when numeric, and stamps InsertedBy. Public portal saves (organization name present) use ActionId 7.
+        /// Repository Interaction: Executes StoredProc.Requests.AccessRequestCrud with ActionId 1 or 7.
         /// Response Details: Returns the scalar integer result from the stored procedure.
         /// </remarks>
         /// <param name="input">Input DTO containing request fields.</param>
@@ -125,13 +125,41 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         public async Task<int> SaveAccessRequestAsync(AccessRequestInput input)
         {
             ArgumentNullException.ThrowIfNull(input);
+            bool isPublicRequest = !string.IsNullOrWhiteSpace(input.OrganizationName);
             int? productId = int.TryParse(input.ProductId, out int parsedId) && parsedId > 0 ? parsedId : null;
+            var products = input.Products;
+            if ((products == null || products.Count == 0) && (!string.IsNullOrWhiteSpace(input.ProductId) || !string.IsNullOrWhiteSpace(input.ProductName)))
+            {
+                products =
+                [
+                    new AccessRequestProductItem
+                    {
+                        ProductId = input.ProductId ?? string.Empty,
+                        ProductName = input.ProductName ?? string.Empty,
+                    },
+                ];
+            }
+
             var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.AccessRequestParams.ActionId, 1, DbType.Int32);
+            parameters.Add(DBParameterName.AccessRequestParams.ActionId, isPublicRequest ? 7 : 1, DbType.Int32);
             parameters.Add(DBParameterName.AccessRequestParams.ProductId, productId, DbType.Int32);
             parameters.Add(DBParameterName.AccessRequestParams.ProductName, input.ProductName, DbType.String);
             parameters.Add(DBParameterName.AccessRequestParams.RequesterEmail, string.IsNullOrWhiteSpace(input.RequesterEmail) ? null : input.RequesterEmail, DbType.String);
             parameters.Add(DBParameterName.AccessRequestParams.Comment, input.Comment, DbType.String);
+            if (isPublicRequest)
+            {
+                string? productsJson = products is { Count: > 0 } ? System.Text.Json.JsonSerializer.Serialize(products) : null;
+                parameters.Add(DBParameterName.AccessRequestParams.FirstName, input.FirstName, DbType.String);
+                parameters.Add(DBParameterName.AccessRequestParams.LastName, input.LastName, DbType.String);
+                parameters.Add(DBParameterName.AccessRequestParams.OrganizationType, input.OrganizationType, DbType.String);
+                parameters.Add(DBParameterName.AccessRequestParams.OrganizationName, input.OrganizationName, DbType.String);
+                parameters.Add(DBParameterName.AccessRequestParams.Address, input.Address, DbType.String);
+                parameters.Add(DBParameterName.AccessRequestParams.City, input.City, DbType.String);
+                parameters.Add(DBParameterName.AccessRequestParams.State, input.State, DbType.String);
+                parameters.Add(DBParameterName.AccessRequestParams.Zip, input.Zip, DbType.String);
+                parameters.Add(DBParameterName.AccessRequestParams.Phone, input.Phone, DbType.String);
+                parameters.Add(DBParameterName.AccessRequestParams.ProductsJson, productsJson, DbType.String);
+            }
             parameters.Add(DBParameterName.AccessRequestParams.InsertedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.AccessRequestParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Requests.AccessRequestCrud, parameters, CommandType.StoredProcedure);

@@ -52,6 +52,10 @@ const OrganizationAddPage = () => {
         website: values.website.trim(),
         contactPerson: values.contactPerson.trim(),
         contactPhone: values.contactPhone.trim(),
+        address: values.address.trim(),
+        city: values.city.trim(),
+        state: values.state.trim(),
+        zip: values.zip.trim(),
       });
       showToast(`${values.orgName.trim()} created.`, 'success');
       navigateToList();
@@ -86,6 +90,10 @@ const OrganizationAddPage = () => {
           <InputField control={control} name="contactPerson" label="Contact person" placeholder="Enter contact person" disabled={saving} />
           <InputField control={control} name="contactPhone" label="Contact number" type="tel" placeholder="Enter contact number" rules={organizationRules.contactPhone} disabled={saving} />
           <InputField control={control} name="contactEmail" label="Contact email" type="email" placeholder="Enter contact email" rules={organizationRules.contactEmail} disabled={saving} />
+          <InputField control={control} name="address" label="Address" placeholder="Street address" disabled={saving} wrapperClassName="sm:col-span-2" />
+          <InputField control={control} name="city" label="City" placeholder="City" disabled={saving} />
+          <InputField control={control} name="state" label="State" placeholder="State" disabled={saving} />
+          <InputField control={control} name="zip" label="ZIP" placeholder="12345" rules={organizationRules.zip} disabled={saving} />
           <Dropdown control={control} name="orgStatus" label="Status" searchable={false} clearable={false} options={ORG_STATUS_OPTIONS} disabled={saving} />
         </div>
 

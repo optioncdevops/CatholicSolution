@@ -29,6 +29,42 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string OrganizationName { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the organization type from the public request.
+        /// </summary>
+        [JsonPropertyName("organizationType")]
+        public string? OrganizationType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the organization street address.
+        /// </summary>
+        [JsonPropertyName("address")]
+        public string? Address { get; set; }
+
+        /// <summary>
+        /// Gets or sets the organization city.
+        /// </summary>
+        [JsonPropertyName("city")]
+        public string? City { get; set; }
+
+        /// <summary>
+        /// Gets or sets the organization state.
+        /// </summary>
+        [JsonPropertyName("state")]
+        public string? State { get; set; }
+
+        /// <summary>
+        /// Gets or sets the organization ZIP / postal code.
+        /// </summary>
+        [JsonPropertyName("zip")]
+        public string? Zip { get; set; }
+
+        /// <summary>
+        /// Gets or sets the requester phone number.
+        /// </summary>
+        [JsonPropertyName("phone")]
+        public string? Phone { get; set; }
+
+        /// <summary>
         /// Gets or sets the requester full name.
         /// </summary>
         [JsonPropertyName("requesterName")]

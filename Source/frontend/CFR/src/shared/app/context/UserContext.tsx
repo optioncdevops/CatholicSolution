@@ -14,8 +14,8 @@ interface UserContextValue {
 }
 
 const DEFAULT_USER: CurrentUser = {
-  name: 'Carl Lapp',
-  email: 'carl.lapp@optionc.com',
+  name: 'Sherlina',
+  email: 'sherlina@dbcyelagiri.edu.in',
   phone: '(555) 214-7788',
 };
 
