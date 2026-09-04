@@ -21,3 +21,15 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+// Dismisses the inline boot preloader from index.html once the app shell has actually painted —
+// a double rAF (not a fixed timeout) waits for one real paint after React's render() call
+// returns, since render() finishing doesn't guarantee the browser has drawn the frame yet.
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    const preloader = document.getElementById('app-preloader');
+    if (!preloader) return;
+    preloader.dataset.hide = 'true';
+    preloader.addEventListener('transitionend', () => preloader.remove(), { once: true });
+  });
+});

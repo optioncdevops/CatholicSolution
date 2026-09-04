@@ -93,6 +93,14 @@ export interface ProductCustomerRow {
   status: 'active' | 'trial' | 'suspended';
 }
 
+export interface ProductAssignmentSummaryApiItem {
+  productId: number;
+  productName: string;
+  activeOrgCount: number;
+  inactiveOrgCount: number;
+  totalOrgCount: number;
+}
+
 export interface ProductLicenseApiItem {
   licenseId: number;
   organizationProductId: number;

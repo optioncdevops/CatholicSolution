@@ -9,6 +9,9 @@
 -- ActionId 7: License POST (Create)
 -- ActionId 8: License PUT (Update)
 -- ActionId 9: Product customers from [core].[Organization]
+-- ActionId 10: Per-product organization assignment counts (active vs. inactive/revoked vs. total
+-- distinct organizations), for the admin dashboard's real App Access Overview — this is genuine
+-- lic.OrganizationProduct assignment data, not inferred from the static product catalog.
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -539,6 +542,39 @@ BEGIN
         ) AS u
         WHERE o.[IsDeleted] = 0
         ORDER BY o.[OrgName];
+
+        RETURN 0;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 10: Per-product organization assignment summary
+    ---------------------------------------------------------------------------
+    IF @ActionId = 10
+    BEGIN
+        SELECT
+            p.[ProductId],
+            p.[ProductName],
+            (
+                SELECT COUNT(DISTINCT op.[OrgId])
+                FROM [lic].[OrganizationProduct] AS op
+                WHERE op.[ProductId] = p.[ProductId]
+                  AND op.[IsDeleted] = 0
+                  AND op.[AssignStatus] = N'active'
+            ) AS [ActiveOrgCount],
+            (
+                SELECT COUNT(DISTINCT op.[OrgId])
+                FROM [lic].[OrganizationProduct] AS op
+                WHERE op.[ProductId] = p.[ProductId]
+                  AND (op.[IsDeleted] = 1 OR op.[AssignStatus] <> N'active')
+            ) AS [InactiveOrgCount],
+            (
+                SELECT COUNT(DISTINCT op.[OrgId])
+                FROM [lic].[OrganizationProduct] AS op
+                WHERE op.[ProductId] = p.[ProductId]
+            ) AS [TotalOrgCount]
+        FROM [core].[Product] AS p
+        WHERE p.[IsDeleted] = 0
+        ORDER BY p.[ProductName];
 
         RETURN 0;
     END

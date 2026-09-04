@@ -2,7 +2,7 @@ import type { Control, FieldValues, RegisterOptions } from "react-hook-form";
 import type { AppIconName } from "@app/components/icons";
 import type { FormFieldInfoTooltipProp } from "../formControlFieldProps";
 
-export type RichTextFormatBlock = "p" | "h1" | "h2" | "h3" | "blockquote";
+export type RichTextFormatBlock = "p" | "h1" | "h2" | "h3" | "blockquote" | "pre";
 
 export type RichTextToolbarActionId =
   | "undo"
@@ -21,7 +21,12 @@ export type RichTextToolbarActionId =
   | "numberedList"
   | "outdent"
   | "indent"
-  | "foreColor";
+  | "foreColor"
+  | "highlightColor"
+  | "horizontalRule"
+  | "image"
+  | "table"
+  | "removeFormat";
 
 export interface RichTextToolbarAction {
   id: RichTextToolbarActionId;

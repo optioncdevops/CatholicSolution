@@ -103,8 +103,23 @@
 }
 @keyframes admin-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
 
+/* Branded loading ring for AppLoader — the in-app Suspense-boundary counterpart to index.html's
+   boot preloader, using the same gold-on-navy accent language on a light surface. */
+.app-loader-ring {
+  position: relative;
+  display: inline-block;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 2.5px solid var(--line-strong);
+  border-top-color: var(--secondary);
+  animation: admin-loader-spin 800ms linear infinite;
+}
+
+@keyframes admin-loader-spin { to { transform: rotate(360deg); } }
+
 @media (prefers-reduced-motion: reduce) {
-  .admin-reveal, .admin-reveal-stagger > *, .admin-skeleton { animation: none !important; }
+  .admin-reveal, .admin-reveal-stagger > *, .admin-skeleton, .app-loader-ring { animation: none !important; }
 }
 
 /* The whole page body is one framed card — the title strip is its top region, not a
@@ -504,21 +519,6 @@
   background: var(--warning);
 }
 
-/* Generic "unsaved changes" / "all changes saved" pill — shared by any edit-in-place screen
-   (Email Templates, Organization Profile, ...), not specific to one feature. */
-.admin-status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border-radius: 999px;
-  padding: 0.3rem 0.65rem;
-  font-size: 0.6875rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-.admin-status-chip--saved { background: var(--success-bg); color: var(--success); }
-.admin-status-chip--dirty { background: var(--warning-bg); color: var(--warning); }
-.admin-status-chip__dot { width: 0.4rem; height: 0.4rem; border-radius: 999px; background: currentColor; flex-shrink: 0; }
 
 .admin-email-template-tag {
   display: inline-flex;
@@ -673,22 +673,6 @@
   font-weight: 750;
   color: var(--text-secondary);
 }
-.admin-email-branding__color-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.admin-email-branding__color-swatch {
-  flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--admin-control-radius);
-  background: none;
-  cursor: pointer;
-}
-.admin-email-branding__color-text,
 .admin-email-branding__number,
 .admin-email-branding__text {
   min-height: 2rem;
@@ -700,6 +684,5 @@
   font-weight: 650;
   color: var(--text-primary);
 }
-.admin-email-branding__color-text { width: 100%; font-family: ui-monospace, monospace; }
 .admin-email-branding__number { width: 100%; }
 .admin-email-branding__text { width: 100%; }

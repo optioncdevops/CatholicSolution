@@ -14,6 +14,7 @@ export const FORMAT_BLOCK_OPTIONS: readonly {
   { label: "Heading 2", value: "h2" },
   { label: "Heading 3", value: "h3" },
   { label: "Quote", value: "blockquote" },
+  { label: "Code", value: "pre" },
 ] as const;
 
 function commandAction(
@@ -47,6 +48,7 @@ export const RICH_TEXT_TOOLBAR_ACTIONS: Record<
   underline: toggleAction("underline", "Underline", "underline", "underline"),
   strike: toggleAction("strike", "Strikethrough", "strikethrough", "strikeThrough"),
   foreColor: commandAction("foreColor", "Text color", "baseline", "foreColor"),
+  highlightColor: commandAction("highlightColor", "Highlight color", "palette", "hiliteColor"),
 
   alignLeft: toggleAction("alignLeft", "Align left", "alignLeft", "justifyLeft"),
   alignCenter: toggleAction("alignCenter", "Align center", "alignCenter", "justifyCenter"),
@@ -55,6 +57,9 @@ export const RICH_TEXT_TOOLBAR_ACTIONS: Record<
 
   link: { id: "link", label: "Insert link", icon: "link" },
   unlink: commandAction("unlink", "Remove link", "link2Off", "unlink"),
+  image: { id: "image", label: "Insert image", icon: "imagePlus" },
+  table: { id: "table", label: "Insert table", icon: "table2" },
+  horizontalRule: commandAction("horizontalRule", "Insert divider", "minus", "insertHorizontalRule"),
 
   bulletList: toggleAction("bulletList", "Bullet list", "list", "insertUnorderedList"),
   numberedList: toggleAction(
@@ -66,6 +71,8 @@ export const RICH_TEXT_TOOLBAR_ACTIONS: Record<
 
   outdent: commandAction("outdent", "Decrease indent", "outdent", "outdent"),
   indent: commandAction("indent", "Increase indent", "indent", "indent"),
+
+  removeFormat: commandAction("removeFormat", "Clear formatting", "eraser", "removeFormat"),
 };
 
 /**
@@ -74,9 +81,9 @@ export const RICH_TEXT_TOOLBAR_ACTIONS: Record<
  */
 export const RICH_TEXT_TOOLBAR_GROUPS: readonly (readonly RichTextToolbarActionId[])[] = [
   ["undo", "redo"],
-  ["bold", "italic", "underline", "strike", "foreColor"],
+  ["bold", "italic", "underline", "strike", "foreColor", "highlightColor"],
   ["alignLeft", "alignCenter", "alignRight", "alignJustify"],
-  ["link", "unlink"],
-  ["bulletList", "numberedList"],
-  ["outdent", "indent"],
+  ["link", "unlink", "image", "table", "horizontalRule"],
+  ["bulletList", "numberedList", "outdent", "indent"],
+  ["removeFormat"],
 ] as const;

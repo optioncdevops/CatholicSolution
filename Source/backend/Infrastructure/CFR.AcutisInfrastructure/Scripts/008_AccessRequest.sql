@@ -568,7 +568,7 @@ BEGIN
             p.[SubCategoryName],
             p.[ProdDescription],
             p.[ExternalPageUrl],
-            p.[LogoUrl],
+            p.[LogoName] AS [LogoUrl],
             p.[IsActive],
             CAST(CASE WHEN p.[ProductStatus] = 1 THEN 1 ELSE 0 END AS BIT) AS [IsAvailable],
             CASE
