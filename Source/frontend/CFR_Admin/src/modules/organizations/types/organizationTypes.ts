@@ -2,6 +2,7 @@ export interface OrganizationApiItem {
   orgId: number;
   orgName: string;
   orgStatus: string;
+  orgType: string | null;
   contactEmail: string | null;
   website: string | null;
   contactPerson: string | null;
@@ -19,6 +20,7 @@ export interface OrganizationApiItem {
 export interface OrganizationFormValues {
   orgName: string;
   orgStatus: string;
+  orgType: string;
   contactEmail: string;
   website: string;
   contactPerson: string;
@@ -33,6 +35,7 @@ export interface UpdateOrganizationPayload {
   orgId: number;
   orgName: string;
   orgStatus: string;
+  orgType: string;
   contactEmail: string;
   website: string;
   contactPerson: string;
@@ -46,6 +49,7 @@ export interface UpdateOrganizationPayload {
 export interface CreateOrganizationPayload {
   orgName: string;
   orgStatus: string;
+  orgType: string;
   contactEmail: string;
   website: string;
   contactPerson: string;
@@ -59,8 +63,27 @@ export interface CreateOrganizationPayload {
 export interface OrganizationUserApiItem {
   authUserId: number;
   email: string;
+  fullName: string;
   memberStatus: string | null;
   linkedDate: string;
+  appCount: number;
+}
+
+export interface OrganizationUserAppApiItem {
+  productId: number;
+  productName: string;
+  subCategoryName: string | null;
+}
+
+export interface OrganizationUserDetailApiItem {
+  authUserId: number;
+  email: string;
+  fullName: string;
+  orgId: number;
+  orgName: string;
+  memberStatus: string | null;
+  linkedDate: string;
+  apps: OrganizationUserAppApiItem[];
 }
 
 export interface OrganizationProductApiItem {
@@ -71,6 +94,7 @@ export interface OrganizationProductApiItem {
   externalPageUrl: string | null;
   assignStatus: string | null;
   assignedDate: string;
+  expiryDate: string | null;
 }
 
 export interface AssignableProductApiItem {

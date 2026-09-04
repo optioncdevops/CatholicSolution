@@ -3,6 +3,7 @@ import type { OrganizationFormValues } from '../types/organizationTypes';
 export const organizationDefaultValues: OrganizationFormValues = {
   orgName: '',
   orgStatus: 'active',
+  orgType: '',
   contactEmail: '',
   website: '',
   contactPerson: '',
@@ -37,8 +38,8 @@ export const organizationRules = {
   },
   zip: {
     pattern: {
-      value: /^\d{5}(?:-\d{4})?$/,
-      message: 'Enter a valid ZIP code.',
+      value: /^[A-Z0-9][A-Z0-9\s-]{2,9}$/i,
+      message: 'Enter a valid ZIP/postal code.',
     },
   },
 };

@@ -43,8 +43,9 @@ namespace CFR.AcutisInfrastructure.Interfaces.Profile
         /// </remarks>
         /// <param name="userId">Signed-in user identifier.</param>
         /// <param name="input">Input DTO containing the new profile fields.</param>
+        /// <param name="profileImageUrl">The resolved profile image URL to save, or null.</param>
         /// <returns>Scalar result of the update stored procedure.</returns>
-        Task<int> UpdateProfileAsync(long userId, UpdateProfileInput input);
+        Task<int> UpdateProfileAsync(long userId, UpdateProfileInput input, string? profileImageUrl);
 
         /// <summary>
         /// Changes the signed-in user's own password after verifying the current one.

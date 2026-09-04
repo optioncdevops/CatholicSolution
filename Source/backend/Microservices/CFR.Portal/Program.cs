@@ -1,23 +1,36 @@
+[assembly: NeutralResourcesLanguage("en-US", UltimateResourceFallbackLocation.Satellite)]
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Configuration.AddConfiguration(ConfigurationLoader.LoadConfiguration());
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddCommonServicesSetup();
+
+builder.Services.AddDIServicesSetup();
+
+builder.Services.AddAuthenticationSetup(builder.Configuration);
+
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+});
+
+builder.Services.AddSwaggerGenSetup(SwaggerModuleDoc.PortalDocs);
+
+builder.Services.DisableAuthenticationPolicy(builder.Environment);
+
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseCommonAppSetup(SwaggerModuleDoc.CFRPortal, app.Services.GetRequiredService<IOptions<SwaggerGenOptions>>().Value);
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
+app.UseCustomMiddlewareSetup();
 
 app.MapControllers();
+app.MapScalarForSwashbuckle(SwaggerModuleDoc.PortalDocs, SwaggerModuleDoc.CFRPortal);
+
+app.MapGet("/", () => Results.Text(DefaultData.WebStartPage.Replace("{0}", SwaggerModuleDoc.CFRPortal), "text/html")).ExcludeFromDescription();
 
 app.Run();

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Infrastructure\CFR.PortalInfrastructure\CFR.PortalInfrastructure.csproj" />
+    <ProjectReference Include="..\CFR.CommonService\CFR.CommonService.csproj" />
   </ItemGroup>
 
 </Project>

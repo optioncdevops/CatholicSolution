@@ -76,6 +76,33 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
         }
 
         /// <summary>
+        /// Fetches one member's organization-membership detail plus effective app access using StoredProc.Organization.OrganizationCrud.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Organization Users tab's user-detail view.
+        /// Request Flow: IOrganizationService -> OrganizationRepository.GetOrganizationUserDetailAsync() -> Database.
+        /// Validation Details: OrgId/AuthUserId parameter mapping.
+        /// Business Logic: Reads the membership header row, then the effective-app-access rows, and assigns the list onto the header.
+        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud with ActionId 14.
+        /// Response Details: Returns an OrganizationUserDetailOutput record, or null when not found.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">Member identifier.</param>
+        /// <returns>The matching membership detail, or null when not found.</returns>
+        public async Task<OrganizationUserDetailOutput?> GetOrganizationUserDetailAsync(long orgId, long authUserId)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.OrganizationParams.ActionId, 14, DbType.Int32);
+            parameters.Add(DBParameterName.OrganizationParams.OrgId, orgId, DbType.Int64);
+            parameters.Add(DBParameterName.OrganizationParams.AuthUserId, authUserId, DbType.Int64);
+            using var grid = await dapperHandler.QueryMultipleAsync(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
+            var detail = (await grid.ReadAsync<OrganizationUserDetailOutput>()).FirstOrDefault();
+            if (detail == null) return null;
+            detail.Apps = (await grid.ReadAsync<ProductLookupOutput>()).AsList();
+            return detail;
+        }
+
+        /// <summary>
         /// Fetches the real products assigned to an organization using StoredProc.Organization.OrganizationCrud.
         /// </summary>
         /// <remarks>
@@ -166,6 +193,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             parameters.Add(DBParameterName.OrganizationParams.ActionId, 4, DbType.Int32);
             parameters.Add(DBParameterName.OrganizationParams.OrgName, input.OrgName, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.OrgStatus, input.OrgStatus, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.OrgType, input.OrgType, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactEmail, input.ContactEmail, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.Website, input.Website, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPerson, input.ContactPerson, DbType.String);
@@ -238,6 +266,33 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             return parameters.Get<int>(DBParameterName.OrganizationParams.ReturnValue);
         }
 
+        /// <summary>
+        /// Unlinks a user from an organization using StoredProc.Organization.OrganizationCrud.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Remove a user from an organization from the Users tab.
+        /// Request Flow: IOrganizationService -> OrganizationRepository.UnlinkOrganizationUserAsync() -> Database.
+        /// Validation Details: OrgId/AuthUserId parameter mapping.
+        /// Business Logic: Executes StoredProc.Organization.OrganizationCrud with ActionId 13.
+        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud.
+        /// Response Details: Returns the scalar integer result from the stored procedure.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">User identifier to unlink.</param>
+        /// <param name="updatedBy">Logged-in user identifier performing the removal.</param>
+        /// <returns>Scalar result of the unlink stored procedure.</returns>
+        public async Task<int> UnlinkOrganizationUserAsync(long orgId, long authUserId, long? updatedBy)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.OrganizationParams.ActionId, 13, DbType.Int32);
+            parameters.Add(DBParameterName.OrganizationParams.OrgId, orgId, DbType.Int64);
+            parameters.Add(DBParameterName.OrganizationParams.AuthUserId, authUserId, DbType.Int64);
+            parameters.Add(DBParameterName.OrganizationParams.UpdatedBy, updatedBy, DbType.Int64);
+            parameters.Add(DBParameterName.OrganizationParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
+            _ = await dapperHandler.ExecuteAsync(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
+            return parameters.Get<int>(DBParameterName.OrganizationParams.ReturnValue);
+        }
+
         #endregion DELETE Methods
 
         #region PUT Methods
@@ -264,6 +319,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             parameters.Add(DBParameterName.OrganizationParams.OrgId, input.OrgId, DbType.Int64);
             parameters.Add(DBParameterName.OrganizationParams.OrgName, input.OrgName, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.OrgStatus, input.OrgStatus, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.OrgType, input.OrgType, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactEmail, input.ContactEmail, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.Website, input.Website, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPerson, input.ContactPerson, DbType.String);

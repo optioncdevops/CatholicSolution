@@ -882,7 +882,7 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
                         className={cn(
                           "w-full bg-transparent outline-none",
                           themeFormControlTextClass,
-                          "text-slate-800 dark:text-slate-100",
+                          "text-[var(--text-primary)] placeholder:text-[var(--text-faint)]",
                         )}
                         placeholder="Search..."
                         value={search}

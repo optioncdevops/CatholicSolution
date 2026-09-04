@@ -931,9 +931,15 @@ BEGIN
         LEFT JOIN (
             SELECT DISTINCT up.[ProductId]
             FROM [auth].[UserProduct] up
+            INNER JOIN [lic].[OrganizationProduct] op
+                ON op.[OrgId] = up.[OrgId]
+               AND op.[ProductId] = up.[ProductId]
+               AND op.[IsDeleted] = 0
+               AND op.[AssignStatus] = N'active'
             WHERE @HubUserId IS NOT NULL
               AND up.[CFRUserId] = @HubUserId
               AND ISNULL(up.[IsDeleted], 0) = 0
+              AND up.[OrgId] IS NOT NULL
         ) assigned
             ON assigned.[ProductId] = p.[ProductId]
         WHERE p.[IsDeleted] = 0

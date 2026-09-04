@@ -3,12 +3,16 @@ import { ACUTIS_AUTH_CHANGED_EVENT } from '@shared/auth/constants/storageKeys';
 import { getRoleName, getStoredAcutisAuth } from '@shared/auth/services/authService';
 
 export interface CurrentUser {
+  userId: number;
   firstName: string;
   lastName: string;
   name: string;
   email: string;
   roleId: number;
   roleName: string;
+  profileImageUrl: string | null;
+  status: string;
+  lastActiveAt: string | null;
 }
 
 interface UserContextValue {
@@ -18,34 +22,61 @@ interface UserContextValue {
 }
 
 const DEFAULT_USER: CurrentUser = {
+  userId: 0,
   firstName: 'Carl',
   lastName: 'Lapp',
   name: 'Carl Lapp',
   email: 'carl.lapp@optionc.com',
   roleId: 0,
   roleName: '',
+  profileImageUrl: null,
+  status: '',
+  lastActiveAt: null,
 };
 
-function buildUser(firstName: string, lastName: string, email: string, roleId: number, roleName = ''): CurrentUser {
-  const name = `${firstName} ${lastName}`.trim();
+function buildUser(fields: {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  roleId: number;
+  profileImageUrl: string | null;
+  status: string;
+  lastActiveAt: string | null;
+  roleName?: string;
+}): CurrentUser {
+  const name = `${fields.firstName} ${fields.lastName}`.trim();
   return {
-    firstName,
-    lastName,
+    userId: fields.userId,
+    firstName: fields.firstName,
+    lastName: fields.lastName,
     name: name || DEFAULT_USER.name,
-    email: email || DEFAULT_USER.email,
-    roleId,
-    roleName,
+    email: fields.email || DEFAULT_USER.email,
+    roleId: fields.roleId,
+    roleName: fields.roleName ?? '',
+    profileImageUrl: fields.profileImageUrl,
+    status: fields.status,
+    lastActiveAt: fields.lastActiveAt,
   };
 }
 
 // Reads from the stored Acutis JWT payload, kept fresh by authService.updateStoredAcutisUser
-// whenever the Profile dialog saves a real change — there is no separate client-side "draft"
+// whenever the Profile page saves a real change — there is no separate client-side "draft"
 // of the user; the stored auth blob is the single source of truth. roleName is resolved
 // separately (see the effect below) since the JWT only carries roleId.
 function userFromAuth(): CurrentUser {
   const stored = getStoredAcutisAuth()?.resultData?.user;
   if (!stored) return DEFAULT_USER;
-  return buildUser(stored.firstName ?? '', stored.lastName ?? '', stored.eMail ?? '', stored.roleId ?? 0);
+  return buildUser({
+    userId: stored.userId ?? 0,
+    firstName: stored.firstName ?? '',
+    lastName: stored.lastName ?? '',
+    email: stored.eMail ?? '',
+    roleId: stored.roleId ?? 0,
+    profileImageUrl: stored.profileImageUrl ?? null,
+    status: stored.status ?? '',
+    lastActiveAt: stored.lastActiveAt ?? null,
+  });
 }
 
 const UserContext = createContext<UserContextValue | null>(null);

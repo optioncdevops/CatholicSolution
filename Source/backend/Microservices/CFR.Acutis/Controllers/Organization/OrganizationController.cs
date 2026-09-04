@@ -102,6 +102,30 @@ namespace CFR.Acutis.Controllers.Organization
         }
 
         /// <summary>
+        /// Retrieves one member's organization-membership detail plus their effective app access.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Organization Users tab's user-detail view.
+        /// Request Flow: Client API GET -> OrganizationController.GetOrganizationUserDetail() -> IOrganizationService.GetOrganizationUserDetailAsync() -> Database.
+        /// Validation Details: Query parameter binding maps the identifiers.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IOrganizationService.GetOrganizationUserDetailAsync().
+        /// Response Details: Standard API result enclosing OrganizationUserDetailOutput with status 200, 204, or 500.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">Member identifier.</param>
+        /// <returns>A consistent API response containing the membership detail.</returns>
+        /// <response code="200">Successfully fetched the membership detail.</response>
+        /// <response code="204">The member is not linked to this organization.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Organization.GetOrganizationUserDetail)]
+        public async Task<IActionResult> GetOrganizationUserDetail(long orgId, long authUserId)
+        {
+            return ApiResultArgs(await service.GetOrganizationUserDetailAsync(orgId, authUserId), APIHttpType.HttpGet);
+        }
+
+        /// <summary>
         /// Retrieves the products not yet assigned to an organization.
         /// </summary>
         /// <remarks>
@@ -222,6 +246,30 @@ namespace CFR.Acutis.Controllers.Organization
         public async Task<IActionResult> RemoveOrganizationProduct(long orgId, int productId)
         {
             return ApiResultArgs(await service.RemoveOrganizationProductAsync(orgId, productId), APIHttpType.HttpDelete);
+        }
+
+        /// <summary>
+        /// Unlinks a user from an organization.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Remove a user from an organization from the Users tab.
+        /// Request Flow: Client API DELETE -> OrganizationController.UnlinkOrganizationUser() -> IOrganizationService.UnlinkOrganizationUserAsync() -> Database.
+        /// Validation Details: Query parameter binding maps the identifiers.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IOrganizationService.UnlinkOrganizationUserAsync().
+        /// Response Details: Standard API result indicating execution status.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">User identifier to unlink.</param>
+        /// <returns>Result of the unlink operation.</returns>
+        /// <response code="200">Successfully unlinked the user.</response>
+        /// <response code="204">The user was not linked.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpDelete]
+        [ActionName(API_Organization.UnlinkOrganizationUser)]
+        public async Task<IActionResult> UnlinkOrganizationUser(long orgId, long authUserId)
+        {
+            return ApiResultArgs(await service.UnlinkOrganizationUserAsync(orgId, authUserId), APIHttpType.HttpDelete);
         }
 
         #endregion DELETE Methods

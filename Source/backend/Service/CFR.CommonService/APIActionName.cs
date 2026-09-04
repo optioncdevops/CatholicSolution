@@ -74,11 +74,28 @@ namespace CFR.CommonService
             public const string CreateOrganization = nameof(CreateOrganization);
             public const string UpdateOrganization = nameof(UpdateOrganization);
             public const string GetOrganizationUsers = nameof(GetOrganizationUsers);
+            public const string GetOrganizationUserDetail = nameof(GetOrganizationUserDetail);
             public const string GetOrganizationProducts = nameof(GetOrganizationProducts);
             public const string GetAssignableProducts = nameof(GetAssignableProducts);
             public const string AssignOrganizationProduct = nameof(AssignOrganizationProduct);
             public const string RemoveOrganizationProduct = nameof(RemoveOrganizationProduct);
             public const string GetOrganizationLicenses = nameof(GetOrganizationLicenses);
+            public const string UnlinkOrganizationUser = nameof(UnlinkOrganizationUser);
+        }
+
+        public static class API_Portal
+        {
+            public static class Authentication
+            {
+                public const string LoginAuthentication = nameof(LoginAuthentication);
+            }
+
+            public static class CFRLaunch
+            {
+                public const string GetAssignedProducts = nameof(GetAssignedProducts);
+                public const string LaunchProduct = nameof(LaunchProduct);
+                public const string ExchangeToken = nameof(ExchangeToken);
+            }
         }
 
         public static class API_Product
@@ -86,10 +103,11 @@ namespace CFR.CommonService
             public const string GetProducts = nameof(GetProducts);
             public const string GetProductById = nameof(GetProductById);
             public const string GetLicenseDetails = nameof(GetLicenseDetails);
-            public const string SaveProduct = nameof(SaveProduct);
-            public const string UpdateProduct = nameof(UpdateProduct);
-            public const string DeleteProduct = nameof(DeleteProduct);
+            public const string GetLicenseById = nameof(GetLicenseById);
+            public const string CreateLicense = nameof(CreateLicense);
+            public const string UpdateLicense = nameof(UpdateLicense);
             public const string UploadProductLogo = nameof(UploadProductLogo);
+            public const string UpdateProduct = nameof(UpdateProduct);
         }
     }
 }

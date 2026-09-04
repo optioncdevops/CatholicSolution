@@ -1,4 +1,3 @@
-import { APP_CATALOG } from '@shared/app/config/appCatalog';
 import type { CatalogApp } from '@shared/app/types/app';
 import type { HubProductApiItem, HubSectionValue } from '../types/productsTypes';
 
@@ -28,8 +27,7 @@ const pickValue = (row: Record<string, unknown>, ...keys: string[]): unknown => 
 const pickString = (row: Record<string, unknown>, ...keys: string[]): string => {
   const value = pickValue(row, ...keys);
   if (value === undefined || value === null) return '';
-  const text = String(value).trim();
-  return text;
+  return String(value).trim();
 };
 
 const asBool = (value: unknown): boolean | undefined => {
@@ -41,8 +39,6 @@ const asBool = (value: unknown): boolean | undefined => {
   if (text === '0' || text === 'false' || text === 'no') return false;
   return undefined;
 };
-
-const compactKey = (value: string) => value.trim().toLowerCase().replace(/[\s_-]+/g, '');
 
 const hashIndex = (value: string, size: number) => {
   let hash = 0;
@@ -60,22 +56,11 @@ const readFeatures = (value: unknown): string[] => {
   return [];
 };
 
-const normalizeHubSection = (value: unknown): HubSectionValue | undefined => {
+const normalizeHubSection = (value: unknown): HubSectionValue => {
   const raw = String(value ?? '').trim().toLowerCase().replace(/[_\s]+/g, '-');
-  if (raw === 'your-apps' || raw === 'active') return 'your';
-  if (raw === 'coming-soon' || raw === 'upcoming' || raw === 'roadmap') return 'future';
-  return HUB_SECTIONS.includes(raw as HubSectionValue) ? (raw as HubSectionValue) : undefined;
-};
-
-const deriveHubSection = (row: Record<string, unknown>, catalogSection?: HubSectionValue): HubSectionValue => {
-  const explicit = normalizeHubSection(pickValue(row, 'hubSection', 'HubSection'));
-  if (explicit) return explicit;
-
-  const isAvailable = asBool(pickValue(row, 'isAvailable', 'IsAvailable'));
-  if (isAvailable === true) return 'available';
-  if (isAvailable === false) return 'future';
-
-  return catalogSection ?? 'future';
+  if (raw === 'your-apps' || raw === 'active' || raw === 'your') return 'your';
+  if (raw === 'available') return 'available';
+  return HUB_SECTIONS.includes(raw as HubSectionValue) ? (raw as HubSectionValue) : 'future';
 };
 
 export const unwrapResultList = (resultData: unknown): unknown[] => {
@@ -94,18 +79,6 @@ export const unwrapResultList = (resultData: unknown): unknown[] => {
   return [];
 };
 
-const findCatalog = (productId: string, productName: string) => {
-  const id = productId.trim().toLowerCase();
-  const name = productName.trim().toLowerCase();
-  const compactName = compactKey(productName);
-  return APP_CATALOG.find((app) => {
-    if (id && app.id.toLowerCase() === id) return true;
-    if (name && (app.name.toLowerCase() === name || app.shortName.toLowerCase() === name)) return true;
-    if (compactName && (compactKey(app.name) === compactName || compactKey(app.id) === compactName)) return true;
-    return false;
-  });
-};
-
 export const toCatalogApp = (row: HubProductApiItem): CatalogApp | null => {
   const source = asRecord(row) ?? {};
   if (asBool(pickValue(source, 'isDeleted', 'IsDeleted')) === true) return null;
@@ -114,36 +87,38 @@ export const toCatalogApp = (row: HubProductApiItem): CatalogApp | null => {
   const productId = pickString(source, 'productId', 'ProductId', 'id', 'Id');
   if (!productName && (!productId || productId === '0')) return null;
 
-  const catalog = findCatalog(productId, productName);
-  const hubSection = deriveHubSection(source, catalog?.hubSection);
+  const hubSection = normalizeHubSection(pickValue(source, 'hubSection', 'HubSection'));
   const features = readFeatures(source.features ?? source.Features ?? source.featureNames ?? source.FeatureNames);
-  const seed = productId || productName || catalog?.id || 'product';
+  const seed = productId || productName || 'product';
   const isYourApps = hubSection === 'your';
   const isAvailable = hubSection === 'available';
+  const numericProductId = Number(productId);
+  const resolvedProductId = Number.isFinite(numericProductId) && numericProductId > 0 ? numericProductId : undefined;
+  const baseUrl = pickString(source, 'baseUrl', 'BaseUrl', 'externalUrl', 'ExternalUrl', 'externalPageUrl', 'ExternalPageUrl');
+  const canRequest = asBool(pickValue(source, 'canRequest', 'CanRequest')) === true;
 
   return {
-    id: (productId && productId !== '0' ? productId : catalog?.id) || seed,
-    name: productName || catalog?.name || 'Untitled product',
-    shortName: catalog?.shortName ?? productName,
-    category: pickString(source, 'category', 'Category', 'subCategoryName', 'SubCategoryName') || catalog?.category || '',
-    description: pickString(source, 'description', 'Description', 'prodDescription', 'ProdDescription') || catalog?.description || '',
-    icon: catalog?.icon || pickString(source, 'icon', 'Icon') || '✦',
-    gradient: catalog?.gradient ?? FALLBACK_GRADIENTS[hashIndex(seed, FALLBACK_GRADIENTS.length)],
-    keywords: catalog?.keywords ?? [productName, pickString(source, 'category', 'Category', 'subCategoryName', 'SubCategoryName')].filter(Boolean),
-    features: features.length > 0 ? features : (catalog?.features ?? []),
-    stats: catalog?.stats ?? [],
-    kind: isYourApps || isAvailable ? (catalog?.kind === 'external' ? 'external' : 'launchable') : (catalog?.kind ?? 'discover'),
+    id: (productId && productId !== '0' ? productId : seed),
+    productId: resolvedProductId,
+    name: productName || 'Untitled product',
+    shortName: productName,
+    category: pickString(source, 'category', 'Category', 'subCategoryName', 'SubCategoryName'),
+    description: pickString(source, 'description', 'Description', 'prodDescription', 'ProdDescription'),
+    icon: pickString(source, 'icon', 'Icon', 'logoUrl', 'LogoUrl') || '✦',
+    gradient: FALLBACK_GRADIENTS[hashIndex(seed, FALLBACK_GRADIENTS.length)],
+    keywords: [productName, pickString(source, 'category', 'Category', 'subCategoryName', 'SubCategoryName')].filter(Boolean),
+    features,
+    stats: [],
+    kind: isYourApps || isAvailable ? 'launchable' : 'discover',
     status: isYourApps ? 'active' : isAvailable ? 'available' : 'coming-soon',
     statusLabel: isYourApps ? 'Active' : isAvailable ? 'Access on request' : 'Coming soon',
-    statusDetail: catalog?.statusDetail,
-    details: catalog?.details,
     hubSection,
-    deploymentModel: catalog?.deploymentModel ?? 'external-saas',
-    ownership: catalog?.ownership ?? 'first-party',
+    deploymentModel: 'external-saas',
+    ownership: 'first-party',
     launcherEnabled: isYourApps,
-    externalUrl: pickString(source, 'externalUrl', 'ExternalUrl', 'externalPageUrl', 'ExternalPageUrl') || catalog?.externalUrl,
-    navigationTarget: catalog?.navigationTarget ?? 'same-tab',
-    contactEmail: pickString(source, 'contactEmail', 'ContactEmail') || catalog?.contactEmail,
+    externalUrl: baseUrl || undefined,
+    navigationTarget: 'same-tab',
+    canRequest,
   };
 };
 
@@ -153,57 +128,14 @@ export const normalizeHubProducts = (resultData: unknown): CatalogApp[] => {
     .filter((app): app is CatalogApp => app != null);
 };
 
-export const mergeHubProducts = (resultData: unknown): CatalogApp[] => {
-  const fromApi = normalizeHubProducts(resultData);
-  const catalogList = Array.isArray(APP_CATALOG) ? APP_CATALOG.map((app) => ({ ...app })) : [];
-
-  if (fromApi.length === 0) {
-    return catalogList;
-  }
-
-  // Create a map of API products
-  const apiMap = new Map<string, CatalogApp>();
-  for (const apiApp of fromApi) {
-    if (apiApp.id) {
-      apiMap.set(apiApp.id.toLowerCase(), apiApp);
-    }
-  }
-
-  const merged = catalogList.map((catalogApp) => {
-    const apiApp = apiMap.get(catalogApp.id.toLowerCase());
-    if (apiApp) {
-      // API app overrides catalog app, updating status/hubSection based on DB
-      return { ...catalogApp, ...apiApp };
-    }
-    return catalogApp;
-  });
-
-  // Include any API products that were not in the catalog
-  const catalogIds = new Set(catalogList.map((a) => a.id.toLowerCase()));
-  for (const apiApp of fromApi) {
-    if (apiApp.id && !catalogIds.has(apiApp.id.toLowerCase())) {
-      merged.push(apiApp);
-    }
-  }
-
-  return merged;
-};
-
 export const productsFromApiResponse = (response: unknown): CatalogApp[] => {
   const envelope = asRecord(response);
   const payload = envelope
     ? (pickValue(envelope, 'resultData', 'ResultData') ?? response)
     : response;
-  return mergeHubProducts(payload);
+  return normalizeHubProducts(payload);
 };
 
 export const productsFromHubResponse = (response: unknown): CatalogApp[] => {
-  const envelope = asRecord(response);
-  const payload = envelope
-    ? (pickValue(envelope, 'resultData', 'ResultData') ?? response)
-    : response;
-  const fromApi = normalizeHubProducts(payload);
-  if (fromApi.length > 0) return fromApi;
-  return APP_CATALOG.map((app) => ({ ...app }));
+  return productsFromApiResponse(response);
 };
-

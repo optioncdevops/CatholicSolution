@@ -33,6 +33,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string OrgStatus { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the organization type (e.g. Parish, Diocese, School, Nonprofit, Business, Other).
+        /// </summary>
+        [JsonPropertyName("orgType")]
+        public string? OrgType { get; set; }
+
+        /// <summary>
         /// Gets or sets the organization contact email address.
         /// </summary>
         [JsonPropertyName("contactEmail")]
@@ -57,25 +63,25 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string? ContactPhone { get; set; }
 
         /// <summary>
-        /// Gets or sets the organization street address.
+        /// Gets or sets the street address.
         /// </summary>
         [JsonPropertyName("address")]
         public string? Address { get; set; }
 
         /// <summary>
-        /// Gets or sets the organization city.
+        /// Gets or sets the city.
         /// </summary>
         [JsonPropertyName("city")]
         public string? City { get; set; }
 
         /// <summary>
-        /// Gets or sets the organization state.
+        /// Gets or sets the state or province.
         /// </summary>
         [JsonPropertyName("state")]
         public string? State { get; set; }
 
         /// <summary>
-        /// Gets or sets the organization ZIP / postal code.
+        /// Gets or sets the ZIP or postal code.
         /// </summary>
         [JsonPropertyName("zip")]
         public string? Zip { get; set; }
@@ -102,6 +108,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string OrgStatus { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the organization type (e.g. Parish, Diocese, School, Nonprofit, Business, Other).
+        /// </summary>
+        [JsonPropertyName("orgType")]
+        public string? OrgType { get; set; }
+
+        /// <summary>
         /// Gets or sets the organization contact email address.
         /// </summary>
         [JsonPropertyName("contactEmail")]
@@ -126,25 +138,25 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string? ContactPhone { get; set; }
 
         /// <summary>
-        /// Gets or sets the organization street address.
+        /// Gets or sets the street address.
         /// </summary>
         [JsonPropertyName("address")]
         public string? Address { get; set; }
 
         /// <summary>
-        /// Gets or sets the organization city.
+        /// Gets or sets the city.
         /// </summary>
         [JsonPropertyName("city")]
         public string? City { get; set; }
 
         /// <summary>
-        /// Gets or sets the organization state.
+        /// Gets or sets the state or province.
         /// </summary>
         [JsonPropertyName("state")]
         public string? State { get; set; }
 
         /// <summary>
-        /// Gets or sets the organization ZIP / postal code.
+        /// Gets or sets the ZIP or postal code.
         /// </summary>
         [JsonPropertyName("zip")]
         public string? Zip { get; set; }

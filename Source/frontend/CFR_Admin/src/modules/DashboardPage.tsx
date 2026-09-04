@@ -13,7 +13,7 @@ import { StatusBadge } from '@app/components/Badge';
 import { EntityAvatar } from '@app/components/EntityAvatar';
 import { Dropdown } from '@app/components/formControls';
 import { formatDate, formatRelativeDate, daysSince } from './utils/formatDate';
-import { getProductWarnings } from './Products';
+import { getProductWarnings, PRODUCTS_PATHS } from './products';
 import type { AdminApplication } from './types';
 
 type DashboardStatus = 'loading' | 'ready' | 'error';
@@ -39,7 +39,7 @@ function domainOf(url: string): string {
 
 const QUICK_ACTIONS = [
   { to: '/admin/requests', label: 'Review Access Requests', icon: ClipboardList },
-  { to: '/admin/applications', label: 'Manage Products', icon: Package },
+  { to: PRODUCTS_PATHS.list, label: 'Manage Products', icon: Package },
   { to: '/admin/organizations', label: 'Manage Organizations', icon: Building2 },
   { to: '/admin/users', label: 'Manage Users', icon: Users },
 ] as const;
@@ -162,7 +162,7 @@ export function DashboardPage() {
             <CommonButton variant="headerSecondary" iconLeft={<RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />} onClick={handleRefresh} disabled={refreshing || status === 'loading'}>
               {refreshing ? 'Refreshing…' : 'Refresh'}
             </CommonButton>
-            <CommonButton variant="headerSecondary" iconLeft={<Package size={14} />} onClick={() => navigate('/admin/products')}>Manage Products</CommonButton>
+            <CommonButton variant="headerSecondary" iconLeft={<Package size={14} />} onClick={() => navigate(PRODUCTS_PATHS.list)}>Manage Products</CommonButton>
           </div>
         )}
       />
@@ -195,12 +195,12 @@ export function DashboardPage() {
         <>
           <div className="admin-reveal-stagger grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
             <KpiTile
-              icon={Package} tint="linear-gradient(135deg,#1E3A8A,#3B82F6)" to="/admin/applications"
+              icon={Package} tint="linear-gradient(135deg,#1E3A8A,#3B82F6)" to={PRODUCTS_PATHS.list}
               label="Total products" value={applications.length}
               status={productsNeedingAttention.length > 0 ? `${productsNeedingAttention.length} need attention` : 'All clear'}
             />
             <KpiTile
-              icon={CheckCircle2} tint="linear-gradient(135deg,#0F766E,#34D399)" to="/admin/applications"
+              icon={CheckCircle2} tint="linear-gradient(135deg,#0F766E,#34D399)" to={PRODUCTS_PATHS.list}
               label="Active products" value={activeProducts.length}
               status={`${applications.length === 0 ? 0 : Math.round((activeProducts.length / applications.length) * 100)}% of catalog`}
             />
@@ -228,7 +228,7 @@ export function DashboardPage() {
                   <h2 className="panel-title">Product Health</h2>
                   <p className="panel-subtitle">Most recently updated products across the registry.</p>
                 </div>
-                <Link to="/admin/applications" className="text-xs font-bold text-[var(--primary)] hover:underline">View All products</Link>
+                <Link to={PRODUCTS_PATHS.list} className="text-xs font-bold text-[var(--primary)] hover:underline">View All products</Link>
               </div>
               {productHealthRows.length === 0 ? (
                 <EmptyState icon="🗂️" title="No products yet" description="Products added to the registry will appear here." />
@@ -247,7 +247,14 @@ export function DashboardPage() {
                     </thead>
                     <tbody>
                       {productHealthRows.map((app: AdminApplication) => (
-                        <tr key={app.id} className="cursor-pointer" onClick={() => navigate(`/admin/products/${app.id}`)}>
+                        <tr key={app.id} className="cursor-pointer" onClick={() => {
+                          const productId = Number(app.id);
+                          if (!Number.isInteger(productId) || productId <= 0) {
+                            navigate(PRODUCTS_PATHS.list);
+                            return;
+                          }
+                          navigate(PRODUCTS_PATHS.details, { state: { productId } });
+                        }}>
                           <td>
                             <span className="flex items-center gap-2.5 font-bold text-[var(--text-primary)]">
                               <span className="grid size-7 shrink-0 place-items-center rounded-lg text-xs text-white" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>

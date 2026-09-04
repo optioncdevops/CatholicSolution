@@ -49,6 +49,14 @@ export interface CatalogApp {
   /** Whether this app is approved to appear in the centrally published App Switcher. */
   launcherEnabled: boolean;
   /**
+   * Numeric [core].[Product] identifier used for SSO launch. Catalog slugs stay on `id`.
+   */
+  productId?: number;
+  /**
+   * When true, Available Apps may show Request. Set from [auth].[UserProduct].RoleId 4 or 9.
+   */
+  canRequest?: boolean;
+  /**
    * Approved independently deployed destination. Products do not need an `apps/*`
    * workspace inside Catholic_Solution to participate in App Hub or the launcher.
    * Production destinations must use HTTPS; localhost HTTP is reserved for development.

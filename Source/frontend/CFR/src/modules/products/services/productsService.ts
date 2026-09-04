@@ -15,3 +15,4 @@ export const getProducts = async (): Promise<any> => {
     throw 'Failed to load products';
   }
 };
+

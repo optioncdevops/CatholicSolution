@@ -2,8 +2,8 @@
 <!-- https://go.microsoft.com/fwlink/?LinkID=208121. -->
 <Project>
   <PropertyGroup>
-    <_PublishTargetUrl>D:\wwwroot\cfracutis</_PublishTargetUrl>
-    <History>True|2026-08-26T03:42:13.9403341Z||;</History>
+    <_PublishTargetUrl>D:\Build\CFR_Acutis</_PublishTargetUrl>
+    <History>True|2026-09-02T04:36:12.8144542Z||;True|2026-08-26T09:12:13.9403341+05:30||;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>

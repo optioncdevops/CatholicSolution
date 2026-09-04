@@ -3,12 +3,17 @@
 namespace CFR.AcutisInfrastructure.Models.Input
 {
     /// <summary>
-    /// Input DTO used to create a new product in Core.Product.
-    /// Bound from the controller request body on POST /api/v1/Products/SaveProduct.
-    /// ProductId is omitted because it is generated sequentially on the server.
+    /// Input DTO used to update an existing product in Core.Product.
+    /// Bound from the controller request body on PUT /api/v1/Products/UpdateProduct.
     /// </summary>
-    public class ProductSaveInput
+    public class ProductInput
     {
+        /// <summary>
+        /// Gets or sets the product identifier.
+        /// </summary>
+        [JsonPropertyName("productId")]
+        public int ProductId { get; set; }
+
         /// <summary>
         /// Gets or sets the product name.
         /// </summary>
@@ -40,10 +45,22 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public int DefaultAccessDays { get; set; } = 365;
 
         /// <summary>
+        /// Gets or sets the product logo file name.
+        /// </summary>
+        [JsonPropertyName("logoName")]
+        public string? LogoName { get; set; }
+
+        /// <summary>
         /// Gets or sets the relative path or URL of the product logo image.
         /// </summary>
         [JsonPropertyName("logoUrl")]
         public string? LogoUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product contact person name. Null leaves the stored value unchanged; empty string clears it.
+        /// </summary>
+        [JsonPropertyName("contactPerson")]
+        public string? ContactPerson { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the product is active.
@@ -52,28 +69,21 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public bool IsActive { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether the product is available.
+        /// Gets or sets the product status: 1 = Active, 2 = Coming Soon, 3 = Inactive.
         /// </summary>
-        [JsonPropertyName("isAvailable")]
-        public bool IsAvailable { get; set; } = true;
+        [JsonPropertyName("productStatus")]
+        public int? ProductStatus { get; set; }
 
         /// <summary>
         /// Gets or sets the product feature list.
         /// </summary>
         [JsonPropertyName("features")]
         public List<string>? Features { get; set; }
-    }
 
-    /// <summary>
-    /// Input DTO used to update an existing product in Core.Product.
-    /// Bound from the controller request body on PUT /api/v1/Products/UpdateProduct.
-    /// </summary>
-    public class ProductInput : ProductSaveInput
-    {
         /// <summary>
-        /// Gets or sets the product identifier.
+        /// Gets or sets the uploaded logo image file from multipart/form-data.
         /// </summary>
-        [JsonPropertyName("productId")]
-        public int ProductId { get; set; }
+        [JsonIgnore]
+        public IFormFile? File { get; set; }
     }
 }

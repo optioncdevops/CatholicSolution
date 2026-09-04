@@ -58,6 +58,22 @@ namespace CFR.AcutisService.Interfaces.Organization
         Task<MSResultArgs> GetOrganizationUsersAsync(long orgId);
 
         /// <summary>
+        /// Retrieves one member's organization-membership detail plus their effective app access.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Organization Users tab's user-detail view.
+        /// Request Flow: OrganizationController -> IOrganizationService.GetOrganizationUserDetailAsync() -> IOrganizationRepository.GetOrganizationUserDetailAsync().
+        /// Validation Details: OrgId and AuthUserId must be positive.
+        /// Business Logic: Wraps the typed record in MSResultArgs.
+        /// Repository Interaction: Calls IOrganizationRepository.GetOrganizationUserDetailAsync().
+        /// Response Details: MSResultArgs containing OrganizationUserDetailOutput, or NoRecordFound.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">Member identifier.</param>
+        /// <returns>MSResultArgs containing the membership detail.</returns>
+        Task<MSResultArgs> GetOrganizationUserDetailAsync(long orgId, long authUserId);
+
+        /// <summary>
         /// Retrieves the real products assigned to an organization.
         /// </summary>
         /// <remarks>
@@ -155,6 +171,22 @@ namespace CFR.AcutisService.Interfaces.Organization
         /// <param name="productId">Product identifier to remove.</param>
         /// <returns>MSResultArgs containing the remove status.</returns>
         Task<MSResultArgs> RemoveOrganizationProductAsync(long orgId, int productId);
+
+        /// <summary>
+        /// Unlinks a user from an organization.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Remove a user from an organization from the Users tab.
+        /// Request Flow: OrganizationController -> IOrganizationService.UnlinkOrganizationUserAsync() -> IOrganizationRepository.UnlinkOrganizationUserAsync().
+        /// Validation Details: OrgId and AuthUserId must be positive.
+        /// Business Logic: Passes the signed-in user id as UpdatedBy; -99 from the repository means not linked.
+        /// Repository Interaction: Calls IOrganizationRepository.UnlinkOrganizationUserAsync().
+        /// Response Details: MSResultArgs containing the user identifier, or NoRecordFound when not linked.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier.</param>
+        /// <param name="authUserId">User identifier to unlink.</param>
+        /// <returns>MSResultArgs containing the unlink status.</returns>
+        Task<MSResultArgs> UnlinkOrganizationUserAsync(long orgId, long authUserId);
 
         #endregion DELETE Methods
 

@@ -1,45 +1,192 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, Mail, Phone, Trash2, User } from 'lucide-react';
 import { EmptyState } from '@shared/app/components/EmptyState';
-import { Badge } from '@app/components/Badge';
+import { useToast } from '@shared/app/components/ToastProvider';
+import { CommonIconButton } from '@app/components/buttons';
+import { StatusBadge } from '@app/components/Badge';
+import { EntityAvatar } from '@app/components/EntityAvatar';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
+import { confirmAction } from '@/modules/lib/confirm';
 import { formatDate } from '@/modules/utils/formatDate';
-import type { OrganizationUserApiItem } from '../../types/organizationTypes';
+import { unlinkOrganizationUser } from '../../services/organizationsService';
+import type { OrganizationApiItem, OrganizationUserApiItem } from '../../types/organizationTypes';
 
-const columns: DataTableColumn<OrganizationUserApiItem>[] = [
+const columns = (
+  onView: (user: OrganizationUserApiItem) => void,
+  onUnlink: (user: OrganizationUserApiItem) => void,
+  unlinkingUserId: number | null,
+): DataTableColumn<OrganizationUserApiItem>[] => [
   {
-    id: 'email', header: 'Email', width: '16rem',
-    value: (user) => user.email,
-    cell: (user) => <span className="font-bold text-[var(--text-primary)]">{user.email}</span>,
+    id: 'fullName', header: 'User', width: '16rem',
+    value: (user) => user.fullName || user.email,
+    cell: (user) => (
+      <button
+        type="button"
+        onClick={() => onView(user)}
+        className="flex min-w-0 items-center gap-2.5 text-left hover:underline"
+        aria-label={`View ${user.fullName || user.email}`}
+      >
+        <EntityAvatar name={user.fullName || user.email} size={28} />
+        <span className="truncate font-bold text-[var(--text-primary)]">{user.fullName || user.email}</span>
+      </button>
+    ),
   },
   {
-    id: 'memberStatus', header: 'Status',
+    id: 'email', header: 'Email',
+    value: (user) => user.email,
+    cell: (user) => <span className="text-[var(--text-secondary)]">{user.email}</span>,
+  },
+  {
+    id: 'role', header: 'Role',
+    value: () => 'Member',
+    cell: () => <span className="text-[var(--text-secondary)]">Member</span>,
+  },
+  {
+    id: 'memberStatus', header: 'Membership',
     value: (user) => user.memberStatus ?? '',
-    cell: (user) => <Badge tone={user.memberStatus === 'active' ? 'success' : 'neutral'}>{user.memberStatus || '—'}</Badge>,
+    cell: (user) => <StatusBadge status={user.memberStatus === 'active' ? 'active' : 'inactive'} kind="user" />,
+  },
+  {
+    id: 'appCount', header: 'Apps',
+    value: (user) => user.appCount,
+    cell: (user) => <span className="text-[var(--text-secondary)]">{user.appCount}</span>,
+  },
+  {
+    id: 'lastLogin', header: 'Last Login',
+    value: () => '',
+    cell: () => <span className="text-[var(--text-faint)]" title="This platform does not yet track member sign-in timestamps.">Not tracked</span>,
   },
   {
     id: 'linkedDate', header: 'Linked On',
     value: (user) => user.linkedDate,
     cell: (user) => <span className="text-[var(--text-muted)]">{formatDate(user.linkedDate)}</span>,
   },
+  {
+    id: 'actions', header: 'Actions', width: '5.5rem', excludeFromExport: true, sortable: false,
+    cell: (user) => (
+      <div className="flex items-center justify-center gap-1.5">
+        <CommonIconButton
+          aria-label={`View ${user.fullName || user.email}`}
+          tooltip="View"
+          variant="secondary"
+          icon={<Eye size={14} />}
+          onClick={() => onView(user)}
+        />
+        <CommonIconButton
+          aria-label={`Unlink ${user.fullName || user.email}`}
+          tooltip="Unlink"
+          variant="danger"
+          icon={<Trash2 size={14} />}
+          onClick={() => onUnlink(user)}
+          disabled={unlinkingUserId === user.authUserId}
+        />
+      </div>
+    ),
+  },
 ];
 
+function ContactDetail({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-center gap-2">
+      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)]" aria-hidden="true">
+        <Icon size={14} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[0.625rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">{label}</p>
+        <p className="truncate text-[0.8125rem] font-bold text-[var(--text-primary)]">{value}</p>
+      </div>
+    </div>
+  );
+}
+
 type OrganizationUsersPanelProps = {
+  orgId: number;
+  organization: OrganizationApiItem;
   users: OrganizationUserApiItem[];
+  onChanged: () => Promise<void> | void;
 };
 
-const OrganizationUsersPanel = ({ users }: OrganizationUsersPanelProps) => {
-  if (users.length === 0) {
-    return <EmptyState icon="👥" title="No users linked" description="Users linked to this organization will appear here." />;
-  }
+// View + unlink only — linking a user to an organization from here has been removed. There is no
+// "Edit" action: organization members (auth.User) are a distinct population from CFR Admin's own
+// Users module (auth.AcutisUser, internal staff accounts) and have no editable profile fields or
+// role concept in this system today — "Role" is shown as a fixed "Member" label rather than
+// fabricated per-user data, and "Last Login" is honestly marked "Not tracked" since member
+// sign-in timestamps aren't recorded anywhere in the schema.
+const OrganizationUsersPanel = ({ orgId, organization, users, onChanged }: OrganizationUsersPanelProps) => {
+  //#region Hooks
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  //#endregion
+
+  //#region States
+  const [unlinkingUserId, setUnlinkingUserId] = useState<number | null>(null);
+  //#endregion
+
+  //#region Handlers
+  const handleView = (user: OrganizationUserApiItem) => {
+    navigate(`/admin/organizations/${orgId}/members/${user.authUserId}`);
+  };
+
+  const handleUnlink = async (user: OrganizationUserApiItem) => {
+    const confirmed = await confirmAction({
+      title: 'Unlink this user?',
+      description: `${user.fullName || user.email} will lose membership in ${organization.orgName} and its assigned apps.`,
+      confirmLabel: 'Unlink',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+
+    setUnlinkingUserId(user.authUserId);
+    try {
+      await unlinkOrganizationUser(orgId, user.authUserId);
+      showToast(`${user.fullName || user.email} removed from ${organization.orgName}.`, 'success');
+      await onChanged();
+    } catch (error) {
+      console.error('Error unlinking user:', error);
+      showToast(typeof error === 'string' ? error : 'Failed to unlink user.', 'error');
+    } finally {
+      setUnlinkingUserId(null);
+    }
+  };
+  //#endregion
+
+  const hasPrimaryContact = Boolean(organization.contactPerson || organization.contactPhone || organization.contactEmail);
 
   return (
-    <DataTable
-      data={users}
-      columns={columns}
-      getRowId={(user) => String(user.authUserId)}
-      exportFileName="organization-users"
-      exportTitle="Organization — Users"
-      emptyMessage="No users found."
-    />
+    <div className="flex flex-col gap-4">
+      {hasPrimaryContact ? (
+        <section className="admin-panel-card">
+          <div className="admin-panel-card__header"><h2 className="panel-title">Primary Contact</h2></div>
+          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3">
+            <ContactDetail icon={User} label="Contact Person" value={organization.contactPerson} />
+            <ContactDetail icon={Phone} label="Contact Number" value={organization.contactPhone} />
+            <ContactDetail icon={Mail} label="Contact Email" value={organization.contactEmail} />
+          </div>
+        </section>
+      ) : null}
+
+      <section className="admin-panel-card">
+        <div className="admin-panel-card__header"><h2 className="panel-title">Linked Users</h2></div>
+        <p className="px-4 pt-3 text-sm text-[var(--text-muted)]">Users linked to this organization can access the applications assigned to the organization.</p>
+
+        <div className="p-4">
+          {users.length === 0 ? (
+            <EmptyState icon="👥" title="No users linked" description="Users linked to this organization will appear here." />
+          ) : (
+            <DataTable
+              data={users}
+              columns={columns(handleView, handleUnlink, unlinkingUserId)}
+              getRowId={(user) => String(user.authUserId)}
+              exportFileName="organization-users"
+              exportTitle="Organization — Users"
+              emptyMessage="No users found."
+            />
+          )}
+        </div>
+      </section>
+    </div>
   );
 };
 

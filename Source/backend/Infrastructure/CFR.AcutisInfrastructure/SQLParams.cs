@@ -175,6 +175,26 @@ namespace CFR.AcutisInfrastructure
             public const string Status = nameof(Status);
 
             /// <summary>
+            /// Per-template accent color (hex) override for the send-time wrapper.
+            /// </summary>
+            public const string AccentColor = nameof(AccentColor);
+
+            /// <summary>
+            /// Per-template logo image URL override for the send-time wrapper.
+            /// </summary>
+            public const string LogoUrl = nameof(LogoUrl);
+
+            /// <summary>
+            /// Per-template font-family override for the send-time wrapper.
+            /// </summary>
+            public const string FontFamily = nameof(FontFamily);
+
+            /// <summary>
+            /// Per-template base body font size (pixels) override for the send-time wrapper.
+            /// </summary>
+            public const string BaseFontSize = nameof(BaseFontSize);
+
+            /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);
@@ -214,6 +234,16 @@ namespace CFR.AcutisInfrastructure
             /// User email address.
             /// </summary>
             public const string Email = nameof(Email);
+
+            /// <summary>
+            /// Relative URL of the user's uploaded profile image (e.g. /uploads/profile/{fileName}).
+            /// </summary>
+            public const string ProfileImageUrl = nameof(ProfileImageUrl);
+
+            /// <summary>
+            /// User contact/phone number.
+            /// </summary>
+            public const string ContactNumber = nameof(ContactNumber);
 
             /// <summary>
             /// Current plain-text password, verified with dbo.DecryptUserPassword.
@@ -257,6 +287,11 @@ namespace CFR.AcutisInfrastructure
             public const string OrgStatus = nameof(OrgStatus);
 
             /// <summary>
+            /// Organization type (e.g. Parish, Diocese, School, Nonprofit, Business, Other).
+            /// </summary>
+            public const string OrgType = nameof(OrgType);
+
+            /// <summary>
             /// Organization contact email address.
             /// </summary>
             public const string ContactEmail = nameof(ContactEmail);
@@ -277,22 +312,22 @@ namespace CFR.AcutisInfrastructure
             public const string ContactPhone = nameof(ContactPhone);
 
             /// <summary>
-            /// Organization street address.
+            /// Street address.
             /// </summary>
             public const string Address = nameof(Address);
 
             /// <summary>
-            /// Organization city.
+            /// City.
             /// </summary>
             public const string City = nameof(City);
 
             /// <summary>
-            /// Organization state.
+            /// State or province.
             /// </summary>
             public const string State = nameof(State);
 
             /// <summary>
-            /// Organization ZIP / postal code.
+            /// ZIP or postal code.
             /// </summary>
             public const string Zip = nameof(Zip);
 
@@ -305,6 +340,11 @@ namespace CFR.AcutisInfrastructure
             /// Product identifier, used when assigning/removing a product for an organization.
             /// </summary>
             public const string ProductId = nameof(ProductId);
+
+            /// <summary>
+            /// User identifier (auth.User.CFRUserId), used when linking/unlinking a user for an organization.
+            /// </summary>
+            public const string AuthUserId = nameof(AuthUserId);
 
             /// <summary>
             /// Stored procedure output / return value.
@@ -468,9 +508,15 @@ namespace CFR.AcutisInfrastructure
             public const string DefaultAccessDays = nameof(DefaultAccessDays);
 
             /// <summary>
-            /// Relative path or URL to the product logo image.
+            /// File name or relative path to the product logo image.
             /// </summary>
+            public const string LogoName = nameof(LogoName);
             public const string LogoUrl = nameof(LogoUrl);
+
+            /// <summary>
+            /// Acutis user display name stored as the product contact person. Empty string clears the contact.
+            /// </summary>
+            public const string ContactPerson = nameof(ContactPerson);
 
             /// <summary>
             /// Pipe-delimited list of product features.
@@ -483,9 +529,54 @@ namespace CFR.AcutisInfrastructure
             public const string IsActive = nameof(IsActive);
 
             /// <summary>
-            /// Availability flag: 1 = available, 0 = coming soon.
+            /// Product status flag: 1 = Active, 2 = Coming Soon, 3 = Inactive.
             /// </summary>
-            public const string IsAvailable = nameof(IsAvailable);
+            public const string ProductStatus = nameof(ProductStatus);
+
+            /// <summary>
+            /// License identifier.
+            /// </summary>
+            public const string LicenseId = nameof(LicenseId);
+
+            /// <summary>
+            /// Organization product link identifier.
+            /// </summary>
+            public const string OrganizationProductId = nameof(OrganizationProductId);
+
+            /// <summary>
+            /// Organization identifier.
+            /// </summary>
+            public const string OrgId = nameof(OrgId);
+
+            /// <summary>
+            /// License type (e.g. licensed, trial, subscription).
+            /// </summary>
+            public const string LicenseType = nameof(LicenseType);
+
+            /// <summary>
+            /// License activation date.
+            /// </summary>
+            public const string ActivationDate = nameof(ActivationDate);
+
+            /// <summary>
+            /// License expiration date.
+            /// </summary>
+            public const string ExpiryDate = nameof(ExpiryDate);
+
+            /// <summary>
+            /// License status.
+            /// </summary>
+            public const string LicenseStatus = nameof(LicenseStatus);
+
+            /// <summary>
+            /// Assignment status on OrganizationProduct.
+            /// </summary>
+            public const string AssignStatus = nameof(AssignStatus);
+
+            /// <summary>
+            /// License remarks or notes.
+            /// </summary>
+            public const string Remarks = nameof(Remarks);
 
             /// <summary>
             /// Logged-in user identifier for audit columns (ICurrentUserService.UserId).

@@ -362,7 +362,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .profile-menu { position:relative; }
 .profile-menu__trigger { display:inline-flex; min-height:2.75rem; align-items:center; gap:.55rem; border:1px solid transparent; border-radius:.9rem; background:transparent; padding:.25rem .4rem; transition:border-color 160ms ease, background-color 160ms ease; }
 .profile-menu__trigger:hover,.profile-menu__trigger--open { border-color:#e2e8f0; background:#f8fafc; }
-.profile-menu__avatar,.profile-menu__summary-avatar { display:grid; place-items:center; border:2px solid #d9a83f; border-radius:999px; background:#12264c; color:#fff; font-size:.6875rem; font-weight:800; box-shadow:0 0 0 2px #fff; }
+.profile-menu__avatar,.profile-menu__summary-avatar { display:grid; place-items:center; overflow:hidden; border:2px solid #d9a83f; border-radius:999px; background:#12264c; color:#fff; font-size:.6875rem; font-weight:800; box-shadow:0 0 0 2px #fff; }
+.profile-menu__avatar img,.profile-menu__summary-avatar img { width:100%; height:100%; object-fit:cover; }
 .profile-menu__avatar { width:2.25rem; height:2.25rem; }
 .profile-menu__trigger-copy { display:none; min-width:0; text-align:left; }
 .profile-menu__trigger-copy span { display:block; max-width:8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#334155; font-size:.6875rem; font-weight:800; }
@@ -2465,12 +2466,6 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .profile-menu__summary .profile-menu__eyebrow { line-height:1.1; }
 .profile-menu__summary p { margin:.14rem 0 0; line-height:1.2; }
 .profile-menu__summary .profile-menu__email { line-height:1.25; }
-.account-dialog { max-height:calc(100dvh - 2rem); }
-.account-dialog__body { overflow-y:auto; }
-@media (max-width:640px) {
-  .account-dialog-backdrop { align-items:end; padding:.75rem; }
-  .account-dialog { max-height:calc(100dvh - 1.5rem); margin:0; border-radius:1.2rem; }
-}
 
 /* Matt Money: visible workspace navigation instead of a small segmented control buried
    beside secondary header actions. URL-addressable admin/member behavior is unchanged. */
@@ -3416,7 +3411,6 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 }
 
 /* --- Modal / dialog consistency --- */
-.account-dialog,
 .hub-request-modal--received {
   border-radius: var(--radius-panel);
   box-shadow: var(--shadow-elevated);
@@ -5152,24 +5146,6 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   font-size: 0.6875rem;
 }
 
-.account-dialog {
-  border-radius: 0.95rem !important;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-}
-.account-dialog header {
-  padding: 1rem 1.15rem !important;
-}
-.account-dialog header h2 {
-  font-size: 1.1rem !important;
-}
-.account-dialog__body {
-  padding: 1rem 1.15rem !important;
-}
-.account-dialog footer {
-  padding: 0.75rem 1.15rem !important;
-}
-
 @media (max-width: 640px) {
   .app-switcher__menu {
     right: -0.25rem;
@@ -5366,187 +5342,6 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   .matt-role-selector--nav { width: 100%; }
   .matt-role-selector--nav button { flex: 1; }
 }
-
-.account-dialog-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
-  overflow-y: auto;
-  background: rgba(15, 23, 42, 0.55);
-  padding: 1rem;
-  backdrop-filter: blur(6px);
-}
-.account-dialog {
-  width: min(100%, 26rem);
-  margin: 1rem 0;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.95rem;
-  background: #fff;
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
-}
-.account-dialog__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  border-bottom: 1px solid #eef2f6;
-  background: linear-gradient(180deg, #fbfcfe, #f7f9fc);
-  padding: 1rem 1.1rem;
-}
-.account-dialog__header h2 {
-  margin: 0;
-  color: #12233f;
-  font-family: var(--font-serif);
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.account-dialog__header p {
-  margin: 0.25rem 0 0;
-  color: #8090a0;
-  font-size: 0.75rem;
-  font-weight: 650;
-  line-height: 1.4;
-}
-.account-dialog__close {
-  display: grid;
-  width: 2.1rem;
-  height: 2.1rem;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.55rem;
-  background: #fff;
-  color: #64748b;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-.account-dialog__close:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-  color: #12233f;
-}
-.account-dialog__body { padding: 1rem 1.1rem; }
-.account-dialog__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  border-top: 1px solid #eef2f6;
-  background: #f8fafc;
-  padding: 0.75rem 1.1rem;
-}
-.account-dialog__form { display: grid; gap: 0.85rem; }
-.account-dialog__identity {
-  display: grid;
-  grid-template-columns: 3.25rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.75rem;
-}
-.account-dialog__avatar {
-  display: grid;
-  width: 3.25rem;
-  height: 3.25rem;
-  place-items: center;
-  border-radius: 999px;
-  background: #12264c;
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 800;
-}
-.account-dialog__identity span {
-  display: block;
-  color: #8090a0;
-  font-size: 0.625rem;
-  font-weight: 700;
-}
-.account-dialog__identity strong {
-  display: block;
-  margin-top: 0.15rem;
-  color: #12233f;
-  font-size: 0.8125rem;
-  font-weight: 750;
-}
-.account-dialog__field {
-  display: grid;
-  gap: 0.35rem;
-  color: #334155;
-  font-size: 0.6875rem;
-  font-weight: 800;
-}
-.account-dialog__input {
-  width: 100%;
-  min-height: 2.65rem;
-  border: 1px solid #d7dee8;
-  border-radius: 0.6rem;
-  background: #fff;
-  padding: 0.65rem 0.8rem;
-  color: #12233f;
-  font-size: 0.8125rem;
-  font-weight: 650;
-  outline: none;
-}
-.account-dialog__input:focus {
-  border-color: #12264c;
-  box-shadow: 0 0 0 3px rgba(18, 38, 76, 0.08);
-}
-.account-dialog__password {
-  position: relative;
-  display: block;
-}
-.account-dialog__password .account-dialog__input { padding-right: 4rem; }
-.account-dialog__reveal {
-  position: absolute;
-  top: 50%;
-  right: 0.45rem;
-  transform: translateY(-50%);
-  border: 0;
-  border-radius: 0.4rem;
-  background: transparent;
-  padding: 0.35rem 0.45rem;
-  color: #64748b;
-  font-size: 0.625rem;
-  font-weight: 800;
-}
-.account-dialog__reveal:hover {
-  background: #f1f5f9;
-  color: #12233f;
-}
-.account-dialog__strength {
-  display: flex;
-  gap: 0.35rem;
-  margin-top: 0.45rem;
-}
-.account-dialog__strength span {
-  height: 0.3rem;
-  flex: 1;
-  border-radius: 999px;
-  background: #e2e8f0;
-}
-.account-dialog__strength .is-weak { background: #f43f5e; }
-.account-dialog__strength .is-fair { background: #f59e0b; }
-.account-dialog__strength .is-good { background: #eab308; }
-.account-dialog__strength .is-strong { background: #059669; }
-.account-dialog__hint,
-.account-dialog__error {
-  margin: 0.4rem 0 0;
-  font-size: 0.6875rem;
-  font-weight: 700;
-}
-.account-dialog__hint { color: #8090a0; }
-.account-dialog__error { color: #e11d48; }
-.account-recovery-link {
-  display: inline-block;
-  margin-top: 0.45rem;
-  color: #12264c;
-  font-size: 0.6875rem;
-  font-weight: 750;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.account-recovery-link:hover { color: #0f1b33; }
 
 .hub-premium-hero__content--compact h1 {
   font-size: clamp(1.3rem, 1.8vw, 1.55rem);

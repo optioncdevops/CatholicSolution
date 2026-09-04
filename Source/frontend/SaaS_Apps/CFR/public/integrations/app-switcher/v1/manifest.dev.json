@@ -9,7 +9,7 @@
       "category": "Student Information System",
       "icon": "🎓",
       "gradient": "linear-gradient(135deg,#1E3A8A,#3B82F6)",
-      "href": "http://localhost:4002",
+      "href": "https://optionc-sms.optioncapp.com",
       "target": "same-tab"
     },
     {
@@ -19,7 +19,7 @@
       "category": "Parish Administration",
       "icon": "✝️",
       "gradient": "linear-gradient(135deg,#166534,#22C55E)",
-      "href": "http://localhost:4005",
+      "href": "https://optionc-parish.optioncapp.com",
       "target": "same-tab"
     },
     {

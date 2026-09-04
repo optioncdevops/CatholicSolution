@@ -1,4 +1,4 @@
-import { getApi, postApi } from '@app/config/appAcutisClient';
+import { postApi } from '@app/config/appAcutisClient';
 import type { SaveAccessRequestPayload } from '../types/accessRequestTypes';
 
 const controller = 'AccessRequest';
