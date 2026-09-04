@@ -38,6 +38,25 @@ export const ORG_TYPE_OPTIONS: Array<{ id: string; value: string }> = [
 export const orgTypeLabel = (orgType: string | null | undefined): string =>
   ORG_TYPE_OPTIONS.find((option) => option.id === orgType)?.value ?? (orgType || '—');
 
+// Distinct Badge tone per organization type so the Type column is scannable by color as well as
+// label (never color alone — the label text is always shown too). Falls back to neutral for any
+// value outside ORG_TYPE_OPTIONS (this column is an app convention, not DB-enforced).
+const ORG_TYPE_TONE: Record<string, 'success' | 'warning' | 'neutral' | 'danger' | 'info'> = {
+  'Catholic School': 'info',
+  Parish: 'success',
+  'Diocese / Archdiocese': 'warning',
+  'Ministry / Nonprofit': 'danger',
+  Other: 'neutral',
+};
+
+export const orgTypeTone = (orgType: string | null | undefined): 'success' | 'warning' | 'neutral' | 'danger' | 'info' =>
+  (orgType && ORG_TYPE_TONE[orgType]) || 'neutral';
+
+// Display-only identifier, e.g. "ORG-15001" — the same ORG-<OrgId> format already used by the
+// product Customers tab (Acutis_Products_CRUD ActionId 9's OrgCode column). Computed from OrgId
+// rather than stored, since it's a deterministic display format, not a separate database value.
+export const formatOrgCode = (orgId: number): string => `ORG-${orgId}`;
+
 // Composes the address parts into a single display line, e.g. "123 Main St, Springfield, IL 62704".
 // City/state are joined with a comma; the ZIP trails the state with just a space (US postal convention).
 export const composeOrganizationAddress = (organization: Pick<OrganizationApiItem, 'address' | 'city' | 'state' | 'zip'>): string => {

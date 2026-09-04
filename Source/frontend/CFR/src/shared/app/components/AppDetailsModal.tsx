@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
-import { resolveAppDestination, resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
 
 interface AppDetailsModalProps {
   app: CatalogApp | null;
   onClose: () => void;
   onRequest?: (app: CatalogApp) => void;
+  onLaunch?: (app: CatalogApp) => void;
 }
 
-export function AppDetailsModal({ app, onClose, onRequest }: AppDetailsModalProps) {
+export function AppDetailsModal({ app, onClose, onRequest, onLaunch }: AppDetailsModalProps) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -38,17 +38,17 @@ export function AppDetailsModal({ app, onClose, onRequest }: AppDetailsModalProp
 
   if (!app) return null;
 
-  const destination = resolveAppDestination(app);
-  const target = destination?.href;
+  const ssoLaunch = Boolean(onLaunch && app.productId && app.hubSection === 'your');
+  const showRequest = Boolean(onRequest && app.canRequest && app.hubSection === 'available');
   const isExternal = app.kind === 'external';
-  const openInNewTab = destination?.openInNewTab ?? false;
-  const requestTarget = !target && app.status !== 'coming-soon' ? resolvePlatformUrl(`/request-access?product=${encodeURIComponent(app.id)}`) : '';
-  const primaryLabel = target
-    ? `${isExternal ? 'Visit site' : 'Launch'} ${openInNewTab ? '↗' : '→'}`
-    : app.status === 'coming-soon' ? 'Coming soon' : 'Request this app →';
-  const primaryClass = `action-primary ${target ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 shadow-sm' : 'border border-brand-navy bg-white text-brand-navy hover:bg-brand-navy hover:text-white'}`;
+  const primaryLabel = ssoLaunch
+    ? `${isExternal ? 'Visit site' : 'Launch'} →`
+    : showRequest
+      ? 'Request this app →'
+      : app.status === 'coming-soon' ? 'Coming soon' : 'Not available';
+  const primaryClass = `action-primary ${ssoLaunch ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 shadow-sm' : 'border border-brand-navy bg-white text-brand-navy hover:bg-brand-navy hover:text-white'}`;
   const details = app.details;
-  const statusClass = target && app.kind === 'launchable' ? 'bg-emerald-50 text-emerald-700' : isExternal ? 'bg-slate-100 text-slate-700' : app.kind === 'ai' ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-700';
+  const statusClass = ssoLaunch && app.kind === 'launchable' ? 'bg-emerald-50 text-emerald-700' : isExternal ? 'bg-slate-100 text-slate-700' : app.kind === 'ai' ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-700';
 
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={onClose}>
@@ -84,12 +84,10 @@ export function AppDetailsModal({ app, onClose, onRequest }: AppDetailsModalProp
 
         <footer className="flex flex-wrap items-center gap-3 border-t border-slate-200 bg-slate-50/70 px-5 py-4 sm:px-6">
           <span className={`mr-auto rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide ${statusClass}`}>{app.statusDetail ?? app.statusLabel}</span>
-          {target ? (
-            <a href={target} target={destination?.target} rel={destination?.rel} onClick={onClose} className={primaryClass}>{primaryLabel}</a>
-          ) : onRequest && app.status !== 'coming-soon' ? (
-            <button type="button" onClick={() => onRequest(app)} className={primaryClass}>{primaryLabel}</button>
-          ) : requestTarget ? (
-            <a href={requestTarget} onClick={onClose} className={primaryClass}>{primaryLabel}</a>
+          {ssoLaunch ? (
+            <button type="button" onClick={() => { void onLaunch?.(app); onClose(); }} className={primaryClass}>{primaryLabel}</button>
+          ) : showRequest ? (
+            <button type="button" onClick={() => onRequest?.(app)} className={primaryClass}>{primaryLabel}</button>
           ) : (
             <button
               type="button"

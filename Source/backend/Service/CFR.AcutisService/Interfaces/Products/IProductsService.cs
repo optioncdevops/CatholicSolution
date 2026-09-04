@@ -102,6 +102,20 @@ namespace CFR.AcutisService.Interfaces.Products
         /// <returns>MSResultArgs containing the product customer records list.</returns>
         Task<MSResultArgs> GetProductCustomersAsync(int productId);
 
+        /// <summary>
+        /// Retrieves per-product organization assignment counts.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the admin dashboard's App Access Overview with real assignment data.
+        /// Request Flow: ProductsController -> IProductsService.GetProductAssignmentSummaryAsync() -> IProductsRepository.GetProductAssignmentSummaryAsync().
+        /// Validation Details: None.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IProductsRepository.GetProductAssignmentSummaryAsync().
+        /// Response Details: MSResultArgs containing List of ProductAssignmentSummaryOutput.
+        /// </remarks>
+        /// <returns>MSResultArgs containing the per-product organization assignment summaries.</returns>
+        Task<MSResultArgs> GetProductAssignmentSummaryAsync();
+
         #endregion GET Methods
 
         #region POST Methods

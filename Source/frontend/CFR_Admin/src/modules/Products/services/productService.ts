@@ -55,6 +55,17 @@ export const getProductCustomers = async (productId: number): Promise<ApiRespons
   }
 };
 
+export const getProductAssignmentSummary = async (): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductAssignmentSummary`);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to fetch product assignment summary';
+  }
+};
+
 export const getProductContactUsers = async (): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>('Users/GetUsers');

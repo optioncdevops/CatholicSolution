@@ -17,7 +17,9 @@ import {
 } from "./richTextEditor.toolbarConfig";
 import { RichTextToolbarButton } from "./RichTextToolbarButton";
 import {
+  applyImage,
   applyLink,
+  applyTable,
   formatBlockCommandValue,
   runEditorCommand,
 } from "./richTextEditor.utils";
@@ -48,6 +50,16 @@ export function RichTextToolbar({
     const action = RICH_TEXT_TOOLBAR_ACTIONS[id];
     if (id === "link") {
       applyLink(editor);
+      onAfterCommand();
+      return;
+    }
+    if (id === "image") {
+      applyImage(editor);
+      onAfterCommand();
+      return;
+    }
+    if (id === "table") {
+      applyTable(editor);
       onAfterCommand();
       return;
     }
@@ -109,12 +121,13 @@ export function RichTextToolbar({
             const action = RICH_TEXT_TOOLBAR_ACTIONS[actionId];
             const Icon = action.icon;
 
-            if (actionId === "foreColor") {
+            if (actionId === "foreColor" || actionId === "highlightColor") {
+              const isHighlight = actionId === "highlightColor";
               return (
                 <label
                   key={actionId}
-                  title="Text color"
-                  aria-label="Text color"
+                  title={action.label}
+                  aria-label={action.label}
                   onMouseDown={(event) => { event.preventDefault(); }}
                   className={cn(
                     "relative inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground-muted",
@@ -137,9 +150,9 @@ export function RichTextToolbar({
                     type="color"
                     disabled={isDisabled}
                     className="absolute inset-0 cursor-pointer opacity-0"
-                    defaultValue="#1e3a5f"
+                    defaultValue={isHighlight ? "#fff3b0" : "#1e3a5f"}
                     onInput={(event) => {
-                      run("foreColor", event.currentTarget.value);
+                      run(action.command ?? "foreColor", event.currentTarget.value);
                     }}
                   />
                 </label>

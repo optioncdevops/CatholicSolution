@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { ShieldCheckIcon, SparklesIcon } from '@shared/app/components/UiIcons';
-import { APP_CATALOG } from '@shared/app/config/appCatalog';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { getProducts } from '@/modules/products/services/productsService';
 import { productsFromApiResponse } from '@/modules/products/utils/productsHelpers';
@@ -21,7 +20,7 @@ export function AuthShell({
   title = <>Welcome back to your Catholic community <span className="text-brand-gold-light">platform.</span></>,
   description = 'One secure sign-in for the school, parish, finance, communications, content, and ministry tools your organization uses every day.',
 }: AuthShellProps) {
-  const [apps, setApps] = useState<CatalogApp[]>(() => APP_CATALOG.map((app) => ({ ...app })));
+  const [apps, setApps] = useState<CatalogApp[]>([]);
 
   useEffect(() => {
     let cancelled = false;

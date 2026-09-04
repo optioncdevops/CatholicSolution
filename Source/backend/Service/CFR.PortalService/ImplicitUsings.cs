@@ -1,6 +1,14 @@
-﻿namespace CFR.AcutisService
-{
-    internal class ImplicitUsings
-    {
-    }
-}
+// Copyright (c) OptionC. All rights reserved.
+
+global using CFR.PortalInfrastructure.Interfaces.Authentication;
+global using CFR.PortalInfrastructure.Interfaces.CFRLaunch;
+global using CFR.PortalInfrastructure.Models.Input;
+global using CFR.PortalInfrastructure.Models.Output;
+global using CFR.PortalService.Interfaces.Authentication;
+global using CFR.PortalService.Interfaces.CFRLaunch;
+global using CFR.Common;
+global using CFR.CommonService;
+global using CFR.CommonService.Interfaces;
+global using CFR.DBEngine;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.Logging;

@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertTriangle, CheckCircle2, KeyRound, Mail, MailCheck, MailQuestion, Palette, RotateCcw, Save, Search, Send, Settings, Sparkles, Wand2,
+  AlertTriangle, CheckCircle2, Eye, KeyRound, Mail, MailCheck, MailQuestion, Palette, RotateCcw, Save, Search, Send, Sparkles, Wand2,
 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Badge } from '@app/components/Badge';
-import { Dropdown, InputField, RichTextEditor } from '@app/components/formControls';
+import { BaseModal } from '@app/components/modal/BaseModal';
+import { ColorPicker, Dropdown, InputField, RichTextEditor } from '@app/components/formControls';
 // The ported formControls InputField doesn't forward a ref to the underlying element, which the
 // merge-tag "insert at cursor" feature below needs for the Subject field — keep the local
 // ref-forwarding one. The Body field is now the shared RichTextEditor (WYSIWYG, standard
-// bold/italic/lists/links/color toolbar) instead of a raw-HTML textarea.
+// bold/italic/lists/links/color/image/table toolbar) instead of a raw-HTML textarea.
 import { InputField as SubjectField } from '@app/components/form/TextField';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 import { confirmAction } from '../../../lib/confirm';
@@ -53,6 +54,7 @@ function EmailTemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const subjectRef = useRef<HTMLInputElement>(null);
   //#endregion
 
@@ -226,9 +228,6 @@ function EmailTemplatesPage() {
     }
   };
 
-  const handleMailSettings = () => {
-    showToast('Mail Settings is a prototype placeholder — there is no SMTP configuration screen yet.');
-  };
   //#endregion
 
   //#region Render
@@ -310,22 +309,11 @@ function EmailTemplatesPage() {
                 </div>
               </div>
 
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <span className={`admin-status-chip ${isDirty ? 'admin-status-chip--dirty' : 'admin-status-chip--saved'}`}>
-                  <span className="admin-status-chip__dot" aria-hidden="true" />
-                  {isDirty ? 'Unsaved changes' : 'All changes saved'}
-                </span>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty || saving}>Reset</CommonButton>
-                  <CommonButton
-                    variant="outline" size="sm" iconLeft={<Settings size={13} />} onClick={handleMailSettings}
-                    tooltip="Prototype only — no SMTP settings screen is wired up yet."
-                  >
-                    Mail Settings
-                  </CommonButton>
-                  <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={() => void handleSendTest()} disabled={sendingTest}>{sendingTest ? 'Sending…' : 'Send Test'}</CommonButton>
-                  <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={() => void handleSave()} disabled={!isDirty || saving}>{saving ? 'Saving…' : 'Save'}</CommonButton>
-                </div>
+              <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty || saving}>Reset</CommonButton>
+                <CommonButton variant="outline" size="sm" iconLeft={<Eye size={13} />} onClick={() => setPreviewOpen(true)}>Preview</CommonButton>
+                <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={() => void handleSendTest()} disabled={sendingTest}>{sendingTest ? 'Sending…' : 'Send Test'}</CommonButton>
+                <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={() => void handleSave()} disabled={!isDirty || saving}>{saving ? 'Saving…' : 'Save'}</CommonButton>
               </div>
             </div>
 
@@ -339,26 +327,26 @@ function EmailTemplatesPage() {
               </div>
             ) : null}
 
-            <div className="grid gap-0 divide-y divide-[var(--line-soft)] xl:grid-cols-2 xl:divide-x xl:divide-y-0">
-              <div className="flex flex-col gap-3 p-4">
-                <SubjectField
-                  label="Subject" required
-                  ref={subjectRef}
-                  value={draft.subject}
-                  onChange={(event) => updateField('subject', event.target.value)}
-                  placeholder="Enter the email subject line"
-                  hint="Shown as the message subject line — keep it short and specific."
-                />
+            <div className="flex flex-col gap-4 p-4">
+              <SubjectField
+                label="Subject" required
+                ref={subjectRef}
+                value={draft.subject}
+                onChange={(event) => updateField('subject', event.target.value)}
+                placeholder="Enter the email subject line"
+                hint="Shown as the message subject line — keep it short and specific."
+              />
+              <div>
                 <RichTextEditor
                   id={BODY_EDITOR_ID}
                   label="Body"
                   value={draft.body}
                   onValueChange={(html) => updateField('body', html)}
                   placeholder="Enter the email body"
-                  minHeight={260}
-                  helperText="Format the body with the toolbar (bold, links, lists, color, alignment), or use the merge tags below to personalize it — click one to insert it at your cursor."
+                  minHeight={340}
+                  helperText="Use the toolbar for formatting, images, tables, and links, or one of the merge tags below to personalize it — click one to insert it at your cursor."
                 />
-                <div>
+                <div className="mt-2">
                   <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">
                     <Wand2 size={12} aria-hidden="true" /> Insert Variable
                   </p>
@@ -378,123 +366,109 @@ function EmailTemplatesPage() {
                     ))}
                   </div>
                 </div>
-
-                <div className="admin-email-branding">
-                  <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">
-                    <Palette size={12} aria-hidden="true" /> Branding
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className="admin-email-branding__field">
-                      <span>Accent color</span>
-                      <span className="admin-email-branding__color-row">
-                        <input
-                          type="color"
-                          value={draft.accentColor}
-                          onChange={(event) => updateField('accentColor', event.target.value)}
-                          className="admin-email-branding__color-swatch"
-                          aria-label="Accent color"
-                        />
-                        <input
-                          type="text"
-                          value={draft.accentColor}
-                          onChange={(event) => updateField('accentColor', event.target.value)}
-                          className="admin-email-branding__color-text"
-                          maxLength={9}
-                        />
-                      </span>
-                    </label>
-
-                    <label className="admin-email-branding__field">
-                      <span>Base font size (px)</span>
-                      <input
-                        type="number"
-                        min={10}
-                        max={24}
-                        value={draft.baseFontSize}
-                        onChange={(event) => updateField('baseFontSize', Number(event.target.value) || DEFAULT_EMAIL_BASE_FONT_SIZE)}
-                        className="admin-email-branding__number"
-                      />
-                    </label>
-
-                    <label className="admin-email-branding__field col-span-2">
-                      <span>Font family</span>
-                      <Dropdown
-                        label="Font family" hideLabel
-                        searchable={false}
-                        clearable={false}
-                        value={draft.fontFamily}
-                        onValueChange={(value) => updateField('fontFamily', value ?? DEFAULT_EMAIL_FONT_FAMILY)}
-                        options={EMAIL_FONT_FAMILY_OPTIONS}
-                        className="min-h-8"
-                      />
-                    </label>
-
-                    <label className="admin-email-branding__field col-span-2">
-                      <span>Logo image URL</span>
-                      <input
-                        type="text"
-                        value={draft.logoUrl}
-                        onChange={(event) => updateField('logoUrl', event.target.value)}
-                        placeholder="https://…/logo.png (leave blank for the default brand header)"
-                        className="admin-email-branding__text"
-                      />
-                    </label>
-                  </div>
-                </div>
               </div>
 
-              <div className="flex flex-col gap-2 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Live Preview</p>
-                </div>
-                <div className="admin-email-preview-shell">
-                  <div
-                    className="admin-email-preview-card"
-                    onClick={(event) => { if ((event.target as HTMLElement).closest('a')) event.preventDefault(); }}
-                  >
-                    <div className="admin-email-preview-card__meta">
-                      <div className="admin-email-preview-card__meta-row">
-                        <span className="admin-email-preview-card__meta-label">To</span>
-                        <span className="admin-email-preview-card__meta-value">{storedAuthEmail || '—'}</span>
-                      </div>
-                    </div>
-                    <p className="admin-email-preview-card__subject">{draft.subject || 'Untitled subject'}</p>
-                    {draft.body ? (
-                      // Mirrors SMTPMailService.FormatMailContent's actual send-time wrapper (gradient
-                      // band, brand header, white content card, disclaimer footer) so this preview
-                      // matches the real email structure, not just the raw body in isolation. Keep in
-                      // sync with that method if its wrapper markup changes. [AccentColor] is
-                      // substituted here for the live preview only — every other merge tag stays literal.
-                      <div className="admin-email-preview-card__envelope" style={{ fontFamily: draft.fontFamily, fontSize: `${draft.baseFontSize}px` }}>
-                        {draft.logoUrl ? (
-                          <div className="admin-email-preview-card__logo-image">
-                            <img src={draft.logoUrl} alt={templateDisplayLabel(template.templateCode)} />
-                          </div>
-                        ) : (
-                          <div className="admin-email-preview-card__brand">Catholic Solutions</div>
-                        )}
-                        <div className="admin-email-preview-card__content">
-                          <div className="admin-email-preview-card__body" dangerouslySetInnerHTML={{ __html: previewBody }} />
-                          <div className="admin-email-preview-card__disclaimer">
-                            <span>Disclaimer</span>
-                            <p>Please do not respond directly to this email. The originating email is not monitored.</p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="px-4 pb-4 text-xs italic text-[var(--text-faint)]">Start typing the body to see it rendered here.</p>
-                    )}
-                  </div>
-                </div>
-                <p className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
-                  <CheckCircle2 size={12} className="shrink-0" aria-hidden="true" />
-                  Preview shows the template and branding as written. [AccentColor] is filled in live; other merge tags stay as placeholders until a real send fills them in.
+              <div className="admin-email-branding">
+                <p className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">
+                  <Palette size={12} aria-hidden="true" /> Branding
                 </p>
+                <p className="mb-2 text-xs text-[var(--text-muted)]">
+                  These settings only style <strong>{templateDisplayLabel(template.templateCode)}</strong> — each template has its own accent color, font, and size, so changing them here doesn't affect any other template.
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <ColorPicker
+                    label="Accent color"
+                    value={draft.accentColor}
+                    onChange={(value) => updateField('accentColor', value ?? DEFAULT_EMAIL_ACCENT_COLOR)}
+                    enableNativePicker
+                  />
+
+                  <label className="admin-email-branding__field">
+                    <span>Base font size (px)</span>
+                    <input
+                      type="number"
+                      min={10}
+                      max={24}
+                      value={draft.baseFontSize}
+                      onChange={(event) => updateField('baseFontSize', Number(event.target.value) || DEFAULT_EMAIL_BASE_FONT_SIZE)}
+                      className="admin-email-branding__number"
+                    />
+                  </label>
+
+                  <label className="admin-email-branding__field">
+                    <span>Font family</span>
+                    <Dropdown
+                      label="Font family" hideLabel
+                      searchable={false}
+                      clearable={false}
+                      value={draft.fontFamily}
+                      onValueChange={(value) => updateField('fontFamily', value ?? DEFAULT_EMAIL_FONT_FAMILY)}
+                      options={EMAIL_FONT_FAMILY_OPTIONS}
+                      className="min-h-8"
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           </section>
         ) : null}
       </div>
+
+      {template ? (
+        <BaseModal
+          isOpen={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          title={`Preview — ${templateDisplayLabel(template.templateCode)}`}
+          size="lg"
+          height="lg"
+        >
+          <div className="flex flex-col gap-2">
+            <div className="admin-email-preview-shell">
+              <div
+                className="admin-email-preview-card"
+                onClick={(event) => { if ((event.target as HTMLElement).closest('a')) event.preventDefault(); }}
+              >
+                <div className="admin-email-preview-card__meta">
+                  <div className="admin-email-preview-card__meta-row">
+                    <span className="admin-email-preview-card__meta-label">To</span>
+                    <span className="admin-email-preview-card__meta-value">{storedAuthEmail || '—'}</span>
+                  </div>
+                </div>
+                <p className="admin-email-preview-card__subject">{draft.subject || 'Untitled subject'}</p>
+                {draft.body ? (
+                  // Mirrors SMTPMailService.FormatMailContent's actual send-time wrapper (gradient
+                  // band, brand header, white content card, disclaimer footer) so this preview
+                  // matches the real email structure, not just the raw body in isolation. Keep in
+                  // sync with that method if its wrapper markup changes. [AccentColor] is
+                  // substituted here for the live preview only — every other merge tag stays literal.
+                  <div className="admin-email-preview-card__envelope" style={{ fontFamily: draft.fontFamily, fontSize: `${draft.baseFontSize}px` }}>
+                    {draft.logoUrl ? (
+                      <div className="admin-email-preview-card__logo-image">
+                        <img src={draft.logoUrl} alt={templateDisplayLabel(template.templateCode)} />
+                      </div>
+                    ) : (
+                      <div className="admin-email-preview-card__brand">Catholic Solutions</div>
+                    )}
+                    <div className="admin-email-preview-card__content">
+                      <div className="admin-email-preview-card__body" dangerouslySetInnerHTML={{ __html: previewBody }} />
+                      <div className="admin-email-preview-card__disclaimer">
+                        <span>Disclaimer</span>
+                        <p>Please do not respond directly to this email. The originating email is not monitored.</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="px-4 pb-4 text-xs italic text-[var(--text-faint)]">Start typing the body to see it rendered here.</p>
+                )}
+              </div>
+            </div>
+            <p className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
+              <CheckCircle2 size={12} className="shrink-0" aria-hidden="true" />
+              Preview shows the template and branding as written. [AccentColor] is filled in live; other merge tags stay as placeholders until a real send fills them in.
+            </p>
+          </div>
+        </BaseModal>
+      ) : null}
     </div>
   );
   //#endregion

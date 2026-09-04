@@ -134,6 +134,13 @@ interface BaseDropdownProps
   /** Show “(optional)” suffix when the field is not required */
   optional?: boolean;
   className?: string;
+  /**
+   * Extra classes for the field's outer wrapper (the label + control column) — this is what
+   * actually needs a grid-column-span class like `md:col-span-4` to size the field within a
+   * form grid. `className` only reaches the inner trigger button, not this wrapper, so it can't
+   * be used for that (matches InputField's `wrapperClassName` convention).
+   */
+  wrapperClassName?: string;
   /** Controlled value (when not using react-hook-form) */
   value?: string | number;
   /** Default value for uncontrolled mode */
@@ -183,6 +190,7 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
   required,
   optional,
   className,
+  wrapperClassName,
   value,
   defaultValue,
   onValueChange,
@@ -741,7 +749,7 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
 
     return (
       <div
-        className={cn(themeFieldWrapperClass, hideLabel && "gap-0!")}
+        className={cn(themeFieldWrapperClass, wrapperClassName, hideLabel && "gap-0!")}
         ref={containerRef}
       >
         <FormFieldLabel

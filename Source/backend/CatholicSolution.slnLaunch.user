@@ -7,7 +7,7 @@
         "Action": "Start"
       },
       {
-        "Path": "Microservices\\CFR.Acutis\\CFR.Acutis.csproj",
+        "Path": "Microservices\\CFR.Portal\\CFR.Portal.csproj",
         "Action": "Start"
       }
     ]

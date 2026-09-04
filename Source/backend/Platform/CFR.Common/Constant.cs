@@ -59,7 +59,10 @@ namespace CFR.Common
             /// <summary>
             /// Portal
             /// </summary>
-            public const string PortalDocs = "Portal.Organization,Portal.Reports";
+            public const string CFRPortal = "CFRPortal";
+            public const string PortalAuthentication = "Portal.Authentication";
+            public const string PortalCFRLaunch = "Portal.CFRLaunch";
+            public const string PortalDocs = "Portal.Authentication,Portal.CFRLaunch";
         }
 
         public static class SwaggerDocs

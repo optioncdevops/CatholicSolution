@@ -159,6 +159,26 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             return result.ToList();
         }
 
+        /// <summary>
+        /// Fetches per-product organization assignment counts using StoredProc.Products.ProductsCrud (EnumVariables.ProductAction.GetAssignmentSummary).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the admin dashboard's App Access Overview with real assignment data.
+        /// Request Flow: IProductsService -> ProductsRepository.GetProductAssignmentSummaryAsync() -> Database.
+        /// Validation Details: None.
+        /// Business Logic: Maps the joined core.Product + lic.OrganizationProduct rows to ProductAssignmentSummaryOutput.
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud with EnumVariables.ProductAction.GetAssignmentSummary.
+        /// Response Details: Returns a list of per-product organization assignment summaries.
+        /// </remarks>
+        /// <returns>A list of per-product organization assignment summaries.</returns>
+        public async Task<List<ProductAssignmentSummaryOutput>> GetProductAssignmentSummaryAsync()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumVariables.ProductAction.GetAssignmentSummary, DbType.Int32);
+            var result = await dapperHandler.QueryAsync<ProductAssignmentSummaryOutput>(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
+            return result.ToList();
+        }
+
         #endregion GET Methods
 
         #region POST Methods

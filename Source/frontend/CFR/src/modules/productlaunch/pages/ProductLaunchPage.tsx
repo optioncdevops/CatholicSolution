@@ -8,11 +8,11 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { BellIcon, SearchIcon } from '@shared/app/components/UiIcons';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import type { CatalogApp } from '@shared/app/types/app';
-import { APP_CATALOG } from '@shared/app/config/appCatalog';
-import { getHubProducts } from '@/modules/requests/services/accessRequestService';
-import { productsFromHubResponse } from '@/modules/products/utils/productsHelpers';
-import { AppCard } from './AppCard';
-import { RequestInterestModal } from './RequestInterestModal';
+import { getAssignedProducts, launchProduct } from '../services/productLaunchService';
+import { hubProductsFromResponse } from '../utils/productLaunchHelpers';
+import { validateLaunchProduct } from '../validator/ProductLaunchValidator';
+import { AppCard } from './partials/AppCard';
+import { RequestInterestModal } from './partials/RequestInterestModal';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { GlobalAppSwitcher } from '@/appShell/GlobalAppSwitcher';
 
@@ -23,10 +23,10 @@ function greeting(firstName: string) {
   return `Good evening, ${firstName}`;
 }
 
-export function AppHubPage() {
+export default function ProductLaunchPage() {
   //#region Hooks
   const { showToast } = useToast();
-  const { firstName, user } = useCurrentUser();
+  const { firstName } = useCurrentUser();
   //#endregion
 
   //#region States
@@ -34,7 +34,7 @@ export function AppHubPage() {
   const [selectedApp, setSelectedApp] = useState<CatalogApp | null>(null);
   const [requestedApp, setRequestedApp] = useState<CatalogApp | null>(null);
   const [requestedAppIds, setRequestedAppIds] = useState<string[]>([]);
-  const [apps, setApps] = useState<CatalogApp[]>(() => APP_CATALOG.map((app) => ({ ...app })));
+  const [apps, setApps] = useState<CatalogApp[]>([]);
   const [loading, setLoading] = useState(true);
   //#endregion
 
@@ -42,16 +42,16 @@ export function AppHubPage() {
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getHubProducts(user.email);
-      setApps(productsFromHubResponse(response));
+      const assignedResponse = await getAssignedProducts();
+      setApps(hubProductsFromResponse(assignedResponse));
     } catch (error) {
       console.error('Error loading products:', error);
       showToast(typeof error === 'string' ? error : 'Failed to load products.');
-      setApps(productsFromHubResponse([]));
+      setApps([]);
     } finally {
       setLoading(false);
     }
-  }, [showToast, user.email]);
+  }, [showToast]);
   //#endregion
 
   //#region Effects
@@ -109,6 +109,26 @@ export function AppHubPage() {
   const closeRequestModal = useCallback(() => {
     setRequestedApp(null);
   }, []);
+
+  const handleLaunch = useCallback(async (app: CatalogApp) => {
+    const messages = validateLaunchProduct(app.productId);
+    if (messages.length) {
+      showToast(messages.join(' '));
+      return;
+    }
+    try {
+      const { launchUrl } = await launchProduct(app.productId as number);
+      showToast(`Launching ${app.name}.`);
+      if (app.navigationTarget === 'new-tab') {
+        window.open(launchUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      window.location.assign(launchUrl);
+    } catch (error) {
+      console.error('Error launching product:', error);
+      showToast(typeof error === 'string' ? error : `Failed to launch ${app.name}.`);
+    }
+  }, [showToast]);
 
   const handleRequestSubmitted = useCallback((app: CatalogApp) => {
     setRequestedAppIds((current) => (current.includes(app.id) ? current : [...current, app.id]));
@@ -185,6 +205,7 @@ export function AppHubPage() {
                       app={app}
                       onDetails={setSelectedApp}
                       onRequest={openRequestModal}
+                      onLaunch={handleLaunch}
                       hidePrimaryAction={group.hidePrimaryAction}
                       actionMode={group.actionMode}
                       statusMode={group.statusMode}
@@ -200,7 +221,7 @@ export function AppHubPage() {
         </div>
       </section>
       <Footer />
-      <AppDetailsModal app={selectedApp} onClose={() => setSelectedApp(null)} onRequest={openRequestModal} />
+      <AppDetailsModal app={selectedApp} onClose={() => setSelectedApp(null)} onRequest={openRequestModal} onLaunch={handleLaunch} />
       <RequestInterestModal app={requestedApp} onClose={closeRequestModal} onSubmitted={handleRequestSubmitted} />
     </main>
   );
