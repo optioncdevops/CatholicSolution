@@ -574,13 +574,13 @@ export function DashboardPage() {
                   <input
                     type="date" aria-label="Custom range start date" aria-invalid={Boolean(customRangeError)}
                     value={customFrom} onChange={(event) => setCustomFrom(event.target.value)}
-                    className="h-8 rounded-[var(--admin-control-radius)] border border-[var(--line-strong)] bg-[var(--surface)] px-2 text-xs font-semibold text-[var(--text-primary)]"
+                    className="h-8 rounded-[var(--admin-control-radius)] border border-[var(--line-strong)] bg-[var(--surface)] px-2 text-[length:var(--admin-text-base)] font-semibold text-[var(--text-primary)]"
                   />
                   <span className="text-xs text-[var(--text-faint)]">to</span>
                   <input
                     type="date" aria-label="Custom range end date" aria-invalid={Boolean(customRangeError)}
                     value={customTo} onChange={(event) => setCustomTo(event.target.value)}
-                    className="h-8 rounded-[var(--admin-control-radius)] border border-[var(--line-strong)] bg-[var(--surface)] px-2 text-xs font-semibold text-[var(--text-primary)]"
+                    className="h-8 rounded-[var(--admin-control-radius)] border border-[var(--line-strong)] bg-[var(--surface)] px-2 text-[length:var(--admin-text-base)] font-semibold text-[var(--text-primary)]"
                   />
                 </div>
                 {customRangeError ? <span className="text-[0.6875rem] font-bold text-[var(--error)]">{customRangeError}</span> : null}

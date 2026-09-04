@@ -203,7 +203,7 @@ export function AdminShell() {
       <div className="admin-top-accent" aria-hidden="true" />
       <header className="sticky top-0 z-40 bg-[var(--surface)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--surface)]/80">
         <div
-          className={`flex h-14 items-center gap-4 border-b border-[var(--line-soft)] ${CONTAINER}`}
+          className={`flex h-16 items-center gap-4 border-b border-[var(--line-soft)] ${CONTAINER}`}
         >
           <div className="flex shrink-0 items-center gap-3">
             <Brand compact />

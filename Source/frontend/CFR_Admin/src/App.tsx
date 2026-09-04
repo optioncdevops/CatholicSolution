@@ -10,6 +10,7 @@ import { AdminShell } from "@/modules/components/AdminShell";
 import { usersRoutes } from "@/modules/users";
 import { userRolesRoutes } from "@/modules/administration/userRoles";
 import { emailTemplatesRoutes } from "@/modules/administration/emailTemplates";
+import { emailSettingsRoutes } from "@/modules/administration/emailSettings";
 import { organizationsRoutes } from "@/modules/organizations";
 import { requestsRoutes } from "@/modules/requests";
 import { productsRoutes } from "@/modules/Products";
@@ -70,6 +71,7 @@ export default function App() {
           {requestsRoutes}
           <Route path="/admin/administration-rights" element={<RightsPage />} />
           {emailTemplatesRoutes}
+          {emailSettingsRoutes}
           {/* Dev-only — see the removal note at the top of SampleAddPage.tsx / SampleViewPage.tsx. */}
           <Route
             path="/admin/administration/component-library/add"

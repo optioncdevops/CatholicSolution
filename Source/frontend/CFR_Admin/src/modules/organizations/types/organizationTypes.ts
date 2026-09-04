@@ -68,6 +68,7 @@ export interface OrganizationUserApiItem {
   memberStatus: string | null;
   linkedDate: string;
   appCount: number;
+  appNames: string | null;
 }
 
 export interface OrganizationUserAppApiItem {

@@ -175,26 +175,6 @@ namespace CFR.AcutisInfrastructure
             public const string Status = nameof(Status);
 
             /// <summary>
-            /// Per-template accent color (hex) override for the send-time wrapper.
-            /// </summary>
-            public const string AccentColor = nameof(AccentColor);
-
-            /// <summary>
-            /// Per-template logo image URL override for the send-time wrapper.
-            /// </summary>
-            public const string LogoUrl = nameof(LogoUrl);
-
-            /// <summary>
-            /// Per-template font-family override for the send-time wrapper.
-            /// </summary>
-            public const string FontFamily = nameof(FontFamily);
-
-            /// <summary>
-            /// Per-template base body font size (pixels) override for the send-time wrapper.
-            /// </summary>
-            public const string BaseFontSize = nameof(BaseFontSize);
-
-            /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);

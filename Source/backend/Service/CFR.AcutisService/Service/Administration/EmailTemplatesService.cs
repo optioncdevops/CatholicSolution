@@ -171,10 +171,10 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                string accentColor = string.IsNullOrWhiteSpace(input.AccentColor) ? "#1d4ed8" : input.AccentColor;
+                string accentColor = SMTPMailService.GetAccentColor();
                 string testSubject = input.Subject.Replace("[AccentColor]", accentColor);
                 string testBody = input.Body.Replace("[AccentColor]", accentColor);
-                bool sent = await mailService.SendMailAsync(testSubject, testBody, input.ToAddress, templateLogoUrl: input.LogoUrl, fontFamily: input.FontFamily, baseFontSize: input.BaseFontSize);
+                bool sent = await mailService.SendMailAsync(testSubject, testBody, input.ToAddress);
                 if (!sent)
                 {
                     result.StatusCode = ErrorCodes.Failed;

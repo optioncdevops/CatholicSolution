@@ -11,55 +11,20 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
--- Per-template branding overrides (color/logo/font/size), idempotent — safe to re-run. A NULL
--- value on any of these means "use the built-in default", so existing rows and existing send
--- code paths are unaffected until an admin actually sets one via the editor.
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'adm' AND TABLE_NAME = 'EmailTemplate' AND COLUMN_NAME = 'AccentColor'
-)
-BEGIN
-    ALTER TABLE [adm].[EmailTemplate] ADD [AccentColor] NVARCHAR(9) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'adm' AND TABLE_NAME = 'EmailTemplate' AND COLUMN_NAME = 'LogoUrl'
-)
-BEGIN
-    ALTER TABLE [adm].[EmailTemplate] ADD [LogoUrl] NVARCHAR(500) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'adm' AND TABLE_NAME = 'EmailTemplate' AND COLUMN_NAME = 'FontFamily'
-)
-BEGIN
-    ALTER TABLE [adm].[EmailTemplate] ADD [FontFamily] NVARCHAR(200) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'adm' AND TABLE_NAME = 'EmailTemplate' AND COLUMN_NAME = 'BaseFontSize'
-)
-BEGIN
-    ALTER TABLE [adm].[EmailTemplate] ADD [BaseFontSize] INT NULL;
-END
-GO
-
+-- AccentColor/LogoUrl/FontFamily/BaseFontSize used to be per-template branding overrides here.
+-- Branding is now platform-wide instead (the admin Email Settings page, file-backed — see
+-- ConfSettingsService/SMTPMailConfig in CFR.CommonService), so this procedure no longer reads or
+-- writes those four columns; a template is Subject/Body content only. The columns themselves are
+-- deliberately left in place on [adm].[EmailTemplate] (not dropped) rather than risk an
+-- irreversible schema change — they're just unused dead columns now.
 IF OBJECT_ID(N'[dbo].[Acutis_EmailTemplates_CRUD]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD];
 GO
 
--- ActionId 1: Save (insert when @TemplateId = 0, otherwise update Subject/Body/Status/branding).
+-- ActionId 1: Save (insert when @TemplateId = 0, otherwise update Subject/Body/Status).
 -- ActionId 2: Get by TemplateId.
 -- ActionId 3: Get list (all templates).
 -- ActionId 4: Get by TemplateCode (used internally by AcutisPasswordService to load PasswordReset).
--- AccentColor/LogoUrl/FontFamily/BaseFontSize are per-template branding overrides for the send-time
--- wrapper (SMTPMailService.FormatMailContent); NULL on any of them means "use the built-in default".
 CREATE PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD]
     @ActionId INT,
     @TemplateId INT = 0,
@@ -67,10 +32,6 @@ CREATE PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD]
     @Subject NVARCHAR(200) = NULL,
     @Body NVARCHAR(MAX) = NULL,
     @Status NVARCHAR(20) = NULL,
-    @AccentColor NVARCHAR(9) = NULL,
-    @LogoUrl NVARCHAR(500) = NULL,
-    @FontFamily NVARCHAR(200) = NULL,
-    @BaseFontSize INT = NULL,
     @UpdatedBy BIGINT = NULL,
     @ReturnValue INT = NULL OUTPUT
 AS
@@ -99,7 +60,7 @@ BEGIN
 
             INSERT INTO [adm].[EmailTemplate]
             (
-                [TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [AccentColor], [LogoUrl], [FontFamily], [BaseFontSize], [CreatedDate], [InsertedBy], [IsDeleted]
+                [TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
@@ -108,10 +69,6 @@ BEGIN
                 @Subject,
                 @Body,
                 CASE WHEN @Status = N'inactive' THEN 0 ELSE 1 END,
-                @AccentColor,
-                @LogoUrl,
-                @FontFamily,
-                @BaseFontSize,
                 SYSUTCDATETIME(),
                 @UpdatedBy,
                 0
@@ -130,10 +87,6 @@ BEGIN
                 WHEN @Status = N'active' THEN 1
                 ELSE [IsActive]
             END,
-            [AccentColor] = @AccentColor,
-            [LogoUrl] = @LogoUrl,
-            [FontFamily] = @FontFamily,
-            [BaseFontSize] = @BaseFontSize,
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UpdatedBy
         WHERE [TemplateId] = @TemplateId
@@ -152,11 +105,7 @@ BEGIN
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             t.[CreatedDate],
-            t.[UpdatedDate],
-            ISNULL(t.[AccentColor], N'[AccentColor]') AS [AccentColor],
-            t.[LogoUrl],
-            ISNULL(t.[FontFamily], N'Segoe UI, Helvetica, Arial, sans-serif') AS [FontFamily],
-            ISNULL(t.[BaseFontSize], 14) AS [BaseFontSize]
+            t.[UpdatedDate]
         FROM [adm].[EmailTemplate] AS t
         WHERE t.[TemplateId] = @TemplateId
           AND t.[IsDeleted] = 0;
@@ -172,11 +121,7 @@ BEGIN
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             t.[CreatedDate],
-            t.[UpdatedDate],
-            ISNULL(t.[AccentColor], N'[AccentColor]') AS [AccentColor],
-            t.[LogoUrl],
-            ISNULL(t.[FontFamily], N'Segoe UI, Helvetica, Arial, sans-serif') AS [FontFamily],
-            ISNULL(t.[BaseFontSize], 14) AS [BaseFontSize]
+            t.[UpdatedDate]
         FROM [adm].[EmailTemplate] AS t
         WHERE t.[IsDeleted] = 0
         ORDER BY t.[TemplateCode];
@@ -192,11 +137,7 @@ BEGIN
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             t.[CreatedDate],
-            t.[UpdatedDate],
-            ISNULL(t.[AccentColor], N'[AccentColor]') AS [AccentColor],
-            t.[LogoUrl],
-            ISNULL(t.[FontFamily], N'Segoe UI, Helvetica, Arial, sans-serif') AS [FontFamily],
-            ISNULL(t.[BaseFontSize], 14) AS [BaseFontSize]
+            t.[UpdatedDate]
         FROM [adm].[EmailTemplate] AS t
         WHERE t.[TemplateCode] = @TemplateCode
           AND t.[IsActive] = 1

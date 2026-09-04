@@ -680,7 +680,7 @@
   border: 1px solid var(--line-strong);
   background: var(--surface);
   padding: 0 0.6rem;
-  font-size: 0.8125rem;
+  font-size: var(--admin-text-base); /* 14px — matches every other form control */
   font-weight: 650;
   color: var(--text-primary);
 }

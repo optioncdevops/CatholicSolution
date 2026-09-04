@@ -81,6 +81,9 @@ namespace CFR.Common
         public const string ProductLogoFileRequired = "File is empty or not provided.";
         public const string ProductLogoFileTooLarge = "File size cannot exceed 2 MB.";
         public const string ProductLogoInvalidType = "Only JPG and PNG images are allowed.";
+        public const string EmailLogoFileRequired = "File is empty or not provided.";
+        public const string EmailLogoFileTooLarge = "File size cannot exceed 2 MB.";
+        public const string EmailLogoInvalidType = "Only JPG and PNG images are allowed.";
     }
 
     public static class SerilogErrorMessages
@@ -106,6 +109,11 @@ namespace CFR.Common
             public const string FetchEmailTemplateByIdFailed = "Error while fetching email template {TemplateId}";
             public const string SaveEmailTemplateFailed = "Error while saving email template";
             public const string SendTestEmailFailed = "Error while sending test email";
+            public const string FetchEmailSettingsFailed = "Error while fetching email settings";
+            public const string SaveEmailSettingsFailed = "Error while saving email settings";
+            public const string UploadEmailLogoFailed = "Error while uploading email logo";
+            public const string RemoveEmailLogoFailed = "Error while removing email logo";
+            public const string FetchEmailLogoFailed = "Error while fetching email logo";
             public const string FetchProfileFailed = "Error while fetching profile for user {UserId}";
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
             public const string ChangePasswordFailed = "Error while changing password for user {UserId}";

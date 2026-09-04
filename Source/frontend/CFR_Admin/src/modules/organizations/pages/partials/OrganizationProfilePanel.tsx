@@ -15,7 +15,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">{label}</p>
-      <p className="mt-0.5 truncate text-[0.8125rem] font-bold text-[var(--text-primary)]">{value || '—'}</p>
+      <p className="mt-0.5 truncate text-[0.8125rem] font-normal text-[var(--text-primary)]">{value || '—'}</p>
     </div>
   );
 }
