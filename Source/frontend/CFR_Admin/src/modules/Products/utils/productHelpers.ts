@@ -5,9 +5,9 @@ export * from './productFilters';
 
 export const PRODUCTS_PATHS = {
   list: '/admin/products',
-  details: '/admin/products/details',
-  edit: '/admin/products/edit',
-  addLicense: '/admin/products/add-license',
+  details: '/admin/product-details',
+  edit: '/admin/edit-products',
+  addLicense: '/admin/add-product-license',
 } as const;
 
 export const DEFAULT_PRODUCT_ICON = '📦';
@@ -315,14 +315,10 @@ export function pickProductLogoUrl(item: unknown): string | null {
   return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
 }
 
-export function toStoredProductLogoFileName(logoUrl: string | null | undefined): string | null {
+export function toStoredProductLogoPath(logoUrl: string | null | undefined): string | null {
   if (!logoUrl || typeof logoUrl !== 'string' || !logoUrl.trim()) return null;
   const trimmed = logoUrl.trim().replace(/\\/g, '/');
   return trimmed.split('/').filter(Boolean).pop() ?? null;
-}
-
-export function toStoredProductLogoPath(logoUrl: string | null | undefined): string | null {
-  return toStoredProductLogoFileName(logoUrl);
 }
 
 export function resolveProductLogoUrl(

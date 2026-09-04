@@ -106,7 +106,6 @@ export interface ProductLicenseApiItem {
   licenseType?: string | null;
   activationDate?: string | null;
   expiryDate?: string | null;
-  maxUsers?: number | null;
   licenseStatus: string;
   assignStatus?: string | null;
   issuedBy?: number | null;

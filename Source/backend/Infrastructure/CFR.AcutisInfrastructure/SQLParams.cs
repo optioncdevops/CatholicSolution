@@ -528,10 +528,6 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string Remarks = nameof(Remarks);
 
-            /// <summary>
-            /// Logged-in user identifier for audit columns (ICurrentUserService.UserId).
-            /// </summary>
-            public const string UserId = nameof(UserId);
 
             /// <summary>
             /// Logged-in user who inserted the row (ICurrentUserService.UserId).
