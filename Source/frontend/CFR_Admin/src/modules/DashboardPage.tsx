@@ -22,6 +22,9 @@ import { getAccessRequests, normalizeAccessRequestList, updateAccessRequestStatu
 import type { AccessRequestApiItem } from './requests';
 import RequestReviewModal from './requests/pages/partials/RequestReviewModal';
 import { accessStatusOf, daysSince, formatRelativeDate } from './utils/formatDate';
+import { formatDate, formatRelativeDate, daysSince } from './utils/formatDate';
+import { getProductWarnings, PRODUCTS_PATHS } from './products';
+import type { AdminApplication } from './types';
 
 type DashboardStatus = 'loading' | 'ready' | 'error';
 type DateRange = '7d' | '30d' | '90d' | 'all';

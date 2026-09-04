@@ -458,9 +458,15 @@ namespace CFR.AcutisInfrastructure
             public const string DefaultAccessDays = nameof(DefaultAccessDays);
 
             /// <summary>
-            /// Relative path or URL to the product logo image.
+            /// File name or relative path to the product logo image.
             /// </summary>
+            public const string LogoName = nameof(LogoName);
             public const string LogoUrl = nameof(LogoUrl);
+
+            /// <summary>
+            /// Acutis user display name stored as the product contact person. Empty string clears the contact.
+            /// </summary>
+            public const string ContactPerson = nameof(ContactPerson);
 
             /// <summary>
             /// Pipe-delimited list of product features.
@@ -473,9 +479,54 @@ namespace CFR.AcutisInfrastructure
             public const string IsActive = nameof(IsActive);
 
             /// <summary>
-            /// Availability flag: 1 = available, 0 = coming soon.
+            /// Product status flag: 1 = Active, 2 = Coming Soon, 3 = Inactive.
             /// </summary>
-            public const string IsAvailable = nameof(IsAvailable);
+            public const string ProductStatus = nameof(ProductStatus);
+
+            /// <summary>
+            /// License identifier.
+            /// </summary>
+            public const string LicenseId = nameof(LicenseId);
+
+            /// <summary>
+            /// Organization product link identifier.
+            /// </summary>
+            public const string OrganizationProductId = nameof(OrganizationProductId);
+
+            /// <summary>
+            /// Organization identifier.
+            /// </summary>
+            public const string OrgId = nameof(OrgId);
+
+            /// <summary>
+            /// License type (e.g. licensed, trial, subscription).
+            /// </summary>
+            public const string LicenseType = nameof(LicenseType);
+
+            /// <summary>
+            /// License activation date.
+            /// </summary>
+            public const string ActivationDate = nameof(ActivationDate);
+
+            /// <summary>
+            /// License expiration date.
+            /// </summary>
+            public const string ExpiryDate = nameof(ExpiryDate);
+
+            /// <summary>
+            /// License status.
+            /// </summary>
+            public const string LicenseStatus = nameof(LicenseStatus);
+
+            /// <summary>
+            /// Assignment status on OrganizationProduct.
+            /// </summary>
+            public const string AssignStatus = nameof(AssignStatus);
+
+            /// <summary>
+            /// License remarks or notes.
+            /// </summary>
+            public const string Remarks = nameof(Remarks);
 
             /// <summary>
             /// Logged-in user identifier for audit columns (ICurrentUserService.UserId).

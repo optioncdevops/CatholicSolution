@@ -89,10 +89,11 @@ namespace CFR.CommonService
             public const string GetProducts = nameof(GetProducts);
             public const string GetProductById = nameof(GetProductById);
             public const string GetLicenseDetails = nameof(GetLicenseDetails);
-            public const string SaveProduct = nameof(SaveProduct);
-            public const string UpdateProduct = nameof(UpdateProduct);
-            public const string DeleteProduct = nameof(DeleteProduct);
+            public const string GetLicenseById = nameof(GetLicenseById);
+            public const string CreateLicense = nameof(CreateLicense);
+            public const string UpdateLicense = nameof(UpdateLicense);
             public const string UploadProductLogo = nameof(UploadProductLogo);
+            public const string UpdateProduct = nameof(UpdateProduct);
         }
     }
 }

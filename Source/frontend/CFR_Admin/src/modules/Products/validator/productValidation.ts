@@ -13,6 +13,25 @@ function hostnameOf(url: string): string | null {
   }
 }
 
+function protocolOf(url: string): string | null {
+  try {
+    return new URL(url).protocol;
+  } catch {
+    return null;
+  }
+}
+
+function firstPartyHostname(): string | null {
+  const configured = import.meta.env.VITE_APP_HUB_URL || import.meta.env.VITE_APP_REST_API_BASE_URL;
+  if (configured) {
+    return hostnameOf(configured);
+  }
+  if (typeof window !== 'undefined') {
+    return window.location.hostname.toLowerCase();
+  }
+  return null;
+}
+
 /**
  * Non-blocking data-quality and lifecycle warnings for a product, evaluated against the
  * full catalog (needed for the duplicate-domain check). Pure function — no side effects.
@@ -28,7 +47,7 @@ export function getProductWarnings(app: AdminApplication, allApplications: Admin
     if (!hostname) {
       warnings.push({ id: 'invalid-url', message: 'Production URL is not a valid web address.' });
     } else {
-      if (url.startsWith('http://')) {
+      if (import.meta.env.PROD && protocolOf(url) === 'http:') {
         warnings.push({ id: 'non-https', message: 'Production URL is not HTTPS.' });
       }
       const duplicate = allApplications.find((other) => other.id !== app.id && hostnameOf((other.productionUrl ?? '').trim()) === hostname);
@@ -42,8 +61,9 @@ export function getProductWarnings(app: AdminApplication, allApplications: Admin
     warnings.push({ id: 'missing-description', message: 'Missing description.' });
   }
 
-  if (app.ownership === 'partner' && hostnameOf(url)?.endsWith('optioncapp.com')) {
-    warnings.push({ id: 'partner-first-party-domain', message: 'Marked as a partner product but hosted on a first-party (optioncapp.com) domain.' });
+  const firstParty = firstPartyHostname();
+  if (app.ownership === 'partner' && firstParty && hostnameOf(url)?.endsWith(firstParty)) {
+    warnings.push({ id: 'partner-first-party-domain', message: 'Marked as a partner product but hosted on a first-party domain.' });
   }
 
   return warnings;
@@ -65,9 +85,27 @@ export function validateProductForm(form: Partial<AdminApplication>): ProductFor
         return false;
       }
     })();
-    if (!isValidUrl) errors.productionUrl = 'Enter a valid URL, e.g. https://app.optioncapp.com.';
+    if (!isValidUrl) errors.productionUrl = 'Enter a valid URL.';
   }
   return errors;
+}
+
+export function validateLicenseForm(values: {
+  title: string;
+  orgId: string;
+  activationDate: string;
+  expiryDate: string;
+  customMessage?: string;
+}): string[] {
+  const messages: string[] = [];
+  if (!values.title.trim()) messages.push('Title is required.');
+  if (!values.orgId) messages.push('Organization is required.');
+  if (!values.activationDate) messages.push('Start date is required.');
+  if (!values.expiryDate) messages.push('Expiry date is required.');
+  if (values.customMessage && values.customMessage.trim().length > 500) {
+    messages.push('Remarks / Custom message must not exceed 500 characters.');
+  }
+  return messages;
 }
 
 /** Whether the current status allows the product to be launched directly from App Hub. */
@@ -94,3 +132,6 @@ export const STATUS_IMPACT: Record<ProductStatus, string> = {
   inactive: 'The product is temporarily hidden from launch actions but stays in the registry. Existing organization assignments are preserved.',
   'coming-soon': 'The product becomes visible in App Hub as a preview with no launch action available.',
 };
+
+export const CHANGE_STATUS_DESCRIPTION =
+  'Select a new availability status for this product across the platform. Changing the status updates product visibility and launch access in App Hub.';

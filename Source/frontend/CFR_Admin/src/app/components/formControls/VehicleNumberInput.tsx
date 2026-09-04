@@ -458,7 +458,7 @@ export const VehicleNumberInput = forwardRef<HTMLInputElement, VehicleNumberInpu
                       className={cn(
                         "w-full min-w-0 bg-transparent outline-none",
                         themeFormControlTextClass,
-                        "text-slate-800 dark:text-slate-100",
+                        "text-[var(--text-primary)] placeholder:text-[var(--text-faint)]",
                       )}
                       placeholder="Search..."
                       value={countrySearch}

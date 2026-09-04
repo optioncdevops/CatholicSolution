@@ -69,7 +69,11 @@ namespace CFR.Common
         public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
         public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
         public const string ExistProduct = "A product with this name already exists.";
+        public const string ExistLicense = "A license for this customer already exists.";
         public const string ProductNotFound = "Product not found.";
+        public const string ProductLogoFileRequired = "File is empty or not provided.";
+        public const string ProductLogoFileTooLarge = "File size cannot exceed 2 MB.";
+        public const string ProductLogoInvalidType = "Only JPG and PNG images are allowed.";
     }
 
     public static class SerilogErrorMessages
@@ -120,10 +124,13 @@ namespace CFR.Common
             public const string UpdateOrganizationFailed = "Error while updating organization {OrgId}";
             public const string FetchProductByIdFailed = "Error while fetching product {ProductId}";
             public const string FetchProductLicensesFailed = "Error while fetching product licenses for {ProductId}";
-            public const string SaveProductFailed = "Error while saving product";
+            public const string FetchLicenseByIdFailed = "Error while fetching license {LicenseId}";
+            public const string CreateLicenseFailed = "Error while creating license";
+            public const string UpdateLicenseFailed = "Error while updating license {LicenseId}";
             public const string UpdateProductFailed = "Error while updating product {ProductId}";
-            public const string DeleteProductFailed = "Error while deleting product {ProductId}";
             public const string UploadProductLogoFailed = "Error while uploading product logo";
+            public const string FetchProductLogoFailed = "Error while fetching product logo";
+            public const string DeleteProductLogoFailed = "Error deleting previous product logo file {RelativeUrl}";
         }
     }
 }

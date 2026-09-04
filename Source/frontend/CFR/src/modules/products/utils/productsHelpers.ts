@@ -71,10 +71,6 @@ const deriveHubSection = (row: Record<string, unknown>, catalogSection?: HubSect
   const explicit = normalizeHubSection(pickValue(row, 'hubSection', 'HubSection'));
   if (explicit) return explicit;
 
-  const isAvailable = asBool(pickValue(row, 'isAvailable', 'IsAvailable'));
-  if (isAvailable === true) return 'available';
-  if (isAvailable === false) return 'future';
-
   return catalogSection ?? 'future';
 };
 

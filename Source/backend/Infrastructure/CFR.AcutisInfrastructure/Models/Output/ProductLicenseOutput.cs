@@ -60,11 +60,6 @@ namespace CFR.AcutisInfrastructure.Models.Output
         [JsonPropertyName("expiryDate")]
         public DateTime? ExpiryDate { get; set; }
 
-        /// <summary>
-        /// Gets or sets the maximum allowed users / seats.
-        /// </summary>
-        [JsonPropertyName("maxUsers")]
-        public int? MaxUsers { get; set; }
 
         /// <summary>
         /// Gets or sets the license status (e.g. active, expired, cancelled).

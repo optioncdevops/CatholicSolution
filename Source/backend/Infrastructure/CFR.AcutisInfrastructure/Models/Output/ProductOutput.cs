@@ -44,6 +44,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public int DefaultAccessDays { get; set; }
 
         /// <summary>
+        /// Gets or sets the product logo file name.
+        /// </summary>
+        [JsonPropertyName("logoName")]
+        public string? LogoName { get; set; }
+
+        /// <summary>
         /// Gets or sets the relative path or URL of the product logo.
         /// </summary>
         [JsonPropertyName("logoUrl")]
@@ -56,10 +62,22 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public bool IsActive { get; set; }
 
         /// <summary>
-        /// Gets or sets the availability flag.
+        /// Gets or sets the product status: 1 = Active, 2 = Coming Soon, null = Inactive.
         /// </summary>
-        [JsonPropertyName("isAvailable")]
-        public bool IsAvailable { get; set; }
+        [JsonPropertyName("productStatus")]
+        public int? ProductStatus { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product contact person name from [auth].[AcutisUser].
+        /// </summary>
+        [JsonPropertyName("contactPerson")]
+        public string? ContactPerson { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of organizations assigned to this product.
+        /// </summary>
+        [JsonPropertyName("customerCount")]
+        public int CustomerCount { get; set; }
 
         /// <summary>
         /// Gets or sets the record creation date.
