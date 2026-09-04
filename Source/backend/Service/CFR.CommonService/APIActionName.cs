@@ -81,6 +81,21 @@ namespace CFR.CommonService
             public const string GetOrganizationLicenses = nameof(GetOrganizationLicenses);
         }
 
+        public static class API_Portal
+        {
+            public static class Authentication
+            {
+                public const string LoginAuthentication = nameof(LoginAuthentication);
+            }
+
+            public static class CFRLaunch
+            {
+                public const string GetAssignedProducts = nameof(GetAssignedProducts);
+                public const string LaunchProduct = nameof(LaunchProduct);
+                public const string ExchangeToken = nameof(ExchangeToken);
+            }
+        }
+
         public static class API_Product
         {
             public const string GetProducts = nameof(GetProducts);

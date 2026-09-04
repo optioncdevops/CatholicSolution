@@ -68,6 +68,13 @@ namespace CFR.Common
         public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
         public const string ExistProduct = "A product with this name already exists.";
         public const string ProductNotFound = "Product not found.";
+        public const string ProductDisabled = "This product is not available.";
+        public const string ProductNotAssignedToUser = "This product is not assigned to the current user.";
+        public const string ExternalPageUrlMissing = "This product does not have a launch URL configured.";
+        public const string InvalidAuthorizationCode = "The authorization code is invalid.";
+        public const string ExpiredAuthorizationCode = "The authorization code has expired.";
+        public const string AuthorizationCodeUsed = "The authorization code has already been used.";
+        public const string AuthorizationCodeProductMismatch = "The authorization code does not belong to this product.";
     }
 
     public static class SerilogErrorMessages
@@ -119,6 +126,14 @@ namespace CFR.Common
             public const string UpdateProductFailed = "Error while updating product {ProductId}";
             public const string DeleteProductFailed = "Error while deleting product {ProductId}";
             public const string UploadProductLogoFailed = "Error while uploading product logo";
+        }
+
+        public static class PortalLogMessages
+        {
+            public const string LoginAuthenticationFailed = "Error while authenticating Portal login for {UserName}";
+            public const string FetchAssignedProductsFailed = "Error while fetching assigned products for user {UserId}";
+            public const string LaunchProductFailed = "Error while launching product {ProductId} for user {UserId}";
+            public const string ExchangeTokenFailed = "Error while exchanging SSO authorization code for product {ProductId}";
         }
     }
 }

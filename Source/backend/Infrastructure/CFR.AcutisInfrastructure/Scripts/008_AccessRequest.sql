@@ -545,7 +545,7 @@ BEGIN
     END
 
     -- App Hub: products assigned to the member (Your Apps) plus every other core.Product
-    -- as Available (IsAvailable = 1) or Future.
+    -- as Available (ProductStatus = 1) or Future (ProductStatus = 2).
     IF @ActionId = 6
     BEGIN
         DECLARE @HubUserId BIGINT = NULL;
@@ -565,10 +565,10 @@ BEGIN
             p.[ExternalPageUrl],
             p.[LogoUrl],
             p.[IsActive],
-            p.[IsAvailable],
+            CAST(CASE WHEN p.[ProductStatus] = 1 THEN 1 ELSE 0 END AS BIT) AS [IsAvailable],
             CASE
                 WHEN assigned.[ProductId] IS NOT NULL THEN N'your'
-                WHEN p.[IsAvailable] = 1 THEN N'available'
+                WHEN p.[ProductStatus] = 1 THEN N'available'
                 ELSE N'future'
             END AS [HubSection]
         FROM [core].[Product] p
@@ -584,7 +584,7 @@ BEGIN
         ORDER BY
             CASE
                 WHEN assigned.[ProductId] IS NOT NULL THEN 0
-                WHEN p.[IsAvailable] = 1 THEN 1
+                WHEN p.[ProductStatus] = 1 THEN 1
                 ELSE 2
             END,
             p.[ProductName];

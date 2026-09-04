@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState, type PropsWithChildren } from 'react';
+import { getPortalSessionUser } from '@app/config/appPortalClient';
 
 export interface CurrentUser {
   name: string;
@@ -25,8 +26,15 @@ function getInitials(name: string) {
   return name.trim().split(/\s+/).filter(Boolean).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'CL';
 }
 
+function readSessionUser(): CurrentUser {
+  const session = getPortalSessionUser();
+  if (!session?.eMail) return DEFAULT_USER;
+  const name = `${session.firstName} ${session.lastName}`.trim() || session.eMail;
+  return { name, email: session.eMail, phone: DEFAULT_USER.phone };
+}
+
 export function UserProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState(DEFAULT_USER);
+  const [user, setUser] = useState(readSessionUser);
   const value = useMemo<UserContextValue>(() => ({
     user,
     initials: getInitials(user.name),

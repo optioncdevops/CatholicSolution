@@ -1,6 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
 using System.Globalization;
+using System.Security.Cryptography;
 
 using Microsoft.AspNetCore.Http;
 
@@ -629,6 +630,45 @@ namespace CFR.CommonService
             }
 
             dt.Rows.Add(dr);
+        }
+
+        /// <summary>
+        /// Creates a one-time product-launch authorization code.
+        /// </summary>
+        /// <returns>Lowercase hex authorization code.</returns>
+        public static string CreateAuthorizationCode()
+        {
+            byte[] bytes = RandomNumberGenerator.GetBytes(32);
+            return Convert.ToHexString(bytes).ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// Hashes a product-launch authorization code with SHA-256.
+        /// </summary>
+        /// <param name="code">Raw authorization code.</param>
+        /// <returns>Lowercase hex SHA-256 hash.</returns>
+        public static string HashAuthorizationCode(string code)
+        {
+            byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(code ?? string.Empty));
+            return Convert.ToHexString(hash).ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// Appends the authorization code query string to a product BaseUrl.
+        /// </summary>
+        /// <param name="baseUrl">ProductEnvironment BaseUrl.</param>
+        /// <param name="code">Raw authorization code.</param>
+        /// <returns>Launch URL including the code query parameter.</returns>
+        public static string AppendCode(string baseUrl, string code)
+        {
+            string url = (baseUrl ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(url))
+            {
+                return url;
+            }
+
+            string separator = url.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+            return $"{url}{separator}code={Uri.EscapeDataString(code ?? string.Empty)}";
         }
     }
 }
