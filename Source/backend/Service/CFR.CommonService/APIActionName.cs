@@ -113,6 +113,8 @@ namespace CFR.CommonService
             public const string UpdateLicense = nameof(UpdateLicense);
             public const string UploadProductLogo = nameof(UploadProductLogo);
             public const string UpdateProduct = nameof(UpdateProduct);
+            public const string GetProductLogo = nameof(GetProductLogo);
+            public const string GetProductCustomers = nameof(GetProductCustomers);
         }
     }
 }

@@ -3,20 +3,11 @@ import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus
 import { accessStatusOf, daysUntil, effectiveLicenseStatus, formatDateTime } from '@/modules/utils/formatDate';
 export * from './productFilters';
 
-export function toProductSlug(name: string | null | undefined): string {
-  if (!name || typeof name !== 'string') return '';
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
 export const PRODUCTS_PATHS = {
   list: '/admin/products',
-  details: '/admin/products/details',
-  edit: '/admin/products/edit',
-  addLicense: '/admin/products/add-license',
+  details: '/admin/product-details',
+  edit: '/admin/edit-products',
+  addLicense: '/admin/add-product-license',
 } as const;
 
 export const DEFAULT_PRODUCT_ICON = '📦';
@@ -154,7 +145,10 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
       : item.ProductStatus != null
         ? Number(item.ProductStatus)
         : null,
+    licenseType: (item.licenseType ?? item.LicenseType ?? null) as string | null,
+    navigationTarget: (item.navigationTarget ?? item.NavigationTarget ?? null) as string | null,
     customerCount: toProductCustomerCount((item.customerCount ?? item.CustomerCount) as number),
+    contactUserId: toProductContactUserId(item.contactUserId ?? item.ContactUserId),
     contactPerson: toProductContactPersonName((item.contactPerson ?? item.ContactPerson) as string) || null,
     features,
     createdDate: String(item.createdDate ?? item.CreatedDate ?? ''),
@@ -265,9 +259,16 @@ export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLic
     }
   }
 
-  return licenses.map((item) => {
+  const usedInvoiceNumbers = new Set<string>();
+  return licenses.map((item, index) => {
     const startDate = item.activationDate ?? item.createdDate ?? '';
     const expiryDate = item.expiryDate ?? '';
+    const invoiceNumber = formatInvoiceNumber(
+      startDate,
+      item.licenseId,
+      usedInvoiceNumbers,
+      index,
+    );
     const days = expiryDate ? daysUntil(expiryDate) : null;
     const isOverdue = days !== null && days < 0;
     const paymentStatus: 'paid' | 'overdue' | 'suspended' = isOverdue
@@ -286,6 +287,7 @@ export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLic
     return {
       id: String(item.licenseId),
       licenseId: item.licenseId,
+      invoiceNumber,
       orgId: String(item.orgId),
       customerCode: formatCustomerCodeAsInteger(item.orgId),
       customer: item.orgName?.trim() || `Organization #${item.orgId}`,
@@ -313,14 +315,10 @@ export function pickProductLogoUrl(item: unknown): string | null {
   return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
 }
 
-export function toStoredProductLogoFileName(logoUrl: string | null | undefined): string | null {
+export function toStoredProductLogoPath(logoUrl: string | null | undefined): string | null {
   if (!logoUrl || typeof logoUrl !== 'string' || !logoUrl.trim()) return null;
   const trimmed = logoUrl.trim().replace(/\\/g, '/');
   return trimmed.split('/').filter(Boolean).pop() ?? null;
-}
-
-export function toStoredProductLogoPath(logoUrl: string | null | undefined): string | null {
-  return toStoredProductLogoFileName(logoUrl);
 }
 
 export function resolveProductLogoUrl(
@@ -404,13 +402,17 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     productionUrl: item.externalPageUrl || '',
     ownership: 'first-party',
     deploymentModel: 'external-saas',
-    licenseType: item.defaultAccessDays === 0 ? 'free' : 'licensed',
-    navigationTarget: 'same-tab',
+    licenseType: (item.licenseType === 'free' || item.licenseType === 'licensed')
+      ? item.licenseType
+      : 'licensed',
+    navigationTarget: (item.navigationTarget === 'new-tab' || item.navigationTarget === 'same-tab')
+      ? item.navigationTarget
+      : 'same-tab',
     status: deriveProductStatus(item),
     registryRef: `reg_app_${String(item.productId).padStart(4, '0')}`,
     sourceLocation: `SaaS_Apps/${productName.toLowerCase().replace(/\s+/g, '-')}`,
     updatedAt: item.updatedDate || item.createdDate,
-    contactUserId: item.contactPerson || '',
+    contactUserId: item.contactUserId != null ? String(item.contactUserId) : '',
     contactPersonName: item.contactPerson || '',
   };
 }
@@ -419,15 +421,15 @@ export function resolveContactUser(
   app: AdminApplication,
   users: ProductContactUser[]
 ): AdminApplication {
-  const rawContact = (app.contactPersonName || app.contactUserId || '').trim();
-  if (!rawContact) return app;
+  const contactUserId = toProductContactUserId(app.contactUserId);
+  const rawName = (app.contactPersonName || '').trim();
+  if (!contactUserId && !rawName) return app;
 
-  const lower = rawContact.toLowerCase();
+  const lower = rawName.toLowerCase();
   const match = users.find(
     (u) =>
-      String(u.userId) === rawContact ||
-      u.fullName.trim().toLowerCase() === lower ||
-      (u.eMail && u.eMail.trim().toLowerCase() === lower)
+      (contactUserId != null && u.userId === contactUserId) ||
+      (lower && u.fullName.trim().toLowerCase() === lower)
   );
 
   if (match) {
@@ -440,7 +442,56 @@ export function resolveContactUser(
 
   return {
     ...app,
-    contactUserId: app.contactUserId || rawContact,
-    contactPersonName: app.contactPersonName || rawContact,
+    contactUserId: app.contactUserId || (contactUserId != null ? String(contactUserId) : ''),
+    contactPersonName: app.contactPersonName || rawName,
   };
+}
+
+/**
+ * Extracts a 4-digit start year from a date string, falling back to the current year.
+ */
+export function extractStartYear(dateStr: string | null | undefined): string {
+  if (!dateStr || typeof dateStr !== 'string') {
+    return String(new Date().getFullYear());
+  }
+  const match = dateStr.match(/\b(20\d{2}|19\d{2})\b/);
+  if (match) {
+    return match[1];
+  }
+  const d = new Date(dateStr);
+  if (!Number.isNaN(d.getFullYear())) {
+    return String(d.getFullYear());
+  }
+  return String(new Date().getFullYear());
+}
+
+/**
+ * Formats a unique invoice number in the format INV-{StartYear}-{UniqueSerialNumber}.
+ * Example: INV-2026-00263
+ * Guarantees no duplicate values even across edge-cases via an optional usedNumbers Set.
+ */
+export function formatInvoiceNumber(
+  startDate: string | null | undefined,
+  licenseId: number | string,
+  usedNumbers?: Set<string>,
+  fallbackIndex?: number,
+): string {
+  const year = extractStartYear(startDate);
+  const idNum = Number(licenseId);
+  let serial =
+    !Number.isNaN(idNum) && idNum > 0
+      ? idNum
+      : fallbackIndex != null
+        ? fallbackIndex + 1
+        : 1;
+
+  let candidate = `INV-${year}-${String(serial).padStart(5, '0')}`;
+  if (usedNumbers) {
+    while (usedNumbers.has(candidate)) {
+      serial++;
+      candidate = `INV-${year}-${String(serial).padStart(5, '0')}`;
+    }
+    usedNumbers.add(candidate);
+  }
+  return candidate;
 }

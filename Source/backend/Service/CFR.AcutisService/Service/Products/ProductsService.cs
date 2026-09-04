@@ -384,7 +384,7 @@ namespace CFR.AcutisService.Service.Products
                 if (createdId == -95)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = "Invalid Organization or Product for license creation.";
+                    result.StatusMessage = ErrorMessages.InvalidLicenseOrgProduct;
                     return result;
                 }
 
@@ -462,7 +462,7 @@ namespace CFR.AcutisService.Service.Products
                         input.LogoName = Path.GetFileName(existingLogo.Replace('\\', '/'));
                         input.LogoUrl = input.LogoName;
                     }
-                    input.ContactPerson ??= existingProduct.ContactPerson;
+                    input.ContactUserId ??= existingProduct.ContactUserId;
                     if (input.DefaultAccessDays <= 0)
                     {
                         input.DefaultAccessDays = existingProduct.DefaultAccessDays > 0 ? existingProduct.DefaultAccessDays : 365;
@@ -541,7 +541,7 @@ namespace CFR.AcutisService.Service.Products
                 if (updatedId == -95)
                 {
                     result.StatusCode = ErrorCodes.NotFound;
-                    result.StatusMessage = "License not found.";
+                    result.StatusMessage = ErrorMessages.LicenseNotFound;
                     return result;
                 }
 

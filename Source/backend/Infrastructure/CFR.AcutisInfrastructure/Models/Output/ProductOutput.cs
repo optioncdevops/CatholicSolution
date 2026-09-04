@@ -68,7 +68,25 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public int? ProductStatus { get; set; }
 
         /// <summary>
-        /// Gets or sets the product contact person name from [auth].[AcutisUser].
+        /// Gets or sets the product license type: 'free' or 'licensed'.
+        /// </summary>
+        [JsonPropertyName("licenseType")]
+        public string? LicenseType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the navigation target: 'same-tab' or 'new-tab'.
+        /// </summary>
+        [JsonPropertyName("navigationTarget")]
+        public string? NavigationTarget { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contact [auth].[AcutisUser] identifier.
+        /// </summary>
+        [JsonPropertyName("contactUserId")]
+        public long? ContactUserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contact display name resolved from [auth].[AcutisUser].
         /// </summary>
         [JsonPropertyName("contactPerson")]
         public string? ContactPerson { get; set; }

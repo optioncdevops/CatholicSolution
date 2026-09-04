@@ -78,6 +78,8 @@ namespace CFR.Common
         public const string ExpiredAuthorizationCode = "The authorization code has expired.";
         public const string AuthorizationCodeUsed = "The authorization code has already been used.";
         public const string AuthorizationCodeProductMismatch = "The authorization code does not belong to this product.";
+        public const string LicenseNotFound = "License not found.";
+        public const string InvalidLicenseOrgProduct = "Invalid Organization or Product for license creation.";
         public const string ProductLogoFileRequired = "File is empty or not provided.";
         public const string ProductLogoFileTooLarge = "File size cannot exceed 2 MB.";
         public const string ProductLogoInvalidType = "Only JPG and PNG images are allowed.";

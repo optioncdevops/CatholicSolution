@@ -51,8 +51,6 @@ namespace CFR.Acutis
             services.AddScoped<IEmailSettingsService, EmailSettingsService>();
             services.AddScoped<IAccessRequestService, AccessRequestService>();
             services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
-            services.AddScoped<IProductsService, ProductsService>();
-            services.AddScoped<IProductsRepository, ProductsRepository>();
 
             // Products service and repository
             services.AddScoped<IProductsService, ProductsService>();

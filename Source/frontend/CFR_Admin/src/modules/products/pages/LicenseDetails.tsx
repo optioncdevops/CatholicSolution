@@ -25,6 +25,7 @@ import type { ProductLicenseApiItem } from "../types/productTypes";
 import {
   PRODUCTS_PATHS,
   formatCustomerCodeAsInteger,
+  formatInvoiceNumber,
   toLicenseDetailsRows,
 } from "../utils/productHelpers";
 import { LICENSE_DETAILS_STATUS_FILTERS, InvoiceStatusBadge } from "../utils/productFilters";
@@ -67,13 +68,14 @@ export function InvoiceDetailModal({
           ) : null}
         </div>
         <div className="grid grid-cols-2 gap-3">
+          <DetailField label="Invoice #" value={invoice.licenseNumber} />
+          <DetailField label="Customer code" value={customerCode} />
           <DetailField
             label="Customer"
             value={
               org?.name ?? invoice.title?.split("—")[0]?.trim() ?? invoice.orgId
             }
           />
-          <DetailField label="Customer code" value={customerCode} />
           <DetailField
             label="Start date"
             value={formatDate(invoice.startDate)}
@@ -100,11 +102,10 @@ export function InvoiceDetailModal({
 }
 export interface LiveProductLicense {
   id: string;
-  licenseId: number;
-  organizationProductId: number;
   orgId: number;
   customerCode: string;
   customer: string;
+  invoiceNumber: string;
   licenseNumber: string;
   licenseKey: string;
   licenseType: string;
@@ -113,8 +114,6 @@ export interface LiveProductLicense {
   days: number | null;
   paidOn: string | null;
   status: string;
-  rawStatus: string;
-  assignStatus?: string | null;
   remarks?: string | null;
 }
 
@@ -167,7 +166,8 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
   //#endregion
 
   const mappedLicenses: LiveProductLicense[] = useMemo(() => {
-    return toLicenseDetailsRows(dbLicenses).map((lic) => {
+    const usedInvoiceNumbers = new Set<string>();
+    return toLicenseDetailsRows(dbLicenses).map((lic, index) => {
       const days = lic.expiryDate ? daysUntil(lic.expiryDate) : null;
       const isOverdue = days !== null && days < 0;
       const isExpiringSoon = days !== null && days >= 0 && days <= 30;
@@ -186,23 +186,28 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
             ? formatDateTime(lic.createdDate)
             : null;
 
+      const startDate = lic.activationDate || "";
+      const invoiceNumber = formatInvoiceNumber(
+        startDate || lic.createdDate,
+        lic.licenseId,
+        usedInvoiceNumbers,
+        index,
+      );
+
       return {
         id: String(lic.licenseId),
-        licenseId: lic.licenseId,
-        organizationProductId: lic.organizationProductId,
         orgId: lic.orgId,
         customerCode: formatCustomerCodeAsInteger(lic.orgId),
         customer: lic.orgName || `Organization #${lic.orgId}`,
+        invoiceNumber,
         licenseNumber: `LIC-${String(lic.licenseId).padStart(5, "0")}`,
         licenseKey: `LIC-${lic.orgId}-${lic.productId}-${String(lic.licenseId).padStart(4, "0")}`,
         licenseType: lic.licenseType ? (lic.licenseType.charAt(0).toUpperCase() + lic.licenseType.slice(1)) : "Subscription",
-        startDate: lic.activationDate || "",
+        startDate,
         expiryDate: lic.expiryDate || "",
         days,
         paidOn,
         status,
-        rawStatus: lic.licenseStatus,
-        assignStatus: lic.assignStatus,
         remarks: lic.remarks,
       };
     });
@@ -245,17 +250,17 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
       excludeFromExport: true,
       cell: (lic) => (
         <CommonIconButton
-          aria-label={`View license ${lic.licenseNumber}`}
+          aria-label={`View invoice ${lic.invoiceNumber}`}
           tooltip="View"
           icon={<Eye size={15} />}
           onClick={() => {
             const licenseModalData: License = {
               id: lic.id,
-              licenseNumber: lic.licenseNumber,
+              licenseNumber: lic.invoiceNumber,
               licenseKey: lic.licenseKey,
               orgId: String(lic.orgId),
               appId: app.id,
-              title: `${app.name} — ${lic.licenseType ? (lic.licenseType.charAt(0).toUpperCase() + lic.licenseType.slice(1)) : 'Subscription'}`,
+              title: `${app.name} — ${lic.invoiceNumber}`,
               startDate: lic.startDate,
               expiryDate: lic.expiryDate,
               status: lic.status === "active" ? "active" : "suspended",
@@ -289,13 +294,13 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
       ),
     },
     {
-      id: "licenseType",
-      header: "License Type",
-      width: "9.5rem",
-      value: (lic) => lic.licenseType,
+      id: "invoiceNumber",
+      header: "Invoice",
+      width: "12rem",
+      value: (lic) => lic.invoiceNumber,
       cell: (lic) => (
-        <span className="capitalize text-xs font-semibold text-[var(--text-secondary)]">
-          {lic.licenseType}
+        <span className="font-mono text-xs text-[var(--text-secondary)]">
+          {lic.invoiceNumber}
         </span>
       ),
     },
