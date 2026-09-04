@@ -60,7 +60,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
         /// Purpose: Populate the Users section of the organization detail page.
         /// Request Flow: IOrganizationService -> OrganizationRepository.GetOrganizationUsersAsync() -> Database.
         /// Validation Details: OrgId parameter mapping.
-        /// Business Logic: Maps the joined auth.OrganizationUser + auth.AuthUser rows to OrganizationUserOutput.
+        /// Business Logic: Maps the grouped auth.UserProduct + auth.User + auth.AcutisRole rows to OrganizationUserOutput.
         /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud with ActionId 5.
         /// Response Details: Returns a list of organization user output records.
         /// </remarks>
@@ -165,6 +165,26 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             parameters.Add(DBParameterName.OrganizationParams.ActionId, 10, DbType.Int32);
             parameters.Add(DBParameterName.OrganizationParams.OrgId, orgId, DbType.Int64);
             var result = await dapperHandler.QueryAsync<OrganizationLicenseOutput>(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
+            return result.ToList();
+        }
+
+        /// <summary>
+        /// Fetches every license issued across all organizations using StoredProc.Organization.OrganizationCrud.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the admin dashboard's platform-wide "Licenses" KPI.
+        /// Request Flow: IOrganizationService -> OrganizationRepository.GetAllLicensesAsync() -> Database.
+        /// Validation Details: None.
+        /// Business Logic: Maps the joined lic.License + lic.OrganizationProduct + core.Product + core.Organization rows to LicenseSummaryOutput.
+        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud with ActionId 11.
+        /// Response Details: Returns a list of license summary output records.
+        /// </remarks>
+        /// <returns>A list of licenses issued across all organizations.</returns>
+        public async Task<List<LicenseSummaryOutput>> GetAllLicensesAsync()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.OrganizationParams.ActionId, 11, DbType.Int32);
+            var result = await dapperHandler.QueryAsync<LicenseSummaryOutput>(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
             return result.ToList();
         }
 

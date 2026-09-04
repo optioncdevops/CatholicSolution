@@ -44,12 +44,35 @@ export function applyLink(editor: HTMLElement | null): void {
   runEditorCommand(editor, "createLink", safe);
 }
 
+export function applyImage(editor: HTMLElement | null): void {
+  const input = window.prompt("Enter image URL", "https://");
+  if (input === null) {return;}
+  const safe = sanitizeRichTextUrl(input);
+  if (!safe) {
+    window.alert("Invalid URL. Use http or https.");
+    return;
+  }
+  runEditorCommand(editor, "insertImage", safe);
+}
+
+// A plain HTML table (no execCommand equivalent) inserted via insertHTML — inline styles because
+// this markup can end up in an emailed template body, where a <style> block won't be honored.
+export function applyTable(editor: HTMLElement | null): void {
+  const rows = 3;
+  const cols = 3;
+  const cell = '<td style="border:1px solid #d0d5dd;padding:6px 10px;">&nbsp;</td>';
+  const row = `<tr>${cell.repeat(cols)}</tr>`;
+  const table = `<table style="border-collapse:collapse;width:100%;">${row.repeat(rows)}</table><p></p>`;
+  runEditorCommand(editor, "insertHTML", table);
+}
+
 export function normalizeFormatBlock(value: string): RichTextFormatBlock {
   const v = (value ?? "").toLowerCase();
   if (v.includes("h1")) {return "h1";}
   if (v.includes("h2")) {return "h2";}
   if (v.includes("h3")) {return "h3";}
   if (v.includes("blockquote")) {return "blockquote";}
+  if (v.includes("pre")) {return "pre";}
   return "p";
 }
 
