@@ -1,30 +1,34 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, MailIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { AdminAuthShell } from './AdminAuthShell';
 import { forgotPassword } from './services/authService';
+import { EMAIL_PATTERN } from './validators';
+
+interface ForgotPasswordFormValues {
+  email: string;
+}
 
 export function ForgotPasswordPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const initialEmail = searchParams.get('email')?.trim() ?? '';
   const { showToast } = useToast();
-  const [email, setEmail] = useState(initialEmail);
   const [submittedEmail, setSubmittedEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState('');
   const loginTarget = useMemo(() => `/login${location.search}`, [location.search]);
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setError('Enter the email connected to your account.');
-      return;
-    }
+  const { register, handleSubmit, formState: { errors } } = useForm<ForgotPasswordFormValues>({
+    defaultValues: { email: initialEmail },
+    mode: 'onChange',
+  });
 
-    setError('');
+  const submit = handleSubmit(async (values) => {
+    const trimmedEmail = values.email.trim();
+    setServerError('');
     setSubmitting(true);
     try {
       await forgotPassword({ userName: trimmedEmail });
@@ -32,12 +36,14 @@ export function ForgotPasswordPage() {
       setSubmittedEmail(trimmedEmail);
     } catch (err) {
       const message = typeof err === 'string' ? err : 'Something went wrong. Please try again.';
-      setError(message);
+      setServerError(message);
       showToast(message, 'error');
     } finally {
       setSubmitting(false);
     }
-  };
+  });
+
+  const fieldError = errors.email?.message ?? serverError;
 
   return (
     <AdminAuthShell>
@@ -47,22 +53,26 @@ export function ForgotPasswordPage() {
             <span className="admin-auth-success__icon"><CheckIcon size={22} /></span>
             <span className="admin-auth-card__kicker">Recovery Requested</span>
             <h2>Check Your Email</h2>
-            <p>We&apos;ve sent a secure password reset link to <strong>{submittedEmail}</strong>. It expires after a short period and can only be used once.</p>
+            <p>A secure password reset link has been sent to <strong>{submittedEmail}</strong>. For your security, the link will expire after a limited time and can only be used once.</p>
             <div className="admin-auth-success__actions">
-              <button type="button" className="admin-auth-text-link" onClick={() => setSubmittedEmail('')}>Use a Different Email</button>
-              <Link to={loginTarget} className="admin-auth-text-link">Return to Sign In</Link>
+              <Link to={loginTarget} className="admin-auth-submit admin-auth-submit--link">
+                Return to Sign In <ArrowRightIcon size={15} />
+              </Link>
+              <button type="button" className="admin-auth-submit admin-auth-submit--link admin-auth-submit--ghost" onClick={() => setSubmittedEmail('')}>
+                Use a Different Email
+              </button>
             </div>
           </div>
         ) : (
           <>
-            <Link to={loginTarget} className="admin-auth-back-link"><ArrowLeftIcon size={13} /> Back to Sign In</Link>
+            <Link to={loginTarget} className="admin-auth-back-link"><ArrowLeftIcon size={13} /> Back To Sign In</Link>
             <div className="admin-auth-card__header">
               <span className="admin-auth-card__mark"><ShieldCheckIcon size={20} /></span>
               <span className="admin-auth-card__kicker">Account Recovery</span>
               <h1 className="admin-auth-card__title">Forgot Your Password?</h1>
-              <p className="admin-auth-card__description">Enter the email connected to your account and we&apos;ll send you a secure password reset link.</p>
+              <p className="admin-auth-card__description">Enter the email address associated with your account. We&apos;ll send you a link to reset your password.</p>
             </div>
-            <form onSubmit={(event) => void submit(event)} className="admin-auth-form" noValidate>
+            <form onSubmit={submit} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">
                 <label className="admin-auth-label" htmlFor="reset-email">Email Address</label>
                 <div className="admin-auth-input-wrap">
@@ -70,24 +80,25 @@ export function ForgotPasswordPage() {
                   <input
                     id="reset-email"
                     type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
                     className="admin-auth-input"
                     autoComplete="email"
                     placeholder="name@organization.org"
-                    required
                     autoFocus
                     disabled={submitting}
-                    aria-invalid={Boolean(error)}
-                    aria-describedby={error ? 'reset-email-error' : undefined}
+                    aria-invalid={Boolean(fieldError)}
+                    aria-describedby={fieldError ? 'reset-email-error' : undefined}
+                    {...register('email', {
+                      required: 'Enter the email connected to your account.',
+                      pattern: { value: EMAIL_PATTERN, message: 'Enter a valid email address.' },
+                    })}
                   />
                 </div>
               </div>
 
-              {error ? (
+              {fieldError ? (
                 <div id="reset-email-error" className="admin-auth-banner" role="alert">
                   <AlertTriangleIcon size={15} />
-                  <span>{error}</span>
+                  <span>{fieldError}</span>
                 </div>
               ) : null}
 
@@ -99,12 +110,12 @@ export function ForgotPasswordPage() {
                   </>
                 ) : (
                   <>
-                    Send Recovery Instructions <ArrowRightIcon size={15} />
+                    Send Reset Link <ArrowRightIcon size={15} />
                   </>
                 )}
               </button>
             </form>
-            <div className="admin-auth-security-note"><ShieldCheckIcon size={14} /><span>Recovery requests expire and are rate-limited by the connected identity service.</span></div>
+            <div className="admin-auth-security-note"><ShieldCheckIcon size={14} /><span>For security, password reset links expire after a limited time.</span></div>
           </>
         )}
       </section>

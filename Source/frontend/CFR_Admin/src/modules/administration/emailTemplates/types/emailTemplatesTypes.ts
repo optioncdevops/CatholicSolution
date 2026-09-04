@@ -8,11 +8,19 @@ export interface EmailTemplateApiItem {
   status: EmailTemplateStatusValue;
   createdDate: string | null;
   updatedDate: string | null;
+  accentColor: string;
+  logoUrl: string | null;
+  fontFamily: string;
+  baseFontSize: number;
 }
 
 export interface EmailTemplateFormValues {
   subject: string;
   body: string;
+  accentColor: string;
+  logoUrl: string;
+  fontFamily: string;
+  baseFontSize: number;
 }
 
 export interface SaveEmailTemplatePayload {
@@ -21,6 +29,10 @@ export interface SaveEmailTemplatePayload {
   subject: string;
   body: string;
   status: EmailTemplateStatusValue;
+  accentColor: string;
+  logoUrl: string;
+  fontFamily: string;
+  baseFontSize: number;
 }
 
 export interface SendTestEmailPayload {
@@ -28,6 +40,10 @@ export interface SendTestEmailPayload {
   subject: string;
   body: string;
   toAddress: string;
+  accentColor: string;
+  logoUrl: string;
+  fontFamily: string;
+  baseFontSize: number;
 }
 
 export interface EmailTemplateVariable {

@@ -15,5 +15,4 @@ export interface HubProductApiItem {
   hubSection?: HubSectionValue;
   canRequest?: boolean | number;
   isActive: boolean | number;
-  isAvailable: boolean | number;
 }

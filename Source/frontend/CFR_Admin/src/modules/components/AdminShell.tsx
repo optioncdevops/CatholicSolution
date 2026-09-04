@@ -1,19 +1,28 @@
-import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react';
-import { createPortal } from 'react-dom';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  Bell, ChevronDown, Settings,
-} from 'lucide-react';
-import { Brand } from '@shared/app/components/Brand';
-import { Footer } from '@shared/app/components/Footer';
-import { ProfileMenu } from '@shared/app/components/ProfileMenu';
-import { ACUTIS_AUTH_CHANGED_EVENT } from '@shared/auth/constants/storageKeys';
-import { getStoredAcutisAuth } from '@shared/auth/services/authService';
-import { resolveMenuIcon, splitAdminMenus, toDropdownItems } from '@shared/auth/utils/menuHelpers';
-import '../theme.css';
-import '../admin.css';
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ComponentType,
+} from "react";
+import { createPortal } from "react-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Bell, ChevronDown, Settings } from "lucide-react";
+import { Brand } from "@shared/app/components/Brand";
+import { Footer } from "@shared/app/components/Footer";
+import { ProfileMenu } from "@shared/app/components/ProfileMenu";
+import { ACUTIS_AUTH_CHANGED_EVENT } from "@shared/auth/constants/storageKeys";
+import { getStoredAcutisAuth } from "@shared/auth/services/authService";
+import {
+  resolveMenuIcon,
+  splitAdminMenus,
+  toDropdownItems,
+} from "@shared/auth/utils/menuHelpers";
+import "../theme.css";
+import "../admin.css";
 
-const CONTAINER = 'mx-auto w-[95%]';
+const CONTAINER = "mx-auto w-[95%]";
 
 interface NavDropdownItem {
   to: string;
@@ -22,13 +31,26 @@ interface NavDropdownItem {
 }
 
 /** Shared hover/click dropdown behind both the "Administration" and "Masters" nav menus. */
-function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon: ComponentType<{ size?: number }>; items: NavDropdownItem[] }) {
+function NavDropdown({
+  label,
+  icon: TriggerIcon,
+  items,
+}: {
+  label: string;
+  icon: ComponentType<{ size?: number }>;
+  items: NavDropdownItem[];
+}) {
   const location = useLocation();
   const [open, setOpen] = useState(false);
-  const [panelPosition, setPanelPosition] = useState<{ top: number; left: number } | null>(null);
+  const [panelPosition, setPanelPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const isActive = items.some((item) => location.pathname.startsWith(item.to));
 
   const cancelClose = () => {
@@ -51,11 +73,11 @@ function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon:
       if (rect) setPanelPosition({ top: rect.bottom + 8, left: rect.left });
     };
     updatePosition();
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
     return () => {
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
     };
   }, [open]);
 
@@ -67,13 +89,13 @@ function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon:
       setOpen(false);
     };
     const closeEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === "Escape") setOpen(false);
     };
-    document.addEventListener('mousedown', closeOutside);
-    document.addEventListener('keydown', closeEscape);
+    document.addEventListener("mousedown", closeOutside);
+    document.addEventListener("keydown", closeEscape);
     return () => {
-      document.removeEventListener('mousedown', closeOutside);
-      document.removeEventListener('keydown', closeEscape);
+      document.removeEventListener("mousedown", closeOutside);
+      document.removeEventListener("keydown", closeEscape);
     };
   }, []);
 
@@ -94,11 +116,14 @@ function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon:
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className={`admin-nav-item ${isActive ? 'admin-nav-item--active' : ''}`}
+        className={`admin-nav-item ${isActive ? "admin-nav-item--active" : ""}`}
       >
         <TriggerIcon size={14} />
         <span>{label}</span>
-        <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          size={13}
+          className={`transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       {open && panelPosition
@@ -108,7 +133,11 @@ function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon:
               role="menu"
               aria-label={label}
               className="admin-nav-dropdown__panel"
-              style={{ position: 'fixed', top: panelPosition.top, left: panelPosition.left }}
+              style={{
+                position: "fixed",
+                top: panelPosition.top,
+                left: panelPosition.left,
+              }}
               onMouseEnter={cancelClose}
               onMouseLeave={scheduleClose}
             >
@@ -118,9 +147,13 @@ function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon:
                   to={to}
                   role="menuitem"
                   onClick={() => setOpen(false)}
-                  className={({ isActive: itemActive }) => `admin-nav-dropdown__item ${itemActive ? 'admin-nav-dropdown__item--active' : ''}`}
+                  className={({ isActive: itemActive }) =>
+                    `admin-nav-dropdown__item ${itemActive ? "admin-nav-dropdown__item--active" : ""}`
+                  }
                 >
-                  <span className="admin-nav-dropdown__icon" aria-hidden="true"><Icon size={16} /></span>
+                  <span className="admin-nav-dropdown__icon" aria-hidden="true">
+                    <Icon size={16} />
+                  </span>
                   <span>{itemLabel}</span>
                 </NavLink>
               ))}
@@ -132,16 +165,31 @@ function NavDropdown({ label, icon: TriggerIcon, items }: { label: string; icon:
   );
 }
 
+function isTopNavItemActive(
+  itemPath: string | undefined,
+  currentPath: string,
+): boolean {
+  if (!itemPath) return false;
+  if (itemPath === "/admin") {
+    return currentPath === "/admin" || currentPath === "/admin/";
+  }
+  return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
+}
+
 export function AdminShell() {
-  const [menuItems, setMenuItems] = useState(() => getStoredAcutisAuth()?.resultData?.menuItems ?? []);
+  const location = useLocation();
+  const [menuItems, setMenuItems] = useState(
+    () => getStoredAcutisAuth()?.resultData?.menuItems ?? [],
+  );
 
   useEffect(() => {
-    const refresh = () => setMenuItems(getStoredAcutisAuth()?.resultData?.menuItems ?? []);
+    const refresh = () =>
+      setMenuItems(getStoredAcutisAuth()?.resultData?.menuItems ?? []);
     window.addEventListener(ACUTIS_AUTH_CHANGED_EVENT, refresh);
-    window.addEventListener('focus', refresh);
+    window.addEventListener("focus", refresh);
     return () => {
       window.removeEventListener(ACUTIS_AUTH_CHANGED_EVENT, refresh);
-      window.removeEventListener('focus', refresh);
+      window.removeEventListener("focus", refresh);
     };
   }, []);
 
@@ -153,16 +201,25 @@ export function AdminShell() {
     <div className="admin-shell-bg flex min-h-screen flex-col text-[var(--text-primary)]">
       <div className="admin-top-accent" aria-hidden="true" />
       <header className="sticky top-0 z-40 bg-[var(--surface)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--surface)]/80">
-        <div className={`flex h-14 items-center gap-4 border-b border-[var(--line-soft)] ${CONTAINER}`}>
+        <div
+          className={`flex h-14 items-center gap-4 border-b border-[var(--line-soft)] ${CONTAINER}`}
+        >
           <div className="flex shrink-0 items-center gap-3">
             <Brand compact />
-            <span className="admin-plane-badge hidden sm:inline-flex">CFR Acutis</span>
+            <span className="admin-plane-badge hidden sm:inline-flex">
+              CFR Acutis
+            </span>
           </div>
 
           <div className="flex-1" />
 
           <div className="flex shrink-0 items-center gap-1.5">
-            <button type="button" aria-label="Notifications" title="Notifications" className="grid size-9 place-items-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--hover)]">
+            <button
+              type="button"
+              aria-label="Notifications"
+              title="Notifications"
+              className="grid size-9 place-items-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--hover)]"
+            >
               <Bell size={16} />
             </button>
             <ProfileMenu />
@@ -170,15 +227,19 @@ export function AdminShell() {
         </div>
 
         <div className="admin-nav-strip">
-          <nav aria-label="Admin navigation" className={`admin-nav-scroll flex items-center overflow-x-auto ${CONTAINER}`}>
+          <nav
+            aria-label="Admin navigation"
+            className={`admin-nav-scroll flex items-center overflow-x-auto ${CONTAINER}`}
+          >
             {topItems.map((item) => {
               const Icon = resolveMenuIcon(item.icon);
+              const active = isTopNavItemActive(item.path, location.pathname);
               return (
                 <NavLink
                   key={item.sessionKey || item.path}
-                  to={item.path || '/admin'}
-                  end={item.path === '/admin'}
-                  className={({ isActive }) => `admin-nav-item ${isActive ? 'admin-nav-item--active' : ''}`}
+                  to={item.path || "/admin"}
+                  end={item.path === "/admin"}
+                  className={`admin-nav-item ${active ? "admin-nav-item--active" : ""}`}
                 >
                   <Icon size={14} />
                   <span>{item.title}</span>
@@ -186,7 +247,11 @@ export function AdminShell() {
               );
             })}
             {administrationItems.length > 0 ? (
-              <NavDropdown label={administration?.title || 'Administration'} icon={AdministrationIcon || Settings} items={administrationItems} />
+              <NavDropdown
+                label={administration?.title || "Administration"}
+                icon={AdministrationIcon || Settings}
+                items={administrationItems}
+              />
             ) : null}
           </nav>
         </div>
@@ -194,7 +259,16 @@ export function AdminShell() {
 
       <main className={`flex-1 py-4 ${CONTAINER}`}>
         <div className="admin-page-card">
-          <Suspense fallback={<div className="grid min-h-[40vh] place-items-center"><div className="size-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" aria-label="Loading" /></div>}>
+          <Suspense
+            fallback={
+              <div className="grid min-h-[40vh] place-items-center">
+                <div
+                  className="size-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"
+                  aria-label="Loading"
+                />
+              </div>
+            }
+          >
             <Outlet />
           </Suspense>
         </div>

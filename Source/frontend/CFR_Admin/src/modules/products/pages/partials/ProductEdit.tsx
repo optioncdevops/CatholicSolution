@@ -1,0 +1,550 @@
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { AlertTriangle, Save, X } from "lucide-react";
+import { PanelHeader } from "@shared/app/components/PanelHeader";
+import { useToast } from "@shared/app/components/ToastProvider";
+import { CommonButton } from "@app/components/buttons";
+import { InputField, MandatoryIndicator, ProfileImageUpload, RadioGroup, TextareaField, Dropdown } from "@app/components/formControls";
+import { StatusBadge } from "@app/components/Badge";
+import { cn } from "@app/utilities/cn";
+import { confirmAction } from "@/modules/lib/confirm";
+import { validateProductForm, type ProductFormErrors } from "../../validator/productValidation";
+import {
+  getProductById,
+  getProductContactUsers,
+  updateProduct,
+  uploadProductLogo,
+} from "../../services/productService";
+import type {
+  ProductApiItem,
+  ProductContactUser,
+  ProductInputPayload,
+} from "../../types/productTypes";
+import {
+  DEFAULT_PRODUCT_ICON,
+  PRODUCTS_PATHS,
+  normalizeProductApiItem,
+  normalizeProductContactUsers,
+  parseProductIdFromState,
+  resolveProductLogoUrl,
+  toStoredProductLogoPath,
+  toAdminApplication,
+  resolveContactUser,
+} from "../../utils/productHelpers";
+import {
+  PRODUCT_LICENSE_TYPE_OPTIONS,
+  PRODUCT_NAVIGATION_OPTIONS,
+} from "../../utils/productFilters";
+import type { AdminApplication, ProductLicenseType, ProductNavigationTarget } from "@/modules/types";
+
+
+
+function isImageIcon(icon: string): boolean {
+  if (!icon) return false;
+  return icon.startsWith("data:") || icon.startsWith("blob:") || icon.startsWith("/") || /^https?:\/\//i.test(icon);
+}
+
+function ProductIcon({ icon, gradient }: { icon: string; gradient: string }) {
+  if (isImageIcon(icon)) {
+    const resolved =
+      icon.startsWith("data:") || icon.startsWith("blob:") || /^https?:\/\//i.test(icon)
+        ? icon
+        : resolveProductLogoUrl(icon) || icon;
+    return <img src={resolved} alt="" className="size-9 shrink-0 rounded-lg object-cover" aria-hidden="true" />;
+  }
+  return (
+    <span className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white" style={{ background: gradient }} aria-hidden="true">
+      {icon}
+    </span>
+  );
+}
+
+function ProductCard({
+  app,
+  linkTo,
+  warningCount = 0,
+  footer,
+  className,
+}: {
+  app: Pick<AdminApplication, "name" | "category" | "icon" | "gradient" | "description" | "status">;
+  linkTo?: string;
+  warningCount?: number;
+  footer?: ReactNode;
+  className?: string;
+}) {
+  const identity = (
+    <>
+      <ProductIcon icon={app.icon} gradient={app.gradient} />
+      <div className="min-w-0">
+        <span className="flex items-center gap-1.5">
+          <span className={cn("truncate text-sm font-extrabold text-[var(--text-primary)]", linkTo && "group-hover:underline")}>{app.name}</span>
+          {warningCount > 0 ? (
+            <span title={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`} aria-label={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`}>
+              <AlertTriangle size={13} className="shrink-0 text-[var(--warning)]" />
+            </span>
+          ) : null}
+        </span>
+        <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">{app.category}</span>
+      </div>
+    </>
+  );
+
+  return (
+    <article className={cn("admin-product-card relative", !linkTo && "admin-product-card--static", className)}>
+      <div className="absolute right-[0.85rem] top-3">
+        <StatusBadge status={app.status} kind="application" />
+      </div>
+      <div className="flex items-center gap-2.5 pr-16">
+        {linkTo ? (
+          <Link to={linkTo} className="group flex min-w-0 items-center gap-2.5">{identity}</Link>
+        ) : (
+          <div className="flex min-w-0 items-center gap-2.5">{identity}</div>
+        )}
+      </div>
+      <p className="admin-product-card__description">{app.description || "No description yet."}</p>
+      {footer ? (
+        <div className="mt-auto">
+          <div className="admin-product-card__divider" />
+          {footer}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function TagList({ label, values, draft, onDraftChange, onAdd, onRemove }: {
+  label: string;
+  values: string[];
+  draft: string;
+  onDraftChange: (value: string) => void;
+  onAdd: () => void;
+  onRemove: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      {values.length === 0 ? (
+        <p className="text-xs text-[var(--text-muted)]">None added yet.</p>
+      ) : (
+        <ul className="flex flex-wrap gap-1.5">
+          {values.map((value) => (
+            <li key={value} className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+              {value}
+              <button type="button" onClick={() => onRemove(value)} aria-label={`Remove ${value}`} className="text-[var(--text-faint)] hover:text-[var(--error)]">✕</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={(event) => onDraftChange(event.target.value)}
+          onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onAdd(); } }}
+          placeholder={`Add ${label.toLowerCase()} and press Enter`}
+          className="flex-1 rounded-[var(--admin-control-radius)] border border-[var(--line)] px-3 py-2 text-[length:var(--admin-text-base)] text-[var(--text-primary)]"
+        />
+        <CommonButton variant="outline" size="sm" onClick={onAdd}>Add</CommonButton>
+      </div>
+    </div>
+  );
+}
+
+function ProductForm({
+  form,
+  errors,
+  touched,
+  contactUsers,
+  onUpdate,
+  onLogoFileChange,
+}: {
+  form: AdminApplication;
+  errors: ProductFormErrors;
+  touched: boolean;
+  contactUsers: ProductContactUser[];
+  onUpdate: <K extends keyof AdminApplication>(key: K, value: AdminApplication[K]) => void;
+  onLogoFileChange?: (file: File | null) => void;
+}) {
+  const [featureDraft, setFeatureDraft] = useState("");
+
+  const contactOptions = useMemo(() => {
+    const list = contactUsers
+      .filter((user) => user.isActive === 1 || String(user.userId) === form.contactUserId)
+      .map((user) => ({
+        id: String(user.userId),
+        value: user.fullName,
+      }));
+
+    const activeId = form.contactUserId || form.contactPersonName || "";
+    if (activeId && !list.some((opt) => opt.id === activeId || opt.value.toLowerCase() === activeId.toLowerCase())) {
+      list.unshift({
+        id: activeId,
+        value: form.contactPersonName || activeId,
+      });
+    }
+
+    return list;
+  }, [contactUsers, form.contactUserId, form.contactPersonName]);
+
+  const addFeature = () => {
+    const value = featureDraft.trim();
+    if (!value) return;
+    onUpdate("features", [...(form.features ?? []), value]);
+    setFeatureDraft("");
+  };
+  const removeFeature = (value: string) => onUpdate("features", (form.features ?? []).filter((item) => item !== value));
+
+  const handleLogoChange = (file: File | null) => {
+    if (onLogoFileChange) {
+      onLogoFileChange(file);
+    } else if (file) {
+      const localUrl = URL.createObjectURL(file);
+      onUpdate("icon", localUrl);
+    }
+  };
+
+  const previewUrl = resolveProductLogoUrl(form.icon) || (isImageIcon(form.icon) ? form.icon : undefined);
+
+  return (
+    <section className="admin-panel-card">
+      <div className="flex flex-col divide-y divide-[var(--line-soft)]">
+        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <InputField label="Product Name" required placeholder="Enter product name" autoFocus value={form.name} onChange={(event) => onUpdate("name", event.target.value)} error={touched ? errors.name : undefined} />
+          <InputField label="Short Name" placeholder="Enter short name" value={form.shortName} onChange={(event) => onUpdate("shortName", event.target.value)} />
+          <InputField label="Product Subtitle" required placeholder="Enter product subtitle" value={form.category} onChange={(event) => onUpdate("category", event.target.value)} error={touched ? errors.category : undefined} />
+          <InputField
+            label="Production URL"
+            value={form.productionUrl}
+            onChange={(event) => onUpdate("productionUrl", event.target.value)}
+            placeholder="https://app.optioncapp.com"
+            error={touched ? errors.productionUrl : undefined}
+          />
+          <RadioGroup
+            label="License Type"
+            options={PRODUCT_LICENSE_TYPE_OPTIONS}
+            value={form.licenseType}
+            onValueChange={(value) => onUpdate("licenseType", value as ProductLicenseType)}
+          />
+          <RadioGroup
+            label="Navigation Target"
+            options={PRODUCT_NAVIGATION_OPTIONS}
+            value={form.navigationTarget}
+            onValueChange={(value) => onUpdate("navigationTarget", value as ProductNavigationTarget)}
+          />
+          <Dropdown
+            label="Contact Person"
+            placeholder="Select contact person"
+            searchable
+            clearable
+            value={form.contactUserId || form.contactPersonName || ""}
+            onValueChange={(value) => {
+              const selectedValue = value ?? "";
+              const selected = contactUsers.find(
+                (user) =>
+                  String(user.userId) === selectedValue ||
+                  user.fullName.trim().toLowerCase() === selectedValue.trim().toLowerCase()
+              );
+              onUpdate("contactUserId", selected ? String(selected.userId) : selectedValue);
+              onUpdate("contactPersonName", selected?.fullName ?? selectedValue);
+            }}
+            options={contactOptions}
+          />
+        </div>
+
+        <div className="p-4">
+          <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Features</p>
+          <TagList label="Features" values={form.features ?? []} draft={featureDraft} onDraftChange={setFeatureDraft} onAdd={addFeature} onRemove={removeFeature} />
+        </div>
+
+        <div className="p-4">
+          <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Product Preview</p>
+          <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
+            <ProfileImageUpload
+              label="Product Logo"
+              onFileChange={handleLogoChange}
+              removable
+              fallbackInitials={(form.icon?.length ?? 0) <= 2 ? form.icon : undefined}
+              initialPreviewUrl={previewUrl}
+            />
+            <ProductCard app={form} className="max-w-xs" />
+          </div>
+        </div>
+
+        <div className="p-4">
+          <TextareaField label="Description" value={form.description} onChange={(event) => onUpdate("description", event.target.value)} rows={3} showCharCount={false} placeholder="What does this product do?" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const ProductEdit = () => {
+  //#region Hooks
+  const location = useLocation();
+  const stateProductId = parseProductIdFromState(location.state);
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  //#endregion
+
+  //#region States
+  const [product, setProduct] = useState<ProductApiItem | null>(null);
+  const [form, setForm] = useState<AdminApplication | null>(null);
+  const [originalForm, setOriginalForm] = useState<AdminApplication | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoRemoved, setLogoRemoved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const [contactUsers, setContactUsers] = useState<ProductContactUser[]>([]);
+  //#endregion
+
+  //#region Functions
+  const goToDetails = (id: number) => {
+    navigate(PRODUCTS_PATHS.details, { state: { productId: id } });
+  };
+
+  const loadProduct = useCallback(async () => {
+    setLoading(true);
+    try {
+      const resolvedId = stateProductId;
+
+      if (!resolvedId) {
+        setLoading(false);
+        setProduct(null);
+        setForm(null);
+        setOriginalForm(null);
+        return;
+      }
+
+      const [res, usersRes] = await Promise.all([
+        getProductById(resolvedId),
+        getProductContactUsers().catch((err) => {
+          console.error("Error loading contact persons:", err);
+          return { statusCode: 500, statusMessage: "error", resultData: [] };
+        }),
+      ]);
+
+      const loadedUsers =
+        usersRes.statusCode === 204 ? [] : normalizeProductContactUsers(usersRes.resultData);
+      setContactUsers(loadedUsers);
+
+      const item = normalizeProductApiItem(res.resultData);
+      if (item) {
+        const initialForm = resolveContactUser(toAdminApplication(item), loadedUsers);
+        setProduct(item);
+        setForm(initialForm);
+        setOriginalForm(initialForm);
+        setLogoFile(null);
+        setLogoRemoved(false);
+        setTouched(false);
+      } else {
+        setProduct(null);
+        setForm(null);
+        setOriginalForm(null);
+      }
+    } catch (err) {
+      console.error("Error fetching product for edit:", err);
+      showToast("Failed to load product.", "error");
+      setProduct(null);
+      setForm(null);
+      setOriginalForm(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [stateProductId, showToast]);
+
+  const update = <K extends keyof AdminApplication>(
+    key: K,
+    value: AdminApplication[K],
+  ) => {
+    setForm((current) => (current ? { ...current, [key]: value } : current));
+    setTouched(true);
+  };
+
+  const handleLogoFileChange = (file: File | null) => {
+    setLogoFile(file);
+    if (file) {
+      setLogoRemoved(false);
+      const localUrl = URL.createObjectURL(file);
+      update("icon", localUrl);
+    } else {
+      setLogoRemoved(true);
+      update("icon", DEFAULT_PRODUCT_ICON);
+    }
+  };
+
+  const handleCancel = async () => {
+    const dirty =
+      touched && JSON.stringify(form) !== JSON.stringify(originalForm);
+    if (dirty) {
+      const confirmed = await confirmAction({
+        title: "Discard unsaved changes?",
+        description:
+          "You have unsaved changes to this product. Leaving now will discard them.",
+        confirmLabel: "Discard changes",
+        tone: "danger",
+      });
+      if (!confirmed) return;
+    }
+    if (product) {
+      goToDetails(product.productId);
+      return;
+    }
+    navigate(PRODUCTS_PATHS.list);
+  };
+
+  const handleSave = async () => {
+    setTouched(true);
+    if (!form || !product) return;
+    const dirty =
+      Boolean(logoFile) ||
+      logoRemoved ||
+      JSON.stringify(form) !== JSON.stringify(originalForm);
+    if (!dirty) return;
+
+    const errors = validateProductForm(form);
+    if (Object.keys(errors).length > 0) {
+      showToast(Object.values(errors).join("\n"), "error");
+      return;
+    }
+
+    if (form.icon?.startsWith("blob:") && !logoFile && !logoRemoved) {
+      showToast("Please select the product logo again before saving.", "error");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      let finalLogoName: string | null | undefined = product.logoName ?? toStoredProductLogoPath(product.logoUrl) ?? product.logoUrl;
+      if (logoFile) {
+        const uploadedPath = await uploadProductLogo(logoFile);
+        finalLogoName = toStoredProductLogoPath(uploadedPath) ?? uploadedPath;
+      } else if (logoRemoved) {
+        finalLogoName = null;
+      }
+
+      const defaultAccessDays =
+        form.licenseType === "free"
+          ? 0
+          : product.defaultAccessDays > 0
+            ? product.defaultAccessDays
+            : 365;
+      const payload: ProductInputPayload = {
+        productId: product.productId,
+        productName: form.name.trim(),
+        subCategoryName: form.category?.trim() || null,
+        prodDescription: form.description?.trim() || null,
+        externalPageUrl: form.productionUrl?.trim() || null,
+        defaultAccessDays,
+        logoName: finalLogoName,
+        logoUrl: finalLogoName,
+        features: form.features,
+        isActive: form.status !== "inactive",
+        productStatus: form.status === "active" ? 1 : form.status === "coming-soon" ? 2 : null,
+        contactPerson: form.contactPersonName?.trim() || form.contactUserId?.trim() || "",
+      };
+
+      await updateProduct(payload);
+      showToast(`${form.name} updated successfully.`);
+      goToDetails(product.productId);
+    } catch (err) {
+      console.error("Error saving product:", err);
+      showToast(typeof err === "string" ? err : "Failed to update product", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+  //#endregion
+
+  //#region Effects
+  useEffect(() => {
+    void loadProduct();
+  }, [loadProduct]);
+  //#endregion
+
+  if (loading) {
+    return (
+      <div className="admin-reveal flex flex-col gap-4" aria-busy="true">
+        <div className="admin-skeleton h-12 w-full rounded-[var(--radius-panel)]" />
+        <div className="admin-skeleton h-96 w-full rounded-[var(--radius-panel)]" />
+      </div>
+    );
+  }
+
+  if (!product || !form) {
+    return (
+      <div className="admin-reveal flex flex-col items-center justify-center gap-3 py-16 text-center">
+        <span className="text-4xl">{DEFAULT_PRODUCT_ICON}</span>
+        <h2 className="text-lg font-bold text-[var(--text-primary)]">
+          Product Not Found
+        </h2>
+        <p className="text-sm text-[var(--text-muted)]">
+          The requested product could not be located in the database.
+        </p>
+        <CommonButton
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(PRODUCTS_PATHS.list)}
+        >
+          Back to Products
+        </CommonButton>
+      </div>
+    );
+  }
+
+  const errors = validateProductForm(form);
+  const hasErrors = Object.keys(errors).length > 0;
+  const isDirty =
+    Boolean(logoFile) ||
+    logoRemoved ||
+    JSON.stringify(form) !== JSON.stringify(originalForm);
+  const canSave = isDirty && !hasErrors && !saving;
+
+  return (
+    <div className="admin-reveal flex flex-col gap-4">
+      <PanelHeader
+        title="Edit Product"
+        action={<MandatoryIndicator variant="brand" />}
+      />
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!canSave) return;
+          void handleSave();
+        }}
+        noValidate
+        className="flex flex-col gap-4"
+      >
+        <ProductForm
+          form={form}
+          errors={errors}
+          touched={touched}
+          contactUsers={contactUsers}
+          onUpdate={update}
+          onLogoFileChange={handleLogoFileChange}
+        />
+
+        <div className="admin-sticky-footer">
+          <CommonButton
+            variant="outline"
+            size="sm"
+            iconLeft={<X size={14} />}
+            onClick={() => void handleCancel()}
+          >
+            Cancel
+          </CommonButton>
+          <CommonButton
+            variant="primary"
+            size="sm"
+            iconLeft={<Save size={14} />}
+            onClick={() => void handleSave()}
+            disabled={!canSave}
+          >
+            {saving ? "Saving..." : "Save"}
+          </CommonButton>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default ProductEdit;

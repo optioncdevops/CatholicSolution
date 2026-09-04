@@ -876,7 +876,7 @@ const ServerSideDropdownInner = <
                     <input
                       type="text"
                       className={cn(
-                        "w-full bg-transparent outline-none text-slate-800 dark:text-slate-100",
+                        "w-full bg-transparent outline-none text-[var(--text-primary)] placeholder:text-[var(--text-faint)]",
                         themeFormControlTextClass,
                       )}
                       placeholder={searchPlaceholder}

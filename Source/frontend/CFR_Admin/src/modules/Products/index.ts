@@ -1,10 +1,7 @@
-export * from './routes';
+export { productsRoutes } from './routes';
 export * from './services/productService';
 export * from './types/productTypes';
 export * from './utils/productHelpers';
+export * from './utils/productFilters';
 export * from './validator/productValidation';
-export { default as ProductsListPage } from './pages/ProductsListPage';
-export { default as ProductDetailPage } from './pages/partials/ProductDetailPage';
-export { default as ProductEditPage } from './pages/partials/ProductEditPage';
-export { default as CreateInvoicePage } from './pages/partials/CreateInvoicePage';
-export { InvoiceDetailModal } from './pages/partials/InvoiceDetailModal';
+export { InvoiceDetailModal } from './pages/LicenseDetails';

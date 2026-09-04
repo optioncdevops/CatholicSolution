@@ -28,8 +28,9 @@ namespace CFR.CommonService.Services
     {
         private string GetGatewayRoot()
         {
-            return configuration["AppStrings:GatewayRoot"]
-                ?? throw new InvalidOperationException("AppStrings:GatewayRoot is not configured.");
+            return configuration["ApplicationFilePath:Doc_BasePath"]
+                ?? configuration["AppStrings:GatewayRoot"]
+                ?? throw new InvalidOperationException("Base path is not configured in ApplicationFilePath:Doc_BasePath or AppStrings:GatewayRoot.");
         }
 
         /// <summary>

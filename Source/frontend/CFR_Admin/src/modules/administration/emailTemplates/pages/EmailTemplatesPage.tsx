@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertTriangle, CheckCircle2, KeyRound, Mail, MailCheck, MailQuestion, RotateCcw, Save, Search, Send, Settings, Sparkles, Wand2,
+  AlertTriangle, CheckCircle2, KeyRound, Mail, MailCheck, MailQuestion, Palette, RotateCcw, Save, Search, Send, Settings, Sparkles, Wand2,
 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Badge } from '@app/components/Badge';
-import { InputField } from '@app/components/formControls';
-// The ported formControls Input/TextareaField don't forward a ref to the underlying element,
-// which the merge-tag "insert at cursor" feature below needs — keep the local ref-forwarding ones.
-import { InputField as SubjectField, TextareaField } from '@app/components/form/TextField';
+import { Dropdown, InputField, RichTextEditor } from '@app/components/formControls';
+// The ported formControls InputField doesn't forward a ref to the underlying element, which the
+// merge-tag "insert at cursor" feature below needs for the Subject field — keep the local
+// ref-forwarding one. The Body field is now the shared RichTextEditor (WYSIWYG, standard
+// bold/italic/lists/links/color toolbar) instead of a raw-HTML textarea.
+import { InputField as SubjectField } from '@app/components/form/TextField';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 import { confirmAction } from '../../../lib/confirm';
 import { getEmailTemplates, saveEmailTemplate, sendTestEmail } from '../services/emailTemplatesService';
 import type { EmailTemplateApiItem, EmailTemplateFormValues } from '../types/emailTemplatesTypes';
 import {
+  DEFAULT_EMAIL_ACCENT_COLOR, DEFAULT_EMAIL_BASE_FONT_SIZE, DEFAULT_EMAIL_FONT_FAMILY, EMAIL_FONT_FAMILY_OPTIONS,
   EMAIL_TEMPLATE_VARIABLES, getUnsupportedPlaceholders, normalizeEmailTemplatesList, templateDescription, templateDisplayLabel,
 } from '../utils/emailTemplatesHelpers';
 import { validateEmailTemplate } from '../validator/EmailTemplatesValidator';
@@ -25,6 +28,17 @@ const TEMPLATE_ICON: Record<string, typeof Mail> = {
   AccessApproved: MailCheck,
   AccessInfo: MailQuestion,
 };
+
+const BODY_EDITOR_ID = 'email-template-body-editor';
+
+const draftFromTemplate = (item: EmailTemplateApiItem): EmailTemplateFormValues => ({
+  subject: item.subject,
+  body: item.body,
+  accentColor: item.accentColor || DEFAULT_EMAIL_ACCENT_COLOR,
+  logoUrl: item.logoUrl ?? '',
+  fontFamily: item.fontFamily || DEFAULT_EMAIL_FONT_FAMILY,
+  baseFontSize: item.baseFontSize || DEFAULT_EMAIL_BASE_FONT_SIZE,
+});
 
 function EmailTemplatesPage() {
   //#region Hooks
@@ -40,14 +54,12 @@ function EmailTemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [sendingTest, setSendingTest] = useState(false);
   const subjectRef = useRef<HTMLInputElement>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
-  const activeFieldRef = useRef<'subject' | 'body'>('body');
   //#endregion
 
   //#region Functions
   const applyTemplatesList = useCallback((list: EmailTemplateApiItem[]) => {
     setTemplates(list);
-    setDrafts(Object.fromEntries(list.map((item) => [item.templateId, { subject: item.subject, body: item.body }])));
+    setDrafts(Object.fromEntries(list.map((item) => [item.templateId, draftFromTemplate(item)])));
     setSelectedId((current) => current ?? list[0]?.templateId ?? null);
   }, []);
 
@@ -86,8 +98,17 @@ function EmailTemplatesPage() {
   //#endregion
 
   const template = useMemo(() => templates.find((item) => item.templateId === selectedId) ?? null, [templates, selectedId]);
-  const draft = (template ? drafts[template.templateId] : undefined) ?? { subject: '', body: '' };
-  const isDirty = Boolean(template) && (draft.subject !== template!.subject || draft.body !== template!.body);
+  const draft = (template ? drafts[template.templateId] : undefined) ?? {
+    subject: '', body: '', accentColor: DEFAULT_EMAIL_ACCENT_COLOR, logoUrl: '', fontFamily: DEFAULT_EMAIL_FONT_FAMILY, baseFontSize: DEFAULT_EMAIL_BASE_FONT_SIZE,
+  };
+  const isDirty = Boolean(template) && (
+    draft.subject !== template!.subject
+    || draft.body !== template!.body
+    || draft.accentColor !== (template!.accentColor || DEFAULT_EMAIL_ACCENT_COLOR)
+    || draft.logoUrl !== (template!.logoUrl ?? '')
+    || draft.fontFamily !== (template!.fontFamily || DEFAULT_EMAIL_FONT_FAMILY)
+    || draft.baseFontSize !== (template!.baseFontSize || DEFAULT_EMAIL_BASE_FONT_SIZE)
+  );
   const storedAuthEmail = getStoredAcutisAuth()?.resultData?.user?.eMail;
 
   const unsupportedPlaceholders = useMemo(
@@ -101,24 +122,34 @@ function EmailTemplatesPage() {
     return templates.filter((item) => templateDisplayLabel(item.templateCode).toLowerCase().includes(needle) || templateDescription(item.templateCode).toLowerCase().includes(needle));
   }, [templates, search]);
 
-  const updateField = (field: 'subject' | 'body', value: string) => {
+  const updateField = <K extends keyof EmailTemplateFormValues>(field: K, value: EmailTemplateFormValues[K]) => {
     if (!template) return;
     setDrafts((prev) => ({ ...prev, [template.templateId]: { ...prev[template.templateId], [field]: value } }));
   };
 
+  // Inserts a merge tag at the live cursor position in whichever field was last focused. The
+  // Subject field is a plain input, so its selection range is read/restored directly. The Body
+  // field is the shared RichTextEditor (contentEditable, no external ref) — inserting there goes
+  // through document.execCommand, which respects the current caret as long as focus wasn't
+  // stolen by the button first (see its onMouseDown preventDefault below).
   const insertVariable = (token: string) => {
     if (!template) return;
-    const field = activeFieldRef.current;
-    const el = field === 'subject' ? subjectRef.current : bodyRef.current;
-    const text = field === 'subject' ? draft.subject : draft.body;
-    const start = el?.selectionStart ?? text.length;
-    const end = el?.selectionEnd ?? text.length;
-    const next = `${text.slice(0, start)}${token}${text.slice(end)}`;
-    updateField(field, next);
-    requestAnimationFrame(() => {
-      el?.focus();
-      el?.setSelectionRange(start + token.length, start + token.length);
-    });
+    if (document.activeElement === subjectRef.current) {
+      const el = subjectRef.current;
+      const text = draft.subject;
+      const start = el?.selectionStart ?? text.length;
+      const end = el?.selectionEnd ?? text.length;
+      const next = `${text.slice(0, start)}${token}${text.slice(end)}`;
+      updateField('subject', next);
+      requestAnimationFrame(() => {
+        el?.focus();
+        el?.setSelectionRange(start + token.length, start + token.length);
+      });
+      return;
+    }
+
+    document.getElementById(BODY_EDITOR_ID)?.focus();
+    document.execCommand('insertText', false, token);
   };
 
   //#region Handlers
@@ -138,6 +169,10 @@ function EmailTemplatesPage() {
         subject: draft.subject,
         body: draft.body,
         status: template.status,
+        accentColor: draft.accentColor,
+        logoUrl: draft.logoUrl,
+        fontFamily: draft.fontFamily,
+        baseFontSize: draft.baseFontSize,
       });
       showToast(`${templateDisplayLabel(template.templateCode)} saved.`, 'success');
       await load();
@@ -153,12 +188,12 @@ function EmailTemplatesPage() {
     if (!template) return;
     const confirmed = await confirmAction({
       title: 'Reset this template?',
-      description: `"${templateDisplayLabel(template.templateCode)}" will be restored to its last saved subject and body. Unsaved changes will be lost.`,
+      description: `"${templateDisplayLabel(template.templateCode)}" will be restored to its last saved subject, body, and branding. Unsaved changes will be lost.`,
       confirmLabel: 'Reset template',
       tone: 'danger',
     });
     if (!confirmed) return;
-    setDrafts((prev) => ({ ...prev, [template.templateId]: { subject: template.subject, body: template.body } }));
+    setDrafts((prev) => ({ ...prev, [template.templateId]: draftFromTemplate(template) }));
     showToast(`${templateDisplayLabel(template.templateCode)} reset to last saved version.`, 'success');
   };
 
@@ -177,6 +212,10 @@ function EmailTemplatesPage() {
         subject: draft.subject,
         body: draft.body,
         toAddress,
+        accentColor: draft.accentColor,
+        logoUrl: draft.logoUrl,
+        fontFamily: draft.fontFamily,
+        baseFontSize: draft.baseFontSize,
       });
       showToast(`Test email sent to ${toAddress}.`, 'success');
     } catch (error) {
@@ -194,6 +233,9 @@ function EmailTemplatesPage() {
 
   //#region Render
   const TemplateIcon = template ? TEMPLATE_ICON[template.templateCode] ?? Mail : Mail;
+  // Preview-only substitution of [AccentColor] so the color picker has a visible live effect —
+  // every other merge tag intentionally stays a literal placeholder until a real send fills it in.
+  const previewBody = draft.body.replaceAll('[AccentColor]', draft.accentColor || DEFAULT_EMAIL_ACCENT_COLOR);
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -222,7 +264,14 @@ function EmailTemplatesPage() {
               </div>
             ) : filteredTemplates.map((item) => {
               const itemDraft = drafts[item.templateId];
-              const edited = Boolean(itemDraft) && (itemDraft.subject !== item.subject || itemDraft.body !== item.body);
+              const edited = Boolean(itemDraft) && (
+                itemDraft.subject !== item.subject
+                || itemDraft.body !== item.body
+                || itemDraft.accentColor !== (item.accentColor || DEFAULT_EMAIL_ACCENT_COLOR)
+                || itemDraft.logoUrl !== (item.logoUrl ?? '')
+                || itemDraft.fontFamily !== (item.fontFamily || DEFAULT_EMAIL_FONT_FAMILY)
+                || itemDraft.baseFontSize !== (item.baseFontSize || DEFAULT_EMAIL_BASE_FONT_SIZE)
+              );
               const ItemIcon = TEMPLATE_ICON[item.templateCode] ?? Mail;
               const isActive = item.templateId === selectedId;
               return (
@@ -297,19 +346,17 @@ function EmailTemplatesPage() {
                   ref={subjectRef}
                   value={draft.subject}
                   onChange={(event) => updateField('subject', event.target.value)}
-                  onFocus={() => { activeFieldRef.current = 'subject'; }}
                   placeholder="Enter the email subject line"
                   hint="Shown as the message subject line — keep it short and specific."
                 />
-                <TextareaField
+                <RichTextEditor
+                  id={BODY_EDITOR_ID}
                   label="Body"
-                  ref={bodyRef}
-                  rows={12}
                   value={draft.body}
-                  onChange={(event) => updateField('body', event.target.value)}
-                  onFocus={() => { activeFieldRef.current = 'body'; }}
+                  onValueChange={(html) => updateField('body', html)}
                   placeholder="Enter the email body"
-                  hint="Supports inline-styled HTML (buttons, links, layout) as well as plain text. Use the merge tags below to personalize the subject or body — click one to insert it at your cursor."
+                  minHeight={260}
+                  helperText="Format the body with the toolbar (bold, links, lists, color, alignment), or use the merge tags below to personalize it — click one to insert it at your cursor."
                 />
                 <div>
                   <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">
@@ -320,6 +367,7 @@ function EmailTemplatesPage() {
                       <button
                         key={variable.token}
                         type="button"
+                        onMouseDown={(event) => event.preventDefault()}
                         onClick={() => insertVariable(variable.token)}
                         className="admin-email-template-tag"
                         title={`Insert ${variable.label} at the cursor`}
@@ -328,6 +376,69 @@ function EmailTemplatesPage() {
                         {variable.label}
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                <div className="admin-email-branding">
+                  <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">
+                    <Palette size={12} aria-hidden="true" /> Branding
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="admin-email-branding__field">
+                      <span>Accent color</span>
+                      <span className="admin-email-branding__color-row">
+                        <input
+                          type="color"
+                          value={draft.accentColor}
+                          onChange={(event) => updateField('accentColor', event.target.value)}
+                          className="admin-email-branding__color-swatch"
+                          aria-label="Accent color"
+                        />
+                        <input
+                          type="text"
+                          value={draft.accentColor}
+                          onChange={(event) => updateField('accentColor', event.target.value)}
+                          className="admin-email-branding__color-text"
+                          maxLength={9}
+                        />
+                      </span>
+                    </label>
+
+                    <label className="admin-email-branding__field">
+                      <span>Base font size (px)</span>
+                      <input
+                        type="number"
+                        min={10}
+                        max={24}
+                        value={draft.baseFontSize}
+                        onChange={(event) => updateField('baseFontSize', Number(event.target.value) || DEFAULT_EMAIL_BASE_FONT_SIZE)}
+                        className="admin-email-branding__number"
+                      />
+                    </label>
+
+                    <label className="admin-email-branding__field col-span-2">
+                      <span>Font family</span>
+                      <Dropdown
+                        label="Font family" hideLabel
+                        searchable={false}
+                        clearable={false}
+                        value={draft.fontFamily}
+                        onValueChange={(value) => updateField('fontFamily', value ?? DEFAULT_EMAIL_FONT_FAMILY)}
+                        options={EMAIL_FONT_FAMILY_OPTIONS}
+                        className="min-h-8"
+                      />
+                    </label>
+
+                    <label className="admin-email-branding__field col-span-2">
+                      <span>Logo image URL</span>
+                      <input
+                        type="text"
+                        value={draft.logoUrl}
+                        onChange={(event) => updateField('logoUrl', event.target.value)}
+                        placeholder="https://…/logo.png (leave blank for the default brand header)"
+                        className="admin-email-branding__text"
+                      />
+                    </label>
                   </div>
                 </div>
               </div>
@@ -349,10 +460,27 @@ function EmailTemplatesPage() {
                     </div>
                     <p className="admin-email-preview-card__subject">{draft.subject || 'Untitled subject'}</p>
                     {draft.body ? (
-                      // The body is the actual HTML this template sends (SMTPMailService sends IsBodyHtml=true) —
-                      // rendering it here, not as escaped text, is what makes the preview match the real email.
-                      // Content is the signed-in admin's own draft, rendered back to themselves; no other user's input reaches this.
-                      <div className="admin-email-preview-card__body" dangerouslySetInnerHTML={{ __html: draft.body }} />
+                      // Mirrors SMTPMailService.FormatMailContent's actual send-time wrapper (gradient
+                      // band, brand header, white content card, disclaimer footer) so this preview
+                      // matches the real email structure, not just the raw body in isolation. Keep in
+                      // sync with that method if its wrapper markup changes. [AccentColor] is
+                      // substituted here for the live preview only — every other merge tag stays literal.
+                      <div className="admin-email-preview-card__envelope" style={{ fontFamily: draft.fontFamily, fontSize: `${draft.baseFontSize}px` }}>
+                        {draft.logoUrl ? (
+                          <div className="admin-email-preview-card__logo-image">
+                            <img src={draft.logoUrl} alt={templateDisplayLabel(template.templateCode)} />
+                          </div>
+                        ) : (
+                          <div className="admin-email-preview-card__brand">Catholic Solutions</div>
+                        )}
+                        <div className="admin-email-preview-card__content">
+                          <div className="admin-email-preview-card__body" dangerouslySetInnerHTML={{ __html: previewBody }} />
+                          <div className="admin-email-preview-card__disclaimer">
+                            <span>Disclaimer</span>
+                            <p>Please do not respond directly to this email. The originating email is not monitored.</p>
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       <p className="px-4 pb-4 text-xs italic text-[var(--text-faint)]">Start typing the body to see it rendered here.</p>
                     )}
@@ -360,7 +488,7 @@ function EmailTemplatesPage() {
                 </div>
                 <p className="flex items-center gap-1.5 text-xs text-[var(--text-faint)]">
                   <CheckCircle2 size={12} className="shrink-0" aria-hidden="true" />
-                  Preview shows the template as written. Merge tags stay as placeholders until a real send fills them in.
+                  Preview shows the template and branding as written. [AccentColor] is filled in live; other merge tags stay as placeholders until a real send fills them in.
                 </p>
               </div>
             </div>

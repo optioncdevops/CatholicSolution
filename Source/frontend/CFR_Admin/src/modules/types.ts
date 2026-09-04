@@ -37,6 +37,8 @@ export interface AdminApplication {
   navigationTarget: ProductNavigationTarget;
   status: ProductStatus;
   updatedAt: string;
+  contactUserId?: string;
+  contactPersonName?: string;
 }
 
 export type OrganizationStatus = 'active' | 'trial' | 'suspended';

@@ -43,6 +43,34 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("status")]
         public string? Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets the accent color (hex, e.g. "#1d4ed8") used for this template's button and
+        /// link color at send time. Null falls back to the built-in default.
+        /// </summary>
+        [JsonPropertyName("accentColor")]
+        public string? AccentColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets an absolute logo image URL shown above this template's body at send time.
+        /// Null falls back to the shared text brand header (or no header, per microservice config).
+        /// </summary>
+        [JsonPropertyName("logoUrl")]
+        public string? LogoUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the CSS font-family stack used for this template's body at send time.
+        /// Null falls back to the built-in default.
+        /// </summary>
+        [JsonPropertyName("fontFamily")]
+        public string? FontFamily { get; set; }
+
+        /// <summary>
+        /// Gets or sets the base body font size in pixels for this template at send time.
+        /// Null falls back to the built-in default.
+        /// </summary>
+        [JsonPropertyName("baseFontSize")]
+        public int? BaseFontSize { get; set; }
     }
 
     /// <summary>
@@ -78,5 +106,29 @@ namespace CFR.AcutisInfrastructure.Models.Input
         [Required]
         [JsonPropertyName("toAddress")]
         public string ToAddress { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the accent color to test-send with, exactly as currently shown in the editor.
+        /// </summary>
+        [JsonPropertyName("accentColor")]
+        public string? AccentColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the logo URL to test-send with, exactly as currently shown in the editor.
+        /// </summary>
+        [JsonPropertyName("logoUrl")]
+        public string? LogoUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the font family to test-send with, exactly as currently shown in the editor.
+        /// </summary>
+        [JsonPropertyName("fontFamily")]
+        public string? FontFamily { get; set; }
+
+        /// <summary>
+        /// Gets or sets the base font size to test-send with, exactly as currently shown in the editor.
+        /// </summary>
+        [JsonPropertyName("baseFontSize")]
+        public int? BaseFontSize { get; set; }
     }
 }

@@ -108,5 +108,40 @@ namespace CFR.Common
             public const string Notification = "N";
             public const string NewsLetter = "L";
         }
+
+        /// <summary>
+        /// Action identifiers for [dbo].[Acutis_Products_CRUD].
+        /// </summary>
+        public enum ProductAction
+        {
+            [Description("Fetch active products list")]
+            GetList = 1,
+
+            [Description("Fetch product details by identifier")]
+            GetById = 2,
+
+            [Description("Update product details")]
+            Update = 3,
+
+            [Description("Check if product name exists")]
+            CheckNameExists = 4,
+
+            [Description("Fetch licenses for a product")]
+            GetLicenses = 5,
+
+            [Description("Fetch license details by identifier")]
+            GetLicenseById = 6,
+
+            [Description("Create a new license")]
+            CreateLicense = 7,
+
+            [Description("Update an existing license")]
+            UpdateLicense = 8,
+
+            [Description("Fetch customers linked to a product")]
+            GetCustomers = 9
+        }
+
+
     }
 }

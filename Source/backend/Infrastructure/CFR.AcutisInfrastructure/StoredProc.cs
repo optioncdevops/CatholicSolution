@@ -53,12 +53,6 @@ namespace CFR.AcutisInfrastructure
             /// Email templates list, get by id, get by code, and save operations.
             /// </summary>
             public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates_CRUD]";
-
-            /// <summary>
-            /// App Hub product list from core.Product.
-            /// ActionId 4=hub list.
-            /// </summary>
-            public const string ProductsCrud = "[dbo].[Acutis_Products_CRUD]";
         }
 
         /// <summary>
@@ -92,14 +86,9 @@ namespace CFR.AcutisInfrastructure
         public class Products
         {
             /// <summary>
-            /// Products list, get by id, save (insert/update), and soft-delete operations.
+            /// Products and License unified CRUD operations.
             /// </summary>
             public const string ProductsCrud = "[dbo].[Acutis_Products_CRUD]";
-
-            /// <summary>
-            /// Retrieves product license records by ProductId from lic.License and lic.OrganizationProduct.
-            /// </summary>
-            public const string ProductLicensesGetByProductId = "[dbo].[Acutis_ProductLicenses_GetByProductId]";
         }
     }
 }

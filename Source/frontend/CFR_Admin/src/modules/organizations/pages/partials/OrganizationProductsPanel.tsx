@@ -1,19 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Power, PowerOff } from 'lucide-react';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
-import { Dropdown } from '@app/components/formControls';
-import { Badge } from '@app/components/Badge';
+import { StatusBadge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '@/modules/lib/confirm';
 import { formatDate } from '@/modules/utils/formatDate';
-import {
-  assignOrganizationProduct,
-  getAssignableOrganizationProducts,
-  removeOrganizationProduct,
-} from '../../services/organizationsService';
-import type { AssignableProductApiItem, OrganizationProductApiItem } from '../../types/organizationTypes';
+import { assignOrganizationProduct, removeOrganizationProduct } from '../../services/organizationsService';
+import type { OrganizationProductApiItem } from '../../types/organizationTypes';
+import AssignOrganizationProductModal from './AssignOrganizationProductModal';
 
 type OrganizationProductsPanelProps = {
   orgId: number;
@@ -22,74 +18,54 @@ type OrganizationProductsPanelProps = {
   onChanged: () => Promise<void> | void;
 };
 
+// Activate/Deactivate reuse the existing AssignOrganizationProduct / RemoveOrganizationProduct
+// endpoints as-is — the backend already treats "remove" as a soft-delete (AssignStatus set to
+// 'inactive', row kept for history) and "assign" as an insert-or-reactivate, so no new mapping
+// system or stored procedure action is needed for this activate/deactivate toggle.
 const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: OrganizationProductsPanelProps) => {
   //#region Hooks
   const { showToast } = useToast();
   //#endregion
 
   //#region States
-  const [assignableProducts, setAssignableProducts] = useState<AssignableProductApiItem[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [assigning, setAssigning] = useState(false);
-  const [removingProductId, setRemovingProductId] = useState<number | null>(null);
-  //#endregion
-
-  //#region Effects
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const { resultData, statusCode } = await getAssignableOrganizationProducts(orgId);
-        if (cancelled) return;
-        setAssignableProducts(statusCode === 204 || !Array.isArray(resultData) ? [] : resultData as AssignableProductApiItem[]);
-      } catch (error) {
-        if (cancelled) return;
-        console.error('Error loading assignable products:', error);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [orgId, products]);
+  const [processingProductId, setProcessingProductId] = useState<number | null>(null);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
   //#endregion
 
   //#region Handlers
-  const handleAssign = async () => {
-    if (!selectedProductId) return;
-    const product = assignableProducts.find((item) => String(item.productId) === selectedProductId);
-    setAssigning(true);
-    try {
-      await assignOrganizationProduct({ orgId, productId: Number(selectedProductId) });
-      showToast(`${product?.productName ?? 'Product'} assigned to ${orgName}.`, 'success');
-      setSelectedProductId('');
-      await onChanged();
-    } catch (error) {
-      console.error('Error assigning product:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to assign product.', 'error');
-    } finally {
-      setAssigning(false);
-    }
-  };
-
-  const handleRemove = async (product: OrganizationProductApiItem) => {
+  const handleDeactivate = async (product: OrganizationProductApiItem) => {
     const confirmed = await confirmAction({
-      title: 'Remove this product?',
-      description: `${orgName} will lose access to ${product.productName}.`,
-      confirmLabel: 'Remove',
+      title: 'Deactivate this app?',
+      description: `${orgName} and its members will lose access to ${product.productName}.`,
+      confirmLabel: 'Deactivate',
       tone: 'danger',
     });
     if (!confirmed) return;
 
-    setRemovingProductId(product.productId);
+    setProcessingProductId(product.productId);
     try {
       await removeOrganizationProduct(orgId, product.productId);
-      showToast(`${product.productName} removed from ${orgName}.`, 'success');
+      showToast(`${product.productName} deactivated for ${orgName}.`, 'success');
       await onChanged();
     } catch (error) {
-      console.error('Error removing product:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to remove product.', 'error');
+      console.error('Error deactivating product:', error);
+      showToast(typeof error === 'string' ? error : 'Failed to update application access.', 'error');
     } finally {
-      setRemovingProductId(null);
+      setProcessingProductId(null);
+    }
+  };
+
+  const handleActivate = async (product: OrganizationProductApiItem) => {
+    setProcessingProductId(product.productId);
+    try {
+      await assignOrganizationProduct({ orgId, productId: product.productId });
+      showToast(`${product.productName} activated for ${orgName}.`, 'success');
+      await onChanged();
+    } catch (error) {
+      console.error('Error activating product:', error);
+      showToast(typeof error === 'string' ? error : 'Failed to update application access.', 'error');
+    } finally {
+      setProcessingProductId(null);
     }
   };
   //#endregion
@@ -97,7 +73,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
   //#region Columns
   const columns: DataTableColumn<OrganizationProductApiItem>[] = [
     {
-      id: 'productName', header: 'Product', width: '14rem',
+      id: 'productName', header: 'App', width: '14rem',
       value: (product) => product.productName,
       cell: (product) => <span className="font-bold text-[var(--text-primary)]">{product.productName}</span>,
     },
@@ -107,27 +83,41 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
       cell: (product) => <span className="text-[var(--text-secondary)]">{product.subCategoryName || '—'}</span>,
     },
     {
-      id: 'assignStatus', header: 'Status',
+      id: 'assignStatus', header: 'Access',
       value: (product) => product.assignStatus ?? '',
-      cell: (product) => <Badge tone={product.assignStatus === 'active' ? 'success' : 'neutral'}>{product.assignStatus || '—'}</Badge>,
+      cell: (product) => <StatusBadge status={product.assignStatus === 'active' ? 'active' : 'inactive'} kind="application" />,
     },
     {
-      id: 'assignedDate', header: 'Assigned On',
+      id: 'assignedDate', header: 'Last Changed',
       value: (product) => product.assignedDate,
       cell: (product) => <span className="text-[var(--text-muted)]">{formatDate(product.assignedDate)}</span>,
     },
     {
+      id: 'expiryDate', header: 'Expiry Date',
+      value: (product) => product.expiryDate ?? '',
+      cell: (product) => <span className="text-[var(--text-muted)]">{product.expiryDate ? formatDate(product.expiryDate) : 'No expiry'}</span>,
+    },
+    {
       id: 'actions', header: 'Actions', width: '4rem', excludeFromExport: true, sortable: false,
-      cell: (product) => (
+      cell: (product) => (product.assignStatus === 'active' ? (
         <CommonIconButton
-          aria-label={`Remove ${product.productName}`}
-          tooltip="Remove"
+          aria-label={`Deactivate ${product.productName}`}
+          tooltip="Deactivate"
           variant="danger"
-          icon={<Trash2 size={14} />}
-          onClick={() => handleRemove(product)}
-          disabled={removingProductId === product.productId}
+          icon={<PowerOff size={14} />}
+          onClick={() => handleDeactivate(product)}
+          disabled={processingProductId === product.productId}
         />
-      ),
+      ) : (
+        <CommonIconButton
+          aria-label={`Activate ${product.productName}`}
+          tooltip="Activate"
+          variant="success"
+          icon={<Power size={14} />}
+          onClick={() => handleActivate(product)}
+          disabled={processingProductId === product.productId}
+        />
+      )),
     },
   ];
   //#endregion
@@ -135,36 +125,32 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
   //#region Render
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="w-64 shrink-0">
-          <Dropdown
-            label="Product to assign"
-            hideLabel
-            searchable={false}
-            clearable={false}
-            value={selectedProductId || undefined}
-            onValueChange={(value) => setSelectedProductId(value ?? '')}
-            options={assignableProducts.map((product) => ({ id: String(product.productId), value: product.productName }))}
-            placeholder={assignableProducts.length === 0 ? 'All products assigned' : 'Select a product to assign…'}
-            disabled={assigning || assignableProducts.length === 0}
-            className="min-h-8"
-          />
-        </div>
-        <CommonButton variant="primary" size="sm" iconLeft={<Plus size={14} />} onClick={handleAssign} loading={assigning} disabled={!selectedProductId || assigning}>Assign</CommonButton>
+      <div className="flex justify-end">
+        <CommonButton size="sm" iconLeft={<Plus size={14} />} onClick={() => setAssignModalOpen(true)}>
+          Assign App
+        </CommonButton>
       </div>
 
       {products.length === 0 ? (
-        <EmptyState icon="📦" title="No products assigned" description="Assign a product above to give this organization access." />
+        <EmptyState icon="📦" title="No apps assigned" description="Apps assigned to this organization will appear here." />
       ) : (
         <DataTable
           data={products}
           columns={columns}
           getRowId={(product) => String(product.productId)}
           exportFileName="organization-products"
-          exportTitle="Organization — Products"
-          emptyMessage="No products found."
+          exportTitle="Organization — Apps"
+          emptyMessage="No apps found."
         />
       )}
+
+      <AssignOrganizationProductModal
+        isOpen={assignModalOpen}
+        orgId={orgId}
+        orgName={orgName}
+        onClose={() => setAssignModalOpen(false)}
+        onAssigned={onChanged}
+      />
     </div>
   );
   //#endregion

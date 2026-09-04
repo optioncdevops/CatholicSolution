@@ -11,14 +11,55 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
+-- Per-template branding overrides (color/logo/font/size), idempotent — safe to re-run. A NULL
+-- value on any of these means "use the built-in default", so existing rows and existing send
+-- code paths are unaffected until an admin actually sets one via the editor.
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'adm' AND TABLE_NAME = 'EmailTemplate' AND COLUMN_NAME = 'AccentColor'
+)
+BEGIN
+    ALTER TABLE [adm].[EmailTemplate] ADD [AccentColor] NVARCHAR(9) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'adm' AND TABLE_NAME = 'EmailTemplate' AND COLUMN_NAME = 'LogoUrl'
+)
+BEGIN
+    ALTER TABLE [adm].[EmailTemplate] ADD [LogoUrl] NVARCHAR(500) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'adm' AND TABLE_NAME = 'EmailTemplate' AND COLUMN_NAME = 'FontFamily'
+)
+BEGIN
+    ALTER TABLE [adm].[EmailTemplate] ADD [FontFamily] NVARCHAR(200) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'adm' AND TABLE_NAME = 'EmailTemplate' AND COLUMN_NAME = 'BaseFontSize'
+)
+BEGIN
+    ALTER TABLE [adm].[EmailTemplate] ADD [BaseFontSize] INT NULL;
+END
+GO
+
 IF OBJECT_ID(N'[dbo].[Acutis_EmailTemplates_CRUD]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD];
 GO
 
--- ActionId 1: Save (insert when @TemplateId = 0, otherwise update Subject/Body/Status).
+-- ActionId 1: Save (insert when @TemplateId = 0, otherwise update Subject/Body/Status/branding).
 -- ActionId 2: Get by TemplateId.
 -- ActionId 3: Get list (all templates).
 -- ActionId 4: Get by TemplateCode (used internally by AcutisPasswordService to load PasswordReset).
+-- AccentColor/LogoUrl/FontFamily/BaseFontSize are per-template branding overrides for the send-time
+-- wrapper (SMTPMailService.FormatMailContent); NULL on any of them means "use the built-in default".
 CREATE PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD]
     @ActionId INT,
     @TemplateId INT = 0,
@@ -26,6 +67,10 @@ CREATE PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD]
     @Subject NVARCHAR(200) = NULL,
     @Body NVARCHAR(MAX) = NULL,
     @Status NVARCHAR(20) = NULL,
+    @AccentColor NVARCHAR(9) = NULL,
+    @LogoUrl NVARCHAR(500) = NULL,
+    @FontFamily NVARCHAR(200) = NULL,
+    @BaseFontSize INT = NULL,
     @UpdatedBy BIGINT = NULL,
     @ReturnValue INT = NULL OUTPUT
 AS
@@ -54,7 +99,7 @@ BEGIN
 
             INSERT INTO [adm].[EmailTemplate]
             (
-                [TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [InsertedBy], [IsDeleted]
+                [TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [AccentColor], [LogoUrl], [FontFamily], [BaseFontSize], [CreatedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
@@ -63,6 +108,10 @@ BEGIN
                 @Subject,
                 @Body,
                 CASE WHEN @Status = N'inactive' THEN 0 ELSE 1 END,
+                @AccentColor,
+                @LogoUrl,
+                @FontFamily,
+                @BaseFontSize,
                 SYSUTCDATETIME(),
                 @UpdatedBy,
                 0
@@ -81,6 +130,10 @@ BEGIN
                 WHEN @Status = N'active' THEN 1
                 ELSE [IsActive]
             END,
+            [AccentColor] = @AccentColor,
+            [LogoUrl] = @LogoUrl,
+            [FontFamily] = @FontFamily,
+            [BaseFontSize] = @BaseFontSize,
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UpdatedBy
         WHERE [TemplateId] = @TemplateId
@@ -99,7 +152,11 @@ BEGIN
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             t.[CreatedDate],
-            t.[UpdatedDate]
+            t.[UpdatedDate],
+            ISNULL(t.[AccentColor], N'[AccentColor]') AS [AccentColor],
+            t.[LogoUrl],
+            ISNULL(t.[FontFamily], N'Segoe UI, Helvetica, Arial, sans-serif') AS [FontFamily],
+            ISNULL(t.[BaseFontSize], 14) AS [BaseFontSize]
         FROM [adm].[EmailTemplate] AS t
         WHERE t.[TemplateId] = @TemplateId
           AND t.[IsDeleted] = 0;
@@ -115,7 +172,11 @@ BEGIN
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             t.[CreatedDate],
-            t.[UpdatedDate]
+            t.[UpdatedDate],
+            ISNULL(t.[AccentColor], N'[AccentColor]') AS [AccentColor],
+            t.[LogoUrl],
+            ISNULL(t.[FontFamily], N'Segoe UI, Helvetica, Arial, sans-serif') AS [FontFamily],
+            ISNULL(t.[BaseFontSize], 14) AS [BaseFontSize]
         FROM [adm].[EmailTemplate] AS t
         WHERE t.[IsDeleted] = 0
         ORDER BY t.[TemplateCode];
@@ -131,7 +192,11 @@ BEGIN
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             t.[CreatedDate],
-            t.[UpdatedDate]
+            t.[UpdatedDate],
+            ISNULL(t.[AccentColor], N'[AccentColor]') AS [AccentColor],
+            t.[LogoUrl],
+            ISNULL(t.[FontFamily], N'Segoe UI, Helvetica, Arial, sans-serif') AS [FontFamily],
+            ISNULL(t.[BaseFontSize], 14) AS [BaseFontSize]
         FROM [adm].[EmailTemplate] AS t
         WHERE t.[TemplateCode] = @TemplateCode
           AND t.[IsActive] = 1
@@ -155,7 +220,7 @@ BEGIN
         @SeedTemplateId,
         N'PasswordReset',
         N'Reset your Catholic Solutions password',
-        N'<div style="font-family:''Segoe UI'',Helvetica,Arial,sans-serif;color:#0f172a;"><h1 style="margin:0 0 6px;font-size:20px;font-weight:800;color:#0f172a;">Reset your password</h1><p style="margin:0 0 20px;font-size:13px;color:#64748b;">Hi [FirstName], we received a request to reset the password on your Catholic Solutions account.</p><p style="margin:0 0 26px;font-size:14px;line-height:1.7;color:#1e293b;">Click the button below to choose a new password. For your security, this link can only be used once.</p><div style="text-align:center;margin:0 0 26px;"><a href="[ResetLink]" style="display:inline-block;padding:14px 34px;background-color:#1d4ed8;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;">Reset Password</a></div><div style="background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin:0 0 22px;"><p style="margin:0;font-size:12.5px;color:#1d4ed8;font-weight:700;">This link expires in [ExpiryMinutes] minutes and can only be used once.</p></div><p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">If the button above doesn''t work, copy and paste this link into your browser:</p><p style="margin:0 0 22px;font-size:12px;word-break:break-all;"><a href="[ResetLink]" style="color:#1d4ed8;">[ResetLink]</a></p><p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">If you didn''t request this, you can safely ignore this email. Your password will stay the same.</p></div>',
+        N'<div style="font-family:''Segoe UI'',Helvetica,Arial,sans-serif;color:#0f172a;"><p style="margin:0 0 4px;font-size:13px;color:#64748b;">Hi [FirstName],</p><p style="margin:0 0 26px;font-size:14px;line-height:1.7;color:#1e293b;">We received a request to reset the password for your Catholic Solutions account. Click the button below to choose a new password.</p><div style="text-align:center;margin:0 0 26px;"><a href="[ResetLink]" style="display:inline-block;padding:14px 34px;background-color:[AccentColor];color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;">Reset Password</a></div><div style="background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin:0 0 22px;"><p style="margin:0;font-size:12.5px;color:[AccentColor];font-weight:700;">This link expires in [ExpiryMinutes] minutes and can only be used once.</p></div><p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">If the button above doesn''t work, copy and paste this link into your browser:</p><p style="margin:0;font-size:12px;word-break:break-all;"><a href="[ResetLink]" style="color:[AccentColor];">[ResetLink]</a></p></div>',
         1,
         SYSUTCDATETIME(),
         0
@@ -227,10 +292,25 @@ GO
 UPDATE [adm].[EmailTemplate]
 SET
     [Subject] = N'Reset your Catholic Solutions password',
-    [Body] = N'<div style="font-family:''Segoe UI'',Helvetica,Arial,sans-serif;color:#0f172a;"><h1 style="margin:0 0 6px;font-size:20px;font-weight:800;color:#0f172a;">Reset your password</h1><p style="margin:0 0 20px;font-size:13px;color:#64748b;">Hi [FirstName], we received a request to reset the password on your Catholic Solutions account.</p><p style="margin:0 0 26px;font-size:14px;line-height:1.7;color:#1e293b;">Click the button below to choose a new password. For your security, this link can only be used once.</p><div style="text-align:center;margin:0 0 26px;"><a href="[ResetLink]" style="display:inline-block;padding:14px 34px;background-color:#1d4ed8;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;">Reset Password</a></div><div style="background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin:0 0 22px;"><p style="margin:0;font-size:12.5px;color:#1d4ed8;font-weight:700;">This link expires in [ExpiryMinutes] minutes and can only be used once.</p></div><p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">If the button above doesn''t work, copy and paste this link into your browser:</p><p style="margin:0 0 22px;font-size:12px;word-break:break-all;"><a href="[ResetLink]" style="color:#1d4ed8;">[ResetLink]</a></p><p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">If you didn''t request this, you can safely ignore this email. Your password will stay the same.</p></div>',
+    [Body] = N'<div style="font-family:''Segoe UI'',Helvetica,Arial,sans-serif;color:#0f172a;"><p style="margin:0 0 4px;font-size:13px;color:#64748b;">Hi [FirstName],</p><p style="margin:0 0 26px;font-size:14px;line-height:1.7;color:#1e293b;">We received a request to reset the password for your Catholic Solutions account. Click the button below to choose a new password.</p><div style="text-align:center;margin:0 0 26px;"><a href="[ResetLink]" style="display:inline-block;padding:14px 34px;background-color:[AccentColor];color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;">Reset Password</a></div><div style="background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin:0 0 22px;"><p style="margin:0;font-size:12.5px;color:[AccentColor];font-weight:700;">This link expires in [ExpiryMinutes] minutes and can only be used once.</p></div><p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">If the button above doesn''t work, copy and paste this link into your browser:</p><p style="margin:0;font-size:12px;word-break:break-all;"><a href="[ResetLink]" style="color:[AccentColor];">[ResetLink]</a></p></div>',
     [UpdatedDate] = SYSUTCDATETIME()
 WHERE [TemplateCode] = N'PasswordReset'
   AND [IsDeleted] = 0
   AND [Subject] = N'Reset your CFR Acutis password'
   AND [Body] NOT LIKE N'%Reset Password</a>%' ESCAPE N'\';
+GO
+
+-- Upgrade guard #2: strips the redundant "Reset your password" heading and the closing
+-- "if you didn't request this" line from a row still on the first HTML redesign, since the
+-- subject line already says "Reset your password" and the disclaimer line is no longer wanted.
+-- Guarded on the old heading still being present, so a row an admin has since customized (and
+-- therefore no longer contains that exact heading) is left untouched.
+UPDATE [adm].[EmailTemplate]
+SET
+    [Body] = N'<div style="font-family:''Segoe UI'',Helvetica,Arial,sans-serif;color:#0f172a;"><p style="margin:0 0 4px;font-size:13px;color:#64748b;">Hi [FirstName],</p><p style="margin:0 0 26px;font-size:14px;line-height:1.7;color:#1e293b;">We received a request to reset the password for your Catholic Solutions account. Click the button below to choose a new password.</p><div style="text-align:center;margin:0 0 26px;"><a href="[ResetLink]" style="display:inline-block;padding:14px 34px;background-color:[AccentColor];color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;">Reset Password</a></div><div style="background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin:0 0 22px;"><p style="margin:0;font-size:12.5px;color:[AccentColor];font-weight:700;">This link expires in [ExpiryMinutes] minutes and can only be used once.</p></div><p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">If the button above doesn''t work, copy and paste this link into your browser:</p><p style="margin:0;font-size:12px;word-break:break-all;"><a href="[ResetLink]" style="color:[AccentColor];">[ResetLink]</a></p></div>',
+    [UpdatedDate] = SYSUTCDATETIME()
+WHERE [TemplateCode] = N'PasswordReset'
+  AND [IsDeleted] = 0
+  AND [Subject] = N'Reset your Catholic Solutions password'
+  AND [Body] LIKE N'%<h1%Reset your password</h1>%' ESCAPE N'\';
 GO
