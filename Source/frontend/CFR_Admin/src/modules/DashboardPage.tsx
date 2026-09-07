@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Area, Bar, CartesianGrid, Cell, ComposedChart, Legend, Pie, PieChart,
+  Bar, CartesianGrid, Cell, Legend, Pie, PieChart,
   ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis, BarChart,
 } from 'recharts';
 import {
   Activity, AlertTriangle, ArrowDownRight, ArrowUpRight, Building2, Check, CheckCircle2,
-  Clock, Eye, KeyRound, Layers, Minus, Package, RefreshCw, ShieldAlert, ShieldCheck, Users,
+  Contact, Eye, KeyRound, Layers, Minus, Package, RefreshCw, ShieldAlert, ShieldCheck, Users,
 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -23,8 +23,8 @@ import { normalizeOrganizationsList } from './organizations/utils/organizationHe
 import type { LicenseSummaryApiItem, OrganizationApiItem } from './organizations/types/organizationTypes';
 import { getUsers, normalizeUsersList } from './users';
 import type { UsersApiItem } from './users';
-import { getProductAssignmentSummary, getProducts, normalizeProductList, PRODUCTS_PATHS } from './products';
-import type { ProductApiItem, ProductAssignmentSummaryApiItem } from './products';
+import { getProducts, normalizeProductList, PRODUCTS_PATHS } from './Products';
+import type { ProductApiItem } from './Products';
 import { getAccessRequests, normalizeAccessRequestList, updateAccessRequestStatus } from './requests';
 import type { AccessRequestApiItem, RequestStatus } from './requests';
 import RequestReviewModal from './requests/pages/partials/RequestReviewModal';
@@ -217,23 +217,6 @@ function KpiTile({ icon: Icon, tint, label, value, status, trend, to }: {
   );
 }
 
-function AlertsKpiTile({ value, status }: { value: number; status: string }) {
-  return (
-    <button
-      type="button"
-      onClick={() => document.getElementById('dashboard-alerts')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-      className="admin-kpi-tile text-left"
-    >
-      <span className="admin-kpi-tile__icon" style={{ background: 'linear-gradient(135deg,#991B1B,#EF4444)' }} aria-hidden="true"><ShieldAlert size={18} /></span>
-      <span className="min-w-0">
-        <span className="metric-label block text-[var(--text-faint)]">Alerts / Issues</span>
-        <span className="metric-value block leading-tight">{value}</span>
-        <span className="block truncate text-[0.6875rem] font-semibold text-[var(--text-muted)]">{status}</span>
-      </span>
-    </button>
-  );
-}
-
 function StatChip({ label, value, tone }: { label: string; value: number; tone: 'success' | 'warning' | 'neutral' | 'danger' | 'info' }) {
   const dotClass: Record<typeof tone, string> = {
     success: 'bg-[var(--success)]', warning: 'bg-[var(--warning)]', neutral: 'bg-[var(--text-faint)]', danger: 'bg-[var(--error)]', info: 'bg-[var(--info)]',
@@ -280,7 +263,6 @@ export function DashboardPage() {
   const [products, setProducts] = useState<ProductApiItem[]>([]);
   const [requests, setRequests] = useState<AccessRequestApiItem[]>([]);
   const [licenses, setLicenses] = useState<LicenseSummaryApiItem[]>([]);
-  const [assignmentSummary, setAssignmentSummary] = useState<ProductAssignmentSummaryApiItem[]>([]);
 
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
   const [actingRequestId, setActingRequestId] = useState<number | null>(null);
@@ -289,18 +271,17 @@ export function DashboardPage() {
   //#region Functions
   // Every domain is fetched independently (Promise.allSettled, not Promise.all) so one failing
   // service degrades that one panel/KPI to an empty state instead of blanking the whole
-  // dashboard — the right resilience trade-off when a single page aggregates six domains.
+  // dashboard — the right resilience trade-off when a single page aggregates several domains.
   const loadDashboard = useCallback(async (isRefresh: boolean) => {
     if (isRefresh) setRefreshing(true); else setStatus('loading');
     setAnnouncement(isRefresh ? 'Refreshing dashboard…' : 'Loading dashboard…');
 
-    const [orgResult, userResult, productResult, requestResult, licenseResult, assignmentResult] = await Promise.allSettled([
+    const [orgResult, userResult, productResult, requestResult, licenseResult] = await Promise.allSettled([
       getOrganizations(),
       getUsers(),
       getProducts(),
       getAccessRequests(),
       getAllLicenses(),
-      getProductAssignmentSummary(),
     ]);
 
     const errors: string[] = [];
@@ -336,17 +317,10 @@ export function DashboardPage() {
       errors.push('Licenses');
     }
 
-    if (assignmentResult.status === 'fulfilled') {
-      const data = assignmentResult.value.resultData;
-      setAssignmentSummary(assignmentResult.value.statusCode === 204 || !Array.isArray(data) ? [] : data as ProductAssignmentSummaryApiItem[]);
-    } else {
-      errors.push('App Access');
-    }
-
     setLoadErrors(errors);
     setLastRefreshedAt(new Date());
 
-    if (errors.length === 6) {
+    if (errors.length === 5) {
       setStatus('error');
       setAnnouncement('Failed to load the dashboard.');
     } else {
@@ -387,6 +361,10 @@ export function DashboardPage() {
 
   const activeUsers = users.filter((user) => user.isActive === 1 && user.isLocked !== 1);
   const activeProducts = products.filter((product) => product.isActive);
+  // Two distinct populations: Acutis Users are platform/admin accounts (this console's own
+  // sign-ins); Organization Users are members linked to an organization (org.userCount, already
+  // loaded for the Organizations Overview table) — never summed together, since they're different entities.
+  const totalOrgUsers = organizations.reduce((sum, org) => sum + (org.userCount || 0), 0);
 
   const pendingRequests = requests.filter((request) => request.status === 'pending');
   const approvedRequests = requests.filter((request) => request.status === 'approved');
@@ -478,29 +456,6 @@ export function DashboardPage() {
     + rejectedRequests.filter((r) => inBounds(r.submittedAt, currentBounds)).length + infoRequestedRequests.filter((r) => inBounds(r.submittedAt, currentBounds)).length;
   const hasRequestSeriesData = requestsInRangeTotal > 0;
 
-  // Organization Growth chart data — cumulative running total (area) is distinct from new
-  // organizations per bucket (bars); never presented as the same metric.
-  const orgGrowthChartData = useMemo(() => organizations.length === 0 ? [] : buckets.map((bucket) => {
-    const cumulative = organizations.filter((org) => {
-      const parsed = new Date(org.insertedDate.includes('T') ? org.insertedDate : `${org.insertedDate}T00:00:00`);
-      return !Number.isNaN(parsed.getTime()) && parsed <= bucket.end;
-    }).length;
-    const newInBucket = organizations.filter((org) => {
-      const parsed = new Date(org.insertedDate.includes('T') ? org.insertedDate : `${org.insertedDate}T00:00:00`);
-      return !Number.isNaN(parsed.getTime()) && parsed >= bucket.start && parsed <= bucket.end;
-    }).length;
-    return { name: bucket.label, 'Cumulative Total': cumulative, 'New This Period': newInBucket };
-  }), [organizations, buckets]);
-  const newOrgsInRange = organizations.filter((org) => inBounds(org.insertedDate, currentBounds)).length;
-
-  const sortedAssignments = useMemo(
-    () => [...assignmentSummary].sort((a, b) => b.activeOrgCount - a.activeOrgCount).slice(0, 8).map((item) => ({
-      name: item.productName, Active: item.activeOrgCount, Inactive: item.inactiveOrgCount, productId: item.productId, total: item.totalOrgCount,
-    })),
-    [assignmentSummary],
-  );
-  const hasAssignmentData = assignmentSummary.some((item) => item.totalOrgCount > 0);
-
   const orgStatusPieData = [
     { key: 'active', name: 'Active', value: activeOrgs.length, color: CHART_STATUS_COLORS.success, filter: 'active' },
     { key: 'inactive', name: 'Inactive', value: inactiveOrgs.length, color: CHART_STATUS_COLORS.neutral, filter: 'inactive' },
@@ -574,13 +529,13 @@ export function DashboardPage() {
                   <input
                     type="date" aria-label="Custom range start date" aria-invalid={Boolean(customRangeError)}
                     value={customFrom} onChange={(event) => setCustomFrom(event.target.value)}
-                    className="h-8 rounded-[var(--admin-control-radius)] border border-[var(--line-strong)] bg-[var(--surface)] px-2 text-xs font-semibold text-[var(--text-primary)]"
+                    className="h-8 rounded-[var(--admin-control-radius)] border border-[var(--line-strong)] bg-[var(--surface)] px-2 text-[length:var(--admin-text-base)] font-semibold text-[var(--text-primary)]"
                   />
                   <span className="text-xs text-[var(--text-faint)]">to</span>
                   <input
                     type="date" aria-label="Custom range end date" aria-invalid={Boolean(customRangeError)}
                     value={customTo} onChange={(event) => setCustomTo(event.target.value)}
-                    className="h-8 rounded-[var(--admin-control-radius)] border border-[var(--line-strong)] bg-[var(--surface)] px-2 text-xs font-semibold text-[var(--text-primary)]"
+                    className="h-8 rounded-[var(--admin-control-radius)] border border-[var(--line-strong)] bg-[var(--surface)] px-2 text-[length:var(--admin-text-base)] font-semibold text-[var(--text-primary)]"
                   />
                 </div>
                 {customRangeError ? <span className="text-[0.6875rem] font-bold text-[var(--error)]">{customRangeError}</span> : null}
@@ -614,8 +569,8 @@ export function DashboardPage() {
         />
       ) : status === 'loading' ? (
         <>
-          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-6" aria-busy="true" aria-label="Loading dashboard">
-            {Array.from({ length: 6 }).map((_, index) => <div key={index} className="admin-skeleton h-[4.5rem] w-full" />)}
+          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7" aria-busy="true" aria-label="Loading dashboard">
+            {Array.from({ length: 7 }).map((_, index) => <div key={index} className="admin-skeleton h-[4.5rem] w-full" />)}
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <section className="admin-panel-card"><SectionSkeleton rows={6} /></section>
@@ -634,7 +589,7 @@ export function DashboardPage() {
           ) : null}
 
           {/* KPI summary row */}
-          <div className="admin-reveal-stagger grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="admin-reveal-stagger grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
             <KpiTile
               icon={Building2} tint="linear-gradient(135deg,#166534,#22C55E)" to="/admin/organizations"
               label="Organizations" value={organizations.length} trend={orgTrend}
@@ -642,8 +597,13 @@ export function DashboardPage() {
             />
             <KpiTile
               icon={Users} tint="linear-gradient(135deg,#5B21B6,#8B5CF6)" to="/admin/users"
-              label="Active Users" value={activeUsers.length} trend={userTrend}
-              status={`of ${users.length} total users`}
+              label="Acutis Users" value={activeUsers.length} trend={userTrend}
+              status={`${activeUsers.length} active of ${users.length} total`}
+            />
+            <KpiTile
+              icon={Contact} tint="linear-gradient(135deg,#9D174D,#EC4899)" to="/admin/organizations"
+              label="Organization Users" value={totalOrgUsers} trend={{ label: 'Members linked to organizations', direction: 'none' }}
+              status={`across ${organizations.length} organization${organizations.length === 1 ? '' : 's'}`}
             />
             <KpiTile
               icon={Package} tint="linear-gradient(135deg,#1E3A8A,#3B82F6)" to={PRODUCTS_PATHS.list}
@@ -660,8 +620,9 @@ export function DashboardPage() {
               label="Licenses" value={licenses.length} trend={licenseTrend}
               status={expiringLicenses.length > 0 ? `${expiringLicenses.length} expiring soon` : `${expiredLicenses.length} expired`}
             />
-            <AlertsKpiTile
-              value={alertsCount}
+            <KpiTile
+              icon={ShieldAlert} tint="linear-gradient(135deg,#991B1B,#EF4444)" to="/admin/organizations"
+              label="Alerts / Issues" value={alertsCount}
               status={alertsCount > 0 ? `${expiredLicenses.length} expired · ${suspendedOrgs.length} suspended · ${staleRequests.length} stale` : 'Nothing needs attention'}
             />
           </div>
@@ -673,7 +634,7 @@ export function DashboardPage() {
                 <ShieldAlert size={15} className="shrink-0" aria-hidden="true" />
                 {alertsCount} item{alertsCount === 1 ? '' : 's'} need{alertsCount === 1 ? 's' : ''} attention: {expiredLicenses.length} expired license{expiredLicenses.length === 1 ? '' : 's'}, {suspendedOrgs.length} suspended org{suspendedOrgs.length === 1 ? '' : 's'}, {staleRequests.length} stale request{staleRequests.length === 1 ? '' : 's'}.
               </span>
-              <CommonButton variant="outline" size="sm" onClick={() => document.getElementById('dashboard-alerts')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Review</CommonButton>
+              <CommonButton variant="outline" size="sm" onClick={() => navigate('/admin/organizations')}>Review</CommonButton>
             </div>
           ) : (
             <div className="flex items-center gap-2 rounded-[var(--radius-panel)] border border-[var(--success)] bg-[var(--success-bg)] px-4 py-2.5 text-xs font-bold text-[var(--success)]">
@@ -889,154 +850,42 @@ export function DashboardPage() {
             </section>
           </div>
 
-          {/* Growth + access row: organization growth trend + app access overview */}
-          <div className="grid gap-4 lg:grid-cols-2">
+          {/* Recent activity + license health row */}
+          <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
             <section className="admin-panel-card">
               <div className="admin-panel-card__header">
                 <div>
-                  <h2 className="panel-title">Organization Growth</h2>
-                  <p className="panel-subtitle">{RANGE_LABELS[range]} · cumulative total vs. new organizations</p>
+                  <h2 className="panel-title">Recent Activity</h2>
+                  <p className="panel-subtitle">{RANGE_LABELS[range]} · new organizations, product updates, and access requests</p>
                 </div>
+                <Link to="/admin/requests" className="text-xs font-bold text-[var(--primary)] hover:underline">View all activity</Link>
               </div>
-              {organizations.length === 0 ? (
-                <EmptyState icon="📈" title="No organizations yet" description="Organization creation history will be charted here." />
+              {recentActivity.length === 0 ? (
+                <EmptyState icon="🕒" title="No activity in this range" description="Try widening the date range to see older activity." />
               ) : (
-                <div className="flex flex-col gap-2 p-4">
-                  <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                    <ComposedChart data={orgGrowthChartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} vertical={false} />
-                      <XAxis dataKey="name" tick={CHART_AXIS_TICK} axisLine={{ stroke: CHART_GRID_STROKE }} tickLine={false} />
-                      <YAxis allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} width={28} />
-                      <RechartsTooltip content={ChartTooltip} cursor={{ fill: 'var(--hover)' }} />
-                      <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
-                      <Area type="monotone" dataKey="Cumulative Total" stroke={CHART_STATUS_COLORS.primary} fill={CHART_STATUS_COLORS.primary} fillOpacity={0.12} strokeWidth={2} isAnimationActive={false} />
-                      <Bar dataKey="New This Period" fill={CHART_STATUS_COLORS.success} barSize={10} radius={[2, 2, 0, 0]} isAnimationActive={false} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                  <p className="text-xs font-semibold text-[var(--text-muted)]">
-                    {newOrgsInRange} new organization{newOrgsInRange === 1 ? '' : 's'} added during this period. User growth isn't tracked yet — admin user accounts don't record a creation date in this system today.
-                  </p>
-                </div>
-              )}
-            </section>
-
-            <section className="admin-panel-card">
-              <div className="admin-panel-card__header">
-                <div>
-                  <h2 className="panel-title">App Access Overview</h2>
-                  <p className="panel-subtitle">Organizations with an active assignment, by app</p>
-                </div>
-              </div>
-              {!hasAssignmentData ? (
-                <EmptyState icon="📦" title="No app assignments yet" description="Organization-to-app assignments will appear here once products are assigned." />
-              ) : (
-                <ResponsiveContainer width="100%" height={Math.max(CHART_HEIGHT, sortedAssignments.length * 34 + 40)}>
-                  <BarChart
-                    data={sortedAssignments} layout="vertical"
-                    margin={{ top: 4, right: 16, left: 4, bottom: 0 }}
-                    onClick={(state) => {
-                      // Recharts v3 dropped `activePayload` from the chart-level onClick event —
-                      // the clicked row is looked up by `activeIndex` into the same data array instead.
-                      const index = typeof state?.activeIndex === 'number' ? state.activeIndex : undefined;
-                      const row = index !== undefined ? sortedAssignments[index] : undefined;
-                      if (row) navigate(PRODUCTS_PATHS.details, { state: { productId: row.productId } });
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_STROKE} horizontal={false} />
-                    <XAxis type="number" allowDecimals={false} tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" tick={CHART_AXIS_TICK} axisLine={false} tickLine={false} width={110} />
-                    <RechartsTooltip content={ChartTooltip} cursor={{ fill: 'var(--hover)' }} />
-                    <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
-                    <Bar dataKey="Active" stackId="access" fill={CHART_STATUS_COLORS.success} cursor="pointer" />
-                    <Bar dataKey="Inactive" stackId="access" fill={CHART_STATUS_COLORS.neutral} cursor="pointer" radius={[0, 3, 3, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </section>
-          </div>
-
-          {/* Recent activity */}
-          <section className="admin-panel-card">
-            <div className="admin-panel-card__header">
-              <div>
-                <h2 className="panel-title">Recent Activity</h2>
-                <p className="panel-subtitle">{RANGE_LABELS[range]} · new organizations, product updates, and access requests</p>
-              </div>
-              <Link to="/admin/requests" className="text-xs font-bold text-[var(--primary)] hover:underline">View all activity</Link>
-            </div>
-            {recentActivity.length === 0 ? (
-              <EmptyState icon="🕒" title="No activity in this range" description="Try widening the date range to see older activity." />
-            ) : (
-              <div className="flex flex-col gap-3 p-4">
-                {groupedActivity.map((group) => (
-                  <div key={group.label} className="flex flex-col gap-2">
-                    <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">{group.label}</p>
-                    <ul className="flex flex-col gap-2.5">
-                      {group.items.map((item) => {
-                        const Icon = ACTIVITY_ICON[item.kind];
-                        return (
-                          <li key={item.id} className="flex items-start gap-2.5 text-[0.8125rem]">
-                            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-[var(--surface-muted)] text-[var(--text-secondary)]" aria-hidden="true">
-                              <Icon size={12} />
-                            </span>
-                            <div className="min-w-0">
-                              <p className="text-[var(--text-primary)]">{item.message}</p>
-                              <p className="text-xs text-[var(--text-muted)]">{formatRelativeDate(item.at)}</p>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Alerts + license health row */}
-          <div id="dashboard-alerts" className="grid scroll-mt-4 gap-4 lg:grid-cols-[2fr_1fr]">
-            <section className="admin-panel-card">
-              <div className="admin-panel-card__header">
-                <div>
-                  <h2 className="panel-title">Alerts &amp; Attention Needed</h2>
-                  <p className="panel-subtitle">Computed live from license expiry, organization status, and request age — this platform has no separate system-health/queue telemetry today.</p>
-                </div>
-              </div>
-              {alertsCount === 0 ? (
-                <EmptyState icon="🟢" title="All clear" description="No expired licenses, suspended organizations, or stale requests right now." />
-              ) : (
-                <ul className="flex flex-col divide-y divide-[var(--line-soft)]">
-                  {expiredLicenses.slice(0, 3).map((license) => (
-                    <li key={`license-${license.licenseId}`} className="flex items-center gap-2.5 px-4 py-2.5 text-[0.8125rem]">
-                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--error-bg)] text-[var(--error)]" aria-hidden="true"><KeyRound size={13} /></span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[var(--text-primary)]">{license.productName} license for {license.orgName} expired</p>
-                        <p className="text-[0.625rem] font-bold uppercase tracking-wide text-[var(--error)]">Critical</p>
-                      </div>
-                      <StatusBadge status="expired" kind="license" />
-                    </li>
+                <div className="flex flex-col gap-3 p-4">
+                  {groupedActivity.map((group) => (
+                    <div key={group.label} className="flex flex-col gap-2">
+                      <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">{group.label}</p>
+                      <ul className="flex flex-col gap-2.5">
+                        {group.items.map((item) => {
+                          const Icon = ACTIVITY_ICON[item.kind];
+                          return (
+                            <li key={item.id} className="flex items-start gap-2.5 text-[0.8125rem]">
+                              <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-[var(--surface-muted)] text-[var(--text-secondary)]" aria-hidden="true">
+                                <Icon size={12} />
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-[var(--text-primary)]">{item.message}</p>
+                                <p className="text-xs text-[var(--text-muted)]">{formatRelativeDate(item.at)}</p>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
                   ))}
-                  {suspendedOrgs.slice(0, 3).map((org) => (
-                    <li key={`org-${org.orgId}`} className="flex items-center gap-2.5 px-4 py-2.5 text-[0.8125rem]">
-                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--error-bg)] text-[var(--error)]" aria-hidden="true"><Building2 size={13} /></span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[var(--text-primary)]">{org.orgName} is suspended</p>
-                        <p className="text-[0.625rem] font-bold uppercase tracking-wide text-[var(--error)]">Critical</p>
-                      </div>
-                      <StatusBadge status="suspended" kind="organization" />
-                    </li>
-                  ))}
-                  {staleRequests.slice(0, 3).map((request) => (
-                    <li key={`request-${request.accessRequestId}`} className="flex items-center gap-2.5 px-4 py-2.5 text-[0.8125rem]">
-                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--warning-bg)] text-[var(--warning)]" aria-hidden="true"><Clock size={13} /></span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[var(--text-primary)]">{request.requesterName}'s request has waited {daysSince(request.submittedAt)} days</p>
-                        <p className="text-[0.625rem] font-bold uppercase tracking-wide text-[var(--warning)]">Warning</p>
-                      </div>
-                      <StatusBadge status="pending" kind="request" />
-                    </li>
-                  ))}
-                </ul>
+                </div>
               )}
             </section>
 

@@ -10,6 +10,7 @@
     "ContactUsMailId": "",
     "CCMailId": "",
     "LoginURL": "https://devsms.allnewoptionc.com",
-    "LogoUrl": "none"
+    "LogoUrl": "catholic-solutions-logo.png",
+    "ApiBaseUrl": "https://localhost:5050/acutis"
   }
 }

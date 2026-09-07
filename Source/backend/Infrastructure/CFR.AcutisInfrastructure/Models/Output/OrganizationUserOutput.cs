@@ -55,5 +55,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("appCount")]
         public int AppCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets a comma-separated list of the product names this member can effectively
+        /// access within this organization (same gating as AppCount), or null when none.
+        /// </summary>
+        [JsonPropertyName("appNames")]
+        public string? AppNames { get; set; }
     }
 }

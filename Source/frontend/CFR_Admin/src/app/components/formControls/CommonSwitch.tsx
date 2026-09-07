@@ -128,19 +128,22 @@ const SwitchInner = <TFieldValues extends FieldValues = FieldValues>({
     const switchTrackClasses = cn(
       "relative inline-flex items-center rounded-full transition-colors duration-200 ease-in-out",
       sizeConfig.track,
+      // Uses this app's CSS custom-property tokens (var(--primary), var(--line-strong)) rather
+      // than Tailwind's semantic color scale (bg-primary-600, bg-border) — this project has no
+      // Tailwind theme config defining those shades, so they rendered as invisible/transparent.
       isDisabled
         ? themeSwitchDisabledTrackClass
         : currentChecked
-          ? "bg-primary-600 dark:bg-primary-500"
-          : "bg-border dark:bg-muted",
+          ? "bg-[var(--primary)]"
+          : "bg-[var(--line-strong)]",
       isDisabled ? "cursor-not-allowed" : "cursor-pointer",
-      mergedError && "border border-danger-400",
+      mergedError && "border border-[var(--error)]",
     );
 
     const switchThumbClasses = cn(
-      "inline-block transform rounded-full transition-transform duration-200 ease-in-out",
+      "inline-block transform rounded-full shadow-sm transition-transform duration-200 ease-in-out",
       sizeConfig.thumb,
-      isDisabled ? themeSwitchDisabledThumbClass : "bg-white",
+      isDisabled ? themeSwitchDisabledThumbClass : "bg-[var(--surface)]",
       currentChecked ? sizeConfig.translate : "translate-x-0.5",
     );
 

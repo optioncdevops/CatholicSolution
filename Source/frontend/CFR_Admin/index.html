@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#12264c" />
-    <link rel="icon" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <title>CFRAdmin</title>
     <style>
       /* Boot preloader — inlined so it paints before the app bundle/CSS finish loading, with
@@ -31,27 +31,20 @@
       .app-preloader__mark {
         display: grid;
         place-items: center;
-        width: 3.25rem;
-        height: 3.25rem;
+        height: 3.5rem;
+        padding: 0 1.1rem;
         border-radius: 1rem;
         border: 1px solid rgba(232, 181, 74, 0.4);
-        background: rgba(255, 255, 255, 0.06);
+        background: #fff;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 30px -8px rgba(0, 0, 0, 0.5);
-        color: #f2c45f;
-        font-family: Georgia, 'Times New Roman', serif;
-        font-size: 1.5rem;
-        font-weight: 700;
       }
-      .app-preloader__name {
-        font-family: Georgia, 'Times New Roman', serif;
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #ffffff;
-        letter-spacing: -0.01em;
-        text-align: center;
+      .app-preloader__mark img {
+        display: block;
+        height: 2.3rem;
+        width: auto;
       }
       .app-preloader__sub {
-        margin-top: 0.35rem;
+        margin-top: -0.75rem;
         font-size: 0.625rem;
         font-weight: 800;
         letter-spacing: 0.32em;
@@ -117,11 +110,10 @@
   </head>
   <body>
     <div id="app-preloader" role="status" aria-live="polite" aria-label="Loading CFR Acutis">
-      <span class="app-preloader__mark" aria-hidden="true">&#10013;</span>
-      <div>
-        <p class="app-preloader__name">Catholic Solutions</p>
-        <p class="app-preloader__sub">CFR ACUTIS</p>
-      </div>
+      <span class="app-preloader__mark">
+        <img src="/src/assets/images/logo/catholic_solutions_logo.png" alt="Catholic Solutions" />
+      </span>
+      <p class="app-preloader__sub">CFR ACUTIS</p>
       <div class="app-preloader__ring" aria-hidden="true"></div>
       <div class="app-preloader__bar" aria-hidden="true"></div>
       <p class="app-preloader__caption">Loading your workspace&hellip;</p>

@@ -30,12 +30,60 @@ namespace CFR.CommonService.Services
         }
 
         /// <summary>
+        /// Resolves <see cref="SMTPMailConfig.LogoUrl"/> (an uploaded image file name, saved via
+        /// EmailSettingsController.UploadEmailLogo) into the absolute URL that streams it back
+        /// through EmailSettingsController.GetEmailLogo, using <see cref="SMTPMailConfig.ApiBaseUrl"/>
+        /// as the host — this API's own base URL, NOT <see cref="SMTPMailConfig.LoginURL"/> (the
+        /// admin/portal front-end's URL). Those two hosts differ in local development (e.g.
+        /// "https://localhost:5051" for the API vs. a deployed portal domain for LoginURL), and
+        /// using LoginURL there produced a broken image. Falls back to LoginURL when ApiBaseUrl is
+        /// blank, for environments where the two happen to be the same host. Returns null when no
+        /// logo is uploaded, the sentinel is <c>"none"</c>, or no host is configured.
+        /// </summary>
+        private static string? BuildLogoImageUrl(SMTPMailConfig? config)
+        {
+            string? fileName = config?.LogoUrl?.Trim();
+            if (string.IsNullOrWhiteSpace(fileName) || string.Equals(fileName, "none", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            string? apiBaseUrl = !string.IsNullOrWhiteSpace(config?.ApiBaseUrl)
+                ? config.ApiBaseUrl.Trim().TrimEnd('/')
+                : config?.LoginURL?.Trim().TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+            {
+                return null;
+            }
+
+            return $"{apiBaseUrl}/api/v1/EmailSettings/GetEmailLogo?fileName={Uri.EscapeDataString(fileName)}";
+        }
+
+        /// <summary>
+        /// The platform-wide uploaded email logo's absolute image URL (Email Settings page,
+        /// file-backed), or null when none is uploaded. Used by the Email Settings page to preview
+        /// the current logo.
+        /// </summary>
+        public static string? GetLogoImageUrl(SMTPMailConfig? config) => BuildLogoImageUrl(config);
+
+        /// <summary>
+        /// The platform-wide uploaded email logo's absolute image URL (Email Settings page,
+        /// file-backed), or null when none is uploaded.
+        /// </summary>
+        public static string? GetLogoImageUrl()
+        {
+            var settings = LoadData();
+            return BuildLogoImageUrl(settings?.SMTPMailConfig);
+        }
+
+        /// <summary>
         /// Legacy <c>MailService.FormatMailContent</c> logo:
-        /// <c>LoginURL + "/Images/mattmoney-logo.png"</c>, or explicit <see cref="SMTPMailConfig.LogoUrl"/>.
-        /// A <c>LogoUrl</c> of <c>"none"</c> opts a microservice out of that legacy image fallback
-        /// entirely (e.g. CFR Acutis, which has no hosted image for its own brand mark) instead of
-        /// silently showing another product's logo — <see cref="GetLogoMarkup"/> renders a text-based
-        /// brand header for that case rather than no header at all.
+        /// <c>LoginURL + "/Images/mattmoney-logo.png"</c>, or the uploaded platform logo resolved
+        /// via <see cref="BuildLogoImageUrl"/>. A <c>LogoUrl</c> of <c>"none"</c> opts a microservice
+        /// out of that legacy image fallback entirely (e.g. CFR Acutis, which has no hosted image
+        /// for its own brand mark) instead of silently showing another product's logo —
+        /// <see cref="GetLogoMarkup"/> renders a text-based brand header for that case rather than
+        /// no header at all.
         /// </summary>
         private static string GetMailLogoUrl(SMTPMailConfig? config)
         {
@@ -44,9 +92,10 @@ namespace CFR.CommonService.Services
                 return string.Empty;
             }
 
-            if (!string.IsNullOrWhiteSpace(config?.LogoUrl))
+            string? uploadedLogo = BuildLogoImageUrl(config);
+            if (!string.IsNullOrWhiteSpace(uploadedLogo))
             {
-                return config.LogoUrl.Trim();
+                return uploadedLogo;
             }
 
             string? loginUrl = config?.LoginURL?.Trim().TrimEnd('/');
@@ -91,8 +140,19 @@ namespace CFR.CommonService.Services
         {
             var settings = LoadData();
             string logoMarkup = GetLogoMarkup(settings?.SMTPMailConfig, templateLogoUrl);
-            string resolvedFontFamily = string.IsNullOrWhiteSpace(fontFamily) ? "Verdana, Arial, Helvetica, sans-serif" : fontFamily;
-            int resolvedFontSize = baseFontSize is > 0 ? baseFontSize.Value : 13;
+            // Branding is platform-wide now (Email Settings page, file-backed), not per-template —
+            // the caller-supplied overrides only remain for backward compatibility with any
+            // consumer that still passes one; everyone else falls through to the shared config.
+            string resolvedFontFamily = !string.IsNullOrWhiteSpace(fontFamily)
+                ? fontFamily
+                : !string.IsNullOrWhiteSpace(settings?.SMTPMailConfig?.FontFamily)
+                    ? settings.SMTPMailConfig.FontFamily
+                    : "Verdana, Arial, Helvetica, sans-serif";
+            int resolvedFontSize = baseFontSize is > 0
+                ? baseFontSize.Value
+                : settings?.SMTPMailConfig?.BaseFontSize is > 0
+                    ? settings.SMTPMailConfig.BaseFontSize
+                    : 13;
 
             return $@"
             <div style=""color: #000; font-family: {resolvedFontFamily}; font-size: {resolvedFontSize}px; text-rendering: optimizelegibility; line-height: 1.629; background: linear-gradient(90deg, rgb(180, 208, 224) 0%, rgb(221, 238, 255) 100%); box-shadow: inset 0 0 20px #82b3cf;padding: 1rem 2rem 2rem;"">
@@ -106,6 +166,16 @@ namespace CFR.CommonService.Services
                 </p>
                 </div>
             </div>";
+        }
+
+        /// <summary>
+        /// The platform-wide [AccentColor] merge-tag value (Email Settings page, file-backed) —
+        /// every template shares this single brand color instead of setting its own.
+        /// </summary>
+        public static string GetAccentColor()
+        {
+            var settings = LoadData();
+            return !string.IsNullOrWhiteSpace(settings?.SMTPMailConfig?.AccentColor) ? settings.SMTPMailConfig.AccentColor : "#1d4ed8";
         }
 
         public static string FormatMailContent(string template, Dictionary<string, string> placeholders)

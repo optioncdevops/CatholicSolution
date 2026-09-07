@@ -48,6 +48,7 @@ namespace CFR.Acutis
             services.AddScoped<IUserRolesRepository, UserRolesRepository>();
             services.AddScoped<IEmailTemplatesService, EmailTemplatesService>();
             services.AddScoped<IEmailTemplatesRepository, EmailTemplatesRepository>();
+            services.AddScoped<IEmailSettingsService, EmailSettingsService>();
             services.AddScoped<IAccessRequestService, AccessRequestService>();
             services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
 

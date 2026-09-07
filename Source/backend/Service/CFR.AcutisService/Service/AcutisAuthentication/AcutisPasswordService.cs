@@ -169,7 +169,7 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
                 ["FirstName"] = user.FirstName ?? string.Empty,
                 ["ResetLink"] = resetLink,
                 ["ExpiryMinutes"] = TokenLifetimeMinutes.ToString(),
-                ["AccentColor"] = string.IsNullOrWhiteSpace(template?.AccentColor) ? "#1d4ed8" : template.AccentColor,
+                ["AccentColor"] = SMTPMailService.GetAccentColor(),
             };
 
             string subject = template?.Subject ?? "Reset your Catholic Solutions password";
@@ -180,7 +180,7 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
 
             string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
             string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
-            _ = await mailService.SendMailAsync(mergedSubject, mergedBody, user.Email ?? string.Empty, templateLogoUrl: template?.LogoUrl, fontFamily: template?.FontFamily, baseFontSize: template?.BaseFontSize);
+            _ = await mailService.SendMailAsync(mergedSubject, mergedBody, user.Email ?? string.Empty);
         }
 
         #endregion Private Helper Methods
