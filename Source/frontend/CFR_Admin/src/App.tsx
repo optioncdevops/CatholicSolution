@@ -13,7 +13,7 @@ import { emailTemplatesRoutes } from "@/modules/administration/emailTemplates";
 import { emailSettingsRoutes } from "@/modules/administration/emailSettings";
 import { organizationsRoutes } from "@/modules/organizations";
 import { requestsRoutes } from "@/modules/requests";
-import { productsRoutes } from "@/modules/products";
+import { productsRoutes } from "@/modules/Products";
 
 const DashboardPage = lazy(() =>
   import("@/modules/DashboardPage").then((m) => ({ default: m.DashboardPage })),

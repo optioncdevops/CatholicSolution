@@ -652,10 +652,14 @@
   margin-bottom: 1rem;
 }
 .admin-email-preview-card__logo-image img {
+  display: block;
   max-width: 16rem;
   max-height: 4.5rem;
   width: 100%;
   height: auto;
+  /* Tailwind's preflight sets img { display: block }, so the parent's text-align: center has no
+     effect on it — a block element centers via margin, not text-align. */
+  margin: 0 auto;
 }
 
 /* Per-template branding controls (color/logo/font/size) shown under the merge-tag palette. */
