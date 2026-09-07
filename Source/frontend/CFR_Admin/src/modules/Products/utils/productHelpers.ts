@@ -1,7 +1,8 @@
-import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab } from '../types/productTypes';
+import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab, LiveProductLicense } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
 import { accessStatusOf, daysUntil, effectiveLicenseStatus, formatDateTime } from '@/modules/utils/formatDate';
 export * from './productFilters';
+export type { LiveProductLicense } from '../types/productTypes';
 
 export const PRODUCTS_PATHS = {
   list: '/admin/products',
@@ -239,6 +240,55 @@ export function toLicenseDetailsRows(items: ProductLicenseApiItem[]): ProductLic
       if (isNewerLicense(right, left)) return 1;
       return 0;
     });
+}
+
+export function toLiveProductLicenseRows(items: ProductLicenseApiItem[]): LiveProductLicense[] {
+  const licenses = toLicenseDetailsRows(items);
+  const usedInvoiceNumbers = new Set<string>();
+  return licenses.map((lic, index) => {
+    const days = lic.expiryDate ? daysUntil(lic.expiryDate) : null;
+    const isOverdue = days !== null && days < 0;
+    const isExpiringSoon = days !== null && days >= 0 && days <= 30;
+    const status = isOverdue
+      ? 'overdue'
+      : isExpiringSoon
+        ? 'expiring-soon'
+        : lic.licenseStatus === 'suspended'
+          ? 'suspended'
+          : 'paid';
+    const paidOn = isOverdue
+      ? null
+      : lic.activationDate
+        ? formatDateTime(lic.activationDate)
+        : lic.createdDate
+          ? formatDateTime(lic.createdDate)
+          : null;
+
+    const startDate = lic.activationDate || '';
+    const invoiceNumber = formatInvoiceNumber(
+      startDate || lic.createdDate,
+      lic.licenseId,
+      usedInvoiceNumbers,
+      index,
+    );
+
+    return {
+      id: String(lic.licenseId),
+      orgId: lic.orgId,
+      customerCode: formatCustomerCodeAsInteger(lic.orgId),
+      customer: lic.orgName || `Organization #${lic.orgId}`,
+      invoiceNumber,
+      licenseNumber: `LIC-${String(lic.licenseId).padStart(5, '0')}`,
+      licenseKey: `LIC-${lic.orgId}-${lic.productId}-${String(lic.licenseId).padStart(4, '0')}`,
+      licenseType: lic.licenseType ? (lic.licenseType.charAt(0).toUpperCase() + lic.licenseType.slice(1)) : 'Subscription',
+      startDate,
+      expiryDate: lic.expiryDate || '',
+      days,
+      paidOn,
+      status,
+      remarks: lic.remarks,
+    };
+  });
 }
 
 export function customerHasActiveLicense(items: ProductLicenseApiItem[], orgId: number): boolean {

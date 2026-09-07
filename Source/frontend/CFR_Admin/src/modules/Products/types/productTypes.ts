@@ -138,3 +138,20 @@ export interface ProductLicenseHistoryRow {
   remarks?: string | null;
 }
 
+export interface LiveProductLicense {
+  id: string;
+  orgId: number;
+  customerCode: string;
+  customer: string;
+  invoiceNumber: string;
+  licenseNumber: string;
+  licenseKey: string;
+  licenseType: string;
+  startDate: string;
+  expiryDate: string;
+  days: number | null;
+  paidOn: string | null;
+  status: string;
+  remarks?: string | null;
+}
+
