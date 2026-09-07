@@ -1,4 +1,5 @@
 <Solution>
+  <Folder Name="/Automation/" />
   <Folder Name="/Gateway/">
     <Project Path="Gateway/CFR.Gateway/CFR.Gateway.csproj" />
   </Folder>
