@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite --mode development",
-    "build": "tsc -b && vite build --mode production",
-    "build:production": "tsc -b && vite build --mode production",
+    "build": "tsc -b && vite build --mode live",
+    "build:development": "tsc -b && vite build --mode development",
+    "build:pilot": "tsc -b && vite build --mode pilot",
     "build:staging": "tsc -b && vite build --mode staging",
+    "build:live": "tsc -b && vite build --mode live",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "preview": "vite preview"
+    "preview": "vite preview --mode live"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.21.3",

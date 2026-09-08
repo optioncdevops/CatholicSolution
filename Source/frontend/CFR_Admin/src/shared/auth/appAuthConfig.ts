@@ -1,4 +1,4 @@
-export type RuntimeEnvironment = 'development' | 'production';
+export type RuntimeEnvironment = 'development' | 'pilot' | 'staging' | 'live';
 export type ConfiguredAuthMode = 'mock' | 'preview' | 'sso';
 
 export interface PlatformOrigins {
@@ -19,9 +19,16 @@ const developmentOrigins: PlatformOrigins = {
   platformAdmin: 'http://localhost:4011',
 };
 
-const productionOrigins: PlatformOrigins = {
+const hostedOrigins: PlatformOrigins = {
   platform: 'https://cfr.optioncapp.com',
   platformAdmin: 'https://admin.optioncapp.com',
+};
+
+const hostedConfig: AppAuthConfig = {
+  authMode: 'preview',
+  loginOrigin: hostedOrigins.platform,
+  authOrigin: hostedOrigins.platform,
+  origins: hostedOrigins,
 };
 
 const configs: Record<RuntimeEnvironment, AppAuthConfig> = {
@@ -31,24 +38,16 @@ const configs: Record<RuntimeEnvironment, AppAuthConfig> = {
     authOrigin: developmentOrigins.platform,
     origins: developmentOrigins,
   },
-  production: {
-    // Preview auth remains host-scoped. Production federation should use the configured IdP.
-    authMode: 'preview',
-    loginOrigin: productionOrigins.platform,
-    authOrigin: productionOrigins.platform,
-    origins: productionOrigins,
-  },
+  pilot: hostedConfig,
+  staging: hostedConfig,
+  live: hostedConfig,
 };
 
 export function getAppAuthConfig(mode: RuntimeEnvironment) {
   const config = configs[mode];
-  if (mode === 'production' && config.authMode !== 'sso') {
-    // CFRAdmin is currently a non-functional prototype (mocked data only, no real
-    // authentication/API/persistence per its build spec) — warn loudly instead of
-    // throwing, so the production build stays reviewable. Wiring a real IdP and
-    // restoring the hard failure is required before this app handles real users.
+  if (mode !== 'development' && config.authMode !== 'sso') {
     console.warn(
-      `[cfr-admin] Production build is configured with authMode "${config.authMode}", not "sso". ` +
+      `[cfr-admin] ${mode} build is configured with authMode "${config.authMode}", not "sso". ` +
         'This is expected for the current prototype phase (mocked auth only) — do not treat this build as production-ready.',
     );
   }

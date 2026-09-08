@@ -1,1 +1,0 @@
-export { OptionCSchoolPage } from './OptionCSchoolPage';

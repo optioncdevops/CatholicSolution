@@ -14,7 +14,6 @@ import { validateLaunchProduct } from '../validator/ProductLaunchValidator';
 import { AppCard } from './partials/AppCard';
 import { RequestInterestModal } from './partials/RequestInterestModal';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
-import { GlobalAppSwitcher } from '@/appShell/GlobalAppSwitcher';
 
 function greeting(firstName: string) {
   const hour = new Date().getHours();
@@ -143,7 +142,6 @@ export default function ProductLaunchPage() {
         <Brand compact />
         <div className="hub-page-header__spacer" />
         <div className="hub-page-header__actions">
-          <GlobalAppSwitcher currentAppId="platform" currentAppName="CFR" />
           <label className="hub-page-header__search">
             <span className="hub-page-header__search-icon" aria-hidden="true"><SearchIcon size={15} /></span>
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search apps" aria-label="Search apps" />

@@ -410,7 +410,7 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
       : 'same-tab',
     status: deriveProductStatus(item),
     registryRef: `reg_app_${String(item.productId).padStart(4, '0')}`,
-    sourceLocation: `SaaS_Apps/${productName.toLowerCase().replace(/\s+/g, '-')}`,
+    sourceLocation: productName.toLowerCase().replace(/\s+/g, '-'),
     updatedAt: item.updatedDate || item.createdDate,
     contactUserId: item.contactUserId != null ? String(item.contactUserId) : '',
     contactPersonName: item.contactPerson || '',
