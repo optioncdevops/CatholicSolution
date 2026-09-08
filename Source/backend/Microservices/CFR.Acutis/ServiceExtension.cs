@@ -3,17 +3,20 @@ using CFR.AcutisInfrastructure.Interfaces.Administration;
 using CFR.AcutisInfrastructure.Interfaces.Products;
 using CFR.AcutisInfrastructure.Interfaces.Profile;
 using CFR.AcutisInfrastructure.Interfaces.Organization;
+using CFR.AcutisInfrastructure.Interfaces.Dashboard;
 using CFR.AcutisInfrastructure.Repositorys.AcutisAuthentication;
 using CFR.AcutisInfrastructure.Repositorys.Administration;
 using CFR.AcutisInfrastructure.Repositorys.Organization;
 using CFR.AcutisInfrastructure.Repositorys.Products;
 using CFR.AcutisInfrastructure.Repositorys.Profile;
+using CFR.AcutisInfrastructure.Repositorys.Dashboard;
 using CFR.AcutisService.Interfaces.Products;
 using CFR.AcutisService.Service.AcutisAuthentication;
 using CFR.AcutisService.Service.Administration;
 using CFR.AcutisService.Service.Organization;
 using CFR.AcutisService.Service.Products;
 using CFR.AcutisService.Service.Profile;
+using CFR.AcutisService.Service.Dashboard;
 using CFR.CommonService.Interfaces;
 using CFR.CommonService.Service;
 using CFR.CommonService.Services;
@@ -63,6 +66,14 @@ namespace CFR.Acutis
             // Organization
             services.AddScoped<IOrganizationService, OrganizationService>();
             services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+
+            // User Rights
+            services.AddScoped<IUserRightsService, UserRightsService>();
+            services.AddScoped<IUserRightsRepository, UserRightsRepository>();
+
+            // Dashboard
+            services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<IDashboardRepository, DashboardRepository>();
 
             return services;
         }

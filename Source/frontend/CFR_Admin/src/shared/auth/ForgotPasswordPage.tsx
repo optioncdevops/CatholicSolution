@@ -72,13 +72,13 @@ export function ForgotPasswordPage() {
               <h1 className="admin-auth-card__title">Forgot Your Password?</h1>
               <p className="admin-auth-card__description">Enter the email address associated with your account. We&apos;ll send you a link to reset your password.</p>
             </div>
-            <form onSubmit={submit} className="admin-auth-form" noValidate>
+            <form id="formForgotPassword" onSubmit={submit} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">
-                <label className="admin-auth-label" htmlFor="reset-email">Email Address</label>
+                <label className="admin-auth-label" htmlFor="txtEmailAddress">Email Address</label>
                 <div className="admin-auth-input-wrap">
                   <span className="admin-auth-input-icon"><MailIcon size={15} /></span>
                   <input
-                    id="reset-email"
+                    id="txtEmailAddress"
                     type="email"
                     className="admin-auth-input"
                     autoComplete="email"
@@ -86,7 +86,7 @@ export function ForgotPasswordPage() {
                     autoFocus
                     disabled={submitting}
                     aria-invalid={Boolean(fieldError)}
-                    aria-describedby={fieldError ? 'reset-email-error' : undefined}
+                    aria-describedby={fieldError ? 'txtEmailAddress-error' : undefined}
                     {...register('email', {
                       required: 'Enter the email connected to your account.',
                       pattern: { value: EMAIL_PATTERN, message: 'Enter a valid email address.' },
@@ -96,13 +96,13 @@ export function ForgotPasswordPage() {
               </div>
 
               {fieldError ? (
-                <div id="reset-email-error" className="admin-auth-banner" role="alert">
+                <div id="txtEmailAddress-error" className="admin-auth-banner" role="alert">
                   <AlertTriangleIcon size={15} />
                   <span>{fieldError}</span>
                 </div>
               ) : null}
 
-              <button type="submit" className="admin-auth-submit" disabled={submitting}>
+              <button id="btnSendResetLink" type="submit" className="admin-auth-submit" disabled={submitting}>
                 {submitting ? (
                   <>
                     <span className="admin-auth-spinner" aria-hidden="true" />

@@ -15,7 +15,11 @@ IF OBJECT_ID(N'[request].[AccessRequest_CRUD]', N'P') IS NOT NULL
 GO
 
 -- ActionId 1: Save (insert header, product line, history, optional member comment).
--- ActionId 2: Update status (approve / reject / request info).
+-- ActionId 2: Update status (approve / reject / request info). Approving GRANTS real access as
+-- part of the same transaction — activates/creates the org's [lic].[OrganizationProduct] row and
+-- the requester's [auth].[UserProduct] row for this product — not just a status flag. Without
+-- this the request could be "approved" yet the product would never appear in the member's App
+-- Hub / launch flow, since ActionId 6 and Portal_CFRLaunch_CRUD gate purely on those two tables.
 -- ActionId 3: Get by AccessRequestId (header, timeline, comments).
 -- ActionId 4: Get list.
 -- ActionId 5: Recipients for the AccessRequested email, matched by product name/id.
@@ -190,11 +194,24 @@ BEGIN
         DECLARE @LineStatus INT;
         DECLARE @LineProductId INT;
         DECLARE @HeaderStatus INT;
+        DECLARE @HeaderOrgId BIGINT;
+        DECLARE @HeaderRequestedBy BIGINT;
         DECLARE @NextLineStatus INT;
         DECLARE @NextHeaderStatus INT;
         DECLARE @HistoryStatus INT;
         DECLARE @HistoryLineId BIGINT;
         DECLARE @AccessDays INT;
+        DECLARE @ExistingUserProductId BIGINT;
+        DECLARE @ExistingUserProductIsDeleted BIT;
+        DECLARE @MemberUserId BIGINT;
+        DECLARE @MemberOrgName NVARCHAR(200);
+        DECLARE @MemberFirstName NVARCHAR(100);
+        DECLARE @MemberLastName NVARCHAR(100);
+        DECLARE @MemberRoleId INT;
+        DECLARE @MemberIsLoginDisabled BIT;
+        DECLARE @MemberIsLockedOut BIT;
+        DECLARE @ExistingOrgProductId BIGINT;
+        DECLARE @ExistingOrgProductIsDeleted BIT;
 
         IF @AccessRequestId <= 0 OR @Status NOT IN (N'approved', N'rejected', N'info-requested', N'in-review')
         BEGIN
@@ -203,7 +220,9 @@ BEGIN
         END
 
         SELECT
-            @HeaderStatus = ar.[RequestStatus]
+            @HeaderStatus = ar.[RequestStatus],
+            @HeaderOrgId = ar.[OrgId],
+            @HeaderRequestedBy = ar.[RequestedBy]
         FROM [request].[AccessRequest] ar
         WHERE ar.[AccessRequestId] = @AccessRequestId
           AND ar.[IsDeleted] = 0;
@@ -301,6 +320,87 @@ BEGIN
                 [UpdatedBy] = @UpdatedBy
             WHERE [AccessRequestId] = @AccessRequestId
               AND [IsDeleted] = 0;
+
+            -- Approving a request must actually GRANT access, not just flip a status flag —
+            -- both gates that [request].[AccessRequest_CRUD] ActionId 6 (App Hub) and
+            -- Portal_CFRLaunch_CRUD check have to be satisfied: an active [lic].[OrganizationProduct]
+            -- row for the org+product, and an [auth].[UserProduct] row for the member+org+product.
+            -- CFRUserId/OrgId are never taken from the client — both come from [request].[AccessRequest]
+            -- via @AccessRequestId, resolved above into @HeaderRequestedBy/@HeaderOrgId.
+            IF @Status = N'approved'
+            BEGIN
+                -- 1) Organization-level license/assignment (mirrors AccessRequest_CRUD's own
+                --    sibling pattern in Acutis_Organization_CRUD ActionId 8 — same columns, same
+                --    active/reactivate/insert shape).
+                SELECT @ExistingOrgProductId = [OrganizationProductId], @ExistingOrgProductIsDeleted = [IsDeleted]
+                FROM [lic].[OrganizationProduct]
+                WHERE [OrgId] = @HeaderOrgId AND [ProductId] = @LineProductId;
+
+                IF @ExistingOrgProductId IS NOT NULL AND @ExistingOrgProductIsDeleted = 1
+                BEGIN
+                    UPDATE [lic].[OrganizationProduct]
+                    SET [AssignStatus] = N'active',
+                        [CreatedDate] = SYSUTCDATETIME(),
+                        [ActiveStartDate] = SYSUTCDATETIME(),
+                        [ActiveEndDate] = '9999-12-31',
+                        [IsDeleted] = 0
+                    WHERE [OrganizationProductId] = @ExistingOrgProductId;
+                END
+                ELSE IF @ExistingOrgProductId IS NULL
+                BEGIN
+                    INSERT INTO [lic].[OrganizationProduct]
+                    (
+                        [OrgId], [ProductId], [AssignStatus], [ActiveStartDate], [ActiveEndDate], [CreatedDate], [IsDeleted]
+                    )
+                    VALUES
+                    (
+                        @HeaderOrgId, @LineProductId, N'active', SYSUTCDATETIME(), '9999-12-31', SYSUTCDATETIME(), 0
+                    );
+                END
+                -- else: already active — nothing to do.
+
+                -- 2) Resolve the member's identity fields from their existing membership row for
+                --    this org — the requester is guaranteed to have at least one [auth].[UserProduct]
+                --    row here (ActionId 1 resolves @OrgId from exactly that), so a new product row
+                --    for them clones CFRUserId/UserId/OrgName/FirstName/LastName/RoleId from that
+                --    row instead of accepting any of it from the client.
+                SELECT TOP (1)
+                    @MemberUserId = [UserId], @MemberOrgName = [OrgName],
+                    @MemberFirstName = [FirstName], @MemberLastName = [LastName], @MemberRoleId = [RoleId],
+                    @MemberIsLoginDisabled = ISNULL([IsLoginDisabled], 0), @MemberIsLockedOut = ISNULL([IsLockedOut], 0)
+                FROM [auth].[UserProduct]
+                WHERE [CFRUserId] = @HeaderRequestedBy AND [OrgId] = @HeaderOrgId AND ISNULL([IsDeleted], 0) = 0
+                ORDER BY [CFRUserDetailId];
+
+                -- 3) Prevent a duplicate mapping: reactivate the member's soft-deleted row for
+                --    this exact org+product if one exists, otherwise insert a new one. An
+                --    already-active row for this member+org+product is left untouched.
+                SELECT TOP (1) @ExistingUserProductId = [CFRUserDetailId], @ExistingUserProductIsDeleted = ISNULL([IsDeleted], 0)
+                FROM [auth].[UserProduct]
+                WHERE [CFRUserId] = @HeaderRequestedBy AND [OrgId] = @HeaderOrgId AND [ProductId] = @LineProductId
+                ORDER BY [CFRUserDetailId];
+
+                IF @ExistingUserProductId IS NOT NULL AND @ExistingUserProductIsDeleted = 1
+                BEGIN
+                    UPDATE [auth].[UserProduct]
+                    SET [IsDeleted] = 0
+                    WHERE [CFRUserDetailId] = @ExistingUserProductId;
+                END
+                ELSE IF @ExistingUserProductId IS NULL
+                BEGIN
+                    INSERT INTO [auth].[UserProduct]
+                    (
+                        [CFRUserId], [UserId], [ProductId], [OrgId], [OrgName], [RoleId], [FirstName], [LastName],
+                        [IsDeleted], [IsLoginDisabled], [IsLockedOut]
+                    )
+                    VALUES
+                    (
+                        @HeaderRequestedBy, @MemberUserId, @LineProductId, @HeaderOrgId, @MemberOrgName, @MemberRoleId, @MemberFirstName, @MemberLastName,
+                        0, @MemberIsLoginDisabled, @MemberIsLockedOut
+                    );
+                END
+                -- else: already assigned — nothing to do.
+            END
 
             INSERT INTO [request].[AccessRequestStatusHistory]
             (

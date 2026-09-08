@@ -16,6 +16,8 @@ type ModalHeight = "auto" | "sm" | "md" | "lg" | "full";
 type FooterAlign = "start" | "center" | "end" | "between";
 
 interface ModalProps {
+  /** Stable id for the dialog element (e.g. `dlgConfirmDeleteOrganization`) per the Stable Control IDs standard. */
+  id?: string;
   isOpen: boolean;
   onClose: () => void;
   title: string;
@@ -202,6 +204,7 @@ const isTopmostModalLayer = (modalPanel: HTMLElement): boolean => {
 };
 
 export const BaseModal = ({
+  id,
   isOpen,
   onClose,
   title,
@@ -222,6 +225,7 @@ export const BaseModal = ({
 }: ModalProps) => {
   const lastActiveElementRef = useRef<Element | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const titleId = id ? `${id}-title` : "base-modal-title";
 
   // Focus management: automatic focus on open and restore on close
   useEffect(() => {
@@ -384,11 +388,12 @@ export const BaseModal = ({
       onClick={closeOnOverlayClick ? onClose : undefined}
     >
       <div
+        id={id}
         ref={modalRef}
         className={panelClasses}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="base-modal-title"
+        aria-labelledby={titleId}
         onClick={(event) => { event.stopPropagation(); }}
       >
         {/* Header — title + close only; mandatory legend lives in the body */}
@@ -397,7 +402,7 @@ export const BaseModal = ({
           {...{ [MODAL_REGION_ATTR]: "header" }}
         >
           <h3
-            id="base-modal-title"
+            id={titleId}
             className="min-w-0 flex-1 truncate text-[length:var(--admin-text-lg)] font-semibold tracking-tight text-white"
             title={typeof title === "string" ? title : undefined}
           >

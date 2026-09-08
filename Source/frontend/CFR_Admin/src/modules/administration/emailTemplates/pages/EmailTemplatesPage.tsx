@@ -23,7 +23,7 @@ import type { EmailTemplateApiItem, EmailTemplateFormValues } from '../types/ema
 import {
   EMAIL_TEMPLATE_VARIABLES, getUnsupportedPlaceholders, normalizeEmailTemplatesList, templateDescription, templateDisplayLabel,
 } from '../utils/emailTemplatesHelpers';
-import { validateEmailTemplate } from '../validator/EmailTemplatesValidator';
+import { SUBJECT_MAX_LENGTH, validateEmailTemplate } from '../validator/EmailTemplatesValidator';
 
 const TEMPLATE_ICON: Record<string, typeof Mail> = {
   PasswordReset: KeyRound,
@@ -342,6 +342,7 @@ function EmailTemplatesPage() {
                     onChange={(event) => updateField('subject', event.target.value)}
                     placeholder="Enter the email subject line"
                     hint="Shown as the message subject line — keep it short and specific."
+                    maxLength={SUBJECT_MAX_LENGTH}
                   />
                 </div>
                 <div className="sm:flex-1">

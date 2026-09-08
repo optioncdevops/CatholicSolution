@@ -62,6 +62,8 @@ namespace CFR.CommonService
             public const string UpdateAccessRequestStatus = nameof(UpdateAccessRequestStatus);
             public const string GetHubProducts = nameof(GetHubProducts);
             public const string GetProducts = nameof(GetProducts);
+            public const string GetUserRights = nameof(GetUserRights);
+            public const string SaveUserRights = nameof(SaveUserRights);
         }
 
         public static class API_Profile
@@ -115,6 +117,11 @@ namespace CFR.CommonService
             public const string UpdateProduct = nameof(UpdateProduct);
             public const string GetProductLogo = nameof(GetProductLogo);
             public const string GetProductCustomers = nameof(GetProductCustomers);
+        }
+
+        public static class API_Dashboard
+        {
+            public const string GetDashboardSummary = nameof(GetDashboardSummary);
         }
     }
 }
