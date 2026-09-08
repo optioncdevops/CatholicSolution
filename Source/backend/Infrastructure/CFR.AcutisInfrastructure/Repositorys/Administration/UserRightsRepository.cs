@@ -18,7 +18,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.UserRightParams.RoleId, roleId, DbType.Int32);
             parameters.Add(DBParameterName.UserRightParams.ModuleId, moduleId, DbType.Int32);
 
-            using var multi = await dapperHandler.QueryMultipleAsync("GetUserRights", parameters, CommandType.StoredProcedure);
+            using var multi = await dapperHandler.QueryMultipleAsync("GetRightByRoleId", parameters, CommandType.StoredProcedure);
 
             var table1 = (await multi.ReadAsync<dynamic>()).ToList();
             var table2 = (await multi.ReadAsync<dynamic>()).ToList();
