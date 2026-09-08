@@ -50,6 +50,7 @@ namespace CFR.Common
         public const string AccountNotFound = "No account found with this email address.";
         public const string InvalidResetToken = "This reset link is invalid or has expired.";
         public const string PasswordMismatch = "The new passwords do not match or do not meet the minimum length.";
+        public const string PasswordTooWeak = "Use at least 8 characters with upper/lowercase letters, a number, and preferably a symbol.";
         public const string ExistEmailTemplateCode = "A template with this code already exists.";
         public const string InvalidCurrentPassword = "Your current password is incorrect.";
         public const string ProfileUpdated = "Profile updated successfully.";
@@ -86,6 +87,8 @@ namespace CFR.Common
         public const string EmailLogoFileRequired = "File is empty or not provided.";
         public const string EmailLogoFileTooLarge = "File size cannot exceed 2 MB.";
         public const string EmailLogoInvalidType = "Only JPG and PNG images are allowed.";
+        public const string DashboardInvalidDateRange = "Start date must be on or before the end date.";
+        public const string DashboardDateRangeTooLarge = "The selected date range is too large. Choose a range of 366 days or fewer.";
     }
 
     public static class SerilogErrorMessages
@@ -151,6 +154,7 @@ namespace CFR.Common
             public const string DeleteProductLogoFailed = "Error deleting previous product logo file {RelativeUrl}";
             public const string FetchUserRightsFailed = "Error while fetching user rights";
             public const string SaveUserRightsFailed = "Error while saving user rights";
+            public const string FetchDashboardSummaryFailed = "Error while fetching dashboard summary";
         }
 
         public static class PortalLogMessages

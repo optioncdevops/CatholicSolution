@@ -83,24 +83,25 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
 
   return (
     <BaseModal
+      id="dlgChangePassword"
       isOpen={open}
       onClose={onClose}
       title="Change password"
       size="sm"
       footer={(
         <>
-          <CommonButton variant="outline" onClick={onClose} disabled={passwordSaving}>Cancel</CommonButton>
-          <CommonButton variant="primary" type="submit" form="password-form" loading={passwordSaving} disabled={passwordSaving}>Update password</CommonButton>
+          <CommonButton id="btnCancelChangePassword" variant="outline" onClick={onClose} disabled={passwordSaving}>Cancel</CommonButton>
+          <CommonButton id="btnUpdatePassword" variant="primary" type="submit" form="formChangePassword" loading={passwordSaving} disabled={passwordSaving}>Update password</CommonButton>
         </>
       )}
     >
-      <form id="password-form" onSubmit={(event) => void passwordForm.handleSubmit(onPasswordSubmit)(event)} className="flex flex-col gap-4" noValidate>
+      <form id="formChangePassword" onSubmit={(event) => void passwordForm.handleSubmit(onPasswordSubmit)(event)} className="flex flex-col gap-4" noValidate>
         <p className="-mt-2 text-xs text-[var(--text-muted)]">Choose a strong password you do not use elsewhere.</p>
 
-        <InputField control={passwordForm.control} name="currentPassword" type="password" label="Current password" rules={passwordRules.currentPassword} disabled={passwordSaving} required />
+        <InputField id="txtCurrentPassword" control={passwordForm.control} name="currentPassword" type="password" label="Current password" rules={passwordRules.currentPassword} disabled={passwordSaving} required />
 
         <div>
-          <InputField control={passwordForm.control} name="newPassword" type="password" label="New password" rules={passwordRules.newPassword} disabled={passwordSaving} required />
+          <InputField id="txtNewPassword" control={passwordForm.control} name="newPassword" type="password" label="New password" rules={passwordRules.newPassword} disabled={passwordSaving} required />
           <div className="mt-1.5 flex gap-1" aria-hidden="true">
             {[1, 2, 3, 4].map((bar) => (
               <span key={bar} className="h-1 flex-1 rounded-full" style={{ background: bar <= score ? STRENGTH_COLORS[score] : STRENGTH_COLORS[0] }} />
@@ -109,7 +110,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
           <p className="mt-1 text-xs font-semibold text-[var(--text-faint)]">{newPasswordValue ? STRENGTH_LABELS[Math.max(score - 1, 0)] : 'Use 8+ characters with a number and a symbol.'}</p>
         </div>
 
-        <InputField control={passwordForm.control} name="confirmPassword" type="password" label="Confirm new password" rules={passwordRules.confirmPassword} disabled={passwordSaving} required />
+        <InputField id="txtConfirmPassword" control={passwordForm.control} name="confirmPassword" type="password" label="Confirm new password" rules={passwordRules.confirmPassword} disabled={passwordSaving} required />
 
         {passwordError ? <p className="text-xs font-semibold text-[var(--error)]">{passwordError}</p> : null}
       </form>

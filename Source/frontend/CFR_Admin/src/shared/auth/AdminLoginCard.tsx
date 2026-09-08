@@ -31,7 +31,7 @@ export function AdminLoginCard({
         <h1 className="admin-auth-card__title">Sign In to CFR Acutis</h1>
       </div>
 
-      <form onSubmit={onSubmit} className="admin-auth-form" noValidate>
+      <form id="formSignIn" onSubmit={onSubmit} className="admin-auth-form" noValidate>
         {formError ? (
           <div className="admin-auth-banner" role="alert">
             <AlertTriangleIcon size={15} />
@@ -40,39 +40,40 @@ export function AdminLoginCard({
         ) : null}
 
         <div className="admin-auth-field">
-          <label className="admin-auth-label" htmlFor="admin-email">Email Address</label>
+          <label className="admin-auth-label" htmlFor="txtEmailAddress">Email Address</label>
           <div className="admin-auth-input-wrap">
             <span className="admin-auth-input-icon"><MailIcon size={15} /></span>
             <input
-              id="admin-email"
+              id="txtEmailAddress"
               type="email"
               className="admin-auth-input"
               autoComplete="email"
               aria-invalid={Boolean(emailError)}
-              aria-describedby={emailError ? 'admin-email-error' : undefined}
+              aria-describedby={emailError ? 'txtEmailAddress-error' : undefined}
               {...emailRegister}
             />
           </div>
-          {emailError ? <p id="admin-email-error" className="admin-auth-field-error">{emailError}</p> : null}
+          {emailError ? <p id="txtEmailAddress-error" className="admin-auth-field-error">{emailError}</p> : null}
         </div>
 
         <div className="admin-auth-field">
           <div className="admin-auth-field__label-row">
-            <label className="admin-auth-label" htmlFor="admin-password">Password</label>
-            <Link to={forgotHref} className="admin-auth-forgot">Forgot Password?</Link>
+            <label className="admin-auth-label" htmlFor="txtPassword">Password</label>
+            <Link id="lnkForgotPassword" to={forgotHref} className="admin-auth-forgot">Forgot Password?</Link>
           </div>
           <div className="admin-auth-input-wrap">
             <span className="admin-auth-input-icon"><LockIcon size={15} /></span>
             <input
-              id="admin-password"
+              id="txtPassword"
               type={showPassword ? 'text' : 'password'}
               className="admin-auth-input admin-auth-input--with-action"
               autoComplete="current-password"
               aria-invalid={Boolean(passwordError)}
-              aria-describedby={passwordError ? 'admin-password-error' : undefined}
+              aria-describedby={passwordError ? 'txtPassword-error' : undefined}
               {...passwordRegister}
             />
             <button
+              id="ibtnTogglePasswordVisibility"
               type="button"
               onClick={onToggleShowPassword}
               className="admin-auth-input-action"
@@ -81,10 +82,10 @@ export function AdminLoginCard({
               {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
             </button>
           </div>
-          {passwordError ? <p id="admin-password-error" className="admin-auth-field-error">{passwordError}</p> : null}
+          {passwordError ? <p id="txtPassword-error" className="admin-auth-field-error">{passwordError}</p> : null}
         </div>
 
-        <button type="submit" className="admin-auth-submit" disabled={!canSubmit}>
+        <button id="btnSignIn" type="submit" className="admin-auth-submit" disabled={!canSubmit}>
           {submitting ? (
             <>
               <span className="admin-auth-spinner" aria-hidden="true" />

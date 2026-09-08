@@ -114,10 +114,10 @@ export function ResetPasswordPage() {
               <h1 className="admin-auth-card__title">Create a New Password</h1>
               <p className="admin-auth-card__description">{email ? <>Set a new password for <strong>{email}</strong></> : 'Choose a new password for your account.'}</p>
             </div>
-            <form onSubmit={submit} className="admin-auth-form" noValidate>
+            <form id="formResetPassword" onSubmit={submit} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">
                 <PasswordField
-                  id="new-password"
+                  id="txtNewPassword"
                   label="New Password"
                   visible={showPassword}
                   onToggle={() => setShowPassword((value) => !value)}
@@ -136,7 +136,7 @@ export function ResetPasswordPage() {
 
               <div className="admin-auth-field">
                 <PasswordField
-                  id="confirm-password"
+                  id="txtConfirmPassword"
                   label="Confirm New Password"
                   visible={showConfirm}
                   onToggle={() => setShowConfirm((value) => !value)}
@@ -156,7 +156,7 @@ export function ResetPasswordPage() {
                 </div>
               ) : null}
 
-              <button type="submit" className="admin-auth-submit" disabled={submitting}>
+              <button id="btnResetPassword" type="submit" className="admin-auth-submit" disabled={submitting}>
                 {submitting ? (
                   <>
                     <span className="admin-auth-spinner" aria-hidden="true" />

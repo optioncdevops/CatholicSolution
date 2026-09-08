@@ -53,6 +53,7 @@ export function PasswordField({
           {...inputProps}
         />
         <button
+          id={`ibtnToggle${id.charAt(0).toUpperCase()}${id.slice(1)}Visibility`}
           type="button"
           className={actionClassName}
           onClick={onToggle}
