@@ -50,6 +50,7 @@ namespace CFR.Common
         public const string AccountNotFound = "No account found with this email address.";
         public const string InvalidResetToken = "This reset link is invalid or has expired.";
         public const string PasswordMismatch = "The new passwords do not match or do not meet the minimum length.";
+        public const string PasswordTooWeak = "Use at least 8 characters with upper/lowercase letters, a number, and preferably a symbol.";
         public const string ExistEmailTemplateCode = "A template with this code already exists.";
         public const string InvalidCurrentPassword = "Your current password is incorrect.";
         public const string ProfileUpdated = "Profile updated successfully.";
@@ -78,9 +79,16 @@ namespace CFR.Common
         public const string ExpiredAuthorizationCode = "The authorization code has expired.";
         public const string AuthorizationCodeUsed = "The authorization code has already been used.";
         public const string AuthorizationCodeProductMismatch = "The authorization code does not belong to this product.";
+        public const string LicenseNotFound = "License not found.";
+        public const string InvalidLicenseOrgProduct = "Invalid Organization or Product for license creation.";
         public const string ProductLogoFileRequired = "File is empty or not provided.";
         public const string ProductLogoFileTooLarge = "File size cannot exceed 2 MB.";
         public const string ProductLogoInvalidType = "Only JPG and PNG images are allowed.";
+        public const string EmailLogoFileRequired = "File is empty or not provided.";
+        public const string EmailLogoFileTooLarge = "File size cannot exceed 2 MB.";
+        public const string EmailLogoInvalidType = "Only JPG and PNG images are allowed.";
+        public const string DashboardInvalidDateRange = "Start date must be on or before the end date.";
+        public const string DashboardDateRangeTooLarge = "The selected date range is too large. Choose a range of 366 days or fewer.";
     }
 
     public static class SerilogErrorMessages
@@ -106,6 +114,11 @@ namespace CFR.Common
             public const string FetchEmailTemplateByIdFailed = "Error while fetching email template {TemplateId}";
             public const string SaveEmailTemplateFailed = "Error while saving email template";
             public const string SendTestEmailFailed = "Error while sending test email";
+            public const string FetchEmailSettingsFailed = "Error while fetching email settings";
+            public const string SaveEmailSettingsFailed = "Error while saving email settings";
+            public const string UploadEmailLogoFailed = "Error while uploading email logo";
+            public const string RemoveEmailLogoFailed = "Error while removing email logo";
+            public const string FetchEmailLogoFailed = "Error while fetching email logo";
             public const string FetchProfileFailed = "Error while fetching profile for user {UserId}";
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
             public const string ChangePasswordFailed = "Error while changing password for user {UserId}";
@@ -117,6 +130,9 @@ namespace CFR.Common
             public const string FetchOrganizationProductsFailed = "Error while fetching organization products for organization {OrgId}";
             public const string FetchAssignableProductsFailed = "Error while fetching assignable products for organization {OrgId}";
             public const string FetchOrganizationLicensesFailed = "Error while fetching licenses for organization {OrgId}";
+            public const string FetchAllLicensesFailed = "Error while fetching licenses across all organizations";
+            public const string FetchProductAssignmentSummaryFailed = "Error while fetching product assignment summary";
+            public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string CreateOrganizationFailed = "Error while creating organization";
             public const string AssignOrganizationProductFailed = "Error while assigning product to organization {OrgId}";
             public const string RemoveOrganizationProductFailed = "Error while removing product from organization {OrgId}";
@@ -131,6 +147,9 @@ namespace CFR.Common
             public const string UploadProductLogoFailed = "Error while uploading product logo";
             public const string FetchProductLogoFailed = "Error while fetching product logo";
             public const string DeleteProductLogoFailed = "Error deleting previous product logo file {RelativeUrl}";
+            public const string FetchUserRightsFailed = "Error while fetching user rights";
+            public const string SaveUserRightsFailed = "Error while saving user rights";
+            public const string FetchDashboardSummaryFailed = "Error while fetching dashboard summary";
         }
 
         public static class PortalLogMessages

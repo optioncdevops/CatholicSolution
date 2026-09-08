@@ -64,9 +64,11 @@ export interface OrganizationUserApiItem {
   authUserId: number;
   email: string;
   fullName: string;
+  roleName: string | null;
   memberStatus: string | null;
   linkedDate: string;
   appCount: number;
+  appNames: string | null;
 }
 
 export interface OrganizationUserAppApiItem {
@@ -79,6 +81,7 @@ export interface OrganizationUserDetailApiItem {
   authUserId: number;
   email: string;
   fullName: string;
+  roleName: string | null;
   orgId: number;
   orgName: string;
   memberStatus: string | null;
@@ -119,4 +122,9 @@ export interface OrganizationLicenseApiItem {
   licenseStatus: string;
   remarks: string | null;
   createdDate: string;
+}
+
+export interface LicenseSummaryApiItem extends OrganizationLicenseApiItem {
+  orgId: number;
+  orgName: string;
 }

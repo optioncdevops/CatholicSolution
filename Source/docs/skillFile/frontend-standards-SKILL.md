@@ -134,6 +134,90 @@ Do **not** use relative `"add"` / `"edit"` children of the list route. Pass edit
 ### 0.11 Unused imports MUST be removed
 When creating or changing any page, partial, service, type, validator, or util file, remove unused imports, unused variables, and unused types before finishing. Do not keep an import "for later". Use `import type` only for type-only symbols. If a helper is no longer called, delete it from the util file too.
 
+### Stable Control IDs
+
+Every interactive or testable UI control must have a stable `id`.
+
+**Required controls:**
+- Text inputs
+- Textareas
+- Dropdowns/selects
+- Date pickers
+- Checkboxes
+- Radio buttons
+- Buttons
+- Icon buttons
+- Navigation links
+- Menus
+- Menu items
+- Tabs
+- Tables
+- Table rows where interaction exists
+- Modals/dialogs
+- Form sections
+- Charts when they have interactions
+- Search and filter controls
+- Pagination controls
+- Upload controls
+
+**IDs must:**
+- Be unique within the rendered page
+- Be deterministic (same control -> same id on every render, every session)
+- Use the feature and control purpose (`txtOrganizationName`, not `txtInput1`)
+- Remain stable between renders — do not derive an id from `Math.random()`, `crypto.randomUUID()`, `Date.now()`, or a loop index
+- Not depend on database IDs unless the record identity is genuinely required (a table row, a per-record modal) — a static field on a form does not need one
+- Not contain spaces
+- Use PascalCase for the control-name portion after the prefix
+- Use the approved prefix catalog below
+
+Do not use a random id, an array index, a generated UUID, a timestamp, or the control's visible text as the only identifier.
+
+**Approved ID prefixes**
+
+| Control | Prefix | Example |
+|---|---|---|
+| Textbox/input | `txt` | `txtOrganizationName` |
+| Textarea | `txta` | `txtaDescription` |
+| Dropdown/select | `ddl` | `ddlOrganizationStatus` |
+| Date picker | `dtp` | `dtpStartDate` |
+| Checkbox | `chk` | `chkIsActive` |
+| Radio button | `rdo` | `rdoLicenseTypeAnnual` |
+| Button | `btn` | `btnSaveOrganization` |
+| Icon button | `ibtn` | `ibtnRefreshDashboard` |
+| Link | `lnk` | `lnkViewOrganizations` |
+| Menu | `menu` | `menuAdministration` |
+| Menu item | `menuItem` | `menuItemOrganizations` |
+| Tab | `tab` | `tabOrganizationUsers` |
+| Search field | `txtSearch` | `txtSearchOrganizations` |
+| Filter | `filter` | `filterRequestStatus` |
+| Table | `tbl` | `tblOrganizations` |
+| Table row | `row` | `rowOrganization123` |
+| Modal/dialog | `dlg` | `dlgConfirmDeleteOrganization` |
+| Form | `form` | `formOrganization` |
+| Section | `section` | `sectionOrganizationProducts` |
+| Chart | `chart` | `chartRequestTrend` |
+| Pagination | `pagination` | `paginationOrganizations` |
+| File upload | `file` | `fileProductLogo` |
+| Toast region | `toast` | `toastDashboard` |
+
+For a row/record-scoped id, append the record's real identity (not the array index): `rowOrganization123` for `OrgId = 123`, `menuItemOrganizations` for a fixed nav entry (no record identity involved, so no number is appended).
+
+Usage — pass `id` straight through the shared control, the same way `name`/`label`/`rules` are already passed:
+```tsx
+<InputField id="txtOrganizationName" control={control} name="orgName" label="Organization Name" />
+<Dropdown id="ddlOrganizationStatus" control={control} name="orgStatus" label="Status" options={statusOptions} />
+<DatePicker id="dtpStartDate" control={control} name="startDate" label="Start Date" />
+<CommonCheckbox id="chkIsActive" control={control} name="isActive" label="Active" />
+<CommonButton id="btnSaveOrganization" type="submit">Save</CommonButton>
+<CommonIconButton id="ibtnRefreshDashboard" aria-label="Refresh dashboard" icon={<RefreshCw />} onClick={handleRefresh} />
+<Link id="lnkViewOrganizations" to="/admin/organizations">View all</Link>
+<BaseModal id="dlgConfirmDeleteOrganization" isOpen={isOpen} onClose={onClose} title="Delete organization?">...</BaseModal>
+```
+
+If a shared control does not yet accept/forward an `id` prop, add that prop to the control (forwarded onto its underlying DOM element) rather than reaching past it with a raw HTML attribute or a wrapping `<div id=...>` that doesn't reach the actual interactive element.
+
+Do not skip this rule "because it's just a dashboard" or "just an internal tool" — stable ids are what let QA automation, accessibility tooling, and analytics target a specific control reliably across releases.
+
 ---
 
 ## 1. APP FOLDERS (do not recreate these inside a module)

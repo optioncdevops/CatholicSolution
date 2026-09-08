@@ -224,12 +224,12 @@ namespace CFR.AcutisService.Service.Administration
             try
             {
                 var template = await emailTemplatesRepository.GetEmailTemplateByCodeAsync(templateCode);
-                placeholders["AccentColor"] = string.IsNullOrWhiteSpace(template?.AccentColor) ? "#1d4ed8" : template.AccentColor;
+                placeholders["AccentColor"] = SMTPMailService.GetAccentColor();
                 string subject = template?.Subject ?? fallbackSubject;
                 string body = template?.Body ?? fallbackBody;
                 string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
                 string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
-                _ = await mailService.SendMailAsync(mergedSubject, mergedBody, toAddress, templateLogoUrl: template?.LogoUrl, fontFamily: template?.FontFamily, baseFontSize: template?.BaseFontSize);
+                _ = await mailService.SendMailAsync(mergedSubject, mergedBody, toAddress);
             }
             catch (Exception ex)
             {

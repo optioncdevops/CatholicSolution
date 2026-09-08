@@ -67,6 +67,7 @@ type DatePickerInnerProps = BasePickerProps & {
 };
 
 const DatePickerInner: React.FC<DatePickerInnerProps> = ({
+  id,
   label,
   required,
   optional,
@@ -559,7 +560,7 @@ const DatePickerInner: React.FC<DatePickerInnerProps> = ({
     >
       <FormFieldLabel
         label={label}
-        htmlFor={name}
+        htmlFor={id ?? name}
         required={required}
         optional={optional}
         error={!!mergedError}
@@ -589,7 +590,7 @@ const DatePickerInner: React.FC<DatePickerInnerProps> = ({
           <input
             ref={inputRef}
             type="text"
-            id={name}
+            id={id ?? name}
             autoComplete="off"
             inputMode="numeric"
             disabled={isDisabled}

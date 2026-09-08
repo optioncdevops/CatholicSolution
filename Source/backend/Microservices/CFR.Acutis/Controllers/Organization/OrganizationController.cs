@@ -169,6 +169,27 @@ namespace CFR.Acutis.Controllers.Organization
             return ApiResultArgs(await service.GetOrganizationLicensesAsync(orgId), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves every license issued across all organizations.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the admin dashboard's platform-wide "Licenses" KPI.
+        /// Request Flow: Client API GET -> OrganizationController.GetAllLicenses() -> IOrganizationService.GetAllLicensesAsync() -> Database.
+        /// Validation Details: None.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IOrganizationService.GetAllLicensesAsync().
+        /// Response Details: Standard API result enclosing List of LicenseSummaryOutput with status 200 or 500.
+        /// </remarks>
+        /// <returns>A consistent API response containing every license across all organizations.</returns>
+        /// <response code="200">Successfully fetched all licenses.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Organization.GetAllLicenses)]
+        public async Task<IActionResult> GetAllLicenses()
+        {
+            return ApiResultArgs(await service.GetAllLicensesAsync(), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
 
         #region POST Methods

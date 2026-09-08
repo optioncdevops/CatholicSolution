@@ -110,6 +110,7 @@ const OrganizationMemberDetailPage = () => {
             <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3">
               <DetailField label="Full Name">{member.fullName || '—'}</DetailField>
               <DetailField label="Email">{member.email || '—'}</DetailField>
+              <DetailField label="Role">{member.roleName || '—'}</DetailField>
               <DetailField label="Last Login">
                 <span className="font-normal text-[var(--text-faint)]" title="This platform does not yet track member sign-in timestamps.">Not tracked</span>
               </DetailField>

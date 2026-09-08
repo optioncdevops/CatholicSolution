@@ -298,6 +298,36 @@ namespace CFR.AcutisService.Service.Organization
             return result;
         }
 
+        /// <summary>
+        /// Retrieves every license issued across all organizations.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the admin dashboard's platform-wide "Licenses" KPI.
+        /// Request Flow: OrganizationController -> OrganizationService.GetAllLicensesAsync() -> IOrganizationRepository.GetAllLicensesAsync().
+        /// Validation Details: None.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IOrganizationRepository.GetAllLicensesAsync().
+        /// Response Details: MSResultArgs containing List of LicenseSummaryOutput, or NoRecordFound.
+        /// </remarks>
+        /// <returns>MSResultArgs containing the licenses issued across all organizations.</returns>
+        public async Task<MSResultArgs> GetAllLicensesAsync()
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                var data = await repository.GetAllLicensesAsync();
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchAllLicensesFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion GET Methods
 
         #region POST Methods

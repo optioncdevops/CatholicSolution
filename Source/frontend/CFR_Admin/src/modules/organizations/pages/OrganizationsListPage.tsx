@@ -10,7 +10,7 @@ import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataT
 import { formatDate } from '../../utils/formatDate';
 import { getOrganizations, updateOrganization } from '../services/organizationsService';
 import type { OrganizationApiItem } from '../types/organizationTypes';
-import { normalizeOrganizationsList, ORG_STATUS_OPTIONS, orgTypeLabel } from '../utils/organizationHelpers';
+import { formatOrgCode, normalizeOrganizationsList, ORG_STATUS_OPTIONS, orgTypeLabel, orgTypeTone } from '../utils/organizationHelpers';
 import { OrganizationStatusDialog } from './partials/OrganizationStatusDialog';
 
 const STATUS_FILTER_PARAM = 'status';
@@ -166,6 +166,11 @@ export function OrganizationsListPage() {
       ),
     },
     {
+      id: 'orgCode', header: 'Org Code', width: '7rem', sortable: false,
+      value: (org) => formatOrgCode(org.orgId),
+      cell: (org) => <span className="font-mono text-xs font-bold text-[var(--text-muted)]">{formatOrgCode(org.orgId)}</span>,
+    },
+    {
       id: 'orgName', header: 'Organization', width: '14rem',
       value: (org) => org.orgName,
       cell: (org) => <span className="font-bold text-[var(--text-primary)]">{org.orgName}</span>,
@@ -173,7 +178,7 @@ export function OrganizationsListPage() {
     {
       id: 'orgType', header: 'Type',
       value: (org) => org.orgType ?? '',
-      cell: (org) => org.orgType ? <Badge tone="neutral">{orgTypeLabel(org.orgType)}</Badge> : <span className="text-[var(--text-faint)]">—</span>,
+      cell: (org) => org.orgType ? <Badge tone={orgTypeTone(org.orgType)}>{orgTypeLabel(org.orgType)}</Badge> : <span className="text-[var(--text-faint)]">—</span>,
     },
     {
       id: 'website', header: 'Website', width: '12rem',

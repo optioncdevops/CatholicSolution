@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Automation/">
+    <Project Path="Automation/Automation.Acutis/Automation.Acutis.csproj" />
+    <Project Path="Automation/Automation.Framework/Automation.Framework.csproj" />
+  </Folder>
   <Folder Name="/Gateway/">
     <Project Path="Gateway/CFR.Gateway/CFR.Gateway.csproj" />
   </Folder>

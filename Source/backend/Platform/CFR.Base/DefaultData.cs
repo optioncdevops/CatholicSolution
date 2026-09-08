@@ -4,7 +4,8 @@ namespace CFR.Base;
 
 public static class DefaultData
 {
-    public const string WebStartPage = @"<<html>
+    public const string WebStartPage = @"<!DOCTYPE html>
+<html>
 <head>
     <title>{0}</title>
     <style>

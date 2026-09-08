@@ -146,3 +146,14 @@ export const getOrganizationLicenses = async (orgId: number): Promise<ApiRespons
     throw err.response?.data?.statusMessage || err.message || 'Failed to load organization licenses';
   }
 };
+
+export const getAllLicenses = async (): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetAllLicenses`);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to load licenses';
+  }
+};

@@ -48,19 +48,6 @@ export const getUnsupportedPlaceholders = (templateCode: string, subject: string
   return Array.from(found);
 };
 
-// Web-safe stacks only — HTML email clients don't reliably load custom web fonts.
-export const EMAIL_FONT_FAMILY_OPTIONS: Array<{ id: string; value: string }> = [
-  { id: 'Verdana, Arial, Helvetica, sans-serif', value: 'Verdana' },
-  { id: "'Segoe UI', Helvetica, Arial, sans-serif", value: 'Segoe UI' },
-  { id: 'Arial, Helvetica, sans-serif', value: 'Arial' },
-  { id: "Georgia, 'Times New Roman', serif", value: 'Georgia' },
-  { id: "'Trebuchet MS', Helvetica, sans-serif", value: 'Trebuchet MS' },
-];
-
-export const DEFAULT_EMAIL_FONT_FAMILY = EMAIL_FONT_FAMILY_OPTIONS[0].id;
-export const DEFAULT_EMAIL_ACCENT_COLOR = '#1d4ed8';
-export const DEFAULT_EMAIL_BASE_FONT_SIZE = 13;
-
 export const normalizeEmailTemplatesList = (resultData: unknown): EmailTemplateApiItem[] => {
   if (!Array.isArray(resultData)) return [];
   return resultData as EmailTemplateApiItem[];

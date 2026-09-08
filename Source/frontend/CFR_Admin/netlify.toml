@@ -2,11 +2,3 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
-# Migration-only compatibility for integrations created before platform/CDN hosting.
-[[headers]]
-  for = "/integrations/app-switcher/*"
-  [headers.values]
-    Cache-Control = "public, max-age=300, must-revalidate"
-    Access-Control-Allow-Origin = "*"
-    X-Content-Type-Options = "nosniff"

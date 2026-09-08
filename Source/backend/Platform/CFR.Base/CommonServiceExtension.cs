@@ -1,6 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
 using CFR.CommonService.Interfaces;
+using CFR.CommonService.MailService;
 using CFR.CommonService.Service;
 using CFR.CommonService.Services;
 using Microsoft.AspNetCore.Authentication.Certificate;
@@ -83,6 +84,7 @@ public static class ServiceExtension
 
         // Common DI Register for all API
         _ = services.AddScoped<ISMTPMailService, SMTPMailService>();
+        _ = services.AddScoped<IConfSettingsService, ConfSettingsService>();
         _ = services.AddScoped<IFileHandlerService, FileHandlerService>();
         _ = services.AddScoped<IInMemoryCacheHelper, InMemoryCacheHelper>();
 

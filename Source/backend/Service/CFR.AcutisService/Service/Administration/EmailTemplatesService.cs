@@ -119,6 +119,15 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                // [adm].[EmailTemplate].[Subject] is NVARCHAR(200) — reject here instead of
+                // letting the stored procedure silently truncate a longer subject on save.
+                if (input.Subject.Length > 200)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
                 if (input.TemplateId == 0 && string.IsNullOrWhiteSpace(input.TemplateCode))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
@@ -171,10 +180,10 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                string accentColor = string.IsNullOrWhiteSpace(input.AccentColor) ? "#1d4ed8" : input.AccentColor;
+                string accentColor = SMTPMailService.GetAccentColor();
                 string testSubject = input.Subject.Replace("[AccentColor]", accentColor);
                 string testBody = input.Body.Replace("[AccentColor]", accentColor);
-                bool sent = await mailService.SendMailAsync(testSubject, testBody, input.ToAddress, templateLogoUrl: input.LogoUrl, fontFamily: input.FontFamily, baseFontSize: input.BaseFontSize);
+                bool sent = await mailService.SendMailAsync(testSubject, testBody, input.ToAddress);
                 if (!sent)
                 {
                     result.StatusCode = ErrorCodes.Failed;

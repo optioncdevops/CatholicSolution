@@ -52,12 +52,18 @@ namespace CFR.CommonService
             public const string GetEmailTemplateById = nameof(GetEmailTemplateById);
             public const string SaveEmailTemplate = nameof(SaveEmailTemplate);
             public const string SendTestEmail = nameof(SendTestEmail);
+            public const string GetEmailSettings = nameof(GetEmailSettings);
+            public const string SaveEmailSettings = nameof(SaveEmailSettings);
+            public const string UploadEmailLogo = nameof(UploadEmailLogo);
+            public const string RemoveEmailLogo = nameof(RemoveEmailLogo);
             public const string GetAccessRequests = nameof(GetAccessRequests);
             public const string GetAccessRequestById = nameof(GetAccessRequestById);
             public const string SaveAccessRequest = nameof(SaveAccessRequest);
             public const string UpdateAccessRequestStatus = nameof(UpdateAccessRequestStatus);
             public const string GetHubProducts = nameof(GetHubProducts);
             public const string GetProducts = nameof(GetProducts);
+            public const string GetUserRights = nameof(GetUserRights);
+            public const string SaveUserRights = nameof(SaveUserRights);
         }
 
         public static class API_Profile
@@ -80,6 +86,7 @@ namespace CFR.CommonService
             public const string AssignOrganizationProduct = nameof(AssignOrganizationProduct);
             public const string RemoveOrganizationProduct = nameof(RemoveOrganizationProduct);
             public const string GetOrganizationLicenses = nameof(GetOrganizationLicenses);
+            public const string GetAllLicenses = nameof(GetAllLicenses);
             public const string UnlinkOrganizationUser = nameof(UnlinkOrganizationUser);
         }
 
@@ -108,6 +115,13 @@ namespace CFR.CommonService
             public const string UpdateLicense = nameof(UpdateLicense);
             public const string UploadProductLogo = nameof(UploadProductLogo);
             public const string UpdateProduct = nameof(UpdateProduct);
+            public const string GetProductLogo = nameof(GetProductLogo);
+            public const string GetProductCustomers = nameof(GetProductCustomers);
+        }
+
+        public static class API_Dashboard
+        {
+            public const string GetDashboardSummary = nameof(GetDashboardSummary);
         }
     }
 }

@@ -171,22 +171,6 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   }
 }
 
-/* Compact placeholder shown while the hosted App Switcher script registers. */
-.app-switcher-skeleton {
-  display: inline-flex;
-  min-height: 2.35rem;
-  min-width: 5.5rem;
-  border-radius: var(--radius-control, .625rem);
-  background: linear-gradient(90deg, var(--bg-subtle) 25%, var(--surface-muted) 37%, var(--bg-subtle) 63%);
-  background-size: 400% 100%;
-  animation: app-switcher-shimmer 1.4s ease infinite;
-}
-
-@keyframes app-switcher-shimmer {
-  0% { background-position: 100% 50%; }
-  100% { background-position: 0 50%; }
-}
-
 /* App Hub card actions: explicit CSS keeps button geometry stable across all cards. */
 .hub-card-actions {
   position: relative;
@@ -300,64 +284,6 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .app-topbar__name { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--font-display); font-size:.8125rem; font-weight:800; }
 .app-topbar__category { display:block; margin-top:.15rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#94a3b8; font-size:.625rem; font-weight:700; }
 .app-topbar__spacer { flex:1; }
-
-.app-switcher { position:relative; }
-.app-switcher__trigger {
-  display:inline-flex; min-height:2.875rem; align-items:center; gap:.625rem; border:1px solid #d8e0e9; border-radius:.95rem;
-  background:#fff; padding:.375rem .7rem .375rem .45rem; color:#12264c; font-family:var(--font-body); font-size:.8125rem; font-weight:800;
-  letter-spacing:-.01em; box-shadow:0 1px 2px rgba(15,23,42,.03); transition:border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
-}
-.app-switcher__trigger:hover,.app-switcher__trigger--open { border-color:#b8c3d1; background:#f8fafc; box-shadow:0 8px 22px rgba(15,23,42,.08); }
-.app-switcher__trigger:focus-visible { outline:3px solid rgba(217,168,63,.35); outline-offset:2px; }
-.app-switcher__trigger-icon { display:grid; width:2.125rem; height:2.125rem; place-items:center; border-radius:.72rem; background:#edf2f7; color:#12264c; }
-.app-switcher__chevron { color:#94a3b8; transition:transform 160ms ease; }
-.app-switcher__chevron--open { transform:rotate(180deg); }
-
-/* v1.3.5 catalog-synchronized launcher: published entries from App Hub `Your Apps`
-   are rendered in a dense adaptive grid. More than six destinations use three columns;
-   the current app is indicated by a quiet background state without an extra check badge. */
-.app-switcher__menu {
-  position:absolute; right:0; top:3.4rem; z-index:60; width:min(28rem,calc(100vw - 1.5rem)); max-height:calc(100dvh - 5rem); overflow:auto;
-  overscroll-behavior:contain; border:1px solid #e2e5eb; border-radius:1.25rem; background:#fff;
-  box-shadow:0 28px 80px rgba(15,23,42,.18),0 8px 22px rgba(15,23,42,.08);
-}
-.app-switcher__header { padding:.95rem 1rem .35rem; }
-.app-switcher__header h2 { margin:0; color:#7c7899; font-family:var(--font-body); font-size:.7rem; font-weight:850; line-height:1; letter-spacing:.13em; text-transform:uppercase; }
-.app-switcher__grid { display:grid; gap:.48rem; margin:0; padding:.45rem .75rem .72rem; list-style:none; }
-.app-switcher__grid--two { grid-template-columns:repeat(2,minmax(0,1fr)); }
-.app-switcher__grid--three { grid-template-columns:repeat(3,minmax(0,1fr)); }
-.app-switcher__grid li { min-width:0; }
-.app-switcher__tile {
-  position:relative; display:flex; min-height:4.85rem; min-width:0; align-items:center; justify-content:center; flex-direction:column; gap:.4rem;
-  border:1px solid transparent; border-radius:.9rem; background:#fff; padding:.5rem .35rem; text-align:center; text-decoration:none;
-  transition:border-color 160ms ease,background-color 160ms ease,box-shadow 160ms ease;
-}
-.app-switcher__tile:hover { border-color:#e1e6ee; background:#f8fafc; box-shadow:0 7px 18px rgba(15,23,42,.05); }
-.app-switcher__tile:focus-visible,.app-switcher__all-apps:focus-visible { outline:3px solid rgba(217,168,63,.32); outline-offset:2px; }
-.app-switcher__tile--current { background:#fff6df; }
-.app-switcher__tile--disabled { cursor:not-allowed; opacity:.52; }
-.app-switcher__app-icon { display:grid; width:2.5rem; height:2.5rem; flex-shrink:0; place-items:center; border-radius:.75rem; color:#fff; font-size:1rem; box-shadow:0 5px 13px rgba(15,23,42,.12); }
-.app-switcher__item-title { display:flex; min-height:1.9rem; max-width:100%; align-items:center; justify-content:center; color:#22223b; font-family:var(--font-body); font-size:.69rem; font-weight:800; line-height:1.18; letter-spacing:-.012em; overflow-wrap:anywhere; }
-.app-switcher__footer { border-top:1px solid #edf0f4; background:#fbfcfe; padding:.62rem .75rem .75rem; }
-.app-switcher__all-apps {
-  display:grid; grid-template-columns:1.1rem 1fr 1.1rem; min-height:2.8rem; width:100%; align-items:center; gap:.55rem; border:1px solid #ead9ad; border-radius:.85rem;
-  background:linear-gradient(100deg,#fffaf0,#fff7f4); padding:.58rem .78rem; color:#25233e; font-size:.73rem; font-weight:850; text-align:center; text-decoration:none;
-  transition:border-color 160ms ease,background-color 160ms ease,box-shadow 160ms ease;
-}
-.app-switcher__all-apps:hover { border-color:#dfc47c; background:linear-gradient(100deg,#fff8e8,#fff4ef); box-shadow:0 7px 18px rgba(15,23,42,.045); }
-.app-switcher__all-apps svg:last-child { justify-self:end; color:#9b8460; }
-@media (max-width:560px) {
-  .app-switcher__menu { right:-.25rem; width:min(27rem,calc(100vw - .75rem)); }
-  .app-switcher__header { padding-left:.7rem; padding-right:.7rem; }
-  .app-switcher__grid { gap:.4rem; padding-left:.5rem; padding-right:.5rem; }
-  .app-switcher__footer { padding-left:.5rem; padding-right:.5rem; }
-  .app-switcher__tile { min-height:4.7rem; border-radius:.82rem; }
-  .app-switcher__app-icon { width:2.35rem; height:2.35rem; border-radius:.7rem; }
-  .app-switcher__item-title { font-size:.66rem; }
-}
-@media (max-width:400px) {
-  .app-switcher__grid--three { grid-template-columns:repeat(2,minmax(0,1fr)); }
-}
 
 .profile-menu { position:relative; }
 .profile-menu__trigger { display:inline-flex; min-height:2.75rem; align-items:center; gap:.55rem; border:1px solid transparent; border-radius:.9rem; background:transparent; padding:.25rem .4rem; transition:border-color 160ms ease, background-color 160ms ease; }
@@ -1259,58 +1185,38 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .brand-lockup {
   display:inline-flex;
   align-items:center;
-  gap:.65rem;
   border-radius:.8rem;
   text-decoration:none;
 }
-.brand-lockup__symbol {
-  display:grid;
-  width:2.15rem;
-  height:2.15rem;
-  flex-shrink:0;
-  place-items:center;
-  border:1px solid rgba(217,168,63,.34);
-  border-radius:.72rem;
-  background:#fff9eb;
-  color:#b47d18;
-  font-family:var(--font-serif);
-  font-size:1.05rem;
-  font-weight:700;
+/* The logo PNG has a solid white background (no alpha) baked in, so it's framed in a white pill
+   here rather than placed directly on a surface — keeps it legible on both light and `inverse`
+   (dark) backgrounds without needing a separate cropped/transparent asset. The source image is a
+   wide lockup (mark + "Catholic Solutions" wordmark, ~4:1), so it's sized by height with the pill
+   sized generously enough for the wordmark to stay legible — a tall-but-narrow frame (as if it
+   were still the old icon-only mark) crushes the wordmark down to nothing. */
+.brand-lockup__image-frame {
+  display:inline-flex;
+  align-items:center;
+  height:2.9rem;
+  padding:0 .8rem;
+  border-radius:.62rem;
+  border:1px solid rgba(15,23,42,.08);
+  background:#fff;
   box-shadow:0 5px 14px rgba(15,23,42,.06);
 }
-.brand-lockup__wordmark { display:block; min-width:0; line-height:1; }
-.brand-lockup__name {
+.brand-lockup__image {
   display:block;
-  color:#12264c;
-  font-family:var(--font-serif);
-  font-size:1.08rem;
-  font-weight:700;
-  letter-spacing:-.015em;
+  height:2rem;
+  width:auto;
 }
-.brand-lockup__subname {
-  display:block;
-  margin-top:.28rem;
-  color:#b47d18;
-  font-size:.5rem;
-  font-weight:800;
-  letter-spacing:.27em;
+.brand-lockup--inverse .brand-lockup__image-frame {
+  border-color:rgba(255,255,255,.16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 5px 14px rgba(0,0,0,.18);
 }
-.brand-lockup--inverse .brand-lockup__symbol {
-  border-color:rgba(232,181,74,.42);
-  background:rgba(255,255,255,.09);
-  color:#f2c45f;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
-}
-.brand-lockup--inverse .brand-lockup__name { color:#fff; }
-.brand-lockup--inverse .brand-lockup__subname { color:#e8b54a; }
-.brand-lockup--compact { gap:.5rem; }
-.brand-lockup--compact .brand-lockup__symbol { width:1.85rem; height:1.85rem; border-radius:.62rem; font-size:.9rem; }
-.brand-lockup--compact .brand-lockup__name { font-size:.94rem; }
-.brand-lockup--compact .brand-lockup__subname { margin-top:.2rem; font-size:.43rem; }
-.brand-lockup--prominent { gap:.85rem; }
-.brand-lockup--prominent .brand-lockup__symbol { width:2.8rem; height:2.8rem; border-radius:.88rem; font-size:1.35rem; }
-.brand-lockup--prominent .brand-lockup__name { font-size:1.45rem; }
-.brand-lockup--prominent .brand-lockup__subname { margin-top:.32rem; font-size:.57rem; letter-spacing:.3em; }
+.brand-lockup--compact .brand-lockup__image-frame { height:3rem; padding:0 .75rem; border-radius:.6rem; }
+.brand-lockup--compact .brand-lockup__image { height:2.15rem; }
+.brand-lockup--prominent .brand-lockup__image-frame { height:3.6rem; padding:0 .95rem; border-radius:.85rem; }
+.brand-lockup--prominent .brand-lockup__image { height:2.4rem; }
 
 .auth-brand-panel__content { padding:clamp(1.45rem,3vh,2.25rem) clamp(1.75rem,3.3vw,3.65rem) 1rem; }
 .auth-brand-panel__hero { margin-top:clamp(1.25rem,3vh,2.2rem); max-width:36rem; }
@@ -1347,8 +1253,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .app-footer--auth .app-footer__mission,
 .app-footer--auth .app-footer__divider { display:none; }
 .app-footer--auth .app-footer__legal { padding:.35rem clamp(1rem,2.5vw,2rem); }
-.app-footer--auth .brand-lockup--compact .brand-lockup__symbol { width:1.6rem; height:1.6rem; }
-.app-footer--auth .brand-lockup--compact .brand-lockup__name { font-size:.8rem; }
+.app-footer--auth .brand-lockup--compact .brand-lockup__image-frame { height:1.95rem; padding:0 .5rem; }
+.app-footer--auth .brand-lockup--compact .brand-lockup__image { height:1.25rem; }
 
 .request-access-topbar--minimal { min-height:3.25rem; padding:.35rem clamp(1rem,2.2vw,2rem); }
 .request-access-main--full { max-width:none; padding:.6rem clamp(1rem,2.5vw,2.5rem) .75rem; }
@@ -1428,7 +1334,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   .request-access-form--compact .request-access-products--full { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:560px) {
-  .brand-lockup--prominent .brand-lockup__name { font-size:1.2rem; }
+  .brand-lockup--prominent .brand-lockup__image-frame { height:3.1rem; padding:0 .8rem; }
+  .brand-lockup--prominent .brand-lockup__image { height:2rem; }
   .request-access-form--compact .request-access-products--full { grid-template-columns:1fr; }
 }
 
@@ -3448,8 +3355,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
     min-height: 0;
     overflow: hidden;
   }
-  .brand-lockup--prominent .brand-lockup__name { font-size: 1.15rem; }
-  .brand-lockup--prominent .brand-lockup__symbol { width: 2.35rem; height: 2.35rem; }
+  .brand-lockup--prominent .brand-lockup__image-frame { height: 2.9rem; padding: 0 .75rem; }
+  .brand-lockup--prominent .brand-lockup__image { height: 1.9rem; }
 }
 
 .kpi-card { border-radius: var(--radius-panel); }

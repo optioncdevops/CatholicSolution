@@ -201,7 +201,7 @@ const InputFieldInner = <TFieldValues extends FieldValues = FieldValues>({
           : "";
 
     const inputBaseClasses = isAuthVariant
-      ? "min-h-10 h-auto w-full rounded-md border bg-background px-3 py-2.5 text-[0.9375rem] leading-[1.35] text-foreground shadow-none transition-[color,background-color,border-color,box-shadow] placeholder:text-foreground-subtle focus:bg-background focus:outline-none focus:ring-2 focus:ring-offset-0 dark:border-primary-600/50 dark:bg-primary-950/45 dark:text-foreground dark:placeholder:text-white/45 dark:focus:bg-primary-950/45"
+      ? "min-h-10 h-auto w-full rounded-md border bg-background px-3 py-2.5 text-[0.875rem] leading-[1.35] text-foreground shadow-none transition-[color,background-color,border-color,box-shadow] placeholder:text-foreground-subtle focus:bg-background focus:outline-none focus:ring-2 focus:ring-offset-0 dark:border-primary-600/50 dark:bg-primary-950/45 dark:text-foreground dark:placeholder:text-white/45 dark:focus:bg-primary-950/45"
       : isDisabled || isReadOnly
         ? themeFieldShellClass
         : themeFieldBaseClass;

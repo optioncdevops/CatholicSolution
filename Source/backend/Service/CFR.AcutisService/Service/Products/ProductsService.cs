@@ -208,6 +208,36 @@ namespace CFR.AcutisService.Service.Products
         }
 
         /// <summary>
+        /// Retrieves per-product organization assignment counts.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the admin dashboard's App Access Overview with real assignment data.
+        /// Request Flow: ProductsController -> ProductsService.GetProductAssignmentSummaryAsync() -> IProductsRepository.GetProductAssignmentSummaryAsync().
+        /// Validation Details: None.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IProductsRepository.GetProductAssignmentSummaryAsync().
+        /// Response Details: MSResultArgs containing List of ProductAssignmentSummaryOutput.
+        /// </remarks>
+        /// <returns>MSResultArgs containing the per-product organization assignment summaries.</returns>
+        public async Task<MSResultArgs> GetProductAssignmentSummaryAsync()
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                var data = await repository.GetProductAssignmentSummaryAsync();
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchProductAssignmentSummaryFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Retrieves a product logo image from local storage.
         /// </summary>
         /// <remarks>
@@ -354,7 +384,7 @@ namespace CFR.AcutisService.Service.Products
                 if (createdId == -95)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = "Invalid Organization or Product for license creation.";
+                    result.StatusMessage = ErrorMessages.InvalidLicenseOrgProduct;
                     return result;
                 }
 
@@ -432,7 +462,7 @@ namespace CFR.AcutisService.Service.Products
                         input.LogoName = Path.GetFileName(existingLogo.Replace('\\', '/'));
                         input.LogoUrl = input.LogoName;
                     }
-                    input.ContactPerson ??= existingProduct.ContactPerson;
+                    input.ContactUserId ??= existingProduct.ContactUserId;
                     if (input.DefaultAccessDays <= 0)
                     {
                         input.DefaultAccessDays = existingProduct.DefaultAccessDays > 0 ? existingProduct.DefaultAccessDays : 365;
@@ -511,7 +541,7 @@ namespace CFR.AcutisService.Service.Products
                 if (updatedId == -95)
                 {
                     result.StatusCode = ErrorCodes.NotFound;
-                    result.StatusMessage = "License not found.";
+                    result.StatusMessage = ErrorMessages.LicenseNotFound;
                     return result;
                 }
 

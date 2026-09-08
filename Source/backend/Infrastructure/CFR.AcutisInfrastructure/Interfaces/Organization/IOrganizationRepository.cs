@@ -116,6 +116,20 @@ namespace CFR.AcutisInfrastructure.Interfaces.Organization
         /// <returns>A list of licenses issued against the organization's products.</returns>
         Task<List<OrganizationLicenseOutput>> GetOrganizationLicensesAsync(long orgId);
 
+        /// <summary>
+        /// Retrieves every license issued across all organizations.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the admin dashboard's platform-wide "Licenses" KPI.
+        /// Request Flow: IOrganizationService -> IOrganizationRepository.GetAllLicensesAsync() -> SQL Database.
+        /// Validation Details: None.
+        /// Business Logic: Joins lic.License to lic.OrganizationProduct, core.Product, and core.Organization; directly retrieves rows without manipulation.
+        /// Repository Interaction: Executes StoredProc.Organization.OrganizationCrud with ActionId 11.
+        /// Response Details: Returns a list of LicenseSummaryOutput records.
+        /// </remarks>
+        /// <returns>A list of licenses issued across all organizations.</returns>
+        Task<List<LicenseSummaryOutput>> GetAllLicensesAsync();
+
         #endregion GET Methods
 
         #region POST Methods

@@ -1,0 +1,29 @@
+<Project>
+
+  <!--
+    Shared build settings for every Automation.* project.
+    Keeping the target framework and language settings here means a future
+    upgrade is a one-line change instead of ten.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <!--
+    MSBuild stops at the first Directory.Build.props it finds walking up, so this
+    file shadows BackEnd\Directory.Build.props. The analyzer settings from there
+    are repeated here; the shared BackEnd\.editorconfig supplies the severities.
+  -->
+  <PropertyGroup>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <NoWarn>$(NoWarn);EnableGenerateDocumentationFile</NoWarn>
+  </PropertyGroup>
+
+</Project>

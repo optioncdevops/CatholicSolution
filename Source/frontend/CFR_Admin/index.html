@@ -4,12 +4,121 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#12264c" />
-    <link rel="icon" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <title>CFRAdmin</title>
+    <style>
+      /* Boot preloader — inlined so it paints before the app bundle/CSS finish loading, with
+         zero white flash. Removed by main.tsx once the React app has mounted; kept in sync
+         visually with shared/app/components/AppLoader.tsx (the in-app Suspense fallback), but
+         necessarily a separate stylesheet since this one must render before any bundle exists. */
+      #app-preloader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        background: radial-gradient(120% 120% at 50% 0%, #1b3560 0%, #12264c 55%, #0d1d3a 100%);
+        transition: opacity 320ms ease, visibility 320ms ease;
+      }
+      #app-preloader[data-hide="true"] {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .app-preloader__mark {
+        display: grid;
+        place-items: center;
+        height: 3.5rem;
+        padding: 0 1.1rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(232, 181, 74, 0.4);
+        background: #fff;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 30px -8px rgba(0, 0, 0, 0.5);
+      }
+      .app-preloader__mark img {
+        display: block;
+        height: 2.3rem;
+        width: auto;
+      }
+      .app-preloader__sub {
+        margin-top: -0.75rem;
+        font-size: 0.625rem;
+        font-weight: 800;
+        letter-spacing: 0.32em;
+        color: #e8b54a;
+        text-align: center;
+      }
+      .app-preloader__ring {
+        position: relative;
+        width: 2.5rem;
+        height: 2.5rem;
+      }
+      .app-preloader__ring::before,
+      .app-preloader__ring::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2.5px solid transparent;
+      }
+      .app-preloader__ring::before {
+        border-top-color: rgba(232, 181, 74, 0.18);
+        border-right-color: rgba(232, 181, 74, 0.18);
+        border-bottom-color: rgba(232, 181, 74, 0.18);
+        border-left-color: rgba(232, 181, 74, 0.18);
+      }
+      .app-preloader__ring::after {
+        border-top-color: #e8b54a;
+        animation: app-preloader-spin 850ms linear infinite;
+      }
+      .app-preloader__bar {
+        width: 9rem;
+        height: 3px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .app-preloader__bar::after {
+        content: '';
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, #e8b54a, transparent);
+        background-size: 60% 100%;
+        animation: app-preloader-slide 1.1s ease-in-out infinite;
+      }
+      .app-preloader__caption {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.55);
+      }
+      @keyframes app-preloader-spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes app-preloader-slide {
+        0% { transform: translateX(-120%); }
+        100% { transform: translateX(220%); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .app-preloader__ring::after { animation: none; border-top-color: #e8b54a; }
+        .app-preloader__bar::after { animation: none; transform: none; background: #e8b54a; }
+      }
+    </style>
   </head>
   <body>
+    <div id="app-preloader" role="status" aria-live="polite" aria-label="Loading CFR Acutis">
+      <span class="app-preloader__mark">
+        <img src="/src/assets/images/logo/catholic_solutions_logo.png" alt="Catholic Solutions" />
+      </span>
+      <p class="app-preloader__sub">CFR ACUTIS</p>
+      <div class="app-preloader__ring" aria-hidden="true"></div>
+      <div class="app-preloader__bar" aria-hidden="true"></div>
+      <p class="app-preloader__caption">Loading your workspace&hellip;</p>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script src="%VITE_APP_SWITCHER_URL%" defer></script>
   </body>
 </html>

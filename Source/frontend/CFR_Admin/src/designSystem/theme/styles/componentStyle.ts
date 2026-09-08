@@ -14,10 +14,12 @@ import { cn } from "@app/utilities/cn";
 
 // ── Typography ───────────────────────────────────────────────────────
 
-/** Standard form label. `capitalize` renders every label in Title Case without requiring
+/** Standard form label. Sized to match the field's own text (`--admin-text-base`) rather than a
+ * smaller label size, with a 500-weight (not bold) — the label should read as a caption for the
+ * value, not compete with it. `capitalize` renders every label in Title Case without requiring
  * each call site to hand-author its label string that way. */
 export const themeLabelClass =
-  "text-[length:var(--admin-text-xs)] [font-weight:var(--admin-weight-bold)] text-[var(--text-secondary)] capitalize";
+  "text-[length:var(--admin-text-base)] [font-weight:var(--admin-weight-regular)] text-[var(--text-secondary)] capitalize";
 
 /** Input values, dropdown triggers, picker triggers, and control text. */
 export const themeFormControlTextClass =

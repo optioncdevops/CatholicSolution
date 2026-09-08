@@ -65,11 +65,11 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
   const openLicense = (row: ProductLicenseHistoryRow) => {
     setViewingInvoice({
       id: row.id,
-      licenseNumber: `LIC-${String(row.licenseId).padStart(5, '0')}`,
+      licenseNumber: row.invoiceNumber,
       licenseKey: '',
       orgId: row.orgId,
       appId: app.id,
-      title: `${row.customer} — ${app.name}`,
+      title: `${row.customer} — ${row.invoiceNumber}`,
       startDate: row.startDate,
       expiryDate: row.expiryDate,
       status: 'active',
@@ -93,7 +93,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
       excludeFromExport: true,
       cell: (row) => (
         <CommonIconButton
-          aria-label={`View license history for ${row.customer}`}
+          aria-label={`View invoice ${row.invoiceNumber}`}
           tooltip="View"
           icon={<Eye size={15} />}
           onClick={() => openLicense(row)}
@@ -113,6 +113,17 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
       width: '18rem',
       value: (row) => row.customer,
       cell: (row) => <span className="font-bold text-[var(--text-primary)]">{row.customer}</span>,
+    },
+    {
+      id: 'invoiceNumber',
+      header: 'Invoice',
+      width: '12rem',
+      value: (row) => row.invoiceNumber,
+      cell: (row) => (
+        <span className="font-mono text-xs text-[var(--text-secondary)]">
+          {row.invoiceNumber}
+        </span>
+      ),
     },
     {
       id: 'startDate',

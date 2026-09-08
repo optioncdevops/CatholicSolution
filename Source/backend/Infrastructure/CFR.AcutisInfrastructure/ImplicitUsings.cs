@@ -11,6 +11,7 @@ global using CFR.AcutisInfrastructure.Interfaces.Administration;
 global using CFR.AcutisInfrastructure.Interfaces.Organization;
 global using CFR.AcutisInfrastructure.Interfaces.Profile;
 global using CFR.AcutisInfrastructure.Interfaces.Products;
+global using CFR.AcutisInfrastructure.Interfaces.Dashboard;
 global using CFR.AcutisInfrastructure.Models.Input;
 global using CFR.AcutisInfrastructure.Models.Output;
 global using CFR.CommonService.Interfaces;

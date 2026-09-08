@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Mail, Phone, Trash2, User } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonIconButton } from '@app/components/buttons';
 import { StatusBadge } from '@app/components/Badge';
-import { EntityAvatar } from '@app/components/EntityAvatar';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '@/modules/lib/confirm';
 import { formatDate } from '@/modules/utils/formatDate';
@@ -24,10 +23,9 @@ const columns = (
       <button
         type="button"
         onClick={() => onView(user)}
-        className="flex min-w-0 items-center gap-2.5 text-left hover:underline"
+        className="min-w-0 text-left hover:underline"
         aria-label={`View ${user.fullName || user.email}`}
       >
-        <EntityAvatar name={user.fullName || user.email} size={28} />
         <span className="truncate font-bold text-[var(--text-primary)]">{user.fullName || user.email}</span>
       </button>
     ),
@@ -39,8 +37,8 @@ const columns = (
   },
   {
     id: 'role', header: 'Role',
-    value: () => 'Member',
-    cell: () => <span className="text-[var(--text-secondary)]">Member</span>,
+    value: (user) => user.roleName ?? '',
+    cell: (user) => <span className="text-[var(--text-secondary)]">{user.roleName || '—'}</span>,
   },
   {
     id: 'memberStatus', header: 'Membership',
@@ -48,9 +46,23 @@ const columns = (
     cell: (user) => <StatusBadge status={user.memberStatus === 'active' ? 'active' : 'inactive'} kind="user" />,
   },
   {
-    id: 'appCount', header: 'Apps',
-    value: (user) => user.appCount,
-    cell: (user) => <span className="text-[var(--text-secondary)]">{user.appCount}</span>,
+    id: 'appAccess', header: 'App Access', width: '18rem',
+    value: (user) => user.appNames ?? '',
+    cell: (user) => {
+      const apps = user.appNames ? user.appNames.split(', ').filter(Boolean) : [];
+      if (apps.length === 0) return <span className="text-[var(--text-faint)]">No app access</span>;
+      // Every app is shown — no "+N more" truncation, since that had no way to expand it.
+      // Chips wrap onto additional lines within the cell instead of being hidden.
+      return (
+        <span className="flex flex-wrap items-center gap-1 py-1">
+          {apps.map((app) => (
+            <span key={app} className="inline-flex items-center rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--text-secondary)]">
+              {app}
+            </span>
+          ))}
+        </span>
+      );
+    },
   },
   {
     id: 'lastLogin', header: 'Last Login',
@@ -86,21 +98,6 @@ const columns = (
   },
 ];
 
-function ContactDetail({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string | null }) {
-  if (!value) return null;
-  return (
-    <div className="flex items-center gap-2">
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--surface-muted)] text-[var(--text-muted)]" aria-hidden="true">
-        <Icon size={14} />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[0.625rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">{label}</p>
-        <p className="truncate text-[0.8125rem] font-bold text-[var(--text-primary)]">{value}</p>
-      </div>
-    </div>
-  );
-}
-
 type OrganizationUsersPanelProps = {
   orgId: number;
   organization: OrganizationApiItem;
@@ -109,11 +106,12 @@ type OrganizationUsersPanelProps = {
 };
 
 // View + unlink only — linking a user to an organization from here has been removed. There is no
-// "Edit" action: organization members (auth.User) are a distinct population from CFR Admin's own
-// Users module (auth.AcutisUser, internal staff accounts) and have no editable profile fields or
-// role concept in this system today — "Role" is shown as a fixed "Member" label rather than
-// fabricated per-user data, and "Last Login" is honestly marked "Not tracked" since member
-// sign-in timestamps aren't recorded anywhere in the schema.
+// "Edit" action: organization members (auth.UserProduct) are a distinct population from CFR
+// Admin's own Users module (auth.AcutisUser, internal staff accounts) and have no editable
+// profile fields in this system today. "Role" shows the real auth.UserProduct.RoleId resolved
+// against auth.AcutisRole when it matches, or a dash when it doesn't — never fabricated. "Last
+// Login" is honestly marked "Not tracked" since member sign-in timestamps aren't recorded
+// anywhere in the schema.
 const OrganizationUsersPanel = ({ orgId, organization, users, onChanged }: OrganizationUsersPanelProps) => {
   //#region Hooks
   const navigate = useNavigate();
@@ -152,41 +150,19 @@ const OrganizationUsersPanel = ({ orgId, organization, users, onChanged }: Organ
   };
   //#endregion
 
-  const hasPrimaryContact = Boolean(organization.contactPerson || organization.contactPhone || organization.contactEmail);
+  if (users.length === 0) {
+    return <EmptyState icon="👥" title="No users linked" description="Users linked to this organization will appear here." />;
+  }
 
   return (
-    <div className="flex flex-col gap-4">
-      {hasPrimaryContact ? (
-        <section className="admin-panel-card">
-          <div className="admin-panel-card__header"><h2 className="panel-title">Primary Contact</h2></div>
-          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3">
-            <ContactDetail icon={User} label="Contact Person" value={organization.contactPerson} />
-            <ContactDetail icon={Phone} label="Contact Number" value={organization.contactPhone} />
-            <ContactDetail icon={Mail} label="Contact Email" value={organization.contactEmail} />
-          </div>
-        </section>
-      ) : null}
-
-      <section className="admin-panel-card">
-        <div className="admin-panel-card__header"><h2 className="panel-title">Linked Users</h2></div>
-        <p className="px-4 pt-3 text-sm text-[var(--text-muted)]">Users linked to this organization can access the applications assigned to the organization.</p>
-
-        <div className="p-4">
-          {users.length === 0 ? (
-            <EmptyState icon="👥" title="No users linked" description="Users linked to this organization will appear here." />
-          ) : (
-            <DataTable
-              data={users}
-              columns={columns(handleView, handleUnlink, unlinkingUserId)}
-              getRowId={(user) => String(user.authUserId)}
-              exportFileName="organization-users"
-              exportTitle="Organization — Users"
-              emptyMessage="No users found."
-            />
-          )}
-        </div>
-      </section>
-    </div>
+    <DataTable
+      data={users}
+      columns={columns(handleView, handleUnlink, unlinkingUserId)}
+      getRowId={(user) => String(user.authUserId)}
+      exportFileName="organization-users"
+      exportTitle="Organization — Users"
+      emptyMessage="No users found."
+    />
   );
 };
 

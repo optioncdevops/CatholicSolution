@@ -130,11 +130,12 @@ const TextareaFieldInner = <TFieldValues extends FieldValues = FieldValues>({
   onChange,
   disabled,
   readOnly,
+  id,
   ...props
 }: TextareaFieldProps<TFieldValues>) => {
   const reactId = useId();
   const [isFocused, setIsFocused] = useState(false);
-  const fieldId = name ?? `textarea-${reactId.replace(/:/g, "")}`;
+  const fieldId = id ?? name ?? `textarea-${reactId.replace(/:/g, "")}`;
   const errorId = `${fieldId}-error`;
   const helperId = `${fieldId}-helper`;
 

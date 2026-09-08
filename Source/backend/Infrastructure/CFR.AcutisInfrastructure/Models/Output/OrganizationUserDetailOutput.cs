@@ -25,11 +25,17 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string? Email { get; set; }
 
         /// <summary>
-        /// Gets or sets a best-effort display name (from the member's most recent auth.UserProduct
-        /// row, falling back to Email when the member has none).
+        /// Gets or sets the member's display name, from auth.UserProduct.FirstName/LastName.
         /// </summary>
         [JsonPropertyName("fullName")]
         public string FullName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a best-effort role name (auth.AcutisRole lookup by
+        /// auth.UserProduct.RoleId), or null when the RoleId has no match in that table.
+        /// </summary>
+        [JsonPropertyName("roleName")]
+        public string? RoleName { get; set; }
 
         /// <summary>
         /// Gets or sets the organization identifier this membership belongs to.
@@ -38,13 +44,13 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public long OrgId { get; set; }
 
         /// <summary>
-        /// Gets or sets the organization's display name.
+        /// Gets or sets the organization's display name (auth.UserProduct.OrgName).
         /// </summary>
         [JsonPropertyName("orgName")]
         public string OrgName { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the membership status for this organization link.
+        /// Gets or sets the membership status, derived from IsLoginDisabled/IsLocked.
         /// </summary>
         [JsonPropertyName("memberStatus")]
         public string MemberStatus { get; set; } = string.Empty;

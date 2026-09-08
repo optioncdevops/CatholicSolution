@@ -4,13 +4,10 @@ import { Building2, Eye, Pencil, RefreshCw, Search } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { EmptyState } from "@shared/app/components/EmptyState";
 import { useToast } from "@shared/app/components/ToastProvider";
-import { CommonButton, CommonIconButton } from "@app/components/buttons";
+import { CommonIconButton } from "@app/components/buttons";
 import { InputField, Dropdown } from "@app/components/formControls";
 import { StatusBadge } from "@app/components/Badge";
-import { BaseModal } from "@app/components/modal/BaseModal";
 import { formatDate } from "@/modules/utils/formatDate";
-import { confirmAction } from "@/modules/lib/confirm";
-import { STATUS_IMPACT, CHANGE_STATUS_DESCRIPTION } from "../validator/productValidation";
 import { getProducts, updateProduct } from "../services/productService";
 import type {
   ProductApiItem,
@@ -28,107 +25,11 @@ import {
 import {
   PRODUCT_STATUS_FILTERS,
   PRODUCT_SORT_OPTIONS,
-  PRODUCT_MODAL_STATUS_OPTIONS,
   type ProductStatusFilter,
   type ProductSortOption,
 } from "../utils/productFilters";
-import type { AdminApplication, ProductStatus } from "@/modules/types";
-
-
-
-function ProductStatusDialog({
-  app,
-  onClose,
-  onConfirm,
-  pendingStatus,
-  onSelectStatus,
-}: {
-  app: AdminApplication | null;
-  onClose: () => void;
-  onConfirm: (status: ProductStatus) => void;
-  pendingStatus: ProductStatus | null;
-  onSelectStatus: (status: ProductStatus | null) => void;
-}) {
-  const commitStatusChange = async () => {
-    if (!pendingStatus) return;
-    const confirmed = await confirmAction({
-      title: `Set status to "${pendingStatus.replace("-", " ")}"?`,
-      description: STATUS_IMPACT[pendingStatus],
-      confirmLabel: "Confirm status change",
-      tone: pendingStatus === "inactive" ? "danger" : "primary",
-    });
-    if (confirmed) onConfirm(pendingStatus);
-  };
-
-  return (
-    <BaseModal
-      isOpen={Boolean(app)}
-      onClose={onClose}
-      title={app ? `Change Status — ${app.name}` : ""}
-      size="sm"
-      closeOnOverlayClick={false}
-      autoFocus={false}
-      footer={
-        <>
-          <CommonButton variant="outline" onClick={onClose}>
-            Cancel
-          </CommonButton>
-          <CommonButton
-            variant="primary"
-            disabled={!pendingStatus || pendingStatus === app?.status}
-            onClick={() => void commitStatusChange()}
-          >
-            Continue
-          </CommonButton>
-        </>
-      }
-    >
-      {app ? (
-        <div className="flex flex-col gap-3.5">
-          <p className="text-xs font-medium leading-relaxed text-[var(--text-secondary)]">
-            {CHANGE_STATUS_DESCRIPTION}
-          </p>
-          <fieldset className="flex flex-col gap-2">
-            <legend className="sr-only">New Status</legend>
-            {PRODUCT_MODAL_STATUS_OPTIONS.map((status) => {
-              const isCurrent = status === app.status;
-              const isSelected = pendingStatus === status;
-              return (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => onSelectStatus(status)}
-                  disabled={isCurrent}
-                  aria-pressed={isSelected}
-                  className={`flex items-center justify-between gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left transition-all ${
-                    isCurrent
-                      ? "border-[var(--line-soft)] bg-[var(--surface-muted)] opacity-70 cursor-not-allowed"
-                      : isSelected
-                        ? "border-[var(--primary)] bg-[var(--primary-muted)] shadow-xs ring-2 ring-[var(--primary)]/20 cursor-pointer"
-                        : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--primary)]/60 hover:bg-[var(--hover)] cursor-pointer"
-                  }`}
-                >
-                  <StatusBadge status={status} kind="application" />
-                  {isCurrent ? (
-                    <span className="rounded-full border border-[var(--line-soft)] bg-[var(--surface)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-                      Current
-                    </span>
-                  ) : isSelected ? (
-                    <span className="flex size-4 shrink-0 items-center justify-center rounded-full border-2 border-[var(--primary)] bg-[var(--primary)]">
-                      <span className="size-1.5 rounded-full bg-[var(--surface)]" />
-                    </span>
-                  ) : (
-                    <span className="size-4 shrink-0 rounded-full border-2 border-[var(--line-strong)]" />
-                  )}
-                </button>
-              );
-            })}
-          </fieldset>
-        </div>
-      ) : null}
-    </BaseModal>
-  );
-}
+import type { ProductStatus } from "@/modules/types";
+import { ProductStatusModal } from "./partials/ProductStatusModal";
 
 const ProductList = () => {
   //#region Hooks
@@ -181,7 +82,8 @@ const ProductList = () => {
     if (!selectedProduct) return;
     try {
       const isActive = status !== "inactive";
-      const productStatus = status === "active" ? 1 : status === "coming-soon" ? 2 : null;
+      const productStatus =
+        status === "active" ? 1 : status === "coming-soon" ? 2 : null;
       const payload: ProductInputPayload = {
         productId: selectedProduct.productId,
         productName: selectedProduct.productName,
@@ -189,9 +91,11 @@ const ProductList = () => {
         prodDescription: selectedProduct.prodDescription,
         externalPageUrl: selectedProduct.externalPageUrl,
         defaultAccessDays: selectedProduct.defaultAccessDays,
+        licenseType: selectedProduct.licenseType,
+        navigationTarget: selectedProduct.navigationTarget,
         isActive,
         productStatus,
-        contactPerson: selectedProduct.contactPerson,
+        contactUserId: selectedProduct.contactUserId,
       };
       await updateProduct(payload);
       showToast(
@@ -439,7 +343,7 @@ const ProductList = () => {
       )}
 
       {selectedProduct && statusDialogOpen && (
-        <ProductStatusDialog
+        <ProductStatusModal
           app={{
             id: String(selectedProduct.productId),
             name: selectedProduct.productName,
@@ -458,7 +362,7 @@ const ProductList = () => {
             licenseType: "licensed",
             navigationTarget: "same-tab",
             registryRef: `reg_app_${String(selectedProduct.productId).padStart(4, "0")}`,
-            sourceLocation: `SaaS_Apps/${selectedProduct.productName.toLowerCase().replace(/\s+/g, "-")}`,
+            sourceLocation: selectedProduct.productName.toLowerCase().replace(/\s+/g, "-"),
             updatedAt:
               selectedProduct.updatedDate || selectedProduct.createdDate,
           }}

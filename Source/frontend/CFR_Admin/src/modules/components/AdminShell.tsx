@@ -9,6 +9,7 @@ import {
 import { createPortal } from "react-dom";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Bell, ChevronDown, Settings } from "lucide-react";
+import { AppLoader } from "@shared/app/components/AppLoader";
 import { Brand } from "@shared/app/components/Brand";
 import { Footer } from "@shared/app/components/Footer";
 import { ProfileMenu } from "@shared/app/components/ProfileMenu";
@@ -24,6 +25,16 @@ import "../admin.css";
 
 const CONTAINER = "mx-auto w-[95%]";
 
+/** Turns a backend-supplied menu title (e.g. "User Roles") into a stable PascalCase id suffix
+ * ("UserRoles") — deterministic per menu entry, per the Stable Control IDs standard. */
+function toMenuIdSuffix(label: string): string {
+  return label
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
+}
+
 interface NavDropdownItem {
   to: string;
   label: string;
@@ -32,10 +43,12 @@ interface NavDropdownItem {
 
 /** Shared hover/click dropdown behind both the "Administration" and "Masters" nav menus. */
 function NavDropdown({
+  id,
   label,
   icon: TriggerIcon,
   items,
 }: {
+  id: string;
   label: string;
   icon: ComponentType<{ size?: number }>;
   items: NavDropdownItem[];
@@ -112,6 +125,7 @@ function NavDropdown({
       onMouseLeave={scheduleClose}
     >
       <button
+        id={id}
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
@@ -144,6 +158,7 @@ function NavDropdown({
               {items.map(({ to, label: itemLabel, icon: Icon }) => (
                 <NavLink
                   key={to}
+                  id={`menuItem${toMenuIdSuffix(itemLabel)}`}
                   to={to}
                   role="menuitem"
                   onClick={() => setOpen(false)}
@@ -202,7 +217,7 @@ export function AdminShell() {
       <div className="admin-top-accent" aria-hidden="true" />
       <header className="sticky top-0 z-40 bg-[var(--surface)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--surface)]/80">
         <div
-          className={`flex h-14 items-center gap-4 border-b border-[var(--line-soft)] ${CONTAINER}`}
+          className={`flex h-16 items-center gap-4 border-b border-[var(--line-soft)] ${CONTAINER}`}
         >
           <div className="flex shrink-0 items-center gap-3">
             <Brand compact />
@@ -215,6 +230,7 @@ export function AdminShell() {
 
           <div className="flex shrink-0 items-center gap-1.5">
             <button
+              id="ibtnNotifications"
               type="button"
               aria-label="Notifications"
               title="Notifications"
@@ -228,6 +244,7 @@ export function AdminShell() {
 
         <div className="admin-nav-strip">
           <nav
+            id="menuAdminNavigation"
             aria-label="Admin navigation"
             className={`admin-nav-scroll flex items-center overflow-x-auto ${CONTAINER}`}
           >
@@ -237,6 +254,7 @@ export function AdminShell() {
               return (
                 <NavLink
                   key={item.sessionKey || item.path}
+                  id={`menuItem${toMenuIdSuffix(item.title || item.path || "")}`}
                   to={item.path || "/admin"}
                   end={item.path === "/admin"}
                   className={`admin-nav-item ${active ? "admin-nav-item--active" : ""}`}
@@ -248,6 +266,7 @@ export function AdminShell() {
             })}
             {administrationItems.length > 0 ? (
               <NavDropdown
+                id={`menu${toMenuIdSuffix(administration?.title || "Administration")}`}
                 label={administration?.title || "Administration"}
                 icon={AdministrationIcon || Settings}
                 items={administrationItems}
@@ -259,16 +278,7 @@ export function AdminShell() {
 
       <main className={`flex-1 py-4 ${CONTAINER}`}>
         <div className="admin-page-card">
-          <Suspense
-            fallback={
-              <div className="grid min-h-[40vh] place-items-center">
-                <div
-                  className="size-8 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent"
-                  aria-label="Loading"
-                />
-              </div>
-            }
-          >
+          <Suspense fallback={<AppLoader label="Loading page" caption="Loading…" />}>
             <Outlet />
           </Suspense>
         </div>

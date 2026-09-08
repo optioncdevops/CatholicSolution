@@ -23,7 +23,10 @@ export interface ProductApiItem {
   logoUrl?: string | null;
   isActive: boolean;
   productStatus?: number | null;
+  licenseType?: string | null;
+  navigationTarget?: string | null;
   customerCount: number;
+  contactUserId: number | null;
   contactPerson: string | null;
   features?: string[];
   createdDate: string;
@@ -33,7 +36,9 @@ export interface ProductApiItem {
   isDeleted: boolean;
 }
 
-export interface ProductSaveInputPayload {
+
+export interface ProductInputPayload {
+  productId: number;
   productName: string;
   subCategoryName?: string | null;
   prodDescription?: string | null;
@@ -41,14 +46,12 @@ export interface ProductSaveInputPayload {
   defaultAccessDays: number;
   logoName?: string | null;
   logoUrl?: string | null;
-  contactPerson?: string | null;
+  contactUserId?: number | null;
   features?: string[];
   isActive: boolean;
   productStatus?: number | null;
-}
-
-export interface ProductInputPayload extends ProductSaveInputPayload {
-  productId: number;
+  licenseType?: string | null;
+  navigationTarget?: string | null;
 }
 
 export interface ProductLicenseInputPayload {
@@ -93,6 +96,14 @@ export interface ProductCustomerRow {
   status: 'active' | 'trial' | 'suspended';
 }
 
+export interface ProductAssignmentSummaryApiItem {
+  productId: number;
+  productName: string;
+  activeOrgCount: number;
+  inactiveOrgCount: number;
+  totalOrgCount: number;
+}
+
 export interface ProductLicenseApiItem {
   licenseId: number;
   organizationProductId: number;
@@ -103,7 +114,6 @@ export interface ProductLicenseApiItem {
   licenseType?: string | null;
   activationDate?: string | null;
   expiryDate?: string | null;
-  maxUsers?: number | null;
   licenseStatus: string;
   assignStatus?: string | null;
   issuedBy?: number | null;
@@ -114,6 +124,7 @@ export interface ProductLicenseApiItem {
 export interface ProductLicenseHistoryRow {
   id: string;
   licenseId: number;
+  invoiceNumber: string;
   orgId: string;
   customerCode: string;
   customer: string;

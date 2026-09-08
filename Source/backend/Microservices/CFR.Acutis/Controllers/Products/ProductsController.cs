@@ -125,7 +125,7 @@ namespace CFR.Acutis.Controllers.Products
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet]
         [AllowAnonymous]
-        [ActionName(nameof(GetProductLogo))]
+        [ActionName(API_Product.GetProductLogo)]
         [Produces("image/jpeg", "image/png")]
         public async Task<IActionResult> GetProductLogo(string fileName)
         {
@@ -157,10 +157,31 @@ namespace CFR.Acutis.Controllers.Products
         /// <response code="400">Invalid product identifier.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet]
-        [ActionName(nameof(GetProductCustomers))]
+        [ActionName(API_Product.GetProductCustomers)]
         public async Task<IActionResult> GetProductCustomers(int productId)
         {
             return ApiResultArgs(await service.GetProductCustomersAsync(productId), APIHttpType.HttpGet);
+        }
+
+        /// <summary>
+        /// Retrieves per-product organization assignment counts.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the admin dashboard's App Access Overview with real assignment data.
+        /// Request Flow: Client API GET -> ProductsController.GetProductAssignmentSummary() -> IProductsService.GetProductAssignmentSummaryAsync() -> Database.
+        /// Validation Details: None.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IProductsService.GetProductAssignmentSummaryAsync().
+        /// Response Details: Standard API result enclosing List of ProductAssignmentSummaryOutput with status 200 or 500.
+        /// </remarks>
+        /// <returns>A consistent API response containing per-product organization assignment summaries.</returns>
+        /// <response code="200">Successfully fetched the assignment summary.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(nameof(GetProductAssignmentSummary))]
+        public async Task<IActionResult> GetProductAssignmentSummary()
+        {
+            return ApiResultArgs(await service.GetProductAssignmentSummaryAsync(), APIHttpType.HttpGet);
         }
 
         #endregion GET Methods
