@@ -64,6 +64,10 @@ namespace CFR.Acutis
             services.AddScoped<IOrganizationService, OrganizationService>();
             services.AddScoped<IOrganizationRepository, OrganizationRepository>();
 
+            // User Rights
+            services.AddScoped<IUserRightsService, UserRightsService>();
+            services.AddScoped<IUserRightsRepository, UserRightsRepository>();
+
             return services;
         }
     }
