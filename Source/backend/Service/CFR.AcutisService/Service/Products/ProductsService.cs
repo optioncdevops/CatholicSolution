@@ -289,71 +289,7 @@ namespace CFR.AcutisService.Service.Products
 
         #region POST Methods
 
-        /// <summary>
-        /// Validates and saves an uploaded product logo image (JPG or PNG, max 2MB).
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Store product logo under wwwroot/Acutis/Attachment/Products via IFileHandlerService.
-        /// Request Flow: ProductsController -> ProductsService.UploadProductLogoAsync() -> IFileHandlerService.
-        /// Validation Details: File is required, max 2 MB, extensions .jpg/.jpeg/.png only.
-        /// Business Logic: Saves using AppStrings:GatewayRoot + AppSettings:ProductLogoPath.
-        /// Repository Interaction: None (file storage only).
-        /// Response Details: MSResultArgs containing relative URL path (/Acutis/Attachment/Products/{fileName}).
-        /// </remarks>
-        /// <param name="file">Uploaded image file from multipart form data.</param>
-        /// <returns>MSResultArgs containing relative accessible URL path.</returns>
-        public async Task<MSResultArgs> UploadProductLogoAsync(IFormFile file)
-        {
-            var result = new MSResultArgs();
-            try
-            {
-                if (file == null || file.Length == 0)
-                {
-                    result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = ErrorMessages.ProductLogoFileRequired;
-                    return result;
-                }
 
-                const long maxFileSize = 2 * 1024 * 1024;
-                if (file.Length > maxFileSize)
-                {
-                    result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = ErrorMessages.ProductLogoFileTooLarge;
-                    return result;
-                }
-
-                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
-                if (!allowedExtensions.Contains(extension))
-                {
-                    result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = ErrorMessages.ProductLogoInvalidType;
-                    return result;
-                }
-
-                string relativeDirectory = GetProductLogoRelativePath();
-                string rawName = Path.GetFileNameWithoutExtension(file.FileName);
-                string safeName = string.Concat(rawName.Select(c => char.IsLetterOrDigit(c) || c == '_' || c == '-' ? c : '_')).Trim('_');
-                if (string.IsNullOrWhiteSpace(safeName))
-                {
-                    safeName = "logo";
-                }
-
-                string uniquePrefix = $"{safeName}_{Guid.NewGuid().ToString("N")[..8]}";
-                string savedPath = fileHandler.SaveUniqueFile(file, relativeDirectory, uniquePrefix);
-                string fileName = Path.GetFileName(savedPath);
-                result.ResultData = fileName;
-                await Task.CompletedTask;
-            }
-            catch (Exception ex)
-            {
-                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.UploadProductLogoFailed);
-                result.StatusCode = ErrorCodes.InternalServerError;
-                result.StatusMessage = ErrorMessages.InternalServerError;
-            }
-
-            return result;
-        }
 
         /// <summary>
         /// Creates a new product license in lic.License and lic.OrganizationProduct.
@@ -443,12 +379,11 @@ namespace CFR.AcutisService.Service.Products
                     return result;
                 }
 
-                string? candidateLogo = !string.IsNullOrWhiteSpace(input.LogoName) ? input.LogoName : input.LogoUrl;
+                string? candidateLogo = input.LogoName;
                 string? cleanLogo = !string.IsNullOrWhiteSpace(candidateLogo)
                     ? Path.GetFileName(candidateLogo.Trim().Replace('\\', '/'))
                     : null;
                 input.LogoName = cleanLogo;
-                input.LogoUrl = cleanLogo;
 
                 var existingProduct = await repository.GetProductByIdAsync(input.ProductId);
                 if (existingProduct != null)
@@ -456,11 +391,10 @@ namespace CFR.AcutisService.Service.Products
                     input.SubCategoryName ??= existingProduct.SubCategoryName;
                     input.ProdDescription ??= existingProduct.ProdDescription;
                     input.ExternalPageUrl ??= existingProduct.ExternalPageUrl;
-                    string? existingLogo = !string.IsNullOrWhiteSpace(existingProduct.LogoName) ? existingProduct.LogoName : existingProduct.LogoUrl;
+                    string? existingLogo = existingProduct.LogoName;
                     if (cleanLogo == null && existingLogo != null)
                     {
                         input.LogoName = Path.GetFileName(existingLogo.Replace('\\', '/'));
-                        input.LogoUrl = input.LogoName;
                     }
                     input.ContactUserId ??= existingProduct.ContactUserId;
                     if (input.DefaultAccessDays <= 0)
@@ -492,9 +426,7 @@ namespace CFR.AcutisService.Service.Products
                 }
 
                 // Safely clean up previous logo file if it was replaced or removed
-                string? prevLogo = existingProduct != null
-                    ? (!string.IsNullOrWhiteSpace(existingProduct.LogoName) ? existingProduct.LogoName : existingProduct.LogoUrl)
-                    : null;
+                string? prevLogo = existingProduct?.LogoName;
                 if (!string.IsNullOrWhiteSpace(prevLogo) && !string.Equals(Path.GetFileName(prevLogo), input.LogoName, StringComparison.OrdinalIgnoreCase))
                 {
                     TryDeleteLocalFile(prevLogo);
@@ -505,6 +437,102 @@ namespace CFR.AcutisService.Service.Products
             catch (Exception ex)
             {
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.UpdateProductFailed, input?.ProductId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Validates, saves, and updates the product logo image in storage and database for the related product.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Save product logo to disk and immediately update Core.Product.LogoName for the specified ProductId.
+        /// Request Flow: ProductsController -> ProductsService.UpdateProductLogoAsync() -> IProductsRepository.UpdateProductLogoAsync().
+        /// Validation Details: ProductId must be positive. File is required, max 2 MB, extensions .jpg/.jpeg/.png only.
+        /// Business Logic: Validates product existence, generates safe unique filename, saves image, updates record, and cleans up old file.
+        /// Repository Interaction: Calls IProductsRepository.GetProductByIdAsync and UpdateProductLogoAsync.
+        /// Response Details: MSResultArgs containing the saved logo file name.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the target product ID and logo image file.</param>
+        /// <returns>MSResultArgs containing the saved logo file name.</returns>
+        public async Task<MSResultArgs> UpdateProductLogoAsync(ProductLogoUploadInput input)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (input == null || input.ProductId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                if (input.File == null || input.File.Length == 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.ProductLogoFileRequired;
+                    return result;
+                }
+
+                const long maxFileSize = 2 * 1024 * 1024;
+                if (input.File.Length > maxFileSize)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.ProductLogoFileTooLarge;
+                    return result;
+                }
+
+                var extension = Path.GetExtension(input.File.FileName).ToLowerInvariant();
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                if (!allowedExtensions.Contains(extension))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.ProductLogoInvalidType;
+                    return result;
+                }
+
+                var existingProduct = await repository.GetProductByIdAsync(input.ProductId);
+                if (existingProduct == null)
+                {
+                    result.StatusCode = ErrorCodes.NotFound;
+                    result.StatusMessage = ErrorMessages.ProductNotFound;
+                    return result;
+                }
+
+                string relativeDirectory = GetProductLogoRelativePath();
+                string rawName = Path.GetFileNameWithoutExtension(input.File.FileName);
+                string safeName = string.Concat(rawName.Select(c => char.IsLetterOrDigit(c) || c == '_' || c == '-' ? c : '_')).Trim('_');
+                if (string.IsNullOrWhiteSpace(safeName))
+                {
+                    safeName = "logo";
+                }
+
+                string uniquePrefix = $"{safeName}_{Guid.NewGuid().ToString("N")[..8]}";
+                string savedPath = fileHandler.SaveUniqueFile(input.File, relativeDirectory, uniquePrefix);
+                string fileName = Path.GetFileName(savedPath);
+
+                int updatedId = await repository.UpdateProductLogoAsync(input.ProductId, fileName);
+                if (updatedId == -95)
+                {
+                    result.StatusCode = ErrorCodes.NotFound;
+                    result.StatusMessage = ErrorMessages.ProductNotFound;
+                    return result;
+                }
+
+                // Safely clean up previous logo file if it was replaced
+                string? prevLogo = existingProduct.LogoName;
+                if (!string.IsNullOrWhiteSpace(prevLogo) && !string.Equals(Path.GetFileName(prevLogo), fileName, StringComparison.OrdinalIgnoreCase))
+                {
+                    TryDeleteLocalFile(prevLogo);
+                }
+
+                result.ResultData = fileName;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.UploadProductLogoFailed);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }

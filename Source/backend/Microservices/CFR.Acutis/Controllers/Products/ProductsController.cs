@@ -187,29 +187,6 @@ namespace CFR.Acutis.Controllers.Products
 
         #region POST Methods
 
-        /// <summary>
-        /// Uploads a product logo image (JPG or PNG, max 2MB).
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Accepts an image file, saves it securely, and returns the accessible relative file path.
-        /// Request Flow: Client API POST -> ProductsController.UploadProductLogo() -> IProductsService.UploadProductLogoAsync() -> Storage.
-        /// Validation Details: Bound from multipart form data; validates extension (.jpg, .jpeg, .png) and size (up to 2 MB).
-        /// Business Logic: None at controller level; delegates to service layer.
-        /// Service Interaction: Calls IProductsService.UploadProductLogoAsync(file).
-        /// Response Details: Standard API result enclosing relative file URL path.
-        /// </remarks>
-        /// <param name="form">Multipart form containing the logo image file.</param>
-        /// <returns>A consistent API response containing the relative URL path of the saved logo.</returns>
-        /// <response code="200">Successfully uploaded the product logo.</response>
-        /// <response code="400">Invalid image file or size exceeds 2 MB.</response>
-        /// <response code="500">Internal server error occurred.</response>
-        [HttpPost]
-        [ActionName(API_Product.UploadProductLogo)]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadProductLogo([FromForm] ProductInput form)
-        {
-            return ApiResultArgs(await service.UploadProductLogoAsync(form.File!), APIHttpType.HttpPost);
-        }
 
         /// <summary>
         /// Creates a new product license.
@@ -262,6 +239,31 @@ namespace CFR.Acutis.Controllers.Products
         public async Task<IActionResult> UpdateProduct([FromBody] ProductInput input)
         {
             return ApiResultArgs(await service.UpdateProductAsync(input), APIHttpType.HttpPut);
+        }
+
+        /// <summary>
+        /// Updates a product logo image (JPG or PNG, max 2MB) and stores it in the database for the specified product.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Accepts an image file and product ID, saves the image to storage, and persists the filename to Core.Product.LogoName.
+        /// Request Flow: Client API PUT -> ProductsController.UpdateProductLogo() -> IProductsService.UpdateProductLogoAsync() -> Database (+ storage).
+        /// Validation Details: Bound from multipart form data; validates productId positive, image extension (.jpg, .jpeg, .png) and size (up to 2 MB).
+        /// Business Logic: None at controller level; delegates to service layer.
+        /// Service Interaction: Calls IProductsService.UpdateProductLogoAsync(input).
+        /// Response Details: Standard API result enclosing file name of the saved logo.
+        /// </remarks>
+        /// <param name="input">Multipart form containing the product ID and logo image file.</param>
+        /// <returns>A consistent API response containing the saved logo file name.</returns>
+        /// <response code="200">Successfully updated the product logo in storage and database.</response>
+        /// <response code="400">Invalid product identifier or image file exceeds 2 MB.</response>
+        /// <response code="404">Product not found.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpPut]
+        [ActionName(API_Product.UpdateProductLogo)]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateProductLogo([FromForm] ProductLogoUploadInput input)
+        {
+            return ApiResultArgs(await service.UpdateProductLogoAsync(input), APIHttpType.HttpPut);
         }
 
         /// <summary>

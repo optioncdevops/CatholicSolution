@@ -120,20 +120,6 @@ namespace CFR.AcutisService.Interfaces.Products
 
         #region POST Methods
 
-        /// <summary>
-        /// Validates and saves an uploaded product logo image (JPG or PNG, max 2MB).
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Store product logo safely and return relative accessible URL.
-        /// Request Flow: ProductsController -> IProductsService.UploadProductLogoAsync() -> Storage.
-        /// Validation Details: File is required, max 2 MB, extensions .jpg/.jpeg/.png only.
-        /// Business Logic: Generates unique filename and saves to storage location.
-        /// Repository Interaction: None (file storage only).
-        /// Response Details: MSResultArgs containing relative URL path (/Acutis/Attachment/Products/{fileName}).
-        /// </remarks>
-        /// <param name="file">Uploaded image file from multipart form data.</param>
-        /// <returns>MSResultArgs containing relative accessible URL path.</returns>
-        Task<MSResultArgs> UploadProductLogoAsync(IFormFile file);
 
         /// <summary>
         /// Creates a new product license.
@@ -168,6 +154,21 @@ namespace CFR.AcutisService.Interfaces.Products
         /// <param name="input">Input DTO containing updated product details.</param>
         /// <returns>MSResultArgs representing update status.</returns>
         Task<MSResultArgs> UpdateProductAsync(ProductInput input);
+
+        /// <summary>
+        /// Validates, saves, and updates the product logo image in storage and database for the related product.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Save product logo to disk and immediately update Core.Product.LogoName for the specified ProductId.
+        /// Request Flow: ProductsController -> IProductsService.UpdateProductLogoAsync() -> IProductsRepository.UpdateProductLogoAsync().
+        /// Validation Details: ProductId must be greater than zero, File is required, max 2 MB, extensions .jpg/.jpeg/.png only.
+        /// Business Logic: Validates product existence, generates safe unique filename, saves image, updates record, and cleans up old file.
+        /// Repository Interaction: Calls IProductsRepository.GetProductByIdAsync and UpdateProductLogoAsync.
+        /// Response Details: MSResultArgs containing the saved logo file name.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the target product ID and logo image file.</param>
+        /// <returns>MSResultArgs containing the saved logo file name.</returns>
+        Task<MSResultArgs> UpdateProductLogoAsync(ProductLogoUploadInput input);
 
         /// <summary>
         /// Updates an existing license in lic.License and lic.OrganizationProduct.

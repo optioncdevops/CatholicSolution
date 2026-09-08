@@ -20,7 +20,6 @@ export interface ProductApiItem {
   externalPageUrl: string | null;
   defaultAccessDays: number;
   logoName?: string | null;
-  logoUrl?: string | null;
   isActive: boolean;
   productStatus?: number | null;
   licenseType?: string | null;
@@ -45,7 +44,6 @@ export interface ProductInputPayload {
   externalPageUrl?: string | null;
   defaultAccessDays: number;
   logoName?: string | null;
-  logoUrl?: string | null;
   contactUserId?: number | null;
   features?: string[];
   isActive: boolean;

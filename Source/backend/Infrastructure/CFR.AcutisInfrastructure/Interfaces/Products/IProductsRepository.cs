@@ -154,6 +154,22 @@ namespace CFR.AcutisInfrastructure.Interfaces.Products
         Task<int> UpdateProductAsync(ProductInput input);
 
         /// <summary>
+        /// Updates a product's logo name in Core.Product using StoredProc.Products.ProductsCrud (ActionId 3).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Update logo file name and stamp UpdatedDate/UpdatedBy.
+        /// Request Flow: IProductsService -> IProductsRepository.UpdateProductLogoAsync() -> SQL Database.
+        /// Validation Details: Parameter mapping from productId and logoName.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 3 and sets LogoName.
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
+        /// Response Details: Returns updated ProductId, or -95 if not found.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <param name="logoName">Saved logo file name.</param>
+        /// <returns>Updated ProductId or negative error code.</returns>
+        Task<int> UpdateProductLogoAsync(int productId, string logoName);
+
+        /// <summary>
         /// Updates an existing license using StoredProc.Products.ProductsCrud (ActionId 8).
         /// </summary>
         /// <remarks>

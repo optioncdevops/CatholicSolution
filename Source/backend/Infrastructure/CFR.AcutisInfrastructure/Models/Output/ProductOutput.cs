@@ -50,12 +50,6 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string? LogoName { get; set; }
 
         /// <summary>
-        /// Gets or sets the relative path or URL of the product logo.
-        /// </summary>
-        [JsonPropertyName("logoUrl")]
-        public string? LogoUrl { get; set; }
-
-        /// <summary>
         /// Gets or sets the active status flag.
         /// </summary>
         [JsonPropertyName("isActive")]

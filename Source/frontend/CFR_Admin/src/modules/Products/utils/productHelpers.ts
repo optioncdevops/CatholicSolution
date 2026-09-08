@@ -138,8 +138,7 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
     prodDescription: (item.prodDescription ?? item.ProdDescription ?? null) as string | null,
     externalPageUrl: (item.externalPageUrl ?? item.ExternalPageUrl ?? null) as string | null,
     defaultAccessDays: Number(item.defaultAccessDays ?? item.DefaultAccessDays ?? 0),
-    logoName: (item.logoName ?? item.LogoName ?? item.logoUrl ?? item.LogoUrl ?? null) as string | null,
-    logoUrl: pickProductLogoUrl(item as unknown as ProductApiItem),
+    logoName: (item.logoName ?? item.LogoName ?? null) as string | null,
     isActive: Boolean(item.isActive ?? item.IsActive ?? false),
     productStatus: item.productStatus != null
       ? Number(item.productStatus)
@@ -361,24 +360,24 @@ export function pickProductLogoUrl(item: unknown): string | null {
     return null;
   }
   const record = item as Record<string, unknown>;
-  const raw = record.logoName ?? record.LogoName ?? record.logoUrl ?? record.LogoUrl;
+  const raw = record.logoName ?? record.LogoName;
   return typeof raw === 'string' && raw.trim() ? raw.trim() : null;
 }
 
-export function toStoredProductLogoPath(logoUrl: string | null | undefined): string | null {
-  if (!logoUrl || typeof logoUrl !== 'string' || !logoUrl.trim()) return null;
-  const trimmed = logoUrl.trim().replace(/\\/g, '/');
+export function toStoredProductLogoPath(logoName: string | null | undefined): string | null {
+  if (!logoName || typeof logoName !== 'string' || !logoName.trim()) return null;
+  const trimmed = logoName.trim().replace(/\\/g, '/');
   return trimmed.split('/').filter(Boolean).pop() ?? null;
 }
 
 export function resolveProductLogoUrl(
-  logoUrl: string | null | undefined,
+  logoName: string | null | undefined,
   cacheKey?: string | number | null,
 ): string | null {
-  if (!logoUrl || typeof logoUrl !== 'string' || !logoUrl.trim()) {
+  if (!logoName || typeof logoName !== 'string' || !logoName.trim()) {
     return null;
   }
-  const trimmed = logoUrl.trim();
+  const trimmed = logoName.trim();
   if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
     return trimmed;
   }
@@ -396,11 +395,11 @@ export function resolveProductLogoUrl(
   return `${url}?v=${encodeURIComponent(String(cacheKey))}`;
 }
 
-function toPublicProductLogoPath(logoUrl: string | null | undefined): string | null {
-  if (!logoUrl || typeof logoUrl !== 'string' || !logoUrl.trim()) {
+function toPublicProductLogoPath(logoName: string | null | undefined): string | null {
+  if (!logoName || typeof logoName !== 'string' || !logoName.trim()) {
     return null;
   }
-  const trimmed = logoUrl.trim();
+  const trimmed = logoName.trim();
   if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
     return null;
   }
@@ -437,7 +436,7 @@ function isProductLogoFileName(name: string): boolean {
 }
 
 export function toAdminApplication(item: ProductApiItem): AdminApplication {
-  const storedLogo = pickProductLogoUrl(item) || item.logoUrl || '';
+  const storedLogo = pickProductLogoUrl(item) || '';
   const logoUrl = resolveProductLogoUrl(storedLogo, item.updatedDate) || storedLogo;
   const productName = item.productName || '';
   return {
