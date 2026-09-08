@@ -1,93 +1,60 @@
-import type { UserRightsFeatureNode, UserRightsPendingChange } from '../types/userRightsTypes';
+import { accessLevelFromCode, type AccessLevel, type UserRightsFeatureNode, type UserRightsPendingChange } from '../types/userRightsTypes';
 
 type RawRow = Record<string, unknown>;
 
-//#region Defensive field extraction
+//#region Field extraction
 // GetUserRights returns Dapper `dynamic` rows (no typed C# DTO — see userRightsService.ts), so
-// row keys arrive as whatever the unchecked-in stored procedure aliases its columns as. Reading
-// every field across the plausible casings/aliases means a live-DB naming difference degrades to
-// a missing label/description instead of crashing the page.
-function pick(row: RawRow, keys: string[]): unknown {
-  for (const key of keys) {
-    const value = row[key];
-    if (value !== undefined && value !== null) return value;
-  }
-  return undefined;
-}
-
-function pickString(row: RawRow, keys: string[]): string {
-  const value = pick(row, keys);
+// JSON keys are the exact SQL column aliases from `auth.GetRightByRoleId`'s third result set:
+//   FeatureID, ParentId, GrandParentId, Module, SubModule, ItemDescription, AccessRight
+// (confirmed against the live stored procedure — see 016_Acutis_UserAccessVerification.sql for
+// how to re-check this against a given database). That result set does NOT project DisplayOrder
+// or RoutingUrl, even though it's *sorted* by DisplayOrder — so row order must be preserved
+// as-returned rather than re-sorted, and `routingUrl` is intentionally always blank here.
+function pickString(row: RawRow, key: string): string {
+  const value = row[key];
   if (typeof value === 'string') return value.trim();
   return value != null ? String(value) : '';
 }
 
-function pickNumber(row: RawRow, keys: string[], fallback: number): number {
-  const value = pick(row, keys);
+function pickNumber(row: RawRow, key: string, fallback: number): number {
+  const value = row[key];
   const num = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(num) ? num : fallback;
 }
 
-function pickBoolean(row: RawRow, keys: string[]): boolean {
-  const value = pick(row, keys);
-  if (typeof value === 'boolean') return value;
-  if (typeof value === 'number') return value > 0;
-  if (typeof value === 'string') return value === '1' || value.toLowerCase() === 'true' || value.toLowerCase() === 'on';
-  return false;
-}
-
-const FEATURE_ID_KEYS = ['FeatureID', 'FeatureId', 'featureID', 'featureId'];
-const PARENT_ID_KEYS = ['ParentId', 'ParentID', 'parentId'];
-const MODULE_KEYS = ['Module', 'module'];
-const SUBMODULE_KEYS = ['SubModule', 'subModule'];
-const ACTIVITY_KEYS = ['Activity', 'activity'];
-const DESCRIPTION_KEYS = ['ItemDescription', 'Description', 'description', 'itemDescription'];
-const DISPLAY_ORDER_KEYS = ['DisplayOrder', 'displayOrder'];
-const ROUTING_URL_KEYS = ['RoutingUrl', 'RoutingURL', 'routingUrl'];
-const SHOW_IN_USER_RIGHT_KEYS = ['ShowinUserRight', 'ShowInUserRight', 'showinUserRight', 'showInUserRight'];
-const IS_DELETED_KEYS = ['IsDeleted', 'isDeleted'];
-const ACCESS_RIGHT_KEYS = ['AccessRight', 'accessRight', 'UserRight', 'userRight'];
-
 function pickLabel(row: RawRow): string {
-  return pickString(row, SUBMODULE_KEYS) || pickString(row, ACTIVITY_KEYS) || pickString(row, MODULE_KEYS) || 'Untitled';
+  // A leaf "activity" row (e.g. FeatureID 11, "Reset Password" under Users) carries neither
+  // Module nor SubModule — only Activity — so it must be checked too, not just as a last resort.
+  return pickString(row, 'SubModule') || pickString(row, 'Module') || pickString(row, 'Activity') || 'Untitled';
 }
 //#endregion
 
-/** Builds the module/submenu/activity tree from the `modules` result set (the feature catalog),
- * merging in each feature's current grant from the `userRights` result set (already scoped to
- * the requested role by the backend). Rows explicitly marked deleted or hidden from the rights
- * screen (`ShowinUserRight`) are dropped; a row missing that flag entirely is kept, since we
- * cannot distinguish "not shown" from "column not present under this casing" otherwise. */
+/** Builds the module/submenu tree directly from `GetUserRights`'s `userRights` result set — that
+ * one result set already carries both the feature catalog (FeatureID/ParentId/labels) AND each
+ * feature's grant for the requested role (AccessRight), pre-filtered server-side to
+ * `ShowinUserRight = 1`. Sibling order is the order the rows arrived in (the backend's own
+ * `ORDER BY DisplayOrder`), not re-sorted client-side — there is no DisplayOrder column to sort
+ * by here. */
 export function buildUserRightsTree(resultData: unknown): UserRightsFeatureNode[] {
   const root = (resultData && typeof resultData === 'object') ? (resultData as RawRow) : {};
-  const moduleRows = (Array.isArray(root.modules) ? root.modules : Array.isArray(root.Modules) ? root.Modules : []) as RawRow[];
-  const rightRows = (Array.isArray(root.userRights) ? root.userRights : Array.isArray(root.UserRights) ? root.UserRights : []) as RawRow[];
-
-  const accessByFeatureId = new Map<number, boolean>();
-  for (const row of rightRows) {
-    const featureId = pickNumber(row, FEATURE_ID_KEYS, -1);
-    if (featureId >= 0) accessByFeatureId.set(featureId, pickBoolean(row, ACCESS_RIGHT_KEYS));
-  }
+  const rows = (Array.isArray(root.userRights) ? root.userRights : Array.isArray(root.UserRights) ? root.UserRights : []) as RawRow[];
 
   const nodesById = new Map<number, UserRightsFeatureNode>();
   const childrenByParent = new Map<number, UserRightsFeatureNode[]>();
   const order: number[] = [];
 
-  for (const row of moduleRows) {
-    if (pickBoolean(row, IS_DELETED_KEYS)) continue;
-    if (pick(row, SHOW_IN_USER_RIGHT_KEYS) !== undefined && !pickBoolean(row, SHOW_IN_USER_RIGHT_KEYS)) continue;
-
-    const featureId = pickNumber(row, FEATURE_ID_KEYS, -1);
+  for (const row of rows) {
+    const featureId = pickNumber(row, 'FeatureID', -1);
     if (featureId < 0 || nodesById.has(featureId)) continue;
-    const parentId = pickNumber(row, PARENT_ID_KEYS, 0);
+    const parentId = pickNumber(row, 'ParentId', 0);
 
     const node: UserRightsFeatureNode = {
       featureId,
       parentId,
       label: pickLabel(row),
-      description: pickString(row, DESCRIPTION_KEYS),
-      routingUrl: pickString(row, ROUTING_URL_KEYS),
-      displayOrder: pickNumber(row, DISPLAY_ORDER_KEYS, 0),
-      accessRight: accessByFeatureId.get(featureId) ?? false,
+      description: pickString(row, 'ItemDescription'),
+      routingUrl: '',
+      accessLevel: accessLevelFromCode(pickNumber(row, 'AccessRight', 0)),
       children: [],
     };
     nodesById.set(featureId, node);
@@ -97,10 +64,8 @@ export function buildUserRightsTree(resultData: unknown): UserRightsFeatureNode[
     childrenByParent.set(parentId, siblings);
   }
 
-  const byOrder = (a: UserRightsFeatureNode, b: UserRightsFeatureNode) => a.displayOrder - b.displayOrder || a.featureId - b.featureId;
-
   const attach = (node: UserRightsFeatureNode): void => {
-    const children = (childrenByParent.get(node.featureId) ?? []).sort(byOrder);
+    const children = childrenByParent.get(node.featureId) ?? [];
     node.children = children;
     children.forEach(attach);
   };
@@ -109,27 +74,24 @@ export function buildUserRightsTree(resultData: unknown): UserRightsFeatureNode[
     .map((id) => nodesById.get(id))
     .filter((node): node is UserRightsFeatureNode => Boolean(node) && (node!.parentId === 0 || !nodesById.has(node!.parentId)));
   roots.forEach(attach);
-  return roots.sort(byOrder);
+  return roots;
 }
 
 /** Every featureId in a node's own subtree (itself + all descendants) — used both to bulk-apply
- * a toggle to a whole branch and to compute that branch's rolled-up checkbox state. */
+ * a permission level to a whole branch and to compute that branch's rolled-up state. */
 export function collectSubtreeFeatureIds(node: UserRightsFeatureNode): number[] {
   return [node.featureId, ...node.children.flatMap(collectSubtreeFeatureIds)];
 }
 
-export type RowRollup = 'checked' | 'unchecked' | 'mixed';
+export type RowRollup = AccessLevel | 'mixed';
 
-/** Resolves a node's effective (pending-change-aware) access state, and — for a branch — whether
- * every feature underneath agrees, so the row can render a real check, an empty box, or a
- * indeterminate dash. */
-export function computeRowRollup(node: UserRightsFeatureNode, effective: (featureId: number) => boolean): RowRollup {
+/** Resolves a branch's rolled-up permission state from its pending-change-aware effective level
+ * at every feature underneath it: a single level if every feature agrees, otherwise "mixed" (so
+ * the row shows no pill as selected, the same way the prior design signaled "mixed"). */
+export function computeRowRollup(node: UserRightsFeatureNode, effective: (featureId: number) => AccessLevel): RowRollup {
   const values = collectSubtreeFeatureIds(node).map(effective);
-  const allChecked = values.every(Boolean);
-  const allUnchecked = values.every((value) => !value);
-  if (allChecked) return 'checked';
-  if (allUnchecked) return 'unchecked';
-  return 'mixed';
+  const first = values[0];
+  return values.every((value) => value === first) ? first : 'mixed';
 }
 
 interface FlatRightsRow {
@@ -155,12 +117,12 @@ export function collectAllFeatureIds(nodes: UserRightsFeatureNode[]): number[] {
 
 /** Merges a queued change into the pending map, replacing any earlier queued value for the same
  * feature (never appending a duplicate entry). */
-export function mergePendingChange(pending: Map<number, boolean>, featureId: number, accessRight: boolean): Map<number, boolean> {
+export function mergePendingChange(pending: Map<number, AccessLevel>, featureId: number, accessLevel: AccessLevel): Map<number, AccessLevel> {
   const next = new Map(pending);
-  next.set(featureId, accessRight);
+  next.set(featureId, accessLevel);
   return next;
 }
 
-export function toPendingChangeList(pending: Map<number, boolean>): UserRightsPendingChange[] {
-  return Array.from(pending.entries()).map(([featureId, accessRight]) => ({ featureId, accessRight }));
+export function toPendingChangeList(pending: Map<number, AccessLevel>): UserRightsPendingChange[] {
+  return Array.from(pending.entries()).map(([featureId, accessLevel]) => ({ featureId, accessLevel }));
 }

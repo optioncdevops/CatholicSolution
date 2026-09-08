@@ -1,37 +1,80 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, RotateCcw, Save } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, RotateCcw, Save, ShieldCheck, ShieldOff } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
-import { CommonCheckbox, Dropdown } from '@app/components/formControls';
+import { Dropdown } from '@app/components/formControls';
+import { confirmAction } from '../../../lib/confirm';
 import { getUserRoles } from '../../userRoles/services/userRolesService';
 import { normalizeUserRolesList } from '../../userRoles/utils/userRolesHelpers';
 import type { UserRolesApiItem } from '../../userRoles/types/userRolesTypes';
 import { getUserRights, saveUserRights } from '../services/userRightsService';
 import {
-  buildUserRightsTree, collectAllFeatureIds, collectSubtreeFeatureIds, computeRowRollup, flattenUserRightsTree,
-  mergePendingChange, toPendingChangeList,
+  buildUserRightsTree, collectAllFeatureIds, computeRowRollup, flattenUserRightsTree,
+  mergePendingChange, toPendingChangeList, type RowRollup,
 } from '../utils/userRightsHelpers';
-import type { UserRightsFeatureNode } from '../types/userRightsTypes';
+import type { AccessLevel, UserRightsFeatureNode } from '../types/userRightsTypes';
 
 type PageStatus = 'loading' | 'ready' | 'error';
 
+const ACCESS_LEVEL_LABEL: Record<AccessLevel, string> = { access: 'Access', readOnly: 'Read Only', denied: 'Denied' };
+
 //#region Presentational subcomponents
-function RightsRowCheckbox({ id, label, rollup, onChange, disabled }: {
-  id: string; label: string; rollup: 'checked' | 'unchecked' | 'mixed'; onChange: (next: boolean) => void; disabled?: boolean;
+/** Three-state Access / Read Only / Denied toggle. `AccessRight` is a plain SQL int (not a bit),
+ * so this genuinely persists all three states — 0/1/2 — with no schema change. A mixed rollup
+ * (descendants disagree) leaves every pill unselected, the same way the prior prototype signaled
+ * "mixed". Clicking any pill applies that level to the row's whole subtree at once, so setting a
+ * module's permission is a real "apply to all [its features]" action, not just that one row. */
+function PermissionToggle({ idPrefix, label, rollup, levels, onChange, disabled }: {
+  idPrefix: string; label: string; rollup: RowRollup; levels: AccessLevel[]; onChange: (next: AccessLevel) => void; disabled?: boolean;
 }) {
   return (
-    <CommonCheckbox
-      id={id}
-      label={label}
-      hideLabel
-      checked={rollup === 'checked'}
-      indeterminate={rollup === 'mixed'}
-      onCheckedChange={(next) => onChange(next)}
-      disabled={disabled}
-    />
+    <div role="group" aria-label={`Access for ${label}`} className="flex gap-1.5">
+      <CommonButton
+        id={`btnAccess${idPrefix}`}
+        type="button" size="xs" disabled={disabled}
+        variant={rollup === 'access' ? 'success' : 'outline'}
+        onClick={() => onChange('access')}
+      >
+        Access
+      </CommonButton>
+      {levels.includes('readOnly') ? (
+        <CommonButton
+          id={`btnReadOnly${idPrefix}`}
+          type="button" size="xs" disabled={disabled}
+          variant={rollup === 'readOnly' ? 'primary' : 'outline'}
+          onClick={() => onChange('readOnly')}
+        >
+          Read Only
+        </CommonButton>
+      ) : null}
+      <CommonButton
+        id={`btnDenied${idPrefix}`}
+        type="button" size="xs" disabled={disabled}
+        variant={rollup === 'denied' ? 'danger' : 'outline'}
+        onClick={() => onChange('denied')}
+      >
+        Denied
+      </CommonButton>
+    </div>
   );
+}
+
+/** Module (depth 0) and Activity (depth 2+) rows are a plain on/off switch — only Feature rows
+ * (depth 1, e.g. "KPI Tiles" under "Dashboard") can be set to Read Only. */
+function levelsForDepth(depth: number): AccessLevel[] {
+  return depth === 1 ? ['access', 'readOnly', 'denied'] : ['access', 'denied'];
+}
+
+/** Depth-aware bulk/cascade collector: only includes a featureId if `level` is actually a valid
+ * state at that node's depth (e.g. applying Read Only from a Module or to an Activity is a no-op
+ * for that row — Access/Denied cascade to every depth without restriction). */
+function collectFeatureIdsForLevel(nodes: UserRightsFeatureNode[], level: AccessLevel, depth = 0): number[] {
+  return nodes.flatMap((node) => [
+    ...(levelsForDepth(depth).includes(level) ? [node.featureId] : []),
+    ...collectFeatureIdsForLevel(node.children, level, depth + 1),
+  ]);
 }
 
 function SectionSkeleton({ rows = 8 }: { rows?: number }) {
@@ -57,8 +100,9 @@ export function UserRightsPage() {
   const [tree, setTree] = useState<UserRightsFeatureNode[]>([]);
   const [moduleFilter, setModuleFilter] = useState<number | 'all'>('all');
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
-  const [pending, setPending] = useState<Map<number, boolean>>(new Map());
+  const [pending, setPending] = useState<Map<number, AccessLevel>>(new Map());
   const [saving, setSaving] = useState(false);
+  const [applyingAll, setApplyingAll] = useState(false);
   //#endregion
 
   //#region Functions
@@ -69,7 +113,7 @@ export function UserRightsPage() {
     setStatus('loading');
     setPending(new Map());
     try {
-      const { resultData } = await getUserRights(forRoleId, 0);
+      const { resultData } = await getUserRights(forRoleId, -1);
       const nextTree = buildUserRightsTree(resultData);
       setTree(nextTree);
       setExpanded(new Set(collectAllFeatureIds(nextTree)));
@@ -113,7 +157,7 @@ export function UserRightsPage() {
       setStatus('loading');
       setPending(new Map());
       try {
-        const { resultData } = await getUserRights(roleId, 0);
+        const { resultData } = await getUserRights(roleId, -1);
         if (cancelled) return;
         const nextTree = buildUserRightsTree(resultData);
         setTree(nextTree);
@@ -133,8 +177,8 @@ export function UserRightsPage() {
 
   const selectedRole = roles.find((role) => role.roleId === roleId);
 
-  // Effective (pending-change-aware) access for a feature — what the checkbox should actually show.
-  const effectiveAccess = useCallback((featureId: number): boolean => {
+  // Effective (pending-change-aware) level for a feature — what its row should actually show.
+  const effectiveLevel = useCallback((featureId: number): AccessLevel => {
     if (pending.has(featureId)) return pending.get(featureId)!;
     const find = (nodes: UserRightsFeatureNode[]): UserRightsFeatureNode | undefined => {
       for (const node of nodes) {
@@ -144,7 +188,7 @@ export function UserRightsPage() {
       }
       return undefined;
     };
-    return find(tree)?.accessRight ?? false;
+    return find(tree)?.accessLevel ?? 'denied';
   }, [pending, tree]);
 
   const moduleOptions = useMemo(
@@ -161,6 +205,17 @@ export function UserRightsPage() {
 
   const dirtyCount = pending.size;
 
+  // Real counts across every feature currently loaded for this role, pending-change aware — not
+  // a fabricated prototype default.
+  const { accessCount, readOnlyCount, deniedCount } = useMemo(() => {
+    const levels = collectAllFeatureIds(tree).map(effectiveLevel);
+    return {
+      accessCount: levels.filter((level) => level === 'access').length,
+      readOnlyCount: levels.filter((level) => level === 'readOnly').length,
+      deniedCount: levels.filter((level) => level === 'denied').length,
+    };
+  }, [tree, effectiveLevel]);
+
   //#region Handlers
   const handleToggleExpanded = (featureId: number) => {
     setExpanded((prev) => {
@@ -170,10 +225,12 @@ export function UserRightsPage() {
     });
   };
 
-  const handleToggleRow = (node: UserRightsFeatureNode, next: boolean) => {
+  const handleToggleRow = (node: UserRightsFeatureNode, depth: number, next: AccessLevel) => {
     setPending((prev) => {
       let updated = prev;
-      for (const featureId of collectSubtreeFeatureIds(node)) {
+      // Cascades to the whole subtree, but Read Only only ever lands on Feature-depth rows (see
+      // levelsForDepth) — a Module or Activity in that subtree keeps its own current value.
+      for (const featureId of collectFeatureIdsForLevel([node], next, depth)) {
         updated = mergePendingChange(updated, featureId, next);
       }
       return updated;
@@ -188,6 +245,37 @@ export function UserRightsPage() {
   const handleDiscard = () => {
     setPending(new Map());
     showToast('Unsaved changes discarded.', 'success');
+  };
+
+  // Bulk "apply to all" — scoped to the currently visible (module-filtered) set, matching what's
+  // on screen rather than silently touching hidden rows. Read Only only ever lands on
+  // Feature-depth rows (see levelsForDepth) — Module/Activity rows in scope are left untouched
+  // rather than clamped to some other value the user didn't ask for. Confirmed first since it can
+  // affect a large number of features in one action.
+  const handleApplyToAll = async (level: AccessLevel) => {
+    const allIds = collectAllFeatureIds(visibleTree);
+    const featureIds = collectFeatureIdsForLevel(visibleTree, level);
+    if (featureIds.length === 0) return;
+    const skippedCount = allIds.length - featureIds.length;
+    const scopeLabel = moduleFilter === 'all' ? 'every module' : moduleOptions.find((option) => option.id === String(moduleFilter))?.value ?? 'this module';
+    const confirmed = await confirmAction({
+      title: `Set ${ACCESS_LEVEL_LABEL[level]} for ${scopeLabel}?`,
+      description: `This queues ${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} to ${ACCESS_LEVEL_LABEL[level].toLowerCase()} for ${selectedRole?.roleName ?? 'this role'}.`
+        + (skippedCount > 0 ? ` ${skippedCount} module/activity-level row${skippedCount === 1 ? '' : 's'} in scope don't support Read Only and will be left as-is.` : '')
+        + ' Review the matrix and click Save Changes to persist it.',
+      confirmLabel: `Set all to ${ACCESS_LEVEL_LABEL[level]}`,
+      tone: level === 'denied' ? 'danger' : 'primary',
+    });
+    if (!confirmed) return;
+
+    setApplyingAll(true);
+    setPending((prev) => {
+      let updated = prev;
+      for (const featureId of featureIds) updated = mergePendingChange(updated, featureId, level);
+      return updated;
+    });
+    showToast(`${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} queued as ${ACCESS_LEVEL_LABEL[level]} — click Save Changes to persist.`, 'success');
+    setApplyingAll(false);
   };
 
   const handleSave = async () => {
@@ -225,31 +313,63 @@ export function UserRightsPage() {
       </p>
 
       <section className="admin-panel-card">
-        <div className="flex flex-wrap items-end gap-3 p-4">
-          <div className="w-56 shrink-0">
-            <Dropdown
-              id="ddlUserRightsRole"
-              label="Role" searchable={false} clearable={false}
-              value={roleId != null ? String(roleId) : undefined}
-              onValueChange={(value) => setRoleId(value ? Number(value) : null)}
-              options={roles.map((role) => ({ id: String(role.roleId), value: role.roleName }))}
-              disabled={rolesLoading}
-            />
+        <div className="flex flex-wrap items-end justify-between gap-3 p-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="w-56 shrink-0">
+              <Dropdown
+                id="ddlUserRightsRole"
+                label="Role" searchable={false} clearable={false}
+                value={roleId != null ? String(roleId) : undefined}
+                onValueChange={(value) => setRoleId(value ? Number(value) : null)}
+                options={roles.map((role) => ({ id: String(role.roleId), value: role.roleName }))}
+                disabled={rolesLoading}
+              />
+            </div>
+            <div className="w-56 shrink-0">
+              <Dropdown
+                id="ddlUserRightsModule"
+                label="Module" searchable={false} clearable={false}
+                value={String(moduleFilter)}
+                onValueChange={(value) => setModuleFilter(value === 'all' || !value ? 'all' : Number(value))}
+                options={moduleOptions}
+                disabled={status === 'loading'}
+              />
+            </div>
+            <CommonButton id="btnClearUserRightsFilters" variant="outline" size="sm" onClick={handleClearFilters}>
+              Clear Filters
+            </CommonButton>
           </div>
-          <div className="w-56 shrink-0">
-            <Dropdown
-              id="ddlUserRightsModule"
-              label="Module" searchable={false} clearable={false}
-              value={String(moduleFilter)}
-              onValueChange={(value) => setModuleFilter(value === 'all' || !value ? 'all' : Number(value))}
-              options={moduleOptions}
-              disabled={status === 'loading'}
-            />
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs font-bold text-[var(--text-faint)]">Apply to all shown:</span>
+            <CommonButton id="btnApplyAllAccess" variant="outline" size="sm" iconLeft={<ShieldCheck size={13} />} disabled={status !== 'ready' || applyingAll || saving} onClick={() => void handleApplyToAll('access')}>
+              Access
+            </CommonButton>
+            <CommonButton id="btnApplyAllReadOnly" variant="outline" size="sm" iconLeft={<Eye size={13} />} disabled={status !== 'ready' || applyingAll || saving} onClick={() => void handleApplyToAll('readOnly')}>
+              Read Only
+            </CommonButton>
+            <CommonButton id="btnApplyAllDenied" variant="outline" size="sm" iconLeft={<ShieldOff size={13} />} disabled={status !== 'ready' || applyingAll || saving} onClick={() => void handleApplyToAll('denied')}>
+              Denied
+            </CommonButton>
           </div>
-          <CommonButton id="btnClearUserRightsFilters" variant="outline" size="sm" onClick={handleClearFilters}>
-            Clear Filters
-          </CommonButton>
         </div>
+        {status === 'ready' && selectedRole ? (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--line-soft)] px-4 py-2.5 text-xs">
+            <span className="font-bold text-[var(--text-primary)]">Editing rights for {selectedRole.roleName}:</span>
+            <span className="flex items-center gap-1.5 font-bold text-[var(--success)]">
+              <span className="size-2 rounded-full bg-[var(--success)]" aria-hidden="true" /> {accessCount} Access
+            </span>
+            <span className="flex items-center gap-1.5 font-bold text-[var(--primary)]">
+              <span className="size-2 rounded-full bg-[var(--primary)]" aria-hidden="true" /> {readOnlyCount} Read Only
+            </span>
+            <span className="flex items-center gap-1.5 font-bold text-[var(--error)]">
+              <span className="size-2 rounded-full bg-[var(--error)]" aria-hidden="true" /> {deniedCount} Denied
+            </span>
+            <span className="text-[var(--text-faint)]">
+              Changes save to the database and apply the next time a user with this role signs in.
+            </span>
+          </div>
+        ) : null}
       </section>
 
       {status === 'error' ? (
@@ -267,12 +387,12 @@ export function UserRightsPage() {
                 <tr>
                   <th scope="col">Module / Feature / Activity</th>
                   <th scope="col">Description</th>
-                  <th scope="col">Access</th>
+                  <th scope="col">Permission</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map(({ node, depth }) => {
-                  const rollup = computeRowRollup(node, effectiveAccess);
+                  const rollup = computeRowRollup(node, effectiveLevel);
                   const hasChildren = node.children.length > 0;
                   const isExpanded = expanded.has(node.featureId);
                   return (
@@ -299,11 +419,12 @@ export function UserRightsPage() {
                       </td>
                       <td className="text-[var(--text-muted)]">{node.description || '—'}</td>
                       <td>
-                        <RightsRowCheckbox
-                          id={`chkFeatureAccess${node.featureId}`}
-                          label={`Toggle access to ${node.label}`}
+                        <PermissionToggle
+                          idPrefix={`Feature${node.featureId}`}
+                          label={node.label}
                           rollup={rollup}
-                          onChange={(next) => handleToggleRow(node, next)}
+                          levels={levelsForDepth(depth)}
+                          onChange={(next) => handleToggleRow(node, depth, next)}
                           disabled={saving}
                         />
                       </td>

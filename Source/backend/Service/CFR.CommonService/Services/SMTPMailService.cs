@@ -115,9 +115,35 @@ namespace CFR.CommonService.Services
         /// image exists for this product), or nothing at all when branding simply isn't configured
         /// (preserves the original legacy behavior for other consumers of this shared method).
         /// </summary>
+        /// <summary>
+        /// True when <paramref name="url"/> points at a host only the machine sending the email
+        /// can reach (localhost/loopback) — e.g. an admin saved "https://localhost:5050/acutis"
+        /// into <see cref="SMTPMailConfig.ApiBaseUrl"/> from the Email Settings page. Embedding
+        /// such a URL as an &lt;img src&gt; in a real outgoing email produces a permanently broken
+        /// image for every recipient, since their mail client can never reach the sender's own
+        /// dev machine. Not an exhaustive private-IP check — just the loopback cases that
+        /// actually cause this failure.
+        /// </summary>
+        private static bool IsLoopbackHost(string url)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                return false;
+            }
+
+            return uri.IsLoopback || uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static string GetLogoMarkup(SMTPMailConfig? config, string? templateLogoUrl)
         {
             string applicationLogo = !string.IsNullOrWhiteSpace(templateLogoUrl) ? templateLogoUrl.Trim() : GetMailLogoUrl(config);
+            if (IsLoopbackHost(applicationLogo))
+            {
+                // A loopback logo URL can never load for a real recipient — degrade the same way
+                // "no image configured" already does, instead of shipping a guaranteed-dead <img>.
+                applicationLogo = string.Empty;
+            }
+
             string displayName = string.IsNullOrWhiteSpace(config?.DisplayName) ? "Logo" : config.DisplayName.Trim();
 
             if (!string.IsNullOrWhiteSpace(applicationLogo))
