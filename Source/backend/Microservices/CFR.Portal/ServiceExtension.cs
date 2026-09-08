@@ -8,6 +8,10 @@ using CFR.PortalInfrastructure.Repositorys.Authentication;
 using CFR.PortalInfrastructure.Repositorys.CFRLaunch;
 using CFR.PortalService.Service.Authentication;
 using CFR.PortalService.Service.CFRLaunch;
+using CFR.PortalInfrastructure.Interfaces.Administration;
+using CFR.PortalInfrastructure.Repositorys.Administration;
+using CFR.PortalService.Interfaces.Administration;
+using CFR.PortalService.Service.Administration;
 
 namespace CFR.Portal
 {
@@ -33,6 +37,11 @@ namespace CFR.Portal
             services.AddScoped<IPortalAuthenticationRepository, PortalAuthenticationRepository>();
             services.AddScoped<ICFRLaunchService, CFRLaunchService>();
             services.AddScoped<ICFRLaunchRepository, CFRLaunchRepository>();
+
+            services.AddScoped<IEmailTemplatesRepository, EmailTemplatesRepository>();
+            services.AddScoped<ISMTPMailService, SMTPMailService>();
+            services.AddScoped<IAccessRequestService, AccessRequestService>();
+            services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
 
             return services;
         }

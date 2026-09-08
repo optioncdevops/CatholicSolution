@@ -7,7 +7,7 @@ import { Dropdown, InputField } from '@app/components/formControls';
 import { StatusBadge } from '@app/components/Badge';
 import { updateOrganization } from '../../services/organizationsService';
 import type { OrganizationApiItem, OrganizationFormValues } from '../../types/organizationTypes';
-import { composeOrganizationAddress, ORG_TYPE_OPTIONS, orgTypeLabel } from '../../utils/organizationHelpers';
+import { composeOrganizationAddress, ORG_STATUS_OPTIONS, ORG_TYPE_OPTIONS, orgTypeLabel } from '../../utils/organizationHelpers';
 import { organizationRules } from '../../validator/OrganizationValidator';
 import { formatDate } from '@/modules/utils/formatDate';
 

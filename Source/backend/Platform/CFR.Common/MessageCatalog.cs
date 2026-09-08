@@ -111,19 +111,13 @@ namespace CFR.Common
             public const string ChangePasswordFailed = "Error while changing password for user {UserId}";
             public const string FetchOrganizationsFailed = "Error while fetching organizations";
             public const string FetchOrganizationByIdFailed = "Error while fetching organization {OrganizationId}";
-            public const string FetchAccessRequestsFailed = "Error while fetching access requests";
             public const string FetchOrganizationUsersFailed = "Error while fetching organization users for organization {OrgId}";
             public const string FetchOrganizationUserDetailFailed = "Error while fetching organization user detail for organization {OrgId}, user {AuthUserId}";
-            public const string FetchAccessRequestByIdFailed = "Error while fetching access request {RequestId}";
-            public const string FetchHubProductsFailed = "Error while fetching App Hub products for {RequesterEmail}";
             public const string FetchProductsFailed = "Error while fetching products";
             public const string FetchOrganizationProductsFailed = "Error while fetching organization products for organization {OrgId}";
-            public const string SaveAccessRequestFailed = "Error while saving access request";
             public const string FetchAssignableProductsFailed = "Error while fetching assignable products for organization {OrgId}";
             public const string FetchOrganizationLicensesFailed = "Error while fetching licenses for organization {OrgId}";
-            public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string CreateOrganizationFailed = "Error while creating organization";
-            public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
             public const string AssignOrganizationProductFailed = "Error while assigning product to organization {OrgId}";
             public const string RemoveOrganizationProductFailed = "Error while removing product from organization {OrgId}";
             public const string UnlinkOrganizationUserFailed = "Error while unlinking user from organization {OrgId}";
@@ -145,6 +139,12 @@ namespace CFR.Common
             public const string FetchAssignedProductsFailed = "Error while fetching assigned products for user {UserId}";
             public const string LaunchProductFailed = "Error while launching product {ProductId} for user {UserId}";
             public const string ExchangeTokenFailed = "Error while exchanging SSO authorization code for product {ProductId}";
+            public const string FetchAccessRequestsFailed = "Error while fetching access requests";
+            public const string FetchAccessRequestByIdFailed = "Error while fetching access request {RequestId}";
+            public const string FetchHubProductsFailed = "Error while fetching App Hub products for {RequesterEmail}";
+            public const string SaveAccessRequestFailed = "Error while saving access request";
+            public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
+            public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
         }
     }
 }

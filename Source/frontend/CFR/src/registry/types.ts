@@ -40,6 +40,7 @@ export interface CatalogApp {
   statusDetail?: string;
   details?: AppExtendedDetails;
   contactEmail?: string;
+  contactUserId?: number | string;
   /** App Hub ownership/discovery state. This is the only section-classification field. */
   hubSection: AppHubSection;
   /** Business applications are deployed outside this repository on independently managed domains. */
@@ -57,6 +58,11 @@ export interface CatalogApp {
    */
   canRequest?: boolean;
   /**
+   * When true, an access request for this product was already approved for the member's organization.
+   */
+  isOrgApproved?: boolean;
+  /**
+
    * Approved independently deployed destination. Products do not need an `apps/*`
    * workspace inside Catholic_Solution to participate in App Hub or the launcher.
    * Production destinations must use HTTPS; localhost HTTP is reserved for development.

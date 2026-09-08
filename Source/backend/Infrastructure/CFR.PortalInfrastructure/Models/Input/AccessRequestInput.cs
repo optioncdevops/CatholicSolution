@@ -2,7 +2,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace CFR.AcutisInfrastructure.Models.Input
+namespace CFR.PortalInfrastructure.Models.Input
 {
     /// <summary>
     /// Input DTO used to create an access request from App Hub Request access.
@@ -121,3 +121,4 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string ProductName { get; set; } = string.Empty;
     }
 }
+

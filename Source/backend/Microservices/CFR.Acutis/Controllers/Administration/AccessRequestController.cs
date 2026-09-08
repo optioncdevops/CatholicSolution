@@ -1,5 +1,10 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using CFR.AcutisInfrastructure.Models.Input;
+using CFR.AcutisService.Interfaces.Administration;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 namespace CFR.Acutis.Controllers.Administration
 {
     /// <summary>
@@ -56,57 +61,9 @@ namespace CFR.Acutis.Controllers.Administration
             return ApiResultArgs(await service.GetAccessRequestByIdAsync(accessRequestId), APIHttpType.HttpGet);
         }
 
-        /// <summary>
-        /// Retrieves App Hub products for the signed-in member email.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Match [auth].[User] by email, join [auth].[UserProduct] for Your Apps, and return remaining [core].[Product] rows as Available or Future.
-        /// Request Flow: Client API GET -> AccessRequestController.GetHubProducts() -> IAccessRequestService.GetHubProductsAsync() -> Database.
-        /// Validation Details: Query parameter binding maps requesterEmail.
-        /// Business Logic: None at the controller level; delegates to the service layer.
-        /// Service Interaction: Calls IAccessRequestService.GetHubProductsAsync().
-        /// Response Details: Standard API result enclosing List of HubProductOutput with status 200 or 500.
-        /// </remarks>
-        /// <param name="requesterEmail">Member email used to resolve [auth].[User].CFRUserId.</param>
-        /// <returns>A consistent API response containing the hub product dataset.</returns>
-        /// <response code="200">Successfully fetched hub products.</response>
-        /// <response code="500">Internal server error occurred.</response>
-        [HttpGet]
-        [ActionName(API_Administration.GetHubProducts)]
-        public async Task<IActionResult> GetHubProducts(string? requesterEmail)
-        {
-            return ApiResultArgs(await service.GetHubProductsAsync(requesterEmail), APIHttpType.HttpGet);
-        }
+
 
         #endregion GET Methods
-
-        #region POST Methods
-
-        /// <summary>
-        /// Saves a new access request from App Hub Request access.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Insert AccessRequest, AccessRequestProduct, AccessRequestStatusHistory, and optional AccessRequestComment, then email admins.
-        /// Request Flow: Client API POST -> AccessRequestController.SaveAccessRequest() -> IAccessRequestService.SaveAccessRequestAsync() -> Database.
-        /// Validation Details: Model binding maps AccessRequestInput from the request body.
-        /// Business Logic: None at the controller level; delegates to the service layer.
-        /// Service Interaction: Calls IAccessRequestService.SaveAccessRequestAsync().
-        /// Response Details: Standard API result indicating execution status.
-        /// </remarks>
-        /// <param name="input">Input DTO containing request fields.</param>
-        /// <returns>Result of the save operation.</returns>
-        /// <response code="200">Successfully saved the access request.</response>
-        /// <response code="409">A pending request for this product already exists.</response>
-        /// <response code="500">Internal server error occurred.</response>
-        [HttpPost]
-        [AllowAnonymous]
-        [ActionName(API_Administration.SaveAccessRequest)]
-        public async Task<IActionResult> SaveAccessRequest([FromBody] AccessRequestInput input)
-        {
-            return ApiResultArgs(await service.SaveAccessRequestAsync(input), APIHttpType.HttpPost);
-        }
-
-        #endregion POST Methods
 
         #region PUT Methods
 
@@ -135,3 +92,4 @@ namespace CFR.Acutis.Controllers.Administration
         #endregion PUT Methods
     }
 }
+

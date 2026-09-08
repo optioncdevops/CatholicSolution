@@ -97,6 +97,8 @@ export const toCatalogApp = (row: HubProductApiItem): CatalogApp | null => {
   const baseUrl = pickString(source, 'baseUrl', 'BaseUrl', 'externalUrl', 'ExternalUrl', 'externalPageUrl', 'ExternalPageUrl');
   const canRequest = asBool(pickValue(source, 'canRequest', 'CanRequest')) === true;
 
+  console.log('Raw product source from API:', source);
+
   return {
     id: (productId && productId !== '0' ? productId : seed),
     productId: resolvedProductId,
@@ -119,6 +121,9 @@ export const toCatalogApp = (row: HubProductApiItem): CatalogApp | null => {
     externalUrl: baseUrl || undefined,
     navigationTarget: 'same-tab',
     canRequest,
+    isOrgApproved: asBool(pickValue(source, 'isOrgApproved', 'IsOrgApproved')) === true,
+    contactUserId: (pickValue(source, 'contactUserId', 'ContactUserId') as string | number | undefined) ?? undefined,
+    contactEmail: pickString(source, 'contactEmail', 'ContactEmail') || undefined,
   };
 };
 

@@ -101,6 +101,10 @@ export default function ProductLaunchPage() {
 
   //#region Handlers
   const openRequestModal = useCallback((app: CatalogApp) => {
+    if (app.isOrgApproved) {
+      showToast(`Access to ${app.name} has already been approved for your organization.`);
+      return;
+    }
     if (requestedAppIds.includes(app.id)) {
       showToast(`You have already requested access to ${app.name}.`);
       return;
@@ -133,7 +137,7 @@ export default function ProductLaunchPage() {
     }
   }, [showToast]);
 
-  const handleRequestSubmitted = useCallback((app: CatalogApp) => {
+  const handleRequestSubmitted = useCallback((app: CatalogApp, message?: string) => {
     setRequestedAppIds((current) => (current.includes(app.id) ? current : [...current, app.id]));
     showToast(message || `Your access request for ${app.name} has been sent.`);
   }, [showToast]);

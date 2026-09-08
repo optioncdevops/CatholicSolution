@@ -2,7 +2,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace CFR.AcutisInfrastructure.Models.Input
+namespace CFR.PortalInfrastructure.Models.Input
 {
     /// <summary>
     /// Input DTO used to approve, reject, or request more information on an access request.

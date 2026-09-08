@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
 
 interface AppDetailsModalProps {
@@ -10,16 +10,6 @@ interface AppDetailsModalProps {
 
 export function AppDetailsModal({ app, onClose, onRequest, onLaunch }: AppDetailsModalProps) {
   const closeRef = useRef<HTMLButtonElement | null>(null);
-  const [expanded, setExpanded] = useState(false);
-
-  // Collapse the expanded section when a different app is opened. Adjusted during render
-  // rather than in an effect: resetting state from an effect body queues a second render
-  // pass, so the modal would briefly paint the previous app's expanded state.
-  const [renderedApp, setRenderedApp] = useState(app);
-  if (app !== renderedApp) {
-    setRenderedApp(app);
-    setExpanded(false);
-  }
 
   useEffect(() => {
     if (!app) return undefined;
@@ -38,16 +28,18 @@ export function AppDetailsModal({ app, onClose, onRequest, onLaunch }: AppDetail
 
   if (!app) return null;
 
+  const isOrgApproved = Boolean(app.isOrgApproved);
   const ssoLaunch = Boolean(onLaunch && app.productId && app.hubSection === 'your');
-  const showRequest = Boolean(onRequest && app.canRequest && app.hubSection === 'available');
+  const showRequest = Boolean(onRequest && app.canRequest && app.hubSection === 'available' && !isOrgApproved);
   const isExternal = app.kind === 'external';
   const primaryLabel = ssoLaunch
     ? `${isExternal ? 'Visit site' : 'Launch'} →`
-    : showRequest
-      ? 'Request this app →'
-      : app.status === 'coming-soon' ? 'Coming soon' : 'Not available';
+    : isOrgApproved
+      ? 'Approved'
+      : showRequest
+        ? 'Request this app →'
+        : app.status === 'coming-soon' ? 'Coming soon' : 'Not available';
   const primaryClass = `action-primary ${ssoLaunch ? 'bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-950 shadow-sm' : 'border border-brand-navy bg-white text-brand-navy hover:bg-brand-navy hover:text-white'}`;
-  const details = app.details;
   const statusClass = ssoLaunch && app.kind === 'launchable' ? 'bg-emerald-50 text-emerald-700' : isExternal ? 'bg-slate-100 text-slate-700' : app.kind === 'ai' ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-700';
 
   return (

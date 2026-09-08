@@ -59,7 +59,9 @@ BEGIN
                     THEN 1
                     ELSE 0
                 END AS BIT
-            ) AS [CanRequest]
+            ) AS [CanRequest],
+            contactUser.[UserId] AS [ContactUserId],
+            LTRIM(RTRIM(contactUser.[Email])) AS [ContactEmail]
         FROM [core].[Product] AS p
         LEFT JOIN (
             SELECT DISTINCT up.[ProductId]
@@ -75,6 +77,16 @@ BEGIN
            AND pe.[EnvironmentName] = @EnvironmentName
            AND ISNULL(pe.[IsDeleted], 0) = 0
            AND pe.[IsActive] = 1
+        LEFT JOIN [auth].[AcutisUser] AS contactUser
+            ON (
+                (p.[ContactUserId] IS NOT NULL AND p.[ContactUserId] = contactUser.[UserId])
+                OR (p.[ContactUserId] IS NULL AND (
+                    contactUser.[UserId] = TRY_CAST(p.[ContactPerson] AS INT)
+                    OR LTRIM(RTRIM(ISNULL(contactUser.[FirstName], N'') + N' ' + ISNULL(contactUser.[LastName], N''))) = LTRIM(RTRIM(p.[ContactPerson]))
+                ))
+            )
+            AND contactUser.[IsDeleted] = 0
+            AND contactUser.[IsActive] = 1
         WHERE p.[IsDeleted] = 0
         ORDER BY
             CASE

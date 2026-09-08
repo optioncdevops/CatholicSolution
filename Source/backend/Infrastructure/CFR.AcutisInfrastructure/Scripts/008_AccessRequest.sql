@@ -841,6 +841,7 @@ BEGIN
     BEGIN
         DECLARE @Recipients TABLE ([EMail] NVARCHAR(256) NOT NULL);
         DECLARE @ProductContactPerson NVARCHAR(200);
+        DECLARE @ProductContactUserId BIGINT;
 
         IF @ProductId IS NULL AND @ProductName IS NOT NULL
         BEGIN
@@ -850,11 +851,13 @@ BEGIN
               AND p.[ProductName] = @ProductName;
         END
 
-        SELECT @ProductContactPerson = p.[ContactPerson]
+        SELECT
+            @ProductContactPerson = p.[ContactPerson],
+            @ProductContactUserId = p.[ContactUserId]
         FROM [core].[Product] p
         WHERE p.[ProductId] = @ProductId;
 
-        IF @ProductContactPerson IS NOT NULL AND LTRIM(RTRIM(@ProductContactPerson)) <> N''
+        IF @ProductContactUserId IS NOT NULL OR (@ProductContactPerson IS NOT NULL AND LTRIM(RTRIM(@ProductContactPerson)) <> N'')
         BEGIN
             INSERT INTO @Recipients ([EMail])
             SELECT DISTINCT LTRIM(RTRIM(u.[Email]))
@@ -863,7 +866,13 @@ BEGIN
               AND u.[IsActive] = 1
               AND u.[IsLocked] = 0
               AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL
-              AND LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) = LTRIM(RTRIM(@ProductContactPerson));
+              AND (
+                  (@ProductContactUserId IS NOT NULL AND u.[UserId] = @ProductContactUserId)
+                  OR (@ProductContactUserId IS NULL AND (
+                      u.[UserId] = TRY_CAST(@ProductContactPerson AS INT)
+                      OR LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) = LTRIM(RTRIM(@ProductContactPerson))
+                  ))
+              );
         END
 
         IF NOT EXISTS (SELECT 1 FROM @Recipients)
@@ -904,7 +913,6 @@ BEGIN
             p.[SubCategoryName],
             p.[ProdDescription],
             p.[ExternalPageUrl],
-            p.[LogoUrl],
             p.[IsActive],
             p.[ProductStatus],
             CASE
@@ -920,12 +928,32 @@ BEGIN
                   AND pf.[IsActive] = 1
             ) AS [Features],
             (
+                SELECT TOP 1 u.[UserId]
+                FROM [auth].[AcutisUser] u
+                WHERE u.[IsDeleted] = 0
+                  AND u.[IsActive] = 1
+                  AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL
+                  AND (
+                      (p.[ContactUserId] IS NOT NULL AND u.[UserId] = p.[ContactUserId])
+                      OR (p.[ContactUserId] IS NULL AND (
+                          u.[UserId] = TRY_CAST(p.[ContactPerson] AS INT)
+                          OR LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) = LTRIM(RTRIM(p.[ContactPerson]))
+                      ))
+                  )
+            ) AS [ContactUserId],
+            (
                 SELECT TOP 1 LTRIM(RTRIM(u.[Email]))
                 FROM [auth].[AcutisUser] u
                 WHERE u.[IsDeleted] = 0
                   AND u.[IsActive] = 1
                   AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL
-                  AND LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) = LTRIM(RTRIM(p.[ContactPerson]))
+                  AND (
+                      (p.[ContactUserId] IS NOT NULL AND u.[UserId] = p.[ContactUserId])
+                      OR (p.[ContactUserId] IS NULL AND (
+                          u.[UserId] = TRY_CAST(p.[ContactPerson] AS INT)
+                          OR LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) = LTRIM(RTRIM(p.[ContactPerson]))
+                      ))
+                  )
             ) AS [ContactEmail]
         FROM [core].[Product] p
         LEFT JOIN (
