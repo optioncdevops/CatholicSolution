@@ -508,7 +508,6 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string Remarks = nameof(Remarks);
 
-
             /// <summary>
             /// Logged-in user who inserted the row (ICurrentUserService.UserId).
             /// </summary>
@@ -524,6 +523,14 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);
         }
+
+        public static class UserRightParams
+        {
+            public const string RoleId = nameof(RoleId);
+            public const string ModuleId = nameof(ModuleId);
+            public const string ParentId = nameof(ParentId);
+            public const string AccessRights = nameof(AccessRights);
+            public const string FeatureIds = nameof(FeatureIds);
+        }
     }
 }
-
