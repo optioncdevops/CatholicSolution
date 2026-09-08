@@ -9,6 +9,10 @@
       {
         "Path": "Microservices\\CFR.Portal\\CFR.Portal.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "Microservices\\CFR.Acutis\\CFR.Acutis.csproj",
+        "Action": "Start"
       }
     ]
   }

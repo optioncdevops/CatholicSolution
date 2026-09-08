@@ -24,10 +24,6 @@ function protocolOf(url: string): string | null {
 }
 
 function firstPartyHostname(): string | null {
-  const hubUrl = import.meta.env.VITE_APP_HUB_URL;
-  if (hubUrl) {
-    return hostnameOf(hubUrl);
-  }
   if (typeof window !== 'undefined') {
     return window.location.hostname.toLowerCase();
   }
