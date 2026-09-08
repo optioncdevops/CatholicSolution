@@ -13,7 +13,7 @@ export const MOCK_ROLES: AdminRole[] = [
 
 export const MOCK_APPLICATIONS: AdminApplication[] = [
   {
-    id: 'optionc-school', registryRef: 'reg_app_0001', sourceLocation: 'SaaS_Apps/optionc-school',
+    id: 'optionc-school', registryRef: 'reg_app_0001', sourceLocation: 'optionc-school',
     name: 'OptionC School', shortName: 'School', category: 'Student Information System',
     icon: '🎓', gradient: 'linear-gradient(135deg,#1E3A8A,#3B82F6)',
     description: 'Comprehensive student information and academic management — attendance, gradebook, report cards and a parent portal in one place.',
@@ -23,7 +23,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     status: 'active', licenseType: 'licensed', updatedAt: '2026-08-12',
   },
   {
-    id: 'optionc-parish', registryRef: 'reg_app_0002', sourceLocation: 'SaaS_Apps/optionc-parish',
+    id: 'optionc-parish', registryRef: 'reg_app_0002', sourceLocation: 'optionc-parish',
     name: 'Parish Hub', shortName: 'Parish', category: 'Parish Administration',
     icon: '✝️', gradient: 'linear-gradient(135deg,#166534,#22C55E)',
     description: 'Integrated tools to manage your parish community and sacraments — family records, sacrament registers and Mass intentions.',
@@ -33,7 +33,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     status: 'active', licenseType: 'licensed', updatedAt: '2026-08-09',
   },
   {
-    id: 'matt-money', registryRef: 'reg_app_0003', sourceLocation: 'SaaS_Apps/matt-money',
+    id: 'matt-money', registryRef: 'reg_app_0003', sourceLocation: 'matt-money',
     name: 'Matt Money', shortName: 'Matt Money', category: 'Billing & Finance',
     icon: '💰', gradient: 'linear-gradient(135deg,#0F766E,#34D399)',
     description: 'Seamless online payment processing and financial tracking — tuition billing, donations and automatic reconciliation.',
@@ -43,7 +43,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     status: 'inactive', licenseType: 'licensed', updatedAt: '2026-08-05',
   },
   {
-    id: 'arc-alerts', registryRef: 'reg_app_0004', sourceLocation: 'SaaS_Apps/arc-alerts',
+    id: 'arc-alerts', registryRef: 'reg_app_0004', sourceLocation: 'arc-alerts',
     name: 'ArcAlerts', shortName: 'ArcAlerts', category: 'Emergency Communication',
     icon: '🔔', gradient: 'linear-gradient(135deg,#B91C1C,#EF4444)',
     description: 'Instant multi-channel notifications via text, email, and voicemail — reach every parent, staff member and parishioner in under a minute.',
@@ -55,7 +55,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     status: 'coming-soon', licenseType: 'licensed', updatedAt: '2026-07-30',
   },
   {
-    id: 'catholic-content', registryRef: 'reg_app_0005', sourceLocation: 'SaaS_Apps/catholic-content',
+    id: 'catholic-content', registryRef: 'reg_app_0005', sourceLocation: 'catholic-content',
     name: 'Catholic Content', shortName: 'Content', category: 'Faith Resources',
     icon: '📚', gradient: 'linear-gradient(135deg,#5B21B6,#8B5CF6)',
     description: 'Over 1,600 faith-based resources including workbooks, coloring pages, and more — searchable by grade, season and topic.',
@@ -65,7 +65,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     status: 'coming-soon', licenseType: 'free', updatedAt: '2026-07-22',
   },
   {
-    id: 'unified-directory', registryRef: 'reg_app_0006', sourceLocation: 'SaaS_Apps/unified-directory',
+    id: 'unified-directory', registryRef: 'reg_app_0006', sourceLocation: 'unified-directory',
     name: 'Unified Directory', shortName: 'Directory', category: 'Identity & Access',
     icon: '👥', gradient: 'linear-gradient(135deg,#075985,#0EA5E9)',
     description: 'Add and manage people and groups across Catholic Solutions from one shared organization directory.',
@@ -75,7 +75,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     status: 'inactive', licenseType: 'free', updatedAt: '2026-07-18',
   },
   {
-    id: 'support-center', registryRef: 'reg_app_0007', sourceLocation: 'SaaS_Apps/support-center',
+    id: 'support-center', registryRef: 'reg_app_0007', sourceLocation: 'support-center',
     name: 'Support Center', shortName: 'Support', category: 'Member Services',
     icon: '🛟', gradient: 'linear-gradient(135deg,#164E63,#0E7490)',
     description: 'Submit support tickets and keep the complete conversation history for every Catholic Solutions request in one workspace.',
@@ -87,7 +87,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     status: 'coming-soon', licenseType: 'licensed', updatedAt: '2026-07-02',
   },
   {
-    id: 'ai-lesson-plan', registryRef: 'reg_app_0008', sourceLocation: 'SaaS_Apps/ai-lesson-plan',
+    id: 'ai-lesson-plan', registryRef: 'reg_app_0008', sourceLocation: 'ai-lesson-plan',
     name: 'AI Lesson Plan Generator', shortName: 'Lesson Plans', category: 'AI · Teaching',
     icon: '📝', gradient: 'linear-gradient(135deg,#D97706,#FBBF24)',
     description: 'Generate faith-integrated lesson plans from a short description of the class and topic.',

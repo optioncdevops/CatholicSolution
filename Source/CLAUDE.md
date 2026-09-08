@@ -8,7 +8,7 @@ This repo holds two independent halves that are not wired together in this works
 
 ```text
 backend/    .NET 10 microservices solution (CatholicSolution.slnx)
-frontend/   Independent React/Vite projects (cfr, cfr-admin, SaaS_Apps/*) — see frontend/CLAUDE.md
+frontend/   Independent React/Vite projects (cfr, cfr-admin) — see frontend/CLAUDE.md
 docs/skillFile/   Source-of-truth coding-standard docs, mirrored as invocable skills
 ```
 
@@ -68,8 +68,8 @@ Controllers never hard-code route/action strings — they use `[ActionName(API_{
 
 ### Configuration
 
-- `ConfigurationLoader.LoadConfiguration()` (`CFR.Base`) reads the **`Environment` key inside `appsettings.json`** (not `ASPNETCORE_ENVIRONMENT`) to decide which `appsettings.{Environment}.json` to layer on top. Each microservice's `appsettings.json` just sets `{"Environment": "Development"}` (or `QA`/`Pilot`/etc.) and the real per-environment values live in the matching `appsettings.{Environment}.json`.
-- `CFR.Gateway` is a YARP reverse proxy: `Gateway/CFR.Gateway/appsettings.Development.json` defines `ReverseProxy.Routes`/`Clusters` mapping path prefixes (`/acutis`, `/portal`) to each microservice's local HTTPS port, and strips the prefix before forwarding. Swagger/Scalar on the gateway aggregate the downstream microservices' OpenAPI JSON.
+- `ConfigurationLoader.LoadConfiguration()` (`CFR.Base`) reads the **`Environment` key inside `appsettings.json`** (not `ASPNETCORE_ENVIRONMENT`) to decide which `appsettings.{Environment}.json` to layer on top. Set `"Environment"` to `Development`, `Pilot`, `Staging`, or `Live`. Each host (`CFR.Acutis`, `CFR.Portal`, `CFR.Gateway`) has matching overlay files; the real per-environment values live there.
+- `CFR.Gateway` is a YARP reverse proxy: `Gateway/CFR.Gateway/appsettings.{Environment}.json` defines `ReverseProxy.Routes`/`Clusters` mapping path prefixes (`/acutis`, `/portal`) to each microservice, and strips the prefix before forwarding. Swagger/Scalar on the gateway aggregate the downstream microservices' OpenAPI JSON.
 
 ### Commands
 

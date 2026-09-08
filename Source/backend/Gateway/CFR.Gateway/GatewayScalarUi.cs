@@ -7,17 +7,16 @@ using static CFR.Common.Constant;
 namespace CFR.Gateway;
 
 /// <summary>
-/// Scalar API reference at the gateway: local APIGateway spec plus OpenAPI JSON proxied through YARP.
-/// <para>
-/// Each downstream module can be toggled via <c>Gateway:{Module}Enabled</c> (default: true).
-/// Set to <c>"false"</c> in appsettings to hide modules whose API host is not running locally.
-/// </para>
+/// Scalar API reference at the gateway. Servers include existing <c>/api/v1</c>
+/// and service-prefixed <c>/{service}/api/v1</c> bases.
 /// </summary>
 internal static class GatewayScalarUi
 {
     public static void Configure(ScalarOptions options, IConfiguration configuration)
     {
         options.WithTitle(SwaggerModuleDoc.OptionCBGateway);
+        options.WithDynamicBaseServerUrl(true);
+        options.AddServer("/", "Existing /api/v1");
 
         options.AddDocument(
             SwaggerModuleDoc.OptionCBGateway,
@@ -25,51 +24,16 @@ internal static class GatewayScalarUi
             routePattern: "/swagger/APIGateway/swagger.json",
             isDefault: true);
 
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:AcutisEnabled", configKey: "Gateway:AcutisPathPrefix", defaultPrefix: "/acutis", docs: SwaggerModuleDoc.CFRAcutisDocs, labelPrefix: "Acutis");
-        RegisterIfEnabled(options, configuration, enabledKey: "Gateway:PortalEnabled", configKey: "Gateway:PortalPathPrefix", defaultPrefix: "/portal", docs: SwaggerModuleDoc.PortalDocs, labelPrefix: "Portal");
-    }
-
-    private static void RegisterIfEnabled(ScalarOptions options, IConfiguration configuration, string enabledKey, string configKey, string defaultPrefix, string docs, string labelPrefix)
-    {
-        string? enabled = configuration[enabledKey];
-        if (string.Equals(enabled, "false", StringComparison.OrdinalIgnoreCase))
+        foreach (GatewayModuleDocs module in GatewayDocs.EnabledModules(configuration))
         {
-            return;
+            options.AddServer(module.PathPrefix, $"{module.LabelPrefix} /{module.LabelPrefix.ToLowerInvariant()}");
+            foreach (string doc in GatewayDocs.SplitDocs(module.DocsCsv))
+            {
+                options.AddDocument(
+                    doc,
+                    title: $"{module.LabelPrefix}.{GatewayDocs.ShortDisplayName(doc)}",
+                    routePattern: GatewayDocs.SpecUrl(module.PathPrefix, doc));
+            }
         }
-        RegisterModuleScalarDocs(options, configuration, configKey, defaultPrefix, docs, labelPrefix);
-    }
-
-    private static void RegisterModuleScalarDocs(ScalarOptions options, IConfiguration configuration, string configKey, string defaultPrefix, string docs, string labelPrefix)
-    {
-        string pathPrefix = NormalizePrefix(configuration[configKey] ?? defaultPrefix);
-        foreach (string doc in docs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            options.AddDocument(
-                doc,
-                title: $"{labelPrefix}.{ShortDisplayName(doc)}",
-                routePattern: $"{pathPrefix}/swagger/{doc}/swagger.json");
-        }
-    }
-
-    private static string NormalizePrefix(string value)
-    {
-        value = value.Trim();
-        if (value.Length == 0)
-        {
-            return string.Empty;
-        }
-
-        if (!value.StartsWith('/'))
-        {
-            value = "/" + value;
-        }
-
-        return value.TrimEnd('/');
-    }
-
-    private static string ShortDisplayName(string doc)
-    {
-        int i = doc.LastIndexOf('.');
-        return i >= 0 ? doc[(i + 1)..] : doc;
     }
 }

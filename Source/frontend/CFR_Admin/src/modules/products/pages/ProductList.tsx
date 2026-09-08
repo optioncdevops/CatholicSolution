@@ -362,7 +362,7 @@ const ProductList = () => {
             licenseType: "licensed",
             navigationTarget: "same-tab",
             registryRef: `reg_app_${String(selectedProduct.productId).padStart(4, "0")}`,
-            sourceLocation: `SaaS_Apps/${selectedProduct.productName.toLowerCase().replace(/\s+/g, "-")}`,
+            sourceLocation: selectedProduct.productName.toLowerCase().replace(/\s+/g, "-"),
             updatedAt:
               selectedProduct.updatedDate || selectedProduct.createdDate,
           }}
