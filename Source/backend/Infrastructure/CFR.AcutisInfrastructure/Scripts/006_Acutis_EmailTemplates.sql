@@ -226,6 +226,27 @@ We need a bit more information to process your request for [AppName]:
         0
     );
 END
+
+-- The frontend's merge-tag list and AccessRequestService both fully support this 5th template
+-- code (sent to admins when a member submits a new access request); it had no seed row here, so
+-- it never appeared in the admin editor and always silently sent AccessRequestService's hardcoded
+-- fallback body instead. Text matches that exact fallback (AccessRequestService.SendNewRequestEmailAsync).
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'AccessRequested')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'AccessRequested',
+        N'New access request for [AppName]',
+        N'<p>A member has requested access and needs an admin review.</p><p><strong>Requester:</strong> [RequesterName] ([RequesterEmail])</p><p><strong>Organization:</strong> [OrganizationName]</p><p><strong>Application:</strong> [AppName]</p><p><a href="[ReviewLink]">Review this request</a></p>',
+        1,
+        SYSUTCDATETIME(),
+        0
+    );
+END
 GO
 
 -- Upgrade guard: brings a pre-existing PasswordReset row seeded before the premium-HTML redesign

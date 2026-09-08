@@ -119,6 +119,15 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                // [adm].[EmailTemplate].[Subject] is NVARCHAR(200) — reject here instead of
+                // letting the stored procedure silently truncate a longer subject on save.
+                if (input.Subject.Length > 200)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
                 if (input.TemplateId == 0 && string.IsNullOrWhiteSpace(input.TemplateCode))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;

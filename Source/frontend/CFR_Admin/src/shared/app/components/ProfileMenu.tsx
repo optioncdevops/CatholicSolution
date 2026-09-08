@@ -55,6 +55,7 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
     <>
       <div className="profile-menu" ref={wrapperRef}>
         <button
+          id="menuProfile"
           type="button"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
@@ -88,14 +89,14 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
             </div>
 
             <div className="profile-menu__actions">
-              <button type="button" role="menuitem" onClick={() => { setOpen(false); navigate('/admin/profile'); }}>
+              <button id="menuItemProfile" type="button" role="menuitem" onClick={() => { setOpen(false); navigate('/admin/profile'); }}>
                 <span aria-hidden="true"><UserIcon size={16} /></span>
                 <div>
                   <strong>Profile</strong>
                   <small>Personal and contact details</small>
                 </div>
               </button>
-              <button type="button" role="menuitem" onClick={() => { setOpen(false); setPasswordModalOpen(true); }}>
+              <button id="menuItemChangePassword" type="button" role="menuitem" onClick={() => { setOpen(false); setPasswordModalOpen(true); }}>
                 <span aria-hidden="true"><LockIcon size={16} /></span>
                 <div>
                   <strong>Change password</strong>
@@ -105,7 +106,7 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
             </div>
 
             <div className="profile-menu__divider" role="separator" />
-            <button type="button" role="menuitem" onClick={handleSignOut} className="profile-menu__signout">
+            <button id="menuItemSignOut" type="button" role="menuitem" onClick={handleSignOut} className="profile-menu__signout">
               <LogOutIcon size={16} />
               <span>Sign out</span>
             </button>

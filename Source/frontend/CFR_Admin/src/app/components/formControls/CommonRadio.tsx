@@ -14,6 +14,8 @@ import {
 } from "@designSystem/theme/styles/componentStyle";
 
 interface BaseRadioProps {
+  /** Stable id for this radio input (e.g. `rdoLicenseTypeAnnual`) per the Stable Control IDs standard — this is the full id for this specific option, not a group prefix. */
+  id?: string;
   label: string;
   /** Value stored in the form when this radio is selected */
   radioValue: string;
@@ -41,6 +43,7 @@ export interface CommonRadioProps<
 }
 
 const RadioInner = <TFieldValues extends FieldValues = FieldValues>({
+  id,
   label,
   radioValue,
   helperText,
@@ -59,9 +62,9 @@ const RadioInner = <TFieldValues extends FieldValues = FieldValues>({
     defaultValue,
   );
   const generatedId = React.useId();
-  const inputId = name
+  const inputId = id ?? (name
     ? `${name}-${radioValue}`
-    : `radio-${radioValue}-${generatedId}`;
+    : `radio-${radioValue}-${generatedId}`);
 
   const selected = value ?? internalValue;
 

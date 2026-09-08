@@ -508,7 +508,6 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string Remarks = nameof(Remarks);
 
-
             /// <summary>
             /// Logged-in user who inserted the row (ICurrentUserService.UserId).
             /// </summary>
@@ -524,6 +523,35 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);
         }
+
+        /// <summary>
+        /// Parameters for the Dashboard summary stored procedure.
+        /// </summary>
+        public static class DashboardParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>
+            /// Inclusive start of the trend-events date range (UTC).
+            /// </summary>
+            public const string StartDate = nameof(StartDate);
+
+            /// <summary>
+            /// Inclusive end of the trend-events date range (UTC).
+            /// </summary>
+            public const string EndDate = nameof(EndDate);
+        }
+
+        public static class UserRightParams
+        {
+            public const string RoleId = nameof(RoleId);
+            public const string ModuleId = nameof(ModuleId);
+            public const string ParentId = nameof(ParentId);
+            public const string AccessRights = nameof(AccessRights);
+            public const string FeatureIds = nameof(FeatureIds);
+        }
     }
 }
-
