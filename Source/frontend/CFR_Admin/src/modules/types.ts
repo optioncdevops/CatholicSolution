@@ -108,8 +108,6 @@ export interface AdminRole {
   active: boolean;
 }
 
-export type PermissionLevel = 'read-only' | 'full-control' | 'deny';
-
 export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'info-requested';
 
 export interface RequestTimelineEntry {
