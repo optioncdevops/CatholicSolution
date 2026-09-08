@@ -14,6 +14,8 @@ import {
 } from "@designSystem/theme/styles/componentStyle";
 
 interface BaseCheckboxProps {
+  /** Stable id for the checkbox input (e.g. `chkIsActive`) per the Stable Control IDs standard. */
+  id?: string;
   label: string;
   helperText?: string;
   error?: string;
@@ -41,6 +43,7 @@ export interface CommonCheckboxProps<
 }
 
 const CheckboxInner = <TFieldValues extends FieldValues = FieldValues>({
+  id,
   label,
   helperText,
   error,
@@ -57,7 +60,7 @@ const CheckboxInner = <TFieldValues extends FieldValues = FieldValues>({
 }: CommonCheckboxProps<TFieldValues>) => {
   const [internalChecked, setInternalChecked] = React.useState(defaultChecked);
   const generatedId = React.useId();
-  const inputId = name ?? `checkbox-${generatedId}`;
+  const inputId = id ?? name ?? `checkbox-${generatedId}`;
 
   const isChecked = checked ?? internalChecked;
 

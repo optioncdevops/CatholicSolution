@@ -144,6 +144,13 @@ namespace CFR.AcutisService.Service.Administration
                     return Task.FromResult(result);
                 }
 
+                if (input.SmtpPort is < 1 or > 65535)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return Task.FromResult(result);
+                }
+
                 var settings = confSettingsService.LoadData();
                 settings ??= new ConfSettings();
                 var smtp = settings.SMTPMailConfig ?? new SMTPMailConfig();

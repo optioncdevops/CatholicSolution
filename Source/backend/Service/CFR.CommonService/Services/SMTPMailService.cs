@@ -178,6 +178,13 @@ namespace CFR.CommonService.Services
             return !string.IsNullOrWhiteSpace(settings?.SMTPMailConfig?.AccentColor) ? settings.SMTPMailConfig.AccentColor : "#1d4ed8";
         }
 
+        /// <summary>
+        /// Substitutes [Token] merge tags in an HTML email template. Every value is HTML-encoded
+        /// before substitution — these values (requester name, organization name, reviewer notes,
+        /// etc.) come from user input, and the template itself is sent as raw HTML, so an
+        /// unescaped value would let stored HTML/script be injected into an email admins and
+        /// requesters open directly.
+        /// </summary>
         public static string FormatMailContent(string template, Dictionary<string, string> placeholders)
         {
             ArgumentNullException.ThrowIfNull(placeholders);
@@ -187,7 +194,7 @@ namespace CFR.CommonService.Services
             }
             foreach (var placeholder in placeholders)
             {
-                template = template.Replace($"[{placeholder.Key}]", placeholder.Value ?? string.Empty);
+                template = template.Replace($"[{placeholder.Key}]", WebUtility.HtmlEncode(placeholder.Value) ?? string.Empty);
             }
             return template;
         }

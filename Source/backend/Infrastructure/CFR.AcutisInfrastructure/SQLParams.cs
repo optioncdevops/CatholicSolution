@@ -524,6 +524,27 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);
         }
+
+        /// <summary>
+        /// Parameters for the Dashboard summary stored procedure.
+        /// </summary>
+        public static class DashboardParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>
+            /// Inclusive start of the trend-events date range (UTC).
+            /// </summary>
+            public const string StartDate = nameof(StartDate);
+
+            /// <summary>
+            /// Inclusive end of the trend-events date range (UTC).
+            /// </summary>
+            public const string EndDate = nameof(EndDate);
+        }
     }
 }
 

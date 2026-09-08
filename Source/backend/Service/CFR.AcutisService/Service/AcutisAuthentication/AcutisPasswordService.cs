@@ -113,6 +113,13 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
                     return result;
                 }
 
+                if (!PasswordPolicy.IsStrongEnough(input.NewPassword))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.PasswordTooWeak;
+                    return result;
+                }
+
                 string tokenHash = HashToken(input.Token.Trim());
                 int userId = await repository.ResetPasswordAsync(tokenHash, input.NewPassword);
                 if (userId <= 0)

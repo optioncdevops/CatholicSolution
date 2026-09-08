@@ -116,5 +116,10 @@ namespace CFR.CommonService
             public const string GetProductLogo = nameof(GetProductLogo);
             public const string GetProductCustomers = nameof(GetProductCustomers);
         }
+
+        public static class API_Dashboard
+        {
+            public const string GetDashboardSummary = nameof(GetDashboardSummary);
+        }
     }
 }
