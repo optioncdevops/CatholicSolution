@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shared library: page objects, hooks helpers and test data readers.
+       Not a test project, so it takes the Reqnroll runtime only - not the
+       Reqnroll.NUnit generator. -->
+
+  <ItemGroup>
+    <PackageReference Include="Reqnroll" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="Selenium.WebDriver" />
+    <PackageReference Include="Selenium.Support" />
+    <PackageReference Include="DotNetSeleniumExtras.PageObjects.Core" />
+    <PackageReference Include="ExtentReports" />
+    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+
+</Project>

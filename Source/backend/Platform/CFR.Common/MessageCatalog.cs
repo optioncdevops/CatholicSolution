@@ -152,6 +152,8 @@ namespace CFR.Common
             public const string UploadProductLogoFailed = "Error while uploading product logo";
             public const string FetchProductLogoFailed = "Error while fetching product logo";
             public const string DeleteProductLogoFailed = "Error deleting previous product logo file {RelativeUrl}";
+            public const string FetchUserRightsFailed = "Error while fetching user rights";
+            public const string SaveUserRightsFailed = "Error while saving user rights";
             public const string FetchDashboardSummaryFailed = "Error while fetching dashboard summary";
         }
 
