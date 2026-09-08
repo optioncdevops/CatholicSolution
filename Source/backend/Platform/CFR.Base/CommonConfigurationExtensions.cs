@@ -16,7 +16,7 @@ namespace CFR.Base
                 .Build(); // Build the temporary configuration
 
             // Step 2: Fetch the environment from appsettings.json (fallback to system variable)
-            string env = tempConfig["Environment"] ?? "Production";
+            string env = tempConfig["Environment"] ?? "Live";
 
             // Step 3: Build the final configuration with the correct environment
             builder

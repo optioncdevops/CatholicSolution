@@ -4,19 +4,15 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "predev": "npm run sync:app-switcher-manifest",
     "dev": "vite --mode development",
-    "prebuild": "npm run sync:app-switcher-manifest",
-    "build": "tsc -b && vite build --mode production",
-    "prebuild:production": "npm run sync:app-switcher-manifest",
-    "build:production": "tsc -b && vite build --mode production",
-    "prebuild:staging": "npm run sync:app-switcher-manifest",
+    "build": "tsc -b && vite build --mode live",
+    "build:development": "tsc -b && vite build --mode development",
+    "build:pilot": "tsc -b && vite build --mode pilot",
     "build:staging": "tsc -b && vite build --mode staging",
+    "build:live": "tsc -b && vite build --mode live",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "preview": "vite preview",
-    "sync:app-switcher-manifest": "node --experimental-strip-types scripts/generate-app-switcher-manifest.mjs",
-    "test:app-switcher-manifest": "node --experimental-strip-types --test scripts/generate-app-switcher-manifest.test.mjs"
+    "preview": "vite preview --mode live"
   },
   "dependencies": {
     "react": "^19.2.8",

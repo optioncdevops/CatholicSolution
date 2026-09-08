@@ -67,7 +67,7 @@ export function buildCentralLogoutUrl(returnUrl?: string) {
 function cookieAttributes(expire = false, remember = false) {
   const attributes = ['Path=/', 'SameSite=Lax'];
   if (environment.sessionCookieDomain) attributes.push(`Domain=${environment.sessionCookieDomain}`);
-  if (environment.mode === 'production') attributes.push('Secure');
+  if (environment.mode !== 'development') attributes.push('Secure');
   if (expire) attributes.push('Max-Age=0');
   else if (remember) attributes.push('Max-Age=604800');
   return attributes.join('; ');

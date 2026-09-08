@@ -69,15 +69,12 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseCommonAppGatewaySetup();
 
-// Gateway OpenAPI + Swagger UI (downstream JSON is loaded via relative URLs → YARP → Acutis / SSO).
+app.MapGet("/", () => Results.Content(GatewayStartPage.Html(), "text/html"))
+    .ExcludeFromDescription();
 
 app.UseSwaggerUI(options => GatewaySwaggerUi.Configure(options, app.Configuration));
 app.MapScalarApiReference("/scalar", options => GatewayScalarUi.Configure(options, app.Configuration));
 
 app.MapReverseProxy();
-
-app.MapGet("/", () =>
-        Results.Text(DefaultData.WebStartPage.Replace("{0}", "OptionC.API Gateway"), "text/html"))
-    .ExcludeFromDescription();
 
 app.Run();

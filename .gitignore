@@ -47,3 +47,6 @@
 /Source/backend/Automation/Automation.Acutis/Result/index.html
 /Source/backend/Automation/Automation.Framework/bin/Debug/net8.0
 /Source/backend/Automation/Automation.Framework/obj
+/Source/backend
+/Source/backend/Infrastructure/CFR.PortalInfrastructure/bin/Release/net10.0
+/Source/backend/Service/CFR.PortalService/bin/Release/net10.0
