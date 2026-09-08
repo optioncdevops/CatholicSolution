@@ -67,6 +67,10 @@ namespace CFR.Acutis
             services.AddScoped<IOrganizationService, OrganizationService>();
             services.AddScoped<IOrganizationRepository, OrganizationRepository>();
 
+            // User Rights
+            services.AddScoped<IUserRightsService, UserRightsService>();
+            services.AddScoped<IUserRightsRepository, UserRightsRepository>();
+
             // Dashboard
             services.AddScoped<IDashboardService, DashboardService>();
             services.AddScoped<IDashboardRepository, DashboardRepository>();
