@@ -175,26 +175,6 @@ namespace CFR.AcutisInfrastructure
             public const string Status = nameof(Status);
 
             /// <summary>
-            /// Per-template accent color (hex) override for the send-time wrapper.
-            /// </summary>
-            public const string AccentColor = nameof(AccentColor);
-
-            /// <summary>
-            /// Per-template logo image URL override for the send-time wrapper.
-            /// </summary>
-            public const string LogoUrl = nameof(LogoUrl);
-
-            /// <summary>
-            /// Per-template font-family override for the send-time wrapper.
-            /// </summary>
-            public const string FontFamily = nameof(FontFamily);
-
-            /// <summary>
-            /// Per-template base body font size (pixels) override for the send-time wrapper.
-            /// </summary>
-            public const string BaseFontSize = nameof(BaseFontSize);
-
-            /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);
@@ -528,7 +508,6 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string Remarks = nameof(Remarks);
 
-
             /// <summary>
             /// Logged-in user who inserted the row (ICurrentUserService.UserId).
             /// </summary>
@@ -544,6 +523,35 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);
         }
+
+        /// <summary>
+        /// Parameters for the Dashboard summary stored procedure.
+        /// </summary>
+        public static class DashboardParams
+        {
+            /// <summary>
+            /// CRUD action identifier.
+            /// </summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>
+            /// Inclusive start of the trend-events date range (UTC).
+            /// </summary>
+            public const string StartDate = nameof(StartDate);
+
+            /// <summary>
+            /// Inclusive end of the trend-events date range (UTC).
+            /// </summary>
+            public const string EndDate = nameof(EndDate);
+        }
+
+        public static class UserRightParams
+        {
+            public const string RoleId = nameof(RoleId);
+            public const string ModuleId = nameof(ModuleId);
+            public const string ParentId = nameof(ParentId);
+            public const string AccessRights = nameof(AccessRights);
+            public const string FeatureIds = nameof(FeatureIds);
+        }
     }
 }
-

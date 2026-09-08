@@ -46,9 +46,23 @@ const columns = (
     cell: (user) => <StatusBadge status={user.memberStatus === 'active' ? 'active' : 'inactive'} kind="user" />,
   },
   {
-    id: 'appCount', header: 'Apps',
-    value: (user) => user.appCount,
-    cell: (user) => <span className="text-[var(--text-secondary)]">{user.appCount}</span>,
+    id: 'appAccess', header: 'App Access', width: '18rem',
+    value: (user) => user.appNames ?? '',
+    cell: (user) => {
+      const apps = user.appNames ? user.appNames.split(', ').filter(Boolean) : [];
+      if (apps.length === 0) return <span className="text-[var(--text-faint)]">No app access</span>;
+      // Every app is shown — no "+N more" truncation, since that had no way to expand it.
+      // Chips wrap onto additional lines within the cell instead of being hidden.
+      return (
+        <span className="flex flex-wrap items-center gap-1 py-1">
+          {apps.map((app) => (
+            <span key={app} className="inline-flex items-center rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[0.6875rem] font-bold text-[var(--text-secondary)]">
+              {app}
+            </span>
+          ))}
+        </span>
+      );
+    },
   },
   {
     id: 'lastLogin', header: 'Last Login',
@@ -136,28 +150,19 @@ const OrganizationUsersPanel = ({ orgId, organization, users, onChanged }: Organ
   };
   //#endregion
 
-  return (
-    <div className="flex flex-col gap-4">
-      <section className="admin-panel-card">
-        <div className="admin-panel-card__header"><h2 className="panel-title">Linked Users</h2></div>
-        <p className="px-4 pt-3 text-sm text-[var(--text-muted)]">Users linked to this organization can access the applications assigned to the organization.</p>
+  if (users.length === 0) {
+    return <EmptyState icon="👥" title="No users linked" description="Users linked to this organization will appear here." />;
+  }
 
-        <div className="p-4">
-          {users.length === 0 ? (
-            <EmptyState icon="👥" title="No users linked" description="Users linked to this organization will appear here." />
-          ) : (
-            <DataTable
-              data={users}
-              columns={columns(handleView, handleUnlink, unlinkingUserId)}
-              getRowId={(user) => String(user.authUserId)}
-              exportFileName="organization-users"
-              exportTitle="Organization — Users"
-              emptyMessage="No users found."
-            />
-          )}
-        </div>
-      </section>
-    </div>
+  return (
+    <DataTable
+      data={users}
+      columns={columns(handleView, handleUnlink, unlinkingUserId)}
+      getRowId={(user) => String(user.authUserId)}
+      exportFileName="organization-users"
+      exportTitle="Organization — Users"
+      emptyMessage="No users found."
+    />
   );
 };
 

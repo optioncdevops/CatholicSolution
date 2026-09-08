@@ -50,15 +50,53 @@ namespace CFR.CommonService.MailService
         public string DefaultToAddress { get; set; } = string.Empty;
 
         /// <summary>
-        /// Absolute logo URL for HTML emails. When empty, falls back to
-        /// <c>{LoginURL}/Images/mattmoney-logo.png</c> (legacy MailService).
+        /// File name of the uploaded platform email logo image (JPG/PNG, via the Email Settings
+        /// page's Upload Logo control — see EmailSettingsController.UploadEmailLogo), resolved to
+        /// a full image URL at send time by SMTPMailService.GetLogoImageUrl. The literal value
+        /// "none" renders a text-only brand mark instead of an image. When empty, falls back to
+        /// <c>{LoginURL}/Images/mattmoney-logo.png</c> (legacy MailService default).
         /// </summary>
         public string LogoUrl { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Base URL of this CFR.Acutis API itself (e.g. "https://localhost:5051" in local
+        /// development, or the public gateway/API domain in a deployed environment) — used to
+        /// build the uploaded email logo's absolute image URL. Deliberately separate from
+        /// <see cref="LoginURL"/>, which is the admin/portal front-end's URL and is not
+        /// necessarily the same host that serves this API's GetEmailLogo action; conflating the
+        /// two produced broken logo images whenever the two hosts differ (e.g. local dev). Falls
+        /// back to <see cref="LoginURL"/> when blank, for backward compatibility.
+        /// </summary>
+        public string ApiBaseUrl { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Platform-wide accent color (hex, e.g. "#1d4ed8") substituted for the [AccentColor]
+        /// merge tag in every email template. Standardized here instead of per-template so every
+        /// outgoing email shares one brand color — falls back to "#1d4ed8" when blank.
+        /// </summary>
+        public string AccentColor { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Platform-wide email body font family. Falls back to "Verdana, Arial, Helvetica, sans-serif" when blank.
+        /// </summary>
+        public string FontFamily { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Platform-wide email body base font size in px. Falls back to 13 when unset/zero.
+        /// </summary>
+        public int BaseFontSize { get; set; }
     }
 
-    public class ConfSettingsService
+    public interface IConfSettingsService
     {
-        public ConfSettings Settings = new();
+        ConfSettings Settings { get; }
+        ConfSettings LoadData();
+        void SaveData(ConfSettings settings);
+    }
+
+    public class ConfSettingsService : IConfSettingsService
+    {
+        public ConfSettings Settings { get; private set; } = new();
 
         public ConfSettingsService()
         {
@@ -86,6 +124,22 @@ namespace CFR.CommonService.MailService
                 // Optionally log the exception
             }
             return confSettings;
+        }
+
+        /// <summary>
+        /// Writes the settings back to the same _configurationSettings.json file LoadData reads
+        /// from (falls back to a file directly beside the running assembly when no existing file
+        /// is found anywhere up the directory tree, so a first save always has somewhere to land).
+        /// This is the only file-level settings writer in the codebase — used by the admin Email
+        /// Settings page so SMTP/branding config lives in this file, not a database table.
+        /// </summary>
+        public void SaveData(ConfSettings settings)
+        {
+            string settingsPath = ResolveSettingsFilePath()
+                ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "_configurationSettings.json");
+            string json = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            File.WriteAllText(settingsPath, json);
+            Settings = settings;
         }
 
         private static string? ResolveSettingsFilePath()

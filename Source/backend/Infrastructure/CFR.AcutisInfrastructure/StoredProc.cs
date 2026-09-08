@@ -90,5 +90,17 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string ProductsCrud = "[dbo].[Acutis_Products_CRUD]";
         }
+
+        /// <summary>
+        /// Stored procedure names for the Dashboard feature.
+        /// </summary>
+        public class Dashboard
+        {
+            /// <summary>
+            /// Authoritative dashboard summary: platform KPIs, entitlement integrity metrics, and
+            /// trend events for a date range. ActionId 1=get summary.
+            /// </summary>
+            public const string DashboardCrud = "[dbo].[Acutis_Dashboard_CRUD]";
+        }
     }
 }

@@ -270,18 +270,30 @@ BEGIN
             CASE WHEN MAX(CASE WHEN ISNULL(up.[IsLoginDisabled], 0) = 1 THEN 1 ELSE 0 END) = 1
                  THEN N'inactive' ELSE N'active' END AS [MemberStatus],
             MIN(up.[CreatedDate]) AS [LinkedDate],
+            -- App access for a linked member is simply the organization's own active product
+            -- assignments (the same set shown on the Products tab) — every member linked to the
+            -- org has access to every product the org currently has active. This intentionally
+            -- does NOT also require the member's own auth.UserProduct row to reference that same
+            -- ProductId — that requirement made AppCount/AppNames disagree with the Products tab
+            -- (e.g. "Products 3" but "No app access") whenever a member's individual UserProduct
+            -- rows didn't happen to cover every product the org has assigned.
             (
-                SELECT COUNT(DISTINCT up2.[ProductId])
-                FROM [auth].[UserProduct] AS up2
-                INNER JOIN [lic].[OrganizationProduct] AS op
-                    ON op.[OrgId] = @OrgId
-                   AND op.[ProductId] = up2.[ProductId]
-                   AND op.[IsDeleted] = 0
-                   AND op.[AssignStatus] = N'active'
-                WHERE up2.[CFRUserId] = up.[CFRUserId]
-                  AND up2.[OrgId] = @OrgId
-                  AND ISNULL(up2.[IsDeleted], 0) = 0
-            ) AS [AppCount]
+                SELECT COUNT(DISTINCT op.[ProductId])
+                FROM [lic].[OrganizationProduct] AS op
+                WHERE op.[OrgId] = @OrgId
+                  AND op.[IsDeleted] = 0
+                  AND op.[AssignStatus] = N'active'
+            ) AS [AppCount],
+            (
+                SELECT STRING_AGG(p2.[ProductName], N', ') WITHIN GROUP (ORDER BY p2.[ProductName])
+                FROM [lic].[OrganizationProduct] AS op
+                INNER JOIN [core].[Product] AS p2
+                    ON p2.[ProductId] = op.[ProductId]
+                   AND p2.[IsDeleted] = 0
+                WHERE op.[OrgId] = @OrgId
+                  AND op.[IsDeleted] = 0
+                  AND op.[AssignStatus] = N'active'
+            ) AS [AppNames]
         FROM [auth].[UserProduct] AS up
         LEFT JOIN [auth].[User] AS u ON u.[CFRUserId] = up.[CFRUserId]
         LEFT JOIN [auth].[AcutisRole] AS r ON r.[RoleId] = up.[RoleId] AND r.[IsDeleted] = 0
@@ -471,9 +483,9 @@ BEGIN
     BEGIN
         -- Two result sets: (1) the membership header (sourced from [auth].[UserProduct], grouped
         -- the same way as ActionId 5), (2) the member's effective app access within THIS
-        -- organization — a product only counts as effective access when the organization has it
-        -- active (lic.OrganizationProduct) AND the member has an individual assignment row
-        -- (auth.UserProduct), same org-aware rule the App Hub uses for "Your Apps".
+        -- organization — every product the organization currently has active (lic.OrganizationProduct),
+        -- same rule as ActionId 5's AppCount/AppNames (not additionally gated by the member's own
+        -- auth.UserProduct row for that ProductId — see the comment on ActionId 5 for why).
         SELECT
             up.[CFRUserId] AS [AuthUserId],
             u.[Email],
@@ -492,20 +504,15 @@ BEGIN
           AND ISNULL(up.[IsDeleted], 0) = 0
         GROUP BY up.[CFRUserId], up.[OrgId], u.[Email];
 
-        SELECT DISTINCT
+        SELECT
             p.[ProductId],
             p.[ProductName],
             p.[SubCategoryName]
-        FROM [auth].[UserProduct] AS up
-        INNER JOIN [lic].[OrganizationProduct] AS op
-            ON op.[OrgId] = @OrgId
-           AND op.[ProductId] = up.[ProductId]
-           AND op.[IsDeleted] = 0
-           AND op.[AssignStatus] = N'active'
-        INNER JOIN [core].[Product] AS p ON p.[ProductId] = up.[ProductId] AND p.[IsDeleted] = 0
-        WHERE up.[CFRUserId] = @AuthUserId
-          AND up.[OrgId] = @OrgId
-          AND ISNULL(up.[IsDeleted], 0) = 0
+        FROM [lic].[OrganizationProduct] AS op
+        INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId] AND p.[IsDeleted] = 0
+        WHERE op.[OrgId] = @OrgId
+          AND op.[IsDeleted] = 0
+          AND op.[AssignStatus] = N'active'
         ORDER BY p.[ProductName];
 
         RETURN 0;

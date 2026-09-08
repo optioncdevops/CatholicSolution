@@ -189,6 +189,13 @@ namespace CFR.AcutisService.Service.Profile
                     return result;
                 }
 
+                if (!PasswordPolicy.IsStrongEnough(input.NewPassword))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.PasswordTooWeak;
+                    return result;
+                }
+
                 int updatedId = await repository.ChangePasswordAsync(currentUserService.UserId, input.CurrentPassword, input.NewPassword);
                 if (updatedId == -98)
                 {
@@ -237,8 +244,40 @@ namespace CFR.AcutisService.Service.Profile
                 return false;
             }
 
+            // Extension is client-supplied and trivially spoofable (rename any file to .jpg); a
+            // magic-byte check on the actual file content is the only way to confirm it's really
+            // an image before it's saved into wwwroot and served back as static content.
+            if (!HasImageSignature(file, extension))
+            {
+                errorMessage = "The uploaded file is not a valid JPG or PNG image.";
+                return false;
+            }
+
             errorMessage = string.Empty;
             return true;
+        }
+
+        /// <summary>
+        /// Confirms the file's actual leading bytes match the magic number for its claimed
+        /// extension (PNG: 89 50 4E 47; JPEG: FF D8 FF) rather than trusting the file name alone.
+        /// </summary>
+        /// <param name="file">Uploaded image file from multipart form data.</param>
+        /// <param name="extension">Lower-cased file extension the caller has already validated.</param>
+        /// <returns>True when the file's content signature matches the claimed image type.</returns>
+        private static bool HasImageSignature(IFormFile file, string extension)
+        {
+            Span<byte> header = stackalloc byte[4];
+            using var stream = file.OpenReadStream();
+            int bytesRead = stream.Read(header);
+            if (bytesRead < 3)
+            {
+                return false;
+            }
+
+            bool isPng = bytesRead == 4 && header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47;
+            bool isJpeg = header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF;
+
+            return extension == ".png" ? isPng : isJpeg;
         }
 
         /// <summary>

@@ -145,15 +145,16 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
 
   return (
     <BaseModal
+      id="dlgAccessRequestReview"
       isOpen={isOpen}
       title={detail ? `${detail.requesterName}'s request` : 'Access request'}
       onClose={handleClose}
       size="sm"
       footer={canResolve ? (
         <>
-          <CommonButton variant="danger" size="sm" disabled={saving || loading} onClick={() => void resolve('rejected')}>Reject</CommonButton>
-          <CommonButton variant="outline" size="sm" disabled={saving || loading} onClick={handleSubmit(() => void resolve('info-requested'), onInvalid)}>Request Info</CommonButton>
-          <CommonButton variant="primary" size="sm" intent="save" loading={saving} disabled={saving || loading} onClick={() => void resolve('approved')}>Approve</CommonButton>
+          <CommonButton id="btnRejectAccessRequest" variant="danger" size="sm" disabled={saving || loading} onClick={() => void resolve('rejected')}>Reject</CommonButton>
+          <CommonButton id="btnRequestInfoAccessRequest" variant="outline" size="sm" disabled={saving || loading} onClick={handleSubmit(() => void resolve('info-requested'), onInvalid)}>Request Info</CommonButton>
+          <CommonButton id="btnApproveAccessRequest" variant="primary" size="sm" intent="save" loading={saving} disabled={saving || loading} onClick={() => void resolve('approved')}>Approve</CommonButton>
         </>
       ) : undefined}
     >

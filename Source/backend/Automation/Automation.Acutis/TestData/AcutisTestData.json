@@ -1,0 +1,17 @@
+{
+  "Login": {
+    "URL": "https://devacutis.newoptionc.com/",
+    "UserName": "jclement@optionc.com",
+    "Password": "20260908"
+  },
+  "UserDetails": {
+    "FirstName": "CFR-Test1",
+    "EditFirstName": "CFR-Test-Edit",
+    "LastName": "Admin",
+    "EditLastName": "Admin-Edit",
+    "UserName": null,
+    "EMail": "cfracutis@newoptionc.com",
+    "Password": "cfr@123",
+    "UserRole": "Admin"
+  }
+}

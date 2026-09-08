@@ -120,6 +120,8 @@ const moveFocusFromTrigger = (
 
 interface BaseDropdownProps
   extends FormFieldInfoTooltipProp, SelectClearableProp {
+  /** Stable id for the dropdown trigger (e.g. `ddlOrganizationStatus`). Falls back to `name`, then a generated id — pass it explicitly per the Stable Control IDs standard. */
+  id?: string;
   label: string;
   options: DropdownOptions;
   /** When true, `options` is interpreted as grouped sections. */
@@ -176,6 +178,7 @@ export interface DropdownProps<
 }
 
 const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
+  id,
   label,
   options,
   isGrouped = false,
@@ -205,7 +208,7 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
   tabIndex,
 }: DropdownProps<TFieldValues>) => {
   const generatedId = useId();
-  const fieldId = name ?? `dropdown-${generatedId}`;
+  const fieldId = id ?? name ?? `dropdown-${generatedId}`;
   const labelId = `${fieldId}-label`;
   const helperId = `${fieldId}-helper`;
   const errorId = `${fieldId}-error`;
