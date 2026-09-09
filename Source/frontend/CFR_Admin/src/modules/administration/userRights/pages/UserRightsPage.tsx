@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Eye, Save, ShieldCheck, ShieldOff, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
@@ -74,6 +76,8 @@ function SectionSkeleton({ rows = 8 }: { rows?: number }) {
 export function UserRightsPage() {
   //#region Hooks
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel('/admin/administration-rights');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -211,6 +215,7 @@ export function UserRightsPage() {
   };
 
   const handleToggleRow = (node: UserRightsFeatureNode, next: AccessLevel) => {
+    if (isReadOnly) return;
     // Each row's access is independent — toggling a parent (Module/Feature) must NOT change its
     // children; every node keeps its own separately-persisted value. Bulk-changing a whole branch
     // at once is what "Apply to all" is for (see handleApplyToAll below).
@@ -233,6 +238,7 @@ export function UserRightsPage() {
   // rather than clamped to some other value the user didn't ask for. Confirmed first since it can
   // affect a large number of features in one action.
   const handleApplyToAll = async (level: AccessLevel) => {
+    if (isReadOnly) return;
     const allIds = collectAllFeatureIds(visibleTree);
     const featureIds = collectFeatureIdsForLevel(visibleTree, level);
     if (featureIds.length === 0) return;
@@ -259,7 +265,7 @@ export function UserRightsPage() {
   };
 
   const handleSave = async () => {
-    if (roleId == null || dirtyCount === 0) return;
+    if (roleId == null || dirtyCount === 0 || isReadOnly) return;
     setSaving(true);
     try {
       const changes = toPendingChangeList(pending);
@@ -332,11 +338,11 @@ export function UserRightsPage() {
           rollup={computeRowRollup(row.node, effectiveLevel)}
           levels={levelsForKind(row.node.kind)}
           onChange={(next) => handleToggleRow(row.node, next)}
-          disabled={saving}
+          disabled={saving || isReadOnly}
         />
       ),
     },
-  ], [expanded, effectiveLevel, saving]);
+  ], [expanded, effectiveLevel, saving, isReadOnly]);
   //#endregion
 
   //#region Render
@@ -355,6 +361,8 @@ export function UserRightsPage() {
       <p className="-mt-2 text-xs text-[var(--text-muted)]">
         Per-role access to every module, submenu, and activity in CFR Acutis. Changes take effect the next time a user with this role signs in.
       </p>
+
+      {isReadOnly ? <ReadOnlyBanner featureName="User Rights" /> : null}
 
       <section className="admin-panel-card">
         <div className="flex flex-wrap items-end justify-between gap-3 p-4">
@@ -386,13 +394,13 @@ export function UserRightsPage() {
 
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs font-bold text-[var(--text-faint)]">Apply to all shown:</span>
-            <CommonButton id="btnApplyAllAccess" variant="outline" size="sm" iconLeft={<ShieldCheck size={13} />} disabled={status !== 'ready' || applyingAll || saving} onClick={() => void handleApplyToAll('access')}>
+            <CommonButton id="btnApplyAllAccess" variant="outline" size="sm" iconLeft={<ShieldCheck size={13} />} disabled={status !== 'ready' || applyingAll || saving || isReadOnly} onClick={() => void handleApplyToAll('access')}>
               Access
             </CommonButton>
-            <CommonButton id="btnApplyAllReadOnly" variant="outline" size="sm" iconLeft={<Eye size={13} />} disabled={status !== 'ready' || applyingAll || saving} onClick={() => void handleApplyToAll('readOnly')}>
+            <CommonButton id="btnApplyAllReadOnly" variant="outline" size="sm" iconLeft={<Eye size={13} />} disabled={status !== 'ready' || applyingAll || saving || isReadOnly} onClick={() => void handleApplyToAll('readOnly')}>
               Read Only
             </CommonButton>
-            <CommonButton id="btnApplyAllDenied" variant="outline" size="sm" iconLeft={<ShieldOff size={13} />} disabled={status !== 'ready' || applyingAll || saving} onClick={() => void handleApplyToAll('denied')}>
+            <CommonButton id="btnApplyAllDenied" variant="outline" size="sm" iconLeft={<ShieldOff size={13} />} disabled={status !== 'ready' || applyingAll || saving || isReadOnly} onClick={() => void handleApplyToAll('denied')}>
               Denied
             </CommonButton>
           </div>
@@ -440,7 +448,7 @@ export function UserRightsPage() {
         <CommonButton id="btnCancelUserRights" variant="outline" iconLeft={<X size={14} />} onClick={handleDiscard} disabled={dirtyCount === 0 || saving}>
           Cancel
         </CommonButton>
-        <CommonButton id="btnSaveUserRights" variant="primary" iconLeft={<Save size={14} />} onClick={() => void handleSave()} loading={saving} disabled={dirtyCount === 0 || saving}>
+        <CommonButton id="btnSaveUserRights" variant="primary" iconLeft={<Save size={14} />} onClick={() => void handleSave()} loading={saving} disabled={dirtyCount === 0 || saving || isReadOnly}>
           Save
         </CommonButton>
       </div>

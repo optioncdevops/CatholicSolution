@@ -3,7 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, Pencil, Plus, RefreshCw } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { Badge, StatusBadge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
@@ -20,6 +22,8 @@ export function OrganizationsListPage() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const accessLevel = useFeatureAccessLevel('/admin/organizations');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -89,7 +93,7 @@ export function OrganizationsListPage() {
   }, [navigate]);
 
   const handleConfirmStatus = async (status: string) => {
-    if (!changingStatusOrg) return;
+    if (!changingStatusOrg || isReadOnly) return;
     try {
       await updateOrganization({
         orgId: changingStatusOrg.orgId,
@@ -160,8 +164,8 @@ export function OrganizationsListPage() {
       cell: (org) => (
         <div className="flex items-center gap-0.5" onClick={(event) => event.stopPropagation()}>
           <CommonIconButton aria-label={`View ${org.orgName}`} tooltip="View" icon={<Eye size={14} />} onClick={() => handleView(org)} />
-          <CommonIconButton aria-label={`Edit ${org.orgName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleEdit(org)} />
-          <CommonIconButton aria-label={`Change status for ${org.orgName}`} tooltip="Change Status" icon={<RefreshCw size={14} />} onClick={() => setChangingStatusOrg(org)} />
+          <CommonIconButton aria-label={`Edit ${org.orgName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleEdit(org)} disabled={isReadOnly} />
+          <CommonIconButton aria-label={`Change status for ${org.orgName}`} tooltip="Change Status" icon={<RefreshCw size={14} />} onClick={() => setChangingStatusOrg(org)} disabled={isReadOnly} />
         </div>
       ),
     },
@@ -217,7 +221,7 @@ export function OrganizationsListPage() {
       value: (org) => org.insertedDate,
       cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.insertedDate)}</span>,
     },
-  ], [handleView, handleEdit]);
+  ], [handleView, handleEdit, isReadOnly]);
   //#endregion
 
   //#region Render
@@ -225,8 +229,10 @@ export function OrganizationsListPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="Organizations"
-        action={<CommonButton variant="headerSecondary" size="sm" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/organizations/add')}>Add Organization</CommonButton>}
+        action={<CommonButton variant="headerSecondary" size="sm" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/organizations/add')} disabled={isReadOnly}>Add Organization</CommonButton>}
       />
+
+      {isReadOnly ? <ReadOnlyBanner featureName="Organizations" /> : null}
 
       {!loading ? (
         <div role="group" aria-label="Filter organizations by status" className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">

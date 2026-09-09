@@ -3,7 +3,9 @@ import { useForm, type FieldErrors } from 'react-hook-form';
 import { CommonButton } from '@app/components/buttons';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { TextareaField } from '@app/components/formControls';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { getAccessRequestById, updateAccessRequestStatus } from '../../services/requestsService';
 import type { AccessRequestApiItem, AccessRequestReviewFormValues, RequestStatus } from '../../types/requestsTypes';
 import { normalizeAccessRequest } from '../../utils/requestsHelpers';
@@ -33,6 +35,8 @@ const formatDate = (dateString: string) => {
 const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestReviewModalProps) => {
   //#region Hooks
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel('/admin/requests');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -113,7 +117,7 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
   };
 
   const resolve = async (status: RequestStatus) => {
-    if (!detail || !ALLOWED_RESOLVE_STATUSES.includes(status)) return;
+    if (!detail || !ALLOWED_RESOLVE_STATUSES.includes(status) || isReadOnly) return;
     const note = getValues('note').trim();
     setSaving(true);
     try {
@@ -141,7 +145,7 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
 
   //#region Render
   const isOpen = Boolean(accessRequestId);
-  const canResolve = detail?.status === 'pending' || detail?.status === 'info-requested';
+  const canResolve = (detail?.status === 'pending' || detail?.status === 'info-requested') && !isReadOnly;
 
   return (
     <BaseModal
@@ -161,6 +165,7 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
       {loading && !detail ? <p className="text-sm text-[var(--text-muted)]">Loading request…</p> : null}
       {detail ? (
         <div className="flex flex-col gap-4">
+          {isReadOnly ? <ReadOnlyBanner featureName="Requests" /> : null}
           {detail.productName ? <p className="-mt-2 text-xs text-[var(--text-muted)]">{detail.productName}</p> : null}
           <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] p-3">
             <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Requester</p>

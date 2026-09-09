@@ -99,7 +99,7 @@ export function InvoiceDetailModal({
   );
 }
 
-export function LicenseDetails({ app }: { app: AdminApplication }) {
+export function LicenseDetails({ app, readOnly = false }: { app: AdminApplication; readOnly?: boolean }) {
   //#region Hooks
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -341,6 +341,7 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
                 state: { productId: Number(app.id), tab: "invoice-details" },
               })
             }
+            disabled={readOnly}
           >
             Create Invoice
           </CommonButton>

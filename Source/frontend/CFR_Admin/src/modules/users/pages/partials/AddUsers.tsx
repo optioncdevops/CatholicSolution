@@ -3,7 +3,9 @@ import { useForm, type FieldErrors } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { DatePicker, Dropdown, InputField, MandatoryIndicator, RadioGroup } from '@app/components/formControls';
 import { getUserById, getUserLookups, saveUser } from '../../services/usersService';
@@ -18,6 +20,8 @@ const AddUsers = () => {
   const { showToast } = useToast();
   const userId = (location.state as { id?: number } | undefined)?.id;
   const isEdit = Boolean(userId && userId > 0);
+  const accessLevel = useFeatureAccessLevel('/admin/users');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -110,6 +114,7 @@ const AddUsers = () => {
   };
 
   const onSubmit = async (values: UsersFormValues) => {
+    if (isReadOnly) return;
     setSaving(true);
     try {
       const response = await saveUser(toSaveUserPayload(values, isEdit ? userId : 0));
@@ -131,7 +136,9 @@ const AddUsers = () => {
   //#region Render
   return (
     <div className="admin-reveal flex flex-col gap-4">
-      <PanelHeader title={isEdit ? 'Edit User' : 'Add User'} action={<MandatoryIndicator variant="brand" />} />
+      <PanelHeader title={isEdit ? (isReadOnly ? 'View User' : 'Edit User') : 'Add User'} action={<MandatoryIndicator variant="brand" />} />
+
+      {isReadOnly ? <ReadOnlyBanner featureName="Users" /> : null}
 
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -143,7 +150,7 @@ const AddUsers = () => {
             autoFocus
             required
             rules={usersRules.firstName}
-            disabled={saving}
+            disabled={saving || isReadOnly}
           />
           <InputField
             control={control}
@@ -152,7 +159,7 @@ const AddUsers = () => {
             placeholder="Enter last name"
             required
             rules={usersRules.lastName}
-            disabled={saving}
+            disabled={saving || isReadOnly}
           />
           <InputField
             control={control}
@@ -162,7 +169,7 @@ const AddUsers = () => {
             placeholder="Enter email address"
             required
             rules={usersRules.eMail}
-            disabled={saving}
+            disabled={saving || isReadOnly}
           />
           <InputField
             control={control}
@@ -172,7 +179,7 @@ const AddUsers = () => {
             placeholder={isEdit ? 'Leave blank to keep the current password' : 'Enter password'}
             required={!isEdit}
             rules={isEdit ? undefined : usersRules.password}
-            disabled={saving}
+            disabled={saving || isReadOnly}
           />
           <DatePicker
             control={control}
@@ -184,7 +191,7 @@ const AddUsers = () => {
             outputFormat="yyyy-MM-dd"
             required
             rules={usersRules.dateOfBirth}
-            disabled={saving}
+            disabled={saving || isReadOnly}
           />
           <Dropdown
             control={control}
@@ -196,7 +203,7 @@ const AddUsers = () => {
             clearable={false}
             rules={usersRules.roleId}
             options={roles.map((role) => ({ id: String(role.roleId), value: role.roleName }))}
-            disabled={saving}
+            disabled={saving || isReadOnly}
           />
           <RadioGroup
             control={control}
@@ -209,7 +216,7 @@ const AddUsers = () => {
               { id: '1', value: 'Active' },
               { id: '0', value: 'Inactive' },
             ]}
-            disabled={saving}
+            disabled={saving || isReadOnly}
           />
           <RadioGroup
             control={control}
@@ -222,13 +229,13 @@ const AddUsers = () => {
               { id: '0', value: 'Unlocked' },
               { id: '1', value: 'Locked' },
             ]}
-            disabled={saving}
+            disabled={saving || isReadOnly}
           />
         </div>
 
         <div className="admin-sticky-footer">
           <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={saving}>Cancel</CommonButton>
-          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || isReadOnly}>Save</CommonButton>
         </div>
       </form>
     </div>

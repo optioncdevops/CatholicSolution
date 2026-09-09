@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { Tabs, TabPanel } from '@app/components/Tabs';
 import { PRODUCTS_PATHS } from '@/modules/cfrproducts';
@@ -25,6 +27,8 @@ const OrganizationDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel('/admin/organizations');
+  const isReadOnly = accessLevel === 'readOnly';
   const startInEdit = Boolean((location.state as { edit?: boolean } | undefined)?.edit);
 
   const navState = location.state as {
@@ -211,6 +215,8 @@ const OrganizationDetailPage = () => {
         </div>
       ) : organization ? (
         <>
+          {isReadOnly ? <ReadOnlyBanner featureName="Organizations" /> : null}
+
           <Tabs
             activeId={activeTab}
             onChange={setActiveTab}
@@ -224,15 +230,15 @@ const OrganizationDetailPage = () => {
           />
 
           <TabPanel id="profile" activeId={activeTab}>
-            <OrganizationProfilePanel organization={organization} startInEdit={startInEdit} onSaved={handleSavedProfile} />
+            <OrganizationProfilePanel organization={organization} startInEdit={startInEdit} onSaved={handleSavedProfile} readOnly={isReadOnly} />
           </TabPanel>
 
           <TabPanel id="users" activeId={activeTab}>
-            <OrganizationUsersPanel orgId={numericOrgId} organization={organization} users={users} onChanged={handleUsersChanged} />
+            <OrganizationUsersPanel orgId={numericOrgId} organization={organization} users={users} onChanged={handleUsersChanged} readOnly={isReadOnly} />
           </TabPanel>
 
           <TabPanel id="products" activeId={activeTab}>
-            <OrganizationProductsPanel orgId={numericOrgId} orgName={organization.orgName} products={products} onChanged={handleProductsChanged} />
+            <OrganizationProductsPanel orgId={numericOrgId} orgName={organization.orgName} products={products} onChanged={handleProductsChanged} readOnly={isReadOnly} />
           </TabPanel>
 
           <TabPanel id="licenses" activeId={activeTab}>

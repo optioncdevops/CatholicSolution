@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { StatusBadge } from '@app/components/Badge';
 import { EntityAvatar } from '@app/components/EntityAvatar';
@@ -18,6 +20,8 @@ import { formatDate } from '../../utils/formatDate';
 function RequestsListPage() {
   //#region Hooks
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel('/admin/requests');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -117,6 +121,8 @@ function RequestsListPage() {
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader title="Access Requests" />
+
+      {isReadOnly ? <ReadOnlyBanner featureName="Requests" /> : null}
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex-1 overflow-hidden">
