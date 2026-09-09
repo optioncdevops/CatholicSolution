@@ -243,7 +243,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             parameters.Add(DBParameterName.ProductParams.SubCategoryName, input.SubCategoryName?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.ProdDescription, input.ProdDescription?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.ExternalPageUrl, input.ExternalPageUrl?.Trim(), DbType.String);
-            string? logo = !string.IsNullOrWhiteSpace(input.LogoName) ? input.LogoName.Trim() : input.LogoUrl?.Trim();
+            string? logo = input.LogoName?.Trim();
             parameters.Add(DBParameterName.ProductParams.LogoName, logo, DbType.String);
             parameters.Add(DBParameterName.ProductParams.ContactUserId, input.ContactUserId is null ? DBNull.Value : input.ContactUserId.Value, DbType.Int64);
             string? updateFeatures = input.Features != null && input.Features.Count > 0
@@ -257,6 +257,32 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             parameters.Add(DBParameterName.ProductParams.ProductStatus, productStatusParam, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.LicenseType, string.IsNullOrWhiteSpace(input.LicenseType) ? DBNull.Value : input.LicenseType.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.NavigationTarget, string.IsNullOrWhiteSpace(input.NavigationTarget) ? DBNull.Value : input.NavigationTarget.Trim(), DbType.String);
+            parameters.Add(DBParameterName.ProductParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
+            parameters.Add(DBParameterName.ProductParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
+            _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
+            return parameters.Get<int>(DBParameterName.ProductParams.ReturnValue);
+        }
+
+        /// <summary>
+        /// Updates a product's logo name in Core.Product using StoredProc.Products.ProductsCrud (EnumVariables.ProductAction.Update).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Update logo file name and stamp UpdatedDate/UpdatedBy.
+        /// Request Flow: IProductsService -> ProductsRepository.UpdateProductLogoAsync() -> Database.
+        /// Validation Details: Parameter mapping from productId and logoName.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 3 and sets LogoName.
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
+        /// Response Details: Returns updated ProductId, or -95 if not found.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <param name="logoName">Saved logo file name.</param>
+        /// <returns>Updated ProductId or negative status code.</returns>
+        public async Task<int> UpdateProductLogoAsync(int productId, string logoName)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.THREE, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.LogoName, logoName.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);

@@ -12,9 +12,7 @@ import {
 } from "@app/components/dataTable/DataTable";
 import {
   formatDate,
-  formatDateTime,
   formatDaysLabel,
-  daysUntil,
   effectiveLicenseStatus,
 } from "@/modules/utils/formatDate";
 import { DetailField } from "@app/components/DetailField";
@@ -25,8 +23,8 @@ import type { ProductLicenseApiItem } from "../types/productTypes";
 import {
   PRODUCTS_PATHS,
   formatCustomerCodeAsInteger,
-  formatInvoiceNumber,
-  toLicenseDetailsRows,
+  toLiveProductLicenseRows,
+  type LiveProductLicense,
 } from "../utils/productHelpers";
 import { LICENSE_DETAILS_STATUS_FILTERS, InvoiceStatusBadge } from "../utils/productFilters";
 import type {
@@ -100,22 +98,6 @@ export function InvoiceDetailModal({
     </BaseModal>
   );
 }
-export interface LiveProductLicense {
-  id: string;
-  orgId: number;
-  customerCode: string;
-  customer: string;
-  invoiceNumber: string;
-  licenseNumber: string;
-  licenseKey: string;
-  licenseType: string;
-  startDate: string;
-  expiryDate: string;
-  days: number | null;
-  paidOn: string | null;
-  status: string;
-  remarks?: string | null;
-}
 
 export function LicenseDetails({ app }: { app: AdminApplication }) {
   //#region Hooks
@@ -165,53 +147,10 @@ export function LicenseDetails({ app }: { app: AdminApplication }) {
   }, [fetchLicenses]);
   //#endregion
 
-  const mappedLicenses: LiveProductLicense[] = useMemo(() => {
-    const usedInvoiceNumbers = new Set<string>();
-    return toLicenseDetailsRows(dbLicenses).map((lic, index) => {
-      const days = lic.expiryDate ? daysUntil(lic.expiryDate) : null;
-      const isOverdue = days !== null && days < 0;
-      const isExpiringSoon = days !== null && days >= 0 && days <= 30;
-      const status = isOverdue
-        ? "overdue"
-        : isExpiringSoon
-          ? "expiring-soon"
-          : lic.licenseStatus === "suspended"
-            ? "suspended"
-            : "paid";
-      const paidOn = isOverdue
-        ? null
-        : lic.activationDate
-          ? formatDateTime(lic.activationDate)
-          : lic.createdDate
-            ? formatDateTime(lic.createdDate)
-            : null;
-
-      const startDate = lic.activationDate || "";
-      const invoiceNumber = formatInvoiceNumber(
-        startDate || lic.createdDate,
-        lic.licenseId,
-        usedInvoiceNumbers,
-        index,
-      );
-
-      return {
-        id: String(lic.licenseId),
-        orgId: lic.orgId,
-        customerCode: formatCustomerCodeAsInteger(lic.orgId),
-        customer: lic.orgName || `Organization #${lic.orgId}`,
-        invoiceNumber,
-        licenseNumber: `LIC-${String(lic.licenseId).padStart(5, "0")}`,
-        licenseKey: `LIC-${lic.orgId}-${lic.productId}-${String(lic.licenseId).padStart(4, "0")}`,
-        licenseType: lic.licenseType ? (lic.licenseType.charAt(0).toUpperCase() + lic.licenseType.slice(1)) : "Subscription",
-        startDate,
-        expiryDate: lic.expiryDate || "",
-        days,
-        paidOn,
-        status,
-        remarks: lic.remarks,
-      };
-    });
-  }, [dbLicenses]);
+  const mappedLicenses: LiveProductLicense[] = useMemo(
+    () => toLiveProductLicenseRows(dbLicenses),
+    [dbLicenses],
+  );
 
   const rows = useMemo(() => {
     return mappedLicenses.filter((lic) => {
