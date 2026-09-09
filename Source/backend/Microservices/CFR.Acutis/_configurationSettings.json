@@ -7,10 +7,15 @@
     "MUserName": "levinjose6371@gmail.com",
     "MPassword": "yitnkxshdijrngxe",
     "IsSSLEnabled": "1",
-    "ContactUsMailId": "",
     "CCMailId": "",
     "LoginURL": "https://devsms.allnewoptionc.com",
+    "ContactUsMailId": "",
+    "ReceiverMail": null,
+    "DefaultToAddress": "",
     "LogoUrl": "catholic-solutions-logo.png",
-    "ApiBaseUrl": "https://cfrapi.allnewoptionc.com"
+    "ApiBaseUrl": "https://cfrapi.allnewoptionc.com",
+    "AccentColor": "#1d4ed8",
+    "FontFamily": "Verdana, Arial, Helvetica, sans-serif",
+    "BaseFontSize": 13
   }
 }

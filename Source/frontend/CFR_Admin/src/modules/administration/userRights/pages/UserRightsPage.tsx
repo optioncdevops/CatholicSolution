@@ -5,6 +5,7 @@ import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown } from '@app/components/formControls';
+import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '../../../lib/confirm';
 import { getUserRoles } from '../../userRoles/services/userRolesService';
 import { normalizeUserRolesList } from '../../userRoles/utils/userRolesHelpers';
@@ -274,6 +275,70 @@ export function UserRightsPage() {
   };
   //#endregion
 
+  //#region Columns
+  // Uses the shared DataTable (rule 0.4) with a generous fixed page size — this is a tree, not a
+  // flat list, so paginating it mid-branch would orphan a child row on a later page with no parent
+  // visible above it. Indentation/expand-toggle/permission-toggle cells stay hand-rendered here
+  // since DataTable's ColumnDef is deliberately flat-row-shaped; the tree structure itself (which
+  // rows are visible/expanded) is still owned by this page via `rows`/`expanded` above.
+  const columns: DataTableColumn<{ node: UserRightsFeatureNode; depth: number }>[] = useMemo(() => [
+    {
+      id: 'label',
+      header: 'Module / Feature / Activity',
+      value: (row) => row.node.label,
+      sortable: false,
+      cell: (row) => {
+        const { node, depth } = row;
+        const hasChildren = node.children.length > 0;
+        const isExpanded = expanded.has(node.featureId);
+        return (
+          <span className="flex items-center gap-1.5" style={{ paddingLeft: `${depth * 1.25}rem` }}>
+            {hasChildren ? (
+              <button
+                id={`ibtnToggleFeature${node.featureId}`}
+                type="button"
+                aria-label={isExpanded ? `Collapse ${node.label}` : `Expand ${node.label}`}
+                onClick={() => handleToggleExpanded(node.featureId)}
+                className="grid size-5 shrink-0 place-items-center rounded text-[var(--text-faint)] hover:bg-[var(--hover)]"
+              >
+                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+            ) : (
+              <span className="inline-block size-5 shrink-0" aria-hidden="true" />
+            )}
+            <span className={node.kind === 'module' ? 'font-extrabold text-[var(--text-primary)]' : node.kind === 'feature' ? 'font-bold text-[var(--text-secondary)]' : 'text-[var(--text-secondary)]'}>
+              {node.label}
+            </span>
+          </span>
+        );
+      },
+    },
+    {
+      id: 'description',
+      header: 'Description',
+      value: (row) => row.node.description,
+      sortable: false,
+      cell: (row) => <span className="text-[var(--text-muted)]">{row.node.description || '—'}</span>,
+    },
+    {
+      id: 'permission',
+      header: 'Permission',
+      sortable: false,
+      excludeFromExport: true,
+      cell: (row) => (
+        <PermissionToggle
+          idPrefix={`Feature${row.node.featureId}`}
+          label={row.node.label}
+          rollup={computeRowRollup(row.node, effectiveLevel)}
+          levels={levelsForKind(row.node.kind)}
+          onChange={(next) => handleToggleRow(row.node, next)}
+          disabled={saving}
+        />
+      ),
+    },
+  ], [expanded, effectiveLevel, saving]);
+  //#endregion
+
   //#region Render
   if (!rolesLoading && roles.length === 0) {
     return (
@@ -358,61 +423,16 @@ export function UserRightsPage() {
       ) : rows.length === 0 ? (
         <EmptyState icon="🔍" title="No matches" description="Try a different module filter." />
       ) : (
-        <section className="admin-panel-card">
-          <div className="overflow-x-auto">
-            <table id="tblUserRights" className="admin-table">
-              <caption className="sr-only">User rights matrix for {selectedRole?.roleName ?? 'the selected role'}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Module / Feature / Activity</th>
-                  <th scope="col">Description</th>
-                  <th scope="col">Permission</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(({ node, depth }) => {
-                  const rollup = computeRowRollup(node, effectiveLevel);
-                  const hasChildren = node.children.length > 0;
-                  const isExpanded = expanded.has(node.featureId);
-                  return (
-                    <tr key={node.featureId} id={`rowFeature${node.featureId}`}>
-                      <td style={{ paddingLeft: `${depth * 1.25}rem` }}>
-                        <span className="flex items-center gap-1.5">
-                          {hasChildren ? (
-                            <button
-                              id={`ibtnToggleFeature${node.featureId}`}
-                              type="button"
-                              aria-label={isExpanded ? `Collapse ${node.label}` : `Expand ${node.label}`}
-                              onClick={() => handleToggleExpanded(node.featureId)}
-                              className="grid size-5 shrink-0 place-items-center rounded text-[var(--text-faint)] hover:bg-[var(--hover)]"
-                            >
-                              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                            </button>
-                          ) : (
-                            <span className="inline-block size-5 shrink-0" aria-hidden="true" />
-                          )}
-                          <span className={depth === 0 ? 'font-extrabold text-[var(--text-primary)]' : depth === 1 ? 'font-bold text-[var(--text-secondary)]' : 'text-[var(--text-secondary)]'}>
-                            {node.label}
-                          </span>
-                        </span>
-                      </td>
-                      <td className="text-[var(--text-muted)]">{node.description || '—'}</td>
-                      <td>
-                        <PermissionToggle
-                          idPrefix={`Feature${node.featureId}`}
-                          label={node.label}
-                          rollup={rollup}
-                          levels={levelsForKind(node.kind)}
-                          onChange={(next) => handleToggleRow(node, next)}
-                          disabled={saving}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <section className="admin-panel-card" id="tblUserRights">
+          <DataTable
+            columns={columns}
+            data={rows}
+            getRowId={(row) => String(row.node.featureId)}
+            pageSize={Math.max(rows.length, 10)}
+            exportFileName="User Rights"
+            exportTitle={`User rights for ${selectedRole?.roleName ?? 'the selected role'}`}
+            emptyMessage="No matches."
+          />
         </section>
       )}
 
