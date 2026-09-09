@@ -184,6 +184,9 @@ namespace Automation.Framework.ViperPages
 
         public static class XPath_Login
         {
+            public const string txtEmailAddress = nameof(txtEmailAddress);
+            public const string txtPassword = nameof(txtPassword);
+            public const string btnSignIn = nameof(btnSignIn);
             public const string username = nameof(username);
             public const string password = nameof(password);
 
