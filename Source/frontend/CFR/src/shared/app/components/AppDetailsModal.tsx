@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
+import { ProductLogoIcon } from '@shared/app/components/ProductLogoIcon';
 
 interface AppDetailsModalProps {
   app: CatalogApp | null;
@@ -46,7 +47,7 @@ export function AppDetailsModal({ app, onClose, onRequest, onLaunch }: AppDetail
     <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={onClose}>
       <section role="dialog" aria-modal="true" aria-labelledby="app-modal-title" aria-describedby="app-modal-description" className="my-6 flex w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-white shadow-[var(--shadow-elevated)]" onMouseDown={(event) => event.stopPropagation()}>
         <header className="relative flex items-center gap-4 p-5 text-white sm:p-6" style={{ background: app.gradient }}>
-          <span className="grid size-14 shrink-0 place-items-center rounded-2xl border border-white/30 bg-white/20 text-2xl">{app.icon}</span>
+          <ProductLogoIcon app={app} className="grid size-14 shrink-0 place-items-center rounded-2xl border border-white/30 bg-white/20 text-2xl" />
           <div className="min-w-0"><h2 id="app-modal-title" className="truncate font-display text-xl font-extrabold">{app.name}</h2><span className="mt-2 inline-flex rounded-full border border-white/30 bg-white/15 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider">{app.category}</span></div>
           <button ref={closeRef} type="button" onClick={onClose} className="absolute right-4 top-4 grid size-9 place-items-center rounded-xl border border-white/15 bg-white/10 font-bold hover:bg-white/20" aria-label="Close app details">✕</button>
         </header>

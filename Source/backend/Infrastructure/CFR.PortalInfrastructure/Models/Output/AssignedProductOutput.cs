@@ -87,6 +87,12 @@ namespace CFR.PortalInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("isOrgApproved")]
         public bool IsOrgApproved { get; set; }
+
+        /// <summary>
+        /// Gets or sets comma-separated or list of product features.
+        /// </summary>
+        [JsonPropertyName("features")]
+        public string? Features { get; set; }
     }
 }
 

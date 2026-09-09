@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { CheckIcon, MailIcon, UserIcon } from '@shared/app/components/UiIcons';
+import { ProductLogoIcon } from '@shared/app/components/ProductLogoIcon';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import type { CatalogApp } from '@shared/app/types/app';
@@ -108,7 +109,7 @@ export function RequestInterestModal({ app, onClose, onSubmitted }: RequestInter
         onMouseDown={(event) => event.stopPropagation()}
       >
         <button ref={closeRef} type="button" className="hub-request-modal__close" onClick={handleClose} disabled={submitting} aria-label="Close request">×</button>
-        <span className="hub-request-modal__icon" style={{ background: app.gradient }} aria-hidden="true">{app.icon}</span>
+        <ProductLogoIcon app={app} className="hub-request-modal__icon" />
         {submitted ? (
           <>
             <span className="hub-request-modal__status"><CheckIcon size={13}/> Request received</span>

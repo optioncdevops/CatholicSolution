@@ -30,6 +30,7 @@ export interface CatalogApp {
   category: string;
   description: string;
   icon: string;
+  logoUrl?: string;
   gradient: string;
   keywords: string[];
   features: string[];

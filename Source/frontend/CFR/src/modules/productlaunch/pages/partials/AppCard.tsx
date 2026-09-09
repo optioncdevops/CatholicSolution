@@ -1,5 +1,6 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
+import { ProductLogoIcon } from '@shared/app/components/ProductLogoIcon';
 import { resolveAppDestination } from '@shared/platform/navigation/solutionNavigation';
 
 interface AppCardProps {
@@ -90,7 +91,7 @@ export function AppCard({ app, onDetails, onRequest, onLaunch, hidePrimaryAction
       <span className="hub-module-card__accent" style={{ background: app.gradient }} aria-hidden="true" />
       <span className="hub-module-card__wash" style={{ background: app.gradient }} aria-hidden="true" />
       <div className="hub-module-card__top">
-        <span className="hub-module-card__icon" style={{ background: app.gradient }}>{app.icon}</span>
+        <ProductLogoIcon app={app} className="hub-module-card__icon" />
         <h3 className="hub-module-card__name" title={app.name}>{app.name}</h3>
       </div>
       <div className="hub-module-card__meta">

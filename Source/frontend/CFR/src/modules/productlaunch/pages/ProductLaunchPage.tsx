@@ -201,7 +201,7 @@ export default function ProductLaunchPage() {
             <div className="hub-empty-state">Loading apps…</div>
           ) : groups.map((group) => (
             <section key={group.title} className={`hub-section-panel hub-section-panel--${group.variant}`}>
-              <SectionHeading title={group.title} count={group.count} />
+              <SectionHeading title={group.title} />
               <p className="hub-section-panel__note">{group.note}</p>
               {group.apps.length ? (
                 <div className="hub-app-grid">
