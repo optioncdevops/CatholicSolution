@@ -48,17 +48,26 @@ namespace CFR.CommonService.Services
                 return null;
             }
 
-            // A local dev machine always prefers its own environment-configured address over
-            // whatever happens to be persisted in _configurationSettings.json (see
-            // ConfSettingsService.ResolveDevelopmentApiBaseUrlOverride) — this is intentionally not
-            // baked into ConfSettingsService.LoadData() itself, since that would also leak into the
-            // Email Settings page's editable/validated ApiBaseUrl field.
-            string? apiBaseUrl = ConfSettingsService.ResolveDevelopmentApiBaseUrlOverride()?.Trim().TrimEnd('/');
+            // A real, publicly-reachable ApiBaseUrl already saved via the Email Settings page
+            // always wins — that's a value an admin deliberately confirmed works, e.g.
+            // "https://cfrapi.allnewoptionc.com" on the live server. The appsettings.{Environment}.json
+            // override (ConfSettingsService.ResolveEnvironmentApiBaseUrlOverride) only kicks in when
+            // there's nothing better to use: the persisted value is blank, OR itself a
+            // localhost/loopback address. This deliberately does NOT trust the override outright,
+            // because detecting "which environment is this" from the server's own appsettings.json
+            // is unreliable — a deployed server's appsettings.json can still say "Development" if
+            // its real environment is only set some other way, and blindly trusting that previously
+            // leaked a localhost image link into a real production email even after the override
+            // logic itself was fixed. Preferring a known-good persisted non-loopback value first
+            // makes that class of bug impossible regardless of how "Environment" ends up resolving
+            // on any given server.
+            string? persistedApiBaseUrl = !string.IsNullOrWhiteSpace(config?.ApiBaseUrl) ? config.ApiBaseUrl.Trim().TrimEnd('/') : null;
+            string? apiBaseUrl = (persistedApiBaseUrl != null && !IsLoopbackHost(persistedApiBaseUrl))
+                ? persistedApiBaseUrl
+                : ConfSettingsService.ResolveEnvironmentApiBaseUrlOverride()?.Trim().TrimEnd('/') ?? persistedApiBaseUrl;
             if (string.IsNullOrWhiteSpace(apiBaseUrl))
             {
-                apiBaseUrl = !string.IsNullOrWhiteSpace(config?.ApiBaseUrl)
-                    ? config.ApiBaseUrl.Trim().TrimEnd('/')
-                    : config?.LoginURL?.Trim().TrimEnd('/');
+                apiBaseUrl = config?.LoginURL?.Trim().TrimEnd('/');
             }
             if (string.IsNullOrWhiteSpace(apiBaseUrl))
             {
