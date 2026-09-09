@@ -18,7 +18,7 @@ import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { getProducts } from '@/modules/products/services/productsService';
 import { productsFromApiResponse } from '@/modules/products/utils/productsHelpers';
 import { saveAccessRequest } from '@/modules/requests/services/accessRequestService';
-import { toPublicAccessRequestPayload, US_STATES } from '@/modules/requests/utils/accessRequestHelpers';
+import { toPublicAccessRequestPayload } from '@/modules/requests/utils/accessRequestHelpers';
 import { validatePublicAccessRequest } from '@/modules/requests/validator/AccessRequestValidator';
 import type { CatalogApp } from '@shared/app/types/app';
 
@@ -136,13 +136,7 @@ export function RequestAccessPage() {
                   <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required />
                   <Field icon={<MapPinIcon size={16} />} label="Address" name="address" placeholder="Street address" autoComplete="street-address" required />
                   <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required />
-                  <SelectField
-                    label="State"
-                    name="state"
-                    options={US_STATES.map((state) => ({ value: state.value, label: state.label }))}
-                    placeholder="Select state"
-                    required
-                  />
+                  <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required />
                   <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required />
                   <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required />
                   <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" />

@@ -1,10 +1,5 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using CFR.AcutisInfrastructure.Models.Input;
-using CFR.AcutisService.Interfaces.Administration;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
 namespace CFR.Acutis.Controllers.Administration
 {
     /// <summary>

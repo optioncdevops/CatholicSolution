@@ -1,12 +1,5 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using Microsoft.Extensions.Configuration;
-
-using CFR.AcutisInfrastructure.Interfaces.Administration;
-using CFR.AcutisInfrastructure.Models.Input;
-using CFR.AcutisInfrastructure.Models.Output;
-using CFR.AcutisService.Interfaces.Administration;
-
 namespace CFR.AcutisService.Service.Administration
 {
     /// <summary>

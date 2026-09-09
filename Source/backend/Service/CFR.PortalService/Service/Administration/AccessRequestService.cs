@@ -1,29 +1,16 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using Microsoft.Extensions.Configuration;
-
 namespace CFR.PortalService.Service.Administration
 {
     /// <summary>
     /// Implements Access Request business logic for list, get, save, and status updates.
     /// Repository Responsibility:
     /// - Invokes IAccessRequestRepository for stored procedure execution.
-    /// - Invokes IEmailTemplatesRepository and ISMTPMailService to send admin/requester emails from configurable templates.
+    /// - Invokes IEmailTemplatesRepository and CFR.CommonService.MailService to send admin/requester emails from configurable templates.
     /// </summary>
-    public class AccessRequestService(IAccessRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, ISMTPMailService mailService, IConfiguration configuration, ILogger<AccessRequestService> logger): IAccessRequestService
+    public class AccessRequestService(IAccessRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, IConfiguration configuration, ILogger<AccessRequestService> logger): IAccessRequestService
     {
         private const string AccessRequestedTemplateCode = "AccessRequested";
-        private const string AccessApprovedTemplateCode = "AccessApproved";
-        private const string AccessInfoTemplateCode = "AccessInfo";
-
-        private static readonly HashSet<string> AllowedResolveStatuses = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "approved",
-            "rejected",
-            "info-requested"
-        };
-
-
 
         /// <summary>
         /// Retrieves App Hub products for a member email.
@@ -212,7 +199,7 @@ namespace CFR.PortalService.Service.Administration
                     return;
                 }
 
-                var placeholders = BuildRequestPlaceholders(request, note: null);
+                var placeholders = BuildRequestPlaceholders(request);
                 placeholders["AdditionalInfo"] = request.Comments.FirstOrDefault()?.Comment ?? "None provided";
                 placeholders["SendToEmail"] = sendToEmail ?? "Default Admins";
 
@@ -230,10 +217,8 @@ namespace CFR.PortalService.Service.Administration
             }
         }
 
-
-
         /// <summary>
-        /// Loads the named template (or a built-in fallback), merges placeholders, and sends the message.
+        /// Loads the named template (or a built-in fallback), merges placeholders, and sends the message using CFR.CommonService.MailService.
         /// </summary>
         private async Task SendTemplatedEmailAsync(string templateCode, int accessRequestId, string toAddress, Dictionary<string, string> placeholders, string fallbackSubject, string fallbackBody)
         {
@@ -245,7 +230,7 @@ namespace CFR.PortalService.Service.Administration
                 string body = template?.Body ?? fallbackBody;
                 string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
                 string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
-                _ = await mailService.SendMailAsync(mergedSubject, mergedBody, toAddress, templateLogoUrl: template?.LogoUrl, fontFamily: template?.FontFamily, baseFontSize: template?.BaseFontSize);
+                await Task.Run(() => CFR.CommonService.MailService.SMPTService.SendMail(mergedSubject, mergedBody, toAddress));
             }
             catch (Exception ex)
             {
@@ -254,9 +239,9 @@ namespace CFR.PortalService.Service.Administration
         }
 
         /// <summary>
-        /// Builds merge-tag values from the saved request row and optional reviewer note.
+        /// Builds merge-tag values from the saved request row.
         /// </summary>
-        private Dictionary<string, string> BuildRequestPlaceholders(AccessRequestOutput request, string? note)
+        private Dictionary<string, string> BuildRequestPlaceholders(AccessRequestOutput request)
         {
             string baseUrl = (configuration["FrontendSetting:CfrAdminBaseUrl"] ?? string.Empty).TrimEnd('/');
             string reviewLink = string.IsNullOrWhiteSpace(baseUrl) ? string.Empty : $"{baseUrl}/admin/requests";
@@ -268,7 +253,6 @@ namespace CFR.PortalService.Service.Administration
                 ["OrganizationName"] = request.OrganizationName ?? string.Empty,
                 ["AppName"] = request.ProductName ?? string.Empty,
                 ["ReviewLink"] = reviewLink,
-                ["Note"] = string.IsNullOrWhiteSpace(note) ? "More information requested." : note.Trim(),
             };
         }
 

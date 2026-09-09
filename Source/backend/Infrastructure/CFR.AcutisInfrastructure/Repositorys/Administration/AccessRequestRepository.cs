@@ -1,9 +1,5 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using CFR.AcutisInfrastructure.Interfaces.Administration;
-using CFR.AcutisInfrastructure.Models.Input;
-using CFR.AcutisInfrastructure.Models.Output;
-
 namespace CFR.AcutisInfrastructure.Repositorys.Administration
 {
     /// <summary>
