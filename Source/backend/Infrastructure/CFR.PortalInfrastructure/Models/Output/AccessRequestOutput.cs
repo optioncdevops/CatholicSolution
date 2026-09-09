@@ -2,7 +2,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace CFR.AcutisInfrastructure.Models.Output
+namespace CFR.PortalInfrastructure.Models.Output
 {
     /// <summary>
     /// Output DTO mapped from stored procedure StoredProc.Requests.AccessRequestCrud.

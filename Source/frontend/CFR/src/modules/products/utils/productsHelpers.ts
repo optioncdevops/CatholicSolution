@@ -1,5 +1,36 @@
 import type { CatalogApp } from '@shared/app/types/app';
+import { getCatalogApp, getCatalogIcon } from '@/registry/appCatalog';
 import type { HubProductApiItem, HubSectionValue } from '../types/productsTypes';
+
+const PRODUCT_LOGO_PUBLIC_DIR = '/Acutis/Attachment/Products';
+
+const isImageFileNameOrUrl = (value: string): boolean => {
+  if (!value || typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  return (
+    /\.(jpe?g|png|webp|svg|gif)($|\?)/i.test(trimmed) ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.includes('/Acutis/Attachment/Products')
+  );
+};
+
+const resolveProductLogoUrl = (logo: string | null | undefined): string | undefined => {
+  if (!logo || typeof logo !== 'string' || !logo.trim()) return undefined;
+  const trimmed = logo.trim();
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || /^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  const fileName = trimmed.replace(/\\/g, '/').split('/').filter(Boolean).pop();
+  if (!fileName || !/\.(jpe?g|png|webp|svg|gif)$/i.test(fileName)) {
+    return undefined;
+  }
+  const apiBase = String(import.meta.env.VITE_APP_REST_API_BASE_URL ?? '').replace(/\/+$/, '');
+  const relativePath = `${PRODUCT_LOGO_PUBLIC_DIR}/${fileName}`;
+  return apiBase ? `${apiBase}${relativePath}` : relativePath;
+};
 
 const FALLBACK_GRADIENTS = [
   'linear-gradient(135deg,#1E3A8A,#3B82F6)',
@@ -97,28 +128,59 @@ export const toCatalogApp = (row: HubProductApiItem): CatalogApp | null => {
   const baseUrl = pickString(source, 'baseUrl', 'BaseUrl', 'externalUrl', 'ExternalUrl', 'externalPageUrl', 'ExternalPageUrl');
   const canRequest = asBool(pickValue(source, 'canRequest', 'CanRequest')) === true;
 
+  console.log('Raw product source from API:', source);
+
+  const rawLogo = pickString(source, 'logoUrl', 'LogoUrl', 'logoName', 'LogoName');
+  const rawIcon = pickString(source, 'icon', 'Icon');
+  const resolvedLogoUrl = resolveProductLogoUrl(rawLogo);
+
+  const catalogApp = getCatalogApp(productName) || getCatalogApp(productId);
+  const resolvedFeatures = features.length > 0 ? features : (catalogApp?.features ?? []);
+
+  // Determine icon: if rawIcon is a symbol/emoji (not an image filename), use it;
+  // otherwise lookup the static catalog icon for this product; fallback to '✦'.
+  let resolvedIcon = '✦';
+  if (rawIcon && !isImageFileNameOrUrl(rawIcon)) {
+    resolvedIcon = rawIcon;
+  } else if (catalogApp?.icon) {
+    resolvedIcon = catalogApp.icon;
+  } else {
+    const catalogIcon = getCatalogIcon(productName) || getCatalogIcon(productId);
+    if (catalogIcon) {
+      resolvedIcon = catalogIcon;
+    } else if (rawIcon && isImageFileNameOrUrl(rawIcon)) {
+      resolvedIcon = '✦';
+    }
+  }
+
   return {
     id: (productId && productId !== '0' ? productId : seed),
     productId: resolvedProductId,
-    name: productName || 'Untitled product',
-    shortName: productName,
-    category: pickString(source, 'category', 'Category', 'subCategoryName', 'SubCategoryName'),
-    description: pickString(source, 'description', 'Description', 'prodDescription', 'ProdDescription'),
-    icon: pickString(source, 'icon', 'Icon', 'logoUrl', 'LogoUrl') || '✦',
-    gradient: FALLBACK_GRADIENTS[hashIndex(seed, FALLBACK_GRADIENTS.length)],
+    name: productName || catalogApp?.name || 'Untitled product',
+    shortName: productName || catalogApp?.shortName || 'Untitled product',
+    category: pickString(source, 'category', 'Category', 'subCategoryName', 'SubCategoryName') || catalogApp?.category || 'General',
+    description: pickString(source, 'description', 'Description', 'prodDescription', 'ProdDescription') || catalogApp?.description || '',
+    icon: resolvedIcon,
+    logoUrl: resolvedLogoUrl || catalogApp?.logoUrl,
+    gradient: catalogApp?.gradient || FALLBACK_GRADIENTS[hashIndex(seed, FALLBACK_GRADIENTS.length)],
     keywords: [productName, pickString(source, 'category', 'Category', 'subCategoryName', 'SubCategoryName')].filter(Boolean),
-    features,
-    stats: [],
-    kind: isYourApps || isAvailable ? 'launchable' : 'discover',
+    features: resolvedFeatures,
+    stats: catalogApp?.stats ?? [],
+    details: catalogApp?.details,
+    kind: isYourApps || isAvailable ? 'launchable' : (catalogApp?.kind ?? 'discover'),
     status: isYourApps ? 'active' : isAvailable ? 'available' : 'coming-soon',
     statusLabel: isYourApps ? 'Active' : isAvailable ? 'Access on request' : 'Coming soon',
+    statusDetail: catalogApp?.statusDetail,
     hubSection,
-    deploymentModel: 'external-saas',
-    ownership: 'first-party',
+    deploymentModel: catalogApp?.deploymentModel ?? 'external-saas',
+    ownership: catalogApp?.ownership ?? 'first-party',
     launcherEnabled: isYourApps,
-    externalUrl: baseUrl || undefined,
-    navigationTarget: 'same-tab',
+    externalUrl: baseUrl || catalogApp?.externalUrl || undefined,
+    navigationTarget: catalogApp?.navigationTarget ?? 'same-tab',
     canRequest,
+    isOrgApproved: asBool(pickValue(source, 'isOrgApproved', 'IsOrgApproved')) === true,
+    contactUserId: (pickValue(source, 'contactUserId', 'ContactUserId') as string | number | undefined) ?? undefined,
+    contactEmail: pickString(source, 'contactEmail', 'ContactEmail') || undefined,
   };
 };
 

@@ -37,6 +37,14 @@ BEGIN
         )
             SET @CanRequest = 1;
 
+        DECLARE @UserOrgId BIGINT = NULL;
+        SELECT TOP (1) @UserOrgId = up.[OrgId]
+        FROM [auth].[UserProduct] up
+        WHERE up.[CFRUserId] = @CFRUserId
+          AND ISNULL(up.[IsDeleted], 0) = 0
+          AND up.[OrgId] IS NOT NULL
+        ORDER BY up.[CFRUserDetailId];
+
         SELECT
             p.[ProductId],
             p.[ProductName],
@@ -59,7 +67,32 @@ BEGIN
                     THEN 1
                     ELSE 0
                 END AS BIT
-            ) AS [CanRequest]
+            ) AS [CanRequest],
+            CAST(
+                CASE
+                    WHEN @UserOrgId IS NOT NULL AND EXISTS (
+                        SELECT 1
+                        FROM [request].[AccessRequest] ar
+                        INNER JOIN [request].[AccessRequestProduct] arp
+                            ON arp.[AccessRequestId] = ar.[AccessRequestId]
+                           AND arp.[IsDeleted] = 0
+                        WHERE ar.[IsDeleted] = 0
+                          AND ar.[OrgId] = @UserOrgId
+                          AND arp.[ProductId] = p.[ProductId]
+                          AND arp.[LineStatus] = 2
+                    ) THEN 1
+                    ELSE 0
+                END AS BIT
+            ) AS [IsOrgApproved],
+            ISNULL((
+                SELECT STRING_AGG(f.[FeatureName], ', ') WITHIN GROUP (ORDER BY f.[ProductFeatureId])
+                FROM [core].[ProductFeature] f
+                WHERE f.[ProductId] = p.[ProductId]
+                  AND f.[IsActive] = 1
+                  AND f.[IsDeleted] = 0
+            ), '') AS [Features],
+            contactUser.[UserId] AS [ContactUserId],
+            LTRIM(RTRIM(contactUser.[Email])) AS [ContactEmail]
         FROM [core].[Product] AS p
         LEFT JOIN (
             SELECT DISTINCT up.[ProductId]
@@ -75,6 +108,16 @@ BEGIN
            AND pe.[EnvironmentName] = @EnvironmentName
            AND ISNULL(pe.[IsDeleted], 0) = 0
            AND pe.[IsActive] = 1
+        LEFT JOIN [auth].[AcutisUser] AS contactUser
+            ON (
+                (p.[ContactUserId] IS NOT NULL AND p.[ContactUserId] = contactUser.[UserId])
+                OR (p.[ContactUserId] IS NULL AND (
+                    contactUser.[UserId] = TRY_CAST(p.[ContactPerson] AS INT)
+                    OR LTRIM(RTRIM(ISNULL(contactUser.[FirstName], N'') + N' ' + ISNULL(contactUser.[LastName], N''))) = LTRIM(RTRIM(p.[ContactPerson]))
+                ))
+            )
+            AND contactUser.[IsDeleted] = 0
+            AND contactUser.[IsActive] = 1
         WHERE p.[IsDeleted] = 0
         ORDER BY
             CASE

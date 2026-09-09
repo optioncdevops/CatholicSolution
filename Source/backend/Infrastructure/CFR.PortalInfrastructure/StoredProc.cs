@@ -1,4 +1,4 @@
-﻿// Copyright (c) OptionC. All rights reserved.
+// Copyright (c) OptionC. All rights reserved.
 
 namespace CFR.PortalInfrastructure
 {
@@ -27,6 +27,16 @@ namespace CFR.PortalInfrastructure
             /// Assigned products, launch-code create, and code exchange.
             /// </summary>
             public const string CFRLaunchCrud = "[dbo].[Portal_CFRLaunch_CRUD]";
+        }
+
+        public class Administration
+        {
+            public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates_CRUD]";
+        }
+
+        public class Requests
+        {
+            public const string AccessRequestCrud = "[request].[AccessRequest_CRUD]";
         }
     }
 }

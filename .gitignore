@@ -1,4 +1,4 @@
-﻿################################################################################
+################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
@@ -38,15 +38,8 @@
 /Source/backend/Platform/CFR.Common/bin/Release/net10.0
 /Source/backend/Platform/CFR.DBEngine/bin/Release/net10.0
 /Source/backend/Service/CFR.CommonService/bin/Release/net10.0
-/Source/backend/Microservices/CFR.Acutis/wwwroot
-/Source/backend/.vs/CatholicSolution/CopilotIndices/18.8.1106.51376
-/Source/backend/Infrastructure/CFR.AcutisInfrastructure/bin/Release/net10.0
-/Source/backend/Service/CFR.AcutisService/bin/Release/net10.0
-/Source/backend/Automation/Automation.Acutis/bin/Debug/net8.0
-/Source/backend/Automation/Automation.Acutis/obj
-/Source/backend/Automation/Automation.Acutis/Result/index.html
-/Source/backend/Automation/Automation.Framework/bin/Debug/net8.0
-/Source/backend/Automation/Automation.Framework/obj
-/Source/backend
-/Source/backend/Infrastructure/CFR.PortalInfrastructure/bin/Release/net10.0
-/Source/backend/Service/CFR.PortalService/bin/Release/net10.0
+# Ignore Visual Studio temporary cache & index files universally
+.vs/
+**/.vs/
+**/[Bb]in/
+**/[Oo]bj/

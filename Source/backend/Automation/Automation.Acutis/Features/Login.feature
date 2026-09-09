@@ -7,5 +7,4 @@ Scenario: 001_Login as a admin with valid user credentials
     And Enter the UserName and the Password
     When I click the login button
     Then The Dashboard should be opened
-    #Then Launch the application with valid user credentials
-    #And User should be able to logout from the application 
+    And User should be able to logout from the application 

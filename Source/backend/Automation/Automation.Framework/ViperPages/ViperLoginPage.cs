@@ -24,7 +24,8 @@ namespace Automation.Framework.ViperPages
 
         public void ClickOnLogout()
         {
-            FindElementById(XPath_Menus.liLogout);
+            FindElementById(XPath_Menus.menuProfile);
+            FindElementById(XPath_Menus.menuItemSignOut);
         }
 
         public void LoginProcess(JsonLogin jsonLogin)

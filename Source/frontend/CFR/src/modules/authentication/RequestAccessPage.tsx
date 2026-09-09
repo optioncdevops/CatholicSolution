@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 import { useSearchParams } from 'react-router-dom';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
+import { useToast } from '@shared/app/components/ToastProvider';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
   BuildingIcon,
   CheckIcon,
   MailIcon,
+  MapPinIcon,
   ShieldCheckIcon,
   UserIcon,
 } from '@shared/app/components/UiIcons';
@@ -15,19 +17,26 @@ import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { getProducts } from '@/modules/products/services/productsService';
 import { productsFromApiResponse } from '@/modules/products/utils/productsHelpers';
+import { saveAccessRequest } from '@/modules/requests/services/accessRequestService';
+import { toPublicAccessRequestPayload } from '@/modules/requests/utils/accessRequestHelpers';
+import { validatePublicAccessRequest } from '@/modules/requests/validator/AccessRequestValidator';
 import type { CatalogApp } from '@shared/app/types/app';
 
 const organizationTypes = ['Catholic School', 'Parish', 'Diocese / Archdiocese', 'Ministry / Nonprofit', 'Other'] as const;
 
+const readFormValue = (form: HTMLFormElement, name: string) => String(new FormData(form).get(name) ?? '').trim();
+
 export function RequestAccessPage() {
   const [searchParams] = useSearchParams();
+  const { showToast } = useToast();
   const requestedProduct = searchParams.get('product');
   const [apps, setApps] = useState<CatalogApp[]>([]);
   const requestableApps = useMemo(() => apps.filter((app) => app.status !== 'coming-soon' && app.hubSection !== 'future'), [apps]);
   const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : (requestableApps[0]?.id ?? '');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedInterests, setSelectedInterests] = useState<string[]>(initialInterest ? [initialInterest] : []);
-  const reference = useMemo(() => `CS-${new Date().getFullYear()}-REQ`, []);
+  const [reference, setReference] = useState(`CS-${new Date().getFullYear()}-REQ`);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,10 +69,44 @@ export function RequestAccessPage() {
     current.includes(id) ? current.filter((value) => value !== id) : [...current, id]
   ));
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (submitting) return;
+
+    const form = event.currentTarget;
+    const values = {
+      firstName: readFormValue(form, 'firstName'),
+      lastName: readFormValue(form, 'lastName'),
+      organizationType: readFormValue(form, 'organizationType'),
+      organizationName: readFormValue(form, 'organization'),
+      address: readFormValue(form, 'address'),
+      city: readFormValue(form, 'city'),
+      state: readFormValue(form, 'state'),
+      zip: readFormValue(form, 'zip'),
+      email: readFormValue(form, 'workEmail'),
+      phone: readFormValue(form, 'phone'),
+      notes: readFormValue(form, 'notes'),
+    };
+    const messages = validatePublicAccessRequest(values, selectedInterests.length);
+    if (messages.length) {
+      showToast(messages[0]);
+      return;
+    }
+
+    const payload = toPublicAccessRequestPayload(values, requestableApps, selectedInterests);
+    setSubmitting(true);
+    try {
+      const response = await saveAccessRequest(payload);
+      const savedId = Number(response?.resultData ?? response?.ResultData ?? 0);
+      setReference(savedId > 0 ? `CS-${new Date().getFullYear()}-${savedId}` : `CS-${new Date().getFullYear()}-REQ`);
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      console.error('Error submitting access request:', error);
+      showToast(typeof error === 'string' ? error : 'Failed to submit access request.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -84,17 +127,18 @@ export function RequestAccessPage() {
               <span className="request-access-trust-badge"><ShieldCheckIcon size={16} /> Secure request</span>
             </div>
 
-            <form onSubmit={submit} className="request-access-form request-access-form--full request-access-form--compact">
+            <form onSubmit={(event) => void submit(event)} className="request-access-form request-access-form--full request-access-form--compact">
               <AccessSection number="01" title="Contact & organization">
                 <div className="request-access-fields-grid">
                   <Field icon={<UserIcon size={16} />} label="First Name" name="firstName" placeholder="Carl" autoComplete="given-name" required />
                   <Field icon={<UserIcon size={16} />} label="Last Name" name="lastName" placeholder="Lapp" autoComplete="family-name" required />
-                  <SelectField label="Organization Type" name="organizationType" options={organizationTypes} required />
+                  <SelectField label="Organization Type" name="organizationType" options={organizationTypes} placeholder="Select organization type" required />
                   <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required />
-                  
+                  <Field icon={<MapPinIcon size={16} />} label="Address" name="address" placeholder="Street address" autoComplete="street-address" required />
+                  <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required />
+                  <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required />
+                  <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required />
                   <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required />
-                 
-                  
                   <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" />
                 </div>
               </AccessSection>
@@ -142,13 +186,13 @@ export function RequestAccessPage() {
               </AccessSection>
 
               <div className="request-access-form__footer request-access-form__footer--full">
-                <p><ShieldCheckIcon size={14} /> Prototype only — no real request is transmitted.</p>
+                <p><ShieldCheckIcon size={14} /> Your request is reviewed by the Catholic Solutions onboarding team.</p>
                 <div>
                   <PlatformLink to="/login" className="auth-secondary-button request-access-footer-back">
                     <ArrowLeftIcon size={15} /> Back to sign in
                   </PlatformLink>
-                  <button type="submit" className="auth-primary-button auth-primary-button--submit">
-                    Submit request <ArrowRightIcon size={16} />
+                  <button type="submit" className="auth-primary-button auth-primary-button--submit" disabled={submitting}>
+                    {submitting ? 'Submitting…' : 'Submit request'} <ArrowRightIcon size={16} />
                   </button>
                 </div>
               </div>
@@ -167,8 +211,8 @@ function RequestSuccess({ reference }: { reference: string }) {
       <span className="request-access-success__icon"><CheckIcon size={28} /></span>
       <span className="request-access-kicker">Request captured</span>
       <h1>Your organization access request is ready for review.</h1>
-      <p>This prototype demonstrates the completed workflow. In production, the request would be routed to the appropriate Catholic Solutions onboarding or organization administrator process.</p>
-      <div className="auth-success-reference"><span>Request reference</span><strong>{reference}</strong><small>No real request is transmitted from this prototype.</small></div>
+      <p>The onboarding team will review your request and follow up using the email you provided.</p>
+      <div className="auth-success-reference"><span>Request reference</span><strong>{reference}</strong><small>Keep this reference if you need to follow up on your request.</small></div>
       <PlatformLink to="/login" className="auth-primary-button auth-primary-button--large">Return to sign in <ArrowRightIcon size={16} /></PlatformLink>
     </section>
   );
@@ -191,6 +235,20 @@ function Field({ label, name, type = 'text', placeholder, autoComplete, required
   return <div><label className="auth-label" htmlFor={name}>{label}{required && <span className="ml-1 text-rose-600">*</span>}</label><div className="auth-input-wrap mt-2">{icon ? <span className="auth-input-icon">{icon}</span> : null}<input id={name} name={name} type={type} placeholder={placeholder} autoComplete={autoComplete} required={required} className={`auth-input ${icon ? '' : 'auth-input--plain'}`} /></div></div>;
 }
 
-function SelectField({ label, name, options, required }: { label: string; name: string; options: readonly string[]; required?: boolean }) {
-  return <div><label className="auth-label" htmlFor={name}>{label}{required && <span className="ml-1 text-rose-600">*</span>}</label><select id={name} name={name} required={required} defaultValue="" className="auth-input auth-input--plain mt-2"><option value="" disabled>Select organization type</option>{options.map((option) => <option key={option}>{option}</option>)}</select></div>;
+type SelectOption = string | { value: string; label: string };
+
+function SelectField({ label, name, options, required, placeholder }: { label: string; name: string; options: readonly SelectOption[]; required?: boolean; placeholder?: string }) {
+  return (
+    <div>
+      <label className="auth-label" htmlFor={name}>{label}{required && <span className="ml-1 text-rose-600">*</span>}</label>
+      <select id={name} name={name} required={required} defaultValue="" className="auth-input auth-input--plain mt-2">
+        <option value="" disabled>{placeholder ?? 'Select'}</option>
+        {options.map((option) => {
+          const value = typeof option === 'string' ? option : option.value;
+          const optionLabel = typeof option === 'string' ? option : option.label;
+          return <option key={value} value={value}>{optionLabel}</option>;
+        })}
+      </select>
+    </div>
+  );
 }

@@ -28,6 +28,7 @@ namespace CFR.Acutis.Controllers.Products
         /// <response code="200">Successfully fetched products list.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet]
+        [AllowAnonymous]
         [ActionName(API_Product.GetProducts)]
         public async Task<IActionResult> GetProducts()
         {

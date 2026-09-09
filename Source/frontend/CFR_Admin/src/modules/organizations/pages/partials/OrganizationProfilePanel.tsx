@@ -7,7 +7,7 @@ import { Dropdown, InputField } from '@app/components/formControls';
 import { StatusBadge } from '@app/components/Badge';
 import { getOrganizationUsers, updateOrganization } from '../../services/organizationsService';
 import type { OrganizationApiItem, OrganizationFormValues, OrganizationUserApiItem } from '../../types/organizationTypes';
-import { composeOrganizationAddress, formatOrgCode, ORG_TYPE_OPTIONS, orgTypeLabel } from '../../utils/organizationHelpers';
+import { composeOrganizationAddress, ORG_STATUS_OPTIONS,formatOrgCode, ORG_TYPE_OPTIONS, orgTypeLabel } from '../../utils/organizationHelpers';
 import { organizationRules } from '../../validator/OrganizationValidator';
 import { formatDate } from '@/modules/utils/formatDate';
 
@@ -160,6 +160,10 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
           <Fact label="Contact Person" value={organization.contactPerson ?? ''} />
           <Fact label="Contact Number" value={organization.contactPhone ?? ''} />
           <Fact label="Contact Email" value={organization.contactEmail ?? ''} />
+          <Fact label="Address" value={organization.address ?? ''} />
+          <Fact label="City" value={organization.city ?? ''} />
+          <Fact label="State" value={organization.state ?? ''} />
+          <Fact label="ZIP" value={organization.zip ?? ''} />
           <div className="min-w-0">
             <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Status</p>
             <p className="mt-0.5"><StatusBadge status={organization.orgStatus} kind="organization" /></p>
