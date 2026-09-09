@@ -48,9 +48,18 @@ namespace CFR.CommonService.Services
                 return null;
             }
 
-            string? apiBaseUrl = !string.IsNullOrWhiteSpace(config?.ApiBaseUrl)
-                ? config.ApiBaseUrl.Trim().TrimEnd('/')
-                : config?.LoginURL?.Trim().TrimEnd('/');
+            // A local dev machine always prefers its own environment-configured address over
+            // whatever happens to be persisted in _configurationSettings.json (see
+            // ConfSettingsService.ResolveDevelopmentApiBaseUrlOverride) — this is intentionally not
+            // baked into ConfSettingsService.LoadData() itself, since that would also leak into the
+            // Email Settings page's editable/validated ApiBaseUrl field.
+            string? apiBaseUrl = ConfSettingsService.ResolveDevelopmentApiBaseUrlOverride()?.Trim().TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+            {
+                apiBaseUrl = !string.IsNullOrWhiteSpace(config?.ApiBaseUrl)
+                    ? config.ApiBaseUrl.Trim().TrimEnd('/')
+                    : config?.LoginURL?.Trim().TrimEnd('/');
+            }
             if (string.IsNullOrWhiteSpace(apiBaseUrl))
             {
                 return null;
