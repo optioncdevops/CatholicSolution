@@ -213,49 +213,52 @@ namespace Automation.Framework.ViperPages
         /// </remarks>
         public static class XPath_MenuAccess
         {
-            // The only stable attribute on the chrome. The mobile sidebar renders every
-            // label a second time, so the top level lookup is scoped to the bar itself.
-            public const string TopNav = "//*[@data-acutis-chrome='top-nav']";
+            // The nav strip carries a stable id. The whole bar is scoped on, because the
+            // profile menu renders links of its own outside it that are not part of the walk.
+            public const string TopNav = "//nav[@id='menuAdminNavigation']";
 
-            // Set on the element the page content scrolls inside.
-            public const string PageScroll = "//*[@data-acutis-page-scroll]";
+            // A group with sub menus renders as a drop down trigger button, a group without
+            // renders as a link that navigates. Both carry the same nav item class.
+            public const string TopNavItem = TopNav + "//*[self::a or self::button][contains(@class, 'admin-nav-item')]";
 
-            // A group that does not fit in the bar is moved into a trailing More menu
-            // rather than dropped, so a missing group is not necessarily an absent one.
-            public const string MoreMenu = "More";
+            // The drop down panel is portalled onto the body rather than nested in the nav,
+            // so this deliberately is not scoped to the bar. It is unmounted when the menu
+            // closes, so at most one panel is ever in the DOM.
+            public const string DropDownPanel = "//div[@role='menu'][contains(@class, 'admin-nav-dropdown__panel')]";
+
+            public const string DropDownEntry = DropDownPanel + "//a[@role='menuitem']";
+
+            // The card every routed page renders inside.
+            public const string PageCard = "//main//*[contains(@class, 'admin-page-card')]";
 
             // A page is treated as loaded when any of these renders. The pages are a mix of
             // data tables, forms and dashboards, so no single locator covers them all.
-            public const string GridRow = "//table//tbody/tr/td";
+            public const string GridRow = PageCard + "//table//tbody/tr/td";
 
-            public const string FormField = "//form//input | //form//select | //form//textarea";
+            public const string FormField = PageCard + "//form//input | " + PageCard + "//form//select | " + PageCard + "//form//textarea";
 
-            public const string PageHeading = "//*[@data-acutis-page-scroll]//h1 | //*[@data-acutis-page-scroll]//h2";
+            public const string PageHeading = PageCard + "//h1 | " + PageCard + "//h2 | " + PageCard + "//h3";
 
-            // Skeleton rows while a grid loads. They are real rows with no data in them, so
-            // they have to be waited out before GridRow means anything.
-            public const string LoadingRow = "//table//tbody/tr[contains(@class, 'animate-pulse')]";
+            // CustomDataTable's empty state. Checked as a settled page in its own right,
+            // because the empty state replaces the rows rather than sitting beside them.
+            public const string EmptyGrid = "//*[normalize-space(text())='No data available']";
 
-            // CustomDataTable's empty state. Checked before GridRow, because the empty
-            // state is itself a table row and would otherwise read as data.
-            public const string EmptyGrid = "//span[normalize-space(text())='No data available'] | //td[normalize-space(text())='No data available']";
+            // The shell renders this in place of the page when the signed in role holds no
+            // grant for the route, so a menu that is shown but not reachable is caught.
+            public const string AccessDenied = PageCard + "//*[@role='status'][.//h3[normalize-space()='Access denied']]";
 
-            // A nav path with no matching route falls through to this screen.
-            public const string PageNotFound = "//*[normalize-space(text())='Page not found']";
+            // The Suspense fallback while a lazily loaded route chunk arrives, and the grid's
+            // skeleton rows. Skeletons are real rows with no data in them, so they have to be
+            // waited out before GridRow means anything.
+            public const string Loading = PageCard + "//*[@role='status'][@aria-live='polite'] | " + PageCard + "//table//tbody/tr[contains(@class, 'animate-pulse')]";
 
-            // Everything a settled page can show, in one locator. Waited on separately each
+            // Everything a settled page can show, in one locator. Waited on separately, each
             // shape that a page is not costs the whole timeout before the next is tried - a
             // form page sat out the grid timeout before its own fields were ever looked for.
-            public const string SettledPage = GridRow + " | " + FormField + " | " + PageHeading + " | " + EmptyGrid + " | " + PageNotFound;
-
-            // A closed drop down stays in the DOM, laid over its trigger at zero opacity,
-            // which Selenium still reports as displayed. Only the open one drops the
-            // pointer-events-none guard, so this is what tells the two apart.
-            private const string _notInAClosedMenu = "[not(ancestor::div[contains(@class, 'pointer-events-none')])]";
+            public const string SettledPage = GridRow + " | " + FormField + " | " + PageHeading + " | " + EmptyGrid + " | " + AccessDenied;
 
             /// <summary>
-            /// A top level menu in the nav bar. A group with sub menus renders as a button
-            /// that opens a drop down; one without renders as a link that navigates.
+            /// A top level menu in the nav bar.
             /// </summary>
             /// <param name="label">the visible text of the menu</param>
             /// <returns>An xpath matching that menu inside the top nav bar.</returns>
@@ -265,16 +268,14 @@ namespace Automation.Framework.ViperPages
             }
 
             /// <summary>
-            /// An entry inside an open drop down. The drop down is portalled onto the body
-            /// rather than nested in the nav, so this deliberately is not scoped to the bar.
-            /// Entries sitting in a closed drop down are excluded, so a label that appears
-            /// under more than one group cannot be clicked in the group that is not open.
+            /// An entry inside the open drop down. Scoping to the panel keeps a label that
+            /// also appears in the bar itself, or in the profile menu, out of the match.
             /// </summary>
             /// <param name="label">the visible text of the entry</param>
             /// <returns>An xpath matching that entry.</returns>
             public static string MenuEntry(string label)
             {
-                return $"//*[self::a or self::button][.//span[normalize-space()='{label}']]{_notInAClosedMenu}";
+                return $"{DropDownPanel}//a[@role='menuitem'][.//span[normalize-space()='{label}']]";
             }
         }
     }
