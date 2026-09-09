@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Eye, RotateCcw, Save, ShieldCheck, ShieldOff } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, Save, ShieldCheck, ShieldOff, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -11,8 +11,8 @@ import { normalizeUserRolesList } from '../../userRoles/utils/userRolesHelpers';
 import type { UserRolesApiItem } from '../../userRoles/types/userRolesTypes';
 import { getUserRights, saveUserRights } from '../services/userRightsService';
 import {
-  buildUserRightsTree, collectAllFeatureIds, computeRowRollup, flattenUserRightsTree,
-  mergePendingChange, toPendingChangeList, type RowRollup,
+  buildUserRightsTree, collectAllFeatureIds, collectFeatureIdsForLevel, computeRowRollup, flattenUserRightsTree,
+  levelsForKind, mergePendingChange, toPendingChangeList, type RowRollup,
 } from '../utils/userRightsHelpers';
 import type { AccessLevel, UserRightsFeatureNode } from '../types/userRightsTypes';
 
@@ -59,22 +59,6 @@ function PermissionToggle({ idPrefix, label, rollup, levels, onChange, disabled 
       </CommonButton>
     </div>
   );
-}
-
-/** Module (depth 0) and Activity (depth 2+) rows are a plain on/off switch — only Feature rows
- * (depth 1, e.g. "KPI Tiles" under "Dashboard") can be set to Read Only. */
-function levelsForDepth(depth: number): AccessLevel[] {
-  return depth === 1 ? ['access', 'readOnly', 'denied'] : ['access', 'denied'];
-}
-
-/** Depth-aware bulk/cascade collector: only includes a featureId if `level` is actually a valid
- * state at that node's depth (e.g. applying Read Only from a Module or to an Activity is a no-op
- * for that row — Access/Denied cascade to every depth without restriction). */
-function collectFeatureIdsForLevel(nodes: UserRightsFeatureNode[], level: AccessLevel, depth = 0): number[] {
-  return nodes.flatMap((node) => [
-    ...(levelsForDepth(depth).includes(level) ? [node.featureId] : []),
-    ...collectFeatureIdsForLevel(node.children, level, depth + 1),
-  ]);
 }
 
 function SectionSkeleton({ rows = 8 }: { rows?: number }) {
@@ -225,16 +209,11 @@ export function UserRightsPage() {
     });
   };
 
-  const handleToggleRow = (node: UserRightsFeatureNode, depth: number, next: AccessLevel) => {
-    setPending((prev) => {
-      let updated = prev;
-      // Cascades to the whole subtree, but Read Only only ever lands on Feature-depth rows (see
-      // levelsForDepth) — a Module or Activity in that subtree keeps its own current value.
-      for (const featureId of collectFeatureIdsForLevel([node], next, depth)) {
-        updated = mergePendingChange(updated, featureId, next);
-      }
-      return updated;
-    });
+  const handleToggleRow = (node: UserRightsFeatureNode, next: AccessLevel) => {
+    // Each row's access is independent — toggling a parent (Module/Feature) must NOT change its
+    // children; every node keeps its own separately-persisted value. Bulk-changing a whole branch
+    // at once is what "Apply to all" is for (see handleApplyToAll below).
+    setPending((prev) => mergePendingChange(prev, node.featureId, next));
   };
 
   const handleClearFilters = () => {
@@ -249,7 +228,7 @@ export function UserRightsPage() {
 
   // Bulk "apply to all" — scoped to the currently visible (module-filtered) set, matching what's
   // on screen rather than silently touching hidden rows. Read Only only ever lands on
-  // Feature-depth rows (see levelsForDepth) — Module/Activity rows in scope are left untouched
+  // Feature-kind rows (see levelsForKind) — Module/Activity rows in scope are left untouched
   // rather than clamped to some other value the user didn't ask for. Confirmed first since it can
   // affect a large number of features in one action.
   const handleApplyToAll = async (level: AccessLevel) => {
@@ -262,7 +241,7 @@ export function UserRightsPage() {
       title: `Set ${ACCESS_LEVEL_LABEL[level]} for ${scopeLabel}?`,
       description: `This queues ${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} to ${ACCESS_LEVEL_LABEL[level].toLowerCase()} for ${selectedRole?.roleName ?? 'this role'}.`
         + (skippedCount > 0 ? ` ${skippedCount} module/activity-level row${skippedCount === 1 ? '' : 's'} in scope don't support Read Only and will be left as-is.` : '')
-        + ' Review the matrix and click Save Changes to persist it.',
+        + ' Review the matrix and click Save to persist it.',
       confirmLabel: `Set all to ${ACCESS_LEVEL_LABEL[level]}`,
       tone: level === 'denied' ? 'danger' : 'primary',
     });
@@ -274,7 +253,7 @@ export function UserRightsPage() {
       for (const featureId of featureIds) updated = mergePendingChange(updated, featureId, level);
       return updated;
     });
-    showToast(`${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} queued as ${ACCESS_LEVEL_LABEL[level]} — click Save Changes to persist.`, 'success');
+    showToast(`${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} queued as ${ACCESS_LEVEL_LABEL[level]} — click Save to persist.`, 'success');
     setApplyingAll(false);
   };
 
@@ -423,8 +402,8 @@ export function UserRightsPage() {
                           idPrefix={`Feature${node.featureId}`}
                           label={node.label}
                           rollup={rollup}
-                          levels={levelsForDepth(depth)}
-                          onChange={(next) => handleToggleRow(node, depth, next)}
+                          levels={levelsForKind(node.kind)}
+                          onChange={(next) => handleToggleRow(node, next)}
                           disabled={saving}
                         />
                       </td>
@@ -437,18 +416,13 @@ export function UserRightsPage() {
         </section>
       )}
 
-      <div className="admin-sticky-footer flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold text-[var(--text-muted)]">
-          {dirtyCount > 0 ? `${dirtyCount} unsaved change${dirtyCount === 1 ? '' : 's'}` : 'No unsaved changes'}
-        </span>
-        <div className="flex items-center gap-2">
-          <CommonButton id="btnDiscardUserRightsChanges" variant="outline" iconLeft={<RotateCcw size={14} />} onClick={handleDiscard} disabled={dirtyCount === 0 || saving}>
-            Discard
-          </CommonButton>
-          <CommonButton id="btnSaveUserRights" variant="primary" iconLeft={<Save size={14} />} onClick={() => void handleSave()} loading={saving} disabled={dirtyCount === 0 || saving}>
-            Save Changes
-          </CommonButton>
-        </div>
+      <div className="admin-sticky-footer">
+        <CommonButton id="btnCancelUserRights" variant="outline" iconLeft={<X size={14} />} onClick={handleDiscard} disabled={dirtyCount === 0 || saving}>
+          Cancel
+        </CommonButton>
+        <CommonButton id="btnSaveUserRights" variant="primary" iconLeft={<Save size={14} />} onClick={() => void handleSave()} loading={saving} disabled={dirtyCount === 0 || saving}>
+          Save
+        </CommonButton>
       </div>
     </div>
   );

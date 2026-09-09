@@ -1,4 +1,6 @@
-import { accessLevelFromCode, type AccessLevel, type UserRightsFeatureNode, type UserRightsPendingChange } from '../types/userRightsTypes';
+import {
+  accessLevelFromCode, type AccessLevel, type FeatureNodeKind, type UserRightsFeatureNode, type UserRightsPendingChange,
+} from '../types/userRightsTypes';
 
 type RawRow = Record<string, unknown>;
 
@@ -27,6 +29,27 @@ function pickLabel(row: RawRow): string {
   // Module nor SubModule — only Activity — so it must be checked too, not just as a last resort.
   return pickString(row, 'SubModule') || pickString(row, 'Module') || pickString(row, 'Activity') || 'Untitled';
 }
+
+/**
+ * The row's real kind — confirmed against live data, NOT inferred from tree depth. Depth is
+ * unreliable here: "Reset Password" (an Activity) sits one level under "Users" (a Module),
+ * skipping the Feature tier entirely, so a Feature and an Activity can both be direct children
+ * of a Module. The two real signals instead:
+ *   - `ParentId` null/0 → module.
+ *   - Otherwise, a non-blank `Activity` column (mirrored by `ModuleFeatures.AccessLevel = 1`,
+ *     confirmed via 016_Acutis_UserAccessVerification.sql-style inspection) → activity.
+ *   - Anything else with a parent → feature.
+ */
+function pickKind(row: RawRow, parentId: number): FeatureNodeKind {
+  if (parentId === 0) return 'module';
+  if (pickString(row, 'Activity')) return 'activity';
+  return 'feature';
+}
+
+/** Only a Feature row may be set to Read Only — Modules and Activities are Access/Denied only. */
+export function levelsForKind(kind: FeatureNodeKind): AccessLevel[] {
+  return kind === 'feature' ? ['access', 'readOnly', 'denied'] : ['access', 'denied'];
+}
 //#endregion
 
 /** Builds the module/submenu tree directly from `GetUserRights`'s `userRights` result set — that
@@ -51,6 +74,7 @@ export function buildUserRightsTree(resultData: unknown): UserRightsFeatureNode[
     const node: UserRightsFeatureNode = {
       featureId,
       parentId,
+      kind: pickKind(row, parentId),
       label: pickLabel(row),
       description: pickString(row, 'ItemDescription'),
       routingUrl: '',
@@ -113,6 +137,16 @@ export function flattenUserRightsTree(nodes: UserRightsFeatureNode[], depth: num
 
 export function collectAllFeatureIds(nodes: UserRightsFeatureNode[]): number[] {
   return nodes.flatMap(collectSubtreeFeatureIds);
+}
+
+/** Kind-aware bulk/cascade collector: only includes a featureId if `level` is actually valid for
+ * that node's real kind (see {@link levelsForKind}) — e.g. applying Read Only from a Module, or
+ * to an Activity underneath it, is a no-op for that row. Access/Denied apply to every kind. */
+export function collectFeatureIdsForLevel(nodes: UserRightsFeatureNode[], level: AccessLevel): number[] {
+  return nodes.flatMap((node) => [
+    ...(levelsForKind(node.kind).includes(level) ? [node.featureId] : []),
+    ...collectFeatureIdsForLevel(node.children, level),
+  ]);
 }
 
 /** Merges a queued change into the pending map, replacing any earlier queued value for the same

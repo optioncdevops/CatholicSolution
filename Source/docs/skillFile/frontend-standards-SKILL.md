@@ -71,11 +71,37 @@ Folder name is `partials/` (plural).
 | Confirm | `showDeleteConfirm` / `CommonAlertDialog` |
 | Toast | `showToast` |
 | Card | `CommonCard` |
-| Actions | `FormActionsBar` |
+| Actions | `.admin-sticky-footer` div (page) / modal `footer` prop (dialog) — see section 0.4a |
 | Layout | `PageShell`, `PageNote`, `PageHeader` |
 
 Do not use raw `<input>`, `<select>`, `<button>`, or add a new table library.
 (If the host app names these controls differently, use its equivalents — never raw HTML controls.)
+
+### 0.4a Save / Cancel button pair — terminology, order, alignment (MUST)
+
+Every form-style Save/Cancel pair in the app (add/edit pages, modals, bulk-edit toolbars) MUST look and behave identically. This is confirmed against every existing add/edit page and modal in CFR Admin (Users, Organizations, Email Settings, User Roles, Product license/assign modals) — do not invent a variant.
+
+**Terminology** — the pair is exactly **`Cancel`** and **`Save`**. Never substitute:
+- `Discard`, `Reset`, `Close`, `Go Back` for Cancel
+- `Save Changes`, `Update`, `Submit`, `Apply` for Save
+
+A domain-specific primary action that is genuinely not a generic save (`Approve`, `Reject`, `Activate`) may replace the Save label — but the button next to it is still exactly `Cancel`, never `Close`/`Discard`.
+
+**Order** — Cancel first, Save second, in that DOM order (both visually and in markup):
+```tsx
+<CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={handleCancel} disabled={saving}>Cancel</CommonButton>
+<CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+```
+- Cancel: `variant="outline"`, `iconLeft={<X size={14} />}` on page-level forms (icon is optional inside a modal footer that already has its own close X in the header — do not add it there if the modal component already renders one).
+- Save: `variant="primary"`, `iconLeft={<Save size={14} />}`, `loading={saving}` while the request is in flight.
+- Both: `size="sm"` on page-level forms (modals may omit `size` to match the modal's own default).
+
+**Alignment**
+- Page-level add/edit form: wrap the pair in `<div className="admin-sticky-footer">` (defined in `modules/admin.css`) — a sticky bar pinned to the bottom of the scrollable form, buttons centered by default. Do not build a bespoke fixed/absolute footer.
+- A page-level footer that also needs to show a status string (e.g. an unsaved-change count) may override alignment with `className="admin-sticky-footer flex items-center justify-between gap-3"` — status text on the left, the Cancel/Save pair grouped together on the right, still in Cancel-then-Save order.
+- Modal: pass the pair through the modal's `footer` prop; do not add a `justify-end` wrapper unless the modal component doesn't already right-align its footer.
+
+Do not reference a `FormActionsBar` component — it does not exist in this codebase. Use the patterns above.
 
 ### 0.5 Pages MUST use `//#region` blocks
 See section 10. Required on list pages, add/edit pages, and modals.
@@ -229,7 +255,7 @@ src/
       formControls/      InputField, Dropdown, DatePicker, RadioGroup, ...
       buttons/           CommonButton, CommonIconButton
       dataTable/         CustomDataTable, CustomServerSideDataTable
-      common/            PageHeader, PageNote, FormActionsBar, CustomToastMessage,
+      common/            PageHeader, PageNote, CustomToastMessage,
                          CommonAlertDialog, ButtonNavigation, DetailGrid
       modal/             BaseModal, ConfirmationPopup
       cards/             CommonCard, FormSectionCard
@@ -797,7 +823,7 @@ List page rules:
 
 File: `{feature}/pages/partials/Add{Feature}.tsx`
 
-Use `CommonCard` + form controls + `FormActionsBar`. Same file handles add and edit when the form is identical (read id from `location.state`).
+Use `CommonCard` + form controls + a `.admin-sticky-footer` Cancel/Save row (rule 0.4a). Same file handles add and edit when the form is identical (read id from `location.state`).
 
 ```tsx
 import { useCallback, useEffect, useState } from "react";
@@ -805,9 +831,9 @@ import { useForm, type FieldErrors } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CommonCard } from "@app/components/cards/CommonCard";
 import { CommonButton } from "@app/components/buttons";
-import { FormActionsBar } from "@app/components/common";
 import { showToast } from "@app/components/common/CustomToastMessage";
 import { InputField, MandatoryIndicator } from "@app/components/formControls";
+import { Save, X } from "lucide-react";
 import { getCustomerDirectoryById, saveCustomerDirectory } from "../../services/customerDirectoryService";
 import type { CustomerDirectoryFormValues } from "../../types/customerDirectoryTypes";
 import { customerDirectoryDefaultValues, customerDirectoryRules } from "../../validator/CustomerDirectoryValidator";
@@ -900,14 +926,14 @@ const AddCustomerDirectory = () => {
             />
           </div>
         </div>
-        <FormActionsBar>
-          <CommonButton type="submit" variant="success" intent="save" loading={loading} disabled={loading}>
-            Save
-          </CommonButton>
-          <CommonButton type="button" variant="secondary" intent="cancel" onClick={navigateToList} disabled={loading}>
+        <div className="admin-sticky-footer">
+          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={loading}>
             Cancel
           </CommonButton>
-        </FormActionsBar>
+          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={loading} disabled={loading}>
+            Save
+          </CommonButton>
+        </div>
       </form>
     </CommonCard>
   );
@@ -919,7 +945,7 @@ export default AddCustomerDirectory;
 
 Form layout:
 - `grid grid-cols-1 gap-6 md:grid-cols-12`; fields use `col-span-12 md:col-span-3|4|6`
-- Save / Cancel live in `FormActionsBar`, Save first, Cancel second
+- Cancel / Save live in `<div className="admin-sticky-footer">`, Cancel first, Save second (rule 0.4a)
 - `required` on the control AND `rules` from the validator (`"{Label} is required."`)
 - `placeholder` on every control (`Enter …` / `Select …`)
 - `autoFocus` on the **first** control only
@@ -986,10 +1012,10 @@ const AddCustomerDirectoryModal = ({ isOpen, onClose, onSaved }: AddCustomerDire
       title="Add Email Address"
       size="md"
       footer={
-        <div className="flex justify-end gap-2">
-          <CommonButton variant="success" onClick={handleSubmit(onSubmit, onInvalid)}>Save</CommonButton>
-          <CommonButton variant="secondary" onClick={onClose}>Cancel</CommonButton>
-        </div>
+        <>
+          <CommonButton variant="outline" onClick={onClose}>Cancel</CommonButton>
+          <CommonButton variant="primary" onClick={handleSubmit(onSubmit, onInvalid)}>Save</CommonButton>
+        </>
       }
     >
       <InputField control={control} name="txtEmailaddress" label="E-Mail Address" type="email" placeholder="Enter email address" autoFocus required rules={customerDirectoryRules.txtEmailaddress} />
@@ -1019,7 +1045,7 @@ Import from `@app/components/formControls` (barrel) unless noted. If the host ap
 
 **Feedback:** `showToast.success` / `showToast.error` (`@app/components/common/CustomToastMessage`), `showDeleteConfirm` (`@app/components/common/CommonAlertDialog`), `CardLoader` (`@app/components/loader`)
 
-**Layout:** `PageShell` (module Index), `PageHeader` / `PageNote`, `FormActionsBar` (Save / Cancel row), `CommonCard` (add/edit forms), `ButtonNavigation` (module section tabs), `MenuTabBar` (in-page tabs), `BaseModal` (dialogs), `DetailGrid` (read-only detail view)
+**Layout:** `PageShell` (module Index), `PageHeader` / `PageNote`, `.admin-sticky-footer` (Cancel / Save row — rule 0.4a), `CommonCard` (add/edit forms), `ButtonNavigation` (module section tabs), `MenuTabBar` (in-page tabs), `BaseModal` (dialogs), `DetailGrid` (read-only detail view)
 
 **Icons:** `lucide-react` — Pencil, Trash2, Eye, Copy, Plus
 
