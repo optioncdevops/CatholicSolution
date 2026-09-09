@@ -18,16 +18,16 @@ namespace Automation.Acutis.Features
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "3.0.0.0")]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::NUnit.Framework.TestFixtureAttribute()]
-    [global::NUnit.Framework.DescriptionAttribute("Admin Access Requests")]
+    [global::NUnit.Framework.DescriptionAttribute("05_AdminAccessRequests")]
     [global::NUnit.Framework.FixtureLifeCycleAttribute(global::NUnit.Framework.LifeCycle.InstancePerTestCase)]
-    public partial class AdminAccessRequestsFeature
+    public partial class _05_AdminAccessRequestsFeature
     {
         
         private global::Reqnroll.ITestRunner testRunner;
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "Admin Access Requests", null, global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "05_AdminAccessRequests", "A short summary of the feature", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
 #line 1 "AdminAccessRequests.feature"
 #line hidden
@@ -105,32 +105,41 @@ namespace Automation.Acutis.Features
         
         public virtual async global::System.Threading.Tasks.Task FeatureBackgroundAsync()
         {
-#line 3
-  #line hidden
-#line 4
-    await testRunner.GivenAsync("I log in to the admin portal", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
-#line hidden
 #line 5
-    await testRunner.AndAsync("I navigate to the Admin Access Requests page", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+  #line hidden
+#line 6
+    await testRunner.GivenAsync("Launch the application with URL", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 7
+    await testRunner.AndAsync("Enter the UserName and the Password", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 8
+    await testRunner.WhenAsync("I click the login button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 9
+    await testRunner.WhenAsync("The Dashboard should be open", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 10
+    await testRunner.ThenAsync("I navigate to the Admin Access Requests page", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
         }
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/AdminAccessRequests.feature.ndjson", 4);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/AdminAccessRequests.feature.ndjson", 3);
         }
         
         [global::NUnit.Framework.TestAttribute()]
-        [global::NUnit.Framework.DescriptionAttribute("Viewing the access requests list")]
-        public async global::System.Threading.Tasks.Task ViewingTheAccessRequestsList()
+        [global::NUnit.Framework.DescriptionAttribute("001_Verify Admin Access Requests listing, status tabs, and dropdown filters")]
+        public async global::System.Threading.Tasks.Task _001_VerifyAdminAccessRequestsListingStatusTabsAndDropdownFilters()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "0";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Viewing the access requests list", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("001_Verify Admin Access Requests listing, status tabs, and dropdown filters", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 7
+#line 12
   this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -140,44 +149,53 @@ namespace Automation.Acutis.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 3
+#line 5
   await this.FeatureBackgroundAsync();
 #line hidden
-#line 8
+#line 13
     await testRunner.ThenAsync("I should see the access requests table or an empty state", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-            }
-            await this.ScenarioCleanupAsync();
-        }
-        
-        [global::NUnit.Framework.TestAttribute()]
-        [global::NUnit.Framework.DescriptionAttribute("Filtering access requests by status")]
-        public async global::System.Threading.Tasks.Task FilteringAccessRequestsByStatus()
-        {
-            string[] tagsOfScenario = ((string[])(null));
-            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
-            string pickleIndex = "1";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Filtering access requests by status", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
-            string[] tagsOfRule = ((string[])(null));
-            global::Reqnroll.RuleInfo ruleInfo = null;
-#line 10
-  this.ScenarioInitialize(scenarioInfo, ruleInfo);
-#line hidden
-            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
-            {
-                await testRunner.SkipScenarioAsync();
-            }
-            else
-            {
-                await this.ScenarioStartAsync();
-#line 3
-  await this.FeatureBackgroundAsync();
-#line hidden
-#line 11
+#line 14
     await testRunner.WhenAsync("I select the \"Pending\" status tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 12
-    await testRunner.ThenAsync("the requests table should only show pending requests or be empty", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line 15
+    await testRunner.ThenAsync("the requests table should show filtered results or be empty", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 16
+    await testRunner.WhenAsync("I select the \"Approved\" status tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 17
+    await testRunner.ThenAsync("the requests table should show filtered results or be empty", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 18
+    await testRunner.WhenAsync("I select the \"Rejected\" status tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 19
+    await testRunner.ThenAsync("the requests table should show filtered results or be empty", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 20
+    await testRunner.WhenAsync("I select the \"Info requested\" status tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 21
+    await testRunner.ThenAsync("the requests table should show filtered results or be empty", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 22
+    await testRunner.WhenAsync("I select the \"All statuses\" status tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 23
+    await testRunner.ThenAsync("the requests table should show filtered results or be empty", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 24
+    await testRunner.WhenAsync("I click on the Application filter dropdown", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 25
+    await testRunner.ThenAsync("the requests table should show filtered results or be empty", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 26
+    await testRunner.WhenAsync("I click on the Organization filter dropdown", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 27
+    await testRunner.ThenAsync("the requests table should show filtered results or be empty", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
