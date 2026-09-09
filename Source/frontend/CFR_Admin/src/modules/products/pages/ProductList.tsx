@@ -241,7 +241,7 @@ const ProductList = () => {
           {filteredProducts.map((item) => {
             const status = deriveProductStatus(item);
             const logoSrc = resolveProductLogoUrl(
-              item.logoUrl,
+              item.logoName,
               item.updatedDate,
             );
 
@@ -350,7 +350,7 @@ const ProductList = () => {
             shortName: selectedProduct.productName,
             category: selectedProduct.subCategoryName || "General",
             icon:
-              resolveProductLogoUrl(selectedProduct.logoUrl) ||
+              resolveProductLogoUrl(selectedProduct.logoName) ||
               DEFAULT_PRODUCT_ICON,
             gradient: DEFAULT_PRODUCT_GRADIENT,
             description: selectedProduct.prodDescription || "",

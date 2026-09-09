@@ -50,12 +50,6 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string? LogoName { get; set; }
 
         /// <summary>
-        /// Gets or sets the relative path or URL of the product logo.
-        /// </summary>
-        [JsonPropertyName("logoUrl")]
-        public string? LogoUrl { get; set; }
-
-        /// <summary>
         /// Gets or sets the active status flag.
         /// </summary>
         [JsonPropertyName("isActive")]
@@ -133,4 +127,26 @@ namespace CFR.AcutisInfrastructure.Models.Output
         [JsonPropertyName("features")]
         public List<string> Features { get; set; } = [];
     }
+
+    /// <summary>
+    /// Output model containing product logo image bytes and content type for streaming.
+    /// </summary>
+    public class ProductLogoFileOutput
+    {
+        /// <summary>
+        /// Gets or sets the raw logo image bytes.
+        /// </summary>
+        public byte[] FileBytes { get; set; } = [];
+
+        /// <summary>
+        /// Gets or sets the MIME content type (e.g. image/jpeg, image/png).
+        /// </summary>
+        public string ContentType { get; set; } = "image/jpeg";
+
+        /// <summary>
+        /// Gets or sets the stored logo file name.
+        /// </summary>
+        public string FileName { get; set; } = string.Empty;
+    }
 }
+

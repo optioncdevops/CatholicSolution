@@ -436,7 +436,7 @@ const ProductDetails = () => {
   }
 
   const app = toAdminApplication(product);
-  const logoSrc = resolveProductLogoUrl(product.logoUrl, product.updatedDate);
+  const logoSrc = resolveProductLogoUrl(product.logoName, product.updatedDate);
   const warnings = getProductWarnings(app, [app]);
 
   return (

@@ -580,20 +580,19 @@ const ProductEdit = () => {
     setSaving(true);
     try {
       let finalLogoName: string | null | undefined =
-        product.logoName ??
-        toStoredProductLogoPath(product.logoUrl) ??
-        product.logoUrl;
+        product.logoName ?? toStoredProductLogoPath(product.logoName);
       if (logoFile) {
-        const uploadedPath = await uploadProductLogo(logoFile);
+        const uploadedPath = await uploadProductLogo(
+          logoFile,
+          product.productId,
+        );
         finalLogoName = toStoredProductLogoPath(uploadedPath) ?? uploadedPath;
       } else if (logoRemoved) {
         finalLogoName = null;
       }
 
       const defaultAccessDays =
-        product.defaultAccessDays > 0
-          ? product.defaultAccessDays
-          : 365;
+        product.defaultAccessDays > 0 ? product.defaultAccessDays : 365;
       const payload: ProductInputPayload = {
         productId: product.productId,
         productName: form.name.trim(),
@@ -604,7 +603,6 @@ const ProductEdit = () => {
         licenseType: form.licenseType,
         navigationTarget: form.navigationTarget,
         logoName: finalLogoName,
-        logoUrl: finalLogoName,
         features: form.features,
         isActive: form.status !== "inactive",
         productStatus:
