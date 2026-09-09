@@ -164,8 +164,8 @@ function EmailSettingsPage() {
                     label="API base URL"
                     value={form.apiBaseUrl}
                     onChange={(event) => updateField('apiBaseUrl', event.target.value)}
-                    placeholder="https://localhost:5050/acutis"
-                    helperText="This API's own address (not the admin site's URL) — used to build the email logo's image link. Use the local gateway URL in development."
+                    placeholder="https://api.example.org/acutis"
+                    helperText="This API's own public address (not the admin site's URL) — used to build the email logo's image link. Must be reachable by recipients' email clients, so never a localhost or private-network address, even while testing locally."
                     disabled={saving}
                   />
                 </div>

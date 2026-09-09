@@ -12,5 +12,12 @@ export const validateEmailSettings = (form: EmailSettingsFormValues): string[] =
   if (form.baseFontSize.trim() && (Number(form.baseFontSize) < 10 || Number(form.baseFontSize) > 24)) {
     errors.push('Base font size must be between 10 and 24.');
   }
+  // This URL is embedded as an <img src> in real outgoing emails — a localhost/private-network
+  // address only the machine sending the email can reach produces a permanently broken logo for
+  // every recipient. Block it here rather than let it reach a live send.
+  const apiBaseUrl = form.apiBaseUrl.trim().toLowerCase();
+  if (apiBaseUrl && /^https?:\/\/(localhost|127\.\d+\.\d+\.\d+|\[::1\]|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)([:/]|$)/.test(apiBaseUrl)) {
+    errors.push('API base URL cannot be a localhost or private-network address — recipients’ email clients cannot reach it. Use the public address of this API.');
+  }
   return errors;
 };

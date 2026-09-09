@@ -53,6 +53,19 @@ namespace CFR.AcutisInfrastructure
             /// Email templates list, get by id, get by code, and save operations.
             /// </summary>
             public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates_CRUD]";
+
+            /// <summary>
+            /// Reads the role/module catalog and per-role feature grants for the User Rights
+            /// screen. Lives in the [auth] schema, not [dbo] — legacy procedure, not part of the
+            /// @ActionId CRUD convention used elsewhere.
+            /// </summary>
+            public const string GetRightByRoleId = "[auth].[GetRightByRoleId]";
+
+            /// <summary>
+            /// Bulk-updates auth.ModuleRights.AccessRight for a role from parallel delimited
+            /// FeatureIds/AccessRights lists. Lives in the [auth] schema, not [dbo].
+            /// </summary>
+            public const string SaveUserRights = "[auth].[SaveUserRights]";
         }
 
         /// <summary>

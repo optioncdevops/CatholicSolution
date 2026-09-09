@@ -9,6 +9,7 @@ import { AdminDataProvider } from "@/modules/AdminDataContext";
 import { AdminShell } from "@/modules/components/AdminShell";
 import { usersRoutes } from "@/modules/users";
 import { userRolesRoutes } from "@/modules/administration/userRoles";
+import { userRightsRoutes } from "@/modules/administration/userRights";
 import { emailTemplatesRoutes } from "@/modules/administration/emailTemplates";
 import { emailSettingsRoutes } from "@/modules/administration/emailSettings";
 import { organizationsRoutes } from "@/modules/organizations";
@@ -20,11 +21,6 @@ const DashboardPage = lazy(() =>
 );
 const ProfilePage = lazy(() =>
   import("@/modules/ProfilePage").then((m) => ({ default: m.ProfilePage })),
-);
-const RightsPage = lazy(() =>
-  import("@/modules/administration/RightsPage").then((m) => ({
-    default: m.RightsPage,
-  })),
 );
 // Dev-only component reference — see the removal note at the top of either sample page file.
 const SampleAddPage = lazy(() =>
@@ -68,8 +64,8 @@ export default function App() {
           {productsRoutes}
           {usersRoutes}
           {userRolesRoutes}
+          {userRightsRoutes}
           {requestsRoutes}
-          <Route path="/admin/administration-rights" element={<RightsPage />} />
           {emailTemplatesRoutes}
           {emailSettingsRoutes}
           {/* Dev-only — see the removal note at the top of SampleAddPage.tsx / SampleViewPage.tsx. */}
