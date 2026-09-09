@@ -129,29 +129,35 @@ namespace CFR.CommonService.MailService
         }
 
         /// <summary>
-        /// The local-development-only ApiBaseUrl override (see <see cref="ResolveDevelopmentApiBaseUrlOverride"/>),
+        /// The environment-configured ApiBaseUrl override (see <see cref="ResolveEnvironmentApiBaseUrlOverride"/>),
         /// resolved once and reused — the same handful of files get re-read on every call otherwise
         /// (this runs on every outgoing email and every Email Settings page load).
         /// </summary>
-        private static readonly Lazy<string?> DevelopmentApiBaseUrlOverride = new(ResolveDevelopmentApiBaseUrlOverrideCore);
+        private static readonly Lazy<string?> EnvironmentApiBaseUrlOverride = new(ResolveEnvironmentApiBaseUrlOverrideCore);
 
         /// <summary>
         /// _configurationSettings.json is a single flat file with no per-environment layering, so
         /// whatever ApiBaseUrl was last saved through the Email Settings page keeps applying
         /// everywhere it's copied — this previously let a dev-only "https://localhost:5050/acutis"
         /// value slip into a real production email, and later the reverse (a hardcoded production
-        /// domain left over on a local dev box, breaking the local logo preview). Deliberately NOT
-        /// applied inside <see cref="LoadData"/> — that would leak into <c>EmailSettingsOutput.ApiBaseUrl</c>,
-        /// the Email Settings page's editable field, which then fails its own "not a localhost
-        /// address" validation on every Save while running locally. Instead, callers that build an
-        /// actual image URL (SMTPMailService's outgoing-email and admin-preview logo links) ask for
-        /// this override directly and prefer it over the persisted value; the persisted/admin-edited
-        /// value itself is never touched. Returns null (no override) for any environment other than
-        /// Development, so a real deployment always uses whatever the admin saved.
+        /// domain left over on a local dev box, breaking the local logo preview). Fixed by making
+        /// each environment's own appsettings.{Environment}.json "EmailSettings:ApiBaseUrl" (when
+        /// present) the effective value for that environment — set it there once per environment
+        /// (Development, Live, Staging, Pilot each have their own file already) and it applies
+        /// automatically, with no risk of one environment's value leaking into another's deployment.
+        /// Deliberately NOT applied inside <see cref="LoadData"/> — that would also feed
+        /// <c>EmailSettingsOutput.ApiBaseUrl</c>, the Email Settings page's editable field, and a
+        /// Development value there fails that field's own "not a localhost address" validation on
+        /// every Save. Instead, callers that build an actual image URL (SMTPMailService's
+        /// outgoing-email and admin-preview logo links) ask for this override directly and prefer it
+        /// over the persisted value; the persisted/admin-edited value itself is never touched, and is
+        /// still what's shown/saved on the Email Settings page. When appsettings.{Environment}.json
+        /// declares no "EmailSettings:ApiBaseUrl" for the current environment, returns null and the
+        /// persisted value is used, unchanged.
         /// </summary>
-        public static string? ResolveDevelopmentApiBaseUrlOverride() => DevelopmentApiBaseUrlOverride.Value;
+        public static string? ResolveEnvironmentApiBaseUrlOverride() => EnvironmentApiBaseUrlOverride.Value;
 
-        private static string? ResolveDevelopmentApiBaseUrlOverrideCore()
+        private static string? ResolveEnvironmentApiBaseUrlOverrideCore()
         {
             try
             {
@@ -161,14 +167,22 @@ namespace CFR.CommonService.MailService
                     return null;
                 }
 
+                // Mirrors ConfigurationLoader.LoadConfiguration()'s own precedence exactly: read
+                // "Environment" from appsettings.json, then let an "Environment" environment
+                // variable override it (that loader appends .AddEnvironmentVariables() after the
+                // json file, so the env var wins) — a deployed server can and often does override
+                // the environment this way rather than shipping a different appsettings.json per
+                // environment, so skipping this check reads the wrong environment's file on such a
+                // server (e.g. resolving "Development" on a Live box that overrides only via env
+                // var, which previously leaked a localhost logo URL into real production emails).
                 string baseSettingsFile = Path.Combine(microserviceDirectory, "appsettings.json");
-                if (!File.Exists(baseSettingsFile))
+                string? environment = Environment.GetEnvironmentVariable("Environment");
+                if (string.IsNullOrWhiteSpace(environment) && File.Exists(baseSettingsFile))
                 {
-                    return null;
+                    environment = JObject.Parse(File.ReadAllText(baseSettingsFile))["Environment"]?.ToString();
                 }
 
-                string environment = JObject.Parse(File.ReadAllText(baseSettingsFile))["Environment"]?.ToString() ?? string.Empty;
-                if (!string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrWhiteSpace(environment))
                 {
                     return null;
                 }
