@@ -69,5 +69,30 @@ namespace CFR.PortalInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("canRequest")]
         public bool CanRequest { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contact user identifier.
+        /// </summary>
+        [JsonPropertyName("contactUserId")]
+        public long? ContactUserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contact person's email address if found.
+        /// </summary>
+        [JsonPropertyName("contactEmail")]
+        public string? ContactEmail { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether an access request for this product has already been approved for the member's organization.
+        /// </summary>
+        [JsonPropertyName("isOrgApproved")]
+        public bool IsOrgApproved { get; set; }
+
+        /// <summary>
+        /// Gets or sets comma-separated or list of product features.
+        /// </summary>
+        [JsonPropertyName("features")]
+        public string? Features { get; set; }
     }
 }
+

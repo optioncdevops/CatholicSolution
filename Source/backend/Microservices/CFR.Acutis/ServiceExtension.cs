@@ -10,6 +10,7 @@ using CFR.AcutisInfrastructure.Repositorys.Organization;
 using CFR.AcutisInfrastructure.Repositorys.Products;
 using CFR.AcutisInfrastructure.Repositorys.Profile;
 using CFR.AcutisInfrastructure.Repositorys.Dashboard;
+using CFR.AcutisService.Interfaces.Administration;
 using CFR.AcutisService.Interfaces.Products;
 using CFR.AcutisService.Service.AcutisAuthentication;
 using CFR.AcutisService.Service.Administration;
@@ -45,6 +46,8 @@ namespace CFR.Acutis
             services.AddScoped<ISMTPMailService, SMTPMailService>();
 
             // Administration services and repository
+            services.AddScoped<IAccessRequestService, AccessRequestService>();
+            services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<IUsersRepository, UsersRepository>();
             services.AddScoped<IUserRolesService, UserRolesService>();
@@ -54,6 +57,8 @@ namespace CFR.Acutis
             services.AddScoped<IEmailSettingsService, EmailSettingsService>();
             services.AddScoped<IAccessRequestService, AccessRequestService>();
             services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
+            services.AddScoped<IProductsService, ProductsService>();
+            services.AddScoped<IProductsRepository, ProductsRepository>();
 
             // Products service and repository
             services.AddScoped<IProductsService, ProductsService>();

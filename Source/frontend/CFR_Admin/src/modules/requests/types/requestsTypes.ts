@@ -18,6 +18,12 @@ export interface AccessRequestApiItem {
   accessRequestId: number;
   organizationId: number;
   organizationName: string;
+  organizationType?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  phone?: string;
   requesterName: string;
   requesterEmail: string;
   productId: string;

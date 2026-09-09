@@ -1,6 +1,6 @@
 // Copyright (c) OptionC. All rights reserved.
 
-namespace CFR.AcutisInfrastructure.Models.Output
+namespace CFR.PortalInfrastructure.Models.Output
 {
     /// <summary>
     /// Output DTO for one App Hub product row from AccessRequest_CRUD ActionId 6.
@@ -62,5 +62,24 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("hubSection")]
         public string HubSection { get; set; } = "future";
+
+        /// <summary>
+        /// Gets or sets the features as a comma-separated string.
+        /// </summary>
+        [JsonPropertyName("features")]
+        public string? Features { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contact person's email address if found.
+        /// </summary>
+        [JsonPropertyName("contactEmail")]
+        public string? ContactEmail { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contact user identifier.
+        /// </summary>
+        [JsonPropertyName("contactUserId")]
+        public long? ContactUserId { get; set; }
     }
 }
+

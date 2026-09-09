@@ -10,6 +10,87 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Address'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [Address] NVARCHAR(300) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'City'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [City] NVARCHAR(100) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'State'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [State] NVARCHAR(50) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Zip'
+)
+BEGIN
+    ALTER TABLE [core].[Organization] ADD [Zip] NVARCHAR(20) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'RequesterFirstName'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [RequesterFirstName] NVARCHAR(100) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'RequesterLastName'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [RequesterLastName] NVARCHAR(100) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'ContactEmail'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [ContactEmail] NVARCHAR(256) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'ContactPhone'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [ContactPhone] NVARCHAR(30) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'OrganizationType'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [OrganizationType] NVARCHAR(100) NULL;
+END
+GO
+
 IF OBJECT_ID(N'[request].[AccessRequest_CRUD]', N'P') IS NOT NULL
     DROP PROCEDURE [request].[AccessRequest_CRUD];
 GO
@@ -23,12 +104,8 @@ GO
 -- ActionId 3: Get by AccessRequestId (header, timeline, comments).
 -- ActionId 4: Get list.
 -- ActionId 5: Recipients for the AccessRequested email, matched by product name/id.
--- ActionId 6: App Hub products. [auth].[User] by email -> [auth].[UserProduct] -> [core].[Product],
--- gated by [lic].[OrganizationProduct] so a user only sees "your" for a product their
--- organization currently has active — CFR Admin's Organization > Products tab (Activate/
--- Deactivate) is the source of truth for organization-level access, not [auth].[UserProduct]
--- alone. Deactivating a product for the organization removes it from every member's Your Apps
--- immediately, even though their individual [auth].[UserProduct] row is untouched.
+-- ActionId 6: App Hub products. [auth].[User] by email -> [auth].[UserProduct] -> [core].[Product].
+-- ActionId 7: Public Request Access save (create/reuse org with address, request header, product lines).
 CREATE PROCEDURE [request].[AccessRequest_CRUD]
     @ActionId INT,
     @AccessRequestId BIGINT = 0,
@@ -38,6 +115,16 @@ CREATE PROCEDURE [request].[AccessRequest_CRUD]
     @Comment NVARCHAR(1000) = NULL,
     @Status NVARCHAR(20) = NULL,
     @Note NVARCHAR(500) = NULL,
+    @FirstName NVARCHAR(100) = NULL,
+    @LastName NVARCHAR(100) = NULL,
+    @OrganizationType NVARCHAR(100) = NULL,
+    @OrganizationName NVARCHAR(200) = NULL,
+    @Address NVARCHAR(300) = NULL,
+    @City NVARCHAR(100) = NULL,
+    @State NVARCHAR(50) = NULL,
+    @Zip NVARCHAR(20) = NULL,
+    @Phone NVARCHAR(30) = NULL,
+    @ProductsJson NVARCHAR(MAX) = NULL,
     @InsertedBy BIGINT = NULL,
     @UpdatedBy BIGINT = NULL,
     @ReturnValue INT = NULL OUTPUT
@@ -54,6 +141,16 @@ BEGIN
     SET @RequesterEmail = NULLIF(LTRIM(RTRIM(@RequesterEmail)), N'');
     SET @Comment = NULLIF(LTRIM(RTRIM(@Comment)), N'');
     SET @Note = NULLIF(LTRIM(RTRIM(@Note)), N'');
+    SET @FirstName = NULLIF(LTRIM(RTRIM(@FirstName)), N'');
+    SET @LastName = NULLIF(LTRIM(RTRIM(@LastName)), N'');
+    SET @OrganizationType = NULLIF(LTRIM(RTRIM(@OrganizationType)), N'');
+    SET @OrganizationName = NULLIF(LTRIM(RTRIM(@OrganizationName)), N'');
+    SET @Address = NULLIF(LTRIM(RTRIM(@Address)), N'');
+    SET @City = NULLIF(LTRIM(RTRIM(@City)), N'');
+    SET @State = NULLIF(LTRIM(RTRIM(@State)), N'');
+    SET @Zip = NULLIF(LTRIM(RTRIM(@Zip)), N'');
+    SET @Phone = NULLIF(LTRIM(RTRIM(@Phone)), N'');
+    SET @ProductsJson = NULLIF(LTRIM(RTRIM(@ProductsJson)), N'');
     SET @Status = LOWER(REPLACE(LTRIM(RTRIM(ISNULL(@Status, N''))), N'_', N'-'));
 
     IF @ActionId = 1
@@ -135,7 +232,7 @@ BEGIN
             )
             VALUES
             (
-                @OrgId, @RequestedBy, N'member_portal', NULL, 1,
+                @OrgId, @RequestedBy, N'member_portal', @Comment, 1,
                 SYSUTCDATETIME(), SYSUTCDATETIME(), @ActorId, 0
             );
 
@@ -179,6 +276,234 @@ BEGIN
 
             COMMIT TRANSACTION;
             SET @ReturnValue = CAST(@NewRequestId AS INT);
+            RETURN @ReturnValue;
+        END TRY
+        BEGIN CATCH
+            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+            SET @ReturnValue = 0;
+            RETURN @ReturnValue;
+        END CATCH
+    END
+
+    IF @ActionId = 7
+    BEGIN
+        DECLARE @PublicRequestedBy BIGINT;
+        DECLARE @PublicOrgId BIGINT;
+        DECLARE @PublicRequestId BIGINT;
+        DECLARE @PublicActorId BIGINT;
+        DECLARE @ContactPerson NVARCHAR(200);
+        DECLARE @ResolvedProducts TABLE ([ProductId] INT NOT NULL PRIMARY KEY);
+
+        IF @OrganizationName IS NULL OR @RequesterEmail IS NULL OR @FirstName IS NULL OR @LastName IS NULL
+           OR @Address IS NULL OR @City IS NULL OR @State IS NULL OR @Zip IS NULL
+        BEGIN
+            SET @ReturnValue = -93;
+            RETURN @ReturnValue;
+        END
+
+        IF @ProductsJson IS NOT NULL AND ISJSON(@ProductsJson) = 1
+        BEGIN
+            INSERT INTO @ResolvedProducts ([ProductId])
+            SELECT DISTINCT resolved.[ProductId]
+            FROM OPENJSON(@ProductsJson) AS j
+            CROSS APPLY (
+                SELECT
+                    TRY_CAST(JSON_VALUE(j.[value], '$.productId') AS INT) AS [ParsedId],
+                    NULLIF(LTRIM(RTRIM(JSON_VALUE(j.[value], '$.productName'))), N'') AS [Name]
+            ) AS parsed
+            CROSS APPLY (
+                SELECT COALESCE(
+                    (
+                        SELECT p.[ProductId]
+                        FROM [core].[Product] p
+                        WHERE p.[IsDeleted] = 0
+                          AND parsed.[ParsedId] IS NOT NULL
+                          AND parsed.[ParsedId] > 0
+                          AND p.[ProductId] = parsed.[ParsedId]
+                    ),
+                    (
+                        SELECT p.[ProductId]
+                        FROM [core].[Product] p
+                        WHERE p.[IsDeleted] = 0
+                          AND parsed.[Name] IS NOT NULL
+                          AND p.[ProductName] = parsed.[Name]
+                    )
+                ) AS [ProductId]
+            ) AS resolved
+            WHERE resolved.[ProductId] IS NOT NULL;
+        END
+
+        IF NOT EXISTS (SELECT 1 FROM @ResolvedProducts)
+        BEGIN
+            IF @ProductId IS NULL AND @ProductName IS NOT NULL
+            BEGIN
+                SELECT @ProductId = p.[ProductId]
+                FROM [core].[Product] p
+                WHERE p.[IsDeleted] = 0
+                  AND p.[ProductName] = @ProductName;
+            END
+
+            IF @ProductId IS NOT NULL
+            BEGIN
+                INSERT INTO @ResolvedProducts ([ProductId])
+                SELECT @ProductId
+                WHERE EXISTS (
+                    SELECT 1 FROM [core].[Product]
+                    WHERE [ProductId] = @ProductId AND [IsDeleted] = 0
+                );
+            END
+        END
+
+        IF NOT EXISTS (SELECT 1 FROM @ResolvedProducts)
+        BEGIN
+            SET @ReturnValue = -97;
+            RETURN @ReturnValue;
+        END
+
+        SELECT @PublicRequestedBy = u.[CFRUserId]
+        FROM [auth].[User] u
+        WHERE LOWER(LTRIM(RTRIM(u.[Email]))) = LOWER(@RequesterEmail);
+
+        IF @PublicRequestedBy IS NULL
+        BEGIN
+            BEGIN TRY
+                INSERT INTO [auth].[User] ([Email], [Password], [CreatedDate], [InsertedBy])
+                VALUES (@RequesterEmail, CONVERT(VARBINARY(64), NEWID()), SYSUTCDATETIME(), -1);
+
+                SELECT @PublicRequestedBy = u.[CFRUserId]
+                FROM [auth].[User] u
+                WHERE LOWER(LTRIM(RTRIM(u.[Email]))) = LOWER(@RequesterEmail);
+            END TRY
+            BEGIN CATCH
+                SELECT @PublicRequestedBy = u.[CFRUserId]
+                FROM [auth].[User] u
+                WHERE LOWER(LTRIM(RTRIM(u.[Email]))) = LOWER(@RequesterEmail);
+            END CATCH
+        END
+
+        SELECT TOP (1) @PublicOrgId = o.[OrgId]
+        FROM [core].[Organization] o
+        WHERE o.[IsDeleted] = 0
+          AND LOWER(LTRIM(RTRIM(o.[OrgName]))) = LOWER(@OrganizationName)
+          AND LOWER(LTRIM(RTRIM(ISNULL(o.[ContactEmail], N'')))) = LOWER(@RequesterEmail)
+        ORDER BY o.[OrgId];
+
+        SET @ContactPerson = LTRIM(RTRIM(ISNULL(@FirstName, N'') + N' ' + ISNULL(@LastName, N'')));
+        SET @PublicActorId = ISNULL(@InsertedBy, @PublicRequestedBy);
+
+        DELETE FROM rp
+        FROM @ResolvedProducts rp
+        WHERE EXISTS (
+            SELECT 1
+            FROM [request].[AccessRequest] ar
+            INNER JOIN [request].[AccessRequestProduct] arp
+                ON arp.[AccessRequestId] = ar.[AccessRequestId]
+               AND arp.[IsDeleted] = 0
+            WHERE ar.[IsDeleted] = 0
+              AND arp.[ProductId] = rp.[ProductId]
+              AND ar.[RequestStatus] IN (1, 2)
+              AND arp.[LineStatus] = 1
+              AND (
+                    (@PublicRequestedBy IS NOT NULL AND ar.[RequestedBy] = @PublicRequestedBy)
+                 OR LOWER(LTRIM(RTRIM(ISNULL(ar.[ContactEmail], N'')))) = LOWER(@RequesterEmail)
+              )
+        );
+
+        IF NOT EXISTS (SELECT 1 FROM @ResolvedProducts)
+        BEGIN
+            SET @ReturnValue = -99;
+            RETURN @ReturnValue;
+        END
+
+        BEGIN TRY
+            BEGIN TRANSACTION;
+
+            IF @PublicOrgId IS NULL
+            BEGIN
+                SELECT @PublicOrgId = ISNULL(MAX([OrgId]), 0) + 1 FROM [core].[Organization];
+
+                INSERT INTO [core].[Organization]
+                (
+                    [OrgId], [OrgName], [OrgStatus], [ContactEmail], [ContactPerson], [ContactPhone],
+                    [Address], [City], [State], [Zip],
+                    [InsertedDate], [InsertedBy], [IsDeleted]
+                )
+                VALUES
+                (
+                    @PublicOrgId, @OrganizationName, N'inactive', @RequesterEmail, @ContactPerson, @Phone,
+                    @Address, @City, @State, @Zip,
+                    SYSUTCDATETIME(), @PublicActorId, 0
+                );
+            END
+            ELSE
+            BEGIN
+                UPDATE [core].[Organization]
+                SET
+                    [ContactEmail] = ISNULL(@RequesterEmail, [ContactEmail]),
+                    [ContactPerson] = ISNULL(NULLIF(@ContactPerson, N''), [ContactPerson]),
+                    [ContactPhone] = ISNULL(@Phone, [ContactPhone]),
+                    [Address] = ISNULL(@Address, [Address]),
+                    [City] = ISNULL(@City, [City]),
+                    [State] = ISNULL(@State, [State]),
+                    [Zip] = ISNULL(@Zip, [Zip]),
+                    [UpdatedDate] = SYSUTCDATETIME(),
+                    [UpdatedBy] = @PublicActorId
+                WHERE [OrgId] = @PublicOrgId
+                  AND [IsDeleted] = 0;
+            END
+
+            INSERT INTO [request].[AccessRequest]
+            (
+                [OrgId], [RequestedBy], [Source], [Justification], [RequestStatus],
+                [RequesterFirstName], [RequesterLastName], [ContactEmail], [ContactPhone], [OrganizationType],
+                [RequestedDate], [InsertedDate], [InsertedBy], [IsDeleted]
+            )
+            VALUES
+            (
+                @PublicOrgId, @PublicRequestedBy, N'external_page', @Comment, 1,
+                @FirstName, @LastName, @RequesterEmail, @Phone, @OrganizationType,
+                SYSUTCDATETIME(), SYSUTCDATETIME(), @PublicActorId, 0
+            );
+
+            SET @PublicRequestId = SCOPE_IDENTITY();
+
+            INSERT INTO [request].[AccessRequestProduct]
+            (
+                [AccessRequestId], [ProductId], [RequestType], [LineStatus],
+                [InsertedDate], [InsertedBy], [IsDeleted]
+            )
+            SELECT
+                @PublicRequestId, rp.[ProductId], 1, 1,
+                SYSUTCDATETIME(), @PublicActorId, 0
+            FROM @ResolvedProducts rp;
+
+            INSERT INTO [request].[AccessRequestStatusHistory]
+            (
+                [AccessRequestId], [AccessRequestProductId], [StatusValue], [Remarks],
+                [ChangedByMember], [ChangedByStaff], [InsertedDate], [InsertedBy]
+            )
+            VALUES
+            (
+                @PublicRequestId, NULL, 1, N'Request submitted',
+                @PublicRequestedBy, NULL, SYSUTCDATETIME(), @PublicActorId
+            );
+
+            IF @Comment IS NOT NULL
+            BEGIN
+                INSERT INTO [request].[AccessRequestComment]
+                (
+                    [AccessRequestId], [AuthorScope], [AuthorId], [CommentText],
+                    [InsertedDate], [InsertedBy]
+                )
+                VALUES
+                (
+                    @PublicRequestId, N'member', ISNULL(@PublicRequestedBy, 0), @Comment,
+                    SYSUTCDATETIME(), @PublicActorId
+                );
+            END
+
+            COMMIT TRANSACTION;
+            SET @ReturnValue = CAST(@PublicRequestId AS INT);
             RETURN @ReturnValue;
         END TRY
         BEGIN CATCH
@@ -444,11 +769,22 @@ BEGIN
             CAST(ar.[AccessRequestId] AS INT) AS [AccessRequestId],
             CAST(ar.[OrgId] AS INT) AS [OrganizationId],
             ISNULL(o.[OrgName], N'') AS [OrganizationName],
+            ar.[OrganizationType] AS [OrganizationType],
+            o.[Address] AS [Address],
+            o.[City] AS [City],
+            o.[State] AS [State],
+            o.[Zip] AS [Zip],
+            ar.[ContactPhone] AS [Phone],
             COALESCE(
+                NULLIF(LTRIM(RTRIM(ISNULL(ar.[RequesterFirstName], N'') + N' ' + ISNULL(ar.[RequesterLastName], N''))), N''),
                 NULLIF(LTRIM(RTRIM(ISNULL(upn.[FirstName], N'') + N' ' + ISNULL(upn.[LastName], N''))), N''),
+                ISNULL(ar.[ContactEmail], N''),
                 ISNULL(u.[Email], N'')
             ) AS [RequesterName],
-            ISNULL(u.[Email], N'') AS [RequesterEmail],
+            COALESCE(
+                NULLIF(LTRIM(RTRIM(ar.[ContactEmail])), N''),
+                ISNULL(u.[Email], N'')
+            ) AS [RequesterEmail],
             CAST(p.[ProductId] AS NVARCHAR(20)) AS [ProductId],
             ISNULL(p.[ProductName], N'') AS [ProductName],
             CASE
@@ -553,11 +889,22 @@ BEGIN
             CAST(ar.[AccessRequestId] AS INT) AS [AccessRequestId],
             CAST(ar.[OrgId] AS INT) AS [OrganizationId],
             ISNULL(o.[OrgName], N'') AS [OrganizationName],
+            ar.[OrganizationType] AS [OrganizationType],
+            o.[Address] AS [Address],
+            o.[City] AS [City],
+            o.[State] AS [State],
+            o.[Zip] AS [Zip],
+            ar.[ContactPhone] AS [Phone],
             COALESCE(
+                NULLIF(LTRIM(RTRIM(ISNULL(ar.[RequesterFirstName], N'') + N' ' + ISNULL(ar.[RequesterLastName], N''))), N''),
                 NULLIF(LTRIM(RTRIM(ISNULL(upn.[FirstName], N'') + N' ' + ISNULL(upn.[LastName], N''))), N''),
+                ISNULL(ar.[ContactEmail], N''),
                 ISNULL(u.[Email], N'')
             ) AS [RequesterName],
-            ISNULL(u.[Email], N'') AS [RequesterEmail],
+            COALESCE(
+                NULLIF(LTRIM(RTRIM(ar.[ContactEmail])), N''),
+                ISNULL(u.[Email], N'')
+            ) AS [RequesterEmail],
             CAST(p.[ProductId] AS NVARCHAR(20)) AS [ProductId],
             ISNULL(p.[ProductName], N'') AS [ProductName],
             CASE
@@ -593,6 +940,8 @@ BEGIN
     IF @ActionId = 5
     BEGIN
         DECLARE @Recipients TABLE ([EMail] NVARCHAR(256) NOT NULL);
+        DECLARE @ProductContactPerson NVARCHAR(200);
+        DECLARE @ProductContactUserId BIGINT;
 
         IF @ProductId IS NULL AND @ProductName IS NOT NULL
         BEGIN
@@ -602,33 +951,29 @@ BEGIN
               AND p.[ProductName] = @ProductName;
         END
 
-        INSERT INTO @Recipients ([EMail])
-        SELECT DISTINCT LTRIM(RTRIM(u.[Email]))
-        FROM [auth].[UserProduct] up
-        INNER JOIN [auth].[User] u
-            ON u.[CFRUserId] = up.[CFRUserId]
-        WHERE up.[ProductId] = @ProductId
-          AND ISNULL(up.[IsDeleted], 0) = 0
-          AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL;
+        SELECT
+            @ProductContactPerson = p.[ContactPerson],
+            @ProductContactUserId = p.[ContactUserId]
+        FROM [core].[Product] p
+        WHERE p.[ProductId] = @ProductId;
 
-        INSERT INTO @Recipients ([EMail])
-        SELECT DISTINCT LTRIM(RTRIM(u.[Email]))
-        FROM [auth].[AcutisUser] u
-        INNER JOIN [auth].[AcutisRole] r
-            ON r.[RoleId] = u.[RoleId]
-           AND r.[IsDeleted] = 0
-        INNER JOIN [core].[Product] p
-            ON p.[ProductId] = @ProductId
-           AND p.[IsDeleted] = 0
-        WHERE u.[IsDeleted] = 0
-          AND u.[IsActive] = 1
-          AND u.[IsLocked] = 0
-          AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL
-          AND NOT EXISTS (SELECT 1 FROM @Recipients x WHERE x.[EMail] = LTRIM(RTRIM(u.[Email])))
-          AND (
-                LOWER(LTRIM(RTRIM(r.[RoleName]))) = LOWER(LTRIM(RTRIM(p.[ProductName])))
-             OR LOWER(r.[RoleName]) LIKE N'%' + LOWER(p.[ProductName]) + N'%'
-          );
+        IF @ProductContactUserId IS NOT NULL OR (@ProductContactPerson IS NOT NULL AND LTRIM(RTRIM(@ProductContactPerson)) <> N'')
+        BEGIN
+            INSERT INTO @Recipients ([EMail])
+            SELECT DISTINCT LTRIM(RTRIM(u.[Email]))
+            FROM [auth].[AcutisUser] u
+            WHERE u.[IsDeleted] = 0
+              AND u.[IsActive] = 1
+              AND u.[IsLocked] = 0
+              AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL
+              AND (
+                  (@ProductContactUserId IS NOT NULL AND u.[UserId] = @ProductContactUserId)
+                  OR (@ProductContactUserId IS NULL AND (
+                      u.[UserId] = TRY_CAST(@ProductContactPerson AS INT)
+                      OR LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) = LTRIM(RTRIM(@ProductContactPerson))
+                  ))
+              );
+        END
 
         IF NOT EXISTS (SELECT 1 FROM @Recipients)
         BEGIN
@@ -650,7 +995,7 @@ BEGIN
     END
 
     -- App Hub: products assigned to the member (Your Apps) plus every other core.Product
-    -- as Available (ProductStatus = 1) or Future (ProductStatus = 2).
+    -- as Available (ProductStatus = 1) or Future.
     IF @ActionId = 6
     BEGIN
         DECLARE @HubUserId BIGINT = NULL;
@@ -670,12 +1015,47 @@ BEGIN
             p.[ExternalPageUrl],
             p.[LogoName] AS [LogoUrl],
             p.[IsActive],
-            CAST(CASE WHEN p.[ProductStatus] = 1 THEN 1 ELSE 0 END AS BIT) AS [IsAvailable],
+            p.[ProductStatus],
             CASE
                 WHEN assigned.[ProductId] IS NOT NULL THEN N'your'
                 WHEN p.[ProductStatus] = 1 THEN N'available'
                 ELSE N'future'
-            END AS [HubSection]
+            END AS [HubSection],
+            (
+                SELECT STRING_AGG(CAST(pf.[FeatureName] AS NVARCHAR(MAX)), ',')
+                FROM [core].[ProductFeature] pf
+                WHERE pf.[ProductId] = p.[ProductId]
+                  AND pf.[IsDeleted] = 0
+                  AND pf.[IsActive] = 1
+            ) AS [Features],
+            (
+                SELECT TOP 1 u.[UserId]
+                FROM [auth].[AcutisUser] u
+                WHERE u.[IsDeleted] = 0
+                  AND u.[IsActive] = 1
+                  AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL
+                  AND (
+                      (p.[ContactUserId] IS NOT NULL AND u.[UserId] = p.[ContactUserId])
+                      OR (p.[ContactUserId] IS NULL AND (
+                          u.[UserId] = TRY_CAST(p.[ContactPerson] AS INT)
+                          OR LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) = LTRIM(RTRIM(p.[ContactPerson]))
+                      ))
+                  )
+            ) AS [ContactUserId],
+            (
+                SELECT TOP 1 LTRIM(RTRIM(u.[Email]))
+                FROM [auth].[AcutisUser] u
+                WHERE u.[IsDeleted] = 0
+                  AND u.[IsActive] = 1
+                  AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL
+                  AND (
+                      (p.[ContactUserId] IS NOT NULL AND u.[UserId] = p.[ContactUserId])
+                      OR (p.[ContactUserId] IS NULL AND (
+                          u.[UserId] = TRY_CAST(p.[ContactPerson] AS INT)
+                          OR LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) = LTRIM(RTRIM(p.[ContactPerson]))
+                      ))
+                  )
+            ) AS [ContactEmail]
         FROM [core].[Product] p
         LEFT JOIN (
             SELECT DISTINCT up.[ProductId]

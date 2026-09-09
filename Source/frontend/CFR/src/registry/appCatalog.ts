@@ -333,5 +333,24 @@ export const availableSwitcherApps = [...yourApps, ...availableApps].filter(
 export const aiApps = APP_CATALOG.filter((app) => app.kind === 'ai');
 export const discoverApps = APP_CATALOG.filter((app) => app.kind === 'discover');
 export const getAppById = (id: string) => APP_CATALOG.find((app) => app.id === id);
+export const getCatalogApp = (idOrName?: string | null): CatalogApp | undefined => {
+  if (!idOrName) return undefined;
+  const target = idOrName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!target) return undefined;
+  return APP_CATALOG.find((app) => {
+    const appId = app.id.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const appName = app.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const appShort = app.shortName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return (
+      appId === target ||
+      appName === target ||
+      appShort === target ||
+      (target.length >= 4 && (appName.includes(target) || target.includes(appName) || appId.includes(target) || target.includes(appId)))
+    );
+  });
+};
+export const getCatalogIcon = (idOrName?: string | null): string | undefined => {
+  return getCatalogApp(idOrName)?.icon;
+};
 /** Central App Hub / switcher launch policy. */
 export const appOpensInNewTab = (app: CatalogApp) => app.navigationTarget === 'new-tab';

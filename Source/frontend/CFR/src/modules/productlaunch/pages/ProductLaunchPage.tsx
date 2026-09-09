@@ -100,10 +100,17 @@ export default function ProductLaunchPage() {
 
   //#region Handlers
   const openRequestModal = useCallback((app: CatalogApp) => {
-    if (requestedAppIds.includes(app.id)) return;
+    if (app.isOrgApproved) {
+      showToast(`Access to ${app.name} has already been approved for your organization.`);
+      return;
+    }
+    if (requestedAppIds.includes(app.id)) {
+      showToast(`You have already requested access to ${app.name}.`);
+      return;
+    }
     setSelectedApp(null);
     setRequestedApp(app);
-  }, [requestedAppIds]);
+  }, [requestedAppIds, showToast]);
 
   const closeRequestModal = useCallback(() => {
     setRequestedApp(null);
@@ -129,9 +136,10 @@ export default function ProductLaunchPage() {
     }
   }, [showToast]);
 
-  const handleRequestSubmitted = useCallback((app: CatalogApp) => {
+  const handleRequestSubmitted = useCallback((app: CatalogApp, message?: string) => {
     setRequestedAppIds((current) => (current.includes(app.id) ? current : [...current, app.id]));
-  }, []);
+    showToast(message || `Your access request for ${app.name} has been sent.`);
+  }, [showToast]);
   //#endregion
 
   //#region Render
@@ -193,7 +201,7 @@ export default function ProductLaunchPage() {
             <div className="hub-empty-state">Loading apps…</div>
           ) : groups.map((group) => (
             <section key={group.title} className={`hub-section-panel hub-section-panel--${group.variant}`}>
-              <SectionHeading title={group.title} count={group.count} />
+              <SectionHeading title={group.title} />
               <p className="hub-section-panel__note">{group.note}</p>
               {group.apps.length ? (
                 <div className="hub-app-grid">
