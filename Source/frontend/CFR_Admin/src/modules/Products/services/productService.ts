@@ -138,12 +138,13 @@ export const updateLicense = async (payload: ProductLicenseInputPayload): Promis
 };
 
 
-export const uploadProductLogo = async (file: File): Promise<string> => {
+export const uploadProductLogo = async (file: File, productId: number): Promise<string> => {
   try {
     const formData = new FormData();
     formData.append('File', file);
-    const response = await axiosInstance.post<ApiResponse<string>>(
-      `${controller}/UploadProductLogo`,
+    formData.append('ProductId', String(productId));
+    const response = await axiosInstance.put<ApiResponse<string>>(
+      `${controller}/UpdateProductLogo`,
       formData,
       {
         transformRequest: [

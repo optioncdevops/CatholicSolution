@@ -51,12 +51,6 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string? LogoName { get; set; }
 
         /// <summary>
-        /// Gets or sets the relative path or URL of the product logo image.
-        /// </summary>
-        [JsonPropertyName("logoUrl")]
-        public string? LogoUrl { get; set; }
-
-        /// <summary>
         /// Gets or sets the contact [auth].[AcutisUser] identifier. Null leaves the stored value unchanged; 0 clears it.
         /// </summary>
         [JsonPropertyName("contactUserId")]
@@ -91,11 +85,5 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("features")]
         public List<string>? Features { get; set; }
-
-        /// <summary>
-        /// Gets or sets the uploaded logo image file from multipart/form-data.
-        /// </summary>
-        [JsonIgnore]
-        public IFormFile? File { get; set; }
     }
 }
