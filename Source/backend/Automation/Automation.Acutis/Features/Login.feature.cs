@@ -140,6 +140,9 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line 9
     await testRunner.ThenAsync("The Dashboard should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
+#line 10
+    await testRunner.AndAsync("User should be able to logout from the application", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
             }
             await this.ScenarioCleanupAsync();
         }
