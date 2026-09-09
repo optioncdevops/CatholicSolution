@@ -12,6 +12,7 @@
     "UserName": null,
     "EMail": "cfracutis@newoptionc.com",
     "Password": "cfr@123",
+    "DateOfBirth": "01/01/1990",
     "UserRole": "Admin"
   }
 }

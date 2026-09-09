@@ -34,6 +34,9 @@ namespace Automation.Framework.JsonTestData
 
         public string? Password { get; set; }
 
+        /// <summary>The date of birth to enter, in the dd/MM/yyyy format the picker shows.</summary>
+        public string? DateOfBirth { get; set; }
+
         public string? UserRole { get; set; }
     }
 }
