@@ -548,7 +548,13 @@ namespace CFR.AcutisInfrastructure
         public static class UserRightParams
         {
             public const string RoleId = nameof(RoleId);
-            public const string ModuleId = nameof(ModuleId);
+            /// <summary>
+            /// Binds to both auth.GetRightByRoleId's `@ParentID` (-1 = full tree, 0 = top-level
+            /// modules only, a FeatureID = that module's subtree) and auth.SaveUserRights'
+            /// `@ParentId` (0 = also cascade a parent's new AccessRight to its direct children).
+            /// SQL Server matches parameter names case-insensitively, so one constant covers both
+            /// procedures' differently-cased parameter.
+            /// </summary>
             public const string ParentId = nameof(ParentId);
             public const string AccessRights = nameof(AccessRights);
             public const string FeatureIds = nameof(FeatureIds);

@@ -151,6 +151,20 @@ namespace CFR.AcutisService.Service.Administration
                     return Task.FromResult(result);
                 }
 
+                // ApiBaseUrl is embedded as an <img src> in every real outgoing email (see
+                // SMTPMailService.BuildLogoImageUrl) — a loopback/private-network address only
+                // this machine can reach produces a permanently broken logo for every recipient.
+                // Rejected here too, not just in the frontend validator, since this action can be
+                // called directly.
+                if (!string.IsNullOrWhiteSpace(input.ApiBaseUrl)
+                    && Uri.TryCreate(input.ApiBaseUrl.Trim(), UriKind.Absolute, out var apiBaseUri)
+                    && (apiBaseUri.IsLoopback || apiBaseUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = "API base URL cannot be a localhost address — recipients' email clients cannot reach it.";
+                    return Task.FromResult(result);
+                }
+
                 var settings = confSettingsService.LoadData();
                 settings ??= new ConfSettings();
                 var smtp = settings.SMTPMailConfig ?? new SMTPMailConfig();
