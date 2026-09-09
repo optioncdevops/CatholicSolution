@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AlertTriangle, Pencil, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Pencil, RefreshCw } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton } from "@app/components/buttons";
@@ -463,6 +463,13 @@ const ProductDetails = () => {
         }
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <CommonButton
+              variant="headerSecondary"
+              iconLeft={<ArrowLeft size={14} />}
+              onClick={() => navigate(PRODUCTS_PATHS.list)}
+            >
+              Back to Products
+            </CommonButton>
             <CommonButton
               variant="headerSecondary"
               iconLeft={<RefreshCw size={14} />}
