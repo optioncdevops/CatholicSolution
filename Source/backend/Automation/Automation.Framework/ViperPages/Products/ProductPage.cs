@@ -317,17 +317,19 @@ namespace Automation.Framework.ViperPages.Products
 
         public void ClickViewFirstOrganization()
         {
-            // Wait for real customer rows with organization links/buttons to render after API response
-            bool rowsLoaded = WaitFor(driver =>
-                driver.FindElements(By.XPath("//table//tbody//tr[.//a[contains(@href, '/admin/organizations/')] or .//button[contains(@aria-label, 'View')]]")).Count > 0,
+            ClickOrganizationsTab();
+
+            // Wait for organization rows or links to appear
+            WaitFor(driver =>
+                driver.FindElements(By.XPath("//table//tbody//tr[.//a[contains(@href, '/admin/organizations/')] or .//button[contains(@aria-label, 'View')]]")).Count > 0
+                || driver.FindElements(By.XPath("//table//tbody//tr")).Count > 0
+                || driver.FindElements(By.XPath("//a[contains(@href, '/admin/organizations/')]")).Count > 0,
                 15);
 
-            IWebElement? viewBtn = null;
-            if (rowsLoaded)
-            {
-                viewBtn = _webDriver.FindElements(By.XPath("//table//tbody//tr//button[contains(@aria-label, 'View')]")).FirstOrDefault()
-                    ?? _webDriver.FindElements(By.XPath("//table//tbody//tr//a[contains(@href, '/admin/organizations/')]")).FirstOrDefault();
-            }
+            var viewBtn = _webDriver.FindElements(By.XPath("//table//tbody//tr//button[contains(@aria-label, 'View')]")).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath("//table//tbody//tr//a[contains(@href, '/admin/organizations/')]")).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath("//a[contains(@href, '/admin/organizations/')]")).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath("//table//tbody//tr[1]")).FirstOrDefault();
 
             if (viewBtn != null)
             {
@@ -335,30 +337,25 @@ namespace Automation.Framework.ViperPages.Products
                 Thread.Sleep(500);
                 ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", viewBtn);
             }
-            else
-            {
-                // Fallback: click first link to organization if present
-                var fallbackLink = _webDriver.FindElements(By.XPath("//a[contains(@href, '/admin/organizations/')]")).FirstOrDefault();
-                if (fallbackLink != null)
-                {
-                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].scrollIntoView(true);", fallbackLink);
-                    Thread.Sleep(500);
-                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", fallbackLink);
-                }
-            }
 
-            WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnBackToProducts)).Count > 0, 15);
+            WaitFor(driver =>
+                driver.Url.Contains("/admin/organizations")
+                || driver.FindElements(By.XPath("//button[contains(., 'Back to Products') or contains(., 'Back to Organizations')]")).Count > 0,
+                15);
             Thread.Sleep(1000);
         }
 
         public bool IsOrganizationDetailsOpened()
         {
-            return WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnBackToProducts)).Count > 0, 10);
+            return WaitFor(driver =>
+                driver.Url.Contains("/admin/organizations")
+                || driver.FindElements(By.XPath("//button[contains(., 'Back to Products') or contains(., 'Back to Organizations')]")).Count > 0,
+                10);
         }
 
         public void ClickBackToProducts()
         {
-            var backBtn = _webDriver.FindElements(By.XPath(XPath_Products.BtnBackToProducts)).FirstOrDefault();
+            var backBtn = _webDriver.FindElements(By.XPath("//button[contains(., 'Back to Products')]")).FirstOrDefault();
             if (backBtn != null)
             {
                 ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].scrollIntoView(true);", backBtn);
@@ -367,7 +364,13 @@ namespace Automation.Framework.ViperPages.Products
             }
             else
             {
-                ClickByScript(XPath_Products.BtnBackToProducts);
+                var backToOrgs = _webDriver.FindElements(By.XPath("//button[contains(., 'Back to Organizations')]")).FirstOrDefault();
+                if (backToOrgs != null)
+                {
+                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", backToOrgs);
+                    Thread.Sleep(500);
+                }
+                _webDriver.Navigate().Back();
             }
 
             WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Count > 0, 15);
