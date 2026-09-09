@@ -24,8 +24,8 @@ import type { OrganizationApiItem } from './organizations/types/organizationType
 import { getAccessRequests, normalizeAccessRequestList, updateAccessRequestStatus } from './requests';
 import type { AccessRequestApiItem, RequestStatus } from './requests';
 import RequestReviewModal from './requests/pages/partials/RequestReviewModal';
-import { getProductAssignmentSummary, PRODUCTS_PATHS } from './products';
-import type { ProductAssignmentSummaryApiItem } from './products';
+import { getProductAssignmentSummary, PRODUCTS_PATHS } from './cfrproducts';
+import type { ProductAssignmentSummaryApiItem } from './cfrproducts';
 import {
   bucketCounts, buildBuckets, computeRangeBounds,
   getDashboardSummary, inBounds, normalizeDashboardSummary,
