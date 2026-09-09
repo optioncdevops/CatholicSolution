@@ -8,12 +8,12 @@ using static Automation.Framework.ViperPages.ViperCommonVariable;
 
 namespace Automation.Framework.ViperPages
 {
-    public class ViperLoginPage(IWebDriver webDriver): BasePageObject(webDriver)
+    public class ViperLoginPage(IWebDriver webDriver) : BasePageObject(webDriver)
     {
         public void SendLoginCredential(string username, string password)
         {
-            FindElementById(XPath_Login.username, username);
-            FindElementById(XPath_Login.password, password);
+            FindElementById(XPath_Login.txtEmailAddress, username);
+            FindElementById(XPath_Login.txtPassword, password);
         }
 
         public void ClickOnLogin()
