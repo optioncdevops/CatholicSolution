@@ -15,6 +15,7 @@ import { InputField, RichTextEditor } from '@app/components/formControls';
 // bold/italic/lists/links/color/image/table toolbar) instead of a raw-HTML textarea.
 import { InputField as SubjectField } from '@app/components/form/TextField';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { confirmAction } from '../../../lib/confirm';
 import { getEmailSettings } from '../../emailSettings/services/emailSettingsService';
 import type { EmailSettingsApiItem } from '../../emailSettings/types/emailSettingsTypes';
@@ -42,6 +43,11 @@ const draftFromTemplate = (item: EmailTemplateApiItem): EmailTemplateFormValues 
 function EmailTemplatesPage() {
   //#region Hooks
   const { showToast } = useToast();
+  // Real enforcement, not just a label: a Read Only grant for this page (set on the User Rights
+  // page) disables every action that would change state — Save, Reset, Send Test, and the
+  // Subject/Body fields themselves. Preview stays available since it doesn't write anything.
+  const accessLevel = useFeatureAccessLevel('/admin/administration-email-templates');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -168,7 +174,7 @@ function EmailTemplatesPage() {
 
   //#region Handlers
   const handleSave = async () => {
-    if (!template) return;
+    if (!template || isReadOnly) return;
     const validationErrors = validateEmailTemplate(draft.subject, draft.body);
     if (validationErrors.length > 0) {
       showToast(validationErrors, 'error');
@@ -195,7 +201,7 @@ function EmailTemplatesPage() {
   };
 
   const handleReset = async () => {
-    if (!template) return;
+    if (!template || isReadOnly) return;
     const confirmed = await confirmAction({
       title: 'Reset this template?',
       description: `"${templateDisplayLabel(template.templateCode)}" will be restored to its last saved subject and body. Unsaved changes will be lost.`,
@@ -208,7 +214,7 @@ function EmailTemplatesPage() {
   };
 
   const handleSendTest = async () => {
-    if (!template) return;
+    if (!template || isReadOnly) return;
     const toAddress = storedAuthEmail;
     if (!toAddress) {
       showToast('Sign in again to send a test email to your account address.', 'error');
@@ -315,12 +321,21 @@ function EmailTemplatesPage() {
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-                <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty || saving}>Reset</CommonButton>
+                <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty || saving || isReadOnly}>Reset</CommonButton>
                 <CommonButton variant="outline" size="sm" iconLeft={<Eye size={13} />} onClick={() => setPreviewOpen(true)}>Preview</CommonButton>
-                <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={() => void handleSendTest()} disabled={sendingTest}>{sendingTest ? 'Sending…' : 'Send Test'}</CommonButton>
-                <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={() => void handleSave()} disabled={!isDirty || saving}>{saving ? 'Saving…' : 'Save'}</CommonButton>
+                <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={() => void handleSendTest()} disabled={sendingTest || isReadOnly}>{sendingTest ? 'Sending…' : 'Send Test'}</CommonButton>
+                <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={() => void handleSave()} disabled={!isDirty || saving || isReadOnly}>{saving ? 'Saving…' : 'Save'}</CommonButton>
               </div>
             </div>
+
+            {isReadOnly ? (
+              <div className="mx-4 mt-3 flex items-center gap-2 rounded-[var(--radius-panel)] border border-[var(--info)] bg-[var(--info-bg)] p-3">
+                <Eye size={14} className="shrink-0 text-[var(--info)]" aria-hidden="true" />
+                <p className="text-xs font-semibold text-[var(--info)]">
+                  Your role has read-only access to Email Templates — you can view and preview templates, but not edit, save, reset, or send test emails.
+                </p>
+              </div>
+            ) : null}
 
             {unsupportedPlaceholders.length > 0 ? (
               <div role="alert" className="mx-4 mt-3 flex items-start gap-2 rounded-[var(--radius-panel)] border border-[var(--warning)] bg-[var(--warning-bg)] p-3">
@@ -343,6 +358,7 @@ function EmailTemplatesPage() {
                     placeholder="Enter the email subject line"
                     hint="Shown as the message subject line — keep it short and specific."
                     maxLength={SUBJECT_MAX_LENGTH}
+                    disabled={isReadOnly}
                   />
                 </div>
                 <div className="sm:flex-1">
@@ -354,6 +370,7 @@ function EmailTemplatesPage() {
                       <button
                         key={variable.token}
                         type="button"
+                        disabled={isReadOnly}
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => insertVariable(variable.token)}
                         className="admin-email-template-tag"
@@ -374,6 +391,7 @@ function EmailTemplatesPage() {
                 onValueChange={(html) => updateField('body', html)}
                 placeholder="Enter the email body"
                 minHeight={340}
+                disabled={isReadOnly}
                 helperText="Use the toolbar for formatting, images, tables, and links, or one of the merge tags above to personalize it — click one to insert it at your cursor."
               />
             </div>
