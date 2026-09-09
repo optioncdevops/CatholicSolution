@@ -16,13 +16,14 @@ type OrganizationProductsPanelProps = {
   orgName: string;
   products: OrganizationProductApiItem[];
   onChanged: () => Promise<void> | void;
+  readOnly?: boolean;
 };
 
 // Activate/Deactivate reuse the existing AssignOrganizationProduct / RemoveOrganizationProduct
 // endpoints as-is — the backend already treats "remove" as a soft-delete (AssignStatus set to
 // 'inactive', row kept for history) and "assign" as an insert-or-reactivate, so no new mapping
 // system or stored procedure action is needed for this activate/deactivate toggle.
-const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: OrganizationProductsPanelProps) => {
+const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOnly = false }: OrganizationProductsPanelProps) => {
   //#region Hooks
   const { showToast } = useToast();
   //#endregion
@@ -34,6 +35,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
 
   //#region Handlers
   const handleDeactivate = async (product: OrganizationProductApiItem) => {
+    if (readOnly) return;
     const confirmed = await confirmAction({
       title: 'Deactivate this app?',
       description: `${orgName} and its members will lose access to ${product.productName}.`,
@@ -56,6 +58,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
   };
 
   const handleActivate = async (product: OrganizationProductApiItem) => {
+    if (readOnly) return;
     setProcessingProductId(product.productId);
     try {
       await assignOrganizationProduct({ orgId, productId: product.productId });
@@ -106,7 +109,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
           variant="danger"
           icon={<PowerOff size={14} />}
           onClick={() => handleDeactivate(product)}
-          disabled={processingProductId === product.productId}
+          disabled={processingProductId === product.productId || readOnly}
         />
       ) : (
         <CommonIconButton
@@ -115,7 +118,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
           variant="success"
           icon={<Power size={14} />}
           onClick={() => handleActivate(product)}
-          disabled={processingProductId === product.productId}
+          disabled={processingProductId === product.productId || readOnly}
         />
       )),
     },
@@ -126,7 +129,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged }: Orga
   return (
     <div className="flex flex-col gap-3">
       <div className="flex justify-end">
-        <CommonButton size="sm" iconLeft={<Plus size={14} />} onClick={() => setAssignModalOpen(true)}>
+        <CommonButton size="sm" iconLeft={<Plus size={14} />} onClick={() => setAssignModalOpen(true)} disabled={readOnly}>
           Assign App
         </CommonButton>
       </div>

@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Building2, Eye, Pencil, RefreshCw, Search } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { EmptyState } from "@shared/app/components/EmptyState";
+import { ReadOnlyBanner } from "@shared/app/components/ReadOnlyBanner";
 import { useToast } from "@shared/app/components/ToastProvider";
+import { useFeatureAccessLevel } from "@shared/auth/hooks/useFeatureAccessLevel";
 import { CommonIconButton } from "@app/components/buttons";
 import { InputField, Dropdown } from "@app/components/formControls";
 import { StatusBadge } from "@app/components/Badge";
@@ -35,6 +37,8 @@ const ProductList = () => {
   //#region Hooks
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel(PRODUCTS_PATHS.list);
+  const isReadOnly = accessLevel === "readOnly";
   //#endregion
 
   //#region States
@@ -79,7 +83,7 @@ const ProductList = () => {
   };
 
   const handleConfirmStatus = async (status: ProductStatus) => {
-    if (!selectedProduct) return;
+    if (!selectedProduct || isReadOnly) return;
     try {
       const isActive = status !== "inactive";
       const productStatus =
@@ -164,6 +168,8 @@ const ProductList = () => {
   return (
     <div className="admin-reveal flex flex-col gap-2.5">
       <PanelHeader title="Products" />
+
+      {isReadOnly ? <ReadOnlyBanner featureName="Products" /> : null}
 
       <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
         <InputField
@@ -332,6 +338,7 @@ const ProductList = () => {
                           setPendingStatus(null);
                           setStatusDialogOpen(true);
                         }}
+                        disabled={isReadOnly}
                       />
                     </div>
                   </div>

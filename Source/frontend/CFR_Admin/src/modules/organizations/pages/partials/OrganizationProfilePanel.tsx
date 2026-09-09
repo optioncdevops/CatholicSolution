@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm, type FieldErrors } from 'react-hook-form';
 import { Pencil, Save, X } from 'lucide-react';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField } from '@app/components/formControls';
@@ -24,15 +25,16 @@ type OrganizationProfilePanelProps = {
   organization: OrganizationApiItem;
   startInEdit: boolean;
   onSaved: () => Promise<void> | void;
+  readOnly?: boolean;
 };
 
-const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: OrganizationProfilePanelProps) => {
+const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly = false }: OrganizationProfilePanelProps) => {
   //#region Hooks
   const { showToast } = useToast();
   //#endregion
 
   //#region States
-  const [editing, setEditing] = useState(startInEdit);
+  const [editing, setEditing] = useState(startInEdit && !readOnly);
   const [saving, setSaving] = useState(false);
   const [members, setMembers] = useState<OrganizationUserApiItem[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
@@ -87,6 +89,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
 
   //#region Handlers
   const handleEdit = () => {
+    if (readOnly) return;
     reset({
       orgName: organization.orgName,
       orgStatus: organization.orgStatus,
@@ -115,6 +118,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
   };
 
   const onSubmit = async (values: OrganizationFormValues) => {
+    if (readOnly) return;
     setSaving(true);
     try {
       await updateOrganization({
@@ -149,8 +153,10 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved }: Organi
       <section className="admin-panel-card">
         <div className="admin-panel-card__header flex items-center justify-between">
           <h2 className="panel-title">Organization Profile</h2>
-          <CommonButton variant="outline" size="sm" iconLeft={<Pencil size={14} />} onClick={handleEdit}>Edit</CommonButton>
+          <CommonButton variant="outline" size="sm" iconLeft={<Pencil size={14} />} onClick={handleEdit} disabled={readOnly}>Edit</CommonButton>
         </div>
+
+        {readOnly ? <div className="px-4 pt-4"><ReadOnlyBanner featureName="Organizations" /></div> : null}
 
         <div className="grid grid-cols-2 gap-x-5 gap-y-3 p-4 sm:grid-cols-3">
           <Fact label="Org Code" value={formatOrgCode(organization.orgId)} />

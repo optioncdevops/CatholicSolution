@@ -15,6 +15,7 @@ const columns = (
   onView: (user: OrganizationUserApiItem) => void,
   onUnlink: (user: OrganizationUserApiItem) => void,
   unlinkingUserId: number | null,
+  readOnly: boolean,
 ): DataTableColumn<OrganizationUserApiItem>[] => [
   {
     id: 'fullName', header: 'User', width: '16rem',
@@ -91,7 +92,7 @@ const columns = (
           variant="danger"
           icon={<Trash2 size={14} />}
           onClick={() => onUnlink(user)}
-          disabled={unlinkingUserId === user.authUserId}
+          disabled={unlinkingUserId === user.authUserId || readOnly}
         />
       </div>
     ),
@@ -103,6 +104,7 @@ type OrganizationUsersPanelProps = {
   organization: OrganizationApiItem;
   users: OrganizationUserApiItem[];
   onChanged: () => Promise<void> | void;
+  readOnly?: boolean;
 };
 
 // View + unlink only — linking a user to an organization from here has been removed. There is no
@@ -112,7 +114,7 @@ type OrganizationUsersPanelProps = {
 // against auth.AcutisRole when it matches, or a dash when it doesn't — never fabricated. "Last
 // Login" is honestly marked "Not tracked" since member sign-in timestamps aren't recorded
 // anywhere in the schema.
-const OrganizationUsersPanel = ({ orgId, organization, users, onChanged }: OrganizationUsersPanelProps) => {
+const OrganizationUsersPanel = ({ orgId, organization, users, onChanged, readOnly = false }: OrganizationUsersPanelProps) => {
   //#region Hooks
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -128,6 +130,7 @@ const OrganizationUsersPanel = ({ orgId, organization, users, onChanged }: Organ
   };
 
   const handleUnlink = async (user: OrganizationUserApiItem) => {
+    if (readOnly) return;
     const confirmed = await confirmAction({
       title: 'Unlink this user?',
       description: `${user.fullName || user.email} will lose membership in ${organization.orgName} and its assigned apps.`,
@@ -157,7 +160,7 @@ const OrganizationUsersPanel = ({ orgId, organization, users, onChanged }: Organ
   return (
     <DataTable
       data={users}
-      columns={columns(handleView, handleUnlink, unlinkingUserId)}
+      columns={columns(handleView, handleUnlink, unlinkingUserId, readOnly)}
       getRowId={(user) => String(user.authUserId)}
       exportFileName="organization-users"
       exportTitle="Organization — Users"

@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { Badge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
@@ -16,6 +18,8 @@ import { normalizeUserRolesList } from '../utils/userRolesHelpers';
 export function UserRolesListPage() {
   //#region Hooks
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel('/admin/administration-user-roles');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -80,6 +84,7 @@ export function UserRolesListPage() {
   };
 
   const handleToggleActive = useCallback(async (role: UserRolesApiItem) => {
+    if (isReadOnly) return;
     if (role.status !== 'active') {
       try {
         await updateUserRoleStatus(role.roleId, 'active');
@@ -106,9 +111,10 @@ export function UserRolesListPage() {
       console.error('Error deactivating user role:', error);
       showToast('Failed to deactivate user role.');
     }
-  }, [load, showToast]);
+  }, [load, showToast, isReadOnly]);
 
   const handleDelete = useCallback(async (role: UserRolesApiItem) => {
+    if (isReadOnly) return;
     const confirmed = await confirmAction({
       title: 'Delete this role?',
       description: `"${role.roleName}" will be permanently removed from the role catalog.`,
@@ -128,7 +134,7 @@ export function UserRolesListPage() {
       console.error('Error deleting user role:', error);
       showToast(typeof error === 'string' ? error : 'Failed to delete user role.');
     }
-  }, [load, showToast]);
+  }, [load, showToast, isReadOnly]);
   //#endregion
 
   //#region Columns
@@ -142,8 +148,8 @@ export function UserRolesListPage() {
       cell: (role) => (
         <div className="flex items-center gap-0.5">
           <CommonIconButton aria-label={`Edit ${role.roleName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleOpenEdit(role)} />
-          <CommonIconButton aria-label={role.status === 'active' ? `Deactivate ${role.roleName}` : `Activate ${role.roleName}`} tooltip={role.status === 'active' ? 'Deactivate' : 'Activate'} variant={role.status === 'active' ? 'danger' : 'ghost'} icon={role.status === 'active' ? <ToggleRight size={16} /> : <ToggleLeft size={16} />} onClick={() => void handleToggleActive(role)} />
-          <CommonIconButton aria-label={`Delete ${role.roleName}`} tooltip="Delete" variant="danger" icon={<Trash2 size={14} />} onClick={() => void handleDelete(role)} />
+          <CommonIconButton aria-label={role.status === 'active' ? `Deactivate ${role.roleName}` : `Activate ${role.roleName}`} tooltip={role.status === 'active' ? 'Deactivate' : 'Activate'} variant={role.status === 'active' ? 'danger' : 'ghost'} icon={role.status === 'active' ? <ToggleRight size={16} /> : <ToggleLeft size={16} />} onClick={() => void handleToggleActive(role)} disabled={isReadOnly} />
+          <CommonIconButton aria-label={`Delete ${role.roleName}`} tooltip="Delete" variant="danger" icon={<Trash2 size={14} />} onClick={() => void handleDelete(role)} disabled={isReadOnly} />
         </div>
       ),
     },
@@ -159,7 +165,7 @@ export function UserRolesListPage() {
     },
     { id: 'createdAt', header: 'Created', value: (role) => role.createdDate ?? '—', cell: (role) => <span className="text-[var(--text-muted)]">{role.createdDate ? formatDate(role.createdDate) : '—'}</span> },
     { id: 'status', header: 'Status', value: (role) => role.status, cell: (role) => <Badge tone={role.status === 'active' ? 'success' : 'neutral'}>{role.status === 'active' ? 'Active' : 'Inactive'}</Badge> },
-  ], [handleDelete, handleToggleActive]);
+  ], [handleDelete, handleToggleActive, isReadOnly]);
   //#endregion
 
   //#region Render
@@ -167,8 +173,10 @@ export function UserRolesListPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="User Roles"
-        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={handleOpenCreate}>Add User Role</CommonButton>}
+        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={handleOpenCreate} disabled={isReadOnly}>Add User Role</CommonButton>}
       />
+
+      {isReadOnly ? <ReadOnlyBanner featureName="User Roles" /> : null}
 
       {!loading && rows.length === 0 ? (
         <EmptyState icon="🧑‍💼" title="No roles yet" description="Add a role to get started." />
@@ -183,7 +191,7 @@ export function UserRolesListPage() {
         />
       )}
 
-      <UserRoleFormModal open={formOpen} role={editingRole} onClose={handleCloseForm} onSaved={load} />
+      <UserRoleFormModal open={formOpen} role={editingRole} onClose={handleCloseForm} onSaved={load} readOnly={isReadOnly} />
     </div>
   );
   //#endregion

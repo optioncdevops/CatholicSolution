@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { StatusBadge, Badge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
@@ -17,6 +19,8 @@ export function UsersListPage() {
   //#region Hooks
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const accessLevel = useFeatureAccessLevel('/admin/users');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -47,6 +51,7 @@ export function UsersListPage() {
 
   //#region Handlers
   const handleToggleStatus = useCallback(async (user: UsersApiItem) => {
+    if (isReadOnly) return;
     const nextIsActive = user.isActive === 1 ? 0 : 1;
     if (nextIsActive === 0) {
       const confirmed = await confirmAction({
@@ -65,9 +70,10 @@ export function UsersListPage() {
       console.error('Error updating user status:', error);
       showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.');
     }
-  }, [load, showToast]);
+  }, [load, showToast, isReadOnly]);
 
   const handleDelete = useCallback(async (user: UsersApiItem) => {
+    if (isReadOnly) return;
     const confirmed = await confirmAction({
       title: 'Delete this user?',
       description: `${user.fullName} will be removed and will no longer be able to sign in.`,
@@ -83,7 +89,7 @@ export function UsersListPage() {
       console.error('Error deleting user:', error);
       showToast(typeof error === 'string' ? error : 'Failed to delete user.');
     }
-  }, [load, showToast]);
+  }, [load, showToast, isReadOnly]);
   //#endregion
 
   //#region Columns
@@ -108,6 +114,7 @@ export function UsersListPage() {
             variant={user.isActive === 1 ? 'danger' : 'ghost'}
             icon={<Power size={15} />}
             onClick={() => void handleToggleStatus(user)}
+            disabled={isReadOnly}
           />
           <CommonIconButton
             aria-label={`Delete ${user.fullName}`}
@@ -115,6 +122,7 @@ export function UsersListPage() {
             variant="danger"
             icon={<Trash2 size={14} />}
             onClick={() => void handleDelete(user)}
+            disabled={isReadOnly}
           />
         </div>
       ),
@@ -138,7 +146,7 @@ export function UsersListPage() {
     { id: 'status', header: 'Status', value: (user) => user.status, cell: (user) => <StatusBadge status={user.status} kind="user" /> },
     { id: 'locked', header: 'Locked', value: (user) => (user.isLocked === 1 ? 'Locked' : 'Unlocked'), cell: (user) => <Badge tone={user.isLocked === 1 ? 'danger' : 'success'}>{user.isLocked === 1 ? 'Locked' : 'Unlocked'}</Badge> },
     { id: 'lastActive', header: 'Last Active', value: (user) => user.lastActiveAt ?? '—', cell: (user) => <span className="text-[var(--text-muted)]">{user.lastActiveAt ? formatDateTime(user.lastActiveAt) : '—'}</span> },
-  ], [handleDelete, handleToggleStatus, navigate]);
+  ], [handleDelete, handleToggleStatus, navigate, isReadOnly]);
   //#endregion
 
   //#region Render
@@ -146,8 +154,10 @@ export function UsersListPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="Users"
-        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/add-users')}>Add User</CommonButton>}
+        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/add-users')} disabled={isReadOnly}>Add User</CommonButton>}
       />
+
+      {isReadOnly ? <ReadOnlyBanner featureName="Users" /> : null}
 
       {!loading && rows.length === 0 ? (
         <EmptyState icon="🙍" title="No users found" description="Add a user to get started." />
