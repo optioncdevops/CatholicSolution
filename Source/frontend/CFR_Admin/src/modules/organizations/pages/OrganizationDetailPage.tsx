@@ -5,7 +5,7 @@ import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Tabs, TabPanel } from '@app/components/Tabs';
-import { PRODUCTS_PATHS } from '@/modules/products';
+import { PRODUCTS_PATHS } from '@/modules/cfrproducts';
 import {
   getOrganizationById,
   getOrganizationProducts,
