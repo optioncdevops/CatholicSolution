@@ -678,8 +678,8 @@ namespace CFR.AcutisService.Service.Products
 
         private string GetProductDocBasePath()
         {
-            string? configuredPath = configuration["ApplicationFilePath:Product_Doc_Basepath"]
-                ?? configuration["ApplicationFilePath:Product_Doc_BasePath"];
+            string? configuredPath = configuration["ApplicationFilePath:Doc_BasePath"]
+                ?? configuration["ApplicationFilePath:Doc_Basepath"];
             if (!string.IsNullOrWhiteSpace(configuredPath))
             {
                 return configuredPath;

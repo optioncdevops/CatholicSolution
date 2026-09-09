@@ -69,16 +69,54 @@ export function CustomerDetails({
   }, [loadCustomers]);
   //#endregion
 
+  const productNavState = useMemo(
+    () => ({
+      fromProductId: Number(app.id),
+      fromProductName: app.name,
+      fromTab: 'organizations',
+    }),
+    [app.id, app.name],
+  );
+
+  const handleNavigateToOrg = (orgId: string | number) => {
+    sessionStorage.setItem('cfr_from_product_id', String(app.id));
+    sessionStorage.setItem('cfr_from_product_name', app.name);
+    navigate(`/admin/organizations/${orgId}`, { state: productNavState });
+  };
+
   const columns: DataTableColumn<ProductCustomerRow>[] = [
     {
-      id: 'actions', header: 'Actions', pinLeft: true, width: '4rem', excludeFromExport: true,
-      cell: (org) => <CommonIconButton aria-label={`View ${org.name}`} tooltip="View" icon={<Eye size={15} />} onClick={() => navigate(`/admin/organizations/${org.id}`)} />,
+      id: 'actions',
+      header: 'Actions',
+      pinLeft: true,
+      width: '4rem',
+      excludeFromExport: true,
+      cell: (org) => (
+        <CommonIconButton
+          aria-label={`View ${org.name}`}
+          tooltip="View"
+          icon={<Eye size={15} />}
+          onClick={() => handleNavigateToOrg(org.id)}
+        />
+      ),
     },
     { id: 'code', header: 'Code', width: '10rem', value: (org) => org.code, cell: (org) => <span className="font-mono text-xs text-[var(--text-secondary)]">{org.code}</span> },
     {
-      id: 'name', header: 'Organization', width: '16rem', value: (org) => org.name,
+      id: 'name',
+      header: 'Organization',
+      width: '16rem',
+      value: (org) => org.name,
       cell: (org) => (
-        <Link to={`/admin/organizations/${org.id}`} className="block min-w-0 truncate font-bold text-[var(--text-primary)] hover:underline" onClick={(event) => event.stopPropagation()}>
+        <Link
+          to={`/admin/organizations/${org.id}`}
+          state={productNavState}
+          className="block min-w-0 truncate font-bold text-[var(--text-primary)] hover:underline"
+          onClick={(event) => {
+            event.stopPropagation();
+            sessionStorage.setItem('cfr_from_product_id', String(app.id));
+            sessionStorage.setItem('cfr_from_product_name', app.name);
+          }}
+        >
           {org.name}
         </Link>
       ),
@@ -122,7 +160,7 @@ export function CustomerDetails({
         data={customers}
         columns={columns}
         getRowId={(org) => org.id}
-        onRowClick={(org) => navigate(`/admin/organizations/${org.id}`)}
+        onRowClick={(org) => handleNavigateToOrg(org.id)}
         exportFileName={`${app.shortName}-customers`}
         exportTitle={`${app.name} — Customers`}
         emptyMessage="No customers found."

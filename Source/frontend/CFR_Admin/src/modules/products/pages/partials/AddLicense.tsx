@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Save, X } from "lucide-react";
+import { ArrowLeft, Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton } from "@app/components/buttons";
@@ -244,7 +244,18 @@ const AddLicense = () => {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="Create License"
-        action={<MandatoryIndicator variant="brand" />}
+        action={
+          <div className="flex items-center gap-2">
+            <CommonButton
+              variant="headerSecondary"
+              iconLeft={<ArrowLeft size={14} />}
+              onClick={() => void handleCancel()}
+            >
+              Back
+            </CommonButton>
+            <MandatoryIndicator variant="brand" />
+          </div>
+        }
       />
 
       {organizations.length === 0 ? (

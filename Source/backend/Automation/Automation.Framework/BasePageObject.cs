@@ -651,6 +651,27 @@ namespace Automation.Framework
         }
 
         /// <summary>
+        /// Types a date into a date picker and commits it.
+        /// </summary>
+        /// <remarks>
+        /// Typing into the picker only updates the text it is showing. The value does not
+        /// reach the form until the field is left, so the field is focused first and blurred
+        /// afterwards - setting the text alone leaves the form holding no date at all, and
+        /// the save fails on a required date that looks filled in on screen.
+        /// </remarks>
+        /// <param name="id">the id of the date picker to type into</param>
+        /// <param name="value">the date to set, in the format the picker shows</param>
+        public void SetDateByScriptById(string id, string value)
+        {
+            string xPath = "//*[@id='" + id + "']";
+            var element = _wait.Until(d => d.FindElement(By.XPath(xPath)));
+            ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].focus();", element);
+            SetValueByScript(xPath, value);
+            ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].blur();", element);
+            Thread.Sleep(500);
+        }
+
+        /// <summary>
         /// Clicks through the browser rather than the driver. Some Acutis menus keep their
         /// drop down closed when the driver synthesises the click, but react to a scripted one.
         /// </summary>

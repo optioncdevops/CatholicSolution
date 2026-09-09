@@ -136,36 +136,89 @@ namespace Automation.Framework.ViperPages
 
             public const string txtlastname = "lastName";
             public const string rolename = "roleId";
-            public const string accesslevel = "accessLevel";
             public const string txtemail = "eMail";
             public const string txtpassword = "password";
-            public const string Documentation = "staffDirectoryModel_Documentation";
+            public const string txtdateofbirth = "dateOfBirth";
 
-            // Navigation and grid controls carry no id, so they are matched by role / label.
-            public const string AdministrationMenu = "//button[.//span[normalize-space()='Administration']]";
+            // The route the users list lives on. The menu entry that leads there is matched
+            // on this rather than on its title, because the title is menu data held in the
+            // database and is renamed there, while the route is fixed in the router.
+            public const string UsersRoute = "/admin/users";
 
-            // The side bar copy of the link is the hidden mobile drawer, the drop down copy sits in a list item.
-            public const string UserDetailsMenu = "//li/a[@href='/user-details']";
+            // The drop down entry, and the same route as a top level link, since which of
+            // the two it is depends on the signed in role's menu data.
+            public const string UserDetailsMenu = "//a[@role='menuitem'][@href='" + UsersRoute + "']";
 
-            public const string AddNewUser = "//button[.//span[normalize-space()='Add New User']]";
+            public const string UserDetailsTopMenu = "//nav[@id='menuAdminNavigation']//a[@href='" + UsersRoute + "']";
+
+            // The nav bar groups that open a drop down, walked in turn to find the one the
+            // users entry sits under.
+            public const string NavDropDownTrigger = "//nav[@id='menuAdminNavigation']//button[@aria-haspopup='menu']";
+
+            public const string AddNewUser = "//button[.//span[normalize-space()='Add User']]";
             public const string GridSearch = "//input[@placeholder='Search']";
-            public const string RowEdit = "(//button[@aria-label='Edit'])[1]";
-            public const string RowDelete = "(//button[@aria-label='Delete'])[1]";
+
+            // Every row action is labelled with the user it acts on ("Edit Jane Doe"), so the
+            // label is matched on its prefix. The grid is filtered down to the one row first.
+            public const string RowEdit = "(//button[starts-with(@aria-label, 'Edit ')])[1]";
+
+            public const string RowDelete = "(//button[starts-with(@aria-label, 'Delete ')])[1]";
+
             public const string Save = "//form//button[@type='submit']";
             public const string Cancel = "//form//button[normalize-space()='Cancel']";
-            public const string DeleteConfirmYes = "//div[@role='dialog']//button[normalize-space()='Delete']";
-            public const string DeleteConfirmNo = "//div[@role='dialog']//button[normalize-space()='Cancel']";
+
+            // Deleting confirms through a SweetAlert2 popup rather than an in page dialog,
+            // so the buttons are matched on the classes it puts on them. Its own labels are
+            // written per call site ("Delete user", "Cancel") and are not relied on here.
+            public const string DeleteConfirmPopup = "//div[contains(@class, 'swal2-popup')]";
+
+            public const string DeleteConfirmYes = "//button[contains(@class, 'swal2-confirm')]";
+            public const string DeleteConfirmNo = "//button[contains(@class, 'swal2-cancel')]";
+
+            // The toast the app answers a save with. It is matched on the progress bar it
+            // carries rather than on its role, because the route loader announces itself
+            // with the same role, and because a refused save is reported through the same
+            // banner as a successful one.
+            public const string ToastBanner = "//div[div[contains(@class, 'admin-toast-progress')]]";
+
+            // A validation message under a field, for a save the form refuses on its own.
+            public const string FieldError = "//form//p[@role='alert']";
+
+            // The list and the add/edit form are separate routes, so these say which of the
+            // two is on screen after a save or a cancel.
+            public const string UsersGrid = "//main//table//tbody/tr";
+
+            public const string UsersForm = "//form//*[@id='" + txtfirstname + "']";
+
+            /// <summary>A grid row holding the given text, used to wait out a search.</summary>
+            /// <param name="text">the cell text to look for</param>
+            /// <returns>An xpath matching the row.</returns>
+            public static string GridRowContaining(string text)
+            {
+                return $"//main//table//tbody/tr[.//*[normalize-space()='{text}']]";
+            }
 
             /// <summary>Option inside the popup listbox of a dropdown with the given control id.</summary>
+            /// <param name="controlId">the id of the dropdown control</param>
+            /// <param name="optionText">the text of the option to pick</param>
+            /// <returns>An xpath matching that option.</returns>
             public static string ListBoxOption(string controlId, string optionText)
             {
                 return $"//div[@id='{controlId}-listbox']//button[@role='option'][normalize-space()='{optionText}']";
             }
 
-            /// <summary>First option inside the popup listbox of a dropdown with the given control id.</summary>
+            /// <summary>
+            /// First option inside the popup listbox of a dropdown with the given control id.
+            /// </summary>
+            /// <remarks>
+            /// The option ids carry the option's own value, not its position, so the first
+            /// option is taken by position rather than by an id ending in zero.
+            /// </remarks>
+            /// <param name="controlId">the id of the dropdown control</param>
+            /// <returns>An xpath matching the first option.</returns>
             public static string FirstListBoxOption(string controlId)
             {
-                return $"//button[@id='{controlId}-listbox-option-0']";
+                return $"(//div[@id='{controlId}-listbox']//button[@role='option'])[1]";
             }
         }
 
@@ -277,6 +330,80 @@ namespace Automation.Framework.ViperPages
             {
                 return $"{DropDownPanel}//a[@role='menuitem'][.//span[normalize-space()='{label}']]";
             }
+        }
+        public static class XPath_AdminRequests
+        {
+            public const string TabAllStatuses = "//button[.//span[normalize-space()='All statuses']]";
+            public const string TabPending = "//button[.//span[normalize-space()='Pending']]";
+            public const string TabApproved = "//button[.//span[normalize-space()='Approved']]";
+            public const string TabRejected = "//button[.//span[normalize-space()='Rejected']]";
+            public const string TabInfoRequested = "//button[.//span[normalize-space()='Info requested']]";
+
+            public const string DropdownAppFilter = "//button[contains(@class, 'dropdown-trigger') and .//span[contains(text(), 'All Applications') or ancestor::div/label[contains(text(), 'application')]]]";
+            public const string DropdownOrgFilter = "//button[contains(@class, 'dropdown-trigger') and .//span[contains(text(), 'All Organizations') or ancestor::div/label[contains(text(), 'organization')]]]";
+
+            public const string DataTableRows = "//table//tbody//tr";
+            public const string EmptyState = "//*[contains(text(), 'No requests found')]";
+            
+            public const string BtnReviewFirstRow = "(//table//tbody//tr//button[contains(text(), 'Review')])[1]";
+        }
+
+        public static class XPath_Products
+        {
+            // Navigation
+            public const string MenuProducts = "//nav[@id='menuAdminNavigation']//a[contains(@href, '/admin/products') or contains(., 'Products') or contains(., 'Applications')]";
+            public const string ProductsUrlPath = "/admin/products";
+
+            // Products Listing
+            public const string SearchInput = "//input[@placeholder='Search by name, subtitle, domain']";
+            public const string ProductCard = "//article[contains(@class, 'admin-product-card')]";
+            public static string FilterChip(string status) => $"//button[contains(@class, 'admin-filter-chip') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{status.ToLowerInvariant()}')]";
+            public static string ProductTitle(string productName) => $"//article[contains(@class, 'admin-product-card')]//span[contains(text(), '{productName}')]";
+            public static string ViewProductButton(string productName) => $"//article[contains(@class, 'admin-product-card') and .//span[contains(text(), '{productName}')]]//button[contains(@aria-label, 'View')]";
+            public const string FirstViewProductButton = "(//article[contains(@class, 'admin-product-card')]//button[contains(@aria-label, 'View')])[1]";
+
+            // Product Details Sub Tabs
+            public const string TabProductDetails = "tab-details";
+            public const string TabOrganizations = "tab-customers";
+            public const string TabInvoiceDetails = "tab-invoice-details";
+            public const string TabInvoiceHistory = "tab-invoice-history";
+            public static string SubTabById(string tabId) => $"//button[@id='{tabId}' or @id='tab-{tabId}']";
+            public static string SubTabByLabel(string label) => $"//div[@role='tablist']//button[contains(., '{label}')]";
+
+            // Change Status Workflow
+            public const string BtnChangeStatus = "//button[contains(., 'Change Status')]";
+            public const string StatusModal = "//*[@role='dialog']";
+            public const string BtnStatusModalCancel = "//*[@role='dialog']//button[normalize-space()='Cancel']";
+            public const string BtnStatusModalContinue = "//*[@role='dialog']//button[normalize-space()='Continue']";
+            public static string StatusModalOption(string status) => $"//*[@role='dialog']//fieldset//button[not(@disabled) and (contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ-', 'abcdefghijklmnopqrstuvwxyz '), '{status.ToLowerInvariant().Replace('-', ' ')}') or contains(., '{status}'))]";
+            public const string FirstAvailableStatusOption = "//*[@role='dialog']//fieldset//button[not(@disabled)][1]";
+
+            // SweetAlert2 Confirmation Dialog
+            public const string SwalConfirmButton = "//button[contains(@class, 'admin-swal-confirm') or contains(@class, 'swal2-confirm') or normalize-space()='Confirm status change']";
+            public const string SwalCancelButton = "//button[contains(@class, 'admin-swal-cancel') or contains(@class, 'swal2-cancel') or normalize-space()='Cancel']";
+
+            // Edit Product Workflow
+            public const string BtnEditProduct = "//button[.//span[normalize-space()='Edit'] or normalize-space()='Edit']";
+            public const string EditProductNameInput = "//input[@placeholder='Enter product name']";
+            public const string EditProductSubtitleInput = "//input[@placeholder='Enter product subtitle']";
+            public const string EditProductDescTextarea = "//textarea[@placeholder='What does this product do?']";
+            public const string BtnEditCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
+            public const string BtnEditSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']]";
+            public const string DiscardChangesConfirm = "//button[contains(@class, 'admin-swal-confirm') or normalize-space()='Discard changes']";
+
+            // Organizations Sub Tab Workflow
+            public const string FirstOrgViewButton = "(//table//tbody//tr//button[contains(@aria-label, 'View')])[1] | (//table//tbody//tr//a[contains(@href, '/admin/organizations/')])[1]";
+            public const string BtnBackToProducts = "//button[contains(., 'Back to Products')]";
+            public const string OrgDetailsHeading = "//div[contains(@class, 'admin-reveal')]//h1 | //div[contains(@class, 'admin-reveal')]//h2";
+
+            // Invoice Details Sub Tab Workflow
+            public static string InvoiceStatusFilterChip(string status) => $"//button[contains(@class, 'admin-filter-chip') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{status.ToLowerInvariant()}')]";
+            public const string BtnCreateInvoice = "//button[contains(., 'Create Invoice')]";
+            public const string InvoiceTitleInput = "//input[@placeholder='Enter title']";
+            public const string InvoiceOrgDropdown = "//button[contains(@id, 'dropdown') or contains(., 'Select organization') or contains(@class, 'admin-dropdown-trigger') or @role='combobox']";
+            public const string FirstDropdownOption = "(//button[@role='option'])[1]";
+            public const string BtnInvoiceCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
+            public const string BtnInvoiceSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']] | //button[@type='submit' and contains(., 'Save')]";
         }
     }
 }

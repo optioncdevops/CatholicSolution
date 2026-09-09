@@ -12,6 +12,22 @@
     "UserName": null,
     "EMail": "cfracutis@newoptionc.com",
     "Password": "cfr@123",
+    "DateOfBirth": "01/01/1990",
     "UserRole": "Admin"
+  },
+  "Product": {
+    "SearchProductName": "OptionC",
+    "TargetProductName": "OptionC",
+    "FilterStatus": "Active",
+    "NewStatus": "Coming Soon",
+    "EditSubtitle": "OptionC School - Updated Subtitle",
+    "EditDescription": "Automated test updated description for OptionC product.",
+    "InvoiceTitle": "Automated Test Invoice Renewal",
+    "SubTabs": [
+      "Organizations",
+      "Invoice Details",
+      "Invoice History",
+      "Product Details"
+    ]
   }
 }

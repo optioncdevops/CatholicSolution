@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AlertTriangle, Save, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton } from "@app/components/buttons";
@@ -677,7 +677,18 @@ const ProductEdit = () => {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="Edit Product"
-        action={<MandatoryIndicator variant="brand" />}
+        action={
+          <div className="flex items-center gap-2">
+            <CommonButton
+              variant="headerSecondary"
+              iconLeft={<ArrowLeft size={14} />}
+              onClick={() => void handleCancel()}
+            >
+              Back to Products
+            </CommonButton>
+            <MandatoryIndicator variant="brand" />
+          </div>
+        }
       />
 
       <form

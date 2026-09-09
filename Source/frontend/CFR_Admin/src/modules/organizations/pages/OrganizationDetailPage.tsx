@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Tabs, TabPanel } from '@app/components/Tabs';
+import { PRODUCTS_PATHS } from '@/modules/products';
 import {
   getOrganizationById,
   getOrganizationProducts,
@@ -25,6 +26,25 @@ const OrganizationDetailPage = () => {
   const location = useLocation();
   const { showToast } = useToast();
   const startInEdit = Boolean((location.state as { edit?: boolean } | undefined)?.edit);
+
+  const navState = location.state as {
+    fromProductId?: number | string;
+    fromProductName?: string;
+    fromTab?: string;
+    edit?: boolean;
+  } | null;
+
+  const fromProductId = useMemo(() => {
+    const rawId = navState?.fromProductId ?? sessionStorage.getItem('cfr_from_product_id');
+    const parsed = Number(rawId);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  }, [navState?.fromProductId]);
+
+  const fromProductName = useMemo(() => {
+    return navState?.fromProductName ?? sessionStorage.getItem('cfr_from_product_name') ?? '';
+  }, [navState?.fromProductName]);
+
+  const fromTab = navState?.fromTab ?? 'organizations';
   //#endregion
 
   //#region States
@@ -131,6 +151,26 @@ const OrganizationDetailPage = () => {
   const handleUsersChanged = async () => {
     await Promise.all([loadUsers(), loadOrganization()]);
   };
+  const handleBackToProducts = () => {
+    sessionStorage.removeItem('cfr_from_product_id');
+    sessionStorage.removeItem('cfr_from_product_name');
+    if (fromProductId) {
+      navigate(PRODUCTS_PATHS.details, {
+        state: {
+          productId: fromProductId,
+          tab: fromTab === 'organizations' ? 'customers' : fromTab,
+        },
+      });
+    } else {
+      navigate(PRODUCTS_PATHS.list);
+    }
+  };
+
+  const handleBackToOrganizations = () => {
+    sessionStorage.removeItem('cfr_from_product_id');
+    sessionStorage.removeItem('cfr_from_product_name');
+    navigate('/admin/organizations');
+  };
   //#endregion
 
   if (notFound) return <Navigate to="/admin/organizations" replace />;
@@ -141,9 +181,27 @@ const OrganizationDetailPage = () => {
       <PanelHeader
         title={organization?.orgName ?? 'Organization'}
         action={(
-          <CommonButton variant="headerSecondary" size="sm" iconLeft={<ArrowLeft size={14} />} onClick={() => navigate('/admin/organizations')}>
-            Back to Organizations
-          </CommonButton>
+          <div className="flex flex-wrap items-center gap-2">
+            {fromProductId ? (
+              <CommonButton
+                variant="headerSecondary"
+                size="sm"
+                iconLeft={<ArrowLeft size={14} />}
+                onClick={handleBackToProducts}
+                title={fromProductName ? `Back to ${fromProductName}` : undefined}
+              >
+                Back to Products
+              </CommonButton>
+            ) : null}
+            <CommonButton
+              variant="headerSecondary"
+              size="sm"
+              iconLeft={<ArrowLeft size={14} />}
+              onClick={handleBackToOrganizations}
+            >
+              Back to Organizations
+            </CommonButton>
+          </div>
         )}
       />
 
