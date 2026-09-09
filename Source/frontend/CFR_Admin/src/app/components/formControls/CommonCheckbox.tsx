@@ -31,6 +31,10 @@ interface BaseCheckboxProps {
   onCheckedChange?: (checked: boolean) => void;
   /** Visually hide the label (keeps it accessible via sr-only). Useful inside table cells. */
   hideLabel?: boolean;
+  /** Renders the native tri-state "indeterminate" visual (a dash instead of a check) — for a
+   * parent row whose children are partially selected. This is a DOM property, not an HTML
+   * attribute, so it's applied imperatively via a ref rather than through `checked`. */
+  indeterminate?: boolean;
 }
 
 export interface CommonCheckboxProps<
@@ -54,6 +58,7 @@ const CheckboxInner = <TFieldValues extends FieldValues = FieldValues>({
   defaultChecked = false,
   onCheckedChange,
   hideLabel = false,
+  indeterminate = false,
   control,
   name,
   rules,
@@ -61,6 +66,11 @@ const CheckboxInner = <TFieldValues extends FieldValues = FieldValues>({
   const [internalChecked, setInternalChecked] = React.useState(defaultChecked);
   const generatedId = React.useId();
   const inputId = id ?? name ?? `checkbox-${generatedId}`;
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  React.useEffect(() => {
+    if (inputRef.current) inputRef.current.indeterminate = indeterminate;
+  }, [indeterminate]);
 
   const isChecked = checked ?? internalChecked;
 
@@ -100,6 +110,7 @@ const CheckboxInner = <TFieldValues extends FieldValues = FieldValues>({
           )}
         >
           <input
+            ref={inputRef}
             id={inputId}
             type="checkbox"
             className={cn(
@@ -112,6 +123,7 @@ const CheckboxInner = <TFieldValues extends FieldValues = FieldValues>({
             disabled={disabled}
             onChange={(e) => { handleChange(e.target.checked, fieldOnChange); }}
             aria-label={hideLabel ? label : undefined}
+            aria-checked={indeterminate ? 'mixed' : currentChecked}
             aria-invalid={!!mergedError}
             aria-describedby={
               mergedError

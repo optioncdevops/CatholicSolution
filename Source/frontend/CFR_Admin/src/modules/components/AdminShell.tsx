@@ -11,11 +11,13 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Bell, ChevronDown, Settings } from "lucide-react";
 import { AppLoader } from "@shared/app/components/AppLoader";
 import { Brand } from "@shared/app/components/Brand";
+import { EmptyState } from "@shared/app/components/EmptyState";
 import { Footer } from "@shared/app/components/Footer";
 import { ProfileMenu } from "@shared/app/components/ProfileMenu";
 import { ACUTIS_AUTH_CHANGED_EVENT } from "@shared/auth/constants/storageKeys";
 import { getStoredAcutisAuth } from "@shared/auth/services/authService";
 import {
+  isAdminRouteAllowed,
   resolveMenuIcon,
   splitAdminMenus,
   toDropdownItems,
@@ -211,6 +213,10 @@ export function AdminShell() {
   const { topItems, administration } = splitAdminMenus(menuItems);
   const administrationItems = toDropdownItems(administration?.links);
   const AdministrationIcon = resolveMenuIcon(administration?.icon);
+  // Real, live route gate — not cosmetic: a role's rights are only as fresh as its last sign-in
+  // (the same limitation the nav itself already has), but within that, this actually blocks
+  // navigating to a page the signed-in role has no grant for, on every route change.
+  const routeAllowed = isAdminRouteAllowed(location.pathname, menuItems);
 
   return (
     <div className="admin-shell-bg flex min-h-screen flex-col text-[var(--text-primary)]">
@@ -278,9 +284,19 @@ export function AdminShell() {
 
       <main className={`flex-1 py-4 ${CONTAINER}`}>
         <div className="admin-page-card">
-          <Suspense fallback={<AppLoader label="Loading page" caption="Loading…" />}>
-            <Outlet />
-          </Suspense>
+          {routeAllowed ? (
+            <Suspense fallback={<AppLoader label="Loading page" caption="Loading…" />}>
+              <Outlet />
+            </Suspense>
+          ) : (
+            <EmptyState
+              icon="🚫"
+              title="Access denied"
+              description="Your role does not have access to this page. Contact an administrator if you believe this is a mistake."
+              actionLabel="Back to Dashboard"
+              onAction={() => { window.location.href = "/admin"; }}
+            />
+          )}
         </div>
       </main>
 

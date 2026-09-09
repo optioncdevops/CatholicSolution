@@ -16,9 +16,13 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.UserRightParams.RoleId, roleId, DbType.Int32);
-            parameters.Add(DBParameterName.UserRightParams.ModuleId, moduleId, DbType.Int32);
+            // auth.GetRightByRoleId's second parameter is @ParentID (default -1 = full tree; 0 =
+            // top-level modules only; a specific FeatureID = that module's subtree) — NOT a
+            // "ModuleId" concept. moduleId is this method's existing public parameter name; it
+            // maps 1:1 onto @ParentID.
+            parameters.Add(DBParameterName.UserRightParams.ParentId, moduleId, DbType.Int32);
 
-            using var multi = await dapperHandler.QueryMultipleAsync("GetRightByRoleId", parameters, CommandType.StoredProcedure);
+            using var multi = await dapperHandler.QueryMultipleAsync(StoredProc.Administration.GetRightByRoleId, parameters, CommandType.StoredProcedure);
 
             var table1 = (await multi.ReadAsync<dynamic>()).ToList();
             var table2 = (await multi.ReadAsync<dynamic>()).ToList();
@@ -40,7 +44,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.UserRightParams.AccessRights, accessRights, DbType.String);
             parameters.Add(DBParameterName.UserRightParams.FeatureIds, featureIds, DbType.String);
 
-            int affected = await dapperHandler.ExecuteAsync("SaveUserRights", parameters, CommandType.StoredProcedure);
+            int affected = await dapperHandler.ExecuteAsync(StoredProc.Administration.SaveUserRights, parameters, CommandType.StoredProcedure);
 
             return affected > 0;
         }
