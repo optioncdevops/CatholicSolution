@@ -347,5 +347,63 @@ namespace Automation.Framework.ViperPages
             
             public const string BtnReviewFirstRow = "(//table//tbody//tr//button[contains(text(), 'Review')])[1]";
         }
+
+        public static class XPath_Products
+        {
+            // Navigation
+            public const string MenuProducts = "//nav[@id='menuAdminNavigation']//a[contains(@href, '/admin/products') or contains(., 'Products') or contains(., 'Applications')]";
+            public const string ProductsUrlPath = "/admin/products";
+
+            // Products Listing
+            public const string SearchInput = "//input[@placeholder='Search by name, subtitle, domain']";
+            public const string ProductCard = "//article[contains(@class, 'admin-product-card')]";
+            public static string FilterChip(string status) => $"//button[contains(@class, 'admin-filter-chip') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{status.ToLowerInvariant()}')]";
+            public static string ProductTitle(string productName) => $"//article[contains(@class, 'admin-product-card')]//span[contains(text(), '{productName}')]";
+            public static string ViewProductButton(string productName) => $"//article[contains(@class, 'admin-product-card') and .//span[contains(text(), '{productName}')]]//button[contains(@aria-label, 'View')]";
+            public const string FirstViewProductButton = "(//article[contains(@class, 'admin-product-card')]//button[contains(@aria-label, 'View')])[1]";
+
+            // Product Details Sub Tabs
+            public const string TabProductDetails = "tab-details";
+            public const string TabOrganizations = "tab-customers";
+            public const string TabInvoiceDetails = "tab-invoice-details";
+            public const string TabInvoiceHistory = "tab-invoice-history";
+            public static string SubTabById(string tabId) => $"//button[@id='{tabId}' or @id='tab-{tabId}']";
+            public static string SubTabByLabel(string label) => $"//div[@role='tablist']//button[contains(., '{label}')]";
+
+            // Change Status Workflow
+            public const string BtnChangeStatus = "//button[contains(., 'Change Status')]";
+            public const string StatusModal = "//*[@role='dialog']";
+            public const string BtnStatusModalCancel = "//*[@role='dialog']//button[normalize-space()='Cancel']";
+            public const string BtnStatusModalContinue = "//*[@role='dialog']//button[normalize-space()='Continue']";
+            public static string StatusModalOption(string status) => $"//*[@role='dialog']//fieldset//button[not(@disabled) and (contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ-', 'abcdefghijklmnopqrstuvwxyz '), '{status.ToLowerInvariant().Replace('-', ' ')}') or contains(., '{status}'))]";
+            public const string FirstAvailableStatusOption = "//*[@role='dialog']//fieldset//button[not(@disabled)][1]";
+
+            // SweetAlert2 Confirmation Dialog
+            public const string SwalConfirmButton = "//button[contains(@class, 'admin-swal-confirm') or contains(@class, 'swal2-confirm') or normalize-space()='Confirm status change']";
+            public const string SwalCancelButton = "//button[contains(@class, 'admin-swal-cancel') or contains(@class, 'swal2-cancel') or normalize-space()='Cancel']";
+
+            // Edit Product Workflow
+            public const string BtnEditProduct = "//button[.//span[normalize-space()='Edit'] or normalize-space()='Edit']";
+            public const string EditProductNameInput = "//input[@placeholder='Enter product name']";
+            public const string EditProductSubtitleInput = "//input[@placeholder='Enter product subtitle']";
+            public const string EditProductDescTextarea = "//textarea[@placeholder='What does this product do?']";
+            public const string BtnEditCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
+            public const string BtnEditSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']]";
+            public const string DiscardChangesConfirm = "//button[contains(@class, 'admin-swal-confirm') or normalize-space()='Discard changes']";
+
+            // Organizations Sub Tab Workflow
+            public const string FirstOrgViewButton = "(//table//tbody//tr//button[contains(@aria-label, 'View')])[1] | (//table//tbody//tr//a[contains(@href, '/admin/organizations/')])[1]";
+            public const string BtnBackToProducts = "//button[contains(., 'Back to Products')]";
+            public const string OrgDetailsHeading = "//div[contains(@class, 'admin-reveal')]//h1 | //div[contains(@class, 'admin-reveal')]//h2";
+
+            // Invoice Details Sub Tab Workflow
+            public static string InvoiceStatusFilterChip(string status) => $"//button[contains(@class, 'admin-filter-chip') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{status.ToLowerInvariant()}')]";
+            public const string BtnCreateInvoice = "//button[contains(., 'Create Invoice')]";
+            public const string InvoiceTitleInput = "//input[@placeholder='Enter title']";
+            public const string InvoiceOrgDropdown = "//button[contains(@id, 'dropdown') or contains(., 'Select organization') or contains(@class, 'admin-dropdown-trigger') or @role='combobox']";
+            public const string FirstDropdownOption = "(//button[@role='option'])[1]";
+            public const string BtnInvoiceCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
+            public const string BtnInvoiceSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']] | //button[@type='submit' and contains(., 'Save')]";
+        }
     }
 }
