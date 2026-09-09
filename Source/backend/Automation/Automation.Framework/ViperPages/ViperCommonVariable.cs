@@ -331,6 +331,22 @@ namespace Automation.Framework.ViperPages
                 return $"{DropDownPanel}//a[@role='menuitem'][.//span[normalize-space()='{label}']]";
             }
         }
+        public static class XPath_AdminRequests
+        {
+            public const string TabAllStatuses = "//button[.//span[normalize-space()='All statuses']]";
+            public const string TabPending = "//button[.//span[normalize-space()='Pending']]";
+            public const string TabApproved = "//button[.//span[normalize-space()='Approved']]";
+            public const string TabRejected = "//button[.//span[normalize-space()='Rejected']]";
+            public const string TabInfoRequested = "//button[.//span[normalize-space()='Info requested']]";
+
+            public const string DropdownAppFilter = "//button[contains(@class, 'dropdown-trigger') and .//span[contains(text(), 'All Applications') or ancestor::div/label[contains(text(), 'application')]]]";
+            public const string DropdownOrgFilter = "//button[contains(@class, 'dropdown-trigger') and .//span[contains(text(), 'All Organizations') or ancestor::div/label[contains(text(), 'organization')]]]";
+
+            public const string DataTableRows = "//table//tbody//tr";
+            public const string EmptyState = "//*[contains(text(), 'No requests found')]";
+            
+            public const string BtnReviewFirstRow = "(//table//tbody//tr//button[contains(text(), 'Review')])[1]";
+        }
 
         public static class XPath_Products
         {
