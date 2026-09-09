@@ -1,0 +1,15 @@
+{
+  "SMTPMailConfig": {
+    "SendMailFlag": "1",
+    "SMTPServer": "smtp.gmail.com",
+    "SMTPPort": "587",
+    "DisplayName": "Catholic Solutions",
+    "MUserName": "levinjose6371@gmail.com",
+    "MPassword": "yitnkxshdijrngxe",
+    "IsSSLEnabled": "1",
+    "ContactUsMailId": "",
+    "CCMailId": "",
+    "LoginURL": "https://devsms.allnewoptionc.com",
+    "LogoUrl": "none"
+  }
+}

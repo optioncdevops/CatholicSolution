@@ -42,41 +42,7 @@ namespace CFR.AcutisService.Interfaces.Administration
         /// <returns>MSResultArgs containing the access request.</returns>
         Task<MSResultArgs> GetAccessRequestByIdAsync(int accessRequestId);
 
-        /// <summary>
-        /// Retrieves App Hub products for a member email.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Return every core.Product with hubSection your / available / future from [auth].[UserProduct].
-        /// Request Flow: AccessRequestController -> IAccessRequestService.GetHubProductsAsync() -> IAccessRequestRepository.GetHubProductsAsync().
-        /// Validation Details: Email is optional; a missing email returns products without a Your Apps assignment.
-        /// Business Logic: Wraps the typed list in MSResultArgs.
-        /// Repository Interaction: Calls IAccessRequestRepository.GetHubProductsAsync().
-        /// Response Details: MSResultArgs containing List of HubProductOutput.
-        /// </remarks>
-        /// <param name="requesterEmail">Member email used to resolve [auth].[User].CFRUserId.</param>
-        /// <returns>MSResultArgs containing the hub product list.</returns>
-        Task<MSResultArgs> GetHubProductsAsync(string? requesterEmail);
-
         #endregion GET Methods
-
-        #region POST Methods
-
-        /// <summary>
-        /// Creates an access request.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Insert request, product, status history, and optional comment rows, then email admins from the AccessRequested template.
-        /// Request Flow: AccessRequestController -> IAccessRequestService.SaveAccessRequestAsync() -> IAccessRequestRepository.SaveAccessRequestAsync().
-        /// Validation Details: Input DTO is required; product name or id and requester email are required.
-        /// Business Logic: Delegates insert to the repository, maps duplicate results to Conflict, then emails users matched to the requested product. Mail failure does not fail the save.
-        /// Repository Interaction: Calls IAccessRequestRepository.SaveAccessRequestAsync(), IAccessRequestRepository.GetProductNotificationRecipientsAsync(), and IEmailTemplatesRepository.GetEmailTemplateByCodeAsync().
-        /// Response Details: MSResultArgs containing the access request identifier, or Conflict.
-        /// </remarks>
-        /// <param name="input">Input DTO containing request fields.</param>
-        /// <returns>MSResultArgs containing the save status.</returns>
-        Task<MSResultArgs> SaveAccessRequestAsync(AccessRequestInput input);
-
-        #endregion POST Methods
 
         #region PUT Methods
 
@@ -98,3 +64,4 @@ namespace CFR.AcutisService.Interfaces.Administration
         #endregion PUT Methods
     }
 }
+

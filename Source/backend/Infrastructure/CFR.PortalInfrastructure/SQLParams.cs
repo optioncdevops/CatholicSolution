@@ -1,4 +1,4 @@
-﻿// Copyright (c) OptionC. All rights reserved.
+// Copyright (c) OptionC. All rights reserved.
 
 namespace CFR.PortalInfrastructure
 {
@@ -67,6 +67,47 @@ namespace CFR.PortalInfrastructure
             /// [core].[ProductEnvironment].EnvironmentName matching appsettings Environment (Development, Pilot, Staging, Live).
             /// </summary>
             public const string EnvironmentName = nameof(EnvironmentName);
+        }
+
+        public static class AccessRequestParams
+        {
+            public const string ActionId = nameof(ActionId);
+            public const string AccessRequestId = nameof(AccessRequestId);
+            public const string ProductId = nameof(ProductId);
+            public const string ProductName = nameof(ProductName);
+            public const string RequesterEmail = nameof(RequesterEmail);
+            public const string Comment = nameof(Comment);
+            public const string FirstName = nameof(FirstName);
+            public const string LastName = nameof(LastName);
+            public const string OrganizationType = nameof(OrganizationType);
+            public const string OrganizationName = nameof(OrganizationName);
+            public const string Address = nameof(Address);
+            public const string City = nameof(City);
+            public const string State = nameof(State);
+            public const string Zip = nameof(Zip);
+            public const string Phone = nameof(Phone);
+            public const string ProductsJson = nameof(ProductsJson);
+            public const string Status = nameof(Status);
+            public const string Note = nameof(Note);
+            public const string InsertedBy = nameof(InsertedBy);
+            public const string UpdatedBy = nameof(UpdatedBy);
+            public const string ReturnValue = nameof(ReturnValue);
+        }
+
+        public static class EmailTemplateParams
+        {
+            public const string ActionId = nameof(ActionId);
+            public const string TemplateId = nameof(TemplateId);
+            public const string TemplateCode = nameof(TemplateCode);
+            public const string Subject = nameof(Subject);
+            public const string Body = nameof(Body);
+            public const string Status = nameof(Status);
+            public const string AccentColor = nameof(AccentColor);
+            public const string LogoUrl = nameof(LogoUrl);
+            public const string FontFamily = nameof(FontFamily);
+            public const string BaseFontSize = nameof(BaseFontSize);
+            public const string UpdatedBy = nameof(UpdatedBy);
+            public const string ReturnValue = nameof(ReturnValue);
         }
     }
 }

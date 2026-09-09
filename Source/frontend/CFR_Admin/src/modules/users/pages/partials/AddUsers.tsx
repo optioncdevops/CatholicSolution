@@ -179,6 +179,9 @@ const AddUsers = () => {
             name="dateOfBirth"
             label="Date of birth"
             placeholder="Select date of birth"
+            // Without this the picker hands the form its display format (dd/MM/yyyy), which
+            // SaveUser cannot bind to its DateTime field and rejects with a 400.
+            outputFormat="yyyy-MM-dd"
             required
             rules={usersRules.dateOfBirth}
             disabled={saving}

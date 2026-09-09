@@ -1,5 +1,6 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { CatalogApp } from '@shared/app/types/app';
+import { ProductLogoIcon } from '@shared/app/components/ProductLogoIcon';
 import { resolveAppDestination } from '@shared/platform/navigation/solutionNavigation';
 
 interface AppCardProps {
@@ -51,9 +52,13 @@ export function AppCard({ app, onDetails, onRequest, onLaunch, hidePrimaryAction
     if (openInNewTab) window.open(target, '_blank', 'noopener,noreferrer');
     else window.location.assign(target);
   };
+  const isOrgApproved = Boolean(app.isOrgApproved);
+  const isDisabled = alreadyRequested || isOrgApproved;
   const openDetails = (event: MouseEvent<HTMLButtonElement>) => { event.stopPropagation(); onDetails(app); };
+
   const requestApp = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
+    if (isOrgApproved) return;
     if (alreadyRequested) return;
     onRequest(app);
   };
@@ -86,7 +91,7 @@ export function AppCard({ app, onDetails, onRequest, onLaunch, hidePrimaryAction
       <span className="hub-module-card__accent" style={{ background: app.gradient }} aria-hidden="true" />
       <span className="hub-module-card__wash" style={{ background: app.gradient }} aria-hidden="true" />
       <div className="hub-module-card__top">
-        <span className="hub-module-card__icon" style={{ background: app.gradient }}>{app.icon}</span>
+        <ProductLogoIcon app={app} className="hub-module-card__icon" />
         <h3 className="hub-module-card__name" title={app.name}>{app.name}</h3>
       </div>
       <div className="hub-module-card__meta">
@@ -110,8 +115,30 @@ export function AppCard({ app, onDetails, onRequest, onLaunch, hidePrimaryAction
             </a>
           )
         ) : null}
-        {showCatalogAction ? <button type="button" onClick={requestApp} disabled={alreadyRequested} className="hub-card-action hub-card-action--primary" style={themedActionStyle}><span>{alreadyRequested ? 'Requested' : 'Request app'}</span><span aria-hidden="true">→</span></button> : null}
-        {showRequestAction ? <button type="button" onClick={requestApp} disabled={alreadyRequested} className="hub-card-action hub-card-action--request" aria-label={alreadyRequested ? `Access already requested for ${app.name}` : `Request access to ${app.name}`}><span aria-hidden="true">{alreadyRequested ? '✓' : '✚'}</span><span>{alreadyRequested ? 'Requested' : 'Request access'}</span></button> : null}
+        {showCatalogAction ? (
+          <button
+            type="button"
+            onClick={requestApp}
+            disabled={isDisabled}
+            className="hub-card-action hub-card-action--primary"
+            style={themedActionStyle}
+          >
+            <span>{isOrgApproved ? 'Approved' : alreadyRequested ? 'Requested' : 'Request app'}</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        ) : null}
+        {showRequestAction ? (
+          <button
+            type="button"
+            onClick={requestApp}
+            disabled={isDisabled}
+            className="hub-card-action hub-card-action--request"
+            aria-label={isOrgApproved ? `Access already approved for your organization for ${app.name}` : alreadyRequested ? `Access already requested for ${app.name}` : `Request access to ${app.name}`}
+          >
+            <span aria-hidden="true">{isOrgApproved || alreadyRequested ? '✓' : '✚'}</span>
+            <span>{isOrgApproved ? 'Approved' : alreadyRequested ? 'Requested' : 'Request access'}</span>
+          </button>
+        ) : null}
         {mode === 'unavailable' ? <span className="hub-card-action hub-card-action--muted">Coming soon</span> : null}
         {deploymentPending ? <span className="hub-card-action hub-card-action--muted">Deployment pending</span> : null}
         <button type="button" onClick={openDetails} className="hub-card-action hub-card-action--secondary-on-light"><span aria-hidden="true">ⓘ</span><span>Details</span></button>

@@ -167,6 +167,13 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
             <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">{detail.requesterName}</p>
             <p className="text-xs text-[var(--text-muted)]">{detail.requesterEmail}</p>
             <p className="mt-2 text-xs text-[var(--text-muted)]">{detail.organizationName || '—'}</p>
+            {detail.organizationType ? <p className="text-xs text-[var(--text-muted)]">{detail.organizationType}</p> : null}
+            {detail.address || detail.city || detail.state || detail.zip ? (
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                {[detail.address, [detail.city, detail.state].filter(Boolean).join(', '), detail.zip].filter(Boolean).join(' · ')}
+              </p>
+            ) : null}
+            {detail.phone ? <p className="text-xs text-[var(--text-muted)]">{detail.phone}</p> : null}
           </div>
 
           <div>

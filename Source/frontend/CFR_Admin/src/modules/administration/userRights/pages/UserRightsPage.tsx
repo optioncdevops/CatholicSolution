@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Eye, RotateCcw, Save, ShieldCheck, ShieldOff } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, Save, ShieldCheck, ShieldOff, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown } from '@app/components/formControls';
+import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '../../../lib/confirm';
 import { getUserRoles } from '../../userRoles/services/userRolesService';
 import { normalizeUserRolesList } from '../../userRoles/utils/userRolesHelpers';
 import type { UserRolesApiItem } from '../../userRoles/types/userRolesTypes';
 import { getUserRights, saveUserRights } from '../services/userRightsService';
 import {
-  buildUserRightsTree, collectAllFeatureIds, computeRowRollup, flattenUserRightsTree,
-  mergePendingChange, toPendingChangeList, type RowRollup,
+  buildUserRightsTree, collectAllFeatureIds, collectFeatureIdsForLevel, computeRowRollup, flattenUserRightsTree,
+  levelsForKind, mergePendingChange, toPendingChangeList, type RowRollup,
 } from '../utils/userRightsHelpers';
 import type { AccessLevel, UserRightsFeatureNode } from '../types/userRightsTypes';
 
@@ -59,22 +60,6 @@ function PermissionToggle({ idPrefix, label, rollup, levels, onChange, disabled 
       </CommonButton>
     </div>
   );
-}
-
-/** Module (depth 0) and Activity (depth 2+) rows are a plain on/off switch — only Feature rows
- * (depth 1, e.g. "KPI Tiles" under "Dashboard") can be set to Read Only. */
-function levelsForDepth(depth: number): AccessLevel[] {
-  return depth === 1 ? ['access', 'readOnly', 'denied'] : ['access', 'denied'];
-}
-
-/** Depth-aware bulk/cascade collector: only includes a featureId if `level` is actually a valid
- * state at that node's depth (e.g. applying Read Only from a Module or to an Activity is a no-op
- * for that row — Access/Denied cascade to every depth without restriction). */
-function collectFeatureIdsForLevel(nodes: UserRightsFeatureNode[], level: AccessLevel, depth = 0): number[] {
-  return nodes.flatMap((node) => [
-    ...(levelsForDepth(depth).includes(level) ? [node.featureId] : []),
-    ...collectFeatureIdsForLevel(node.children, level, depth + 1),
-  ]);
 }
 
 function SectionSkeleton({ rows = 8 }: { rows?: number }) {
@@ -225,16 +210,11 @@ export function UserRightsPage() {
     });
   };
 
-  const handleToggleRow = (node: UserRightsFeatureNode, depth: number, next: AccessLevel) => {
-    setPending((prev) => {
-      let updated = prev;
-      // Cascades to the whole subtree, but Read Only only ever lands on Feature-depth rows (see
-      // levelsForDepth) — a Module or Activity in that subtree keeps its own current value.
-      for (const featureId of collectFeatureIdsForLevel([node], next, depth)) {
-        updated = mergePendingChange(updated, featureId, next);
-      }
-      return updated;
-    });
+  const handleToggleRow = (node: UserRightsFeatureNode, next: AccessLevel) => {
+    // Each row's access is independent — toggling a parent (Module/Feature) must NOT change its
+    // children; every node keeps its own separately-persisted value. Bulk-changing a whole branch
+    // at once is what "Apply to all" is for (see handleApplyToAll below).
+    setPending((prev) => mergePendingChange(prev, node.featureId, next));
   };
 
   const handleClearFilters = () => {
@@ -249,7 +229,7 @@ export function UserRightsPage() {
 
   // Bulk "apply to all" — scoped to the currently visible (module-filtered) set, matching what's
   // on screen rather than silently touching hidden rows. Read Only only ever lands on
-  // Feature-depth rows (see levelsForDepth) — Module/Activity rows in scope are left untouched
+  // Feature-kind rows (see levelsForKind) — Module/Activity rows in scope are left untouched
   // rather than clamped to some other value the user didn't ask for. Confirmed first since it can
   // affect a large number of features in one action.
   const handleApplyToAll = async (level: AccessLevel) => {
@@ -262,7 +242,7 @@ export function UserRightsPage() {
       title: `Set ${ACCESS_LEVEL_LABEL[level]} for ${scopeLabel}?`,
       description: `This queues ${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} to ${ACCESS_LEVEL_LABEL[level].toLowerCase()} for ${selectedRole?.roleName ?? 'this role'}.`
         + (skippedCount > 0 ? ` ${skippedCount} module/activity-level row${skippedCount === 1 ? '' : 's'} in scope don't support Read Only and will be left as-is.` : '')
-        + ' Review the matrix and click Save Changes to persist it.',
+        + ' Review the matrix and click Save to persist it.',
       confirmLabel: `Set all to ${ACCESS_LEVEL_LABEL[level]}`,
       tone: level === 'denied' ? 'danger' : 'primary',
     });
@@ -274,7 +254,7 @@ export function UserRightsPage() {
       for (const featureId of featureIds) updated = mergePendingChange(updated, featureId, level);
       return updated;
     });
-    showToast(`${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} queued as ${ACCESS_LEVEL_LABEL[level]} — click Save Changes to persist.`, 'success');
+    showToast(`${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} queued as ${ACCESS_LEVEL_LABEL[level]} — click Save to persist.`, 'success');
     setApplyingAll(false);
   };
 
@@ -293,6 +273,70 @@ export function UserRightsPage() {
       setSaving(false);
     }
   };
+  //#endregion
+
+  //#region Columns
+  // Uses the shared DataTable (rule 0.4) with a generous fixed page size — this is a tree, not a
+  // flat list, so paginating it mid-branch would orphan a child row on a later page with no parent
+  // visible above it. Indentation/expand-toggle/permission-toggle cells stay hand-rendered here
+  // since DataTable's ColumnDef is deliberately flat-row-shaped; the tree structure itself (which
+  // rows are visible/expanded) is still owned by this page via `rows`/`expanded` above.
+  const columns: DataTableColumn<{ node: UserRightsFeatureNode; depth: number }>[] = useMemo(() => [
+    {
+      id: 'label',
+      header: 'Module / Feature / Activity',
+      value: (row) => row.node.label,
+      sortable: false,
+      cell: (row) => {
+        const { node, depth } = row;
+        const hasChildren = node.children.length > 0;
+        const isExpanded = expanded.has(node.featureId);
+        return (
+          <span className="flex items-center gap-1.5" style={{ paddingLeft: `${depth * 1.25}rem` }}>
+            {hasChildren ? (
+              <button
+                id={`ibtnToggleFeature${node.featureId}`}
+                type="button"
+                aria-label={isExpanded ? `Collapse ${node.label}` : `Expand ${node.label}`}
+                onClick={() => handleToggleExpanded(node.featureId)}
+                className="grid size-5 shrink-0 place-items-center rounded text-[var(--text-faint)] hover:bg-[var(--hover)]"
+              >
+                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+            ) : (
+              <span className="inline-block size-5 shrink-0" aria-hidden="true" />
+            )}
+            <span className={node.kind === 'module' ? 'font-extrabold text-[var(--text-primary)]' : node.kind === 'feature' ? 'font-bold text-[var(--text-secondary)]' : 'text-[var(--text-secondary)]'}>
+              {node.label}
+            </span>
+          </span>
+        );
+      },
+    },
+    {
+      id: 'description',
+      header: 'Description',
+      value: (row) => row.node.description,
+      sortable: false,
+      cell: (row) => <span className="text-[var(--text-muted)]">{row.node.description || '—'}</span>,
+    },
+    {
+      id: 'permission',
+      header: 'Permission',
+      sortable: false,
+      excludeFromExport: true,
+      cell: (row) => (
+        <PermissionToggle
+          idPrefix={`Feature${row.node.featureId}`}
+          label={row.node.label}
+          rollup={computeRowRollup(row.node, effectiveLevel)}
+          levels={levelsForKind(row.node.kind)}
+          onChange={(next) => handleToggleRow(row.node, next)}
+          disabled={saving}
+        />
+      ),
+    },
+  ], [expanded, effectiveLevel, saving]);
   //#endregion
 
   //#region Render
@@ -379,76 +423,26 @@ export function UserRightsPage() {
       ) : rows.length === 0 ? (
         <EmptyState icon="🔍" title="No matches" description="Try a different module filter." />
       ) : (
-        <section className="admin-panel-card">
-          <div className="overflow-x-auto">
-            <table id="tblUserRights" className="admin-table">
-              <caption className="sr-only">User rights matrix for {selectedRole?.roleName ?? 'the selected role'}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Module / Feature / Activity</th>
-                  <th scope="col">Description</th>
-                  <th scope="col">Permission</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(({ node, depth }) => {
-                  const rollup = computeRowRollup(node, effectiveLevel);
-                  const hasChildren = node.children.length > 0;
-                  const isExpanded = expanded.has(node.featureId);
-                  return (
-                    <tr key={node.featureId} id={`rowFeature${node.featureId}`}>
-                      <td style={{ paddingLeft: `${depth * 1.25}rem` }}>
-                        <span className="flex items-center gap-1.5">
-                          {hasChildren ? (
-                            <button
-                              id={`ibtnToggleFeature${node.featureId}`}
-                              type="button"
-                              aria-label={isExpanded ? `Collapse ${node.label}` : `Expand ${node.label}`}
-                              onClick={() => handleToggleExpanded(node.featureId)}
-                              className="grid size-5 shrink-0 place-items-center rounded text-[var(--text-faint)] hover:bg-[var(--hover)]"
-                            >
-                              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                            </button>
-                          ) : (
-                            <span className="inline-block size-5 shrink-0" aria-hidden="true" />
-                          )}
-                          <span className={depth === 0 ? 'font-extrabold text-[var(--text-primary)]' : depth === 1 ? 'font-bold text-[var(--text-secondary)]' : 'text-[var(--text-secondary)]'}>
-                            {node.label}
-                          </span>
-                        </span>
-                      </td>
-                      <td className="text-[var(--text-muted)]">{node.description || '—'}</td>
-                      <td>
-                        <PermissionToggle
-                          idPrefix={`Feature${node.featureId}`}
-                          label={node.label}
-                          rollup={rollup}
-                          levels={levelsForDepth(depth)}
-                          onChange={(next) => handleToggleRow(node, depth, next)}
-                          disabled={saving}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        <section className="admin-panel-card" id="tblUserRights">
+          <DataTable
+            columns={columns}
+            data={rows}
+            getRowId={(row) => String(row.node.featureId)}
+            pageSize={Math.max(rows.length, 10)}
+            exportFileName="User Rights"
+            exportTitle={`User rights for ${selectedRole?.roleName ?? 'the selected role'}`}
+            emptyMessage="No matches."
+          />
         </section>
       )}
 
-      <div className="admin-sticky-footer flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold text-[var(--text-muted)]">
-          {dirtyCount > 0 ? `${dirtyCount} unsaved change${dirtyCount === 1 ? '' : 's'}` : 'No unsaved changes'}
-        </span>
-        <div className="flex items-center gap-2">
-          <CommonButton id="btnDiscardUserRightsChanges" variant="outline" iconLeft={<RotateCcw size={14} />} onClick={handleDiscard} disabled={dirtyCount === 0 || saving}>
-            Discard
-          </CommonButton>
-          <CommonButton id="btnSaveUserRights" variant="primary" iconLeft={<Save size={14} />} onClick={() => void handleSave()} loading={saving} disabled={dirtyCount === 0 || saving}>
-            Save Changes
-          </CommonButton>
-        </div>
+      <div className="admin-sticky-footer">
+        <CommonButton id="btnCancelUserRights" variant="outline" iconLeft={<X size={14} />} onClick={handleDiscard} disabled={dirtyCount === 0 || saving}>
+          Cancel
+        </CommonButton>
+        <CommonButton id="btnSaveUserRights" variant="primary" iconLeft={<Save size={14} />} onClick={() => void handleSave()} loading={saving} disabled={dirtyCount === 0 || saving}>
+          Save
+        </CommonButton>
       </div>
     </div>
   );

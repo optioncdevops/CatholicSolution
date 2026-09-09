@@ -96,7 +96,19 @@ function RequestsListPage() {
     { id: 'submittedAt', header: 'Submitted', value: (request) => request.submittedAt, cell: (request) => <span className="text-[var(--text-muted)]">{formatDate(request.submittedAt)}</span> },
     {
       id: 'review', header: 'Review', sortable: false, excludeFromExport: true,
-      cell: (request) => <CommonButton variant="outline" size="sm" onClick={() => setSelectedId(request.accessRequestId)}>Review</CommonButton>,
+      cell: (request) => {
+        const isApproved = request.status === 'approved' || request.status === 'rejected';
+        return (
+          <CommonButton
+            variant="outline"
+            size="sm"
+            disabled={isApproved}
+            onClick={() => setSelectedId(request.accessRequestId)}
+          >
+            {isApproved ? 'Reviewed' : 'Review'}
+          </CommonButton>
+        );
+      },
     },
   ], []);
   //#endregion

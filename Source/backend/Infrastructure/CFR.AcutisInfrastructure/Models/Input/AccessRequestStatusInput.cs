@@ -29,3 +29,4 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string? Note { get; set; }
     }
 }
+

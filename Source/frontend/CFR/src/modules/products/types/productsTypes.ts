@@ -13,6 +13,10 @@ export interface HubProductApiItem {
   logoUrl?: string | null;
   features?: string[];
   hubSection?: HubSectionValue;
+  contactUserId?: number | string | null;
+  contactEmail?: string | null;
   canRequest?: boolean | number;
+  isOrgApproved?: boolean | number;
   isActive: boolean | number;
 }
+

@@ -1,5 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using Newtonsoft.Json.Linq;
+
 namespace CFR.CommonService.MailService
 {
     public class ConfSettings
@@ -124,6 +126,65 @@ namespace CFR.CommonService.MailService
                 // Optionally log the exception
             }
             return confSettings;
+        }
+
+        /// <summary>
+        /// The local-development-only ApiBaseUrl override (see <see cref="ResolveDevelopmentApiBaseUrlOverride"/>),
+        /// resolved once and reused — the same handful of files get re-read on every call otherwise
+        /// (this runs on every outgoing email and every Email Settings page load).
+        /// </summary>
+        private static readonly Lazy<string?> DevelopmentApiBaseUrlOverride = new(ResolveDevelopmentApiBaseUrlOverrideCore);
+
+        /// <summary>
+        /// _configurationSettings.json is a single flat file with no per-environment layering, so
+        /// whatever ApiBaseUrl was last saved through the Email Settings page keeps applying
+        /// everywhere it's copied — this previously let a dev-only "https://localhost:5050/acutis"
+        /// value slip into a real production email, and later the reverse (a hardcoded production
+        /// domain left over on a local dev box, breaking the local logo preview). Deliberately NOT
+        /// applied inside <see cref="LoadData"/> — that would leak into <c>EmailSettingsOutput.ApiBaseUrl</c>,
+        /// the Email Settings page's editable field, which then fails its own "not a localhost
+        /// address" validation on every Save while running locally. Instead, callers that build an
+        /// actual image URL (SMTPMailService's outgoing-email and admin-preview logo links) ask for
+        /// this override directly and prefer it over the persisted value; the persisted/admin-edited
+        /// value itself is never touched. Returns null (no override) for any environment other than
+        /// Development, so a real deployment always uses whatever the admin saved.
+        /// </summary>
+        public static string? ResolveDevelopmentApiBaseUrlOverride() => DevelopmentApiBaseUrlOverride.Value;
+
+        private static string? ResolveDevelopmentApiBaseUrlOverrideCore()
+        {
+            try
+            {
+                string? microserviceDirectory = Path.GetDirectoryName(ResolveSettingsFilePath());
+                if (string.IsNullOrWhiteSpace(microserviceDirectory))
+                {
+                    return null;
+                }
+
+                string baseSettingsFile = Path.Combine(microserviceDirectory, "appsettings.json");
+                if (!File.Exists(baseSettingsFile))
+                {
+                    return null;
+                }
+
+                string environment = JObject.Parse(File.ReadAllText(baseSettingsFile))["Environment"]?.ToString() ?? string.Empty;
+                if (!string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+
+                string envSettingsFile = Path.Combine(microserviceDirectory, $"appsettings.{environment}.json");
+                if (!File.Exists(envSettingsFile))
+                {
+                    return null;
+                }
+
+                return JObject.Parse(File.ReadAllText(envSettingsFile))["EmailSettings"]?["ApiBaseUrl"]?.ToString();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         /// <summary>

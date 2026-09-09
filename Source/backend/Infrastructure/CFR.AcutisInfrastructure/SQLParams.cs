@@ -368,6 +368,56 @@ namespace CFR.AcutisInfrastructure
             public const string Comment = nameof(Comment);
 
             /// <summary>
+            /// Requester first name from the public Request Access form.
+            /// </summary>
+            public const string FirstName = nameof(FirstName);
+
+            /// <summary>
+            /// Requester last name from the public Request Access form.
+            /// </summary>
+            public const string LastName = nameof(LastName);
+
+            /// <summary>
+            /// Organization type from the public Request Access form.
+            /// </summary>
+            public const string OrganizationType = nameof(OrganizationType);
+
+            /// <summary>
+            /// Organization name from the public Request Access form.
+            /// </summary>
+            public const string OrganizationName = nameof(OrganizationName);
+
+            /// <summary>
+            /// Organization street address.
+            /// </summary>
+            public const string Address = nameof(Address);
+
+            /// <summary>
+            /// Organization city.
+            /// </summary>
+            public const string City = nameof(City);
+
+            /// <summary>
+            /// Organization state.
+            /// </summary>
+            public const string State = nameof(State);
+
+            /// <summary>
+            /// Organization ZIP / postal code.
+            /// </summary>
+            public const string Zip = nameof(Zip);
+
+            /// <summary>
+            /// Requester phone number.
+            /// </summary>
+            public const string Phone = nameof(Phone);
+
+            /// <summary>
+            /// JSON array of selected products for a public Request Access submit.
+            /// </summary>
+            public const string ProductsJson = nameof(ProductsJson);
+
+            /// <summary>
             /// Request status value.
             /// </summary>
             public const string Status = nameof(Status);
