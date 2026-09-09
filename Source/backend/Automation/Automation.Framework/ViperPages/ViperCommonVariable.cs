@@ -81,7 +81,8 @@ namespace Automation.Framework.ViperPages
 
             public const string liSaintoftheDay = nameof(liSaintoftheDay);
             public const string liDataImport = nameof(liDataImport);
-            public const string liLogout = nameof(liLogout);
+            public const string menuProfile = nameof(menuProfile);
+            public const string menuItemSignOut = nameof(menuItemSignOut);
         }
 
         public static class XPath_SchoolDetails

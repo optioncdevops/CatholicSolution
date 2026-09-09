@@ -6,7 +6,7 @@ using static Automation.Framework.ViperPages.ViperCommonVariable;
 
 namespace Automation.Framework.ViperPages
 {
-    public class MenuNavigationPage(IWebDriver webDriver): BasePageObject(webDriver)
+    public class MenuNavigationPage(IWebDriver webDriver) : BasePageObject(webDriver)
     {
         public void NavigateToSchoolMenuPages()
         {
@@ -151,7 +151,8 @@ namespace Automation.Framework.ViperPages
 
         public void NavigateToLogoutMenuPages()
         {
-            FindElementById(XPath_Menus.liLogout);
+            FindElementById(XPath_Menus.menuProfile);
+            FindElementById(XPath_Menus.menuItemSignOut);
         }
     }
 }
