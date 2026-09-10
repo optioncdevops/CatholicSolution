@@ -54,6 +54,7 @@ import {
   PRODUCT_LICENSE_TYPE_OPTIONS,
   PRODUCT_NAVIGATION_OPTIONS,
 } from "../../utils/productFilters";
+import { EntityAvatar } from "@app/components/EntityAvatar";
 import type {
   AdminApplication,
   ProductLicenseType,
@@ -70,32 +71,43 @@ function isImageIcon(icon: string): boolean {
   );
 }
 
-function ProductIcon({ icon, gradient }: { icon: string; gradient: string }) {
-  if (isImageIcon(icon)) {
-    const resolved =
-      icon.startsWith("data:") ||
+function ProductIcon({
+  icon,
+  name,
+}: {
+  icon: string;
+  name: string;
+  gradient?: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [icon]);
+
+  const isImage =
+    isImageIcon(icon) || (icon && !icon.includes("📦") && icon.length > 2);
+  const resolved = isImage
+    ? icon.startsWith("data:") ||
       icon.startsWith("blob:") ||
       /^https?:\/\//i.test(icon)
-        ? icon
-        : resolveProductLogoUrl(icon) || icon;
+      ? icon
+      : resolveProductLogoUrl(icon) || icon
+    : null;
+
+  if (resolved && !hasError) {
     return (
       <img
         src={resolved}
         alt=""
+        onError={() => setHasError(true)}
         className="size-9 shrink-0 rounded-lg object-cover"
         aria-hidden="true"
       />
     );
   }
-  return (
-    <span
-      className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white"
-      style={{ background: gradient }}
-      aria-hidden="true"
-    >
-      {icon}
-    </span>
-  );
+
+  return <EntityAvatar name={name} size={36} square />;
 }
 
 function ProductCard({
@@ -116,7 +128,7 @@ function ProductCard({
 }) {
   const identity = (
     <>
-      <ProductIcon icon={app.icon} gradient={app.gradient} />
+      <ProductIcon icon={app.icon} name={app.name} gradient={app.gradient} />
       <div className="min-w-0">
         <span className="flex items-center gap-1.5">
           <span
@@ -322,29 +334,28 @@ function ProductForm({
         <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
           <InputField
             label="Product Name"
-            required
+            readOnly
             placeholder="Enter product name"
-            autoFocus
             value={form.name}
             onChange={(event) => onUpdate("name", event.target.value)}
-            error={touched ? errors.name : undefined}
           />
           <InputField
             label="Short Name"
+            readOnly
             placeholder="Enter short name"
             value={form.shortName}
             onChange={(event) => onUpdate("shortName", event.target.value)}
           />
           <InputField
             label="Product Subtitle"
-            required
+            readOnly
             placeholder="Enter product subtitle"
             value={form.category}
             onChange={(event) => onUpdate("category", event.target.value)}
-            error={touched ? errors.category : undefined}
           />
           <InputField
             label="Production URL"
+            autoFocus
             value={form.productionUrl}
             onChange={(event) => onUpdate("productionUrl", event.target.value)}
             placeholder="Enter production URL"
@@ -417,7 +428,16 @@ function ProductForm({
               onFileChange={handleLogoChange}
               removable
               fallbackInitials={
-                (form.icon?.length ?? 0) <= 2 ? form.icon : undefined
+                (form.icon?.length ?? 0) <= 2
+                  ? form.icon
+                  : (form.name || "")
+                      .trim()
+                      .split(/\s+/)
+                      .filter(Boolean)
+                      .map((w) => w[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase() || "PR"
               }
               initialPreviewUrl={previewUrl}
             />
@@ -605,6 +625,7 @@ const ProductEdit = () => {
       const payload: ProductInputPayload = {
         productId: product.productId,
         productName: form.name.trim(),
+        shortName: form.shortName?.trim() || null,
         subCategoryName: form.category?.trim() || null,
         prodDescription: form.description?.trim() || null,
         externalPageUrl: form.productionUrl?.trim() || null,

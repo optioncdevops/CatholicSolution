@@ -15,6 +15,7 @@ export interface ProductContactUser {
 export interface ProductApiItem {
   productId: number;
   productName: string;
+  shortName?: string | null;
   subCategoryName: string | null;
   prodDescription: string | null;
   externalPageUrl: string | null;
@@ -39,6 +40,7 @@ export interface ProductApiItem {
 export interface ProductInputPayload {
   productId: number;
   productName: string;
+  shortName?: string | null;
   subCategoryName?: string | null;
   prodDescription?: string | null;
   externalPageUrl?: string | null;

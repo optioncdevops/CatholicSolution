@@ -14,6 +14,7 @@
 -- lic.OrganizationProduct assignment data, not inferred from the static product catalog.
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
+
 GO
 
 IF OBJECT_ID(N'[dbo].[Acutis_Products_CRUD]', N'P') IS NOT NULL
@@ -25,6 +26,7 @@ CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
     -- Product Parameters
     @ProductId INT = 0,
     @ProductName NVARCHAR(200) = NULL,
+    @ShortName NVARCHAR(100) = NULL,
     @SubCategoryName NVARCHAR(200) = NULL,
     @ProdDescription NVARCHAR(MAX) = NULL,
     @ExternalPageUrl NVARCHAR(500) = NULL,
@@ -57,6 +59,7 @@ BEGIN
     SET @InsertedBy = NULLIF(@InsertedBy, 0);
     SET @UpdatedBy = NULLIF(@UpdatedBy, 0);
     SET @ProductName = NULLIF(LTRIM(RTRIM(@ProductName)), N'');
+    SET @ShortName = NULLIF(LTRIM(RTRIM(@ShortName)), N'');
     SET @SubCategoryName = NULLIF(LTRIM(RTRIM(@SubCategoryName)), N'');
     SET @ProdDescription = NULLIF(LTRIM(RTRIM(@ProdDescription)), N'');
     SET @ExternalPageUrl = NULLIF(LTRIM(RTRIM(@ExternalPageUrl)), N'');
@@ -76,6 +79,7 @@ BEGIN
         SELECT
             p.[ProductId],
             p.[ProductName],
+            p.[ShortName],
             p.[SubCategoryName],
             p.[ProdDescription],
             p.[ExternalPageUrl],
@@ -119,6 +123,7 @@ BEGIN
         SELECT
             p.[ProductId],
             p.[ProductName],
+            p.[ShortName],
             p.[SubCategoryName],
             p.[ProdDescription],
             p.[ExternalPageUrl],
@@ -199,6 +204,7 @@ BEGIN
         UPDATE [core].[Product]
         SET
             [ProductName] = ISNULL(@ProductName, [ProductName]),
+            [ShortName] = ISNULL(@ShortName, [ShortName]),
             [SubCategoryName] = ISNULL(@SubCategoryName, [SubCategoryName]),
             [ProdDescription] = ISNULL(@ProdDescription, [ProdDescription]),
             [ExternalPageUrl] = ISNULL(@ExternalPageUrl, [ExternalPageUrl]),

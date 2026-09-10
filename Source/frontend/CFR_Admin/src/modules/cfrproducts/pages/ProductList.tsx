@@ -15,6 +15,7 @@ import type {
   ProductApiItem,
   ProductInputPayload,
 } from "../types/productTypes";
+import { EntityAvatar } from "@app/components/EntityAvatar";
 import {
   DEFAULT_PRODUCT_GRADIENT,
   DEFAULT_PRODUCT_ICON,
@@ -32,6 +33,34 @@ import {
 } from "../utils/productFilters";
 import type { ProductStatus } from "@/modules/types";
 import { ProductStatusModal } from "./partials/ProductStatusModal";
+
+const ProductItemLogo = ({
+  src,
+  name,
+}: {
+  src?: string | null;
+  name: string;
+}) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
+  if (src && !hasError) {
+    return (
+      <img
+        src={src}
+        alt=""
+        onError={() => setHasError(true)}
+        className="size-9 shrink-0 rounded-lg object-cover"
+        aria-hidden="true"
+      />
+    );
+  }
+
+  return <EntityAvatar name={name} size={36} square />;
+};
 
 const ProductList = () => {
   //#region Hooks
@@ -271,22 +300,7 @@ const ProductList = () => {
                     }
                   }}
                 >
-                  {logoSrc ? (
-                    <img
-                      src={logoSrc}
-                      alt=""
-                      className="size-9 shrink-0 rounded-lg object-cover"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <span
-                      className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white"
-                      style={{ background: DEFAULT_PRODUCT_GRADIENT }}
-                      aria-hidden="true"
-                    >
-                      {DEFAULT_PRODUCT_ICON}
-                    </span>
-                  )}
+                  <ProductItemLogo src={logoSrc} name={item.productName} />
                   <div className="min-w-0">
                     <span className="block truncate text-sm font-extrabold text-[var(--text-primary)] hover:underline">
                       {item.productName}
