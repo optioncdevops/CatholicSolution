@@ -66,8 +66,7 @@ namespace Automation.Framework.ViperPages.Administration
             ScrollIntoView(XPath_EmailSettings.BrandingSection);
             ScrollIntoView(XPath_EmailSettings.FontFamilyDropdown);
 
-            var trigger = _webDriver.FindElements(By.XPath(XPath_EmailSettings.FontFamilyDropdown)).FirstOrDefault()
-                ?? _webDriver.FindElements(By.XPath("//div[@role='combobox']")).FirstOrDefault();
+            var trigger = _webDriver.FindElements(By.XPath(XPath_EmailSettings.FontFamilyDropdown)).FirstOrDefault();
             if (trigger is null)
             {
                 return false;

@@ -541,7 +541,7 @@ namespace Automation.Framework.ViperPages
             public const string BaseFontSize = "//label[.//span[normalize-space()='Base font size (px)']]/following::input[1]";
             public const string SendMailSwitch = "//label[contains(normalize-space(), 'Send mail enabled')]";
             public const string SslSwitch = "//label[contains(normalize-space(), 'SSL/TLS enabled')]";
-            public const string FontFamilyDropdown = "//div[@role='combobox'][@aria-haspopup='listbox']";
+            public const string FontFamilyDropdown = "//*[contains(normalize-space(), 'Font family')]/following::div[@role='combobox'][1]";
             public const string FontFamilyLabel = "//*[contains(normalize-space(), 'Font family')]";
             public const string FontFamilyListBox = "//div[@role='listbox']";
             public const string AccentColor = "//label[.//span[normalize-space()='Accent color']]/following::input[1]";
