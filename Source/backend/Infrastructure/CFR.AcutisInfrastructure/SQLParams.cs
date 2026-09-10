@@ -593,6 +593,12 @@ namespace CFR.AcutisInfrastructure
             /// Inclusive end of the trend-events date range (UTC).
             /// </summary>
             public const string EndDate = nameof(EndDate);
+
+            /// <summary>
+            /// Identifies which entitlement-integrity check to drill into for ActionId 2 — one of
+            /// DashboardIntegrityApiItem's field names (e.g. "activeOrganizationProductsWithoutMembers").
+            /// </summary>
+            public const string IssueKey = nameof(IssueKey);
         }
 
         public static class UserRightParams

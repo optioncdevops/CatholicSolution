@@ -38,6 +38,30 @@ namespace CFR.Acutis.Controllers.Dashboard
             return ApiResultArgs(await service.GetDashboardSummaryAsync(startDate, endDate), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves the actual flagged records behind one entitlement-integrity check.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let the Dashboard's Priority Alerts panel show and link to the exact
+        /// organizations/products/members behind a single integrity KPI, not just its count.
+        /// Request Flow: Client API GET -> DashboardController.GetIntegrityIssueDetail() -> IDashboardService.GetIntegrityIssueDetailAsync() -> Database.
+        /// Validation Details: Handled inside the service layer (issueKey must be a supported drill-down key).
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IDashboardService.GetIntegrityIssueDetailAsync().
+        /// Response Details: Standard API result enclosing a list of DashboardIntegrityIssueRowOutput with status 200, 400, or 500.
+        /// </remarks>
+        /// <param name="issueKey">One of the drill-down-supported integrity check keys.</param>
+        /// <returns>A consistent API response containing the flagged rows.</returns>
+        /// <response code="200">Successfully fetched the flagged rows.</response>
+        /// <response code="400">The requested issueKey isn't a supported drill-down.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Dashboard.GetIntegrityIssueDetail)]
+        public async Task<IActionResult> GetIntegrityIssueDetail(string issueKey)
+        {
+            return ApiResultArgs(await service.GetIntegrityIssueDetailAsync(issueKey), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
     }
 }

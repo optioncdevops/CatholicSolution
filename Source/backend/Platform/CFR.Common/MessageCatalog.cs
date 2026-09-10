@@ -47,6 +47,8 @@ namespace CFR.Common
         public const string BadRequest = "Invalid request.";
         public const string UnAuthorized = "Unauthorized.";
         public const string ResetInstructionsSent = "Password reset instructions have been sent to your email address.";
+        public const string ResetEmailSendFailed = "We couldn't send the password reset email. Please try again in a few minutes.";
+        public const string ResetAlreadyRequestedRecently = "A password reset link is already on its way to this email address and is still valid. Check your inbox (and spam folder) for that link before requesting a new one.";
         public const string AccountNotFound = "No account found with this email address.";
         public const string InvalidResetToken = "This reset link is invalid or has expired.";
         public const string PasswordMismatch = "The new passwords do not match or do not meet the minimum length.";
