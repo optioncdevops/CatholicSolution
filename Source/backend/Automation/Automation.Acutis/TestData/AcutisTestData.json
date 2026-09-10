@@ -20,7 +20,12 @@
     "TargetProductName": "OptionC",
     "FilterStatus": "Active",
     "NewStatus": "Coming Soon",
+    "EditProductName": "OptionC School",
+    "EditShortName": "OptionC",
     "EditSubtitle": "OptionC School - Updated Subtitle",
+    "EditLicenseType": "Licensed",
+    "EditNavigationTarget": "Same tab",
+    "EditFeature": "Acutis Integration",
     "EditDescription": "Automated test updated description for OptionC product.",
     "InvoiceTitle": "Automated Test Invoice Renewal",
     "SubTabs": [
