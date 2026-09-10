@@ -29,8 +29,7 @@ import type {
 import {
   DEFAULT_LICENSE_STATUS,
   PRODUCTS_PATHS,
-  customerHasActiveLicense,
-  formatCustomerCodeNumeric,
+  formatCustomerCodeAsInteger,
   parseProductIdFromState,
 } from "../../utils/productHelpers";
 import { validateLicenseForm } from "../../validator/productValidation";
@@ -90,10 +89,9 @@ const AddLicense = () => {
         return;
       }
 
-      const [productRes, orgRes, licenseRes] = await Promise.all([
+      const [productRes, orgRes] = await Promise.all([
         getProductById(resolvedId),
         getOrganizations(),
-        getLicenseDetails(resolvedId),
       ]);
       const loadedProduct =
         (productRes.resultData as ProductApiItem | null) ?? null;
@@ -101,19 +99,13 @@ const AddLicense = () => {
         orgRes.statusCode === 204
           ? []
           : normalizeOrganizationsList(orgRes.resultData);
-      const existingLicenses = Array.isArray(licenseRes.resultData)
-        ? (licenseRes.resultData as ProductLicenseApiItem[])
-        : [];
-      const eligibleOrgs = loadedOrgs.filter(
-        (org) => !customerHasActiveLicense(existingLicenses, org.orgId)
-      );
       setProduct(loadedProduct);
-      setOrganizations(eligibleOrgs);
+      setOrganizations(loadedOrgs);
       if (loadedProduct) {
-        setTitle(`${loadedProduct.productName} — License`);
+        setTitle(`${loadedProduct.productName} — Invoice`);
       }
-      if (eligibleOrgs[0]) {
-        setOrgId(String(eligibleOrgs[0].orgId));
+      if (loadedOrgs[0]) {
+        setOrgId(String(loadedOrgs[0].orgId));
       } else {
         setOrgId("");
       }
@@ -155,7 +147,7 @@ const AddLicense = () => {
           Product Not Found
         </h2>
         <p className="text-sm text-[var(--text-muted)]">
-          Open Create License from a product so the product id is passed in
+          Open Create Invoice from a product so the product id is passed in
           location state.
         </p>
         <CommonButton
@@ -210,8 +202,24 @@ const AddLicense = () => {
       const existingLicenses = Array.isArray(existingRes.resultData)
         ? (existingRes.resultData as ProductLicenseApiItem[])
         : [];
-      if (customerHasActiveLicense(existingLicenses, Number(orgId))) {
-        showToast("A license for this organization already exists.", "error");
+
+      const targetOrgId = Number(orgId);
+      const hasDurationOverlap = existingLicenses.some((lic) => {
+        if (lic.orgId !== targetOrgId) return false;
+        const licStatus = (lic.licenseStatus ?? "").trim().toLowerCase();
+        if (licStatus === "cancelled") return false;
+
+        const licStart =
+          (lic.activationDate ? lic.activationDate.split("T")[0] : "") ||
+          (lic.createdDate ? lic.createdDate.split("T")[0] : "");
+        const licEnd = lic.expiryDate ? lic.expiryDate.split("T")[0] : "9999-12-31";
+
+        if (!licStart) return false;
+        return activationDate <= licEnd && expiryDate >= licStart;
+      });
+
+      if (hasDurationOverlap) {
+        showToast("A license has already been created for this duration.", "error");
         return;
       }
 
@@ -248,7 +256,7 @@ const AddLicense = () => {
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
-        title="Create License"
+        title="Create Invoice"
         action={
           <div className="flex items-center gap-2">
             <CommonButton
@@ -294,10 +302,7 @@ const AddLicense = () => {
             <fieldset disabled={isReadOnly} className="contents">
             <div className="flex flex-col divide-y divide-[var(--line-soft)]">
               <div>
-                <div className="admin-panel-card__header">
-                  <h2 className="panel-title">License Details</h2>
-                </div>
-                <div className="grid gap-2.5 p-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2.5 p-3 sm:grid-cols-2 lg:grid-cols-4">
                   <InputField
                     label="Title"
                     required
@@ -326,7 +331,7 @@ const AddLicense = () => {
                     }}
                     options={organizations.map((org) => ({
                       id: String(org.orgId),
-                      value: `${org.orgName} (${formatCustomerCodeNumeric(org.orgId)})`,
+                      value: `${formatCustomerCodeAsInteger(org.orgId)} - ${org.orgName}`,
                     }))}
                     searchable
                     clearable={false}
@@ -334,9 +339,6 @@ const AddLicense = () => {
                       touched && !orgId ? "Organization is required." : undefined
                     }
                   />
-                </div>
-
-                <div className="grid gap-2.5 p-3 pt-0 sm:grid-cols-2">
                   <DatePicker
                     label="Start Date"
                     required

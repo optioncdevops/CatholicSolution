@@ -161,15 +161,12 @@ function ProductCard({
   return (
     <article
       className={cn(
-        "admin-product-card relative",
+        "admin-product-card",
         !linkTo && "admin-product-card--static",
         className,
       )}
     >
-      <div className="absolute right-[0.85rem] top-3">
-        <StatusBadge status={app.status} kind="application" />
-      </div>
-      <div className="flex items-center gap-2.5 pr-16">
+      <div className="flex items-start justify-between gap-2.5">
         {linkTo ? (
           <Link to={linkTo} className="group flex min-w-0 items-center gap-2.5">
             {identity}
@@ -177,6 +174,9 @@ function ProductCard({
         ) : (
           <div className="flex min-w-0 items-center gap-2.5">{identity}</div>
         )}
+        <div className="shrink-0 pt-0.5">
+          <StatusBadge status={app.status} kind="application" />
+        </div>
       </div>
       <p className="admin-product-card__description">
         {app.description || "No description yet."}
@@ -198,6 +198,7 @@ function TagList({
   onDraftChange,
   onAdd,
   onRemove,
+  maxLength = 100,
 }: {
   label: string;
   values: string[];
@@ -205,24 +206,55 @@ function TagList({
   onDraftChange: (value: string) => void;
   onAdd: () => void;
   onRemove: (value: string) => void;
+  maxLength?: number;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex w-full flex-col gap-1.5">
+      <div className="grid grid-cols-[1fr_auto] sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
+        <div className="flex flex-col gap-1">
+          <label className="block text-xs font-semibold text-[var(--text-secondary)]">
+            {label}
+          </label>
+          <input
+            value={draft}
+            maxLength={maxLength}
+            onChange={(event) => onDraftChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                onAdd();
+              }
+            }}
+            placeholder={`Add ${label.toLowerCase()} and press Enter`}
+            className="w-full rounded-[var(--admin-control-radius)] border border-[var(--line)] bg-[var(--surface-field,var(--surface))] px-3 py-2 text-[length:var(--admin-text-base)] text-[var(--text-primary)] focus:border-[var(--brand)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
+          />
+        </div>
+        <div className="flex items-center">
+          <CommonButton
+            variant="outline"
+            size="sm"
+            onClick={onAdd}
+            className="shrink-0 h-[38px] px-4"
+          >
+            Add
+          </CommonButton>
+        </div>
+      </div>
       {values.length === 0 ? (
-        <p className="text-xs text-[var(--text-muted)]">None added yet.</p>
+        <p className="text-xs text-[var(--text-muted)] pt-0.5">None added yet.</p>
       ) : (
-        <ul className="flex flex-wrap gap-1.5">
+        <ul className="flex w-full flex-wrap gap-1.5 pt-1">
           {values.map((value) => (
             <li
               key={value}
-              className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)]"
+              className="inline-flex items-center gap-1 rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)] border border-[var(--line-soft)]"
             >
-              {value}
+              <span>{value}</span>
               <button
                 type="button"
                 onClick={() => onRemove(value)}
                 aria-label={`Remove ${value}`}
-                className="text-[var(--text-faint)] hover:text-[var(--error)]"
+                className="text-[var(--text-faint)] hover:text-[var(--error)] transition-colors ml-0.5"
               >
                 ✕
               </button>
@@ -230,23 +262,6 @@ function TagList({
           ))}
         </ul>
       )}
-      <div className="flex gap-2">
-        <input
-          value={draft}
-          onChange={(event) => onDraftChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              onAdd();
-            }
-          }}
-          placeholder={`Add ${label.toLowerCase()} and press Enter`}
-          className="flex-1 rounded-[var(--admin-control-radius)] border border-[var(--line)] px-3 py-2 text-[length:var(--admin-text-base)] text-[var(--text-primary)]"
-        />
-        <CommonButton variant="outline" size="sm" onClick={onAdd}>
-          Add
-        </CommonButton>
-      </div>
     </div>
   );
 }
@@ -271,6 +286,7 @@ function ProductForm({
   onLogoFileChange?: (file: File | null) => void;
   readOnly?: boolean;
 }) {
+  const { showToast } = useToast();
   const [featureDraft, setFeatureDraft] = useState("");
 
   const contactOptions = useMemo(() => {
@@ -305,7 +321,18 @@ function ProductForm({
   const addFeature = () => {
     const value = featureDraft.trim();
     if (!value) return;
-    onUpdate("features", [...(form.features ?? []), value]);
+    if (value.length > 100) {
+      showToast("Feature name cannot exceed 100 characters.", "error");
+      return;
+    }
+    const alreadyExists = (form.features ?? []).some(
+      (item) => item.trim().toLowerCase() === value.toLowerCase(),
+    );
+    if (alreadyExists) {
+      showToast(`Feature "${value}" already exists.`, "error");
+      return;
+    }
+    onUpdate("features", [...(form.features ?? []), value.slice(0, 100)]);
     setFeatureDraft("");
   };
   const removeFeature = (value: string) =>
@@ -331,7 +358,7 @@ function ProductForm({
     <section className="admin-panel-card">
       <fieldset disabled={readOnly} className="contents">
       <div className="flex flex-col divide-y divide-[var(--line-soft)]">
-        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
           <InputField
             label="Product Name"
             readOnly
@@ -402,20 +429,17 @@ function ProductForm({
             }}
             options={contactOptions}
           />
-        </div>
-
-        <div className="p-4">
-          <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
-            Features
-          </p>
-          <TagList
-            label="Features"
-            values={form.features ?? []}
-            draft={featureDraft}
-            onDraftChange={setFeatureDraft}
-            onAdd={addFeature}
-            onRemove={removeFeature}
-          />
+          <div className="col-span-full">
+            <TagList
+              label="Features"
+              values={form.features ?? []}
+              draft={featureDraft}
+              onDraftChange={setFeatureDraft}
+              onAdd={addFeature}
+              onRemove={removeFeature}
+              maxLength={100}
+            />
+          </div>
         </div>
 
         <div className="p-4">
@@ -448,11 +472,13 @@ function ProductForm({
         <div className="p-4">
           <TextareaField
             label="Description"
+            required
             value={form.description}
             onChange={(event) => onUpdate("description", event.target.value)}
             rows={3}
             showCharCount={false}
             placeholder="What does this product do?"
+            error={touched ? errors.description : undefined}
           />
         </div>
       </div>

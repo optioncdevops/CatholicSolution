@@ -283,31 +283,33 @@ const ProductList = () => {
             return (
               <article
                 key={item.productId}
-                className="admin-product-card relative"
+                className="admin-product-card"
               >
-                <div className="absolute right-[0.85rem] top-3">
-                  <StatusBadge status={status} kind="application" />
-                </div>
+                <div className="flex items-start justify-between gap-2.5">
+                  <div
+                    className="flex min-w-0 cursor-pointer items-center gap-2.5 transition-opacity hover:opacity-90"
+                    onClick={() => goToDetails(item)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        goToDetails(item);
+                      }
+                    }}
+                  >
+                    <ProductItemLogo src={logoSrc} name={item.productName} />
+                    <div className="min-w-0">
+                      <span className="block truncate text-sm font-extrabold text-[var(--text-primary)] hover:underline">
+                        {item.productName}
+                      </span>
+                      <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">
+                        {item.subCategoryName || "General"}
+                      </span>
+                    </div>
+                  </div>
 
-                <div
-                  className="flex cursor-pointer items-center gap-2.5 pr-16 transition-opacity hover:opacity-90"
-                  onClick={() => goToDetails(item)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      goToDetails(item);
-                    }
-                  }}
-                >
-                  <ProductItemLogo src={logoSrc} name={item.productName} />
-                  <div className="min-w-0">
-                    <span className="block truncate text-sm font-extrabold text-[var(--text-primary)] hover:underline">
-                      {item.productName}
-                    </span>
-                    <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">
-                      {item.subCategoryName || "General"}
-                    </span>
+                  <div className="shrink-0 pt-0.5">
+                    <StatusBadge status={status} kind="application" />
                   </div>
                 </div>
 

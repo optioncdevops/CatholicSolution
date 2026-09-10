@@ -131,7 +131,7 @@ export interface ProductLicenseHistoryRow {
   startDate: string;
   expiryDate: string;
   paidOn?: string | null;
-  paymentStatus: 'paid' | 'overdue' | 'suspended';
+  paymentStatus: 'paid' | 'overdue' | 'suspended' | 'unpaid';
   term: 'Current' | 'Past';
   status: 'active' | 'expiring-soon' | 'expired';
   rawStatus: string;

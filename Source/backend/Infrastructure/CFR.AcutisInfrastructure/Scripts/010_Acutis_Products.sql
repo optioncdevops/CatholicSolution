@@ -412,17 +412,10 @@ BEGIN
         IF EXISTS (
             SELECT 1
             FROM [lic].[License] AS l
-            INNER JOIN [lic].[OrganizationProduct] AS op
-                ON op.[OrganizationProductId] = l.[OrganizationProductId]
-            WHERE op.[OrganizationProductId] = @OrganizationProductId
-              AND op.[IsDeleted] = 0
-              AND LOWER(ISNULL(l.[LicenseStatus], N'active')) NOT IN (N'cancelled', N'expired')
-              AND LOWER(ISNULL(op.[AssignStatus], N'active')) NOT IN (N'suspended', N'revoked')
-              AND (
-                    CAST(ISNULL(l.[ActivationDate], SYSUTCDATETIME()) AS DATE) > CAST(SYSUTCDATETIME() AS DATE)
-                 OR l.[ExpiryDate] IS NULL
-                 OR CAST(l.[ExpiryDate] AS DATE) >= CAST(SYSUTCDATETIME() AS DATE)
-              )
+            WHERE l.[OrganizationProductId] = @OrganizationProductId
+              AND LOWER(ISNULL(l.[LicenseStatus], N'active')) NOT IN (N'cancelled')
+              AND CAST(@ActivationDate AS DATE) <= CAST(ISNULL(l.[ExpiryDate], '9999-12-31') AS DATE)
+              AND CAST(@ExpiryDate AS DATE) >= CAST(ISNULL(l.[ActivationDate], '1900-01-01') AS DATE)
         )
         BEGIN
             SET @ReturnValue = -99;
@@ -516,10 +509,41 @@ BEGIN
     END
 
     ---------------------------------------------------------------------------
-    -- ActionId 9: Product customers from [core].[Organization]
+    -- ActionId 9: Organizations subscribed to a product
     ---------------------------------------------------------------------------
     IF @ActionId = 9
     BEGIN
+        ;WITH UserCounts AS (
+            SELECT up.[OrgId], COUNT(DISTINCT up.[CFRUserId]) AS [UserCount]
+            FROM [auth].[UserProduct] AS up
+            WHERE up.[ProductId] = @ProductId AND (up.[IsDeleted] = 0 OR up.[IsDeleted] IS NULL)
+            GROUP BY up.[OrgId]
+        ),
+        OrgUserCounts AS (
+            SELECT ou.[OrgId], COUNT(*) AS [OrgUserCount]
+            FROM [auth].[OrganizationUser] AS ou
+            WHERE ou.[IsDeleted] = 0
+            GROUP BY ou.[OrgId]
+        ),
+        LatestLicense AS (
+            SELECT 
+                l2.[OrganizationProductId],
+                l2.[ActivationDate],
+                l2.[ExpiryDate],
+                l2.[LicenseType],
+                l2.[LicenseStatus],
+                ROW_NUMBER() OVER (PARTITION BY l2.[OrganizationProductId] ORDER BY l2.[CreatedDate] DESC) AS rn
+            FROM [lic].[License] AS l2
+        ),
+        LatestUser AS (
+            SELECT 
+                ou.[OrgId],
+                usr.[Email],
+                ROW_NUMBER() OVER (PARTITION BY ou.[OrgId] ORDER BY ou.[CreatedDate]) AS rn
+            FROM [auth].[OrganizationUser] AS ou
+            INNER JOIN [auth].[User] AS usr ON usr.[CFRUserId] = ou.[AuthUserId]
+            WHERE ou.[IsDeleted] = 0
+        )
         SELECT
             o.[OrgId],
             o.[OrgName],
@@ -530,25 +554,7 @@ BEGIN
             o.[ContactPhone],
             o.[InsertedDate],
             o.[UpdatedDate],
-            COALESCE(
-                NULLIF(
-                    (
-                        SELECT COUNT(DISTINCT up.[CFRUserId])
-                        FROM [auth].[UserProduct] AS up
-                        WHERE up.[OrgId] = o.[OrgId]
-                          AND up.[ProductId] = op.[ProductId]
-                          AND ISNULL(up.[IsDeleted], 0) = 0
-                    ),
-                    0
-                ),
-                (
-                    SELECT COUNT(*)
-                    FROM [auth].[OrganizationUser] AS ou
-                    WHERE ou.[OrgId] = o.[OrgId]
-                      AND ou.[IsDeleted] = 0
-                ),
-                0
-            ) AS [UserCount],
+            COALESCE(NULLIF(uc.[UserCount], 0), ouc.[OrgUserCount], 0) AS [UserCount],
             CONCAT(N'ORG-', o.[OrgId]) AS [OrgCode],
             ISNULL(l.[ActivationDate], ISNULL(op.[CreatedDate], o.[InsertedDate])) AS [StartDate],
             l.[ExpiryDate],
@@ -559,27 +565,10 @@ BEGIN
             ON op.[OrgId] = o.[OrgId]
            AND op.[ProductId] = @ProductId
            AND op.[IsDeleted] = 0
-        OUTER APPLY
-        (
-            SELECT TOP (1)
-                l2.[ActivationDate],
-                l2.[ExpiryDate],
-                l2.[LicenseType],
-                l2.[LicenseStatus]
-            FROM [lic].[License] AS l2
-            WHERE l2.[OrganizationProductId] = op.[OrganizationProductId]
-            ORDER BY l2.[CreatedDate] DESC
-        ) AS l
-        OUTER APPLY
-        (
-            SELECT TOP (1)
-                usr.[Email]
-            FROM [auth].[OrganizationUser] AS ou
-            INNER JOIN [auth].[User] AS usr ON usr.[CFRUserId] = ou.[AuthUserId]
-            WHERE ou.[OrgId] = o.[OrgId]
-              AND ou.[IsDeleted] = 0
-            ORDER BY ou.[CreatedDate]
-        ) AS u
+        LEFT JOIN UserCounts AS uc ON uc.[OrgId] = o.[OrgId]
+        LEFT JOIN OrgUserCounts AS ouc ON ouc.[OrgId] = o.[OrgId]
+        LEFT JOIN LatestLicense AS l ON l.[OrganizationProductId] = op.[OrganizationProductId] AND l.rn = 1
+        LEFT JOIN LatestUser AS u ON u.[OrgId] = o.[OrgId] AND u.rn = 1
         WHERE o.[IsDeleted] = 0
         ORDER BY o.[OrgName];
 

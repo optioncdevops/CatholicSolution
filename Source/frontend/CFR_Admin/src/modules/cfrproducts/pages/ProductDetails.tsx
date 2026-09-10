@@ -16,7 +16,6 @@ import {
 } from "../validator/productValidation";
 import {
   getProductById,
-  getProductCustomers,
   updateProduct,
 } from "../services/productService";
 import type {
@@ -30,7 +29,6 @@ import {
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
   normalizeProductApiItem,
-  normalizeProductCustomerList,
   parseProductIdFromState,
   parseProductTabFromState,
   resolveProductLogoUrl,
@@ -143,15 +141,12 @@ function ProductCard({
   return (
     <article
       className={cn(
-        "admin-product-card relative",
+        "admin-product-card",
         !linkTo && "admin-product-card--static",
         className,
       )}
     >
-      <div className="absolute right-[0.85rem] top-3">
-        <StatusBadge status={app.status} kind="application" />
-      </div>
-      <div className="flex items-center gap-2.5 pr-16">
+      <div className="flex items-start justify-between gap-2.5">
         {linkTo ? (
           <Link to={linkTo} className="group flex min-w-0 items-center gap-2.5">
             {identity}
@@ -159,6 +154,9 @@ function ProductCard({
         ) : (
           <div className="flex min-w-0 items-center gap-2.5">{identity}</div>
         )}
+        <div className="shrink-0 pt-0.5">
+          <StatusBadge status={app.status} kind="application" />
+        </div>
       </div>
       <p className="admin-product-card__description">
         {app.description || "No description yet."}
@@ -220,7 +218,7 @@ function ProductionUrlFact({ url }: { url: string }) {
     : "";
 
   return (
-    <div className="min-w-0 sm:col-span-2">
+    <div className="min-w-0">
       <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
         Production URL
       </p>
@@ -229,13 +227,13 @@ function ProductionUrlFact({ url }: { url: string }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-0.5 block break-all text-[0.8125rem] font-bold text-[var(--primary)] hover:underline"
+          className="mt-0.5 block truncate text-[0.8125rem] font-bold text-[var(--primary)] hover:underline"
           title={href}
         >
           {href}
         </a>
       ) : (
-        <p className="mt-0.5 text-[0.8125rem] font-bold text-[var(--text-primary)]">
+        <p className="mt-0.5 truncate text-[0.8125rem] font-bold text-[var(--text-primary)]">
           Not configured
         </p>
       )}
@@ -246,16 +244,11 @@ function ProductionUrlFact({ url }: { url: string }) {
 function ProductDetailsTab({ app }: { app: AdminApplication }) {
   return (
     <section className="admin-panel-card">
-      <div className="admin-panel-card__header">
-        <h2 className="panel-title">Product Details</h2>
-      </div>
-
       <div className="flex flex-col divide-y divide-[var(--line-soft)]">
-        <div className="grid grid-cols-2 gap-x-5 gap-y-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
           <Fact label="Product Name" value={app.name} />
           <Fact label="Short Name" value={app.shortName} />
           <Fact label="Product Subtitle" value={app.category} />
-          <Fact label="Status" value={app.status.replace("-", " ")} />
           <ProductionUrlFact url={app.productionUrl} />
           <Fact label="License Type" value={app.licenseType} />
           <Fact
@@ -263,6 +256,7 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
             value={app.navigationTarget === "new-tab" ? "New Tab" : "Same Tab"}
           />
           <Fact label="Contact Person" value={app.contactPersonName || ""} />
+          <Fact label="Status" value={app.status.replace("-", " ")} />
           <Fact label="Last updated" value={formatDate(app.updatedAt)} />
         </div>
 
@@ -298,9 +292,6 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
         </div>
 
         <div className="p-4">
-          <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
-            Product Preview
-          </p>
           <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
             <div className="flex flex-col gap-1.5">
               <span className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
@@ -338,7 +329,6 @@ const ProductDetails = () => {
   const [pendingStatus, setPendingStatus] = useState<ProductStatus | null>(
     null,
   );
-  const [customerCount, setCustomerCount] = useState(0);
   //#endregion
 
   //#region Functions
@@ -416,30 +406,6 @@ const ProductDetails = () => {
       setActiveTab(tab);
     }
   }, [location.state]);
-
-  useEffect(() => {
-    if (!product?.productId) {
-      setCustomerCount(0);
-      return;
-    }
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await getProductCustomers(product.productId);
-        if (cancelled) return;
-        setCustomerCount(normalizeProductCustomerList(res.resultData).length);
-      } catch {
-        if (!cancelled) {
-          setCustomerCount(0);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [product?.productId]);
   //#endregion
 
   if (loading) {
@@ -522,7 +488,7 @@ const ProductDetails = () => {
         onChange={setActiveTab}
         tabs={[
           { id: "details", label: "Product Details" },
-          { id: "customers", label: "Organizations", count: customerCount },
+          { id: "customers", label: "Organizations" },
           { id: "invoice-details", label: "Invoice Details" },
           { id: "invoice-history", label: "Invoice History" },
         ]}
@@ -533,7 +499,7 @@ const ProductDetails = () => {
       </TabPanel>
 
       <TabPanel id="customers" activeId={activeTab}>
-        <CustomerDetails app={app} onCountChange={setCustomerCount} />
+        <CustomerDetails app={app} />
       </TabPanel>
 
       <TabPanel id="invoice-details" activeId={activeTab}>
