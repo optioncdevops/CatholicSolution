@@ -77,7 +77,7 @@ namespace CFR.Common
         public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
         public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
         public const string ExistProduct = "A product with this name already exists.";
-        public const string ExistLicense = "A license for this customer already exists.";
+        public const string ExistLicense = "A license has already been created for this duration.";
         public const string ProductNotFound = "Product not found.";
         public const string ProductDisabled = "This product is not available.";
         public const string ProductNotAssignedToUser = "This product is not assigned to the current user.";

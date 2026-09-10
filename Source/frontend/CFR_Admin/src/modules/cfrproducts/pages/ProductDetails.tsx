@@ -16,7 +16,6 @@ import {
 } from "../validator/productValidation";
 import {
   getProductById,
-  getProductCustomers,
   updateProduct,
 } from "../services/productService";
 import type {
@@ -27,16 +26,15 @@ import { CustomerDetails } from "./CustomerDetails";
 import { LicenseDetails } from "./LicenseDetails";
 import { LicenseHistory } from "./LicenseHistory";
 import {
-  DEFAULT_PRODUCT_GRADIENT,
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
   normalizeProductApiItem,
-  normalizeProductCustomerList,
   parseProductIdFromState,
   parseProductTabFromState,
   resolveProductLogoUrl,
   toAdminApplication,
 } from "../utils/productHelpers";
+import { EntityAvatar } from "@app/components/EntityAvatar";
 import type { AdminApplication, ProductStatus } from "@/modules/types";
 import { ProductStatusModal } from "./partials/ProductStatusModal";
 
@@ -50,32 +48,46 @@ function isImageIcon(icon: string): boolean {
   );
 }
 
-function ProductIcon({ icon, gradient }: { icon: string; gradient: string }) {
-  if (isImageIcon(icon)) {
-    const resolved =
-      icon.startsWith("data:") ||
+function ProductIcon({
+  icon,
+  name,
+  size = 36,
+}: {
+  icon: string;
+  name: string;
+  gradient?: string;
+  size?: number;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [icon]);
+
+  const isImage =
+    isImageIcon(icon) || (icon && !icon.includes("📦") && icon.length > 2);
+  const resolved = isImage
+    ? icon.startsWith("data:") ||
       icon.startsWith("blob:") ||
       /^https?:\/\//i.test(icon)
-        ? icon
-        : resolveProductLogoUrl(icon) || icon;
+      ? icon
+      : resolveProductLogoUrl(icon) || icon
+    : null;
+
+  if (resolved && !hasError) {
     return (
       <img
         src={resolved}
         alt=""
-        className="size-9 shrink-0 rounded-lg object-cover"
+        onError={() => setHasError(true)}
+        style={{ width: size, height: size }}
+        className="shrink-0 rounded-lg object-cover"
         aria-hidden="true"
       />
     );
   }
-  return (
-    <span
-      className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white"
-      style={{ background: gradient }}
-      aria-hidden="true"
-    >
-      {icon}
-    </span>
-  );
+
+  return <EntityAvatar name={name} size={size} square />;
 }
 
 function ProductCard({
@@ -96,7 +108,7 @@ function ProductCard({
 }) {
   const identity = (
     <>
-      <ProductIcon icon={app.icon} gradient={app.gradient} />
+      <ProductIcon icon={app.icon} name={app.name} gradient={app.gradient} />
       <div className="min-w-0">
         <span className="flex items-center gap-1.5">
           <span
@@ -129,15 +141,12 @@ function ProductCard({
   return (
     <article
       className={cn(
-        "admin-product-card relative",
+        "admin-product-card",
         !linkTo && "admin-product-card--static",
         className,
       )}
     >
-      <div className="absolute right-[0.85rem] top-3">
-        <StatusBadge status={app.status} kind="application" />
-      </div>
-      <div className="flex items-center gap-2.5 pr-16">
+      <div className="flex items-start justify-between gap-2.5">
         {linkTo ? (
           <Link to={linkTo} className="group flex min-w-0 items-center gap-2.5">
             {identity}
@@ -145,6 +154,9 @@ function ProductCard({
         ) : (
           <div className="flex min-w-0 items-center gap-2.5">{identity}</div>
         )}
+        <div className="shrink-0 pt-0.5">
+          <StatusBadge status={app.status} kind="application" />
+        </div>
       </div>
       <p className="admin-product-card__description">
         {app.description || "No description yet."}
@@ -197,7 +209,7 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-function WebsiteUrlFact({ url }: { url: string }) {
+function ProductionUrlFact({ url }: { url: string }) {
   const trimmed = (url ?? "").trim();
   const href = trimmed
     ? /^https?:\/\//i.test(trimmed)
@@ -206,22 +218,22 @@ function WebsiteUrlFact({ url }: { url: string }) {
     : "";
 
   return (
-    <div className="min-w-0 sm:col-span-2">
+    <div className="min-w-0">
       <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
-        Website URL
+        Production URL
       </p>
       {trimmed ? (
         <a
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-0.5 block break-all text-[0.8125rem] font-bold text-[var(--primary)] hover:underline"
+          className="mt-0.5 block truncate text-[0.8125rem] font-bold text-[var(--primary)] hover:underline"
           title={href}
         >
           {href}
         </a>
       ) : (
-        <p className="mt-0.5 text-[0.8125rem] font-bold text-[var(--text-primary)]">
+        <p className="mt-0.5 truncate text-[0.8125rem] font-bold text-[var(--text-primary)]">
           Not configured
         </p>
       )}
@@ -232,25 +244,29 @@ function WebsiteUrlFact({ url }: { url: string }) {
 function ProductDetailsTab({ app }: { app: AdminApplication }) {
   return (
     <section className="admin-panel-card">
-      <div className="admin-panel-card__header">
-        <h2 className="panel-title">Product Details</h2>
-      </div>
-
       <div className="flex flex-col divide-y divide-[var(--line-soft)]">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Fact label="Product Name" value={app.name} />
+          <Fact label="Short Name" value={app.shortName} />
+          <Fact label="Product Subtitle" value={app.category} />
+          <ProductionUrlFact url={app.productionUrl} />
+          <Fact label="License Type" value={app.licenseType} />
+          <Fact
+            label="Navigation Target"
+            value={app.navigationTarget === "new-tab" ? "New Tab" : "Same Tab"}
+          />
+          <Fact label="Contact Person" value={app.contactPersonName || ""} />
+          <Fact label="Status" value={app.status.replace("-", " ")} />
+          <Fact label="Last updated" value={formatDate(app.updatedAt)} />
+        </div>
+
         <div className="p-4">
+          <p className="mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
+            Description
+          </p>
           <p className="text-[0.8125rem] leading-6 text-[var(--text-secondary)]">
             {app.description || "No description yet."}
           </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-x-5 gap-y-3 p-4 sm:grid-cols-3 lg:grid-cols-4">
-          <Fact label="Product Subtitle" value={app.category} />
-          <Fact label="Status" value={app.status.replace("-", " ")} />
-          <WebsiteUrlFact url={app.productionUrl} />
-          <Fact label="License Type" value={app.licenseType} />
-          <Fact label="Navigation Target" value={app.navigationTarget === "new-tab" ? "New Tab" : "Same Tab"} />
-          <Fact label="Last updated" value={formatDate(app.updatedAt)} />
-          <Fact label="Contact Person" value={app.contactPersonName || ""} />
         </div>
 
         <div className="p-4">
@@ -276,10 +292,17 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
         </div>
 
         <div className="p-4">
-          <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
-            Product Preview
-          </p>
-          <ProductCard app={app} className="max-w-xs" />
+          <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
+                Product Logo
+              </span>
+              <div className="flex size-18 items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2">
+                <ProductIcon icon={app.icon} name={app.name} size={44} />
+              </div>
+            </div>
+            <ProductCard app={app} className="max-w-xs" />
+          </div>
         </div>
       </div>
     </section>
@@ -306,7 +329,6 @@ const ProductDetails = () => {
   const [pendingStatus, setPendingStatus] = useState<ProductStatus | null>(
     null,
   );
-  const [customerCount, setCustomerCount] = useState(0);
   //#endregion
 
   //#region Functions
@@ -345,6 +367,7 @@ const ProductDetails = () => {
       const payload: ProductInputPayload = {
         productId: product.productId,
         productName: product.productName,
+        shortName: product.shortName,
         subCategoryName: product.subCategoryName,
         prodDescription: product.prodDescription,
         externalPageUrl: product.externalPageUrl,
@@ -383,30 +406,6 @@ const ProductDetails = () => {
       setActiveTab(tab);
     }
   }, [location.state]);
-
-  useEffect(() => {
-    if (!product?.productId) {
-      setCustomerCount(0);
-      return;
-    }
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await getProductCustomers(product.productId);
-        if (cancelled) return;
-        setCustomerCount(normalizeProductCustomerList(res.resultData).length);
-      } catch {
-        if (!cancelled) {
-          setCustomerCount(0);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [product?.productId]);
   //#endregion
 
   if (loading) {
@@ -447,24 +446,7 @@ const ProductDetails = () => {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title={app.name}
-        icon={
-          logoSrc ? (
-            <img
-              src={logoSrc}
-              alt=""
-              className="size-9 shrink-0 rounded-xl object-cover"
-              aria-hidden="true"
-            />
-          ) : (
-            <span
-              className="grid size-9 shrink-0 place-items-center rounded-xl text-base text-white"
-              style={{ background: DEFAULT_PRODUCT_GRADIENT }}
-              aria-hidden="true"
-            >
-              {DEFAULT_PRODUCT_ICON}
-            </span>
-          )
-        }
+        icon={<ProductIcon icon={logoSrc || ""} name={app.name} />}
         action={
           <div className="flex flex-wrap items-center gap-2">
             <CommonButton
@@ -507,7 +489,7 @@ const ProductDetails = () => {
         onChange={setActiveTab}
         tabs={[
           { id: "details", label: "Product Details" },
-          { id: "customers", label: "Organizations", count: customerCount },
+          { id: "customers", label: "Organizations" },
           { id: "invoice-details", label: "Invoice Details" },
           { id: "invoice-history", label: "Invoice History" },
         ]}
@@ -518,7 +500,7 @@ const ProductDetails = () => {
       </TabPanel>
 
       <TabPanel id="customers" activeId={activeTab}>
-        <CustomerDetails app={app} onCountChange={setCustomerCount} />
+        <CustomerDetails app={app} />
       </TabPanel>
 
       <TabPanel id="invoice-details" activeId={activeTab}>

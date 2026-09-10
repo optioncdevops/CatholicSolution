@@ -15,6 +15,7 @@ import type {
   ProductApiItem,
   ProductInputPayload,
 } from "../types/productTypes";
+import { EntityAvatar } from "@app/components/EntityAvatar";
 import {
   DEFAULT_PRODUCT_GRADIENT,
   DEFAULT_PRODUCT_ICON,
@@ -32,6 +33,34 @@ import {
 } from "../utils/productFilters";
 import type { ProductStatus } from "@/modules/types";
 import { ProductStatusModal } from "./partials/ProductStatusModal";
+
+const ProductItemLogo = ({
+  src,
+  name,
+}: {
+  src?: string | null;
+  name: string;
+}) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
+  if (src && !hasError) {
+    return (
+      <img
+        src={src}
+        alt=""
+        onError={() => setHasError(true)}
+        className="size-9 shrink-0 rounded-lg object-cover"
+        aria-hidden="true"
+      />
+    );
+  }
+
+  return <EntityAvatar name={name} size={36} square />;
+};
 
 const ProductList = () => {
   //#region Hooks
@@ -254,46 +283,33 @@ const ProductList = () => {
             return (
               <article
                 key={item.productId}
-                className="admin-product-card relative"
+                className="admin-product-card"
               >
-                <div className="absolute right-[0.85rem] top-3">
-                  <StatusBadge status={status} kind="application" />
-                </div>
+                <div className="flex items-start justify-between gap-2.5">
+                  <div
+                    className="flex min-w-0 cursor-pointer items-center gap-2.5 transition-opacity hover:opacity-90"
+                    onClick={() => goToDetails(item)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        goToDetails(item);
+                      }
+                    }}
+                  >
+                    <ProductItemLogo src={logoSrc} name={item.productName} />
+                    <div className="min-w-0">
+                      <span className="block truncate text-sm font-extrabold text-[var(--text-primary)] hover:underline">
+                        {item.productName}
+                      </span>
+                      <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">
+                        {item.subCategoryName || "General"}
+                      </span>
+                    </div>
+                  </div>
 
-                <div
-                  className="flex cursor-pointer items-center gap-2.5 pr-16 transition-opacity hover:opacity-90"
-                  onClick={() => goToDetails(item)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      goToDetails(item);
-                    }
-                  }}
-                >
-                  {logoSrc ? (
-                    <img
-                      src={logoSrc}
-                      alt=""
-                      className="size-9 shrink-0 rounded-lg object-cover"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <span
-                      className="grid size-9 shrink-0 place-items-center rounded-lg text-sm text-white"
-                      style={{ background: DEFAULT_PRODUCT_GRADIENT }}
-                      aria-hidden="true"
-                    >
-                      {DEFAULT_PRODUCT_ICON}
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <span className="block truncate text-sm font-extrabold text-[var(--text-primary)] hover:underline">
-                      {item.productName}
-                    </span>
-                    <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">
-                      {item.subCategoryName || "General"}
-                    </span>
+                  <div className="shrink-0 pt-0.5">
+                    <StatusBadge status={status} kind="application" />
                   </div>
                 </div>
 

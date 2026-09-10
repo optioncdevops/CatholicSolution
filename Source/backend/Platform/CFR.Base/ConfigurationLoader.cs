@@ -13,15 +13,17 @@ namespace CFR.Base
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
             var tempConfig = builder.Build();
-            // An "Environment" OS/process environment variable (e.g. set on the IIS app pool)
-            // overrides the literal value baked into appsettings.json — without this, a deployed
-            // server can never select its own appsettings.{Environment}.json purely via an
-            // environment variable, since .AddEnvironmentVariables() below is only added AFTER this
-            // decision and only affects individual keys, not which env-specific file gets loaded.
+            // IIS usually sets ASPNETCORE_ENVIRONMENT; this repo also uses a custom "Environment" key.
+            // Either process variable overrides the value baked into appsettings.json so a deployed
+            // host can load appsettings.{Environment}.json without editing the file on the server.
             string? env = Environment.GetEnvironmentVariable("Environment");
             if (string.IsNullOrWhiteSpace(env))
             {
-                env = tempConfig["Environment"]; // Read environment after initial load
+                env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            }
+            if (string.IsNullOrWhiteSpace(env))
+            {
+                env = tempConfig["Environment"];
             }
 
             builder.AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)

@@ -9,7 +9,7 @@ import { formatDate, accessStatusOf } from '@/modules/utils/formatDate';
 import { getProductCustomers } from '../services/productService';
 import type { ProductCustomerRow } from '../types/productTypes';
 import { normalizeProductCustomerList, toProductCustomerRow } from '../utils/productHelpers';
-import { CUSTOMER_STATUS_FILTERS, type EffectiveCustomerStatus } from '../utils/productFilters';
+import { CUSTOMER_STATUS_FILTERS, type CustomerFilterId, type EffectiveCustomerStatus } from '../utils/productFilters';
 import type { AdminApplication } from '@/modules/types';
 
 function effectiveStatusOf(org: ProductCustomerRow): EffectiveCustomerStatus {
@@ -31,8 +31,9 @@ export function CustomerDetails({
   //#endregion
 
   //#region States
-  const [statusFilter, setStatusFilter] = useState<EffectiveCustomerStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<CustomerFilterId>('all');
   const [productCustomers, setProductCustomers] = useState<ProductCustomerRow[]>([]);
+  const [loading, setLoading] = useState(true);
   //#endregion
 
   //#region Functions
@@ -40,10 +41,12 @@ export function CustomerDetails({
     const productId = Number(app.id);
     if (!Number.isInteger(productId) || productId <= 0) {
       setProductCustomers([]);
+      setLoading(false);
       onCountChange?.(0);
       return;
     }
 
+    setLoading(true);
     try {
       const res = await getProductCustomers(productId);
       const rows = normalizeProductCustomerList(res.resultData).map(toProductCustomerRow);
@@ -54,11 +57,17 @@ export function CustomerDetails({
       showToast(typeof err === 'string' ? err : 'Failed to load customers.', 'error');
       setProductCustomers([]);
       onCountChange?.(0);
+    } finally {
+      setLoading(false);
     }
   }, [app.id, onCountChange, showToast]);
 
   const customers = useMemo(() => productCustomers
-    .filter((org) => statusFilter === 'all' || effectiveStatusOf(org) === statusFilter)
+    .filter((org) => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'zero-users') return org.userCount === 0;
+      return effectiveStatusOf(org) === statusFilter;
+    })
     .sort((a, b) => a.name.localeCompare(b.name)),
   [productCustomers, statusFilter]);
   //#endregion
@@ -100,10 +109,19 @@ export function CustomerDetails({
         />
       ),
     },
-    { id: 'code', header: 'Code', width: '10rem', value: (org) => org.code, cell: (org) => <span className="font-mono text-xs text-[var(--text-secondary)]">{org.code}</span> },
+    {
+      id: 'code',
+      header: 'Organization Code',
+      width: '12rem',
+      value: (org) => {
+        const num = Number.parseInt(org.code, 10);
+        return Number.isFinite(num) ? num : 0;
+      },
+      cell: (org) => <span className="font-mono text-xs text-[var(--text-secondary)]">{org.code}</span>,
+    },
     {
       id: 'name',
-      header: 'Organization',
+      header: 'Organization Name',
       width: '16rem',
       value: (org) => org.name,
       cell: (org) => (
@@ -137,11 +155,32 @@ export function CustomerDetails({
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-3" aria-busy="true">
+        <div className="flex flex-nowrap items-center gap-2 pb-0.5">
+          <div className="admin-skeleton h-8 w-24 rounded-full" />
+          <div className="admin-skeleton h-8 w-24 rounded-full" />
+          <div className="admin-skeleton h-8 w-24 rounded-full" />
+        </div>
+        <div className="admin-skeleton h-80 w-full rounded-[var(--radius-panel)]" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
         {CUSTOMER_STATUS_FILTERS.map((filter) => {
-          const count = filter.id === 'all' ? productCustomers.length : productCustomers.filter((org) => effectiveStatusOf(org) === filter.id).length;
+          let count = 0;
+          if (filter.id === 'all') {
+            count = productCustomers.length;
+          } else if (filter.id === 'zero-users') {
+            count = productCustomers.filter((org) => org.userCount === 0).length;
+          } else {
+            count = productCustomers.filter((org) => effectiveStatusOf(org) === filter.id).length;
+          }
+
           return (
             <button
               key={filter.id}

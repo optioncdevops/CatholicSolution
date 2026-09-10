@@ -39,8 +39,10 @@ export const PRODUCT_MODAL_STATUS_OPTIONS: ProductStatus[] = ['active', 'inactiv
  */
 export type EffectiveCustomerStatus = 'active' | 'expiring-soon' | 'expired';
 
+export type CustomerFilterId = EffectiveCustomerStatus | 'all' | 'zero-users';
+
 export const CUSTOMER_STATUS_FILTERS: Array<{
-  id: EffectiveCustomerStatus | 'all';
+  id: CustomerFilterId;
   label: string;
   dot?: string;
 }> = [
@@ -48,6 +50,7 @@ export const CUSTOMER_STATUS_FILTERS: Array<{
   { id: 'active', label: 'Active', dot: 'var(--success)' },
   { id: 'expiring-soon', label: 'Expiring Soon', dot: 'var(--warning)' },
   { id: 'expired', label: 'Expired', dot: 'var(--error)' },
+  { id: 'zero-users', label: '0 Users', dot: 'var(--text-muted)' },
 ];
 
 /**
@@ -66,14 +69,14 @@ export const LICENSE_DETAILS_STATUS_FILTERS: Array<{
 /**
  * License history status filter options for the License History tab.
  */
-export type LicenseHistoryStatusFilter = 'all' | 'paid' | 'overdue' | 'active' | 'expiring-soon' | 'expired';
+export type LicenseHistoryStatusFilter = 'paid' | 'unpaid' | 'overdue';
 
 export const LICENSE_HISTORY_STATUS_FILTERS: Array<{
   id: LicenseHistoryStatusFilter;
   label: string;
 }> = [
-  { id: 'all', label: 'Paid & Unpaid' },
   { id: 'paid', label: 'Paid' },
+  { id: 'unpaid', label: 'Unpaid' },
   { id: 'overdue', label: 'Overdue' },
 ];
 
@@ -96,6 +99,9 @@ export const PRODUCT_NAVIGATION_OPTIONS: Array<{ id: ProductNavigationTarget; va
 export function InvoiceStatusBadge({ status }: { status: string }) {
   if (status === 'paid') {
     return <Badge tone="success">Paid</Badge>;
+  }
+  if (status === 'unpaid') {
+    return <Badge tone="warning">Unpaid</Badge>;
   }
   if (status === 'overdue') {
     return <Badge tone="danger">Overdue</Badge>;

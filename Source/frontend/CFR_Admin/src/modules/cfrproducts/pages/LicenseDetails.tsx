@@ -223,7 +223,7 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
     },
     {
       id: "customer",
-      header: "Organization",
+      header: "Organization Name",
       width: "18rem",
       value: (lic) => lic.customer,
       cell: (lic) => (
@@ -234,7 +234,7 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
     },
     {
       id: "invoiceNumber",
-      header: "Invoice",
+      header: "Invoice No",
       width: "12rem",
       value: (lic) => lic.invoiceNumber,
       cell: (lic) => (
@@ -310,10 +310,26 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-semibold text-[var(--text-muted)]">
-          {rows.length} invoice{rows.length === 1 ? "" : "s"}
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
+          {LICENSE_DETAILS_STATUS_FILTERS.map((filter) => {
+            const count =
+              filter.id === "all"
+                ? mappedLicenses.length
+                : mappedLicenses.filter((lic) => lic.status === filter.id).length;
+            return (
+              <button
+                key={filter.id}
+                type="button"
+                onClick={() => setStatusFilter(filter.id)}
+                className={`admin-filter-chip ${statusFilter === filter.id ? "admin-filter-chip--active" : ""}`}
+              >
+                {filter.label} ({count})
+              </button>
+            );
+          })}
+        </div>
+
         <div className="flex items-center gap-2">
           <div className="w-36">
             <Dropdown
@@ -346,25 +362,6 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
             Create Invoice
           </CommonButton>
         </div>
-      </div>
-
-      <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
-        {LICENSE_DETAILS_STATUS_FILTERS.map((filter) => {
-          const count =
-            filter.id === "all"
-              ? mappedLicenses.length
-              : mappedLicenses.filter((lic) => lic.status === filter.id).length;
-          return (
-            <button
-              key={filter.id}
-              type="button"
-              onClick={() => setStatusFilter(filter.id)}
-              className={`admin-filter-chip ${statusFilter === filter.id ? "admin-filter-chip--active" : ""}`}
-            >
-              {filter.label} ({count})
-            </button>
-          );
-        })}
       </div>
 
       {rows.length === 0 ? (
