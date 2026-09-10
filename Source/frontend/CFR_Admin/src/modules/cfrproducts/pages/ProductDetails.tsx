@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Pencil, RefreshCw } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
+import { ReadOnlyBanner } from "@shared/app/components/ReadOnlyBanner";
 import { useToast } from "@shared/app/components/ToastProvider";
+import { useFeatureAccessLevel } from "@shared/auth/hooks/useFeatureAccessLevel";
 import { CommonButton } from "@app/components/buttons";
 import { Tabs, TabPanel } from "@app/components/Tabs";
 import { StatusBadge } from "@app/components/Badge";
@@ -290,6 +292,8 @@ const ProductDetails = () => {
   const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel(PRODUCTS_PATHS.list);
+  const isReadOnly = accessLevel === "readOnly";
   //#endregion
 
   //#region States
@@ -333,7 +337,7 @@ const ProductDetails = () => {
   }, [stateProductId, showToast]);
 
   const handleConfirmStatus = async (status: ProductStatus) => {
-    if (!product) return;
+    if (!product || isReadOnly) return;
     try {
       const isActive = status !== "inactive";
       const productStatus =
@@ -474,6 +478,7 @@ const ProductDetails = () => {
               variant="headerSecondary"
               iconLeft={<RefreshCw size={14} />}
               onClick={() => setChangingStatus(true)}
+              disabled={isReadOnly}
             >
               Change Status
             </CommonButton>
@@ -493,6 +498,8 @@ const ProductDetails = () => {
       />
 
       <ProductWarningsBanner warnings={warnings} />
+
+      {isReadOnly ? <ReadOnlyBanner featureName="Products" /> : null}
 
       <Tabs
         activeId={activeTab}
@@ -514,7 +521,7 @@ const ProductDetails = () => {
       </TabPanel>
 
       <TabPanel id="invoice-details" activeId={activeTab}>
-        <LicenseDetails app={app} />
+        <LicenseDetails app={app} readOnly={isReadOnly} />
       </TabPanel>
 
       <TabPanel id="invoice-history" activeId={activeTab}>

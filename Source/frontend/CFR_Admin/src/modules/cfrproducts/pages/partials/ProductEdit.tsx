@@ -8,7 +8,9 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
+import { ReadOnlyBanner } from "@shared/app/components/ReadOnlyBanner";
 import { useToast } from "@shared/app/components/ToastProvider";
+import { useFeatureAccessLevel } from "@shared/auth/hooks/useFeatureAccessLevel";
 import { CommonButton } from "@app/components/buttons";
 import {
   InputField,
@@ -244,6 +246,7 @@ function ProductForm({
   contactUsers,
   onUpdate,
   onLogoFileChange,
+  readOnly = false,
 }: {
   form: AdminApplication;
   errors: ProductFormErrors;
@@ -254,6 +257,7 @@ function ProductForm({
     value: AdminApplication[K],
   ) => void;
   onLogoFileChange?: (file: File | null) => void;
+  readOnly?: boolean;
 }) {
   const [featureDraft, setFeatureDraft] = useState("");
 
@@ -313,6 +317,7 @@ function ProductForm({
 
   return (
     <section className="admin-panel-card">
+      <fieldset disabled={readOnly} className="contents">
       <div className="flex flex-col divide-y divide-[var(--line-soft)]">
         <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
           <InputField
@@ -431,6 +436,7 @@ function ProductForm({
           />
         </div>
       </div>
+      </fieldset>
     </section>
   );
 }
@@ -441,6 +447,8 @@ const ProductEdit = () => {
   const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel(PRODUCTS_PATHS.list);
+  const isReadOnly = accessLevel === "readOnly";
   //#endregion
 
   //#region States
@@ -558,6 +566,7 @@ const ProductEdit = () => {
   };
 
   const handleSave = async () => {
+    if (isReadOnly) return;
     setTouched(true);
     if (!form || !product) return;
     const dirty =
@@ -671,7 +680,7 @@ const ProductEdit = () => {
     Boolean(logoFile) ||
     logoRemoved ||
     JSON.stringify(form) !== JSON.stringify(originalForm);
-  const canSave = isDirty && !hasErrors && !saving;
+  const canSave = isDirty && !hasErrors && !saving && !isReadOnly;
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -691,6 +700,8 @@ const ProductEdit = () => {
         }
       />
 
+      {isReadOnly ? <ReadOnlyBanner featureName="Products" /> : null}
+
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -707,6 +718,7 @@ const ProductEdit = () => {
           contactUsers={contactUsers}
           onUpdate={update}
           onLogoFileChange={handleLogoFileChange}
+          readOnly={isReadOnly}
         />
 
         <div className="admin-sticky-footer">

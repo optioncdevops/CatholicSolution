@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { CommonButton } from '@app/components/buttons';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { InputField, TextareaField } from '@app/components/formControls';
@@ -13,9 +14,10 @@ type UserRoleFormModalProps = {
   role: UserRolesApiItem | null;
   onClose: () => void;
   onSaved: () => Promise<void> | void;
+  readOnly?: boolean;
 };
 
-const UserRoleFormModal = ({ open, role, onClose, onSaved }: UserRoleFormModalProps) => {
+const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: UserRoleFormModalProps) => {
   //#region States
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -45,6 +47,7 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved }: UserRoleFormModalPr
 
   //#region Handlers
   const onSubmit = async (values: UserRolesFormValues) => {
+    if (readOnly) return;
     setSaving(true);
     setFormError(null);
     try {
@@ -70,20 +73,21 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved }: UserRoleFormModalPr
     <BaseModal
       isOpen={open}
       onClose={handleClose}
-      title={role ? 'Edit User Role' : 'Add User Role'}
+      title={role ? (readOnly ? 'View User Role' : 'Edit User Role') : 'Add User Role'}
       size="sm"
-      showMandatory
+      showMandatory={!readOnly}
       footer={(
         <>
-          <CommonButton variant="outline" onClick={handleClose} disabled={saving}>Cancel</CommonButton>
-          <CommonButton variant="primary" onClick={handleSubmit(onSubmit)} loading={saving} disabled={saving}>Save</CommonButton>
+          <CommonButton variant="outline" onClick={handleClose} disabled={saving}>{readOnly ? 'Close' : 'Cancel'}</CommonButton>
+          {readOnly ? null : <CommonButton variant="primary" onClick={handleSubmit(onSubmit)} loading={saving} disabled={saving}>Save</CommonButton>}
         </>
       )}
     >
       <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        {readOnly ? <ReadOnlyBanner featureName="User Roles" /> : null}
         {formError ? <p className="text-xs font-semibold text-[var(--error)]">{formError}</p> : null}
-        <InputField control={control} name="roleName" label="Role name" required rules={userRolesRules.roleName} disabled={saving} />
-        <TextareaField control={control} name="description" label="Description" rows={3} showCharCount={false} disabled={saving} />
+        <InputField control={control} name="roleName" label="Role name" required rules={userRolesRules.roleName} disabled={saving || readOnly} />
+        <TextareaField control={control} name="description" label="Description" rows={3} showCharCount={false} disabled={saving || readOnly} />
       </form>
     </BaseModal>
   );

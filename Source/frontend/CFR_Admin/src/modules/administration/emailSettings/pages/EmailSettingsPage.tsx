@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { ColorPicker, CommonSwitch, Dropdown, InputField, MandatoryIndicator, ProfileImageUpload } from '@app/components/formControls';
 import { getEmailSettings, removeEmailLogo, saveEmailSettings, uploadEmailLogo } from '../services/emailSettingsService';
@@ -17,6 +19,8 @@ function EmailSettingsPage() {
   //#region Hooks
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel('/admin/administration-email-settings');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -60,6 +64,7 @@ function EmailSettingsPage() {
 
   //#region Handlers
   const handleSave = async () => {
+    if (isReadOnly) return;
     const validationErrors = validateEmailSettings(form);
     if (validationErrors.length > 0) {
       showToast(validationErrors, 'error');
@@ -81,6 +86,7 @@ function EmailSettingsPage() {
   };
 
   const handleLogoFileChange = async (file: File | null) => {
+    if (isReadOnly) return;
     if (!file) {
       const previousLogoUrl = logoImageUrl;
       setLogoImageUrl(null);
@@ -126,6 +132,8 @@ function EmailSettingsPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader title="Email Settings" action={<MandatoryIndicator variant="brand" />} />
 
+      {isReadOnly ? <ReadOnlyBanner featureName="Email Settings" /> : null}
+
       <form
         noValidate
         onSubmit={(event) => {
@@ -139,35 +147,35 @@ function EmailSettingsPage() {
           <p className={SECTION_HINT_CLASS}>Shared by every outgoing email — password reset, welcome, access request, and access decision messages all send through this configuration.</p>
 
           <div className="flex flex-col gap-3">
-            <CommonSwitch label="Send mail enabled" checked={form.sendMailEnabled} onCheckedChange={(value) => updateField('sendMailEnabled', value)} disabled={saving} />
+            <CommonSwitch label="Send mail enabled" checked={form.sendMailEnabled} onCheckedChange={(value) => updateField('sendMailEnabled', value)} disabled={saving || isReadOnly} />
 
             <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-3">
-              <InputField label="SMTP server" required value={form.smtpServer} onChange={(event) => updateField('smtpServer', event.target.value)} placeholder="smtp.example.com" disabled={saving} />
-              <InputField label="SMTP port" type="number" value={form.smtpPort} onChange={(event) => updateField('smtpPort', event.target.value)} placeholder="587" disabled={saving} />
-              <InputField label="Display name" value={form.displayName} onChange={(event) => updateField('displayName', event.target.value)} placeholder="Catholic Solutions" disabled={saving} />
-              <InputField label="Username" required value={form.username} onChange={(event) => updateField('username', event.target.value)} placeholder="notifications@example.com" disabled={saving} />
+              <InputField label="SMTP server" required value={form.smtpServer} onChange={(event) => updateField('smtpServer', event.target.value)} placeholder="smtp.example.com" disabled={saving || isReadOnly} />
+              <InputField label="SMTP port" type="number" value={form.smtpPort} onChange={(event) => updateField('smtpPort', event.target.value)} placeholder="587" disabled={saving || isReadOnly} />
+              <InputField label="Display name" value={form.displayName} onChange={(event) => updateField('displayName', event.target.value)} placeholder="Catholic Solutions" disabled={saving || isReadOnly} />
+              <InputField label="Username" required value={form.username} onChange={(event) => updateField('username', event.target.value)} placeholder="notifications@example.com" disabled={saving || isReadOnly} />
               <InputField
                 label="Password" type="password"
                 value={form.password}
                 onChange={(event) => updateField('password', event.target.value)}
                 placeholder={hasPassword ? '••••••••  (leave blank to keep current)' : 'Enter a password'}
                 helperText={hasPassword ? 'A password is already set — leave this blank to keep it unchanged.' : 'No password is set yet.'}
-                disabled={saving}
+                disabled={saving || isReadOnly}
               />
-              <InputField label="CC address" value={form.ccMailId} onChange={(event) => updateField('ccMailId', event.target.value)} placeholder="cc@example.com" disabled={saving} />
-              <InputField label="Contact us address" value={form.contactUsMailId} onChange={(event) => updateField('contactUsMailId', event.target.value)} placeholder="support@example.com" disabled={saving} />
+              <InputField label="CC address" value={form.ccMailId} onChange={(event) => updateField('ccMailId', event.target.value)} placeholder="cc@example.com" disabled={saving || isReadOnly} />
+              <InputField label="Contact us address" value={form.contactUsMailId} onChange={(event) => updateField('contactUsMailId', event.target.value)} placeholder="support@example.com" disabled={saving || isReadOnly} />
               <InputField
                 label="API base URL"
                 value={form.apiBaseUrl}
                 onChange={(event) => updateField('apiBaseUrl', event.target.value)}
                 placeholder="https://api.example.org/acutis"
                 helperText="This API's own public address (not the admin site's URL) — used to build the email logo's image link. Must be reachable by recipients' email clients, so never a localhost or private-network address, even while testing locally."
-                disabled={saving}
+                disabled={saving || isReadOnly}
                 wrapperClassName="sm:col-span-2"
               />
             </div>
 
-            <CommonSwitch label="SSL/TLS enabled" checked={form.isSslEnabled} onCheckedChange={(value) => updateField('isSslEnabled', value)} disabled={saving} />
+            <CommonSwitch label="SSL/TLS enabled" checked={form.isSslEnabled} onCheckedChange={(value) => updateField('isSslEnabled', value)} disabled={saving || isReadOnly} />
           </div>
         </div>
 
@@ -180,17 +188,19 @@ function EmailSettingsPage() {
               label="Email logo"
               initialPreviewUrl={logoImageUrl ?? undefined}
               onFileChange={(file) => void handleLogoFileChange(file)}
-              disabled={uploadingLogo || saving}
+              disabled={uploadingLogo || saving || isReadOnly}
               helperText="JPG or PNG, up to 2MB. Shown at the top of every outgoing email — leave empty to show a text brand mark instead."
             />
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <ColorPicker label="Accent color" value={form.accentColor} onChange={(value) => updateField('accentColor', value ?? DEFAULT_EMAIL_ACCENT_COLOR)} enableNativePicker />
+              <div className={isReadOnly ? 'pointer-events-none opacity-60' : undefined}>
+                <ColorPicker label="Accent color" value={form.accentColor} onChange={(value) => updateField('accentColor', value ?? DEFAULT_EMAIL_ACCENT_COLOR)} enableNativePicker />
+              </div>
               <InputField
                 label="Base font size (px)" type="number"
                 value={form.baseFontSize}
                 onChange={(event) => updateField('baseFontSize', event.target.value)}
-                disabled={saving}
+                disabled={saving || isReadOnly}
               />
               <Dropdown
                 label="Font family"
@@ -199,7 +209,7 @@ function EmailSettingsPage() {
                 value={form.fontFamily}
                 onValueChange={(value) => updateField('fontFamily', value ?? DEFAULT_EMAIL_FONT_FAMILY)}
                 options={EMAIL_FONT_FAMILY_OPTIONS}
-                disabled={saving}
+                disabled={saving || isReadOnly}
               />
             </div>
           </div>
@@ -207,7 +217,7 @@ function EmailSettingsPage() {
 
         <div className="admin-sticky-footer">
           <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={() => navigate('/admin/administration-email-templates')} disabled={saving}>Cancel</CommonButton>
-          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || isReadOnly}>Save</CommonButton>
         </div>
       </form>
     </div>
