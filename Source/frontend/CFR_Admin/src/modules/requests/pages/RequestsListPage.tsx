@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
@@ -17,21 +18,37 @@ import { normalizeAccessRequestList, uniqueRequestFilterOptions } from '../utils
 import { REQUEST_STATUS_FILTERS } from '../validator/RequestsValidator';
 import { formatDate } from '../../utils/formatDate';
 
+const STATUS_FILTER_PARAM = 'status';
+
 function RequestsListPage() {
   //#region Hooks
   const { showToast } = useToast();
   const accessLevel = useFeatureAccessLevel('/admin/requests');
   const isReadOnly = accessLevel === 'readOnly';
+  const [searchParams, setSearchParams] = useSearchParams();
   //#endregion
 
   //#region States
   const [rows, setRows] = useState<AccessRequestApiItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<RequestStatus | 'all'>('all');
   const [appFilter, setAppFilter] = useState('all');
   const [orgFilter, setOrgFilter] = useState('all');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   //#endregion
+
+  // The active status filter lives in the URL (?status=approved), not local state — bookmarkable
+  // and shareable, and lets other pages (the Dashboard's Priority Alerts) deep-link straight to a
+  // specific status instead of dumping the visitor on an unfiltered list, matching how the
+  // Organizations list already treats its own status filter.
+  const statusFilter = (searchParams.get(STATUS_FILTER_PARAM) ?? 'all') as RequestStatus | 'all';
+  const setStatusFilter = useCallback((next: RequestStatus | 'all') => {
+    setSearchParams((current) => {
+      const params = new URLSearchParams(current);
+      if (next === 'all') params.delete(STATUS_FILTER_PARAM);
+      else params.set(STATUS_FILTER_PARAM, next);
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   //#region Functions
   const load = useCallback(async () => {

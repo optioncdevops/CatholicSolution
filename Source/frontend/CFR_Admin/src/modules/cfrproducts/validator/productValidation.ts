@@ -74,6 +74,7 @@ export function validateProductForm(form: Partial<AdminApplication>): ProductFor
   const errors: ProductFormErrors = {};
   if (!form.name?.trim()) errors.name = 'Product name is required.';
   if (!form.category?.trim()) errors.category = 'Subtitle is required.';
+  if (!form.description?.trim()) errors.description = 'Description is required.';
   return errors;
 }
 

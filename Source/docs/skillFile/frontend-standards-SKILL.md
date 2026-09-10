@@ -522,7 +522,7 @@ export const deleteCustomerDirectory = async (id: number): Promise<ApiResponse> 
 ```
 
 Do not call axios from the page.
-Do not hard-code the API host; `AxiosInstance` already has the base URL from environment config.
+Do not hard-code the API host or a gateway service prefix (`/acutis`, `/portal`). Env only has `VITE_APP_REST_API_BASE_URL` (gateway origin, e.g. `https://localhost:5050`). Service paths (`/acutis/api/v1/`, `/portal/api/v1/`) live in `src/app/config/gateway.ts` (`GATEWAY_SERVICES`). `AxiosInstance` (Admin) and `appAcutisClient` / `appPortalClient` (CFR) already use that. To add a microservice: add it to `Gateway:Services` in CFR.Gateway appsettings and add a matching key on `GATEWAY_SERVICES`, then call `getServiceApiBaseUrl('newService')`.
 
 ---
 

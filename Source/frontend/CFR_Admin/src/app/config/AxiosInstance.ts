@@ -1,19 +1,10 @@
 import axios, { isAxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { ACUTIS_AUTH_CHANGED_EVENT, ACUTIS_AUTH_STORAGE_KEY } from '@shared/auth/constants/storageKeys';
 import type { AcutisLoginApiResponse } from '@shared/auth/types/authTypes';
-
-const ACUTIS_API_PATH = 'api/v1/';
-
-// VITE_APP_REST_API_BASE_URL carries any gateway prefix itself (e.g. https://host/acutis when
-// routed through CFR.Gateway locally, or just https://host when the API is deployed directly) —
-// this only ever appends the fixed api/v1/ suffix, never a hardcoded gateway path.
-function resolveRestApiBaseUrl(): string {
-  const origin = String(import.meta.env.VITE_APP_REST_API_BASE_URL ?? '').replace(/\/+$/, '');
-  return `${origin}/${ACUTIS_API_PATH}`;
-}
+import { getAcutisApiBaseUrl } from './gateway';
 
 const axiosInstance = axios.create({
-  baseURL: resolveRestApiBaseUrl(),
+  baseURL: getAcutisApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

@@ -13,10 +13,15 @@ interface ResetPasswordFormValues {
   confirmPassword: string;
 }
 
+// The raw token is a hex-encoded SHA-256-sized (32-byte) random value — see
+// AcutisPasswordService.GenerateToken. Anything else in the token slot could not possibly be a
+// real reset token, so it's rejected client-side before ever reaching the API.
+const TOKEN_PATTERN = /^[0-9a-fA-F]{64}$/;
+
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token')?.trim() ?? '';
-  const email = searchParams.get('email')?.trim() ?? '';
+  const rawToken = searchParams.get('token')?.trim() ?? '';
+  const token = TOKEN_PATTERN.test(rawToken) ? rawToken : '';
   const returnUrl = searchParams.get('returnUrl');
   const clientId = searchParams.get('client_id');
   const { showToast } = useToast();
@@ -52,11 +57,23 @@ export function ResetPasswordPage() {
 
   const recoveryTarget = useMemo(() => {
     const params = new URLSearchParams();
-    if (email) params.set('email', email);
     if (returnUrl) params.set('returnUrl', returnUrl);
     if (clientId) params.set('client_id', clientId);
     return `/forgot-password${params.size ? `?${params.toString()}` : ''}`;
-  }, [email, returnUrl, clientId]);
+  }, [returnUrl, clientId]);
+
+  // Strip the token out of the visible URL/browser history as soon as it's read into state — a
+  // single-use secret has no reason to keep sitting in the address bar or a bookmark/history
+  // entry once the page has it, and this is the first line of defense against later leaking via
+  // the Referer header if the user ever follows an outbound link before submitting the form.
+  useEffect(() => {
+    if (!token) return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('token')) return;
+    url.searchParams.delete('token');
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per mount, not on every token identity check
+  }, []);
 
   const submit = handleSubmit(async (values) => {
     setServerError('');
@@ -112,7 +129,7 @@ export function ResetPasswordPage() {
               <span className="admin-auth-card__mark"><ShieldCheckIcon size={20} /></span>
               <span className="admin-auth-card__kicker">Secure Password Reset</span>
               <h1 className="admin-auth-card__title">Create a New Password</h1>
-              <p className="admin-auth-card__description">{email ? <>Set a new password for <strong>{email}</strong></> : 'Choose a new password for your account.'}</p>
+              <p className="admin-auth-card__description">Choose a new password for your account.</p>
             </div>
             <form id="formResetPassword" onSubmit={submit} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">

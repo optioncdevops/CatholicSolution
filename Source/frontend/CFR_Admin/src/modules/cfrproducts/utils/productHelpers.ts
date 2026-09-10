@@ -1,6 +1,7 @@
 import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab, LiveProductLicense } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
 import { accessStatusOf, daysUntil, effectiveLicenseStatus, formatDateTime } from '@/modules/utils/formatDate';
+import { getAcutisPublicUrl } from '@app/config/gateway';
 export * from './productFilters';
 export type { LiveProductLicense } from '../types/productTypes';
 
@@ -134,6 +135,7 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
   return {
     productId: Number(item.productId ?? item.ProductId ?? 0),
     productName: String(item.productName ?? item.ProductName ?? ''),
+    shortName: (item.shortName ?? item.ShortName ?? null) as string | null,
     subCategoryName: (item.subCategoryName ?? item.SubCategoryName ?? null) as string | null,
     prodDescription: (item.prodDescription ?? item.ProdDescription ?? null) as string | null,
     externalPageUrl: (item.externalPageUrl ?? item.ExternalPageUrl ?? null) as string | null,
@@ -257,10 +259,10 @@ export function toLiveProductLicenseRows(items: ProductLicenseApiItem[]): LivePr
           : 'paid';
     const paidOn = isOverdue
       ? null
-      : lic.activationDate
-        ? formatDateTime(lic.activationDate)
-        : lic.createdDate
-          ? formatDateTime(lic.createdDate)
+      : lic.createdDate
+        ? formatDateTime(lic.createdDate)
+        : lic.activationDate
+          ? formatDateTime(lic.activationDate)
           : null;
 
     const startDate = lic.activationDate || '';
@@ -320,17 +322,20 @@ export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLic
     );
     const days = expiryDate ? daysUntil(expiryDate) : null;
     const isOverdue = days !== null && days < 0;
-    const paymentStatus: 'paid' | 'overdue' | 'suspended' = isOverdue
+    const rawStatus = (item.licenseStatus ?? '').trim().toLowerCase();
+    const paymentStatus: 'paid' | 'overdue' | 'suspended' | 'unpaid' = isOverdue
       ? 'overdue'
-      : item.licenseStatus === 'suspended'
-        ? 'suspended'
-        : 'paid';
+      : rawStatus === 'unpaid'
+        ? 'unpaid'
+        : rawStatus === 'suspended'
+          ? 'suspended'
+          : 'paid';
     const paidOn = isOverdue
       ? null
-      : item.activationDate
-        ? formatDateTime(item.activationDate)
-        : item.createdDate
-          ? formatDateTime(item.createdDate)
+      : item.createdDate
+        ? formatDateTime(item.createdDate)
+        : item.activationDate
+          ? formatDateTime(item.activationDate)
           : null;
 
     return {
@@ -382,13 +387,12 @@ export function resolveProductLogoUrl(
     return trimmed;
   }
 
-  const apiBase = String(import.meta.env.VITE_APP_REST_API_BASE_URL ?? '').replace(/\/+$/, '');
   const relativePath = toPublicProductLogoPath(trimmed);
   if (!relativePath) {
     return /^https?:\/\//i.test(trimmed) ? trimmed : null;
   }
 
-  const url = apiBase ? `${apiBase}${relativePath}` : relativePath;
+  const url = getAcutisPublicUrl(relativePath);
   if (cacheKey == null || cacheKey === '') {
     return url;
   }
@@ -442,7 +446,7 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
   return {
     id: String(item.productId),
     name: productName,
-    shortName: productName,
+    shortName: item.shortName ?? '',
     category: item.subCategoryName || '',
     icon: logoUrl || DEFAULT_PRODUCT_ICON,
     gradient: DEFAULT_PRODUCT_GRADIENT,

@@ -16,6 +16,21 @@ namespace CFR.AcutisService.Service.Dashboard
         /// </summary>
         private const int MaximumRangeDays = 366;
 
+        /// <summary>
+        /// Integrity/KPI keys the Priority Alerts drill-down actually supports — the ones whose
+        /// "Review" link previously landed on a generic, unfiltered list because no single URL
+        /// filter could express their multi-table-join condition (org-status and request-status
+        /// filters already cover the rest; see StoredProc.Dashboard.DashboardCrud ActionId 2).
+        /// </summary>
+        private static readonly HashSet<string> SupportedIntegrityIssueKeys = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "activeOrganizationProductsWithoutMembers",
+            "activeUserProductsWithoutActiveOrganizationProduct",
+            "duplicateActiveUserProductMappings",
+            "expiredLicensesWithActiveOrganizationProduct",
+            "expiredLicenses",
+        };
+
         #region GET Methods
 
         /// <summary>
@@ -53,6 +68,43 @@ namespace CFR.AcutisService.Service.Dashboard
 
                 var data = await repository.GetDashboardSummaryAsync(startDate, endDate);
                 result.ResultData = data;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchDashboardSummaryFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieves the flagged records behind one entitlement-integrity check.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch the actual organizations/products/members behind a single integrity KPI.
+        /// Request Flow: DashboardController -> DashboardService.GetIntegrityIssueDetailAsync() -> IDashboardRepository.GetIntegrityIssueDetailAsync().
+        /// Validation Details: issueKey must be one of SupportedIntegrityIssueKeys.
+        /// Business Logic: Wraps the flagged rows in MSResultArgs.
+        /// Repository Interaction: Calls IDashboardRepository.GetIntegrityIssueDetailAsync().
+        /// Response Details: MSResultArgs containing the flagged rows, or BadRequest for an unsupported key.
+        /// </remarks>
+        /// <param name="issueKey">One of the drill-down-supported integrity check keys.</param>
+        /// <returns>MSResultArgs containing the flagged rows.</returns>
+        public async Task<MSResultArgs> GetIntegrityIssueDetailAsync(string issueKey)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(issueKey) || !SupportedIntegrityIssueKeys.Contains(issueKey))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                result.ResultData = await repository.GetIntegrityIssueDetailAsync(issueKey);
             }
             catch (Exception ex)
             {

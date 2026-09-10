@@ -18,6 +18,9 @@ export const organizationRules = {
   orgName: {
     required: 'Organization name is required.',
   },
+  orgType: {
+    required: 'Organization type is required.',
+  },
   contactEmail: {
     pattern: {
       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,

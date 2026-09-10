@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import {
   Activity, AlertTriangle, Building2, Check, CheckCircle2,
-  Clock, Contact, Eye, KeyRound, Layers, LinkIcon, Package, RefreshCw, ShieldAlert, ShieldCheck,
+  Clock, Eye, KeyRound, Layers, LinkIcon, Package, RefreshCw, ShieldAlert,
 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -325,17 +325,17 @@ export function DashboardPage() {
   const alertRows = useMemo<AlertRow[]>(() => {
     if (!integrity || !kpis) return [];
     const rows: AlertRow[] = [
-      { key: 'approvedRequestsMissingOrganizationProduct', label: 'Approved requests missing an organization grant', count: integrity.approvedRequestsMissingOrganizationProduct, description: 'The request was approved, but the organization never received an active app assignment for it.', severity: 'error', to: '/admin/requests' },
-      { key: 'approvedRequestsMissingUserProduct', label: 'Approved requests missing a member grant', count: integrity.approvedRequestsMissingUserProduct, description: "The request was approved, but the requester's own product mapping was never created.", severity: 'error', to: '/admin/requests' },
-      { key: 'rejectedRequestsWithActiveEntitlements', label: 'Rejected requests with active access', count: integrity.rejectedRequestsWithActiveEntitlements, description: 'The request was rejected, but the requester still has an active mapping to that product.', severity: 'error', to: '/admin/requests' },
+      { key: 'approvedRequestsMissingOrganizationProduct', label: 'Approved requests missing an organization grant', count: integrity.approvedRequestsMissingOrganizationProduct, description: 'The request was approved, but the organization never received an active app assignment for it.', severity: 'error', to: '/admin/requests?status=approved' },
+      { key: 'approvedRequestsMissingUserProduct', label: 'Approved requests missing a member grant', count: integrity.approvedRequestsMissingUserProduct, description: "The request was approved, but the requester's own product mapping was never created.", severity: 'error', to: '/admin/requests?status=approved' },
+      { key: 'rejectedRequestsWithActiveEntitlements', label: 'Rejected requests with active access', count: integrity.rejectedRequestsWithActiveEntitlements, description: 'The request was rejected, but the requester still has an active mapping to that product.', severity: 'error', to: '/admin/requests?status=rejected' },
       { key: 'inactiveOrganizationsWithActiveProductAssignments', label: 'Inactive organizations with active app access', count: integrity.inactiveOrganizationsWithActiveProductAssignments, description: 'The organization is inactive or suspended, but still carries an active app assignment.', severity: 'error', to: '/admin/organizations?status=inactive' },
-      { key: 'activeOrganizationProductsWithoutMembers', label: 'Active app assignments with no members', count: integrity.activeOrganizationProductsWithoutMembers, description: 'An organization has an active app assignment, but no member is mapped to it.', severity: 'warning', to: '/admin/organizations' },
-      { key: 'activeUserProductsWithoutActiveOrganizationProduct', label: 'Member grants with no active org assignment', count: integrity.activeUserProductsWithoutActiveOrganizationProduct, description: "A member has an active product mapping, but their organization's assignment for it isn't active.", severity: 'warning', to: '/admin/organizations' },
-      { key: 'duplicateActiveUserProductMappings', label: 'Duplicate member/product mappings', count: integrity.duplicateActiveUserProductMappings, description: 'The same member has more than one active mapping to the same organization and product.', severity: 'warning', to: '/admin/organizations' },
-      { key: 'expiredLicensesWithActiveOrganizationProduct', label: 'Expired licenses still granting access', count: integrity.expiredLicensesWithActiveOrganizationProduct, description: "A license has expired, but the organization's app assignment was never revoked.", severity: 'warning', to: '/admin/organizations' },
-      { key: 'expiredLicenses', label: 'Expired licenses', count: kpis.expiredLicenses, description: 'Licenses past their expiry date — review and renew or revoke access.', severity: 'warning', to: '/admin/organizations' },
+      { key: 'activeOrganizationProductsWithoutMembers', label: 'Active app assignments with no members', count: integrity.activeOrganizationProductsWithoutMembers, description: 'An organization has an active app assignment, but no member is mapped to it.', severity: 'warning', to: '/admin/organizations?integrityIssue=activeOrganizationProductsWithoutMembers' },
+      { key: 'activeUserProductsWithoutActiveOrganizationProduct', label: 'Member grants with no active org assignment', count: integrity.activeUserProductsWithoutActiveOrganizationProduct, description: "A member has an active product mapping, but their organization's assignment for it isn't active.", severity: 'warning', to: '/admin/organizations?integrityIssue=activeUserProductsWithoutActiveOrganizationProduct' },
+      { key: 'duplicateActiveUserProductMappings', label: 'Duplicate member/product mappings', count: integrity.duplicateActiveUserProductMappings, description: 'The same member has more than one active mapping to the same organization and product.', severity: 'warning', to: '/admin/organizations?integrityIssue=duplicateActiveUserProductMappings' },
+      { key: 'expiredLicensesWithActiveOrganizationProduct', label: 'Expired licenses still granting access', count: integrity.expiredLicensesWithActiveOrganizationProduct, description: "A license has expired, but the organization's app assignment was never revoked.", severity: 'warning', to: '/admin/organizations?integrityIssue=expiredLicensesWithActiveOrganizationProduct' },
+      { key: 'expiredLicenses', label: 'Expired licenses', count: kpis.expiredLicenses, description: 'Licenses past their expiry date — review and renew or revoke access.', severity: 'warning', to: '/admin/organizations?integrityIssue=expiredLicenses' },
       { key: 'suspendedOrganizations', label: 'Suspended organizations', count: kpis.suspendedOrganizations, description: 'Organizations currently suspended from platform access.', severity: 'warning', to: '/admin/organizations?status=suspended' },
-      { key: 'staleAccessRequests', label: 'Stale pending requests', count: kpis.staleAccessRequests, description: `Pending for ${STALE_REQUEST_DAYS}+ days without a decision.`, severity: 'warning', to: '/admin/requests' },
+      { key: 'staleAccessRequests', label: 'Stale pending requests', count: kpis.staleAccessRequests, description: `Pending for ${STALE_REQUEST_DAYS}+ days without a decision.`, severity: 'warning', to: '/admin/requests?status=pending' },
     ];
     return rows.filter((row) => row.count > 0).sort((a, b) => (a.severity === b.severity ? 0 : a.severity === 'error' ? -1 : 1));
   }, [integrity, kpis]);
@@ -524,8 +524,8 @@ export function DashboardPage() {
         />
       ) : status === 'loading' ? (
         <>
-          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4" aria-busy="true" aria-label="Loading dashboard">
-            {Array.from({ length: 8 }).map((_, index) => <div key={index} className="admin-skeleton h-[4.5rem] w-full" />)}
+          <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4" aria-busy="true" aria-label="Loading dashboard">
+            {Array.from({ length: 4 }).map((_, index) => <div key={index} className="admin-skeleton h-[4.5rem] w-full" />)}
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <section className="admin-panel-card"><SectionSkeleton rows={6} /></section>
@@ -550,54 +550,32 @@ export function DashboardPage() {
           {summaryFailed ? (
             <EmptyState icon="⚠️" title="Unable to load platform metrics" description="The dashboard summary didn't respond, so KPI values can't be shown right now — try refreshing." actionLabel="Retry" onAction={() => void loadDashboard(true)} />
           ) : (
-            <div className="admin-reveal-stagger grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="admin-reveal-stagger grid grid-cols-2 gap-3.5 lg:grid-cols-4">
               <KpiTile
-                id="lnkKpiTotalOrganizations"
+                id="lnkKpiOrganizations"
                 icon={Building2} tint="linear-gradient(135deg,#166534,#22C55E)" to="/admin/organizations"
-                label="Total Organizations" value={kpis?.totalOrganizations ?? 0}
+                label="Organizations" value={kpis?.totalOrganizations ?? 0}
                 status={`${kpis?.activeOrganizations ?? 0} active · ${kpis?.suspendedOrganizations ?? 0} suspended`}
               />
               <KpiTile
-                id="lnkKpiActiveOrganizations"
-                icon={ShieldCheck} tint="linear-gradient(135deg,#065F46,#10B981)" to="/admin/organizations?status=active"
-                label="Active Organizations" value={kpis?.activeOrganizations ?? 0}
-                status={`${kpis?.activeOrganizations ?? 0} of ${kpis?.totalOrganizations ?? 0} organizations`}
-              />
-              <KpiTile
-                id="lnkKpiOrganizationMembers"
-                icon={Contact} tint="linear-gradient(135deg,#9D174D,#EC4899)" to="/admin/organizations"
-                label="Organization Members" value={kpis?.totalOrganizationMembers ?? 0}
-                status={`${kpis?.activeOrganizationMembers ?? 0} active members`}
-              />
-              <KpiTile
-                id="lnkKpiActiveCatalogApps"
+                id="lnkKpiProducts"
                 icon={Package} tint="linear-gradient(135deg,#1E3A8A,#3B82F6)" to={PRODUCTS_PATHS.list}
-                label="Active Catalog Apps" value={kpis?.activeCatalogProducts ?? 0}
-                status={`${kpis?.activeCatalogProducts ?? 0} of ${kpis?.totalProducts ?? 0} in catalog`}
-              />
-              <KpiTile
-                id="lnkKpiActiveOrgAppAssignments"
-                icon={LinkIcon} tint="linear-gradient(135deg,#0E7490,#22D3EE)" to={PRODUCTS_PATHS.list}
-                label="Active Org App Assignments" value={kpis?.activeOrganizationProductAssignments ?? 0}
-                status={`${kpis?.totalAssignedProducts ?? 0} distinct apps assigned`}
+                label="Products" value={kpis?.totalProducts ?? 0}
+                status={`${kpis?.activeProducts ?? 0} active · ${kpis?.inactiveProducts ?? 0} inactive · ${kpis?.upcomingProducts ?? 0} upcoming`}
               />
               <KpiTile
                 id="lnkKpiPendingAccessRequests"
-                icon={Layers} tint="linear-gradient(135deg,#B45309,#F59E0B)" to="/admin/requests"
+                icon={Layers} tint="linear-gradient(135deg,#B45309,#F59E0B)" to="/admin/requests?status=pending"
                 label="Pending Access Requests" value={kpis?.pendingAccessRequests ?? 0}
                 status={(kpis?.pendingAccessRequests ?? 0) > 0 ? `${kpis?.pendingAccessRequests} require review` : 'Nothing pending'}
               />
               <KpiTile
-                id="lnkKpiActiveLicenses"
+                id="lnkKpiLicenses"
                 icon={KeyRound} tint="linear-gradient(135deg,#0F766E,#34D399)" to="/admin/organizations"
-                label="Active Licenses" value={kpis?.activeLicenses ?? 0}
-                status={`${kpis?.totalLicenses ?? 0} total licenses`}
-              />
-              <KpiTile
-                id="lnkKpiAccessIntegrityIssues"
-                icon={ShieldAlert} tint="linear-gradient(135deg,#991B1B,#EF4444)" to="#sectionPriorityAlerts"
-                label="Access Integrity Issues" value={integrityIssuesCount}
-                status={integrityIssuesCount > 0 ? `${integrityIssuesCount} require attention` : 'No issues found'}
+                label="Licenses" value={kpis?.activeLicenses ?? 0}
+                status={(kpis?.expiringLicenses ?? 0) > 0 || (kpis?.expiredLicenses ?? 0) > 0
+                  ? `${kpis?.expiringLicenses ?? 0} expiring soon · ${kpis?.expiredLicenses ?? 0} expired`
+                  : 'None expiring or expired'}
               />
             </div>
           )}

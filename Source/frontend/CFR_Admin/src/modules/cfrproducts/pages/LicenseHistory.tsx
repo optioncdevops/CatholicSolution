@@ -20,7 +20,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
   //#region States
   const [historyRows, setHistoryRows] = useState<ProductLicenseHistoryRow[]>([]);
   const [customerFilter, setCustomerFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState<LicenseHistoryStatusFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<LicenseHistoryStatusFilter>('paid');
   const [viewingInvoice, setViewingInvoice] = useState<License | null>(null);
   //#endregion
 
@@ -44,21 +44,38 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
   }, [app.id, showToast]);
 
   const customerOptions = useMemo(() => {
-    const unique = new Map<string, string>();
+    const unique = new Map<string, { code: string; name: string }>();
     for (const row of historyRows) {
-      unique.set(row.orgId, row.customer);
+      if (!unique.has(row.orgId)) {
+        unique.set(row.orgId, { code: row.customerCode, name: row.customer });
+      }
     }
     return [
       { id: 'all', value: 'All Organizations' },
       ...[...unique.entries()]
-        .sort((left, right) => left[1].localeCompare(right[1]))
-        .map(([id, value]) => ({ id, value })),
+        .sort((left, right) => {
+          const numA = Number(left[1].code);
+          const numB = Number(right[1].code);
+          if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
+            return numA - numB;
+          }
+          return left[1].name.localeCompare(right[1].name);
+        })
+        .map(([id, item]) => ({
+          id,
+          value: item.code ? `${item.code} - ${item.name}` : item.name,
+        })),
     ];
   }, [historyRows]);
 
   const rows = useMemo(() => historyRows
     .filter((row) => customerFilter === 'all' || row.orgId === customerFilter)
-    .filter((row) => statusFilter === 'all' || row.paymentStatus === statusFilter)
+    .filter((row) => {
+      if (statusFilter === 'paid') return row.paymentStatus === 'paid';
+      if (statusFilter === 'overdue') return row.paymentStatus === 'overdue';
+      if (statusFilter === 'unpaid') return row.paymentStatus === 'unpaid' || row.paymentStatus === 'overdue' || row.paymentStatus !== 'paid';
+      return true;
+    })
     .sort((left, right) => right.startDate.localeCompare(left.startDate)),
   [historyRows, customerFilter, statusFilter]);
 
@@ -109,14 +126,14 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
     },
     {
       id: 'customer',
-      header: 'Organization',
+      header: 'Organization Name',
       width: '18rem',
       value: (row) => row.customer,
       cell: (row) => <span className="font-bold text-[var(--text-primary)]">{row.customer}</span>,
     },
     {
       id: 'invoiceNumber',
-      header: 'Invoice',
+      header: 'Invoice No',
       width: '12rem',
       value: (row) => row.invoiceNumber,
       cell: (row) => (
@@ -161,13 +178,12 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5">
-        <div className="w-48 shrink-0">
+      <div className="flex flex-wrap items-end gap-3 pb-0.5">
+        <div className="w-72 sm:w-80 shrink-0">
           <Dropdown
             label="Organization"
-            hideLabel
             placeholder="Select organization"
-            searchable={false}
+            searchable
             clearable={false}
             value={customerFilter}
             onValueChange={(value) => setCustomerFilter(value ?? 'all')}
@@ -175,15 +191,14 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
             className="min-h-8"
           />
         </div>
-        <div className="w-44 shrink-0">
+        <div className="w-48 shrink-0">
           <Dropdown
             label="Status"
-            hideLabel
             placeholder="Select status"
             searchable={false}
             clearable={false}
             value={statusFilter}
-            onValueChange={(value) => setStatusFilter((value as LicenseHistoryStatusFilter) ?? 'all')}
+            onValueChange={(value) => setStatusFilter((value as LicenseHistoryStatusFilter) ?? 'paid')}
             options={LICENSE_HISTORY_STATUS_FILTERS.map((filter) => ({ id: filter.id, value: filter.label }))}
             className="min-h-8"
           />

@@ -62,7 +62,19 @@ namespace Automation.Framework.JsonTestData
 
         public string? NewStatus { get; set; }
 
+        public string? EditProductName { get; set; }
+
+        public string? EditShortName { get; set; }
+
         public string? EditSubtitle { get; set; }
+
+        public string? EditLicenseType { get; set; }
+
+        public string? EditNavigationTarget { get; set; }
+
+        public string? EditContactPerson { get; set; }
+
+        public string? EditFeature { get; set; }
 
         public string? EditDescription { get; set; }
 

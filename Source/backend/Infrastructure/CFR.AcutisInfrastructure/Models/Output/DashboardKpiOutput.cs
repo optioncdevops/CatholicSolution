@@ -52,9 +52,21 @@ namespace CFR.AcutisInfrastructure.Models.Output
         [JsonPropertyName("totalProducts")]
         public int TotalProducts { get; set; }
 
-        /// <summary>Gets or sets the count of catalog products flagged active (catalog-level only — see activeOrganizationProductAssignments for real entitlement).</summary>
+        /// <summary>Gets or sets the count of catalog products flagged active (catalog-level only — see activeOrganizationProductAssignments for real entitlement). Includes both genuinely-active and coming-soon products (both carry IsActive = 1); see activeProducts/upcomingProducts to split those apart.</summary>
         [JsonPropertyName("activeCatalogProducts")]
         public int ActiveCatalogProducts { get; set; }
+
+        /// <summary>Gets or sets the count of catalog products with ProductStatus = 1 (genuinely active, not coming soon).</summary>
+        [JsonPropertyName("activeProducts")]
+        public int ActiveProducts { get; set; }
+
+        /// <summary>Gets or sets the count of catalog products with ProductStatus = 2 (coming soon / not yet launched).</summary>
+        [JsonPropertyName("upcomingProducts")]
+        public int UpcomingProducts { get; set; }
+
+        /// <summary>Gets or sets the count of catalog products with IsActive = 0 (disabled from the catalog). ActiveProducts + UpcomingProducts + InactiveProducts always reconciles to TotalProducts.</summary>
+        [JsonPropertyName("inactiveProducts")]
+        public int InactiveProducts { get; set; }
 
         /// <summary>Gets or sets the count of organization-product assignment rows currently active ([lic].[OrganizationProduct]).</summary>
         [JsonPropertyName("activeOrganizationProductAssignments")]

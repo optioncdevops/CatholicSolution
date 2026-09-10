@@ -108,6 +108,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.AdministrationParams.IsActive, input.IsActive, DbType.Int32);
             parameters.Add(DBParameterName.AdministrationParams.IsLocked, input.IsLocked, DbType.Int32);
             parameters.Add(DBParameterName.AdministrationParams.DateOfBirth, input.DateOfBirth, DbType.Date);
+            parameters.Add(DBParameterName.AdministrationParams.ContactNumber, input.ContactNumber, DbType.String);
             if (input.UserId == 0)
             {
                 parameters.Add(DBParameterName.AdministrationParams.InsertedBy, currentUserService.UserId, DbType.Int64);

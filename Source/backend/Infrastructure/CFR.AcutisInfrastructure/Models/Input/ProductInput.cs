@@ -21,6 +21,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public string ProductName { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the short product name.
+        /// </summary>
+        [JsonPropertyName("shortName")]
+        public string? ShortName { get; set; }
+
+        /// <summary>
         /// Gets or sets the sub-category / subtitle name.
         /// </summary>
         [JsonPropertyName("subCategoryName")]

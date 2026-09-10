@@ -240,6 +240,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.THREE, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, input.ProductId, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductName, input.ProductName.Trim(), DbType.String);
+            parameters.Add(DBParameterName.ProductParams.ShortName, input.ShortName?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.SubCategoryName, input.SubCategoryName?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.ProdDescription, input.ProdDescription?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.ExternalPageUrl, input.ExternalPageUrl?.Trim(), DbType.String);
