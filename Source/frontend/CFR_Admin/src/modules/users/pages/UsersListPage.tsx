@@ -14,6 +14,7 @@ import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { deleteUser, getUsers, updateUserStatus } from '../services/usersService';
 import type { UsersApiItem } from '../types/usersTypes';
 import { normalizeUsersList } from '../utils/usersHelpers';
+import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 
 export function UsersListPage() {
   //#region Hooks
@@ -21,6 +22,9 @@ export function UsersListPage() {
   const navigate = useNavigate();
   const accessLevel = useFeatureAccessLevel('/admin/users');
   const isReadOnly = accessLevel === 'readOnly';
+  // An admin can never deactivate or delete their own account from this list — the backend
+  // rejects it too, but disabling it here avoids a round trip just to hit that guard.
+  const currentUserId = getStoredAcutisAuth()?.resultData?.user?.userId ?? null;
   //#endregion
 
   //#region States
@@ -52,6 +56,10 @@ export function UsersListPage() {
   //#region Handlers
   const handleToggleStatus = useCallback(async (user: UsersApiItem) => {
     if (isReadOnly) return;
+    if (user.userId === currentUserId) {
+      showToast('You cannot deactivate your own account.', 'error');
+      return;
+    }
     const nextIsActive = user.isActive === 1 ? 0 : 1;
     if (nextIsActive === 0) {
       const confirmed = await confirmAction({
@@ -70,10 +78,14 @@ export function UsersListPage() {
       console.error('Error updating user status:', error);
       showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.');
     }
-  }, [load, showToast, isReadOnly]);
+  }, [load, showToast, isReadOnly, currentUserId]);
 
   const handleDelete = useCallback(async (user: UsersApiItem) => {
     if (isReadOnly) return;
+    if (user.userId === currentUserId) {
+      showToast('You cannot delete your own account.', 'error');
+      return;
+    }
     const confirmed = await confirmAction({
       title: 'Delete this user?',
       description: `${user.fullName} will be removed and will no longer be able to sign in.`,
@@ -89,7 +101,7 @@ export function UsersListPage() {
       console.error('Error deleting user:', error);
       showToast(typeof error === 'string' ? error : 'Failed to delete user.');
     }
-  }, [load, showToast, isReadOnly]);
+  }, [load, showToast, isReadOnly, currentUserId]);
   //#endregion
 
   //#region Columns
@@ -100,32 +112,35 @@ export function UsersListPage() {
       pinLeft: true,
       width: '7.5rem',
       excludeFromExport: true,
-      cell: (user) => (
-        <div className="flex items-center gap-0.5">
-          <CommonIconButton
-            aria-label={`Edit ${user.fullName}`}
-            tooltip="Edit"
-            icon={<Pencil size={14} />}
-            onClick={() => navigate('/admin/edit-users', { state: { id: user.userId } })}
-          />
-          <CommonIconButton
-            aria-label={user.isActive === 1 ? `Deactivate ${user.fullName}` : `Activate ${user.fullName}`}
-            tooltip={user.isActive === 1 ? 'Deactivate' : 'Activate'}
-            variant={user.isActive === 1 ? 'danger' : 'ghost'}
-            icon={<Power size={15} />}
-            onClick={() => void handleToggleStatus(user)}
-            disabled={isReadOnly}
-          />
-          <CommonIconButton
-            aria-label={`Delete ${user.fullName}`}
-            tooltip="Delete"
-            variant="danger"
-            icon={<Trash2 size={14} />}
-            onClick={() => void handleDelete(user)}
-            disabled={isReadOnly}
-          />
-        </div>
-      ),
+      cell: (user) => {
+        const isSelf = user.userId === currentUserId;
+        return (
+          <div className="flex items-center gap-0.5">
+            <CommonIconButton
+              aria-label={`Edit ${user.fullName}`}
+              tooltip="Edit"
+              icon={<Pencil size={14} />}
+              onClick={() => navigate('/admin/edit-users', { state: { id: user.userId } })}
+            />
+            <CommonIconButton
+              aria-label={user.isActive === 1 ? `Deactivate ${user.fullName}` : `Activate ${user.fullName}`}
+              tooltip={isSelf ? 'You cannot deactivate your own account' : user.isActive === 1 ? 'Deactivate' : 'Activate'}
+              variant={user.isActive === 1 ? 'danger' : 'ghost'}
+              icon={<Power size={15} />}
+              onClick={() => void handleToggleStatus(user)}
+              disabled={isReadOnly || isSelf}
+            />
+            <CommonIconButton
+              aria-label={`Delete ${user.fullName}`}
+              tooltip={isSelf ? 'You cannot delete your own account' : 'Delete'}
+              variant="danger"
+              icon={<Trash2 size={14} />}
+              onClick={() => void handleDelete(user)}
+              disabled={isReadOnly || isSelf}
+            />
+          </div>
+        );
+      },
     },
     {
       id: 'username',
@@ -142,11 +157,12 @@ export function UsersListPage() {
       cell: (user) => <span className="text-[var(--text-secondary)]">{user.eMail}</span>,
     },
     { id: 'role', header: 'Role', value: (user) => user.roleName, cell: (user) => <span className="capitalize text-[var(--text-secondary)]">{user.roleName}</span> },
+    { id: 'contactNumber', header: 'Contact Number', value: (user) => user.contactNumber ?? '—', cell: (user) => <span className="text-[var(--text-secondary)]">{user.contactNumber || '—'}</span> },
     { id: 'dob', header: 'Date of birth', value: (user) => user.dateOfBirth ?? '—', cell: (user) => <span className="text-[var(--text-muted)]">{user.dateOfBirth ? formatDate(user.dateOfBirth) : '—'}</span> },
     { id: 'status', header: 'Status', value: (user) => user.status, cell: (user) => <StatusBadge status={user.status} kind="user" /> },
     { id: 'locked', header: 'Locked', value: (user) => (user.isLocked === 1 ? 'Locked' : 'Unlocked'), cell: (user) => <Badge tone={user.isLocked === 1 ? 'danger' : 'success'}>{user.isLocked === 1 ? 'Locked' : 'Unlocked'}</Badge> },
     { id: 'lastActive', header: 'Last Active', value: (user) => user.lastActiveAt ?? '—', cell: (user) => <span className="text-[var(--text-muted)]">{user.lastActiveAt ? formatDateTime(user.lastActiveAt) : '—'}</span> },
-  ], [handleDelete, handleToggleStatus, navigate, isReadOnly]);
+  ], [handleDelete, handleToggleStatus, navigate, isReadOnly, currentUserId]);
   //#endregion
 
   //#region Render

@@ -8,10 +8,14 @@
 --     King Parish (Latin Mass)", "Corpus Christi Chapel (Latin Mass)", "Epiphany Cathedral
 --     Parish", so the name itself is a reliable, honest signal here — not a guess applied
 --     platform-wide.
---   - Deliberately does NOT touch generically-named rows ("Test Org", "testtt", "Test
---     Organization", etc.) — there's no real signal to infer a type from a name like that, and
---     guessing one would be fabricated data. Those are left NULL ("—" in the list) until someone
---     sets a real type via Edit.
+--   - Similarly infers 'Catholic School' from a name containing "School" ("Holy Rosary School -
+--     Medford", "Immaculate Conception Catholic School") — same honest-signal reasoning as Parish.
+--   - Every organization still left blank after those two passes (no Parish/Chapel/Cathedral/
+--     School in the name — e.g. "Test Org", generically-named test rows) is set to 'Other' so the
+--     Type column always shows a value, since Organization Type is now a required field going
+--     forward and the admin list should not display "—" for any row. 'Other' is a genuine, listed
+--     option in ORG_TYPE_OPTIONS (frontend/CFR_Admin's organizationHelpers.ts) — not a fabricated
+--     value — and any of these can still be corrected to a real type via Edit.
 -- Re-running this script is safe (idempotent): once a row's OrgType is set, the IS NULL guard
 -- means it's never touched again.
 SET ANSI_NULLS ON;
@@ -27,4 +31,17 @@ WHERE [IsDeleted] = 0
      OR [OrgName] LIKE N'%Chapel%'
      OR [OrgName] LIKE N'%Cathedral%'
   );
+GO
+
+UPDATE [core].[Organization]
+SET [OrgType] = N'Catholic School'
+WHERE [IsDeleted] = 0
+  AND [OrgType] IS NULL
+  AND [OrgName] LIKE N'%School%';
+GO
+
+UPDATE [core].[Organization]
+SET [OrgType] = N'Other'
+WHERE [IsDeleted] = 0
+  AND (NULLIF(LTRIM(RTRIM([OrgType])), N'') IS NULL);
 GO

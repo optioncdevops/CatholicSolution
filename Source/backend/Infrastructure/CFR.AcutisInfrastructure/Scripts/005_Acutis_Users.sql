@@ -10,10 +10,13 @@ BEGIN
 END
 GO
 
+-- Uses dynamic SQL throughout: [UserId] no longer exists on auth.ModuleRights once this has run
+-- once, and SQL Server binds column names in a static DELETE/ALTER at parse time regardless of the
+-- surrounding IF COL_LENGTH guard — so a second run of this script (e.g. against an environment
+-- that already applied it) would otherwise fail to even compile this batch.
 IF COL_LENGTH(N'auth.ModuleRights', N'UserId') IS NOT NULL
 BEGIN
-    DELETE FROM [auth].[ModuleRights]
-    WHERE [UserId] IS NOT NULL;
+    EXEC(N'DELETE FROM [auth].[ModuleRights] WHERE [UserId] IS NOT NULL;');
 
     IF EXISTS (
         SELECT 1
@@ -31,7 +34,7 @@ BEGIN
     )
         DROP INDEX [UQ_ModuleRights_RoleTemplate] ON [auth].[ModuleRights];
 
-    ALTER TABLE [auth].[ModuleRights] DROP COLUMN [UserId];
+    EXEC(N'ALTER TABLE [auth].[ModuleRights] DROP COLUMN [UserId];');
 END
 GO
 
@@ -44,6 +47,55 @@ IF NOT EXISTS (
 BEGIN
     CREATE UNIQUE INDEX [UQ_ModuleRights_RoleTemplate]
         ON [auth].[ModuleRights] ([RoleId], [FeatureId])
+        WHERE [IsDeleted] = 0;
+END
+GO
+
+-- A soft-deleted user's email must not block re-registering that same address: the app-level
+-- duplicate check in Acutis_Users_CRUD already scopes to IsDeleted = 0, but the table also carries
+-- a plain (non-filtered) unique constraint on Email from its original creation, which still blocks
+-- it at the database level. Replace it with a filtered unique index, same pattern as
+-- UQ_ModuleRights_RoleTemplate above.
+DECLARE @EmailConstraintName SYSNAME = (
+    SELECT TOP 1 kc.[name]
+    FROM sys.key_constraints kc
+    INNER JOIN sys.index_columns ic ON ic.[object_id] = kc.[parent_object_id] AND ic.[index_id] = kc.[unique_index_id]
+    INNER JOIN sys.columns c ON c.[object_id] = ic.[object_id] AND c.[column_id] = ic.[column_id]
+    WHERE kc.[parent_object_id] = OBJECT_ID(N'auth.AcutisUser')
+      AND kc.[type] = 'UQ'
+      AND c.[name] = N'Email'
+);
+IF @EmailConstraintName IS NOT NULL
+BEGIN
+    EXEC(N'ALTER TABLE [auth].[AcutisUser] DROP CONSTRAINT [' + @EmailConstraintName + N'];');
+END
+GO
+
+DECLARE @EmailIndexName SYSNAME = (
+    SELECT TOP 1 i.[name]
+    FROM sys.indexes i
+    INNER JOIN sys.index_columns ic ON ic.[object_id] = i.[object_id] AND ic.[index_id] = i.[index_id]
+    INNER JOIN sys.columns c ON c.[object_id] = ic.[object_id] AND c.[column_id] = ic.[column_id]
+    WHERE i.[object_id] = OBJECT_ID(N'auth.AcutisUser')
+      AND i.[is_unique] = 1
+      AND i.[name] <> N'UQ_AcutisUser_Email_Active'
+      AND c.[name] = N'Email'
+);
+IF @EmailIndexName IS NOT NULL
+BEGIN
+    EXEC(N'DROP INDEX [' + @EmailIndexName + N'] ON [auth].[AcutisUser];');
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE [name] = N'UQ_AcutisUser_Email_Active'
+      AND [object_id] = OBJECT_ID(N'auth.AcutisUser')
+)
+BEGIN
+    CREATE UNIQUE INDEX [UQ_AcutisUser_Email_Active]
+        ON [auth].[AcutisUser] ([Email])
         WHERE [IsDeleted] = 0;
 END
 GO
@@ -63,6 +115,7 @@ CREATE PROCEDURE [dbo].[Acutis_Users_CRUD]
     @IsActive INT = NULL,
     @IsLocked INT = NULL,
     @DateOfBirth DATE = NULL,
+    @ContactNumber NVARCHAR(30) = NULL,
     @InsertedBy BIGINT = NULL,
     @UpdatedBy BIGINT = NULL,
     @ReturnValue INT = NULL OUTPUT
@@ -91,7 +144,7 @@ BEGIN
             INSERT INTO [auth].[AcutisUser]
             (
                 [RoleId], [Email], [Password], [FirstName], [LastName],
-                [DateOfBirth], [IsActive], [IsLocked], [CreatedDate], [InsertedBy], [IsDeleted]
+                [DateOfBirth], [ContactNumber], [IsActive], [IsLocked], [CreatedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
@@ -101,6 +154,7 @@ BEGIN
                 @FirstName,
                 @LastName,
                 @DateOfBirth,
+                @ContactNumber,
                 CASE WHEN @IsActive = 0 THEN 0 ELSE 1 END,
                 CASE WHEN @IsLocked = 1 THEN 1 ELSE 0 END,
                 SYSUTCDATETIME(),
@@ -135,6 +189,7 @@ BEGIN
             END,
             [RoleId] = @RoleId,
             [DateOfBirth] = @DateOfBirth,
+            [ContactNumber] = @ContactNumber,
             [IsActive] = CASE WHEN @IsActive = 0 THEN 0 ELSE 1 END,
             [IsLocked] = CASE WHEN @IsLocked = 1 THEN 1 ELSE 0 END,
             [UpdatedDate] = SYSUTCDATETIME(),
@@ -175,6 +230,7 @@ BEGIN
             CAST(u.[IsLocked] AS INT) AS [IsLocked],
             CASE WHEN u.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             CONVERT(VARCHAR(10), u.[DateOfBirth], 23) AS [DateOfBirth],
+            u.[ContactNumber],
             u.[LastLogin] AS [LastActiveAt]
         FROM [auth].[AcutisUser] AS u
         INNER JOIN [auth].[AcutisRole] AS r ON r.[RoleId] = u.[RoleId]
@@ -199,6 +255,7 @@ BEGIN
             CAST(u.[IsLocked] AS INT) AS [IsLocked],
             CASE WHEN u.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             CONVERT(VARCHAR(10), u.[DateOfBirth], 23) AS [DateOfBirth],
+            u.[ContactNumber],
             u.[LastLogin] AS [LastActiveAt]
         FROM [auth].[AcutisUser] AS u
         INNER JOIN [auth].[AcutisRole] AS r ON r.[RoleId] = u.[RoleId]

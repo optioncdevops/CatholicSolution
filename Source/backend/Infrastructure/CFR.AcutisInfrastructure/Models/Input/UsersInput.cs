@@ -69,5 +69,11 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("dateOfBirth")]
         public DateTime? DateOfBirth { get; set; }
+
+        /// <summary>
+        /// Gets or sets the contact/phone number.
+        /// </summary>
+        [JsonPropertyName("contactNumber")]
+        public string? ContactNumber { get; set; }
     }
 }

@@ -45,7 +45,7 @@ interface DataTableProps<T> {
  * call site. Add new `CustomDataTable` features here, not by bypassing this component.
  */
 export function DataTable<T>({
-  data, columns, getRowId, onRowClick, pageSize = 10, exportFileName = 'export', exportTitle, emptyMessage = 'No results found.', maxHeight, initialSort,
+  data, columns, getRowId, onRowClick, pageSize = 25, exportFileName = 'export', exportTitle, emptyMessage = 'No results found.', maxHeight, initialSort,
 }: DataTableProps<T>) {
   const mappedColumns = useMemo<ColumnDef<T>[]>(() => columns.map((column) => ({
     id: column.id,

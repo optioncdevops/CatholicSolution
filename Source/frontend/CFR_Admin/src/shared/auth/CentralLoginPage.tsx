@@ -114,7 +114,7 @@ export function CentralLoginPage() {
         formError={formError}
         emailError={errors.email?.message}
         passwordError={errors.password?.message}
-        forgotHref={`/forgot-password${location.search}`}
+        forgotHref="/forgot-password"
       />
     </AdminAuthShell>
   );

@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, MailIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { AdminAuthShell } from './AdminAuthShell';
@@ -11,18 +11,21 @@ interface ForgotPasswordFormValues {
   email: string;
 }
 
+// /forgot-password is only ever reached by an in-app link from /login (never a direct external
+// landing target), and none of client_id/entry/returnUrl affect anything on this page itself — so
+// unlike /reset-password (which genuinely arrives via an external emailed link), there's nothing
+// worth carrying forward here. "Back to Sign In" goes to plain /login rather than forwarding
+// whatever query string this page happened to be reached with.
+const LOGIN_TARGET = '/login';
+
 export function ForgotPasswordPage() {
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const initialEmail = searchParams.get('email')?.trim() ?? '';
   const { showToast } = useToast();
   const [submittedEmail, setSubmittedEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
-  const loginTarget = useMemo(() => `/login${location.search}`, [location.search]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<ForgotPasswordFormValues>({
-    defaultValues: { email: initialEmail },
+    defaultValues: { email: '' },
     mode: 'onChange',
   });
 
@@ -31,8 +34,13 @@ export function ForgotPasswordPage() {
     setServerError('');
     setSubmitting(true);
     try {
-      await forgotPassword({ userName: trimmedEmail });
-      showToast('Password reset instructions sent.', 'success');
+      const { statusMessage, resultData } = await forgotPassword({ userName: trimmedEmail });
+      // The backend flags resultData.alreadyRequested when a previously issued link for this
+      // account is still active — nothing new was sent, so this is informational, not a fresh
+      // "email sent" success; it gets its own message and toast tone rather than the green
+      // success banner implying a brand new email just went out.
+      const alreadyRequested = Boolean((resultData as { alreadyRequested?: boolean } | null | undefined)?.alreadyRequested);
+      showToast(statusMessage || 'Password reset instructions sent.', alreadyRequested ? 'info' : 'success');
       setSubmittedEmail(trimmedEmail);
     } catch (err) {
       const message = typeof err === 'string' ? err : 'Something went wrong. Please try again.';
@@ -55,7 +63,7 @@ export function ForgotPasswordPage() {
             <h2>Check Your Email</h2>
             <p>A secure password reset link has been sent to <strong>{submittedEmail}</strong>. For your security, the link will expire after a limited time and can only be used once.</p>
             <div className="admin-auth-success__actions">
-              <Link to={loginTarget} className="admin-auth-submit admin-auth-submit--link">
+              <Link to={LOGIN_TARGET} className="admin-auth-submit admin-auth-submit--link">
                 Return to Sign In <ArrowRightIcon size={15} />
               </Link>
               <button type="button" className="admin-auth-submit admin-auth-submit--link admin-auth-submit--ghost" onClick={() => setSubmittedEmail('')}>
@@ -65,7 +73,7 @@ export function ForgotPasswordPage() {
           </div>
         ) : (
           <>
-            <Link to={loginTarget} className="admin-auth-back-link"><ArrowLeftIcon size={13} /> Back To Sign In</Link>
+            <Link to={LOGIN_TARGET} className="admin-auth-back-link"><ArrowLeftIcon size={13} /> Back To Sign In</Link>
             <div className="admin-auth-card__header">
               <span className="admin-auth-card__mark"><ShieldCheckIcon size={20} /></span>
               <span className="admin-auth-card__kicker">Account Recovery</span>

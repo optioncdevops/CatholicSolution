@@ -29,6 +29,22 @@ namespace CFR.AcutisInfrastructure.Interfaces.Dashboard
         /// <returns>The dashboard summary.</returns>
         Task<DashboardSummaryOutput> GetDashboardSummaryAsync(DateTime startDate, DateTime endDate);
 
+        /// <summary>
+        /// Retrieves the actual flagged records behind one entitlement-integrity count.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let the Dashboard's Priority Alerts panel show and link to the exact
+        /// organizations/products/members behind a single integrity KPI, not just its count.
+        /// Request Flow: IDashboardService -> DashboardRepository.GetIntegrityIssueDetailAsync() -> SQL Database.
+        /// Validation Details: issueKey mapping only — an unrecognized key is handled inside the stored procedure.
+        /// Business Logic: Reads one result set for the given issue key.
+        /// Repository Interaction: Executes StoredProc.Dashboard.DashboardCrud with ActionId 2.
+        /// Response Details: Returns the matching rows, or an empty list for an unrecognized key.
+        /// </remarks>
+        /// <param name="issueKey">One of DashboardIntegrityApiItem's field names.</param>
+        /// <returns>The flagged rows for that issue.</returns>
+        Task<List<DashboardIntegrityIssueRowOutput>> GetIntegrityIssueDetailAsync(string issueKey);
+
         #endregion GET Methods
     }
 }
