@@ -38,7 +38,8 @@ GO
 CREATE PROCEDURE [dbo].[Acutis_Dashboard_CRUD]
     @ActionId INT,
     @StartDate DATETIME2 = NULL,
-    @EndDate DATETIME2 = NULL
+    @EndDate DATETIME2 = NULL,
+    @IssueKey NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -82,6 +83,17 @@ BEGIN
 
             (SELECT COUNT(*) FROM [core].[Product] WHERE [IsDeleted] = 0) AS [TotalProducts],
             (SELECT COUNT(*) FROM [core].[Product] WHERE [IsDeleted] = 0 AND [IsActive] = 1) AS [ActiveCatalogProducts],
+            -- ActiveCatalogProducts above is IsActive=1 regardless of ProductStatus — it counts a
+            -- "coming soon" product as active too, since IsActive just means "not disabled". These
+            -- two split that same IsActive=1 population by the real lifecycle status the Products
+            -- pages already use (ProductStatus: 1=active, 2=coming soon), so the dashboard can show
+            -- a genuinely-active count separately from an upcoming one instead of conflating them.
+            (SELECT COUNT(*) FROM [core].[Product] WHERE [IsDeleted] = 0 AND [IsActive] = 1 AND [ProductStatus] = 1) AS [ActiveProducts],
+            (SELECT COUNT(*) FROM [core].[Product] WHERE [IsDeleted] = 0 AND [IsActive] = 1 AND [ProductStatus] = 2) AS [UpcomingProducts],
+            -- The remaining non-deleted products: IsActive = 0 (disabled from the catalog) — the
+            -- same "Inactive" bucket the Products list page's own status filter counts, so this
+            -- number always reconciles: ActiveProducts + UpcomingProducts + InactiveProducts = TotalProducts.
+            (SELECT COUNT(*) FROM [core].[Product] WHERE [IsDeleted] = 0 AND [IsActive] = 0) AS [InactiveProducts],
 
             (SELECT COUNT(*) FROM [lic].[OrganizationProduct] WHERE [IsDeleted] = 0 AND [AssignStatus] = N'active') AS [ActiveOrganizationProductAssignments],
             (SELECT COUNT(*) FROM [lic].[OrganizationProduct] WHERE NOT ([IsDeleted] = 0 AND [AssignStatus] = N'active')) AS [InactiveOrganizationProductAssignments],
@@ -214,6 +226,107 @@ BEGIN
         FROM [lic].[OrganizationProduct] op
         WHERE op.[IsDeleted] = 0 AND op.[CreatedDate] BETWEEN @StartDate AND @EndDate;
 
+        RETURN 0;
+    END
+
+    -- ActionId 2: Drill into one specific entitlement-integrity check (@IssueKey matches one of
+    -- DashboardIntegrityApiItem's field names) and return the actual flagged rows behind that
+    -- count — the Dashboard's Priority Alerts panel "Review" links open these instead of dumping
+    -- the admin on the generic, unfiltered Organizations/Requests list, which for these
+    -- multi-table-join conditions was correctly showing nothing filtered at all. Every branch here
+    -- mirrors the exact WHERE clause used to compute the matching ActionId 1 integrity count, so
+    -- the row count returned here always reconciles with that KPI number.
+    IF @ActionId = 2
+    BEGIN
+        IF @IssueKey = N'activeOrganizationProductsWithoutMembers'
+        BEGIN
+            SELECT
+                op.[OrgId], o.[OrgName], op.[ProductId], p.[ProductName],
+                CAST(NULL AS BIGINT) AS [MemberUserId], CAST(NULL AS NVARCHAR(200)) AS [MemberName],
+                N'Active app assignment with no member mapped' AS [Detail]
+            FROM [lic].[OrganizationProduct] op
+            INNER JOIN [core].[Organization] o ON o.[OrgId] = op.[OrgId]
+            INNER JOIN [core].[Product] p ON p.[ProductId] = op.[ProductId]
+            WHERE op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active' AND NOT EXISTS (
+                SELECT 1 FROM [auth].[UserProduct] up WHERE up.[OrgId] = op.[OrgId] AND up.[ProductId] = op.[ProductId] AND ISNULL(up.[IsDeleted], 0) = 0
+            )
+            ORDER BY o.[OrgName], p.[ProductName];
+            RETURN 0;
+        END
+
+        IF @IssueKey = N'activeUserProductsWithoutActiveOrganizationProduct'
+        BEGIN
+            SELECT
+                up.[OrgId], up.[OrgName], up.[ProductId], p.[ProductName],
+                up.[CFRUserId] AS [MemberUserId], LTRIM(RTRIM(ISNULL(up.[FirstName], N'') + N' ' + ISNULL(up.[LastName], N''))) AS [MemberName],
+                N'Member has an active product mapping, but the organization''s assignment for it isn''t active' AS [Detail]
+            FROM [auth].[UserProduct] up
+            INNER JOIN [core].[Product] p ON p.[ProductId] = up.[ProductId]
+            WHERE ISNULL(up.[IsDeleted], 0) = 0 AND NOT EXISTS (
+                SELECT 1 FROM [lic].[OrganizationProduct] op WHERE op.[OrgId] = up.[OrgId] AND op.[ProductId] = up.[ProductId] AND op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active'
+            )
+            ORDER BY up.[OrgName], p.[ProductName];
+            RETURN 0;
+        END
+
+        IF @IssueKey = N'duplicateActiveUserProductMappings'
+        BEGIN
+            SELECT
+                up.[OrgId], MAX(up.[OrgName]) AS [OrgName], up.[ProductId], MAX(p.[ProductName]) AS [ProductName],
+                up.[CFRUserId] AS [MemberUserId], LTRIM(RTRIM(ISNULL(MAX(up.[FirstName]), N'') + N' ' + ISNULL(MAX(up.[LastName]), N''))) AS [MemberName],
+                CONCAT(N'This member has ', COUNT(*), N' active mappings for the same organization and product') AS [Detail]
+            FROM [auth].[UserProduct] up
+            INNER JOIN [core].[Product] p ON p.[ProductId] = up.[ProductId]
+            WHERE ISNULL(up.[IsDeleted], 0) = 0
+            GROUP BY up.[CFRUserId], up.[OrgId], up.[ProductId]
+            HAVING COUNT(*) > 1
+            ORDER BY MAX(up.[OrgName]);
+            RETURN 0;
+        END
+
+        IF @IssueKey = N'expiredLicensesWithActiveOrganizationProduct'
+        BEGIN
+            SELECT
+                op.[OrgId], o.[OrgName], op.[ProductId], p.[ProductName],
+                CAST(NULL AS BIGINT) AS [MemberUserId], CAST(NULL AS NVARCHAR(200)) AS [MemberName],
+                CONCAT(N'License expired ', DATEDIFF(DAY, CAST(l.[ExpiryDate] AS DATE), CAST(SYSUTCDATETIME() AS DATE)), N' day(s) ago, but the app assignment is still active') AS [Detail]
+            FROM [lic].[License] l
+            INNER JOIN [lic].[OrganizationProduct] op ON op.[OrganizationProductId] = l.[OrganizationProductId]
+            INNER JOIN [core].[Organization] o ON o.[OrgId] = op.[OrgId]
+            INNER JOIN [core].[Product] p ON p.[ProductId] = op.[ProductId]
+            WHERE LOWER(ISNULL(l.[LicenseStatus], N'active')) <> N'suspended'
+              AND l.[ExpiryDate] IS NOT NULL
+              AND DATEDIFF(DAY, CAST(SYSUTCDATETIME() AS DATE), CAST(l.[ExpiryDate] AS DATE)) < 0
+              AND op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active'
+            ORDER BY l.[ExpiryDate];
+            RETURN 0;
+        END
+
+        IF @IssueKey = N'expiredLicenses'
+        BEGIN
+            SELECT
+                op.[OrgId], o.[OrgName], op.[ProductId], p.[ProductName],
+                CAST(NULL AS BIGINT) AS [MemberUserId], CAST(NULL AS NVARCHAR(200)) AS [MemberName],
+                CONCAT(N'License expired ', DATEDIFF(DAY, CAST(l.[ExpiryDate] AS DATE), CAST(SYSUTCDATETIME() AS DATE)), N' day(s) ago') AS [Detail]
+            FROM [lic].[License] l
+            INNER JOIN [lic].[OrganizationProduct] op ON op.[OrganizationProductId] = l.[OrganizationProductId]
+            INNER JOIN [core].[Organization] o ON o.[OrgId] = op.[OrgId]
+            INNER JOIN [core].[Product] p ON p.[ProductId] = op.[ProductId]
+            WHERE LOWER(ISNULL(l.[LicenseStatus], N'active')) <> N'suspended'
+              AND l.[ExpiryDate] IS NOT NULL
+              AND DATEDIFF(DAY, CAST(SYSUTCDATETIME() AS DATE), CAST(l.[ExpiryDate] AS DATE)) < 0
+            ORDER BY l.[ExpiryDate];
+            RETURN 0;
+        END
+
+        -- Unknown/unsupported key — empty result set rather than an error, so the frontend just
+        -- shows "no rows" instead of a hard failure for a key this drill-down doesn't cover yet.
+        SELECT
+            CAST(NULL AS INT) AS [OrgId], CAST(NULL AS NVARCHAR(200)) AS [OrgName],
+            CAST(NULL AS INT) AS [ProductId], CAST(NULL AS NVARCHAR(200)) AS [ProductName],
+            CAST(NULL AS BIGINT) AS [MemberUserId], CAST(NULL AS NVARCHAR(200)) AS [MemberName],
+            CAST(NULL AS NVARCHAR(400)) AS [Detail]
+        WHERE 1 = 0;
         RETURN 0;
     END
 END

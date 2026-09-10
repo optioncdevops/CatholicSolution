@@ -122,6 +122,7 @@ namespace CFR.CommonService
         public static class API_Dashboard
         {
             public const string GetDashboardSummary = nameof(GetDashboardSummary);
+            public const string GetIntegrityIssueDetail = nameof(GetIntegrityIssueDetail);
         }
     }
 }

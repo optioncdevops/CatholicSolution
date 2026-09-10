@@ -52,10 +52,9 @@ const ORG_TYPE_TONE: Record<string, 'success' | 'warning' | 'neutral' | 'danger'
 export const orgTypeTone = (orgType: string | null | undefined): 'success' | 'warning' | 'neutral' | 'danger' | 'info' =>
   (orgType && ORG_TYPE_TONE[orgType]) || 'neutral';
 
-// Display-only identifier, e.g. "ORG-15001" — the same ORG-<OrgId> format already used by the
-// product Customers tab (Acutis_Products_CRUD ActionId 9's OrgCode column). Computed from OrgId
-// rather than stored, since it's a deterministic display format, not a separate database value.
-export const formatOrgCode = (orgId: number): string => `ORG-${orgId}`;
+// Display-only identifier, e.g. "15001" — just the OrgId. Computed from OrgId rather than stored,
+// since it's a deterministic display format, not a separate database value.
+export const formatOrgCode = (orgId: number): string => `${orgId}`;
 
 // Composes the address parts into a single display line, e.g. "123 Main St, Springfield, IL 62704".
 // City/state are joined with a comma; the ZIP trails the state with just a space (US postal convention).

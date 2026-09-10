@@ -237,11 +237,11 @@ export function ProfilePage() {
           <div className={`${SECTION_CLASS} flex flex-col gap-1 p-6 sm:flex-row sm:items-center sm:justify-between`}>
             <div>
               <span className={SECTION_TITLE_CLASS}>Security</span>
-              <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">Password</p>
+              <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">Change Password</p>
               <p className="text-xs text-[var(--text-muted)]">Change the password used to sign in to CFR Acutis.</p>
             </div>
             <CommonButton type="button" variant="outline" className="shrink-0" onClick={() => setPasswordModalOpen(true)}>
-              Change password
+              Change Password
             </CommonButton>
           </div>
         </div>

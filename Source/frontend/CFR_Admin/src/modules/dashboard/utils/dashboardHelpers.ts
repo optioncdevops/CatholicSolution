@@ -1,5 +1,5 @@
 import type {
-  DashboardIntegrityApiItem, DashboardSummaryApiItem, DashboardTrendEventApiItem, DashboardTrendEventType, IntegrityIssue,
+  DashboardIntegrityApiItem, DashboardSummaryApiItem, DashboardTrendEventApiItem, DashboardTrendEventType, IntegrityIssue, IntegrityIssueDetailRow,
 } from '../types/dashboardTypes';
 
 //#region Date range + bucketing
@@ -140,6 +140,11 @@ export function normalizeDashboardSummary(resultData: unknown): DashboardSummary
     integrity: record.integrity,
     trendEvents: Array.isArray(record.trendEvents) ? record.trendEvents : [],
   };
+}
+
+export function normalizeIntegrityIssueDetail(resultData: unknown): IntegrityIssueDetailRow[] {
+  if (!Array.isArray(resultData)) return [];
+  return resultData as IntegrityIssueDetailRow[];
 }
 
 export function countEventType(events: DashboardTrendEventApiItem[], type: DashboardTrendEventType): number {

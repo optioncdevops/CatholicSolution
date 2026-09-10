@@ -31,6 +31,7 @@ BEGIN
     IF @ActionId = 1
     BEGIN
         DECLARE @UserId BIGINT;
+        DECLARE @HasActiveToken BIT = 0;
 
         SELECT TOP (1) @UserId = u.[UserId]
         FROM [auth].[AcutisUser] AS u
@@ -42,6 +43,43 @@ BEGIN
         IF @UserId IS NULL
         BEGIN
             SET @ReturnValue = 0;
+            RETURN @ReturnValue;
+        END
+
+        -- While an earlier link for this account is still unused AND unexpired, it is still a
+        -- fully valid way in — a fresh request must not replace it and must not trigger another
+        -- email. Without this, every resubmission immediately invalidates the still-good link and
+        -- fires a brand new email, so "wait a couple of minutes and click again" (or an attacker
+        -- repeatedly submitting someone else's address) silently defeats the 30-minute window
+        -- entirely and can email-bomb the account holder's inbox. A new email is only ever sent
+        -- again once the previous link has actually been used or has genuinely expired.
+        IF EXISTS (
+            SELECT 1
+            FROM [auth].[PasswordResetToken] AS t
+            WHERE t.[UserId] = @UserId
+              AND t.[UserScope] = @Scope
+              AND t.[UsedAt] IS NULL
+              AND t.[ExpiresAt] > SYSUTCDATETIME()
+        )
+        BEGIN
+            SET @HasActiveToken = 1;
+        END
+
+        IF @HasActiveToken = 1
+        BEGIN
+            -- Report the same account row (so the API layer can tell this apart from "no account
+            -- found") but issue no new token and send no new email — the still-active link from
+            -- the earlier request remains the one to use.
+            SELECT
+                u.[UserId],
+                u.[Email],
+                u.[FirstName],
+                u.[LastName],
+                CAST(1 AS BIT) AS [RateLimited]
+            FROM [auth].[AcutisUser] AS u
+            WHERE u.[UserId] = @UserId;
+
+            SET @ReturnValue = @UserId;
             RETURN @ReturnValue;
         END
 
@@ -58,7 +96,8 @@ BEGIN
             u.[UserId],
             u.[Email],
             u.[FirstName],
-            u.[LastName]
+            u.[LastName],
+            CAST(0 AS BIT) AS [RateLimited]
         FROM [auth].[AcutisUser] AS u
         WHERE u.[UserId] = @UserId;
 
@@ -69,19 +108,27 @@ BEGIN
     -- ActionId 2: Complete a password reset. Validates the token hash is unused and unexpired,
     -- updates the password (encrypted the same way as Acutis_Users_CRUD), and marks the token
     -- consumed so it cannot be replayed.
+    -- Claiming the token is a single atomic UPDATE (not a SELECT followed by a separate UPDATE) —
+    -- SQL Server row-locks the matched row for the duration of the UPDATE, so two concurrent
+    -- completions racing on the same still-unused token can never both succeed: only the first
+    -- UPDATE's WHERE clause can still see [UsedAt] IS NULL, the second sees it already set and
+    -- claims nothing. A SELECT-then-UPDATE pair would leave a window where both could read the
+    -- token as valid before either commits its own UPDATE.
     IF @ActionId = 2
     BEGIN
+        DECLARE @ClaimedToken TABLE ([TokenId] BIGINT, [UserId] BIGINT);
         DECLARE @TokenId BIGINT;
         DECLARE @ResetUserId BIGINT;
 
-        SELECT TOP (1)
-            @TokenId = t.[TokenId],
-            @ResetUserId = t.[UserId]
-        FROM [auth].[PasswordResetToken] AS t
-        WHERE t.[TokenHash] = @TokenHash
-          AND t.[UserScope] = @Scope
-          AND t.[UsedAt] IS NULL
-          AND t.[ExpiresAt] > SYSUTCDATETIME();
+        UPDATE [auth].[PasswordResetToken]
+        SET [UsedAt] = SYSUTCDATETIME()
+        OUTPUT INSERTED.[TokenId], INSERTED.[UserId] INTO @ClaimedToken ([TokenId], [UserId])
+        WHERE [TokenHash] = @TokenHash
+          AND [UserScope] = @Scope
+          AND [UsedAt] IS NULL
+          AND [ExpiresAt] > SYSUTCDATETIME();
+
+        SELECT TOP (1) @TokenId = [TokenId], @ResetUserId = [UserId] FROM @ClaimedToken;
 
         IF @TokenId IS NULL
         BEGIN
@@ -92,10 +139,6 @@ BEGIN
         UPDATE [auth].[AcutisUser]
         SET [Password] = dbo.EncryptUserPassword(@NewPassword)
         WHERE [UserId] = @ResetUserId;
-
-        UPDATE [auth].[PasswordResetToken]
-        SET [UsedAt] = SYSUTCDATETIME()
-        WHERE [TokenId] = @TokenId;
 
         SET @ReturnValue = @ResetUserId;
         RETURN @ReturnValue;

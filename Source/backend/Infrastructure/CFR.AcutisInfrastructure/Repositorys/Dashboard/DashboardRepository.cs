@@ -39,6 +39,29 @@ namespace CFR.AcutisInfrastructure.Repositorys.Dashboard
             return new DashboardSummaryOutput { Kpis = kpis, Integrity = integrity, TrendEvents = trendEvents };
         }
 
+        /// <summary>
+        /// Fetches the flagged rows behind one entitlement-integrity count using
+        /// StoredProc.Dashboard.DashboardCrud (ActionId 2).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Retrieve the exact organizations/products/members behind a single integrity KPI.
+        /// Request Flow: IDashboardService -> DashboardRepository.GetIntegrityIssueDetailAsync() -> Database.
+        /// Validation Details: issueKey mapping only.
+        /// Business Logic: Executes StoredProc.Dashboard.DashboardCrud with ActionId 2 and @IssueKey.
+        /// Repository Interaction: Executes StoredProc.Dashboard.DashboardCrud.
+        /// Response Details: Returns the matching rows, or an empty list for an unrecognized key.
+        /// </remarks>
+        /// <param name="issueKey">One of DashboardIntegrityApiItem's field names.</param>
+        /// <returns>The flagged rows for that issue.</returns>
+        public async Task<List<DashboardIntegrityIssueRowOutput>> GetIntegrityIssueDetailAsync(string issueKey)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.DashboardParams.ActionId, 2, DbType.Int32);
+            parameters.Add(DBParameterName.DashboardParams.IssueKey, issueKey, DbType.String);
+            var rows = await dapperHandler.QueryAsync<DashboardIntegrityIssueRowOutput>(StoredProc.Dashboard.DashboardCrud, parameters, CommandType.StoredProcedure);
+            return rows.AsList();
+        }
+
         #endregion GET Methods
     }
 }

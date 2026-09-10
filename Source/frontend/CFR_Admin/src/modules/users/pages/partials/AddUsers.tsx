@@ -12,6 +12,7 @@ import { getUserById, getUserLookups, saveUser } from '../../services/usersServi
 import type { RoleLookupItem, UsersFormValues } from '../../types/usersTypes';
 import { toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
 import { usersDefaultValues, usersRules } from '../../validator/UsersValidator';
+import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 
 const AddUsers = () => {
   //#region Hooks
@@ -22,6 +23,9 @@ const AddUsers = () => {
   const isEdit = Boolean(userId && userId > 0);
   const accessLevel = useFeatureAccessLevel('/admin/users');
   const isReadOnly = accessLevel === 'readOnly';
+  // Editing your own account can't be used to lock yourself out — the backend rejects
+  // self-deactivation/self-lock too, but disabling those fields here avoids a confusing save error.
+  const isEditingSelf = isEdit && userId === getStoredAcutisAuth()?.resultData?.user?.userId;
   //#endregion
 
   //#region States
@@ -70,6 +74,7 @@ const AddUsers = () => {
             isActive?: number;
             isLocked?: number;
             dateOfBirth?: string | null;
+            contactNumber?: string | null;
           } | null;
           if (!row) {
             showToast('Failed to load user.');
@@ -85,6 +90,7 @@ const AddUsers = () => {
             isActive: Number(row.isActive) === 0 ? '0' : '1',
             isLocked: Number(row.isLocked) === 1 ? '1' : '0',
             dateOfBirth: toDateOnly(row.dateOfBirth),
+            contactNumber: row.contactNumber ?? '',
           });
           return;
         }
@@ -181,6 +187,16 @@ const AddUsers = () => {
             rules={isEdit ? undefined : usersRules.password}
             disabled={saving || isReadOnly}
           />
+          <InputField
+            control={control}
+            name="contactNumber"
+            label="Contact number"
+            type="tel"
+            placeholder="Enter contact number"
+            rules={usersRules.contactNumber}
+            disabled={saving || isReadOnly}
+            wrapperClassName="sm:col-span-2"
+          />
           <DatePicker
             control={control}
             name="dateOfBirth"
@@ -216,7 +232,7 @@ const AddUsers = () => {
               { id: '1', value: 'Active' },
               { id: '0', value: 'Inactive' },
             ]}
-            disabled={saving || isReadOnly}
+            disabled={saving || isReadOnly || isEditingSelf}
           />
           <RadioGroup
             control={control}
@@ -229,9 +245,12 @@ const AddUsers = () => {
               { id: '0', value: 'Unlocked' },
               { id: '1', value: 'Locked' },
             ]}
-            disabled={saving || isReadOnly}
+            disabled={saving || isReadOnly || isEditingSelf}
           />
         </div>
+        {isEditingSelf ? (
+          <p className="text-xs text-[var(--text-muted)]">You cannot deactivate or lock your own account.</p>
+        ) : null}
 
         <div className="admin-sticky-footer">
           <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={saving}>Cancel</CommonButton>

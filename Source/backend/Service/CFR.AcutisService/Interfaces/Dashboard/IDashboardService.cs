@@ -29,6 +29,22 @@ namespace CFR.AcutisService.Interfaces.Dashboard
         /// <returns>MSResultArgs containing the dashboard summary.</returns>
         Task<MSResultArgs> GetDashboardSummaryAsync(DateTime startDate, DateTime endDate);
 
+        /// <summary>
+        /// Retrieves the actual flagged records behind one entitlement-integrity check.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let the Dashboard's Priority Alerts panel show and link to the exact
+        /// organizations/products/members behind a single integrity KPI, not just its count.
+        /// Request Flow: DashboardController -> IDashboardService.GetIntegrityIssueDetailAsync() -> IDashboardRepository.GetIntegrityIssueDetailAsync().
+        /// Validation Details: issueKey must be one of the drill-down-supported keys.
+        /// Business Logic: Delegates to IDashboardRepository.GetIntegrityIssueDetailAsync().
+        /// Repository Interaction: Calls IDashboardRepository.GetIntegrityIssueDetailAsync().
+        /// Response Details: MSResultArgs containing the flagged rows, or BadRequest for an unsupported key.
+        /// </remarks>
+        /// <param name="issueKey">One of the drill-down-supported integrity check keys.</param>
+        /// <returns>MSResultArgs containing the flagged rows.</returns>
+        Task<MSResultArgs> GetIntegrityIssueDetailAsync(string issueKey);
+
         #endregion GET Methods
     }
 }

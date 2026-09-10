@@ -34,4 +34,5 @@ export const toSaveUserPayload = (values: UsersFormValues, userId = 0) => ({
   isActive: Number(values.isActive) === 0 ? 0 : 1,
   isLocked: Number(values.isLocked) === 1 ? 1 : 0,
   dateOfBirth: toDateOnly(values.dateOfBirth) || null,
+  contactNumber: values.contactNumber.trim() || null,
 });
