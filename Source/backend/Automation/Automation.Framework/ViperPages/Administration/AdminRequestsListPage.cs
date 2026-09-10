@@ -26,8 +26,8 @@ namespace Automation.Framework.ViperPages.Administration
                 "info requested" => XPath_AdminRequests.TabInfoRequested,
                 _ => throw new ArgumentException($"Unknown status tab: {statusName}")
             };
-            FindElementByXPath(xpath);
-            Thread.Sleep(500); // Wait for the table to filter
+            ClickByScript(xpath);
+            Thread.Sleep(1500); // Wait for the table to filter
         }
 
         public bool VerifyResultsOrEmptyState()
@@ -46,14 +46,14 @@ namespace Automation.Framework.ViperPages.Administration
 
         public void SelectApplicationFilter()
         {
-            FindElementByXPath(XPath_AdminRequests.DropdownAppFilter);
-            Thread.Sleep(500);
+            ClickByScript(XPath_AdminRequests.DropdownAppFilter);
+            Thread.Sleep(1500);
         }
 
         public void SelectOrganizationFilter()
         {
-            FindElementByXPath(XPath_AdminRequests.DropdownOrgFilter);
-            Thread.Sleep(500);
+            ClickByScript(XPath_AdminRequests.DropdownOrgFilter);
+            Thread.Sleep(1500);
         }
     }
 }

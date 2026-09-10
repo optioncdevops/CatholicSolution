@@ -333,16 +333,16 @@ namespace Automation.Framework.ViperPages
         }
         public static class XPath_AdminRequests
         {
-            public const string TabAllStatuses = "//button[.//span[normalize-space()='All statuses']]";
-            public const string TabPending = "//button[.//span[normalize-space()='Pending']]";
-            public const string TabApproved = "//button[.//span[normalize-space()='Approved']]";
-            public const string TabRejected = "//button[.//span[normalize-space()='Rejected']]";
-            public const string TabInfoRequested = "//button[.//span[normalize-space()='Info requested']]";
+            public const string TabAllStatuses = "//button[@role='tab' and contains(., 'All statuses')]";
+            public const string TabPending = "//button[@role='tab' and contains(., 'Pending')]";
+            public const string TabApproved = "//button[@role='tab' and contains(., 'Approved')]";
+            public const string TabRejected = "//button[@role='tab' and contains(., 'Rejected')]";
+            public const string TabInfoRequested = "//button[@role='tab' and contains(., 'Info requested')]";
 
-            public const string DropdownAppFilter = "//button[contains(@class, 'dropdown-trigger') and .//span[contains(text(), 'All Applications') or ancestor::div/label[contains(text(), 'application')]]]";
-            public const string DropdownOrgFilter = "//button[contains(@class, 'dropdown-trigger') and .//span[contains(text(), 'All Organizations') or ancestor::div/label[contains(text(), 'organization')]]]";
+            public const string DropdownAppFilter = "//div[span[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'application')]]//div[@role='combobox']";
+            public const string DropdownOrgFilter = "//div[span[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'organization')]]//div[@role='combobox']";
 
-            public const string DataTableRows = "//table//tbody//tr";
+            public const string DataTableRows = "//table//tbody//tr[not(contains(@class, 'animate-pulse'))]";
             public const string EmptyState = "//*[contains(text(), 'No requests found')]";
             
             public const string BtnReviewFirstRow = "(//table//tbody//tr//button[contains(text(), 'Review')])[1]";
@@ -404,6 +404,151 @@ namespace Automation.Framework.ViperPages
             public const string FirstDropdownOption = "(//button[@role='option'])[1]";
             public const string BtnInvoiceCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
             public const string BtnInvoiceSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']] | //button[@type='submit' and contains(., 'Save')]";
+        }
+
+        /// <summary>
+        /// Shared CustomDataTable toolbar, search, and SweetAlert2 locators used by the
+        /// Administration list pages (User Roles, User Rights).
+        /// </summary>
+        public static class XPath_DataTable
+        {
+            public const string GridSearch = "//input[@placeholder='Search']";
+            public const string EmptyGrid = "//*[normalize-space(text())='No data available' or normalize-space(text())='No roles found.' or normalize-space(text())='No matches.']";
+            public const string GridRows = "//main//table//tbody/tr[not(contains(@class, 'animate-pulse'))]";
+            public const string ColumnsButton = "//button[.//span[normalize-space()='Columns']]";
+            public const string ColumnsDialog = "//*[@role='dialog'][@aria-label='Columns']";
+            public const string ColumnsCancel = "//*[@role='dialog'][@aria-label='Columns']//button[normalize-space()='Cancel']";
+            public const string FullscreenToggle = "//button[@title='Fullscreen' or @title='Exit fullscreen']";
+            public const string ExportExcel = "//button[contains(@title, 'Export to Excel')]";
+            public const string ExportPrint = "//button[@title='Print' or contains(@title, 'Print')]";
+            public const string ExportCsv = "//button[contains(@title, 'Download CSV')]";
+            public const string RowsPerPage = "//*[contains(normalize-space(), 'Rows per page')]";
+            public const string RowsPerPageSelect = "//span[contains(normalize-space(), 'Rows per page')]/following::select[1] | //*[contains(normalize-space(), 'Rows per page')]/following::select[1]";
+            public const string PaginationNext = "//button[@title='Next page' or normalize-space()='Next']";
+            public const string PaginationPrev = "//button[@title='Previous page' or normalize-space()='Prev']";
+            public const string ListBox = "//div[@role='listbox']";
+            public const string ListBoxOption = "//div[@role='listbox']//button[@role='option']";
+            public const string ToastBanner = "//div[div[contains(@class, 'admin-toast-progress')]]";
+            public const string DeleteConfirmPopup = "//div[contains(@class, 'swal2-popup')]";
+            public const string DeleteConfirmYes = "//button[contains(@class, 'swal2-confirm') or contains(@class, 'admin-swal-confirm')]";
+            public const string DeleteConfirmNo = "//button[contains(@class, 'swal2-cancel') or contains(@class, 'admin-swal-cancel')]";
+
+            public static string GridRowContaining(string text)
+            {
+                return $"//main//table//tbody/tr[.//*[normalize-space()='{text}']]";
+            }
+
+            public static string ColumnHeader(string header)
+            {
+                return $"//main//table//thead//th[contains(normalize-space(), '{header}')]";
+            }
+        }
+
+        public static class XPath_UserRoles
+        {
+            public const string RolesRoute = "/admin/administration-user-roles";
+            public const string PageTitle = "//h1[contains(@class, 'admin-panel-header__title')][contains(., 'User Roles')]";
+            public const string AddUserRole = "//button[.//span[normalize-space()='Add User Role']]";
+            public const string RoleFormModal = "//*[@role='dialog'][.//h3[contains(., 'User Role')]]";
+            public const string txtRoleName = "roleName";
+            public const string txtDescription = "description";
+            public const string ModalSave = "//*[@role='dialog']//button[.//span[normalize-space()='Save']]";
+            public const string ModalCancel = "//*[@role='dialog']//button[.//span[normalize-space()='Cancel']]";
+            public const string FieldError = "//*[@role='dialog']//p[@role='alert'] | //*[@role='dialog']//p[contains(@class, 'text-[var(--error)]')]";
+            public const string RowEdit = "(//button[starts-with(@aria-label, 'Edit ')])[1]";
+            public const string RowDelete = "(//button[starts-with(@aria-label, 'Delete ')])[1]";
+            public const string RowDeactivate = "(//button[starts-with(@aria-label, 'Deactivate ')])[1]";
+            public const string RowActivate = "(//button[starts-with(@aria-label, 'Activate ')])[1]";
+            public const string RowStatusToggle = "(//button[starts-with(@aria-label, 'Deactivate ') or starts-with(@aria-label, 'Activate ')])[1]";
+
+            public static string EditInRow(string roleName) =>
+                $"//main//table//tbody/tr[.//*[normalize-space()='{roleName}']]//button[starts-with(@aria-label, 'Edit ')]";
+
+            public static string DeleteInRow(string roleName) =>
+                $"//main//table//tbody/tr[.//*[normalize-space()='{roleName}']]//button[starts-with(@aria-label, 'Delete ')]";
+
+            public static string DeactivateInRow(string roleName) =>
+                $"//main//table//tbody/tr[.//*[normalize-space()='{roleName}']]//button[starts-with(@aria-label, 'Deactivate ')]";
+
+            public static string ActivateInRow(string roleName) =>
+                $"//main//table//tbody/tr[.//*[normalize-space()='{roleName}']]//button[starts-with(@aria-label, 'Activate ')]";
+
+            public static string StatusToggleInRow(string roleName) =>
+                $"//main//table//tbody/tr[.//*[normalize-space()='{roleName}']]//button[starts-with(@aria-label, 'Deactivate ') or starts-with(@aria-label, 'Activate ')]";
+        }
+
+        public static class XPath_UserRights
+        {
+            public const string RightsRoute = "/admin/administration-rights";
+            public const string PageTitle = "//h1[contains(@class, 'admin-panel-header__title')][contains(., 'User Rights')]";
+            public const string RoleDropdown = "ddlUserRightsRole";
+            public const string ModuleDropdown = "ddlUserRightsModule";
+            public const string ClearFilters = "//button[@id='btnClearUserRightsFilters']";
+            public const string ApplyAllAccess = "//button[@id='btnApplyAllAccess']";
+            public const string ApplyAllReadOnly = "//button[@id='btnApplyAllReadOnly']";
+            public const string ApplyAllDenied = "//button[@id='btnApplyAllDenied']";
+            public const string Save = "//button[@id='btnSaveUserRights']";
+            public const string Cancel = "//button[@id='btnCancelUserRights']";
+            public const string RightsTable = "//*[@id='tblUserRights']";
+            public const string FirstAccessButton = "(//div[@role='group' and starts-with(@aria-label, 'Access for ')]//button[.//span[normalize-space()='Access'] or normalize-space()='Access'])[1]";
+            public const string FirstReadOnlyButton = "(//div[@role='group' and starts-with(@aria-label, 'Access for ')]//button[.//span[normalize-space()='Read Only'] or normalize-space()='Read Only'])[1]";
+            public const string FirstDeniedButton = "(//div[@role='group' and starts-with(@aria-label, 'Access for ')]//button[.//span[normalize-space()='Denied'] or normalize-space()='Denied'])[1]";
+            public const string FirstExpand = "(//button[starts-with(@aria-label, 'Collapse ') or starts-with(@aria-label, 'Expand ')])[1]";
+            public const string EmptyRoles = "//*[normalize-space()='No roles yet']";
+            public const string EditingRightsFor = "//*[contains(normalize-space(), 'Editing rights for')]";
+        }
+
+        public static class XPath_EmailTemplates
+        {
+            public const string TemplatesRoute = "/admin/administration-email-templates";
+            public const string PageTitle = "//h1[contains(@class, 'admin-panel-header__title')][contains(., 'Email Templates')]";
+            public const string EmailSettingsLink = "//a[contains(@href, '/admin/administration-email-settings')]";
+            public const string EmailSettingsButton = "//button[.//span[normalize-space()='Email Settings']]";
+            public const string SearchTemplates = "//input[contains(@placeholder, 'Search templates')]";
+            public const string TemplateItem = "//button[contains(@class, 'admin-email-template-item')]";
+            public const string ActiveTemplateTitle = "//h2[contains(@class, 'panel-title')]";
+            public const string SubjectInput = "//input[@placeholder='Enter the email subject line']";
+            public const string BodyEditor = "//*[@id='email-template-body-editor']";
+            public const string BtnReset = "//button[.//span[normalize-space()='Reset']]";
+            public const string BtnPreview = "//button[.//span[normalize-space()='Preview']]";
+            public const string BtnSendTest = "//button[.//span[contains(normalize-space(), 'Send Test')]]";
+            public const string BtnSave = "//button[.//span[normalize-space()='Save' or normalize-space()='Saving…']]";
+            public const string PreviewModal = "//*[@role='dialog'][.//h3[contains(., 'Preview')]]";
+            public const string PreviewClose = "//*[@role='dialog']//button[@aria-label='Close']";
+            public const string InsertVariableTag = "//button[contains(@class, 'admin-email-template-tag')]";
+            public const string NoTemplatesMatch = "//*[contains(normalize-space(), 'No templates match')]";
+
+            public static string TemplateItemByLabel(string label)
+            {
+                return $"//button[contains(@class, 'admin-email-template-item')][.//span[contains(@class, 'admin-email-template-item__title')][normalize-space()='{label}']]";
+            }
+        }
+
+        public static class XPath_EmailSettings
+        {
+            public const string SettingsRoute = "/admin/administration-email-settings";
+            public const string PageTitle = "//h1[contains(@class, 'admin-panel-header__title')][contains(., 'Email Settings')]";
+            public const string SmtpSection = "//*[normalize-space()='SMTP Server']";
+            public const string BrandingSection = "//*[normalize-space()='Branding']";
+            public const string SmtpServer = "//label[.//span[normalize-space()='SMTP server']]/following::input[1]";
+            public const string SmtpPort = "//label[.//span[normalize-space()='SMTP port']]/following::input[1]";
+            public const string DisplayName = "//label[.//span[normalize-space()='Display name']]/following::input[1]";
+            public const string Username = "//label[.//span[normalize-space()='Username']]/following::input[1]";
+            public const string Password = "//label[.//span[normalize-space()='Password']]/following::input[1]";
+            public const string CcAddress = "//label[.//span[normalize-space()='CC address']]/following::input[1]";
+            public const string ContactUs = "//label[.//span[normalize-space()='Contact us address']]/following::input[1]";
+            public const string ApiBaseUrl = "//label[.//span[normalize-space()='API base URL']]/following::input[1]";
+            public const string BaseFontSize = "//label[.//span[normalize-space()='Base font size (px)']]/following::input[1]";
+            public const string SendMailSwitch = "//label[contains(normalize-space(), 'Send mail enabled')]";
+            public const string SslSwitch = "//label[contains(normalize-space(), 'SSL/TLS enabled')]";
+            public const string FontFamilyDropdown = "//div[@role='combobox'][@aria-haspopup='listbox']";
+            public const string FontFamilyLabel = "//*[contains(normalize-space(), 'Font family')]";
+            public const string FontFamilyListBox = "//div[@role='listbox']";
+            public const string AccentColor = "//label[.//span[normalize-space()='Accent color']]/following::input[1]";
+            public const string ColorPickerButton = "//button[@aria-label='Open color picker']";
+            public const string EmailLogo = "//*[normalize-space()='Email logo']";
+            public const string BtnSave = "//div[contains(@class, 'admin-sticky-footer')]//button[@type='submit' or .//span[normalize-space()='Save']]";
+            public const string BtnCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[.//span[normalize-space()='Cancel']]";
         }
     }
 }
