@@ -54,5 +54,15 @@ namespace Automation.Acutis.StepDefinitions
         {
             _adminRequestsPage.SelectOrganizationFilter();
         }
+
+        public void RunAdminAccessRequestsProcess()
+        {
+            ThenINavigateToTheAdminAccessRequestsPage();
+            ThenIShouldSeeTheAccessRequestsTableOrAnEmptyState();
+            WhenISelectTheStatusTab("pending");
+            ThenTheRequestsTableShouldShowFilteredResultsOrBeEmpty();
+            WhenIClickOnTheApplicationFilterDropdown();
+            WhenIClickOnTheOrganizationFilterDropdown();
+        }
     }
 }

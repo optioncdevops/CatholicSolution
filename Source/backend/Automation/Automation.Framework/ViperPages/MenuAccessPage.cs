@@ -166,6 +166,12 @@ namespace Automation.Framework.ViperPages
                 }
             }
 
+            // The trigger is a toggle, and reading the entries above left it open. VisitEntry
+            // re-clicks this same trigger per entry expecting it to open the panel, so it must
+            // be closed here first - otherwise that first re-click would toggle it shut instead,
+            // and the very first entry's click would fail as "not clickable".
+            ClickFirstDisplayed(XPath_MenuAccess.TopMenu(group), _menuTimeoutSeconds);
+
             return entries;
         }
 

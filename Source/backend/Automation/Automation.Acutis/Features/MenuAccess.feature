@@ -1,4 +1,4 @@
-Feature: 03_MenuAccess
+Feature: 02_MenuAccess
 
 Every menu the signed in role is shown has to open, and every link under it has to
 land on its own page rather than an error, an empty screen or the dashboard.

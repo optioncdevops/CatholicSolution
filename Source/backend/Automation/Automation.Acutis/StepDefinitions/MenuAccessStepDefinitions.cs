@@ -45,5 +45,11 @@ namespace Automation.Acutis.StepDefinitions
                     + Environment.NewLine
                     + string.Join(Environment.NewLine, failures));
         }
+
+        public void RunMenuAccessProcess()
+        {
+            ThenTheTopNavigationMenuShouldBeLoaded();
+            ThenEveryMenuShouldOpenAndEverySubMenuLinkShouldOpenItsOwnPage();
+        }
     }
 }

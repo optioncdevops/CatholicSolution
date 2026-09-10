@@ -122,5 +122,23 @@ namespace Automation.Acutis.StepDefinitions
         {
             Assert.That(_templatesPage.IsOnEmailSettings(), Is.True, "Email Settings did not open from the Email Templates shortcut.");
         }
+
+        public void RunEmailTemplatesProcess()
+        {
+            ThenClickOnAdministrationMenuAndSelectEmailTemplateSubMenu();
+            ThenEmailTemplatesPageShouldBeOpened();
+            ThenSearchTemplatesAndThenClearTheSearch();
+            ThenSelectEachEmailTemplateFromTheList();
+            ThenSelectTheTargetEmailTemplate();
+            ThenEditTheSubjectAndClickOnPreviewAndCloseThePreview();
+            WhenClickOnResetTemplate();
+            ThenResetConfirmBoxShouldOpenAndClickOnCancel();
+            ThenInsertAMergeTagVariableIntoTheTemplate();
+            ThenEditTheSubjectAndClickOnSaveTemplate();
+            ThenRestoreTheOriginalSubjectAndClickOnSaveTemplate();
+            ThenClickOnSendTestEmail();
+            ThenClickOnEmailSettingsFromEmailTemplatesPage();
+            ThenEmailSettingsPageShouldBeOpenedFromTheShortcut();
+        }
     }
 }

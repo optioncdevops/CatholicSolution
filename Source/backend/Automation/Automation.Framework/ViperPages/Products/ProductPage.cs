@@ -10,21 +10,14 @@ namespace Automation.Framework.ViperPages.Products
     {
         public void NavigateToProducts()
         {
-            try
-            {
-                var menuElement = _webDriver.FindElements(By.XPath(XPath_Products.MenuProducts)).FirstOrDefault();
-                if (menuElement != null && menuElement.Displayed)
-                {
-                    menuElement.Click();
-                }
-                else
-                {
-                    var currentUri = new Uri(_webDriver.Url);
-                    string baseUrl = $"{currentUri.Scheme}://{currentUri.Authority}";
-                    _webDriver.Navigate().GoToUrl(baseUrl + XPath_Products.ProductsUrlPath);
-                }
-            }
-            catch (Exception)
+            // Right after login the top nav's menu items are still hydrating from the login
+            // response, so an immediate, unwaited FindElements can miss the "Products" link and
+            // fall through to a hard page reload below - much slower than the in-app SPA click,
+            // and exactly why this used to feel slow straight after signing in. Give the link up
+            // to 10s to actually render before treating it as unavailable.
+            bool clicked = ClickFirstDisplayed(XPath_Products.MenuProducts, 10);
+
+            if (!clicked)
             {
                 var currentUri = new Uri(_webDriver.Url);
                 string baseUrl = $"{currentUri.Scheme}://{currentUri.Authority}";

@@ -17,6 +17,8 @@ namespace Automation.Framework.JsonTestData
         public EmailTemplatesData? EmailTemplates { get; set; }
 
         public EmailSettingsData? EmailSettings { get; set; }
+
+        public OrganizationData? Organization { get; set; }
     }
 
     public class JsonLogin
@@ -101,5 +103,19 @@ namespace Automation.Framework.JsonTestData
     public class EmailSettingsData
     {
         public string? DisplayNameSuffix { get; set; }
+    }
+
+    public class OrganizationData
+    {
+        public string? OrgType { get; set; }
+        public string? Website { get; set; }
+        public string? Status { get; set; }
+        public string? ContactPerson { get; set; }
+        public string? ContactPhone { get; set; }
+        public string? ContactEmail { get; set; }
+        public string? Address { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? Zip { get; set; }
     }
 }

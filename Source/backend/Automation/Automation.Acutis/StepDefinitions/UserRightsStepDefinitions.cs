@@ -192,5 +192,28 @@ namespace Automation.Acutis.StepDefinitions
             Assert.That(_rightsPage.IsApplyToAllConfirmOpen(), Is.True, "Apply to all did not open a confirmation.");
             _rightsPage.CancelApplyToAll();
         }
+
+        public void RunUserRightsProcess()
+        {
+            ThenClickOnAdministrationMenuAndSelectRightsSubMenu();
+            ThenUserRightsPageShouldBeOpened();
+            ThenSelectEachRoleFromTheRoleDropdown();
+            ThenSelectEachModuleFromTheModuleDropdown();
+            ThenChangeUserRightsRowsPerPage();
+            ThenClickAccessReadOnlyAndDeniedOnTheFirstPermissionRow();
+            ThenClickOnClearFiltersAndVerifyTheRightsMatrixIsShown();
+            ThenToggleTheFirstTreeRowExpandOrCollapse();
+            ThenSearchTheRightsMatrixAndOpenTheColumnsMenu();
+            WhenChangeTheFirstRowPermission();
+            ThenClickOnCancelToDiscardUnsavedRightsChanges();
+            WhenChangeTheFirstRowPermission();
+            ThenClickOnSaveToPersistTheRightsChanges();
+            WhenClickOnApplyToAllAccess();
+            ThenApplyToAllConfirmBoxShouldOpenAndClickOnCancel();
+            WhenClickOnApplyToAllReadOnly();
+            ThenApplyToAllConfirmBoxShouldOpenAndClickOnCancel();
+            WhenClickOnApplyToAllDenied();
+            ThenApplyToAllConfirmBoxShouldOpenAndClickOnCancel();
+        }
     }
 }

@@ -177,5 +177,36 @@ namespace Automation.Acutis.StepDefinitions
         }
 
         #endregion Invoice Details Steps
+
+        public void RunProductProcess()
+        {
+            ThenClickOnProductsMenuAndVerifyProductsPageIsOpened();
+            ThenCheckInAllProductsAndFilterByStatus();
+            ThenClickOnViewProductIconForTheSelectedProduct();
+            ThenProductDetailsPageShouldBeOpened();
+            ThenNavigateThroughProductSubTabsOrganizationsInvoiceDetailsInvoiceHistoryAndProductDetails();
+            
+            WhenClickOnChangeStatusButton();
+            ThenChangeStatusModalShouldOpenAndClickOnCancelButtonToClose();
+            WhenClickOnChangeStatusButton();
+            WhenSelectNewStatusAndClickOnContinueButton();
+            ThenConfirmationPopupShouldOpenAndClickConfirmToUpdateStatus();
+            
+            WhenClickOnEditProductButton();
+            ThenEditProductPageShouldBeOpenedAndClickOnCancelButton();
+            WhenClickOnEditProductButton();
+            ThenEditProductPageShouldBeOpenedAndUpdateTheFieldsAndClickOnSaveButton();
+
+            WhenClickOnOrganizationsTab();
+            ThenClickOnViewOrganizationIconAndVerifyOrganizationDetailsOpened();
+            ThenClickOnBackToProductsButtonAndVerifyProductDetailsOpened();
+
+            WhenClickOnInvoiceDetailsTab();
+            ThenNavigateThroughAllInvoiceStatusFilterTabs();
+            WhenClickOnCreateInvoiceButton();
+            ThenCreateInvoicePageShouldBeOpenedAndClickOnCancelButton();
+            WhenClickOnCreateInvoiceButton();
+            ThenCreateInvoicePageShouldBeOpenedAndEnterInvoiceDetailsAndClickOnSaveButton();
+        }
     }
 }

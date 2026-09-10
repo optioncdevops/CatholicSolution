@@ -11,7 +11,7 @@
     "EditLastName": "Admin-Edit",
     "UserName": null,
     "EMail": "cfracutis@newoptionc.com",
-    "Password": "cfr@123",
+    "Password": "Cfr@12345",
     "DateOfBirth": "01/01/1990",
     "UserRole": "Admin"
   },
@@ -48,5 +48,17 @@
   },
   "EmailSettings": {
     "DisplayNameSuffix": " AutoTest"
+  },
+  "Organization": {
+    "OrgType": "Parish",
+    "Website": "www.testorg.com",
+    "Status": "Active",
+    "ContactPerson": "John Doe",
+    "ContactPhone": "1234567890",
+    "ContactEmail": "test@testorg.com",
+    "Address": "123 Test St",
+    "City": "Testville",
+    "State": "CA",
+    "Zip": "90210"
   }
 }

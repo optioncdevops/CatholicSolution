@@ -524,6 +524,52 @@ namespace Automation.Framework.ViperPages
             }
         }
 
+        public static class XPath_Organizations
+        {
+            public const string OrganizationsMenu = "//a[@href='/admin/organizations']";
+            public const string PageTitle = "//h1[contains(@class, 'admin-panel-header__title')][contains(., 'Organizations')]";
+            public const string BtnAddOrganization = "//button[contains(normalize-space(), 'Add Organization')]";
+            public const string BtnSave = "//div[contains(@class, 'admin-sticky-footer')]//button[@type='submit' or .//span[normalize-space()='Save']]";
+            public const string BtnCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[.//span[normalize-space()='Cancel']]";
+            public const string OrgName = "//input[@name='orgName']";
+            public const string OrgTypeDropdown = "//*[contains(normalize-space(), 'Organization type')]/following::div[@role='combobox'][1]";
+            public const string Website = "//input[@name='website']";
+            public const string StatusDropdown = "//*[contains(normalize-space(), 'Status')]/following::div[@role='combobox'][1]";
+            public const string ContactPerson = "//input[@name='contactPerson']";
+            public const string ContactPhone = "//input[@name='contactPhone']";
+            public const string ContactEmail = "//input[@name='contactEmail']";
+            public const string Address = "//input[@name='address']";
+            public const string City = "//input[@name='city']";
+            public const string State = "//input[@name='state']";
+            public const string Zip = "//input[@name='zip']";
+            public const string FirstRowViewBtn = "//tbody/tr[1]//button[@aria-label[contains(., 'View')]]";
+            public const string FirstRowEditBtn = "//tbody/tr[1]//button[@aria-label[contains(., 'Edit')]]";
+            public const string FirstRowChangeStatusBtn = "//tbody/tr[1]//button[@aria-label[contains(., 'Change status')]]";
+            // Change Status modal
+            public const string ChangeStatusModal = "//*[@role='dialog'][.//*[contains(normalize-space(), 'Change Status')]]";
+            public const string ChangeStatusInactiveOption = "//*[@role='dialog']//button[contains(normalize-space(), 'Inactive')]";
+            // The status option matching the organization's current status renders disabled -
+            // clicking it is a no-op, so this is the fallback used when Inactive already is the
+            // current status (e.g. a previous run left it there).
+            public const string ChangeStatusAnySelectableOption = "//*[@role='dialog']//fieldset//button[not(@disabled)]";
+            public const string ChangeStatusCancelBtn = "//*[@role='dialog']//button[normalize-space()='Cancel']";
+            public const string ChangeStatusContinueBtn = "//*[@role='dialog']//button[normalize-space()='Continue']";
+            public const string ConfirmStatusChangeBtn = "//*[@role='dialog']//button[normalize-space()='Confirm status change']";
+            // Assign App modal (on Products tab of detail page)
+            public const string AssignAppBtn = "//button[contains(normalize-space(), 'Assign App')]";
+            public const string AssignAppModal = "//*[@role='dialog'][.//*[normalize-space()='Assign App']]";
+            public const string AssignAppCancelBtn = "//*[@role='dialog'][.//*[normalize-space()='Assign App']]//button[normalize-space()='Cancel']";
+            // Back to Organizations button on detail page
+            public const string BackToOrganizationsBtn = "//button[contains(normalize-space(), 'Back to Organizations')]";
+            // Edit form on detail page (Profile tab in edit mode)
+            public const string OrgNameEdit = "//input[@name='orgName']";
+            public const string EditSaveBtn = "//div[contains(@class, 'admin-sticky-footer')]//button[@type='submit' or .//span[normalize-space()='Save']]";
+            public const string EditCancelBtn = "//div[contains(@class, 'admin-sticky-footer')]//button[.//span[normalize-space()='Cancel']]";
+            public const string ProfileEditBtn = "//div[contains(@class, 'admin-panel-card__header')]//button[normalize-space()='Edit']";
+            // Add Organization page
+            public const string AddCancelBtn = "//button[normalize-space()='Cancel']";
+        }
+
         public static class XPath_EmailSettings
         {
             public const string SettingsRoute = "/admin/administration-email-settings";
