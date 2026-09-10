@@ -249,8 +249,12 @@ export function OrganizationsListPage() {
       cell: (org) => (
         <div className="flex items-center gap-0.5" onClick={(event) => event.stopPropagation()}>
           <CommonIconButton aria-label={`View ${org.orgName}`} tooltip="View" icon={<Eye size={14} />} onClick={() => handleView(org)} />
-          <CommonIconButton aria-label={`Edit ${org.orgName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleEdit(org)} disabled={isReadOnly} />
-          <CommonIconButton aria-label={`Change status for ${org.orgName}`} tooltip="Change Status" icon={<RefreshCw size={14} />} onClick={() => setChangingStatusOrg(org)} disabled={isReadOnly} />
+          {!isReadOnly && (
+            <CommonIconButton aria-label={`Edit ${org.orgName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleEdit(org)} />
+          )}
+          {!isReadOnly && (
+            <CommonIconButton aria-label={`Change status for ${org.orgName}`} tooltip="Change Status" icon={<RefreshCw size={14} />} onClick={() => setChangingStatusOrg(org)} />
+          )}
         </div>
       ),
     },
@@ -342,7 +346,7 @@ export function OrganizationsListPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="Organizations"
-        action={<CommonButton variant="headerSecondary" size="sm" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/organizations/add')} disabled={isReadOnly}>Add Organization</CommonButton>}
+        action={!isReadOnly && <CommonButton variant="headerSecondary" size="sm" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/organizations/add')}>Add Organization</CommonButton>}
       />
 
       {isReadOnly ? <ReadOnlyBanner featureName="Organizations" /> : null}

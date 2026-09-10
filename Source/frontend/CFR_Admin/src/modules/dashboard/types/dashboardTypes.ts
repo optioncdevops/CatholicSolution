@@ -50,10 +50,16 @@ export type DashboardTrendEventType =
   | 'LicenseCreated' | 'OrgProductAssignmentCreated';
 
 /** One raw event timestamp within the requested range — bucketed client-side the same way the
- * dashboard already buckets other real data, except these are scoped server-side to the range. */
+ * dashboard already buckets other real data, except these are scoped server-side to the range.
+ * orgId/orgName/productId/productName are only populated for LicenseCreated and
+ * OrgProductAssignmentCreated (the two event types the Recent Activity feed names and links). */
 export interface DashboardTrendEventApiItem {
   eventType: DashboardTrendEventType;
   eventDate: string;
+  orgId: number | null;
+  orgName: string | null;
+  productId: number | null;
+  productName: string | null;
 }
 
 export interface DashboardSummaryApiItem {

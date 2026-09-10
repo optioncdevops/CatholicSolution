@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import { Plus, Power, PowerOff } from 'lucide-react';
+import { Power, PowerOff } from 'lucide-react';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { CommonButton, CommonIconButton } from '@app/components/buttons';
+import { CommonIconButton } from '@app/components/buttons';
 import { StatusBadge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '@/modules/lib/confirm';
 import { formatDate } from '@/modules/utils/formatDate';
 import { assignOrganizationProduct, removeOrganizationProduct } from '../../services/organizationsService';
 import type { OrganizationProductApiItem } from '../../types/organizationTypes';
-import AssignOrganizationProductModal from './AssignOrganizationProductModal';
 
 type OrganizationProductsPanelProps = {
   orgId: number;
@@ -30,7 +29,6 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOn
 
   //#region States
   const [processingProductId, setProcessingProductId] = useState<number | null>(null);
-  const [assignModalOpen, setAssignModalOpen] = useState(false);
   //#endregion
 
   //#region Handlers
@@ -102,14 +100,14 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOn
     },
     {
       id: 'actions', header: 'Actions', width: '4rem', excludeFromExport: true, sortable: false,
-      cell: (product) => (product.assignStatus === 'active' ? (
+      cell: (product) => (readOnly ? null : product.assignStatus === 'active' ? (
         <CommonIconButton
           aria-label={`Deactivate ${product.productName}`}
           tooltip="Deactivate"
           variant="danger"
           icon={<PowerOff size={14} />}
           onClick={() => handleDeactivate(product)}
-          disabled={processingProductId === product.productId || readOnly}
+          disabled={processingProductId === product.productId}
         />
       ) : (
         <CommonIconButton
@@ -118,7 +116,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOn
           variant="success"
           icon={<Power size={14} />}
           onClick={() => handleActivate(product)}
-          disabled={processingProductId === product.productId || readOnly}
+          disabled={processingProductId === product.productId}
         />
       )),
     },
@@ -128,12 +126,6 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOn
   //#region Render
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex justify-end">
-        <CommonButton size="sm" iconLeft={<Plus size={14} />} onClick={() => setAssignModalOpen(true)} disabled={readOnly}>
-          Assign App
-        </CommonButton>
-      </div>
-
       {products.length === 0 ? (
         <EmptyState icon="📦" title="No apps assigned" description="Apps assigned to this organization will appear here." />
       ) : (
@@ -146,14 +138,6 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOn
           emptyMessage="No apps found."
         />
       )}
-
-      <AssignOrganizationProductModal
-        isOpen={assignModalOpen}
-        orgId={orgId}
-        orgName={orgName}
-        onClose={() => setAssignModalOpen(false)}
-        onAssigned={onChanged}
-      />
     </div>
   );
   //#endregion

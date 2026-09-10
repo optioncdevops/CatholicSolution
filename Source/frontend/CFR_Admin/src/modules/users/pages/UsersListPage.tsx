@@ -117,27 +117,31 @@ export function UsersListPage() {
         return (
           <div className="flex items-center gap-0.5">
             <CommonIconButton
-              aria-label={`Edit ${user.fullName}`}
-              tooltip="Edit"
+              aria-label={isReadOnly ? `View ${user.fullName}` : `Edit ${user.fullName}`}
+              tooltip={isReadOnly ? 'View' : 'Edit'}
               icon={<Pencil size={14} />}
               onClick={() => navigate('/admin/edit-users', { state: { id: user.userId } })}
             />
-            <CommonIconButton
-              aria-label={user.isActive === 1 ? `Deactivate ${user.fullName}` : `Activate ${user.fullName}`}
-              tooltip={isSelf ? 'You cannot deactivate your own account' : user.isActive === 1 ? 'Deactivate' : 'Activate'}
-              variant={user.isActive === 1 ? 'danger' : 'ghost'}
-              icon={<Power size={15} />}
-              onClick={() => void handleToggleStatus(user)}
-              disabled={isReadOnly || isSelf}
-            />
-            <CommonIconButton
-              aria-label={`Delete ${user.fullName}`}
-              tooltip={isSelf ? 'You cannot delete your own account' : 'Delete'}
-              variant="danger"
-              icon={<Trash2 size={14} />}
-              onClick={() => void handleDelete(user)}
-              disabled={isReadOnly || isSelf}
-            />
+            {!isReadOnly && (
+              <CommonIconButton
+                aria-label={user.isActive === 1 ? `Deactivate ${user.fullName}` : `Activate ${user.fullName}`}
+                tooltip={isSelf ? 'You cannot deactivate your own account' : user.isActive === 1 ? 'Deactivate' : 'Activate'}
+                variant={user.isActive === 1 ? 'danger' : 'ghost'}
+                icon={<Power size={15} />}
+                onClick={() => void handleToggleStatus(user)}
+                disabled={isSelf}
+              />
+            )}
+            {!isReadOnly && (
+              <CommonIconButton
+                aria-label={`Delete ${user.fullName}`}
+                tooltip={isSelf ? 'You cannot delete your own account' : 'Delete'}
+                variant="danger"
+                icon={<Trash2 size={14} />}
+                onClick={() => void handleDelete(user)}
+                disabled={isSelf}
+              />
+            )}
           </div>
         );
       },
@@ -160,7 +164,7 @@ export function UsersListPage() {
     { id: 'contactNumber', header: 'Contact Number', value: (user) => user.contactNumber ?? '—', cell: (user) => <span className="text-[var(--text-secondary)]">{user.contactNumber || '—'}</span> },
     { id: 'dob', header: 'Date of birth', value: (user) => user.dateOfBirth ?? '—', cell: (user) => <span className="text-[var(--text-muted)]">{user.dateOfBirth ? formatDate(user.dateOfBirth) : '—'}</span> },
     { id: 'status', header: 'Status', value: (user) => user.status, cell: (user) => <StatusBadge status={user.status} kind="user" /> },
-    { id: 'locked', header: 'Locked', value: (user) => (user.isLocked === 1 ? 'Locked' : 'Unlocked'), cell: (user) => <Badge tone={user.isLocked === 1 ? 'danger' : 'success'}>{user.isLocked === 1 ? 'Locked' : 'Unlocked'}</Badge> },
+    { id: 'locked', header: 'Is Locked?', value: (user) => (user.isLocked === 1 ? 'Yes' : 'No'), cell: (user) => <Badge tone={user.isLocked === 1 ? 'danger' : 'success'}>{user.isLocked === 1 ? 'Yes' : 'No'}</Badge> },
     { id: 'lastActive', header: 'Last Active', value: (user) => user.lastActiveAt ?? '—', cell: (user) => <span className="text-[var(--text-muted)]">{user.lastActiveAt ? formatDateTime(user.lastActiveAt) : '—'}</span> },
   ], [handleDelete, handleToggleStatus, navigate, isReadOnly, currentUserId]);
   //#endregion
@@ -170,7 +174,7 @@ export function UsersListPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="Users"
-        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/add-users')} disabled={isReadOnly}>Add User</CommonButton>}
+        action={!isReadOnly && <CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/add-users')}>Add User</CommonButton>}
       />
 
       {isReadOnly ? <ReadOnlyBanner featureName="Users" /> : null}

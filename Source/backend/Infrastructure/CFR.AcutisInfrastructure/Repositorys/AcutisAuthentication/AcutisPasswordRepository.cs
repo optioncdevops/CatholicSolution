@@ -67,5 +67,32 @@ namespace CFR.AcutisInfrastructure.Repositorys.AcutisAuthentication
         }
 
         #endregion PUT Methods
+
+        #region GET Methods
+
+        /// <summary>
+        /// Checks a reset token's validity using StoredProc.AcutisAuth.PasswordResetCrud.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Read-only lookup of the account a reset token belongs to.
+        /// Request Flow: IAcutisPasswordService -> AcutisPasswordRepository.ValidateResetTokenAsync() -> Database.
+        /// Validation Details: Maps the token hash to a stored procedure parameter.
+        /// Business Logic: Executes StoredProc.AcutisAuth.PasswordResetCrud with ActionId 3.
+        /// Repository Interaction: Executes StoredProc.AcutisAuth.PasswordResetCrud.
+        /// Response Details: Returns the return value and the matched user's identity, when valid.
+        /// </remarks>
+        /// <param name="tokenHash">SHA-256 hash of the raw reset token supplied by the user.</param>
+        /// <returns>Return value and matched user identity.</returns>
+        public async Task<(int ReturnValue, ForgotPasswordUserResult? User)> ValidateResetTokenAsync(string tokenHash)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.AcutisAuthParams.ActionId, 3, DbType.Int32);
+            parameters.Add(DBParameterName.AcutisAuthParams.TokenHash, tokenHash, DbType.String);
+            parameters.Add(DBParameterName.AcutisAuthParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
+            var result = await dapperHandler.QueryAsync<ForgotPasswordUserResult>(StoredProc.AcutisAuth.PasswordResetCrud, parameters, CommandType.StoredProcedure);
+            return (parameters.Get<int>(DBParameterName.AcutisAuthParams.ReturnValue), result.FirstOrDefault());
+        }
+
+        #endregion GET Methods
     }
 }

@@ -53,9 +53,12 @@ namespace CFR.Common
         public const string ResetAlreadyRequestedRecently = "A password reset link is already on its way to this email address and is still valid. Check your inbox (and spam folder) for that link before requesting a new one.";
         public const string AccountNotFound = "No account found with this email address.";
         public const string InvalidResetToken = "This reset link is invalid or has expired.";
+        public const string ResetTokenAlreadyUsed = "This reset link has already been used. Please request a new one.";
+        public const string ResetTokenExpired = "This reset link has expired. Please request a new one.";
         public const string PasswordMismatch = "The new passwords do not match or do not meet the minimum length.";
         public const string PasswordTooWeak = "Use at least 8 characters with upper/lowercase letters, a number, and preferably a symbol.";
         public const string ExistEmailTemplateCode = "A template with this code already exists.";
+        public const string LinkExpiryMinutesOutOfRange = "Link expiry must be between 5 and 1440 minutes (24 hours).";
         public const string InvalidCurrentPassword = "Your current password is incorrect.";
         public const string ProfileUpdated = "Profile updated successfully.";
         public const string PasswordChanged = "Password changed successfully.";
@@ -114,6 +117,7 @@ namespace CFR.Common
             public const string DeleteUserRoleFailed = "Error while deleting Acutis user role {RoleId}";
             public const string ForgotPasswordFailed = "Error while processing forgot-password request for {UserName}";
             public const string ResetPasswordFailed = "Error while resetting Acutis user password";
+            public const string ValidateResetTokenFailed = "Error while validating Acutis password reset token";
             public const string FetchEmailTemplatesFailed = "Error while fetching email templates";
             public const string FetchEmailTemplateByIdFailed = "Error while fetching email template {TemplateId}";
             public const string SaveEmailTemplateFailed = "Error while saving email template";

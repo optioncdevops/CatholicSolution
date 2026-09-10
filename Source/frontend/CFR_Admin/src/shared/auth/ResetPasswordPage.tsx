@@ -5,7 +5,7 @@ import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, LockIcon, 
 import { PasswordField } from '@shared/app/components/PasswordField';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { AdminAuthShell } from './AdminAuthShell';
-import { resetPassword } from './services/authService';
+import { resetPassword, validateResetToken } from './services/authService';
 import { passwordScore, PASSWORD_STRENGTH_HINT } from './validators';
 
 interface ResetPasswordFormValues {
@@ -30,6 +30,12 @@ export function ResetPasswordPage() {
   const [serverError, setServerError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
+  // Read-only check of the token itself, run once on mount — confirms which account this link
+  // resets (shown above the form) and rejects an already-used/expired link immediately, instead
+  // of only after the visitor fills in a new password and submits.
+  const [checkingToken, setCheckingToken] = useState(true);
+  const [tokenError, setTokenError] = useState('');
+  const [accountEmail, setAccountEmail] = useState('');
 
   const { register, handleSubmit, control, trigger, formState: { errors, dirtyFields } } = useForm<ResetPasswordFormValues>({
     defaultValues: { password: '', confirmPassword: '' },
@@ -75,6 +81,31 @@ export function ResetPasswordPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per mount, not on every token identity check
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      if (!token) {
+        setCheckingToken(false);
+        return;
+      }
+      try {
+        const { resultData } = await validateResetToken(token);
+        if (cancelled) return;
+        const data = resultData as { email?: string } | null | undefined;
+        setAccountEmail(data?.email ?? '');
+      } catch (err) {
+        if (cancelled) return;
+        setTokenError(typeof err === 'string' ? err : 'This reset link is invalid or has expired.');
+      } finally {
+        if (!cancelled) setCheckingToken(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per mount against this token
+  }, []);
+
   const submit = handleSubmit(async (values) => {
     setServerError('');
     setSubmitting(true);
@@ -109,6 +140,38 @@ export function ResetPasswordPage() {
     );
   }
 
+  if (checkingToken) {
+    return (
+      <AdminAuthShell>
+        <section className="admin-auth-card">
+          <div className="admin-auth-success" aria-live="polite">
+            <span className="admin-auth-spinner" aria-hidden="true" />
+            <span className="admin-auth-card__kicker">Checking Your Link</span>
+            <p>Please wait a moment…</p>
+          </div>
+        </section>
+      </AdminAuthShell>
+    );
+  }
+
+  if (tokenError) {
+    return (
+      <AdminAuthShell>
+        <section className="admin-auth-card">
+          <div className="admin-auth-success" aria-live="polite">
+            <span className="admin-auth-success__icon"><AlertTriangleIcon size={22} /></span>
+            <span className="admin-auth-card__kicker">Link Not Valid</span>
+            <h2>This Link Can&apos;t Be Used</h2>
+            <p>{tokenError}</p>
+            <Link to={recoveryTarget} className="admin-auth-submit admin-auth-submit--link">
+              Request a New Link <ArrowRightIcon size={15} />
+            </Link>
+          </div>
+        </section>
+      </AdminAuthShell>
+    );
+  }
+
   return (
     <AdminAuthShell>
       <section className="admin-auth-card">
@@ -129,7 +192,9 @@ export function ResetPasswordPage() {
               <span className="admin-auth-card__mark"><ShieldCheckIcon size={20} /></span>
               <span className="admin-auth-card__kicker">Secure Password Reset</span>
               <h1 className="admin-auth-card__title">Create a New Password</h1>
-              <p className="admin-auth-card__description">Choose a new password for your account.</p>
+              <p className="admin-auth-card__description">
+                {accountEmail ? <>Choose a new password for <strong>{accountEmail}</strong>.</> : 'Choose a new password for your account.'}
+              </p>
             </div>
             <form id="formResetPassword" onSubmit={submit} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">

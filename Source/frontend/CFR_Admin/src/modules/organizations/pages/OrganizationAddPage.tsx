@@ -10,7 +10,7 @@ import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField, MandatoryIndicator } from '@app/components/formControls';
 import { createOrganization } from '../services/organizationsService';
 import type { OrganizationFormValues } from '../types/organizationTypes';
-import { ORG_STATUS_OPTIONS, ORG_TYPE_OPTIONS } from '../utils/organizationHelpers';
+import { ORG_STATUS_OPTIONS, ORG_TYPE_OPTIONS, US_STATE_OPTIONS } from '../utils/organizationHelpers';
 import { organizationDefaultValues, organizationRules } from '../validator/OrganizationValidator';
 
 const OrganizationAddPage = () => {
@@ -102,13 +102,15 @@ const OrganizationAddPage = () => {
           <InputField control={control} name="contactEmail" label="Contact email" type="email" placeholder="Enter contact email" rules={organizationRules.contactEmail} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="address" label="Address" placeholder="Street address" disabled={saving || isReadOnly} wrapperClassName="md:col-span-12" />
           <InputField control={control} name="city" label="City" placeholder="Enter city" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="state" label="State" placeholder="Enter state" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <Dropdown control={control} name="state" label="State" placeholder="Select state" searchable options={US_STATE_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="zip" label="ZIP code" placeholder="Enter ZIP code" rules={organizationRules.zip} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
         </div>
 
         <div className="admin-sticky-footer">
           <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={saving}>Cancel</CommonButton>
-          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || isReadOnly}>Save</CommonButton>
+          {!isReadOnly && (
+            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+          )}
         </div>
       </form>
     </div>
