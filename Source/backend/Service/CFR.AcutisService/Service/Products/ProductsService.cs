@@ -468,6 +468,7 @@ namespace CFR.AcutisService.Service.Products
                 var existingProduct = await repository.GetProductByIdAsync(input.ProductId);
                 if (existingProduct != null)
                 {
+                    input.ShortName ??= existingProduct.ShortName;
                     input.SubCategoryName ??= existingProduct.SubCategoryName;
                     input.ProdDescription ??= existingProduct.ProdDescription;
                     input.ExternalPageUrl ??= existingProduct.ExternalPageUrl;

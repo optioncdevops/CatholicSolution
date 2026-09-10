@@ -99,7 +99,7 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
               <button id="menuItemChangePassword" type="button" role="menuitem" onClick={() => { setOpen(false); setPasswordModalOpen(true); }}>
                 <span aria-hidden="true"><LockIcon size={16} /></span>
                 <div>
-                  <strong>Change password</strong>
+                  <strong>Change Password</strong>
                   <small>Update your account password</small>
                 </div>
               </button>

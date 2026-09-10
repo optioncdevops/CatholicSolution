@@ -62,7 +62,30 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
                     return result;
                 }
 
-                await SendResetEmailAsync(user, rawToken);
+                if (user.RateLimited)
+                {
+                    // A previously issued link for this account is still unused and unexpired — no
+                    // new token was persisted and no new email should go out; that still-active link
+                    // remains the one to use. Reported as Success (not an error) since nothing
+                    // actually went wrong from the caller's perspective, but resultData.alreadyRequested
+                    // lets the frontend show this as informational rather than "a new email was sent."
+                    result.StatusCode = ErrorCodes.Success;
+                    result.StatusMessage = ErrorMessages.ResetAlreadyRequestedRecently;
+                    result.ResultData = new { alreadyRequested = true };
+                    return result;
+                }
+
+                bool emailSent = await SendResetEmailAsync(user, rawToken);
+                if (!emailSent)
+                {
+                    // The token is already persisted at this point, but the user has no way to use it
+                    // if the email never arrived — reporting Success here (as this used to,
+                    // unconditionally) silently strands the user with no reset link and no error.
+                    AppLogger.LogError(logger, null, SerilogErrorMessages.AcutisLogMessages.ForgotPasswordFailed, input.UserName);
+                    result.StatusCode = ErrorCodes.InternalServerError;
+                    result.StatusMessage = ErrorMessages.ResetEmailSendFailed;
+                    return result;
+                }
 
                 result.StatusCode = ErrorCodes.Success;
                 result.StatusMessage = ErrorMessages.ResetInstructionsSent;
@@ -160,16 +183,28 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
         /// admin-configurable "PasswordReset" email template (falls back to a built-in default when no
         /// active template row exists, so a missing/deleted template never blocks the reset flow).
         /// </summary>
-        private async Task SendResetEmailAsync(ForgotPasswordUserResult user, string rawToken)
+        /// <returns>True when the email was actually sent; false when it was skipped (missing config) or SMTP delivery failed — the caller must not report success in either case.</returns>
+        private async Task<bool> SendResetEmailAsync(ForgotPasswordUserResult user, string rawToken)
         {
             string baseUrl = (configuration["FrontendSetting:CfrAdminBaseUrl"] ?? string.Empty).TrimEnd('/');
-            if (string.IsNullOrWhiteSpace(baseUrl))
+            // Validate the configured base URL is actually a well-formed, absolute http(s) address
+            // before building a link from it — a malformed or relative value here would otherwise
+            // silently produce a dead or unsafe reset link that still gets emailed as if it worked.
+            if (string.IsNullOrWhiteSpace(baseUrl)
+                || !Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri)
+                || (baseUri.Scheme != Uri.UriSchemeHttp && baseUri.Scheme != Uri.UriSchemeHttps))
             {
-                logger.LogWarning("FrontendSetting:CfrAdminBaseUrl is not configured; skipped sending the password reset email for user {UserId}.", user.UserId);
-                return;
+                logger.LogWarning("FrontendSetting:CfrAdminBaseUrl is missing or not a valid absolute http(s) URL; skipped sending the password reset email for user {UserId}.", user.UserId);
+                return false;
             }
 
-            string resetLink = $"{baseUrl}/reset-password?token={Uri.EscapeDataString(rawToken)}&email={Uri.EscapeDataString(user.Email ?? string.Empty)}";
+            // The token alone identifies the reset request (ResetPasswordAsync looks it up by its
+            // hash) — the email address isn't needed to complete the reset, so it's kept out of the
+            // link entirely. A query-string token/email pair is otherwise a real exposure surface:
+            // it can end up in server access logs, browser history, and the Referer header if the
+            // page ever loads a third-party resource or the user follows an outbound link before
+            // using it.
+            string resetLink = $"{baseUrl}/reset-password?token={Uri.EscapeDataString(rawToken)}";
             var template = await emailTemplatesRepository.GetEmailTemplateByCodeAsync(PasswordResetTemplateCode);
             var placeholders = new Dictionary<string, string>
             {
@@ -187,7 +222,7 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
 
             string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
             string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
-            _ = await mailService.SendMailAsync(mergedSubject, mergedBody, user.Email ?? string.Empty);
+            return await mailService.SendMailAsync(mergedSubject, mergedBody, user.Email ?? string.Empty);
         }
 
         #endregion Private Helper Methods

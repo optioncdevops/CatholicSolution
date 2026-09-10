@@ -338,7 +338,7 @@ namespace CFR.AcutisService.Service.Organization
         /// <remarks>
         /// Purpose: Add a new organization from the Add Organization page.
         /// Request Flow: OrganizationController -> OrganizationService.CreateOrganizationAsync() -> IOrganizationRepository.CreateOrganizationAsync().
-        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/inactive/suspended.
+        /// Validation Details: Input DTO is required; OrgName and OrgType must not be empty; OrgStatus must be one of active/inactive/suspended.
         /// Business Logic: Passes the signed-in user id as InsertedBy and wraps the scalar result.
         /// Repository Interaction: Calls IOrganizationRepository.CreateOrganizationAsync().
         /// Response Details: MSResultArgs containing the new organization identifier.
@@ -350,7 +350,7 @@ namespace CFR.AcutisService.Service.Organization
             var result = new MSResultArgs();
             try
             {
-                if (input == null || string.IsNullOrWhiteSpace(input.OrgName) || !ValidOrgStatuses.Contains(input.OrgStatus ?? string.Empty))
+                if (input == null || string.IsNullOrWhiteSpace(input.OrgName) || string.IsNullOrWhiteSpace(input.OrgType) || !ValidOrgStatuses.Contains(input.OrgStatus ?? string.Empty))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
@@ -527,7 +527,7 @@ namespace CFR.AcutisService.Service.Organization
         /// <remarks>
         /// Purpose: Save changes to an organization's core identity fields.
         /// Request Flow: OrganizationController -> OrganizationService.UpdateOrganizationAsync() -> IOrganizationRepository.UpdateOrganizationAsync().
-        /// Validation Details: Input DTO is required; OrgName must not be empty; OrgStatus must be one of active/inactive/suspended.
+        /// Validation Details: Input DTO is required; OrgName and OrgType must not be empty; OrgStatus must be one of active/inactive/suspended.
         /// Business Logic: Passes the signed-in user id as UpdatedBy and wraps the scalar result.
         /// Repository Interaction: Calls IOrganizationRepository.UpdateOrganizationAsync().
         /// Response Details: MSResultArgs containing the organization identifier, or NoRecordFound.
@@ -539,7 +539,7 @@ namespace CFR.AcutisService.Service.Organization
             var result = new MSResultArgs();
             try
             {
-                if (input == null || input.OrgId <= 0 || string.IsNullOrWhiteSpace(input.OrgName) || !ValidOrgStatuses.Contains(input.OrgStatus ?? string.Empty))
+                if (input == null || input.OrgId <= 0 || string.IsNullOrWhiteSpace(input.OrgName) || string.IsNullOrWhiteSpace(input.OrgType) || !ValidOrgStatuses.Contains(input.OrgStatus ?? string.Empty))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;

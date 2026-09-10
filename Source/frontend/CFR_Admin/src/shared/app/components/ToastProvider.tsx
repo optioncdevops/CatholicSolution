@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, type CSSProperties, type PropsWithChildren } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
-export type ToastVariant = 'success' | 'error';
+export type ToastVariant = 'success' | 'error' | 'info';
 
 type ToastContextValue = { showToast: (message: string | string[], variant?: ToastVariant) => void };
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -11,6 +11,7 @@ const DEFAULT_DURATION = 3800;
 const VARIANT_TONE: Record<ToastVariant, { label: string; background: string }> = {
   success: { label: 'Success', background: '#16a34a' },
   error: { label: 'Error', background: 'var(--error, #dc2626)' },
+  info: { label: 'Info', background: '#2563eb' },
 };
 
 const BANNER_STYLE: CSSProperties = {

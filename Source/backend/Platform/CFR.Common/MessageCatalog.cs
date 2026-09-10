@@ -41,12 +41,16 @@ namespace CFR.Common
         public const string InternalServerError = "An internal server error occurred.";
         public const string InvalidLogin = "Invalid email or password.";
         public const string ExistUser = "A user with this email already exists.";
+        public const string CannotModifySelfStatus = "You cannot deactivate or lock your own account. Ask another administrator to do this.";
+        public const string CannotDeleteSelf = "You cannot delete your own account. Ask another administrator to do this.";
         public const string ExistRole = "A role with this name already exists.";
         public const string RoleInUse = "This role is assigned to one or more users.";
         public const string Failed = "The request could not be completed.";
         public const string BadRequest = "Invalid request.";
         public const string UnAuthorized = "Unauthorized.";
         public const string ResetInstructionsSent = "Password reset instructions have been sent to your email address.";
+        public const string ResetEmailSendFailed = "We couldn't send the password reset email. Please try again in a few minutes.";
+        public const string ResetAlreadyRequestedRecently = "A password reset link is already on its way to this email address and is still valid. Check your inbox (and spam folder) for that link before requesting a new one.";
         public const string AccountNotFound = "No account found with this email address.";
         public const string InvalidResetToken = "This reset link is invalid or has expired.";
         public const string PasswordMismatch = "The new passwords do not match or do not meet the minimum length.";
@@ -70,7 +74,7 @@ namespace CFR.Common
         public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
         public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
         public const string ExistProduct = "A product with this name already exists.";
-        public const string ExistLicense = "A license for this customer already exists.";
+        public const string ExistLicense = "A license has already been created for this duration.";
         public const string ProductNotFound = "Product not found.";
         public const string ProductDisabled = "This product is not available.";
         public const string ProductNotAssignedToUser = "This product is not assigned to the current user.";

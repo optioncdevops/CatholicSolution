@@ -12,6 +12,7 @@ export interface UsersApiItem {
   isLocked: number;
   status: UserStatusValue;
   dateOfBirth: string | null;
+  contactNumber: string | null;
   lastActiveAt: string | null;
 }
 
@@ -29,6 +30,7 @@ export interface UsersFormValues {
   isActive: string;
   isLocked: string;
   dateOfBirth: string;
+  contactNumber: string;
 }
 
 export interface SaveUserPayload {
@@ -41,4 +43,5 @@ export interface SaveUserPayload {
   isActive: number;
   isLocked: number;
   dateOfBirth: string | null;
+  contactNumber: string | null;
 }

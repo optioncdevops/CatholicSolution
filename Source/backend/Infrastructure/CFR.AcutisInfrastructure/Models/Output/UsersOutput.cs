@@ -89,6 +89,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string? DateOfBirth { get; set; }
 
         /// <summary>
+        /// Gets or sets the contact/phone number.
+        /// </summary>
+        [JsonPropertyName("contactNumber")]
+        public string? ContactNumber { get; set; }
+
+        /// <summary>
         /// Gets or sets the last active timestamp.
         /// </summary>
         [JsonPropertyName("lastActiveAt")]

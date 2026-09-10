@@ -13,6 +13,9 @@ export interface DashboardKpisApiItem {
   activeOrganizationMembers: number;
   totalProducts: number;
   activeCatalogProducts: number;
+  activeProducts: number;
+  upcomingProducts: number;
+  inactiveProducts: number;
   activeOrganizationProductAssignments: number;
   inactiveOrganizationProductAssignments: number;
   totalAssignedProducts: number;
@@ -68,4 +71,17 @@ export interface IntegrityIssue {
   description: string;
   severity: 'warning' | 'error';
   to: string;
+}
+
+/** One flagged record behind a single Priority Alerts count — see Dashboard/GetIntegrityIssueDetail.
+ * Different issue keys populate different subsets of these fields (e.g. a license-expiry issue
+ * has no member; a member-mapping issue has no license), never all of them for one row. */
+export interface IntegrityIssueDetailRow {
+  orgId: number | null;
+  orgName: string | null;
+  productId: number | null;
+  productName: string | null;
+  memberUserId: number | null;
+  memberName: string | null;
+  detail: string | null;
 }
