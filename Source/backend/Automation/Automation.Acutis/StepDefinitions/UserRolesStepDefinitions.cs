@@ -171,5 +171,26 @@ namespace Automation.Acutis.StepDefinitions
             _rolesPage.ClickDeleteConfirmYes();
             Assert.That(_rolesPage.IsRoleInGrid(_rolesPage.CurrentRoleName), Is.False, $"The role '{_rolesPage.CurrentRoleName}' is still in the list after being deleted.");
         }
+
+        public void RunUserRolesProcess()
+        {
+            ThenClickOnAdministrationMenuAndSelectUserRolesSubMenu();
+            ThenUserRolesPageShouldBeOpened();
+            ThenSearchAnExistingRoleAndVerifyEditStatusAndDeleteActionsAreShown();
+            ThenVerifyUserRolesTableToolbarColumnsMaximizeExcelPrintCsvExportColumnSortAndRowsPerPage();
+            WhenClickOnAddUserRoleButton();
+            ThenAddUserRoleModalShouldOpenAndClickOnCancelButtonToClose();
+            WhenClickOnAddUserRoleButton();
+            ThenAddUserRoleModalShouldBeOpenedAndEnterTheRoleDetails();
+            ThenClickOnSaveInTheUserRoleFormAndTheRecordShouldBeSaved();
+            ThenSearchRoleAndClickOnEditButtonAndUpdateTheFieldsAndClickOnSaveButton();
+            ThenSearchRoleAndClickOnDeactivateAndClickOnCancelInTheConfirmBox();
+            ThenSearchRoleAndClickOnDeactivateAndClickOnConfirmInTheConfirmBox();
+            ThenSearchRoleAndClickOnActivateButton();
+            ThenSearchRoleAndClickOnDeleteButtonToDeleteTheRecords();
+            ThenRoleDeleteConfirmBoxShouldOpenAndClickOnTheCancelButton();
+            ThenSearchRoleAndClickOnDeleteButtonToDeleteTheRecords();
+            ThenRoleDeleteConfirmBoxShouldOpenAndClickOnTheConfirmButton();
+        }
     }
 }

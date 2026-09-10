@@ -149,7 +149,17 @@ namespace CFR.PortalService.Service.Administration
                 }
 
                 result.ResultData = savedId;
-                await NotifyAdminsOfNewRequestAsync(savedId, input.SendToEmail);
+                if (input.Products != null && input.Products.Count > 0)
+                {
+                    foreach (var product in input.Products)
+                    {
+                        await NotifyAdminsOfNewRequestAsync(savedId, input.SendToEmail, product.ProductId, product.ProductName);
+                    }
+                }
+                else
+                {
+                    await NotifyAdminsOfNewRequestAsync(savedId, input.SendToEmail);
+                }
             }
             catch (Exception ex)
             {
@@ -170,7 +180,7 @@ namespace CFR.PortalService.Service.Administration
         /// <summary>
         /// Emails users matched to the requested product that a new access request needs review, using the AccessRequested template.
         /// </summary>
-        private async Task NotifyAdminsOfNewRequestAsync(int accessRequestId, string? sendToEmail = null)
+        private async Task NotifyAdminsOfNewRequestAsync(int accessRequestId, string? sendToEmail = null, string? overrideProductId = null, string? overrideProductName = null)
         {
             try
             {
@@ -180,7 +190,10 @@ namespace CFR.PortalService.Service.Administration
                     return;
                 }
 
-                var recipients = await GetProductRecipientAddressesAsync(request.ProductId, request.ProductName);
+                string productId = !string.IsNullOrWhiteSpace(overrideProductId) ? overrideProductId : request.ProductId;
+                string productName = !string.IsNullOrWhiteSpace(overrideProductName) ? overrideProductName : request.ProductName;
+
+                var recipients = await GetProductRecipientAddressesAsync(productId, productName);
                 if (!string.IsNullOrWhiteSpace(sendToEmail))
                 {
                     var parsedEmails = sendToEmail.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -200,6 +213,7 @@ namespace CFR.PortalService.Service.Administration
                 }
 
                 var placeholders = BuildRequestPlaceholders(request);
+                placeholders["AppName"] = productName;
                 placeholders["AdditionalInfo"] = request.Comments.FirstOrDefault()?.Comment ?? "None provided";
                 placeholders["SendToEmail"] = sendToEmail ?? "Default Admins";
 
@@ -208,7 +222,7 @@ namespace CFR.PortalService.Service.Administration
                     accessRequestId,
                     string.Join(';', recipients.Distinct(StringComparer.OrdinalIgnoreCase)),
                     placeholders,
-                    $"New access request for {request.ProductName}",
+                    $"New access request for {productName}",
                     "<p>A member has requested access and needs an admin review.</p><p><strong>Requester:</strong> [RequesterName] ([RequesterEmail])</p><p><strong>Organization:</strong> [OrganizationName]</p><p><strong>Application:</strong> [AppName]</p><p><strong>Reason:</strong> [AdditionalInfo]</p><p><strong>Send To:</strong> [SendToEmail]</p><p><a href=\"[ReviewLink]\">Review this request</a></p>");
             }
             catch (Exception ex)

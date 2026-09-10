@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Brand } from '@shared/app/components/Brand';
+import { EmptyState } from '@shared/app/components/EmptyState';
 import { Footer } from '@shared/app/components/Footer';
 import { useToast } from '@shared/app/components/ToastProvider';
 import {
@@ -31,8 +32,13 @@ export function RequestAccessPage() {
   const { showToast } = useToast();
   const requestedProduct = searchParams.get('product');
   const [apps, setApps] = useState<CatalogApp[]>([]);
-  const requestableApps = useMemo(() => apps.filter((app) => app.status !== 'coming-soon' && app.hubSection !== 'future'), [apps]);
-  const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : (requestableApps[0]?.id ?? '');
+  // Coming-soon products aren't requestable yet - only offer the ones already live.
+  const requestableApps = useMemo(() => apps.filter((app) => app.hubSection !== 'future'), [apps]);
+  // Only pre-select a product when the page was opened with ?product=<id> (e.g. a "Request
+  // access" link from a specific app card) - otherwise start with nothing checked so the
+  // applicant deliberately picks what they want instead of silently submitting whichever
+  // product happened to load first.
+  const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : '';
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedInterests, setSelectedInterests] = useState<string[]>(initialInterest ? [initialInterest] : []);
@@ -58,10 +64,7 @@ export function RequestAccessPage() {
     setSelectedInterests((current) => {
       const stillValid = current.filter((id) => requestableApps.some((app) => app.id === id));
       if (stillValid.length > 0) return stillValid;
-      const fromQuery = requestedProduct && requestableApps.some((app) => app.id === requestedProduct)
-        ? requestedProduct
-        : requestableApps[0]?.id;
-      return fromQuery ? [fromQuery] : [];
+      return requestedProduct && requestableApps.some((app) => app.id === requestedProduct) ? [requestedProduct] : [];
     });
   }, [requestableApps, requestedProduct]);
 
@@ -143,20 +146,24 @@ export function RequestAccessPage() {
                 </div>
               </AccessSection>
 
-              <AccessSection number="02" title="Applications">
-                <div className="access-product-grid request-access-products request-access-products--full">
-                  {requestableApps.map((app) => {
-                    const selected = selectedInterests.includes(app.id);
-                    return (
-                      <label key={app.id} className={`access-product ${selected ? 'access-product--selected' : ''}`}>
-                        <input type="checkbox" className="sr-only" checked={selected} onChange={() => toggleInterest(app.id)} />
-                        <span className="access-product__icon" style={{ background: app.gradient }}>{app.icon}</span>
-                        <span className="access-product__copy"><strong>{app.name}</strong><small>{app.category}</small></span>
-                        <span className="access-product__check">{selected ? <CheckIcon size={14} /> : null}</span>
-                      </label>
-                    );
-                  })}
-                </div>
+              <AccessSection number="02" title="Applications" subtitle="Select every application your organization needs access to.">
+                {requestableApps.length === 0 ? (
+                  <EmptyState icon="📦" title="No applications available to request" description="Every application is either already assigned or not yet open for requests. Check back soon." />
+                ) : (
+                  <div className="access-product-grid request-access-products request-access-products--full">
+                    {requestableApps.map((app) => {
+                      const selected = selectedInterests.includes(app.id);
+                      return (
+                        <label key={app.id} className={`access-product ${selected ? 'access-product--selected' : ''}`}>
+                          <input type="checkbox" className="sr-only" checked={selected} onChange={() => toggleInterest(app.id)} />
+                          <span className="access-product__icon" style={{ background: app.gradient }}>{app.icon}</span>
+                          <span className="access-product__copy"><strong>{app.name}</strong><small>{app.category}</small></span>
+                          <span className="access-product__check">{selected ? <CheckIcon size={14} /> : null}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </AccessSection>
 
               <AccessSection number="03" title="Goals & context">
@@ -218,12 +225,15 @@ function RequestSuccess({ reference }: { reference: string }) {
   );
 }
 
-function AccessSection({ number, title, children }: { number: string; title: string; children: ReactNode }) {
+function AccessSection({ number, title, subtitle, children }: { number: string; title: string; subtitle?: string; children: ReactNode }) {
   return (
     <section className="request-access-section request-access-section--full">
       <div className="request-access-section__heading">
         <span>{number}</span>
-        <div><h3>{title}</h3></div>
+        <div>
+          <h3>{title}</h3>
+          {subtitle ? <p>{subtitle}</p> : null}
+        </div>
       </div>
       <div className="request-access-section__body">{children}</div>
     </section>

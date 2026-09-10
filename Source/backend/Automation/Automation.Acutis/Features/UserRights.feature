@@ -1,4 +1,4 @@
-Feature: 07_UserRights
+Feature: 08_UserRights
 
 A short summary of the feature
 

@@ -49,7 +49,7 @@
           </li>
             <li class="m-r-10">
                 <a href="#">
-                    <span class="badge badge-primary">9/9/2026 9:43:10 PM</span>
+                    <span class="badge badge-primary">9/10/2026 8:30:30 PM</span>
                 </a>
             </li>
         </ul>
@@ -118,19 +118,19 @@
 						</div>
 						<div class="open-test">
 							<div class="test-detail"> 
-								<p class="name">09_EmailSettings</p> 
-								<p class="duration text-sm">0h:0m:32s+157ms</p> 
-								<span class="datetime">21:43:10 PM</span>
+								<p class="name">TestAllProcess</p> 
+								<p class="duration text-sm">0h:2m:22s+419ms</p> 
+								<span class="datetime">20:30:30 PM</span>
 							</div>
 						</div>
 						<div class="test-contents d-none">
 							<div class="detail-head">
 								<div class="p-v-10 d-inline-block">	
 									<div class="info">
-										<h5 class="test-status text-fail">09_EmailSettings</h5>
-										<span class='badge badge-success'>9/9/2026 9:43:10 PM</span>
-										<span class='badge badge-danger'>9/9/2026 9:43:42 PM</span>
-										<span class='badge badge-default'>0h:0m:32s+157ms</span>
+										<h5 class="test-status text-fail">TestAllProcess</h5>
+										<span class='badge badge-success'>9/10/2026 8:30:30 PM</span>
+										<span class='badge badge-danger'>9/10/2026 8:32:53 PM</span>
+										<span class='badge badge-default'>0h:2m:22s+419ms</span>
 									</div>
 																	</div>
 							</div>
@@ -139,7 +139,7 @@
 	<div class="card">
 		<div class="card-header" role="tab">
 			<div class="card-title pl-3">
-				<div class="node">Scenario: 001_Verify Email Settings SMTP and branding fields, switches, save, restore, and cancel</div>
+				<div class="node">Scenario: 001_Verify All System Processes End-To-End</div>
 				<div class="status-avatar float-left fail-bg">
 					<i class="fa fa-times text-white"></i>
 				</div>
@@ -175,28 +175,50 @@
                                 <span class="alert-icon pass-bg">
                                     <i class="fa fa-check text-white"></i>
                                 </span>
-                                <span>Then Click on Administration menu and select Email Settings sub menu</span>
+                                <span>Then The top navigation menu should be loaded</span>
+                            </div>
+			<div class="details"><pre style="white-space:pre-wrap;margin:0;font-family:Consolas,monospace">Menus found: Dashboard, Products, Organizations, Users, Requests, Administration</pre></div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Every menu should open and every sub menu link should open its own page</span>
+                            </div>
+			<div class="details"><pre style="white-space:pre-wrap;margin:0;font-family:Consolas,monospace">PASS  Dashboard           Dashboard                     opened /admin
+PASS  Products            Products                      opened /admin/products
+PASS  Organizations       Organizations                 opened /admin/organizations
+PASS  Users               Users                         opened /admin/users
+PASS  Requests            Requests                      opened /admin/requests
+PASS  Administration      User Roles                    opened /admin/administration-user-roles
+PASS  Administration      Rights                        opened /admin/administration-rights
+PASS  Administration      Email Template                opened /admin/administration-email-templates
+PASS  Administration      Email Settings                opened /admin/administration-email-settings</pre></div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Click on Products menu and verify Products page is opened</span>
                             </div>
                             <div class="d-flex align-items-center justify-content-start then" title="">
                                 <span class="alert-icon pass-bg">
                                     <i class="fa fa-check text-white"></i>
                                 </span>
-                                <span>Then Email Settings page should be opened</span>
+                                <span>Then Check in all products and filter by status</span>
                             </div>
                             <div class="d-flex align-items-center justify-content-start then" title="">
                                 <span class="alert-icon pass-bg">
                                     <i class="fa fa-check text-white"></i>
                                 </span>
-                                <span>Then SMTP Server and Branding sections should be visible</span>
+                                <span>Then Click on View Product icon for the selected product</span>
                             </div>
                             <div class="d-flex align-items-center justify-content-start then" title="">
                                 <span class="alert-icon fail-bg">
                                     <i class="fa fa-times text-white"></i>
                                 </span>
-                                <span>Then Open the Font family dropdown and close it</span>
+                                <span>Then Product Details page should be opened</span>
                             </div>
-			<div class="details"><pre style="white-space:pre-wrap;margin:0;font-family:Consolas,monospace">  The Font family dropdown did not open.
-Assert.That(_settingsPage.OpenAndCloseFontFamily(), Is.True)
+			<div class="details"><pre style="white-space:pre-wrap;margin:0;font-family:Consolas,monospace">  Product Details page failed to open.
+Assert.That(_productPage.IsProductDetailsOpened(), Is.True)
   Expected: True
   But was:  False
 </pre></div>
@@ -279,9 +301,9 @@ Assert.That(_settingsPage.OpenAndCloseFontFamily(), Is.True)
 	                </div>
 	            </div>
 	            <div class="card-footer">
-	                <div><small data-tooltip='87.5%'><b>7</b> steps passed</small></div>
+	                <div><small data-tooltip='90%'><b>9</b> steps passed</small></div>
 	                <div>
-	                    <small data-tooltip='12.5%'><b>1</b> steps failed, 
+	                    <small data-tooltip='10%'><b>1</b> steps failed, 
 	                    <b data-tooltip='0%'>0</b> others
 	                    </small>
                     </div>
@@ -334,7 +356,7 @@ Assert.That(_settingsPage.OpenAndCloseFontFamily(), Is.True)
 	                <div class="media justify-content-between">
 						<div>
 							<h6 class="card-title">Start</h6>
-							<h6 class="font-weight-light">9/9/2026 9:43:10 PM</h6>
+							<h6 class="font-weight-light">9/10/2026 8:30:30 PM</h6>
 							<span class="text-semibold text-success font-size-15">
 						</div>
 						<div class="align-self-end">
@@ -350,7 +372,7 @@ Assert.That(_settingsPage.OpenAndCloseFontFamily(), Is.True)
 	                <div class="media justify-content-between">
 						<div>
 							<h6 class="card-title">Duration</h6>
-							<h6 class="font-weight-light">00:00:32.4691519</h6>
+							<h6 class="font-weight-light">00:02:22.7141921</h6>
 							<span class="text-semibold text-danger font-size-15">
 						</div>
 						<div class="align-self-end">
@@ -384,8 +406,8 @@ Assert.That(_settingsPage.OpenAndCloseFontFamily(), Is.True)
 		infoChild: 0,
 		debugChild: 0,
 		exceptionsChild: 1,
-		grandChildCount: 8,
-		passGrandChild: 7,
+		grandChildCount: 10,
+		passGrandChild: 9,
 		failGrandChild: 1,
 		fatalGrandChild: 0,
 		errorGrandChild: 0,

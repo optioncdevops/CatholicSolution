@@ -1,4 +1,4 @@
-Feature: 04_Product
+Feature: 03_Product
 
 A short summary of the feature
 

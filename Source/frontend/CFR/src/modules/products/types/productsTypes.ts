@@ -18,5 +18,8 @@ export interface HubProductApiItem {
   canRequest?: boolean | number;
   isOrgApproved?: boolean | number;
   isActive: boolean | number;
+  /** 1 = active/available, 2 = coming soon. Only sent by the admin catalog endpoint
+   * (Products/GetProducts) - the member Hub endpoint sends hubSection instead. */
+  productStatus?: number;
 }
 

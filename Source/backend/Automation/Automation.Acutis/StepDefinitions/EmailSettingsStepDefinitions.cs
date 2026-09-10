@@ -83,5 +83,19 @@ namespace Automation.Acutis.StepDefinitions
         {
             Assert.That(_settingsPage.IsOnEmailTemplates(), Is.True, "Cancel on Email Settings did not return to Email Templates.");
         }
+
+        public void RunEmailSettingsProcess()
+        {
+            ThenClickOnAdministrationMenuAndSelectEmailSettingsSubMenu();
+            ThenEmailSettingsPageShouldBeOpened();
+            ThenSmtpServerAndBrandingSectionsShouldBeVisible();
+            ThenToggleSendMailEnabledAndSslSwitchesAndRestoreThem();
+            ThenOpenTheFontFamilyDropdownAndCloseIt();
+            WhenUpdateTheDisplayNameAndClickOnSave();
+            ThenEmailSettingsShouldBeSaved();
+            ThenRestoreTheOriginalDisplayNameAndClickOnSave();
+            WhenClickOnCancelOnEmailSettings();
+            ThenEmailTemplatesPageShouldBeOpenedFromEmailSettingsCancel();
+        }
     }
 }

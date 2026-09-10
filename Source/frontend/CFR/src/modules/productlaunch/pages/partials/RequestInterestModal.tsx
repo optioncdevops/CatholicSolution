@@ -33,8 +33,6 @@ export function RequestInterestModal({ app, onClose, onSubmitted }: RequestInter
   //#region Effects
   useEffect(() => {
     if (!app) return;
-    console.log('RequestInterestModal received app:', app);
-    console.log('app.contactEmail:', app.contactEmail);
     setSubmitted(false);
     setSubmitting(false);
     setForm({ name: user.name, email: user.email, sendToEmail: app.contactEmail || '', reason: '' });

@@ -37,7 +37,11 @@ namespace Automation.Framework.ViperPages.Administration
         /// </remarks>
         public void ClickOnUserDetails()
         {
-            if (ClickFirstDisplayed(XPath_UserDetails.UserDetailsTopMenu, 2))
+            // Right after login the top nav's menu items are still hydrating from the login
+            // response, so this needs the same generous menu timeout used elsewhere in this
+            // class - a 2s check here was too short and would give up on the top level "Users"
+            // link before it had rendered, then wrongly report no menu leads to it at all.
+            if (ClickFirstDisplayed(XPath_UserDetails.UserDetailsTopMenu, _menuTimeoutSeconds))
             {
                 return;
             }
@@ -46,7 +50,7 @@ namespace Automation.Framework.ViperPages.Administration
             for (int index = 1; index <= groupCount; index++)
             {
                 ClickByScript($"({XPath_UserDetails.NavDropDownTrigger})[{index}]");
-                if (ClickFirstDisplayed(XPath_UserDetails.UserDetailsMenu, 2))
+                if (ClickFirstDisplayed(XPath_UserDetails.UserDetailsMenu, _menuTimeoutSeconds))
                 {
                     return;
                 }

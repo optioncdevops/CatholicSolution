@@ -18,16 +18,16 @@ namespace Automation.Acutis.Features
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Reqnroll", "3.0.0.0")]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     [global::NUnit.Framework.TestFixtureAttribute()]
-    [global::NUnit.Framework.DescriptionAttribute("03_MenuAccess")]
+    [global::NUnit.Framework.DescriptionAttribute("02_MenuAccess")]
     [global::NUnit.Framework.FixtureLifeCycleAttribute(global::NUnit.Framework.LifeCycle.InstancePerTestCase)]
-    public partial class _03_MenuAccessFeature
+    public partial class _02_MenuAccessFeature
     {
         
         private global::Reqnroll.ITestRunner testRunner;
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "03_MenuAccess", "Every menu the signed in role is shown has to open, and every link under it has t" +
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "02_MenuAccess", "Every menu the signed in role is shown has to open, and every link under it has t" +
                 "o\r\nland on its own page rather than an error, an empty screen or the dashboard.", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
 #line 1 "MenuAccess.feature"
