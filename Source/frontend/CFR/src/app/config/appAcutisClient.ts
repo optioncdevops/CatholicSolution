@@ -1,9 +1,10 @@
-export const GATEWAY_ACUTIS_API_PATH = '/acutis/api/v1/';
+import { GATEWAY_API_PATH, getAcutisApiBaseUrl } from './gateway';
+
+export const GATEWAY_ACUTIS_API_PATH = GATEWAY_API_PATH;
 export const API_BASE_URL = import.meta.env.VITE_APP_REST_API_BASE_URL;
 
 function resolveUrl(endpoint: string): string {
-  const origin = String(API_BASE_URL).replace(/\/+$/, '');
-  return `${origin}${GATEWAY_ACUTIS_API_PATH}${endpoint.replace(/^\/+/, '')}`;
+  return `${getAcutisApiBaseUrl()}${endpoint.replace(/^\/+/, '')}`;
 }
 
 function readField(source: Record<string, unknown>, ...keys: string[]): unknown {

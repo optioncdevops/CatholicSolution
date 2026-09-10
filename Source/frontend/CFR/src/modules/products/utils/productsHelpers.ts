@@ -1,5 +1,6 @@
 import type { CatalogApp } from '@shared/app/types/app';
 import { getCatalogApp, getCatalogIcon } from '@/registry/appCatalog';
+import { getAcutisPublicUrl } from '@app/config/gateway';
 import type { HubProductApiItem, HubSectionValue } from '../types/productsTypes';
 
 const PRODUCT_LOGO_PUBLIC_DIR = '/Acutis/Attachment/Products';
@@ -27,9 +28,8 @@ const resolveProductLogoUrl = (logo: string | null | undefined): string | undefi
   if (!fileName || !/\.(jpe?g|png|webp|svg|gif)$/i.test(fileName)) {
     return undefined;
   }
-  const apiBase = String(import.meta.env.VITE_APP_REST_API_BASE_URL ?? '').replace(/\/+$/, '');
   const relativePath = `${PRODUCT_LOGO_PUBLIC_DIR}/${fileName}`;
-  return apiBase ? `${apiBase}${relativePath}` : relativePath;
+  return getAcutisPublicUrl(relativePath);
 };
 
 const FALLBACK_GRADIENTS = [

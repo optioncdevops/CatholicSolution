@@ -15,8 +15,12 @@ namespace CFR.Base
                 .AddEnvironmentVariables()
                 .Build(); // Build the temporary configuration
 
-            // Step 2: Fetch the environment from appsettings.json (fallback to system variable)
-            string env = tempConfig["Environment"] ?? "Live";
+            // IIS usually sets ASPNETCORE_ENVIRONMENT; this repo also uses a custom "Environment" key.
+            string env =
+                Environment.GetEnvironmentVariable("Environment")
+                ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+                ?? tempConfig["Environment"]
+                ?? "Live";
 
             // Step 3: Build the final configuration with the correct environment
             builder

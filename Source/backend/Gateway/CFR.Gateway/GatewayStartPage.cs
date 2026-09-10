@@ -1,15 +1,26 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using System.Net;
+using System.Text;
+
 namespace CFR.Gateway;
 
 /// <summary>
-/// Gateway home page: pick Swagger or Scalar, and shows both public API path shapes.
+/// Gateway home page: pick Swagger or Scalar, and lists each configured service path.
 /// </summary>
 internal static class GatewayStartPage
 {
-    internal static string Html()
+    internal static string Html(IConfiguration configuration)
     {
-        return """
+        var paths = new StringBuilder();
+        foreach (GatewayServiceDefinition service in GatewayServiceCatalog.Load(configuration))
+        {
+            string label = WebUtility.HtmlEncode(service.Label);
+            string prefix = WebUtility.HtmlEncode(service.PathPrefix);
+            paths.Append("<li>").Append(label).Append(": <code>").Append(prefix).Append("/api/v1/{controller}/{action}</code></li>");
+        }
+
+        return $$"""
             <!DOCTYPE html>
             <html>
             <head>
@@ -88,10 +99,9 @@ internal static class GatewayStartPage
                 </div>
                 <div class="paths">
                     <h1>API paths</h1>
-                    <p>Both shapes are proxied to the same microservices:</p>
+                    <p>Every microservice is reached through its gateway prefix. Add a new service in <code>Gateway:Services</code>.</p>
                     <ul>
-                        <li>Existing: <code>/api/v1/{controller}/{action}</code> — Portal controllers (<code>CFRLaunch</code>, <code>PortalLogin</code>) go to Portal; all other controllers go to Acutis.</li>
-                        <li>Service: <code>/portal/api/v1/{controller}/{action}</code> and <code>/acutis/api/v1/{controller}/{action}</code></li>
+                        {{paths}}
                     </ul>
                 </div>
             </body>

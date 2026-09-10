@@ -83,8 +83,6 @@ namespace CFR.Base
             // Response Caching Middleware - Caches responses to improve performance
             _ = app.UseResponseCaching();
 
-            app.UseForwardedHeaders(); // Handles forwarded headers from the gateway
-
             _ = app.UseSwagger();
 
             _ = app.UseCors();
