@@ -351,8 +351,9 @@ namespace Automation.Framework.ViperPages
         public static class XPath_Products
         {
             // Navigation
-            public const string MenuProducts = "//nav[@id='menuAdminNavigation']//a[contains(@href, '/admin/products') or contains(., 'Products') or contains(., 'Applications')]";
+            public const string MenuProducts = "//nav[@id='menuAdminNavigation']//a[contains(@href, '/admin/products') or contains(@href, '/admin/cfrproducts') or contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'product') or contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'cfrproduct') or contains(., 'Applications')]";
             public const string ProductsUrlPath = "/admin/products";
+            public const string CfrProductsUrlPath = "/admin/cfrproducts";
 
             // Products Listing
             public const string SearchInput = "//input[@placeholder='Search by name, subtitle, domain']";
@@ -372,11 +373,11 @@ namespace Automation.Framework.ViperPages
 
             // Change Status Workflow
             public const string BtnChangeStatus = "//button[contains(., 'Change Status')]";
-            public const string StatusModal = "//*[@role='dialog']";
-            public const string BtnStatusModalCancel = "//*[@role='dialog']//button[normalize-space()='Cancel']";
-            public const string BtnStatusModalContinue = "//*[@role='dialog']//button[normalize-space()='Continue']";
-            public static string StatusModalOption(string status) => $"//*[@role='dialog']//fieldset//button[not(@disabled) and (contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ-', 'abcdefghijklmnopqrstuvwxyz '), '{status.ToLowerInvariant().Replace('-', ' ')}') or contains(., '{status}'))]";
-            public const string FirstAvailableStatusOption = "//*[@role='dialog']//fieldset//button[not(@disabled)][1]";
+            public const string StatusModal = "//*[@role='dialog' and (.//h3[contains(., 'Change Status')] or .//legend[contains(., 'New Status')])]";
+            public const string BtnStatusModalCancel = "//*[@role='dialog' and (.//h3[contains(., 'Change Status')] or .//legend[contains(., 'New Status')])]//button[normalize-space()='Cancel' or contains(., 'Cancel')]";
+            public const string BtnStatusModalContinue = "//*[@role='dialog' and (.//h3[contains(., 'Change Status')] or .//legend[contains(., 'New Status')])]//button[normalize-space()='Continue' or contains(., 'Continue')]";
+            public static string StatusModalOption(string status) => $"//*[@role='dialog' and (.//h3[contains(., 'Change Status')] or .//legend[contains(., 'New Status')])]//fieldset//button[not(@disabled) and (contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ-', 'abcdefghijklmnopqrstuvwxyz '), '{status.ToLowerInvariant().Replace('-', ' ')}') or contains(., '{status}'))]";
+            public const string FirstAvailableStatusOption = "//*[@role='dialog' and (.//h3[contains(., 'Change Status')] or .//legend[contains(., 'New Status')])]//fieldset//button[not(@disabled)][1]";
 
             // SweetAlert2 Confirmation Dialog
             public const string SwalConfirmButton = "//button[contains(@class, 'admin-swal-confirm') or contains(@class, 'swal2-confirm') or normalize-space()='Confirm status change']";
@@ -385,11 +386,20 @@ namespace Automation.Framework.ViperPages
             // Edit Product Workflow
             public const string BtnEditProduct = "//button[.//span[normalize-space()='Edit'] or normalize-space()='Edit']";
             public const string EditProductNameInput = "//input[@placeholder='Enter product name']";
+            public const string EditProductShortNameInput = "//input[@placeholder='Enter short name']";
             public const string EditProductSubtitleInput = "//input[@placeholder='Enter product subtitle']";
+            public const string EditProductUrlInput = "//input[@placeholder='Enter production URL']";
             public const string EditProductDescTextarea = "//textarea[@placeholder='What does this product do?']";
+            public const string EditProductFeatureInput = "//input[contains(@placeholder, 'Add features')]";
+            public const string BtnEditAddFeature = "//button[normalize-space()='Add']";
+            public const string EditProductContactDropdown = "//div[@role='combobox' and (ancestor::div[label[contains(., 'Contact Person')]] or contains(., 'Select contact person'))]";
+            public const string EditProductContactOption = "(//*[@role='option'])[1]";
+            public static string EditProductRadioOption(string label) => $"//label[contains(., '{label}')]//input[@type='radio'] | //label[contains(., '{label}')]";
             public const string BtnEditCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
             public const string BtnEditSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']]";
-            public const string DiscardChangesConfirm = "//button[contains(@class, 'admin-swal-confirm') or normalize-space()='Discard changes']";
+            public const string DiscardChangesPopup = "//div[contains(@class, 'admin-swal-popup') or contains(@class, 'swal2-popup')]";
+            public const string DiscardChangesConfirm = "//button[contains(@class, 'admin-swal-confirm') or contains(@class, 'swal2-confirm') or normalize-space()='Discard changes']";
+            public const string DiscardChangesCancel = "//button[contains(@class, 'admin-swal-cancel') or (contains(@class, 'swal2-cancel') and normalize-space()='Cancel')]";
 
             // Organizations Sub Tab Workflow
             public const string FirstOrgViewButton = "(//table//tbody//tr//button[contains(@aria-label, 'View')])[1] | (//table//tbody//tr//a[contains(@href, '/admin/organizations/')])[1]";
@@ -404,6 +414,18 @@ namespace Automation.Framework.ViperPages
             public const string FirstDropdownOption = "(//button[@role='option'])[1]";
             public const string BtnInvoiceCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
             public const string BtnInvoiceSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']] | //button[@type='submit' and contains(., 'Save')]";
+
+            // Edit Product Card Icon (from Products list)
+            public static string EditProductCardButton(string productName) => $"//article[contains(@class, 'admin-product-card') and .//span[contains(text(), '{productName}')]]//button[contains(@aria-label, 'Edit')]";
+            public const string FirstEditProductCardButton = "(//article[contains(@class, 'admin-product-card')]//button[contains(@aria-label, 'Edit')])[1]";
+
+            // Invoice Modal & Invoice History Workflow
+            public const string FirstInvoiceViewButton = "(//div[@role='tabpanel']//table//tbody//tr//button[contains(@aria-label, 'View') or @title='View'])[1]";
+            public const string InvoiceModal = "//*[@role='dialog']";
+            public const string BtnInvoiceModalClose = "//*[@role='dialog']//button[@aria-label='Close'] | //*[@role='dialog']//button[contains(@class, 'rounded-full')]";
+            public const string InvoiceHistoryOrgDropdown = "(//div[@role='tabpanel']//div[contains(@class, 'shrink-0')]//div[@role='combobox'])[1]";
+            public const string InvoiceHistoryStatusDropdown = "(//div[@role='tabpanel']//div[contains(@class, 'shrink-0')]//div[@role='combobox'])[2]";
+            public const string FirstInvoiceHistoryViewButton = "(//div[@role='tabpanel']//table//tbody//tr//button[contains(@aria-label, 'View') or @title='View'])[1]";
         }
 
         /// <summary>
