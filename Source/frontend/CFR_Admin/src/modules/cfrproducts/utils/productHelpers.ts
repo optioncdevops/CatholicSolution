@@ -1,6 +1,7 @@
 import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab, LiveProductLicense } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
 import { accessStatusOf, daysUntil, effectiveLicenseStatus, formatDateTime } from '@/modules/utils/formatDate';
+import { getAcutisPublicUrl } from '@app/config/gateway';
 export * from './productFilters';
 export type { LiveProductLicense } from '../types/productTypes';
 
@@ -386,13 +387,12 @@ export function resolveProductLogoUrl(
     return trimmed;
   }
 
-  const apiBase = String(import.meta.env.VITE_APP_REST_API_BASE_URL ?? '').replace(/\/+$/, '');
   const relativePath = toPublicProductLogoPath(trimmed);
   if (!relativePath) {
     return /^https?:\/\//i.test(trimmed) ? trimmed : null;
   }
 
-  const url = apiBase ? `${apiBase}${relativePath}` : relativePath;
+  const url = getAcutisPublicUrl(relativePath);
   if (cacheKey == null || cacheKey === '') {
     return url;
   }

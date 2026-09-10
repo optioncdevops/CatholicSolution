@@ -7,8 +7,8 @@ using static CFR.Common.Constant;
 namespace CFR.Gateway;
 
 /// <summary>
-/// Scalar API reference at the gateway. Servers include existing <c>/api/v1</c>
-/// and service-prefixed <c>/{service}/api/v1</c> bases.
+/// Scalar API reference at the gateway. Servers are the configured service prefixes
+/// (<c>/{service}/api/v1</c>).
 /// </summary>
 internal static class GatewayScalarUi
 {
@@ -16,7 +16,6 @@ internal static class GatewayScalarUi
     {
         options.WithTitle(SwaggerModuleDoc.OptionCBGateway);
         options.WithDynamicBaseServerUrl(true);
-        options.AddServer("/", "Existing /api/v1");
 
         options.AddDocument(
             SwaggerModuleDoc.OptionCBGateway,

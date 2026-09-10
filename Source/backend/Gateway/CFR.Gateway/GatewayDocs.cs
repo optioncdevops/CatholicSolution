@@ -2,8 +2,6 @@
 
 using System.Text.Json;
 
-using static CFR.Common.Constant;
-
 namespace CFR.Gateway;
 
 internal readonly record struct GatewayModuleDocs(string PathPrefix, string LabelPrefix, string DocsCsv);
@@ -15,20 +13,10 @@ internal static class GatewayDocs
 {
     internal static IEnumerable<GatewayModuleDocs> EnabledModules(IConfiguration configuration)
     {
-        if (IsEnabled(configuration, "Gateway:AcutisEnabled"))
+        foreach (GatewayServiceDefinition service in GatewayServiceCatalog.Load(configuration))
         {
-            yield return new GatewayModuleDocs(NormalizePrefix(configuration["Gateway:AcutisPathPrefix"] ?? "/acutis"), "Acutis", SwaggerModuleDoc.CFRAcutisDocs);
+            yield return new GatewayModuleDocs(service.PathPrefix, service.Label, service.DocsCsv);
         }
-
-        if (IsEnabled(configuration, "Gateway:PortalEnabled"))
-        {
-            yield return new GatewayModuleDocs(NormalizePrefix(configuration["Gateway:PortalPathPrefix"] ?? "/portal"), "Portal", SwaggerModuleDoc.PortalDocs);
-        }
-    }
-
-    internal static bool IsEnabled(IConfiguration configuration, string enabledKey)
-    {
-        return !string.Equals(configuration[enabledKey], "false", StringComparison.OrdinalIgnoreCase);
     }
 
     internal static string[] SplitDocs(string docs)  
@@ -80,7 +68,18 @@ internal static class GatewayDocs
             (request) => {
               const prefixes = {{prefixes}};
               let specUrl = '';
-              try { specUrl = (window.ui && window.ui.getConfigs && window.ui.getConfigs().url) || ''; } catch (e) {}
+              try {
+                const cfg = (window.ui && window.ui.getConfigs && window.ui.getConfigs()) || {};
+                specUrl = cfg.url || '';
+                if (!specUrl && window.ui && window.ui.specSelectors && window.ui.specSelectors.url) {
+                  specUrl = window.ui.specSelectors.url() || '';
+                }
+                if (!specUrl && cfg.urls && cfg.urls.length) {
+                  const primary = (new URLSearchParams(window.location.search)).get('urls.primaryName') || '';
+                  const selected = cfg.urls.find((u) => u.name === primary) || cfg.urls[0];
+                  specUrl = (selected && selected.url) || '';
+                }
+              } catch (e) {}
               const prefix = prefixes.find((p) => specUrl.indexOf(p + '/') !== -1);
               if (!prefix || !request || !request.url) return request;
               try {

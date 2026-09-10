@@ -2,8 +2,10 @@
 
 using CFR.Base;
 using CFR.Gateway;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Scalar.AspNetCore;
+using Yarp.ReverseProxy.Transforms;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +21,21 @@ if (builder.Environment.IsDevelopment())
     builder.Logging.AddFilter("Yarp.ReverseProxy", LogLevel.Debug);
 }
 
-var reverseProxyBuilder = builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+var (proxyRoutes, proxyClusters) = GatewayServiceCatalog.BuildProxy(builder.Configuration);
+string[] servicePrefixes = GatewayServiceCatalog.Load(builder.Configuration).Select(service => service.PathPrefix).ToArray();
+var reverseProxyBuilder = builder.Services.AddReverseProxy()
+    .LoadFromMemory(proxyRoutes, proxyClusters)
+    .AddTransforms(context =>
+    {
+        context.AddResponseTransform(transformContext => GatewayOpenApiRewrite.ApplyAsync(transformContext, servicePrefixes));
+    });
 
 // RATE LIMITING - Protects API from abuse (too many requests)
 builder.Services.AddRateLimiterSetup();
@@ -61,15 +77,11 @@ builder.Services.Configure<KestrelServerOptions>(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseRouting();
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
 app.UseCommonAppGatewaySetup();
 
-app.MapGet("/", () => Results.Content(GatewayStartPage.Html(), "text/html"))
+app.MapGet("/", () => Results.Content(GatewayStartPage.Html(app.Configuration), "text/html"))
     .ExcludeFromDescription();
 
 app.UseSwaggerUI(options => GatewaySwaggerUi.Configure(options, app.Configuration));

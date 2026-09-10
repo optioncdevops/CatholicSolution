@@ -1,4 +1,6 @@
-export const GATEWAY_PORTAL_API_PATH = '/portal/api/v1/';
+import { GATEWAY_PORTAL_API_PATH, getPortalApiBaseUrl } from './gateway';
+
+export { GATEWAY_PORTAL_API_PATH };
 export const API_BASE_URL = import.meta.env.VITE_APP_REST_API_BASE_URL;
 const PORTAL_TOKEN_KEY = 'cfr_portal_token';
 const PORTAL_USER_KEY = 'cfr_portal_user';
@@ -37,8 +39,7 @@ export function clearPortalSession() {
 }
 
 function resolveUrl(endpoint: string): string {
-  const origin = String(API_BASE_URL).replace(/\/+$/, '');
-  return `${origin}${GATEWAY_PORTAL_API_PATH}${endpoint.replace(/^\/+/, '')}`;
+  return `${getPortalApiBaseUrl()}${endpoint.replace(/^\/+/, '')}`;
 }
 
 function readField(source: Record<string, unknown>, ...keys: string[]): unknown {

@@ -8,7 +8,7 @@ namespace CFR.Gateway;
 
 /// <summary>
 /// Swagger UI at the gateway. Downstream specs stay <c>/api/v1/{controller}/{action}</c>;
-/// Try-it-out is rewritten here to <c>/{service}/api/v1/{controller}/{action}</c> so YARP matches.
+/// Try-it-out is rewritten to <c>/{service}/api/v1/{controller}/{action}</c> from Gateway:Services.
 /// </summary>
 internal static class GatewaySwaggerUi
 {
