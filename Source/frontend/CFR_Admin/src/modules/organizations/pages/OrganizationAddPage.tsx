@@ -3,7 +3,9 @@ import { useForm, type FieldErrors } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
+import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
+import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField, MandatoryIndicator } from '@app/components/formControls';
 import { createOrganization } from '../services/organizationsService';
@@ -15,6 +17,8 @@ const OrganizationAddPage = () => {
   //#region Hooks
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel('/admin/organizations');
+  const isReadOnly = accessLevel === 'readOnly';
   //#endregion
 
   //#region States
@@ -43,6 +47,7 @@ const OrganizationAddPage = () => {
   };
 
   const onSubmit = async (values: OrganizationFormValues) => {
+    if (isReadOnly) return;
     setSaving(true);
     try {
       await createOrganization({
@@ -74,6 +79,8 @@ const OrganizationAddPage = () => {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader title="Add Organization" action={<MandatoryIndicator variant="brand" />} />
 
+      {isReadOnly ? <ReadOnlyBanner featureName="Organizations" /> : null}
+
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
           <InputField
@@ -84,24 +91,24 @@ const OrganizationAddPage = () => {
             autoFocus
             required
             rules={organizationRules.orgName}
-            disabled={saving}
+            disabled={saving || isReadOnly}
             wrapperClassName="md:col-span-12"
           />
-          <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" searchable={false} options={ORG_TYPE_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving} wrapperClassName="md:col-span-4" />
-          <Dropdown control={control} name="orgStatus" label="Status" searchable={false} clearable={false} options={ORG_STATUS_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="contactPerson" label="Contact person" placeholder="Enter contact person" disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="contactPhone" label="Contact number" type="tel" placeholder="Enter contact number" rules={organizationRules.contactPhone} disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="contactEmail" label="Contact email" type="email" placeholder="Enter contact email" rules={organizationRules.contactEmail} disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="address" label="Address" placeholder="Street address" disabled={saving} wrapperClassName="md:col-span-12" />
-          <InputField control={control} name="city" label="City" placeholder="Enter city" disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="state" label="State" placeholder="Enter state" disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="zip" label="ZIP code" placeholder="Enter ZIP code" rules={organizationRules.zip} disabled={saving} wrapperClassName="md:col-span-4" />
+          <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" searchable={false} options={ORG_TYPE_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <Dropdown control={control} name="orgStatus" label="Status" searchable={false} clearable={false} options={ORG_STATUS_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="contactPerson" label="Contact person" placeholder="Enter contact person" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="contactPhone" label="Contact number" type="tel" placeholder="Enter contact number" rules={organizationRules.contactPhone} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="contactEmail" label="Contact email" type="email" placeholder="Enter contact email" rules={organizationRules.contactEmail} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="address" label="Address" placeholder="Street address" disabled={saving || isReadOnly} wrapperClassName="md:col-span-12" />
+          <InputField control={control} name="city" label="City" placeholder="Enter city" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="state" label="State" placeholder="Enter state" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="zip" label="ZIP code" placeholder="Enter ZIP code" rules={organizationRules.zip} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
         </div>
 
         <div className="admin-sticky-footer">
           <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={saving}>Cancel</CommonButton>
-          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || isReadOnly}>Save</CommonButton>
         </div>
       </form>
     </div>

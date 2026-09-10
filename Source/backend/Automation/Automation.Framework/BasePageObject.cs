@@ -672,6 +672,25 @@ namespace Automation.Framework
         }
 
         /// <summary>
+        /// Scrolls the first match into the middle of the viewport so a later click is not
+        /// swallowed by the sticky footer or a control that is still below the fold.
+        /// </summary>
+        /// <param name="xPath">the xpath of the control to bring on screen</param>
+        public void ScrollIntoView(string xPath)
+        {
+            var element = _webDriver.FindElements(By.XPath(xPath)).FirstOrDefault();
+            if (element is null)
+            {
+                return;
+            }
+
+            ((IJavaScriptExecutor)_webDriver).ExecuteScript(
+                "arguments[0].scrollIntoView({block:'center', inline:'nearest'});",
+                element);
+            Thread.Sleep(400);
+        }
+
+        /// <summary>
         /// Clicks through the browser rather than the driver. Some Acutis menus keep their
         /// drop down closed when the driver synthesises the click, but react to a scripted one.
         /// </summary>
@@ -681,6 +700,41 @@ namespace Automation.Framework
             var element = _wait.Until(d => d.FindElement(By.XPath(xPath)));
             ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", element);
             Thread.Sleep(1000);
+        }
+
+        /// <summary>
+        /// Opens an Administration page from the top nav by the route it points at.
+        /// </summary>
+        /// <remarks>
+        /// Which menu the entry sits under comes from the signed in role's menu data, and a
+        /// group with no sub menus renders as a plain link rather than a drop down, so the
+        /// bar is searched for the entry instead of a single menu being assumed.
+        /// </remarks>
+        /// <param name="route">the path the menu entry navigates to, for example /admin/administration-user-roles</param>
+        public void ClickAdminNavByRoute(string route)
+        {
+            string topMenu = "//nav[@id='menuAdminNavigation']//a[@href='" + route + "']";
+            string menuItem = "//a[@role='menuitem'][@href='" + route + "']";
+            const string navDropDownTrigger = "//nav[@id='menuAdminNavigation']//button[@aria-haspopup='menu']";
+
+            if (ClickFirstDisplayed(topMenu, 2))
+            {
+                return;
+            }
+
+            int groupCount = _webDriver.FindElements(By.XPath(navDropDownTrigger)).Count;
+            for (int index = 1; index <= groupCount; index++)
+            {
+                ClickByScript($"({navDropDownTrigger})[{index}]");
+                if (ClickFirstDisplayed(menuItem, 2))
+                {
+                    return;
+                }
+            }
+
+            throw new NoSuchElementException(
+                $"No menu in the top nav bar leads to '{route}'. "
+                + "Either the signed in role has no rights to the page, or the route has moved.");
         }
 
         public void GridSearch(string searchValue)

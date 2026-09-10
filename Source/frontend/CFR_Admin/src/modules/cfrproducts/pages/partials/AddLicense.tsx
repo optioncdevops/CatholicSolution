@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
+import { ReadOnlyBanner } from "@shared/app/components/ReadOnlyBanner";
 import { useToast } from "@shared/app/components/ToastProvider";
+import { useFeatureAccessLevel } from "@shared/auth/hooks/useFeatureAccessLevel";
 import { CommonButton } from "@app/components/buttons";
 import {
   DatePicker,
@@ -47,6 +49,8 @@ const AddLicense = () => {
   const stateProductId = parseProductIdFromState(location.state);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const accessLevel = useFeatureAccessLevel(PRODUCTS_PATHS.list);
+  const isReadOnly = accessLevel === "readOnly";
   //#endregion
 
   //#region States
@@ -182,6 +186,7 @@ const AddLicense = () => {
   const productId = product.productId;
 
   const handleSubmit = async () => {
+    if (isReadOnly) return;
     setTouched(true);
     if (organizations.length === 0) {
       showToast("All organizations already have an active license for this product.", "error");
@@ -258,6 +263,8 @@ const AddLicense = () => {
         }
       />
 
+      {isReadOnly ? <ReadOnlyBanner featureName="Products" /> : null}
+
       {organizations.length === 0 ? (
         <section className="admin-panel-card p-4">
           <p className="text-sm text-[var(--text-muted)]">
@@ -284,6 +291,7 @@ const AddLicense = () => {
           className="flex flex-col gap-3"
         >
           <section className="admin-panel-card overflow-hidden">
+            <fieldset disabled={isReadOnly} className="contents">
             <div className="flex flex-col divide-y divide-[var(--line-soft)]">
               <div>
                 <div className="admin-panel-card__header">
@@ -374,6 +382,7 @@ const AddLicense = () => {
                 </div>
               </div>
             </div>
+            </fieldset>
           </section>
 
           <div className="admin-sticky-footer">
@@ -389,7 +398,7 @@ const AddLicense = () => {
               iconLeft={<Save size={14} />}
               type="submit"
               loading={saving}
-              disabled={saving || organizations.length === 0}
+              disabled={saving || organizations.length === 0 || isReadOnly}
             >
               Save
             </CommonButton>

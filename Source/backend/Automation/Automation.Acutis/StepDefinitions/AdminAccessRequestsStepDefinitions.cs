@@ -19,17 +19,8 @@ namespace Automation.Acutis.StepDefinitions
         private readonly ViperLoginPage _loginPage = new(driver);
         private readonly AcutisJsonDataObjects _testData = (AcutisJsonDataObjects)JsonDataReader.GetJsonData("Acutis");
 
-        [Given(@"I log in to the admin portal")]
-        public void GivenILogInToTheAdminPortal()
-        {
-            if (_testData.Login != null)
-            {
-                _loginPage.LoginProcess(_testData.Login);
-            }
-        }
-
-        [Given(@"I navigate to the Admin Access Requests page")]
-        public void GivenINavigateToTheAdminAccessRequestsPage()
+        [Then(@"I navigate to the Admin Access Requests page")]
+        public void ThenINavigateToTheAdminAccessRequestsPage()
         {
             _adminRequestsPage.NavigateToAdminRequests();
         }
@@ -37,10 +28,7 @@ namespace Automation.Acutis.StepDefinitions
         [Then(@"I should see the access requests table or an empty state")]
         public void ThenIShouldSeeTheAccessRequestsTableOrAnEmptyState()
         {
-            bool hasRequests = _adminRequestsPage.VerifyRequestsAreDisplayed();
-            bool hasEmptyState = _adminRequestsPage.VerifyEmptyStateIsDisplayed();
-
-            Assert.That(hasRequests || hasEmptyState, Is.True, "Neither the requests table nor the empty state was displayed.");
+            Assert.That(_adminRequestsPage.VerifyResultsOrEmptyState(), Is.True, "Neither the requests table nor the empty state was displayed.");
         }
 
         [When(@"I select the ""([^""]*)"" status tab")]
@@ -49,13 +37,22 @@ namespace Automation.Acutis.StepDefinitions
             _adminRequestsPage.SelectStatusTab(statusName);
         }
 
-        [Then(@"the requests table should only show pending requests or be empty")]
-        public void ThenTheRequestsTableShouldOnlyShowPendingRequestsOrBeEmpty()
+        [Then(@"the requests table should show filtered results or be empty")]
+        public void ThenTheRequestsTableShouldShowFilteredResultsOrBeEmpty()
         {
-            bool hasRequests = _adminRequestsPage.VerifyRequestsAreDisplayed();
-            bool hasEmptyState = _adminRequestsPage.VerifyEmptyStateIsDisplayed();
+            Assert.That(_adminRequestsPage.VerifyResultsOrEmptyState(), Is.True, "Neither the filtered requests table nor the empty state was displayed.");
+        }
 
-            Assert.That(hasRequests || hasEmptyState, Is.True, "Neither the pending requests table nor the empty state was displayed.");
+        [When(@"I click on the Application filter dropdown")]
+        public void WhenIClickOnTheApplicationFilterDropdown()
+        {
+            _adminRequestsPage.SelectApplicationFilter();
+        }
+
+        [When(@"I click on the Organization filter dropdown")]
+        public void WhenIClickOnTheOrganizationFilterDropdown()
+        {
+            _adminRequestsPage.SelectOrganizationFilter();
         }
     }
 }

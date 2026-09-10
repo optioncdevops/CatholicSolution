@@ -34,5 +34,24 @@
       "Invoice History",
       "Product Details"
     ]
+  },
+  "UserRoles": {
+    "RoleName": "CFR-AutoRole",
+    "EditRoleName": "CFR-AutoRole-Edit",
+    "Description": "Automated test role created by Selenium.",
+    "EditDescription": "Automated test role updated by Selenium.",
+    "ExistingRoleSearch": "Admin"
+  },
+  "UserRights": {
+    "RoleName": "test1",
+    "ModuleName": "Administration"
+  },
+  "EmailTemplates": {
+    "SearchText": "Welcome",
+    "TemplateName": "Welcome Email",
+    "SubjectSuffix": " - AutoTest"
+  },
+  "EmailSettings": {
+    "DisplayNameSuffix": " AutoTest"
   }
 }
