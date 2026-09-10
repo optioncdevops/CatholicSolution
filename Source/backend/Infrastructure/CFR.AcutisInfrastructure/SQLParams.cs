@@ -469,6 +469,11 @@ namespace CFR.AcutisInfrastructure
             public const string ProductName = nameof(ProductName);
 
             /// <summary>
+            /// Short product name.
+            /// </summary>
+            public const string ShortName = nameof(ShortName);
+
+            /// <summary>
             /// Sub-category or subtitle name.
             /// </summary>
             public const string SubCategoryName = nameof(SubCategoryName);
