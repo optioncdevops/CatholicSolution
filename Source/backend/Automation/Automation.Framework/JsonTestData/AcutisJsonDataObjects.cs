@@ -9,6 +9,14 @@ namespace Automation.Framework.JsonTestData
         public UserDetails? UserDetails { get; set; }
 
         public ProductData? Product { get; set; }
+
+        public UserRolesData? UserRoles { get; set; }
+
+        public UserRightsData? UserRights { get; set; }
+
+        public EmailTemplatesData? EmailTemplates { get; set; }
+
+        public EmailSettingsData? EmailSettings { get; set; }
     }
 
     public class JsonLogin
@@ -59,5 +67,39 @@ namespace Automation.Framework.JsonTestData
         public string? InvoiceTitle { get; set; }
 
         public List<string>? SubTabs { get; set; }
+    }
+
+    public class UserRolesData
+    {
+        public string? RoleName { get; set; }
+
+        public string? EditRoleName { get; set; }
+
+        public string? Description { get; set; }
+
+        public string? EditDescription { get; set; }
+
+        public string? ExistingRoleSearch { get; set; }
+    }
+
+    public class UserRightsData
+    {
+        public string? RoleName { get; set; }
+
+        public string? ModuleName { get; set; }
+    }
+
+    public class EmailTemplatesData
+    {
+        public string? SearchText { get; set; }
+
+        public string? TemplateName { get; set; }
+
+        public string? SubjectSuffix { get; set; }
+    }
+
+    public class EmailSettingsData
+    {
+        public string? DisplayNameSuffix { get; set; }
     }
 }

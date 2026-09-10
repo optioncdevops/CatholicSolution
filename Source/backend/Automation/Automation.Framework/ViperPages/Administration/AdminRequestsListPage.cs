@@ -26,34 +26,34 @@ namespace Automation.Framework.ViperPages.Administration
                 "info requested" => XPath_AdminRequests.TabInfoRequested,
                 _ => throw new ArgumentException($"Unknown status tab: {statusName}")
             };
-            FindElementByXPath(xpath);
-            Thread.Sleep(500); // Wait for the table to filter
+            ClickByScript(xpath);
+            Thread.Sleep(1500); // Wait for the table to filter
         }
 
-        public bool VerifyRequestsAreDisplayed()
+        public bool VerifyResultsOrEmptyState()
         {
-            try
+            return WaitFor(driver => 
             {
-                var rows = _webDriver.FindElements(By.XPath(XPath_AdminRequests.DataTableRows));
-                return rows.Count > 0;
-            }
-            catch (NoSuchElementException)
-            {
+                var rows = driver.FindElements(By.XPath(XPath_AdminRequests.DataTableRows));
+                if (rows.Count > 0) return true;
+                
+                var emptyState = driver.FindElements(By.XPath(XPath_AdminRequests.EmptyState));
+                if (emptyState.Count > 0) return true;
+                
                 return false;
-            }
+            }, 10);
         }
 
-        public bool VerifyEmptyStateIsDisplayed()
+        public void SelectApplicationFilter()
         {
-            try
-            {
-                var element = _webDriver.FindElement(By.XPath(XPath_AdminRequests.EmptyState));
-                return element.Displayed;
-            }
-            catch (NoSuchElementException)
-            {
-                return false;
-            }
+            ClickByScript(XPath_AdminRequests.DropdownAppFilter);
+            Thread.Sleep(1500);
+        }
+
+        public void SelectOrganizationFilter()
+        {
+            ClickByScript(XPath_AdminRequests.DropdownOrgFilter);
+            Thread.Sleep(1500);
         }
     }
 }
