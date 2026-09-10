@@ -1,3 +1,4 @@
+import { passwordScore, PASSWORD_STRENGTH_HINT } from '@shared/auth/validators';
 import type { UsersFormValues } from '../types/usersTypes';
 
 export const usersDefaultValues: UsersFormValues = {
@@ -9,6 +10,7 @@ export const usersDefaultValues: UsersFormValues = {
   isActive: '1',
   isLocked: '0',
   dateOfBirth: '',
+  contactNumber: '',
 };
 
 export const usersRules = {
@@ -21,9 +23,15 @@ export const usersRules = {
       message: 'Invalid email address.',
     },
   },
-  password: { required: 'Password is required.' },
+  password: {
+    required: 'Password is required.',
+    validate: (value: string) => passwordScore(value) >= 3 || PASSWORD_STRENGTH_HINT,
+  },
   roleId: { required: 'Role is required.' },
   dateOfBirth: { required: 'Date of birth is required.' },
   isActive: { required: 'Status is required.' },
   isLocked: { required: 'Locked is required.' },
+  contactNumber: {
+    pattern: { value: /^[+()\d][\d\s().-]{6,19}$/, message: 'Enter a valid contact number.' },
+  },
 };

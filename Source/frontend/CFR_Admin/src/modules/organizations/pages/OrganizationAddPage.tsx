@@ -94,7 +94,7 @@ const OrganizationAddPage = () => {
             disabled={saving || isReadOnly}
             wrapperClassName="md:col-span-12"
           />
-          <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" searchable={false} options={ORG_TYPE_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" required searchable={false} clearable={false} rules={organizationRules.orgType} options={ORG_TYPE_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <Dropdown control={control} name="orgStatus" label="Status" searchable={false} clearable={false} options={ORG_STATUS_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="contactPerson" label="Contact person" placeholder="Enter contact person" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />

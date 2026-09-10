@@ -41,6 +41,8 @@ namespace CFR.Common
         public const string InternalServerError = "An internal server error occurred.";
         public const string InvalidLogin = "Invalid email or password.";
         public const string ExistUser = "A user with this email already exists.";
+        public const string CannotModifySelfStatus = "You cannot deactivate or lock your own account. Ask another administrator to do this.";
+        public const string CannotDeleteSelf = "You cannot delete your own account. Ask another administrator to do this.";
         public const string ExistRole = "A role with this name already exists.";
         public const string RoleInUse = "This role is assigned to one or more users.";
         public const string Failed = "The request could not be completed.";

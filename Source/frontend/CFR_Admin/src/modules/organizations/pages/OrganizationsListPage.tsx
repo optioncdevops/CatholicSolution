@@ -255,8 +255,10 @@ export function OrganizationsListPage() {
       ),
     },
     {
-      id: 'orgCode', header: 'Org Code', width: '7rem', sortable: false,
-      value: (org) => formatOrgCode(org.orgId),
+      id: 'orgCode', header: 'Org Code', width: '7.1rem',
+      // Sort by the raw numeric OrgId, not the formatted string — otherwise "100" would sort
+      // before "99" (lexicographic comparison of strings rather than numeric comparison).
+      value: (org) => org.orgId,
       cell: (org) => <span className="font-mono text-xs font-bold text-[var(--text-muted)]">{formatOrgCode(org.orgId)}</span>,
     },
     {

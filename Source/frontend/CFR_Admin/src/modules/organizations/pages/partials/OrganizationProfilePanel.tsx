@@ -193,7 +193,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
         </p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
           <InputField control={control} name="orgName" label="Organization name" required rules={organizationRules.orgName} disabled={saving} wrapperClassName="md:col-span-12" />
-          <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" searchable={false} options={ORG_TYPE_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
+          <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" required searchable={false} clearable={false} rules={organizationRules.orgType} options={ORG_TYPE_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving} wrapperClassName="md:col-span-4" />
           <Dropdown
             control={control} name="contactPerson" label="Contact person"

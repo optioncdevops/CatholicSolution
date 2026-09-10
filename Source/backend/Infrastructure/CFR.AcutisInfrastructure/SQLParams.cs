@@ -109,6 +109,11 @@ namespace CFR.AcutisInfrastructure
             public const string DateOfBirth = nameof(DateOfBirth);
 
             /// <summary>
+            /// User contact/phone number.
+            /// </summary>
+            public const string ContactNumber = nameof(ContactNumber);
+
+            /// <summary>
             /// User status value.
             /// </summary>
             public const string Status = nameof(Status);

@@ -86,7 +86,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
       id="dlgChangePassword"
       isOpen={open}
       onClose={onClose}
-      title="Change password"
+      title="Change Password"
       size="sm"
       footer={(
         <>

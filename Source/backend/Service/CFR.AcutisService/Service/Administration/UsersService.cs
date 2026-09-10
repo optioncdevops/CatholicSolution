@@ -7,7 +7,7 @@ namespace CFR.AcutisService.Service.Administration
     /// Repository Responsibility:
     /// - Invokes IUsersRepository for stored procedure execution.
     /// </summary>
-    public class UsersService(IUsersRepository repository, ILogger<UsersService> logger): IUsersService
+    public class UsersService(IUsersRepository repository, ICurrentUserService currentUserService, ILogger<UsersService> logger): IUsersService
     {
         #region GET Methods
 
@@ -159,6 +159,21 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                if (!string.IsNullOrWhiteSpace(input.Password) && !PasswordPolicy.IsStrongEnough(input.Password))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.PasswordTooWeak;
+                    return result;
+                }
+
+                if (input.UserId > 0 && currentUserService.UserId > 0 && input.UserId == currentUserService.UserId
+                    && (input.IsActive == 0 || input.IsLocked == 1))
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.CannotModifySelfStatus;
+                    return result;
+                }
+
                 int savedId = await repository.SaveUserAsync(input, string.IsNullOrWhiteSpace(input.Password) ? null : input.Password);
                 if (savedId == -99)
                 {
@@ -208,6 +223,13 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                if (input.IsActive == 0 && currentUserService.UserId > 0 && input.UserId == currentUserService.UserId)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.CannotModifySelfStatus;
+                    return result;
+                }
+
                 result.ResultData = await repository.UpdateUserStatusAsync(input);
             }
             catch (Exception ex)
@@ -246,6 +268,13 @@ namespace CFR.AcutisService.Service.Administration
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                if (currentUserService.UserId > 0 && userId == currentUserService.UserId)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.CannotDeleteSelf;
                     return result;
                 }
 
