@@ -6,9 +6,9 @@ namespace CFR.PortalService.Service.Administration
     /// Implements Access Request business logic for list, get, save, and status updates.
     /// Repository Responsibility:
     /// - Invokes IAccessRequestRepository for stored procedure execution.
-    /// - Invokes IEmailTemplatesRepository and CFR.CommonService.MailService to send admin/requester emails from configurable templates.
+    /// - Invokes IEmailTemplatesRepository and ISMTPMailService to send admin/requester emails from configurable templates.
     /// </summary>
-    public class AccessRequestService(IAccessRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, IConfiguration configuration, ILogger<AccessRequestService> logger): IAccessRequestService
+    public class AccessRequestService(IAccessRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, ISMTPMailService mailService, IConfiguration configuration, ILogger<AccessRequestService> logger): IAccessRequestService
     {
         private const string AccessRequestedTemplateCode = "AccessRequested";
 
@@ -232,7 +232,7 @@ namespace CFR.PortalService.Service.Administration
         }
 
         /// <summary>
-        /// Loads the named template (or a built-in fallback), merges placeholders, and sends the message using CFR.CommonService.MailService.
+        /// Loads the named template (or a built-in fallback), merges placeholders, and sends the message using ISMTPMailService.
         /// </summary>
         private async Task SendTemplatedEmailAsync(string templateCode, int accessRequestId, string toAddress, Dictionary<string, string> placeholders, string fallbackSubject, string fallbackBody)
         {
@@ -244,7 +244,7 @@ namespace CFR.PortalService.Service.Administration
                 string body = template?.Body ?? fallbackBody;
                 string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
                 string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
-                await Task.Run(() => CFR.CommonService.MailService.SMPTService.SendMail(mergedSubject, mergedBody, toAddress));
+                await mailService.SendMailAsync(mergedSubject, mergedBody, toAddress);
             }
             catch (Exception ex)
             {

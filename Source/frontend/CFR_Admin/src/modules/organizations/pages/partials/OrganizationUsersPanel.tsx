@@ -11,12 +11,16 @@ import { formatDate } from '@/modules/utils/formatDate';
 import { unlinkOrganizationUser } from '../../services/organizationsService';
 import type { OrganizationApiItem, OrganizationUserApiItem } from '../../types/organizationTypes';
 
+type ScopedOrgUser = OrganizationUserApiItem & { orgId?: number; orgName?: string };
+
 const columns = (
-  onView: (user: OrganizationUserApiItem) => void,
-  onUnlink: (user: OrganizationUserApiItem) => void,
+  onView: (user: ScopedOrgUser) => void,
+  onUnlink: (user: ScopedOrgUser) => void,
   unlinkingUserId: number | null,
   readOnly: boolean,
-): DataTableColumn<OrganizationUserApiItem>[] => [
+  showRoleColumn: boolean,
+  showLinkedOnColumn: boolean,
+): DataTableColumn<ScopedOrgUser>[] => [
   {
     id: 'fullName', header: 'User', width: '16rem',
     value: (user) => user.fullName || user.email,
@@ -36,11 +40,11 @@ const columns = (
     value: (user) => user.email,
     cell: (user) => <span className="text-[var(--text-secondary)]">{user.email}</span>,
   },
-  {
+  ...(showRoleColumn ? [{
     id: 'role', header: 'Role',
-    value: (user) => user.roleName ?? '',
-    cell: (user) => <span className="text-[var(--text-secondary)]">{user.roleName || '—'}</span>,
-  },
+    value: (user: ScopedOrgUser) => user.roleName ?? '',
+    cell: (user: ScopedOrgUser) => <span className="text-[var(--text-secondary)]">{user.roleName || '—'}</span>,
+  } as DataTableColumn<ScopedOrgUser>] : []),
   {
     id: 'memberStatus', header: 'Membership',
     value: (user) => user.memberStatus ?? '',
@@ -70,11 +74,11 @@ const columns = (
     value: () => '',
     cell: () => <span className="text-[var(--text-faint)]" title="This platform does not yet track member sign-in timestamps.">Not tracked</span>,
   },
-  {
+  ...(showLinkedOnColumn ? [{
     id: 'linkedDate', header: 'Linked On',
-    value: (user) => user.linkedDate,
-    cell: (user) => <span className="text-[var(--text-muted)]">{formatDate(user.linkedDate)}</span>,
-  },
+    value: (user: ScopedOrgUser) => user.linkedDate,
+    cell: (user: ScopedOrgUser) => <span className="text-[var(--text-muted)]">{formatDate(user.linkedDate)}</span>,
+  } as DataTableColumn<ScopedOrgUser>] : []),
   {
     id: 'actions', header: 'Actions', width: '5.5rem', excludeFromExport: true, sortable: false,
     cell: (user) => (
@@ -100,11 +104,13 @@ const columns = (
 ];
 
 type OrganizationUsersPanelProps = {
-  orgId: number;
-  organization: OrganizationApiItem;
-  users: OrganizationUserApiItem[];
+  orgId?: number;
+  organization?: OrganizationApiItem;
+  users: ScopedOrgUser[];
   onChanged: () => Promise<void> | void;
   readOnly?: boolean;
+  showRoleColumn?: boolean;
+  showLinkedOnColumn?: boolean;
 };
 
 // View + unlink only — linking a user to an organization from here has been removed. There is no
@@ -114,7 +120,15 @@ type OrganizationUsersPanelProps = {
 // against auth.AcutisRole when it matches, or a dash when it doesn't — never fabricated. "Last
 // Login" is honestly marked "Not tracked" since member sign-in timestamps aren't recorded
 // anywhere in the schema.
-const OrganizationUsersPanel = ({ orgId, organization, users, onChanged, readOnly = false }: OrganizationUsersPanelProps) => {
+const OrganizationUsersPanel = ({
+  orgId,
+  organization,
+  users,
+  onChanged,
+  readOnly = false,
+  showRoleColumn = true,
+  showLinkedOnColumn = true,
+}: OrganizationUsersPanelProps) => {
   //#region Hooks
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -125,15 +139,22 @@ const OrganizationUsersPanel = ({ orgId, organization, users, onChanged, readOnl
   //#endregion
 
   //#region Handlers
-  const handleView = (user: OrganizationUserApiItem) => {
-    navigate(`/admin/organizations/${orgId}/members/${user.authUserId}`);
+  // Rows carry their own orgId/orgName when this panel is showing users merged across multiple
+  // organizations (the CFR User "All" filter) -- falls back to the panel-level org otherwise.
+  const handleView = (user: ScopedOrgUser) => {
+    const targetOrgId = user.orgId ?? orgId;
+    if (targetOrgId == null) return;
+    navigate(`/admin/organizations/${targetOrgId}/members/${user.authUserId}`);
   };
 
-  const handleUnlink = async (user: OrganizationUserApiItem) => {
+  const handleUnlink = async (user: ScopedOrgUser) => {
     if (readOnly) return;
+    const targetOrgId = user.orgId ?? orgId;
+    if (targetOrgId == null) return;
+    const targetOrgName = user.orgName ?? organization?.orgName ?? 'this organization';
     const confirmed = await confirmAction({
       title: 'Unlink this user?',
-      description: `${user.fullName || user.email} will lose membership in ${organization.orgName} and its assigned apps.`,
+      description: `${user.fullName || user.email} will lose membership in ${targetOrgName} and its assigned apps.`,
       confirmLabel: 'Unlink',
       tone: 'danger',
     });
@@ -141,8 +162,8 @@ const OrganizationUsersPanel = ({ orgId, organization, users, onChanged, readOnl
 
     setUnlinkingUserId(user.authUserId);
     try {
-      await unlinkOrganizationUser(orgId, user.authUserId);
-      showToast(`${user.fullName || user.email} removed from ${organization.orgName}.`, 'success');
+      await unlinkOrganizationUser(targetOrgId, user.authUserId);
+      showToast(`${user.fullName || user.email} removed from ${targetOrgName}.`, 'success');
       await onChanged();
     } catch (error) {
       console.error('Error unlinking user:', error);
@@ -160,7 +181,7 @@ const OrganizationUsersPanel = ({ orgId, organization, users, onChanged, readOnl
   return (
     <DataTable
       data={users}
-      columns={columns(handleView, handleUnlink, unlinkingUserId, readOnly)}
+      columns={columns(handleView, handleUnlink, unlinkingUserId, readOnly, showRoleColumn, showLinkedOnColumn)}
       getRowId={(user) => String(user.authUserId)}
       exportFileName="organization-users"
       exportTitle="Organization — Users"
