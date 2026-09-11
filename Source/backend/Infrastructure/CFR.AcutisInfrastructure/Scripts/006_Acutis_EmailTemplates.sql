@@ -11,6 +11,16 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
+-- Lets an admin configure how long a template's own reset/verification link stays valid, straight
+-- from the template editor, instead of that duration being a hard-coded backend constant the
+-- [ExpiryMinutes] placeholder merely echoed. NULL for every template except PasswordReset, which
+-- is the only one with a real, time-limited link today.
+IF COL_LENGTH(N'adm.EmailTemplate', N'LinkExpiryMinutes') IS NULL
+BEGIN
+    ALTER TABLE [adm].[EmailTemplate] ADD [LinkExpiryMinutes] INT NULL;
+END
+GO
+
 -- AccentColor/LogoUrl/FontFamily/BaseFontSize used to be per-template branding overrides here.
 -- Branding is now platform-wide instead (the admin Email Settings page, file-backed — see
 -- ConfSettingsService/SMTPMailConfig in CFR.CommonService), so this procedure no longer reads or
@@ -32,6 +42,7 @@ CREATE PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD]
     @Subject NVARCHAR(200) = NULL,
     @Body NVARCHAR(MAX) = NULL,
     @Status NVARCHAR(20) = NULL,
+    @LinkExpiryMinutes INT = NULL,
     @UpdatedBy BIGINT = NULL,
     @ReturnValue INT = NULL OUTPUT
 AS
@@ -60,7 +71,7 @@ BEGIN
 
             INSERT INTO [adm].[EmailTemplate]
             (
-                [TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [InsertedBy], [IsDeleted]
+                [TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [LinkExpiryMinutes], [CreatedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
@@ -69,6 +80,7 @@ BEGIN
                 @Subject,
                 @Body,
                 CASE WHEN @Status = N'inactive' THEN 0 ELSE 1 END,
+                @LinkExpiryMinutes,
                 SYSUTCDATETIME(),
                 @UpdatedBy,
                 0
@@ -87,6 +99,7 @@ BEGIN
                 WHEN @Status = N'active' THEN 1
                 ELSE [IsActive]
             END,
+            [LinkExpiryMinutes] = @LinkExpiryMinutes,
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UpdatedBy
         WHERE [TemplateId] = @TemplateId
@@ -104,6 +117,7 @@ BEGIN
             t.[Subject],
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
+            t.[LinkExpiryMinutes],
             t.[CreatedDate],
             t.[UpdatedDate]
         FROM [adm].[EmailTemplate] AS t
@@ -120,6 +134,7 @@ BEGIN
             t.[Subject],
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
+            t.[LinkExpiryMinutes],
             t.[CreatedDate],
             t.[UpdatedDate]
         FROM [adm].[EmailTemplate] AS t
@@ -136,6 +151,7 @@ BEGIN
             t.[Subject],
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
+            t.[LinkExpiryMinutes],
             t.[CreatedDate],
             t.[UpdatedDate]
         FROM [adm].[EmailTemplate] AS t
@@ -155,7 +171,7 @@ IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Pass
 BEGIN
     SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
 
-    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [LinkExpiryMinutes], [CreatedDate], [IsDeleted])
     VALUES
     (
         @SeedTemplateId,
@@ -163,10 +179,19 @@ BEGIN
         N'Reset your Catholic Solutions password',
         N'<div style="font-family:''Segoe UI'',Helvetica,Arial,sans-serif;color:#0f172a;"><p style="margin:0 0 4px;font-size:13px;color:#64748b;">Hi [FirstName],</p><p style="margin:0 0 26px;font-size:14px;line-height:1.7;color:#1e293b;">We received a request to reset the password for your Catholic Solutions account. Click the button below to choose a new password.</p><div style="text-align:center;margin:0 0 26px;"><a href="[ResetLink]" style="display:inline-block;padding:14px 34px;background-color:[AccentColor];color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;">Reset Password</a></div><div style="background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin:0 0 22px;"><p style="margin:0;font-size:12.5px;color:[AccentColor];font-weight:700;">This link expires in [ExpiryMinutes] minutes and can only be used once.</p></div><p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">If the button above doesn''t work, copy and paste this link into your browser:</p><p style="margin:0;font-size:12px;word-break:break-all;"><a href="[ResetLink]" style="color:[AccentColor];">[ResetLink]</a></p></div>',
         1,
+        15,
         SYSUTCDATETIME(),
         0
     );
 END
+
+-- Backfill for an environment where the PasswordReset row already existed before this column was
+-- added (the IF NOT EXISTS seed above only fires for a brand-new row) — keeps the configurable
+-- value in sync with AcutisPasswordService's own fallback default instead of showing blank.
+UPDATE [adm].[EmailTemplate]
+SET [LinkExpiryMinutes] = 15
+WHERE [TemplateCode] = N'PasswordReset'
+  AND [LinkExpiryMinutes] IS NULL;
 
 IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Welcome')
 BEGIN

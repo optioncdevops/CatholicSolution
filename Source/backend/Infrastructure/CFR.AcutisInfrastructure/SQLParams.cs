@@ -180,6 +180,12 @@ namespace CFR.AcutisInfrastructure
             public const string Status = nameof(Status);
 
             /// <summary>
+            /// Minutes the template's own link (e.g. a password reset link) stays valid before
+            /// expiring — admin-configurable per template; NULL for templates with no such link.
+            /// </summary>
+            public const string LinkExpiryMinutes = nameof(LinkExpiryMinutes);
+
+            /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);

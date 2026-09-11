@@ -48,5 +48,25 @@ namespace CFR.AcutisService.Interfaces.AcutisAuthentication
         Task<MSResultArgs> ResetPasswordAsync(ResetPasswordInput input);
 
         #endregion PUT Methods
+
+        #region GET Methods
+
+        /// <summary>
+        /// Checks a reset token's validity and returns which account it belongs to.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let the Reset Password page confirm and display the account being reset before
+        /// the visitor submits a new password, and reject an already-used/expired link immediately.
+        /// Request Flow: AcutisPasswordController -> IAcutisPasswordService.ValidateResetTokenAsync() -> IAcutisPasswordRepository.ValidateResetTokenAsync().
+        /// Validation Details: Token is required.
+        /// Business Logic: Hashes the supplied token and delegates the read-only lookup to the repository.
+        /// Repository Interaction: Calls IAcutisPasswordRepository.ValidateResetTokenAsync().
+        /// Response Details: MSResultArgs containing the account's email/first name, or BadRequest with a specific already-used/expired/invalid message.
+        /// </remarks>
+        /// <param name="token">Raw reset token from the reset link.</param>
+        /// <returns>MSResultArgs containing the token check outcome.</returns>
+        Task<MSResultArgs> ValidateResetTokenAsync(string token);
+
+        #endregion GET Methods
     }
 }

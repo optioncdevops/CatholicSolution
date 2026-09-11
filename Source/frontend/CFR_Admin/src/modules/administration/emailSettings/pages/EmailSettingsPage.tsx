@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Save, X } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -17,7 +16,6 @@ const SECTION_HINT_CLASS = 'mb-3 text-xs text-[var(--text-muted)]';
 
 function EmailSettingsPage() {
   //#region Hooks
-  const navigate = useNavigate();
   const { showToast } = useToast();
   const accessLevel = useFeatureAccessLevel('/admin/administration-email-settings');
   const isReadOnly = accessLevel === 'readOnly';
@@ -215,10 +213,11 @@ function EmailSettingsPage() {
           </div>
         </div>
 
-        <div className="admin-sticky-footer">
-          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={() => navigate('/admin/administration-email-templates')} disabled={saving}>Cancel</CommonButton>
-          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || isReadOnly}>Save</CommonButton>
-        </div>
+        {!isReadOnly && (
+          <div className="admin-sticky-footer">
+            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+          </div>
+        )}
       </form>
     </div>
   );

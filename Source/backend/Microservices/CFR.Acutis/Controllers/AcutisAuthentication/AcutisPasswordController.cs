@@ -67,5 +67,34 @@ namespace CFR.Acutis.Controllers.AcutisAuthentication
         }
 
         #endregion PUT Methods
+
+        #region GET Methods
+
+        /// <summary>
+        /// Checks a reset token's validity and returns which account it belongs to.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let the Reset Password page confirm/display the account being reset, and reject
+        /// an already-used/expired link immediately, before the visitor submits a new password.
+        /// Request Flow: Client API GET -> AcutisPasswordController.ValidateResetToken() -> IAcutisPasswordService.ValidateResetTokenAsync() -> Database.
+        /// Validation Details: Token is required as a query parameter.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IAcutisPasswordService.ValidateResetTokenAsync().
+        /// Response Details: Standard API result containing the account's email/first name, or a bad request with a specific already-used/expired/invalid message.
+        /// </remarks>
+        /// <param name="token">Raw reset token from the reset link.</param>
+        /// <returns>Result of the token check.</returns>
+        /// <response code="200">The token is valid; result contains the account's email/first name.</response>
+        /// <response code="400">The token is missing, invalid, already used, or expired.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [AllowAnonymous]
+        [HttpGet]
+        [ActionName(API_Acutis.AcutisAuthentication.ValidateResetToken)]
+        public async Task<IActionResult> ValidateResetToken([FromQuery] string token)
+        {
+            return ApiResultArgs(await service.ValidateResetTokenAsync(token), APIHttpType.HttpGet);
+        }
+
+        #endregion GET Methods
     }
 }

@@ -6,6 +6,7 @@ export interface UserRolesApiItem {
   description: string;
   status: UserRoleStatusValue;
   createdDate: string | null;
+  usersCount: number;
 }
 
 export interface UserRolesFormValues {

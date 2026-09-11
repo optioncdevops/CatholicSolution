@@ -32,6 +32,7 @@ namespace CFR.CommonService
                 public const string LoginAuthentication = nameof(LoginAuthentication);
                 public const string ForgotPassword = nameof(ForgotPassword);
                 public const string ResetPassword = nameof(ResetPassword);
+                public const string ValidateResetToken = nameof(ValidateResetToken);
             }
         }
 

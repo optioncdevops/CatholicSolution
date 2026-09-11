@@ -345,17 +345,18 @@ const ProductList = () => {
                         icon={<Pencil size={14} />}
                         onClick={() => goToEdit(item)}
                       />
-                      <CommonIconButton
-                        aria-label={`Change status for ${item.productName}`}
-                        tooltip="Change Status"
-                        icon={<RefreshCw size={14} />}
-                        onClick={() => {
-                          setSelectedProduct(item);
-                          setPendingStatus(null);
-                          setStatusDialogOpen(true);
-                        }}
-                        disabled={isReadOnly}
-                      />
+                      {!isReadOnly && (
+                        <CommonIconButton
+                          aria-label={`Change status for ${item.productName}`}
+                          tooltip="Change Status"
+                          icon={<RefreshCw size={14} />}
+                          onClick={() => {
+                            setSelectedProduct(item);
+                            setPendingStatus(null);
+                            setStatusDialogOpen(true);
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>

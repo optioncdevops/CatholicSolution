@@ -49,5 +49,25 @@ namespace CFR.AcutisInfrastructure.Interfaces.AcutisAuthentication
         Task<int> ResetPasswordAsync(string tokenHash, string newPassword);
 
         #endregion PUT Methods
+
+        #region GET Methods
+
+        /// <summary>
+        /// Read-only check of a reset token's validity and the account it belongs to.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let the Reset Password page show which account is being reset, and reject an
+        /// already-used/expired link immediately, without consuming the token.
+        /// Request Flow: IAcutisPasswordService -> AcutisPasswordRepository.ValidateResetTokenAsync() -> Database.
+        /// Validation Details: Parameter names match stored procedure arguments.
+        /// Business Logic: Executes StoredProc.AcutisAuth.PasswordResetCrud with ActionId 3.
+        /// Repository Interaction: Executes StoredProc.AcutisAuth.PasswordResetCrud.
+        /// Response Details: Returns the matched user's identity and 1 when valid, or no row and -2/-3/-99 when already used, expired, or not found.
+        /// </remarks>
+        /// <param name="tokenHash">SHA-256 hash of the raw reset token supplied by the user.</param>
+        /// <returns>Return value and the matched user's identity, when valid.</returns>
+        Task<(int ReturnValue, ForgotPasswordUserResult? User)> ValidateResetTokenAsync(string tokenHash);
+
+        #endregion GET Methods
     }
 }

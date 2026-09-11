@@ -84,7 +84,7 @@ export function UserRolesListPage() {
   };
 
   const handleToggleActive = useCallback(async (role: UserRolesApiItem) => {
-    if (isReadOnly) return;
+    if (isReadOnly || role.usersCount > 0) return;
     if (role.status !== 'active') {
       try {
         await updateUserRoleStatus(role.roleId, 'active');
@@ -114,7 +114,7 @@ export function UserRolesListPage() {
   }, [load, showToast, isReadOnly]);
 
   const handleDelete = useCallback(async (role: UserRolesApiItem) => {
-    if (isReadOnly) return;
+    if (isReadOnly || role.usersCount > 0) return;
     const confirmed = await confirmAction({
       title: 'Delete this role?',
       description: `"${role.roleName}" will be permanently removed from the role catalog.`,
@@ -145,13 +145,20 @@ export function UserRolesListPage() {
       pinLeft: true,
       width: '7rem',
       excludeFromExport: true,
-      cell: (role) => (
-        <div className="flex items-center gap-0.5">
-          <CommonIconButton aria-label={`Edit ${role.roleName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleOpenEdit(role)} />
-          <CommonIconButton aria-label={role.status === 'active' ? `Deactivate ${role.roleName}` : `Activate ${role.roleName}`} tooltip={role.status === 'active' ? 'Deactivate' : 'Activate'} variant={role.status === 'active' ? 'danger' : 'ghost'} icon={role.status === 'active' ? <ToggleRight size={16} /> : <ToggleLeft size={16} />} onClick={() => void handleToggleActive(role)} disabled={isReadOnly} />
-          <CommonIconButton aria-label={`Delete ${role.roleName}`} tooltip="Delete" variant="danger" icon={<Trash2 size={14} />} onClick={() => void handleDelete(role)} disabled={isReadOnly} />
-        </div>
-      ),
+      cell: (role) => {
+        const inUse = role.usersCount > 0;
+        return (
+          <div className="flex items-center gap-0.5">
+            <CommonIconButton aria-label={`Edit ${role.roleName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleOpenEdit(role)} />
+            {!isReadOnly && !inUse && (
+              <CommonIconButton aria-label={role.status === 'active' ? `Deactivate ${role.roleName}` : `Activate ${role.roleName}`} tooltip={role.status === 'active' ? 'Deactivate' : 'Activate'} variant={role.status === 'active' ? 'danger' : 'ghost'} icon={role.status === 'active' ? <ToggleRight size={16} /> : <ToggleLeft size={16} />} onClick={() => void handleToggleActive(role)} />
+            )}
+            {!isReadOnly && !inUse && (
+              <CommonIconButton aria-label={`Delete ${role.roleName}`} tooltip="Delete" variant="danger" icon={<Trash2 size={14} />} onClick={() => void handleDelete(role)} />
+            )}
+          </div>
+        );
+      },
     },
     {
       id: 'name', header: 'Name', width: '13rem',
@@ -163,6 +170,11 @@ export function UserRolesListPage() {
       value: (role) => role.description,
       cell: (role) => <span className="text-[var(--text-secondary)]">{role.description || '—'}</span>,
     },
+    {
+      id: 'usersCount', header: 'Users', width: '6rem',
+      value: (role) => role.usersCount,
+      cell: (role) => <Badge tone={role.usersCount > 0 ? 'info' : 'neutral'}>{role.usersCount}</Badge>,
+    },
     { id: 'createdAt', header: 'Created', value: (role) => role.createdDate ?? '—', cell: (role) => <span className="text-[var(--text-muted)]">{role.createdDate ? formatDate(role.createdDate) : '—'}</span> },
     { id: 'status', header: 'Status', value: (role) => role.status, cell: (role) => <Badge tone={role.status === 'active' ? 'success' : 'neutral'}>{role.status === 'active' ? 'Active' : 'Inactive'}</Badge> },
   ], [handleDelete, handleToggleActive, isReadOnly]);
@@ -173,7 +185,7 @@ export function UserRolesListPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
         title="User Roles"
-        action={<CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={handleOpenCreate} disabled={isReadOnly}>Add User Role</CommonButton>}
+        action={!isReadOnly && <CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={handleOpenCreate}>Add User Role</CommonButton>}
       />
 
       {isReadOnly ? <ReadOnlyBanner featureName="User Roles" /> : null}

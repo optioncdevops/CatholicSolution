@@ -395,15 +395,17 @@ const AddLicense = () => {
             >
               Cancel
             </CommonButton>
-            <CommonButton
-              variant="primary"
-              iconLeft={<Save size={14} />}
-              type="submit"
-              loading={saving}
-              disabled={saving || organizations.length === 0 || isReadOnly}
-            >
-              Save
-            </CommonButton>
+            {!isReadOnly && (
+              <CommonButton
+                variant="primary"
+                iconLeft={<Save size={14} />}
+                type="submit"
+                loading={saving}
+                disabled={saving || organizations.length === 0}
+              >
+                Save
+              </CommonButton>
+            )}
           </div>
         </form>
       )}

@@ -13,6 +13,18 @@ namespace CFR.AcutisService.Service.Administration
         ICurrentUserService currentUserService,
         ILogger<EmailTemplatesService> logger): IEmailTemplatesService
     {
+        /// <summary>
+        /// Minimum accepted value for LinkExpiryMinutes — long enough that a token can't
+        /// realistically expire before the email even arrives.
+        /// </summary>
+        private const int MinimumLinkExpiryMinutes = 5;
+
+        /// <summary>
+        /// Maximum accepted value for LinkExpiryMinutes — 24 hours, well past any legitimate
+        /// "time-limited" link.
+        /// </summary>
+        private const int MaximumLinkExpiryMinutes = 1440;
+
         #region GET Methods
 
         /// <summary>
@@ -132,6 +144,14 @@ namespace CFR.AcutisService.Service.Administration
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                if (input.LinkExpiryMinutes.HasValue
+                    && (input.LinkExpiryMinutes.Value < MinimumLinkExpiryMinutes || input.LinkExpiryMinutes.Value > MaximumLinkExpiryMinutes))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.LinkExpiryMinutesOutOfRange;
                     return result;
                 }
 

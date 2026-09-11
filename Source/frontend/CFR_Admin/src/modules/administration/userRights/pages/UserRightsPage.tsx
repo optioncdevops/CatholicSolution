@@ -392,18 +392,20 @@ export function UserRightsPage() {
             </CommonButton>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-bold text-[var(--text-faint)]">Apply to all shown:</span>
-            <CommonButton id="btnApplyAllAccess" variant="outline" size="sm" iconLeft={<ShieldCheck size={13} />} disabled={status !== 'ready' || applyingAll || saving || isReadOnly} onClick={() => void handleApplyToAll('access')}>
-              Access
-            </CommonButton>
-            <CommonButton id="btnApplyAllReadOnly" variant="outline" size="sm" iconLeft={<Eye size={13} />} disabled={status !== 'ready' || applyingAll || saving || isReadOnly} onClick={() => void handleApplyToAll('readOnly')}>
-              Read Only
-            </CommonButton>
-            <CommonButton id="btnApplyAllDenied" variant="outline" size="sm" iconLeft={<ShieldOff size={13} />} disabled={status !== 'ready' || applyingAll || saving || isReadOnly} onClick={() => void handleApplyToAll('denied')}>
-              Denied
-            </CommonButton>
-          </div>
+          {!isReadOnly && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-bold text-[var(--text-faint)]">Apply to all shown:</span>
+              <CommonButton id="btnApplyAllAccess" variant="outline" size="sm" iconLeft={<ShieldCheck size={13} />} disabled={status !== 'ready' || applyingAll || saving} onClick={() => void handleApplyToAll('access')}>
+                Access
+              </CommonButton>
+              <CommonButton id="btnApplyAllReadOnly" variant="outline" size="sm" iconLeft={<Eye size={13} />} disabled={status !== 'ready' || applyingAll || saving} onClick={() => void handleApplyToAll('readOnly')}>
+                Read Only
+              </CommonButton>
+              <CommonButton id="btnApplyAllDenied" variant="outline" size="sm" iconLeft={<ShieldOff size={13} />} disabled={status !== 'ready' || applyingAll || saving} onClick={() => void handleApplyToAll('denied')}>
+                Denied
+              </CommonButton>
+            </div>
+          )}
         </div>
         {status === 'ready' && selectedRole ? (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[var(--line-soft)] px-4 py-2.5 text-xs">
@@ -448,9 +450,11 @@ export function UserRightsPage() {
         <CommonButton id="btnCancelUserRights" variant="outline" iconLeft={<X size={14} />} onClick={handleDiscard} disabled={dirtyCount === 0 || saving}>
           Cancel
         </CommonButton>
-        <CommonButton id="btnSaveUserRights" variant="primary" iconLeft={<Save size={14} />} onClick={() => void handleSave()} loading={saving} disabled={dirtyCount === 0 || saving || isReadOnly}>
-          Save
-        </CommonButton>
+        {!isReadOnly && (
+          <CommonButton id="btnSaveUserRights" variant="primary" iconLeft={<Save size={14} />} onClick={() => void handleSave()} loading={saving} disabled={dirtyCount === 0 || saving}>
+            Save
+          </CommonButton>
+        )}
       </div>
     </div>
   );

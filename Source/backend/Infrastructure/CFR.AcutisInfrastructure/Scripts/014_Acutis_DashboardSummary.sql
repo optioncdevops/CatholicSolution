@@ -191,39 +191,66 @@ BEGIN
                 WHERE op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active' AND o.[OrgStatus] IN (N'inactive', N'suspended')) AS [InactiveOrganizationsWithActiveProductAssignments];
 
         -- Result set 3: Raw trend events within the requested range — one row per event, for the
-        -- frontend's existing bucketing utilities to group into daily/weekly/monthly series.
-        SELECT N'OrgCreated' AS [EventType], o.[InsertedDate] AS [EventDate]
+        -- frontend's existing bucketing utilities to group into daily/weekly/monthly series, and
+        -- for the Recent Activity feed to name the actual organization/product involved and link
+        -- to it instead of a generic, unlinked sentence. OrgId/OrgName/ProductId/ProductName are
+        -- NULL for event types that aren't tied to a single organization+product pair (a
+        -- multi-line access request has no one product at the header level).
+        SELECT
+            N'OrgCreated' AS [EventType], o.[InsertedDate] AS [EventDate],
+            o.[OrgId], o.[OrgName],
+            CAST(NULL AS INT) AS [ProductId], CAST(NULL AS NVARCHAR(200)) AS [ProductName]
         FROM [core].[Organization] o
         WHERE o.[InsertedDate] BETWEEN @StartDate AND @EndDate
 
         UNION ALL
 
-        SELECT N'RequestSubmitted', ar.[RequestedDate]
+        SELECT
+            N'RequestSubmitted', ar.[RequestedDate],
+            CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200)),
+            CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200))
         FROM [request].[AccessRequest] ar
         WHERE ar.[IsDeleted] = 0 AND ar.[RequestedDate] BETWEEN @StartDate AND @EndDate
 
         UNION ALL
 
-        SELECT N'RequestApproved', arp.[ReviewedDate]
+        SELECT
+            N'RequestApproved', arp.[ReviewedDate],
+            CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200)),
+            CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200))
         FROM [request].[AccessRequestProduct] arp
         WHERE arp.[IsDeleted] = 0 AND arp.[LineStatus] = 2 AND arp.[ReviewedDate] BETWEEN @StartDate AND @EndDate
 
         UNION ALL
 
-        SELECT N'RequestRejected', arp.[ReviewedDate]
+        SELECT
+            N'RequestRejected', arp.[ReviewedDate],
+            CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200)),
+            CAST(NULL AS INT), CAST(NULL AS NVARCHAR(200))
         FROM [request].[AccessRequestProduct] arp
         WHERE arp.[IsDeleted] = 0 AND arp.[LineStatus] = 3 AND arp.[ReviewedDate] BETWEEN @StartDate AND @EndDate
 
         UNION ALL
 
-        SELECT N'LicenseCreated', l.[CreatedDate]
+        SELECT
+            N'LicenseCreated', l.[CreatedDate],
+            op.[OrgId], lo.[OrgName],
+            op.[ProductId], lp.[ProductName]
         FROM [lic].[License] l
+        INNER JOIN [lic].[OrganizationProduct] op ON op.[OrganizationProductId] = l.[OrganizationProductId]
+        LEFT JOIN [core].[Organization] lo ON lo.[OrgId] = op.[OrgId]
+        LEFT JOIN [core].[Product] lp ON lp.[ProductId] = op.[ProductId]
         WHERE l.[CreatedDate] BETWEEN @StartDate AND @EndDate
 
         UNION ALL
 
-        SELECT N'OrgProductAssignmentCreated', op.[CreatedDate]
+        SELECT
+            N'OrgProductAssignmentCreated', op.[CreatedDate],
+            op.[OrgId], ao.[OrgName],
+            op.[ProductId], ap.[ProductName]
         FROM [lic].[OrganizationProduct] op
+        LEFT JOIN [core].[Organization] ao ON ao.[OrgId] = op.[OrgId]
+        LEFT JOIN [core].[Product] ap ON ap.[ProductId] = op.[ProductId]
         WHERE op.[IsDeleted] = 0 AND op.[CreatedDate] BETWEEN @StartDate AND @EndDate;
 
         RETURN 0;

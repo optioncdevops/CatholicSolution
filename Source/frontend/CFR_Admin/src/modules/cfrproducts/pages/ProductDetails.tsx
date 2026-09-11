@@ -456,14 +456,15 @@ const ProductDetails = () => {
             >
               Back to Products
             </CommonButton>
-            <CommonButton
-              variant="headerSecondary"
-              iconLeft={<RefreshCw size={14} />}
-              onClick={() => setChangingStatus(true)}
-              disabled={isReadOnly}
-            >
-              Change Status
-            </CommonButton>
+            {!isReadOnly && (
+              <CommonButton
+                variant="headerSecondary"
+                iconLeft={<RefreshCw size={14} />}
+                onClick={() => setChangingStatus(true)}
+              >
+                Change Status
+              </CommonButton>
+            )}
             <CommonButton
               variant="headerSecondary"
               iconLeft={<Pencil size={14} />}

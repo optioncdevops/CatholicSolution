@@ -4,10 +4,21 @@
 // EmailTemplatesService.SaveEmailTemplateAsync's server-side check.
 export const SUBJECT_MAX_LENGTH = 200;
 
-export const validateEmailTemplate = (subject: string, body: string): string[] => {
+// Kept in sync with EmailTemplatesService.SaveEmailTemplateAsync's MinimumLinkExpiryMinutes /
+// MaximumLinkExpiryMinutes server-side check.
+export const MIN_LINK_EXPIRY_MINUTES = 5;
+export const MAX_LINK_EXPIRY_MINUTES = 1440;
+
+export const validateEmailTemplate = (subject: string, body: string, linkExpiryMinutes?: string): string[] => {
   const errors: string[] = [];
   if (!subject.trim()) errors.push('Subject is required.');
   if (subject.length > SUBJECT_MAX_LENGTH) errors.push(`Subject must be ${SUBJECT_MAX_LENGTH} characters or fewer.`);
   if (!body.trim()) errors.push('Message is required.');
+  if (linkExpiryMinutes !== undefined && linkExpiryMinutes.trim()) {
+    const parsed = Number(linkExpiryMinutes);
+    if (!Number.isInteger(parsed) || parsed < MIN_LINK_EXPIRY_MINUTES || parsed > MAX_LINK_EXPIRY_MINUTES) {
+      errors.push(`Link expiry must be a whole number between ${MIN_LINK_EXPIRY_MINUTES} and ${MAX_LINK_EXPIRY_MINUTES} minutes.`);
+    }
+  }
   return errors;
 };
