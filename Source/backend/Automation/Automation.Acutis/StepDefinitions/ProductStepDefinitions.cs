@@ -267,7 +267,36 @@ namespace Automation.Acutis.StepDefinitions
             Assert.That(_productPage.IsInvoiceModalOpened(), Is.True, "Invoice history modal failed to open.");
             _productPage.ClickCloseInvoiceModal();
         }
+        public void RunProductProcess()
+        {
+            ThenClickOnProductsMenuAndVerifyProductsPageIsOpened();
+            ThenCheckInAllProductsAndFilterByStatus();
+            ThenClickOnViewProductIconForTheSelectedProduct();
+            ThenProductDetailsPageShouldBeOpened();
+            ThenNavigateThroughProductSubTabsOrganizationsInvoiceDetailsInvoiceHistoryAndProductDetails();
 
+            WhenClickOnChangeStatusButton();
+            ThenChangeStatusModalShouldOpenAndClickOnCancelButtonToClose();
+            WhenClickOnChangeStatusButton();
+            WhenSelectNewStatusAndClickOnContinueButton();
+            ThenConfirmationPopupShouldOpenAndClickConfirmToUpdateStatus();
+
+            WhenClickOnEditProductButton();
+            ThenEditProductPageShouldBeOpenedAndClickOnCancelButton();
+            WhenClickOnEditProductButton();
+            ThenEditProductPageShouldBeOpenedAndUpdateTheFieldsAndClickOnSaveButton();
+
+            WhenClickOnOrganizationsTab();
+            ThenClickOnViewOrganizationIconAndVerifyOrganizationDetailsOpened();
+            ThenClickOnBackToProductsButtonAndVerifyProductDetailsOpened();
+
+            WhenClickOnInvoiceDetailsTab();
+            ThenNavigateThroughAllInvoiceStatusFilterTabs();
+            WhenClickOnCreateInvoiceButton();
+            ThenCreateInvoicePageShouldBeOpenedAndClickOnCancelButton();
+            WhenClickOnCreateInvoiceButton();
+            ThenCreateInvoicePageShouldBeOpenedAndEnterInvoiceDetailsAndClickOnSaveButton();
+        }
         #endregion Invoice History Steps
     }
 }

@@ -87,11 +87,20 @@ const readFeatures = (value: unknown): string[] => {
   return [];
 };
 
-const normalizeHubSection = (value: unknown): HubSectionValue => {
+const normalizeHubSection = (value: unknown, row: Record<string, unknown>): HubSectionValue => {
   const raw = String(value ?? '').trim().toLowerCase().replace(/[_\s]+/g, '-');
   if (raw === 'your-apps' || raw === 'active' || raw === 'your') return 'your';
   if (raw === 'available') return 'available';
-  return HUB_SECTIONS.includes(raw as HubSectionValue) ? (raw as HubSectionValue) : 'future';
+  if (HUB_SECTIONS.includes(raw as HubSectionValue)) return raw as HubSectionValue;
+
+  // The member Hub endpoint (AccessRequest_CRUD ActionId 6) always sends hubSection, but the
+  // admin catalog endpoint (Products/GetProducts, used by the public Request Access page and
+  // the sign-in showcase) does not - it only sends ProductStatus/IsActive. Without this, every
+  // row from that endpoint fell through to 'future' regardless of its real status.
+  const productStatus = Number(pickValue(row, 'productStatus', 'ProductStatus'));
+  if (productStatus === 1) return 'available';
+  if (productStatus === 2) return 'future';
+  return asBool(pickValue(row, 'isActive', 'IsActive')) === false ? 'future' : 'available';
 };
 
 export const unwrapResultList = (resultData: unknown): unknown[] => {
@@ -118,7 +127,7 @@ export const toCatalogApp = (row: HubProductApiItem): CatalogApp | null => {
   const productId = pickString(source, 'productId', 'ProductId', 'id', 'Id');
   if (!productName && (!productId || productId === '0')) return null;
 
-  const hubSection = normalizeHubSection(pickValue(source, 'hubSection', 'HubSection'));
+  const hubSection = normalizeHubSection(pickValue(source, 'hubSection', 'HubSection'), source);
   const features = readFeatures(source.features ?? source.Features ?? source.featureNames ?? source.FeatureNames);
   const seed = productId || productName || 'product';
   const isYourApps = hubSection === 'your';
@@ -127,8 +136,6 @@ export const toCatalogApp = (row: HubProductApiItem): CatalogApp | null => {
   const resolvedProductId = Number.isFinite(numericProductId) && numericProductId > 0 ? numericProductId : undefined;
   const baseUrl = pickString(source, 'baseUrl', 'BaseUrl', 'externalUrl', 'ExternalUrl', 'externalPageUrl', 'ExternalPageUrl');
   const canRequest = asBool(pickValue(source, 'canRequest', 'CanRequest')) === true;
-
-  console.log('Raw product source from API:', source);
 
   const rawLogo = pickString(source, 'logoUrl', 'LogoUrl', 'logoName', 'LogoName');
   const rawIcon = pickString(source, 'icon', 'Icon');

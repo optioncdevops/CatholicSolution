@@ -1,4 +1,4 @@
-Feature: 08_EmailTemplates
+Feature: 09_EmailTemplates
 
 A short summary of the feature
 

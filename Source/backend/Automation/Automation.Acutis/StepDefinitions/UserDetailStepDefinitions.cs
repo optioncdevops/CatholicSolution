@@ -100,5 +100,19 @@ namespace Automation.Acutis.StepDefinitions
             _userPage.ClickDeleteConfirmYes();
             Assert.That(_userPage.IsUserInGrid(Email), Is.False, $"The user '{Email}' is still in the list after being deleted.");
         }
+
+        public void RunUserDetailProcess()
+        {
+            WhenTheDashboardShouldBeOpen();
+            ThenClickOnAdministrationMenuAndSelctUserDetailSubMenu();
+            ThenUserDetailPageShouldBeOpenedAndClickOnAddnewuserButton();
+            ThenNewUserPageShouldBeOpenedAndEnterTheBasicInfoOf();
+            ThenClickOnSaveButtonAndTheRecordShouldBeSaved();
+            ThenSearchAndClickOnEditButtonAndUpdateTheFieldsAndClickOnSaveButton();
+            ThenSearchAndClickOnDeleteButtonToDeleteTheRecords();
+            ThenDeleteAlertConfirmBoxShouldOpenAndClickOnTheNoButton();
+            ThenSearchAndClickOnDeleteButtonToDeleteTheRecords();
+            ThenDeleteAlertConfirmBoxShouldOpenAndClickOnTheYesButton();
+        }
     }
 }
