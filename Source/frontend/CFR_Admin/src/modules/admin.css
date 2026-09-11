@@ -280,6 +280,44 @@
   color: var(--primary);
 }
 
+/* Below `md`, this replaces the horizontal .admin-nav-strip entirely (toggled by the header's
+   hamburger button) — a plain vertical list, since there's no room for pill-shaped nav items or a
+   hover-driven dropdown on a touch screen. */
+.admin-nav-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface);
+  padding: 0.5rem 0.75rem;
+  box-shadow: var(--shadow-card);
+}
+
+.admin-nav-mobile__section {
+  margin: 0.5rem 0.4rem 0.15rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.admin-nav-mobile__item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: var(--radius-control);
+  padding: 0.7rem 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 750;
+  color: var(--text-secondary);
+}
+.admin-nav-mobile__item:hover { background: var(--hover); }
+.admin-nav-mobile__item--active { background: var(--hover); color: var(--primary); }
+.admin-nav-mobile__item--nested { padding-left: 1.1rem; }
+
 .admin-kpi-tile {
   position: relative;
   display: flex;
