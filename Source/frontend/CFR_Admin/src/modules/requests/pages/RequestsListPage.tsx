@@ -7,7 +7,6 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { StatusBadge } from '@app/components/Badge';
-import { EntityAvatar } from '@app/components/EntityAvatar';
 import { Dropdown } from '@app/components/formControls';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { Tabs } from '@app/components/Tabs';
@@ -99,17 +98,14 @@ function RequestsListPage() {
 
   const columns: DataTableColumn<AccessRequestApiItem>[] = useMemo(() => [
     {
-      id: 'requester', header: 'Requester', pinLeft: true, width: '15rem',
-      value: (request) => `${request.requesterName} (${request.requesterEmail})`,
-      cell: (request) => (
-        <div className="flex items-center gap-2.5">
-          <EntityAvatar name={request.requesterName} />
-          <span>
-            <span className="block font-bold text-[var(--text-primary)]">{request.requesterName}</span>
-            <span className="block text-xs text-[var(--text-muted)]">{request.requesterEmail}</span>
-          </span>
-        </div>
-      ),
+      id: 'requester', header: 'Requester', pinLeft: true, width: '12rem',
+      value: (request) => request.requesterName,
+      cell: (request) => <span className="font-bold text-[var(--text-primary)]">{request.requesterName}</span>,
+    },
+    {
+      id: 'requesterEmail', header: 'Email', width: '14rem',
+      value: (request) => request.requesterEmail,
+      cell: (request) => <span className="text-[var(--text-secondary)]">{request.requesterEmail}</span>,
     },
     { id: 'org', header: 'Organization', value: (request) => request.organizationName || '—', cell: (request) => <span className="text-[var(--text-secondary)]">{request.organizationName || '—'}</span> },
     { id: 'app', header: 'Application', value: (request) => request.productName || request.productId, cell: (request) => <span className="text-[var(--text-secondary)]">{request.productName || request.productId}</span> },
@@ -141,37 +137,38 @@ function RequestsListPage() {
 
       {isReadOnly ? <ReadOnlyBanner featureName="Requests" /> : null}
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex-1 overflow-hidden">
-          <Tabs
-            tabs={REQUEST_STATUS_FILTERS.map(filter => ({
-              id: filter.id,
-              label: filter.label,
-              count: filter.id === 'all' ? rows.length : rows.filter((request) => request.status === filter.id).length,
-            }))}
-            activeId={statusFilter}
-            onChange={(id) => setStatusFilter(id as RequestStatus | 'all')}
+      <div className="overflow-hidden">
+        <Tabs
+          tabs={REQUEST_STATUS_FILTERS.map(filter => ({
+            id: filter.id,
+            label: filter.label,
+            count: filter.id === 'all' ? rows.length : rows.filter((request) => request.status === filter.id).length,
+          }))}
+          activeId={statusFilter}
+          onChange={(id) => setStatusFilter(id as RequestStatus | 'all')}
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="w-56 shrink-0">
+          <Dropdown
+            id="filterAccessRequestApplication"
+            label="Application" searchable={false} clearable={false}
+            value={appFilter}
+            onValueChange={(value) => setAppFilter(value ?? 'all')}
+            options={[{ id: 'all', value: 'All Applications' }, ...appOptions]}
+            className="min-h-8"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-44 shrink-0">
-            <Dropdown
-              label="Filter by application" hideLabel searchable={false} clearable={false}
-              value={appFilter}
-              onValueChange={(value) => setAppFilter(value ?? 'all')}
-              options={[{ id: 'all', value: 'All Applications' }, ...appOptions]}
-              className="min-h-8"
-            />
-          </div>
-          <div className="w-44 shrink-0">
-            <Dropdown
-              label="Filter by organization" hideLabel searchable={false} clearable={false}
-              value={orgFilter}
-              onValueChange={(value) => setOrgFilter(value ?? 'all')}
-              options={[{ id: 'all', value: 'All Organizations' }, ...orgOptions]}
-              className="min-h-8"
-            />
-          </div>
+        <div className="w-56 shrink-0">
+          <Dropdown
+            id="filterAccessRequestOrganization"
+            label="Organization" searchable={false} clearable={false}
+            value={orgFilter}
+            onValueChange={(value) => setOrgFilter(value ?? 'all')}
+            options={[{ id: 'all', value: 'All Organizations' }, ...orgOptions]}
+            className="min-h-8"
+          />
         </div>
       </div>
 
