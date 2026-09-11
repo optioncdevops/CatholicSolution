@@ -282,7 +282,7 @@ namespace Automation.Acutis.StepDefinitions
             ThenConfirmationPopupShouldOpenAndClickConfirmToUpdateStatus();
 
             WhenClickOnEditProductButton();
-            ThenEditProductPageShouldBeOpenedAndClickOnCancelButton();
+            ThenEditProductPageShouldBeOpenedAndEditAllFieldsAndFirstClickWithCancelAndThenClickToTheYes();
             WhenClickOnEditProductButton();
             ThenEditProductPageShouldBeOpenedAndUpdateTheFieldsAndClickOnSaveButton();
 
