@@ -414,8 +414,8 @@ namespace Automation.Framework.ViperPages
             // Invoice Details Sub Tab Workflow
             public static string InvoiceStatusFilterChip(string status) => $"//button[contains(@class, 'admin-filter-chip') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{status.ToLowerInvariant()}')]";
             public const string BtnCreateInvoice = "//button[contains(., 'Create Invoice')]";
-            public const string InvoiceTitleInput = "//input[@placeholder='Enter title' or ancestor::div[.//label[contains(text(), 'Product Title')]]//input]";
-            public const string InvoiceProductTitleInput = "//input[@placeholder='Product Title' or ancestor::div[.//label[contains(text(), 'Product Title')]]//input]";
+            public const string InvoiceTitleInput = "//input[@id=//label[contains(text(), 'Product Title')]/@for] | //input[ancestor::div[.//label[contains(text(), 'Product Title')]]] | //label[contains(text(), 'Product Title')]/following::input[1] | //input[@placeholder='Enter title' or @placeholder='Product Title']";
+            public const string InvoiceProductTitleInput = "//input[@id=//label[contains(text(), 'Product Title')]/@for] | //input[ancestor::div[.//label[contains(text(), 'Product Title')]]] | //label[contains(text(), 'Product Title')]/following::input[1] | //input[@placeholder='Product Title' or @aria-label='Product Title']";
             public const string InvoiceRemarksInput = "//div[@role='textbox' and (ancestor::div[.//h2[contains(., 'Remarks')] or .//label[contains(., 'Remarks')]] or @data-placeholder='Enter remarks...' or @data-placeholder='Start typing here...')] | //textarea[contains(@placeholder, 'remarks') or ancestor::div[.//h2[contains(., 'Remarks')]]]";
             public const string InvoiceOrgDropdown = "//div[@role='combobox' and (ancestor::div[.//label[contains(., 'Organization')]] or contains(., 'Select organization'))] | //button[contains(@id, 'dropdown') or contains(., 'Select organization') or contains(@class, 'admin-dropdown-trigger') or @role='combobox']";
             public const string FirstDropdownOption = "(//button[@role='option'])[1]";

@@ -233,8 +233,18 @@ namespace Automation.Acutis.StepDefinitions
         public void ThenCreateInvoicePageShouldBeOpenedAndEnterInvoiceDetailsAndClickOnSaveButton()
         {
             Assert.That(_productPage.IsCreateInvoicePageOpened(), Is.True, "Create Invoice page failed to open.");
+            Assert.That(_productPage.IsInvoiceProductTitleReadOnly(), Is.True, "Product Title should be read-only in Create Invoice page.");
             string invoiceRemarks = _testData.Product?.InvoiceRemarks ?? _testData.Product?.InvoiceTitle ?? "Automated Test Invoice Renewal";
             _productPage.EnterInvoiceDetailsAndSave(invoiceRemarks);
+        }
+
+        [When(@"Product Title should be read only and display the product name")]
+        [Then(@"Product Title should be read only and display the product name")]
+        [When(@"Product Title should be read only")]
+        [Then(@"Product Title should be read only")]
+        public void ThenProductTitleShouldBeReadOnly()
+        {
+            Assert.That(_productPage.IsInvoiceProductTitleReadOnly(), Is.True, "Product Title should be read-only in Create Invoice page.");
         }
 
         [When(@"Click on Back to Products button and verify Products page is opened")]

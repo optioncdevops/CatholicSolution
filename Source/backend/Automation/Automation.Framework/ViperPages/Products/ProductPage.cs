@@ -844,6 +844,41 @@ namespace Automation.Framework.ViperPages.Products
                 || driver.FindElements(By.XPath(XPath_Products.BtnInvoiceCancel)).Count > 0, 10);
         }
 
+        public bool IsInvoiceProductTitleReadOnly()
+        {
+            var titleInput = _webDriver.FindElements(By.XPath(XPath_Products.InvoiceProductTitleInput)).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).FirstOrDefault();
+
+            if (titleInput == null)
+            {
+                return false;
+            }
+
+            string? readOnlyAttr = titleInput.GetAttribute("readonly");
+            string? disabledAttr = titleInput.GetAttribute("disabled");
+            string? ariaReadOnly = titleInput.GetAttribute("aria-readonly");
+            string? ariaDisabled = titleInput.GetAttribute("aria-disabled");
+
+            return (!string.IsNullOrEmpty(readOnlyAttr) && readOnlyAttr != "false")
+                || (!string.IsNullOrEmpty(disabledAttr) && disabledAttr != "false")
+                || (!string.IsNullOrEmpty(ariaReadOnly) && ariaReadOnly != "false")
+                || (!string.IsNullOrEmpty(ariaDisabled) && ariaDisabled != "false")
+                || !titleInput.Enabled;
+        }
+
+        public string GetInvoiceProductTitleValue()
+        {
+            var titleInput = _webDriver.FindElements(By.XPath(XPath_Products.InvoiceProductTitleInput)).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).FirstOrDefault();
+
+            if (titleInput == null)
+            {
+                return string.Empty;
+            }
+
+            return titleInput.GetAttribute("value") ?? string.Empty;
+        }
+
         public void ClickCancelCreateInvoice()
         {
             var cancelBtn = _webDriver.FindElements(By.XPath(XPath_Products.BtnInvoiceCancel)).FirstOrDefault();
@@ -913,6 +948,11 @@ namespace Automation.Framework.ViperPages.Products
             // Verify Product Title is present and read-only
             var titleInput = _webDriver.FindElements(By.XPath(XPath_Products.InvoiceProductTitleInput)).FirstOrDefault()
                 ?? _webDriver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).FirstOrDefault();
+
+            if (titleInput != null && !IsInvoiceProductTitleReadOnly())
+            {
+                throw new InvalidOperationException("Product Title input must be read-only and/or disabled.");
+            }
 
             // Enter remarks
             string remarksToSet = string.IsNullOrWhiteSpace(invoiceRemarks) ? "OptionC License Remarks" : invoiceRemarks;
