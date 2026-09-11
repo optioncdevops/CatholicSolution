@@ -97,6 +97,11 @@ const ExcelUploadInner = <TFieldValues extends FieldValues = FieldValues>({
             return;
         }
         const nextUrl = createObjectUrl(localFile);
+        // Genuine external-system sync, not derivable state: `createObjectUrl` allocates a real
+        // browser resource that must be paired with a `revokeObjectUrl` on cleanup/replacement —
+        // exactly what effects exist for. The URL isn't known until this runs, so this setState
+        // is necessary, not a derived-render calculation.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPreviewUrl(nextUrl);
         return () => { revokeObjectUrl(nextUrl); };
     }, [localFile]);

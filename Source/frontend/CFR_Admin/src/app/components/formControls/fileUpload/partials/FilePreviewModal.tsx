@@ -49,12 +49,19 @@ export function FilePreviewModal({
     : "unsupported";
   const zoomEnabled = canPreviewZoom(previewKind);
 
-  useEffect(() => {
+  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
+  // pattern for "state that resets when a prop identity changes") — zoom/view-mode reset whenever
+  // the modal opens or navigates to a different item. The sentinel tracks every isOpen/safeIndex
+  // change (matching the old effect's `[isOpen, safeIndex]` dependency exactly); the reset itself
+  // still only fires while open, same as the original `if (isOpen)` guard.
+  const [renderedForOpenState, setRenderedForOpenState] = useState({ isOpen, safeIndex });
+  if (renderedForOpenState.isOpen !== isOpen || renderedForOpenState.safeIndex !== safeIndex) {
+    setRenderedForOpenState({ isOpen, safeIndex });
     if (isOpen) {
       setZoom(1);
       setViewMode("fit");
     }
-  }, [isOpen, safeIndex]);
+  }
 
   useEffect(() => {
     if (!isOpen) {return;}

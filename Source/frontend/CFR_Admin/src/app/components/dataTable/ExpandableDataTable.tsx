@@ -192,6 +192,10 @@ export function ExpandableDataTable<T>({
         }
     };
 
+    // Plain (non-memoized) recursive helper — useCallback can't wrap a function that calls
+    // itself by its own const binding, since that binding isn't initialized yet inside its own
+    // initializer. `flatData` below intentionally lists `rowKey`/`expandedRows` directly instead
+    // of `flattenRows` itself, since those are flattenRows' only real dependencies.
     const flattenRows = (rows: T[], level = 0): (T & { _level: number })[] => {
         const result: (T & { _level: number })[] = [];
         rows.forEach((row) => {
@@ -272,7 +276,10 @@ export function ExpandableDataTable<T>({
         return sortRows(filteredData);
     }, [filteredData, sortColumn, sortDirection, columns]);
 
-    const flatData = useMemo(() => flattenRows(sortedData), [sortedData, expandedRows]);
+    // flattenRows is a plain (non-memoized) recursive function; rowKey/expandedRows below are
+    // its actual dependencies, so exhaustive-deps' "missing: flattenRows" is a false positive.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const flatData = useMemo(() => flattenRows(sortedData), [sortedData, rowKey, expandedRows]);
 
     const pageCount = Math.ceil(flatData.length / pageSize);
     const paginatedData = enablePagination

@@ -63,8 +63,9 @@ builder.Services.AddEndpointsApiExplorer();
 
 // Add CORS policy
 builder.Services.AddAuthenticationSetup(builder.Configuration);
-// Allow the Local system to access the api with jwt token
-builder.Services.DisableAuthenticationPolicy(builder.Environment);
+// Real JWT authentication/authorization by default; the anonymous bypass below only activates when
+// explicitly opted into via Authentication:AllowAnonymousDevelopmentBypass on a Development host.
+builder.Services.DisableAuthenticationPolicy(builder.Environment, builder.Configuration);
 
 // RESPONSE CACHING - Caches responses from microservices to improve performance
 builder.Services.AddResponseCaching();

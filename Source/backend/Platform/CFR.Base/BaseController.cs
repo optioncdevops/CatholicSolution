@@ -17,7 +17,7 @@ namespace CFR.Base;
 [ApiController]
 [Route(Constant.ApiRouteConstants.APIController)]
 [Produces(Constant.InputType.ApplicationJson)]
-//[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [ProducesResponseType(StatusCodes.Status200OK)]
 [ProducesResponseType(StatusCodes.Status400BadRequest)]
 [ProducesResponseType(StatusCodes.Status404NotFound)]

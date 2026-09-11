@@ -2,6 +2,15 @@
 
 namespace CFR.Base;
 
+/// <summary>
+/// Treats every request as authenticated and authorized, regardless of any bearer token —
+/// <see cref="AuthenticateAsync"/> fabricates a successful ticket even for an anonymous request,
+/// and <see cref="AuthorizeAsync"/> always returns success. This must NEVER be registered outside
+/// a local developer machine that has explicitly opted in — see
+/// <see cref="ServiceExtension.DisableAuthenticationPolicy"/>, the only place that registers this
+/// type, which gates it behind both <c>IWebHostEnvironment.IsDevelopment()</c> and the
+/// <c>Authentication:AllowAnonymousDevelopmentBypass</c> configuration flag.
+/// </summary>
 public class DisableAuthenticationPolicyEvaluator : IPolicyEvaluator
 {
     public async Task<AuthenticateResult> AuthenticateAsync(AuthorizationPolicy policy, HttpContext context)

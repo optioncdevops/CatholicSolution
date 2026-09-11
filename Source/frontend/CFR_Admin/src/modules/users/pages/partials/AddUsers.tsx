@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm, type FieldErrors } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
@@ -41,9 +41,9 @@ const AddUsers = () => {
   //#endregion
 
   //#region Functions
-  const navigateToList = () => {
+  const navigateToList = useCallback(() => {
     navigate('/admin/users', { replace: true });
-  };
+  }, [navigate]);
   //#endregion
 
   //#region Effects
@@ -51,7 +51,7 @@ const AddUsers = () => {
     if (location.pathname === '/admin/edit-users' && !isEdit) {
       navigateToList();
     }
-  }, [isEdit, location.pathname]);
+  }, [isEdit, location.pathname, navigateToList]);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,7 +108,7 @@ const AddUsers = () => {
     return () => {
       cancelled = true;
     };
-  }, [isEdit, reset, showToast, userId]);
+  }, [isEdit, reset, showToast, userId, navigateToList]);
   //#endregion
 
   //#region Handlers

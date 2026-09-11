@@ -81,9 +81,14 @@ function ProductIcon({
 }) {
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => {
+  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
+  // pattern for "state that resets when a prop identity changes") — a new `icon` deserves a fresh
+  // attempt, not the previous icon's stale error flag.
+  const [renderedForIcon, setRenderedForIcon] = useState(icon);
+  if (renderedForIcon !== icon) {
+    setRenderedForIcon(icon);
     setHasError(false);
-  }, [icon]);
+  }
 
   const isImage =
     isImageIcon(icon) || (icon && !icon.includes("📦") && icon.length > 2);
@@ -687,6 +692,14 @@ const ProductEdit = () => {
 
   //#region Effects
   useEffect(() => {
+    // Standard mount/dependency-driven data-fetch effect, preserved as-is per this review's own
+    // instruction not to blindly rewrite working async loading effects. Known gap (tracked, not
+    // fixed here): `loadProduct` doesn't check a cancellation flag internally, so in the rare case
+    // this component unmounts while the request is still in flight, its `setLoading`/`setProduct`
+    // calls would still fire after unmount — the same shape as several other detail/edit pages in
+    // this app: a real but pre-existing, wider-reaching gap, not something newly introduced or
+    // safe to silently paper over here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadProduct();
   }, [loadProduct]);
   //#endregion

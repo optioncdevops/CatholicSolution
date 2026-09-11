@@ -214,13 +214,13 @@ export function UserRightsPage() {
     });
   };
 
-  const handleToggleRow = (node: UserRightsFeatureNode, next: AccessLevel) => {
+  const handleToggleRow = useCallback((node: UserRightsFeatureNode, next: AccessLevel) => {
     if (isReadOnly) return;
     // Each row's access is independent — toggling a parent (Module/Feature) must NOT change its
     // children; every node keeps its own separately-persisted value. Bulk-changing a whole branch
     // at once is what "Apply to all" is for (see handleApplyToAll below).
     setPending((prev) => mergePendingChange(prev, node.featureId, next));
-  };
+  }, [isReadOnly]);
 
   const handleClearFilters = () => {
     setModuleFilter('all');
@@ -342,7 +342,7 @@ export function UserRightsPage() {
         />
       ),
     },
-  ], [expanded, effectiveLevel, saving, isReadOnly]);
+  ], [expanded, effectiveLevel, saving, isReadOnly, handleToggleRow]);
   //#endregion
 
   //#region Render

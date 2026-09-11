@@ -21,6 +21,11 @@ export function XlsxPreviewPanel({ file }: XlsxPreviewPanelProps) {
 
   useEffect(() => {
     let cancelled = false;
+    // Standard cancellable async-load effect: resetting workbook/error/loading at the start of
+    // each fetch-on-dependency-change cycle is the necessary and correct pattern here (preserved
+    // as-is per this review's own instruction not to rewrite working async loading effects) — the
+    // actual workbook isn't known until `file.arrayBuffer()` resolves and parses below.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWorkbook(null);
     setError(null);
     setLoading(true);

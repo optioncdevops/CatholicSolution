@@ -17,7 +17,16 @@ export function DocxPreviewPanel({ item }: DocxPreviewPanelProps) {
   useLayoutEffect(() => {
     let cancelled = false;
     let revokeBuffer: (() => void) | undefined;
+    // Captured at effect-setup time (not re-read from the ref) so the cleanup below still has
+    // the right node even if `containerRef.current` has already changed/detached by then.
+    const containerAtSetup = containerRef.current;
 
+    // Standard cancellable async-load effect: resetting loading/error at the start of each
+    // fetch-on-dependency-change cycle, before kicking off the async render below, is the
+    // necessary and correct pattern here (preserved as-is per this review's own instruction not
+    // to rewrite working async loading effects) — not a derivable render-time calculation, since
+    // the actual result isn't known until the async work below resolves.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
 
@@ -68,8 +77,13 @@ export function DocxPreviewPanel({ item }: DocxPreviewPanelProps) {
     return () => {
       cancelled = true;
       revokeBuffer?.();
-      containerRef.current?.replaceChildren();
+      containerAtSetup?.replaceChildren();
     };
+    // Deliberately depends on the primitive fields that actually identify "which file to render"
+    // rather than the whole `item` object — `item` is commonly a fresh wrapper object on every
+    // parent render even when the underlying file hasn't changed, and depending on it directly
+    // would re-run this (re-render the document) far more often than necessary.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.file.name, item.file.size, item.file.lastModified, item.url]);
 
   return (

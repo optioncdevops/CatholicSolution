@@ -26,8 +26,9 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddSwaggerGenSetup(SwaggerModuleDoc.CFRAcutisDocs);
 
-// Allow the Local system to access the api with jwt token
-builder.Services.DisableAuthenticationPolicy(builder.Environment);
+// Real JWT authentication/authorization by default; the anonymous bypass below only activates when
+// explicitly opted into via Authentication:AllowAnonymousDevelopmentBypass on a Development host.
+builder.Services.DisableAuthenticationPolicy(builder.Environment, builder.Configuration);
 
 // Use the Serilog configuration from the extension method
 // builder.Host.AddSerilogConfiguration(builder.Configuration.GetConnectionString("AuditLogDB"), AuditTableName.Dietary);

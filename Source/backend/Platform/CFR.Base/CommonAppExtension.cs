@@ -67,7 +67,9 @@ namespace CFR.Base
 
             IConfiguration config = app.ApplicationServices.GetRequiredService<IConfiguration>();
 
-            // Enable authorization (even though authentication is disabled in development)
+            // Real JWT authentication/authorization applies by default in every environment — see
+            // ServiceExtension.DisableAuthenticationPolicy for the one, explicitly-opt-in exception
+            // (Development only, gated by Authentication:AllowAnonymousDevelopmentBypass).
             _ = app.UseAuthorization();
 
             return app;

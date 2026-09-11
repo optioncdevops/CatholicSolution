@@ -18,7 +18,9 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddSwaggerGenSetup(SwaggerModuleDoc.PortalDocs);
 
-builder.Services.DisableAuthenticationPolicy(builder.Environment);
+// Real JWT authentication/authorization by default; the anonymous bypass below only activates when
+// explicitly opted into via Authentication:AllowAnonymousDevelopmentBypass on a Development host.
+builder.Services.DisableAuthenticationPolicy(builder.Environment, builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
 

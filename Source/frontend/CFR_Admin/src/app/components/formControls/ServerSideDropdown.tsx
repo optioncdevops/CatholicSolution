@@ -544,6 +544,10 @@ const ServerSideDropdownInner = <
 
   useEffect(() => {
     if (!allowFetch) {
+      // Part of this same data-loading effect's own gate logic (not a separate concern): when
+      // fetching becomes inapplicable, the in-flight loading indicators must clear together with
+      // it, exactly like the `fetchPage(1, "replace")` call below does for the opposite case.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLoadingInitial(false);
       setIsLoadingMore(false);
       return;

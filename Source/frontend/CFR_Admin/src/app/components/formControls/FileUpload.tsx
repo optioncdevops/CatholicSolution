@@ -73,9 +73,20 @@ export const FileUpload = ({
   const [validationError, setValidationError] = useState<string>("");
   const [clearedExisting, setClearedExisting] = useState(false);
 
-  useEffect(() => {
+  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
+  // pattern for "state that resets when a prop identity changes") — when the parent hands us a
+  // different initial file, any earlier user-initiated "clear" no longer applies to it.
+  const [renderedForInitialPreview, setRenderedForInitialPreview] = useState({
+    url: initialPreview?.url,
+    name: initialPreview?.name,
+  });
+  if (
+    renderedForInitialPreview.url !== initialPreview?.url ||
+    renderedForInitialPreview.name !== initialPreview?.name
+  ) {
+    setRenderedForInitialPreview({ url: initialPreview?.url, name: initialPreview?.name });
     setClearedExisting(false);
-  }, [initialPreview?.url, initialPreview?.name]);
+  }
 
   const resolvedAccept =
     accept ??
@@ -99,6 +110,11 @@ export const FileUpload = ({
     }
 
     const url = createObjectUrl(file);
+    // Genuine external-system sync, not derivable state: `createObjectUrl` allocates a real
+    // browser resource that must be paired with a `revokeObjectUrl` on cleanup/replacement —
+    // exactly what effects exist for. The URL isn't known until this runs, so this setState is
+    // necessary, not a derived-render calculation.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPreviewUrl((previous) => {
       if (previous?.startsWith("blob:")) {
         revokeObjectUrl(previous);

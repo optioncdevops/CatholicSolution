@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@app/utilities/cn";
 import { FormFieldLabel } from "./FormFieldLabel";
@@ -211,35 +211,41 @@ const MultiSelectInner = <TFieldValues extends FieldValues = FieldValues>({
     );
   }, [filteredOptions, groupedMode]);
 
-  const setSelected = (next: string[]) => {
-    if (value === undefined) {
-      setInternalValue(next);
-    }
-    onValueChange?.(next);
-  };
+  const setSelected = useCallback(
+    (next: string[]) => {
+      if (value === undefined) {
+        setInternalValue(next);
+      }
+      onValueChange?.(next);
+    },
+    [value, onValueChange],
+  );
 
-  const toggleOption = (
-    optionId: string | number,
-    externalOnChange?: (val: string[]) => void,
-    currentSelectedList?: string[],
-    optionDisabled = false,
-  ) => {
-    if (optionDisabled) {
-      return;
-    }
+  const toggleOption = useCallback(
+    (
+      optionId: string | number,
+      externalOnChange?: (val: string[]) => void,
+      currentSelectedList?: string[],
+      optionDisabled = false,
+    ) => {
+      if (optionDisabled) {
+        return;
+      }
 
-    const base = currentSelectedList ?? selected;
-    const isSelected = base.some((selectedId) =>
-      areOptionIdsEqual(selectedId, optionId),
-    );
-    const serializedId = serializeOptionIdForForm(optionId);
-    const next = isSelected
-      ? base.filter((selectedId) => !areOptionIdsEqual(selectedId, optionId))
-      : [...base, serializedId];
+      const base = currentSelectedList ?? selected;
+      const isSelected = base.some((selectedId) =>
+        areOptionIdsEqual(selectedId, optionId),
+      );
+      const serializedId = serializeOptionIdForForm(optionId);
+      const next = isSelected
+        ? base.filter((selectedId) => !areOptionIdsEqual(selectedId, optionId))
+        : [...base, serializedId];
 
-    setSelected(next);
-    externalOnChange?.(next);
-  };
+      setSelected(next);
+      externalOnChange?.(next);
+    },
+    [selected, setSelected],
+  );
 
   const handleClear = (
     externalOnChange?: (val: string[]) => void,
@@ -441,7 +447,7 @@ const MultiSelectInner = <TFieldValues extends FieldValues = FieldValues>({
       window.removeEventListener("resize", handleScrollOrResize);
       window.removeEventListener("scroll", handleScrollOrResize, true);
     };
-  }, [isOpen, activeIndex, selectableOptions]);
+  }, [isOpen, activeIndex, selectableOptions, toggleOption]);
 
   const renderMultiSelect = (
     fieldValue?: string[],
@@ -473,7 +479,16 @@ const MultiSelectInner = <TFieldValues extends FieldValues = FieldValues>({
       if (disabled) { return; }
 
       if (event.key === "Tab") {
-        if (isOpen) { closeMenu(false); }
+        if (isOpen) {
+          // False positive: this call sits inside a keydown event handler (not the render
+          // path), where reading refs is safe and standard. The linter's static analysis
+          // treats `renderMultiSelect`'s direct invocation below (`return
+          // renderMultiSelect(...)`) as if every handler defined inside it runs during
+          // render, since it can't see that this closure only actually executes later, on a
+          // real keydown event.
+          // eslint-disable-next-line react-hooks/refs
+          closeMenu(false);
+        }
         return;
       }
 
@@ -712,6 +727,10 @@ const MultiSelectInner = <TFieldValues extends FieldValues = FieldValues>({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  // False positive; same renderMultiSelect-closure cause as
+                  // handleTriggerKeyDown above (this onClick only runs later, on a real
+                  // click, never during render).
+                  // eslint-disable-next-line react-hooks/refs
                   handleClear(fieldOnChange, currentSelected);
                 }}
               >
