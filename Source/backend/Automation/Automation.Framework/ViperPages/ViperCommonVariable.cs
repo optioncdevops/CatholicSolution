@@ -392,9 +392,9 @@ namespace Automation.Framework.ViperPages
             public const string EditProductDescTextarea = "//textarea[@placeholder='What does this product do?']";
             public const string EditProductFeatureInput = "//input[contains(@placeholder, 'Add features')]";
             public const string BtnEditAddFeature = "//button[normalize-space()='Add']";
-            public const string EditProductContactDropdown = "//div[@role='combobox' and (ancestor::div[label[contains(., 'Contact Person')]] or contains(., 'Select contact person'))]";
+            public const string EditProductContactDropdown = "//div[@role='combobox' and (ancestor::div[.//label[contains(., 'Contact Person')]] or contains(., 'Select contact person'))]";
             public const string EditProductContactOption = "(//*[@role='option'])[1]";
-            public static string EditProductRadioOption(string label) => $"//label[contains(., '{label}')]//input[@type='radio'] | //label[contains(., '{label}')]";
+            public static string EditProductRadioOption(string label) => $"//div[@role='radiogroup']//label[contains(., '{label}')] | //label[contains(., '{label}')]//input[@type='radio'] | //label[contains(., '{label}')]";
             public const string BtnEditCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
             public const string BtnEditSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']]";
             public const string DiscardChangesPopup = "//div[contains(@class, 'admin-swal-popup') or contains(@class, 'swal2-popup')]";
@@ -402,6 +402,11 @@ namespace Automation.Framework.ViperPages
             public const string DiscardChangesCancel = "//button[contains(@class, 'admin-swal-cancel') or (contains(@class, 'swal2-cancel') and normalize-space()='Cancel')]";
 
             // Organizations Sub Tab Workflow
+            public const string OrgFilterChipAll = "//div[@role='tabpanel']//button[contains(@class, 'admin-filter-chip') and (contains(., 'All Statuses') or contains(., 'All'))]";
+            public const string OrgFilterChipActive = "//div[@role='tabpanel']//button[contains(@class, 'admin-filter-chip') and contains(., 'Active') and not(contains(., 'Inactive'))]";
+            public const string OrgFilterChipExpiringSoon = "//div[@role='tabpanel']//button[contains(@class, 'admin-filter-chip') and contains(., 'Expiring Soon')]";
+            public const string OrgFilterChipExpired = "//div[@role='tabpanel']//button[contains(@class, 'admin-filter-chip') and contains(., 'Expired') and not(contains(., 'Expiring'))]";
+            public const string OrgFilterChipUsers = "//div[@role='tabpanel']//button[contains(@class, 'admin-filter-chip') and (contains(., '0 Users') or contains(., 'Users'))]";
             public const string FirstOrgViewButton = "(//table//tbody//tr//button[contains(@aria-label, 'View')])[1] | (//table//tbody//tr//a[contains(@href, '/admin/organizations/')])[1]";
             public const string BtnBackToProducts = "//button[contains(., 'Back to Products')]";
             public const string OrgDetailsHeading = "//div[contains(@class, 'admin-reveal')]//h1 | //div[contains(@class, 'admin-reveal')]//h2";
@@ -409,9 +414,14 @@ namespace Automation.Framework.ViperPages
             // Invoice Details Sub Tab Workflow
             public static string InvoiceStatusFilterChip(string status) => $"//button[contains(@class, 'admin-filter-chip') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{status.ToLowerInvariant()}')]";
             public const string BtnCreateInvoice = "//button[contains(., 'Create Invoice')]";
-            public const string InvoiceTitleInput = "//input[@placeholder='Enter title']";
-            public const string InvoiceOrgDropdown = "//button[contains(@id, 'dropdown') or contains(., 'Select organization') or contains(@class, 'admin-dropdown-trigger') or @role='combobox']";
+            public const string InvoiceTitleInput = "//input[@placeholder='Enter title' or ancestor::div[.//label[contains(text(), 'Product Title')]]//input]";
+            public const string InvoiceProductTitleInput = "//input[@placeholder='Product Title' or ancestor::div[.//label[contains(text(), 'Product Title')]]//input]";
+            public const string InvoiceRemarksInput = "//div[@role='textbox' and (ancestor::div[.//h2[contains(., 'Remarks')] or .//label[contains(., 'Remarks')]] or @data-placeholder='Enter remarks...' or @data-placeholder='Start typing here...')] | //textarea[contains(@placeholder, 'remarks') or ancestor::div[.//h2[contains(., 'Remarks')]]]";
+            public const string InvoiceOrgDropdown = "//div[@role='combobox' and (ancestor::div[.//label[contains(., 'Organization')]] or contains(., 'Select organization'))] | //button[contains(@id, 'dropdown') or contains(., 'Select organization') or contains(@class, 'admin-dropdown-trigger') or @role='combobox']";
             public const string FirstDropdownOption = "(//button[@role='option'])[1]";
+            public const string InvoiceStartDateInput = "//input[@placeholder='Select start date']";
+            public const string InvoiceExpiryDateInput = "//input[@placeholder='Select expiry date']";
+            public const string InvoiceOverlapToast = "//*[contains(text(), 'already been created for this duration')]";
             public const string BtnInvoiceCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
             public const string BtnInvoiceSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']] | //button[@type='submit' and contains(., 'Save')]";
 
@@ -419,13 +429,21 @@ namespace Automation.Framework.ViperPages
             public static string EditProductCardButton(string productName) => $"//article[contains(@class, 'admin-product-card') and .//span[contains(text(), '{productName}')]]//button[contains(@aria-label, 'Edit')]";
             public const string FirstEditProductCardButton = "(//article[contains(@class, 'admin-product-card')]//button[contains(@aria-label, 'Edit')])[1]";
 
+            // Products Listing Filter Chips & Sort Dropdown
+            public const string AllStatusChip = "//button[contains(@class, 'admin-filter-chip') and (contains(., 'All Statuses') or contains(., 'All Products') or contains(., 'All'))]";
+            public const string ActiveStatusChip = "//button[contains(@class, 'admin-filter-chip') and contains(., 'Active') and not(contains(., 'Inactive'))]";
+            public const string InactiveStatusChip = "//button[contains(@class, 'admin-filter-chip') and contains(., 'Inactive')]";
+            public const string ComingSoonStatusChip = "//button[contains(@class, 'admin-filter-chip') and (contains(., 'Coming Soon') or contains(., 'Coming-soon'))]";
+            public const string ProductSortDropdown = "//div[contains(@class, 'w-40')]//div[@role='combobox'] | //div[.//span[contains(text(), 'Sort by')]]//div[@role='combobox']";
+            public static string SortOption(string optionText) => $"//div[@role='listbox']//button[@role='option' and contains(., '{optionText}')]";
+
             // Invoice Modal & Invoice History Workflow
             public const string FirstInvoiceViewButton = "(//div[@role='tabpanel']//table//tbody//tr//button[contains(@aria-label, 'View') or @title='View'])[1]";
-            public const string InvoiceModal = "//*[@role='dialog']";
+            public const string InvoiceModal = "//*[@role='dialog' and not(contains(@class, 'swal2'))]";
             public const string BtnInvoiceModalClose = "//*[@role='dialog']//button[@aria-label='Close'] | //*[@role='dialog']//button[contains(@class, 'rounded-full')]";
             public const string InvoiceHistoryOrgDropdown = "(//div[@role='tabpanel']//div[contains(@class, 'shrink-0')]//div[@role='combobox'])[1]";
             public const string InvoiceHistoryStatusDropdown = "(//div[@role='tabpanel']//div[contains(@class, 'shrink-0')]//div[@role='combobox'])[2]";
-            public const string FirstInvoiceHistoryViewButton = "(//div[@role='tabpanel']//table//tbody//tr//button[contains(@aria-label, 'View') or @title='View'])[1]";
+            public const string FirstInvoiceHistoryViewButton = "//div[@role='tabpanel']//table//tbody//tr[1]//button[contains(translate(@aria-label, 'VIEW', 'view'), 'view') or @title='View'] | (//div[@role='tabpanel']//table//tbody//tr[1]//button)[1]";
         }
 
         /// <summary>

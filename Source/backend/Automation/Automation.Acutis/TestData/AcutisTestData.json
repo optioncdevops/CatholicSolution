@@ -28,6 +28,7 @@
     "EditFeature": "Acutis Integration",
     "EditDescription": "Automated test updated description for OptionC product.",
     "InvoiceTitle": "Automated Test Invoice Renewal",
+    "InvoiceRemarks": "Automated Test Invoice Renewal",
     "SubTabs": [
       "Organizations",
       "Invoice Details",

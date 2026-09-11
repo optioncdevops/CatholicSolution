@@ -79,19 +79,17 @@ export function validateProductForm(form: Partial<AdminApplication>): ProductFor
 }
 
 export function validateLicenseForm(values: {
-  title: string;
   orgId: string;
   activationDate: string;
   expiryDate: string;
-  customMessage?: string;
+  remarks?: string;
 }): string[] {
   const messages: string[] = [];
-  if (!values.title.trim()) messages.push('Title is required.');
   if (!values.orgId) messages.push('Organization is required.');
   if (!values.activationDate) messages.push('Start date is required.');
   if (!values.expiryDate) messages.push('Expiry date is required.');
-  if (values.customMessage && values.customMessage.trim().length > 500) {
-    messages.push('Remarks / Custom message must not exceed 500 characters.');
+  if (values.remarks && values.remarks.trim().length > 500) {
+    messages.push('Remarks must not exceed 500 characters.');
   }
   return messages;
 }

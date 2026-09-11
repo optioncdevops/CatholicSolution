@@ -8,7 +8,8 @@ Scenario: 001_Verify Products listing, sub-tabs navigation, status change, edit 
     When I click the login button
     When The Dashboard should be open
     Then Click on Products menu and verify Products page is opened
-    And Check in all products and filter by status
+    When Navigate through all product filter tabs: Active, Inactive, Coming Soon, and other filters
+    And Check the search functionality for products
     And Click on View Product icon for the selected product
     And Product Details page should be opened
     And Click on Back to Products button and verify Products page is opened
@@ -23,6 +24,7 @@ Scenario: 001_Verify Products listing, sub-tabs navigation, status change, edit 
     And Select new status and Click on Continue button
     Then Confirmation popup should open and Click Confirm to update status
     When Click on Organizations tab
+    And Navigate through all organization status filter tabs: Active, Expiring Soon, Expired, and Users
     Then Click on View Organization icon and verify Organization Details opened
     And Click on Back to Products button and verify Product Details opened
     When Click on Invoice Details tab
