@@ -8,7 +8,7 @@ import { Dropdown, InputField } from '@app/components/formControls';
 import { StatusBadge } from '@app/components/Badge';
 import { getOrganizationUsers, updateOrganization } from '../../services/organizationsService';
 import type { OrganizationApiItem, OrganizationFormValues, OrganizationUserApiItem } from '../../types/organizationTypes';
-import { composeOrganizationAddress, formatOrgCode, ORG_TYPE_OPTIONS, orgTypeLabel } from '../../utils/organizationHelpers';
+import { composeOrganizationAddress, formatOrgCode, ORG_TYPE_OPTIONS, orgTypeLabel, stateLabel, US_STATE_OPTIONS } from '../../utils/organizationHelpers';
 import { organizationRules } from '../../validator/OrganizationValidator';
 import { formatDate } from '@/modules/utils/formatDate';
 
@@ -166,16 +166,14 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
           <Fact label="Contact Person" value={organization.contactPerson ?? ''} />
           <Fact label="Contact Number" value={organization.contactPhone ?? ''} />
           <Fact label="Contact Email" value={organization.contactEmail ?? ''} />
-          <Fact label="Address" value={organization.address ?? ''} />
+          <Fact label="Address" value={composeOrganizationAddress(organization)} />
           <Fact label="City" value={organization.city ?? ''} />
-          <Fact label="State" value={organization.state ?? ''} />
+          <Fact label="State" value={stateLabel(organization.state)} />
           <Fact label="ZIP" value={organization.zip ?? ''} />
           <div className="min-w-0">
             <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Status</p>
             <p className="mt-0.5"><StatusBadge status={organization.orgStatus} kind="organization" /></p>
-            <p className="mt-0.5 text-[0.625rem] text-[var(--text-faint)]">Change status from the Organizations list</p>
           </div>
-          <Fact label="Address" value={composeOrganizationAddress(organization)} />
           <Fact label="Created On" value={formatDate(organization.insertedDate)} />
           <Fact label="Last Updated" value={formatDate(organization.updatedDate ?? organization.insertedDate)} />
         </div>
@@ -189,11 +187,11 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
 
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4 p-4">
         <p className="text-[0.6875rem] font-semibold text-[var(--text-faint)]">
-          Contact number and contact email aren't editable here — they're carried over unchanged. Update contact person from the organization's linked members below.
+          Organization name, organization type, contact number, and contact email aren't editable here — they're carried over unchanged. Update contact person from the organization's linked members below.
         </p>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-          <InputField control={control} name="orgName" label="Organization name" required rules={organizationRules.orgName} disabled={saving} wrapperClassName="md:col-span-12" />
-          <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" required searchable={false} clearable={false} rules={organizationRules.orgType} options={ORG_TYPE_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="orgName" label="Organization name" required rules={organizationRules.orgName} disabled wrapperClassName="md:col-span-8" />
+          <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" required searchable={false} clearable={false} rules={organizationRules.orgType} options={ORG_TYPE_OPTIONS} disabled wrapperClassName="md:col-span-4" />
           <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving} wrapperClassName="md:col-span-4" />
           <Dropdown
             control={control} name="contactPerson" label="Contact person"
@@ -202,7 +200,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
           />
           <InputField control={control} name="address" label="Address" disabled={saving} wrapperClassName="md:col-span-12" />
           <InputField control={control} name="city" label="City" disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="state" label="State" disabled={saving} wrapperClassName="md:col-span-4" />
+          <Dropdown control={control} name="state" label="State" placeholder="Select state" searchable options={US_STATE_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="zip" label="ZIP code" rules={organizationRules.zip} disabled={saving} wrapperClassName="md:col-span-4" />
         </div>
 

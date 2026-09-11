@@ -24,7 +24,11 @@ import type { EmailTemplateApiItem, EmailTemplateFormValues } from '../types/ema
 import {
   EMAIL_TEMPLATE_VARIABLES, getUnsupportedPlaceholders, normalizeEmailTemplatesList, templateDescription, templateDisplayLabel,
 } from '../utils/emailTemplatesHelpers';
-import { SUBJECT_MAX_LENGTH, validateEmailTemplate } from '../validator/EmailTemplatesValidator';
+import { MAX_LINK_EXPIRY_MINUTES, MIN_LINK_EXPIRY_MINUTES, SUBJECT_MAX_LENGTH, validateEmailTemplate } from '../validator/EmailTemplatesValidator';
+
+// Only PasswordReset has a real, time-limited link today — the field is hidden for every other
+// template rather than shown-but-meaningless.
+const LINK_EXPIRY_TEMPLATE_CODE = 'PasswordReset';
 
 const TEMPLATE_ICON: Record<string, typeof Mail> = {
   PasswordReset: KeyRound,
@@ -38,14 +42,16 @@ const BODY_EDITOR_ID = 'email-template-body-editor';
 const draftFromTemplate = (item: EmailTemplateApiItem): EmailTemplateFormValues => ({
   subject: item.subject,
   body: item.body,
+  linkExpiryMinutes: item.linkExpiryMinutes != null ? String(item.linkExpiryMinutes) : '',
 });
 
 function EmailTemplatesPage() {
   //#region Hooks
   const { showToast } = useToast();
   // Real enforcement, not just a label: a Read Only grant for this page (set on the User Rights
-  // page) disables every action that would change state — Save, Reset, Send Test, and the
-  // Subject/Body fields themselves. Preview stays available since it doesn't write anything.
+  // page) disables every action that would change the template itself — Save, Reset, and the
+  // Subject/Body fields. Preview and Send Test both stay available since neither one writes
+  // anything to the template; sending a test just emails the currently-loaded content as-is.
   const accessLevel = useFeatureAccessLevel('/admin/administration-email-templates');
   const isReadOnly = accessLevel === 'readOnly';
   //#endregion
@@ -124,10 +130,11 @@ function EmailTemplatesPage() {
   //#endregion
 
   const template = useMemo(() => templates.find((item) => item.templateId === selectedId) ?? null, [templates, selectedId]);
-  const draft = (template ? drafts[template.templateId] : undefined) ?? { subject: '', body: '' };
+  const draft = (template ? drafts[template.templateId] : undefined) ?? { subject: '', body: '', linkExpiryMinutes: '' };
   const isDirty = Boolean(template) && (
     draft.subject !== template!.subject
     || draft.body !== template!.body
+    || draft.linkExpiryMinutes !== (template!.linkExpiryMinutes != null ? String(template!.linkExpiryMinutes) : '')
   );
   const storedAuthEmail = getStoredAcutisAuth()?.resultData?.user?.eMail;
 
@@ -175,7 +182,8 @@ function EmailTemplatesPage() {
   //#region Handlers
   const handleSave = async () => {
     if (!template || isReadOnly) return;
-    const validationErrors = validateEmailTemplate(draft.subject, draft.body);
+    const isLinkExpiryTemplate = template.templateCode === LINK_EXPIRY_TEMPLATE_CODE;
+    const validationErrors = validateEmailTemplate(draft.subject, draft.body, isLinkExpiryTemplate ? draft.linkExpiryMinutes : undefined);
     if (validationErrors.length > 0) {
       showToast(validationErrors, 'error');
       return;
@@ -189,6 +197,7 @@ function EmailTemplatesPage() {
         subject: draft.subject,
         body: draft.body,
         status: template.status,
+        linkExpiryMinutes: isLinkExpiryTemplate && draft.linkExpiryMinutes.trim() ? Number(draft.linkExpiryMinutes) : null,
       });
       showToast(`${templateDisplayLabel(template.templateCode)} saved.`, 'success');
       await load();
@@ -214,7 +223,7 @@ function EmailTemplatesPage() {
   };
 
   const handleSendTest = async () => {
-    if (!template || isReadOnly) return;
+    if (!template) return;
     const toAddress = storedAuthEmail;
     if (!toAddress) {
       showToast('Sign in again to send a test email to your account address.', 'error');
@@ -321,10 +330,14 @@ function EmailTemplatesPage() {
               </div>
 
               <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-                <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty || saving || isReadOnly}>Reset</CommonButton>
+                {!isReadOnly && (
+                  <CommonButton variant="outline" size="sm" iconLeft={<RotateCcw size={13} />} onClick={() => void handleReset()} disabled={!isDirty || saving}>Reset</CommonButton>
+                )}
                 <CommonButton variant="outline" size="sm" iconLeft={<Eye size={13} />} onClick={() => setPreviewOpen(true)}>Preview</CommonButton>
-                <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={() => void handleSendTest()} disabled={sendingTest || isReadOnly}>{sendingTest ? 'Sending…' : 'Send Test'}</CommonButton>
-                <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={() => void handleSave()} disabled={!isDirty || saving || isReadOnly}>{saving ? 'Saving…' : 'Save'}</CommonButton>
+                <CommonButton variant="outline" size="sm" iconLeft={<Send size={13} />} onClick={() => void handleSendTest()} disabled={sendingTest}>{sendingTest ? 'Sending…' : 'Send Test'}</CommonButton>
+                {!isReadOnly && (
+                  <CommonButton variant="primary" size="sm" iconLeft={<Save size={13} />} onClick={() => void handleSave()} disabled={!isDirty || saving}>{saving ? 'Saving…' : 'Save'}</CommonButton>
+                )}
               </div>
             </div>
 
@@ -360,6 +373,21 @@ function EmailTemplatesPage() {
                     maxLength={SUBJECT_MAX_LENGTH}
                     disabled={isReadOnly}
                   />
+                  {template.templateCode === LINK_EXPIRY_TEMPLATE_CODE ? (
+                    <div className="mt-3">
+                      <SubjectField
+                        label="Link expiry (minutes)"
+                        type="number"
+                        min={MIN_LINK_EXPIRY_MINUTES}
+                        max={MAX_LINK_EXPIRY_MINUTES}
+                        value={draft.linkExpiryMinutes}
+                        onChange={(event) => updateField('linkExpiryMinutes', event.target.value)}
+                        placeholder="15"
+                        hint={`How long this link stays valid before it expires (${MIN_LINK_EXPIRY_MINUTES}–${MAX_LINK_EXPIRY_MINUTES} minutes). Shown to recipients via the [ExpiryMinutes] merge tag.`}
+                        disabled={isReadOnly}
+                      />
+                    </div>
+                  ) : null}
                 </div>
                 <div className="sm:flex-1">
                   <p className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">

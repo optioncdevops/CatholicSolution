@@ -25,5 +25,31 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("eventDate")]
         public DateTime EventDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the organization identifier this event belongs to. Null for event types
+        /// not tied to a single organization+product pair.
+        /// </summary>
+        [JsonPropertyName("orgId")]
+        public int? OrgId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the organization name this event belongs to. Null alongside OrgId.
+        /// </summary>
+        [JsonPropertyName("orgName")]
+        public string? OrgName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product identifier this event belongs to. Null for event types not
+        /// tied to a single organization+product pair.
+        /// </summary>
+        [JsonPropertyName("productId")]
+        public int? ProductId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product name this event belongs to. Null alongside ProductId.
+        /// </summary>
+        [JsonPropertyName("productName")]
+        public string? ProductName { get; set; }
     }
 }

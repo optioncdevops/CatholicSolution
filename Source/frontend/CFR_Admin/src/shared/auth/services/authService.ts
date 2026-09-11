@@ -96,6 +96,21 @@ export const resetPassword = async (payload: ResetPasswordPayload): Promise<ApiR
   }
 };
 
+// Read-only check, called as soon as the Reset Password page loads — shows which account the
+// link belongs to, and surfaces an already-used/expired link immediately (via the thrown message)
+// instead of only after the visitor fills in a new password and submits.
+export const validateResetToken = async (token: string): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${passwordController}/ValidateResetToken`, { params: { token } });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    const apiMessage = err.response?.data?.statusMessage;
+    throw (typeof error === 'string' ? error : apiMessage || err.message) || 'This reset link is invalid or has expired.';
+  }
+};
+
 export const getProfile = async (): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${profileController}/GetProfile`);

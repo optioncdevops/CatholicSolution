@@ -43,6 +43,11 @@ interface ActivityEntry {
   kind: ActivityKind;
   message: string;
   at: string;
+  /** Route to navigate to when this entry is clicked — every entry names a real record, so every
+   * entry should be able to link to it (an organization, or the request review modal via onSelect). */
+  to?: string;
+  /** Alternative to `to` for entries that open something other than a route (e.g. a modal). */
+  onSelect?: () => void;
 }
 
 interface AlertRow {
@@ -370,16 +375,36 @@ export function DashboardPage() {
     const trendEvents = summary?.trendEvents ?? [];
     const orgEvents: ActivityEntry[] = organizations
       .filter((org) => org.insertedDate)
-      .map((org) => ({ id: `org-${org.orgId}`, kind: 'organization', message: `${org.orgName} was added as an organization`, at: org.insertedDate }));
+      .map((org) => ({
+        id: `org-${org.orgId}`, kind: 'organization', message: `${org.orgName} was added as an organization`, at: org.insertedDate,
+        to: `/admin/organizations/${org.orgId}`,
+      }));
     const requestEvents: ActivityEntry[] = requests
       .filter((request) => request.submittedAt)
-      .map((request) => ({ id: `request-${request.accessRequestId}`, kind: 'request', message: `${request.requesterName} requested ${request.productName} for ${request.organizationName}`, at: request.submittedAt }));
+      .map((request) => ({
+        id: `request-${request.accessRequestId}`, kind: 'request', message: `${request.requesterName} requested ${request.productName} for ${request.organizationName}`, at: request.submittedAt,
+        onSelect: () => setSelectedRequestId(request.accessRequestId),
+      }));
     const licenseEvents: ActivityEntry[] = trendEvents
       .filter((event) => event.eventType === 'LicenseCreated')
-      .map((event, index) => ({ id: `license-${event.eventDate}-${index}`, kind: 'license', message: 'A new license was issued', at: event.eventDate }));
+      .map((event, index) => ({
+        id: `license-${event.eventDate}-${index}`, kind: 'license',
+        message: event.orgName && event.productName
+          ? `${event.orgName} was issued a license for ${event.productName}`
+          : 'A new license was issued',
+        at: event.eventDate,
+        to: event.orgId ? `/admin/organizations/${event.orgId}` : undefined,
+      }));
     const assignmentEvents: ActivityEntry[] = trendEvents
       .filter((event) => event.eventType === 'OrgProductAssignmentCreated')
-      .map((event, index) => ({ id: `assignment-${event.eventDate}-${index}`, kind: 'assignment', message: 'An organization was granted access to an app', at: event.eventDate }));
+      .map((event, index) => ({
+        id: `assignment-${event.eventDate}-${index}`, kind: 'assignment',
+        message: event.orgName && event.productName
+          ? `${event.orgName} was granted access to ${event.productName}`
+          : 'An organization was granted access to an app',
+        at: event.eventDate,
+        to: event.orgId ? `/admin/organizations/${event.orgId}` : undefined,
+      }));
 
     const seen = new Set<string>();
     return [...orgEvents, ...requestEvents, ...licenseEvents, ...assignmentEvents]
@@ -1004,15 +1029,41 @@ export function DashboardPage() {
                     <ul className="flex flex-col gap-2.5">
                       {group.items.map((item) => {
                         const Icon = ACTIVITY_ICON[item.kind];
+                        const iconSpan = (
+                          <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-[var(--surface-muted)] text-[var(--text-secondary)]" aria-hidden="true">
+                            <Icon size={12} />
+                          </span>
+                        );
+                        const body = (
+                          <div className="min-w-0">
+                            <p className="text-[var(--text-primary)]">{item.message}</p>
+                            <p className="text-xs text-[var(--text-muted)]">{formatRelativeDate(item.at)}</p>
+                          </div>
+                        );
+                        if (item.to) {
+                          return (
+                            <li key={item.id}>
+                              <Link id={`lnkActivity${item.id}`} to={item.to} className="flex items-start gap-2.5 rounded-[var(--radius-control)] p-1 -m-1 text-[0.8125rem] hover:bg-[var(--hover)]">
+                                {iconSpan}
+                                {body}
+                              </Link>
+                            </li>
+                          );
+                        }
+                        if (item.onSelect) {
+                          return (
+                            <li key={item.id}>
+                              <button id={`btnActivity${item.id}`} type="button" onClick={item.onSelect} className="flex w-full items-start gap-2.5 rounded-[var(--radius-control)] p-1 -m-1 text-left text-[0.8125rem] hover:bg-[var(--hover)]">
+                                {iconSpan}
+                                {body}
+                              </button>
+                            </li>
+                          );
+                        }
                         return (
                           <li key={item.id} className="flex items-start gap-2.5 text-[0.8125rem]">
-                            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-[var(--surface-muted)] text-[var(--text-secondary)]" aria-hidden="true">
-                              <Icon size={12} />
-                            </span>
-                            <div className="min-w-0">
-                              <p className="text-[var(--text-primary)]">{item.message}</p>
-                              <p className="text-xs text-[var(--text-muted)]">{formatRelativeDate(item.at)}</p>
-                            </div>
+                            {iconSpan}
+                            {body}
                           </li>
                         );
                       })}

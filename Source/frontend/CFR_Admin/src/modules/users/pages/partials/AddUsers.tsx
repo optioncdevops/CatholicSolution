@@ -237,13 +237,13 @@ const AddUsers = () => {
           <RadioGroup
             control={control}
             name="isLocked"
-            label="Locked"
+            label="Is Locked?"
             direction="horizontal"
             required
             rules={usersRules.isLocked}
             options={[
-              { id: '0', value: 'Unlocked' },
-              { id: '1', value: 'Locked' },
+              { id: '0', value: 'No' },
+              { id: '1', value: 'Yes' },
             ]}
             disabled={saving || isReadOnly || isEditingSelf}
           />
@@ -254,7 +254,9 @@ const AddUsers = () => {
 
         <div className="admin-sticky-footer">
           <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={saving}>Cancel</CommonButton>
-          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || isReadOnly}>Save</CommonButton>
+          {!isReadOnly && (
+            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+          )}
         </div>
       </form>
     </div>

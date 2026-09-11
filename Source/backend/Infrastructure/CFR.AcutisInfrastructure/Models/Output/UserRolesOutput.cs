@@ -39,5 +39,11 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("createdDate")]
         public DateTime? CreatedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of active Acutis users currently assigned this role.
+        /// </summary>
+        [JsonPropertyName("usersCount")]
+        public int UsersCount { get; set; }
     }
 }

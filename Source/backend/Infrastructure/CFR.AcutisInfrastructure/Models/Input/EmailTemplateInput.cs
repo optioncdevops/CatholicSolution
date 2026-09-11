@@ -43,6 +43,13 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("status")]
         public string? Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of minutes this template's own link (e.g. a password reset
+        /// link) stays valid before expiring. Null for templates with no such link.
+        /// </summary>
+        [JsonPropertyName("linkExpiryMinutes")]
+        public int? LinkExpiryMinutes { get; set; }
     }
 
     /// <summary>

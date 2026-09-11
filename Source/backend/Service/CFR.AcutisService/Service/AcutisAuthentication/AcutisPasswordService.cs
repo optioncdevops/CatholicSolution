@@ -19,7 +19,14 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
         IConfiguration configuration,
         ILogger<AcutisPasswordService> logger): IAcutisPasswordService
     {
-        private const int TokenLifetimeMinutes = 30;
+        /// <summary>
+        /// Fallback token lifetime, used only when the PasswordReset email template has no
+        /// LinkExpiryMinutes configured (or it's out of range) — an admin can otherwise set this
+        /// straight from the Email Templates editor.
+        /// </summary>
+        private const int DefaultTokenLifetimeMinutes = 15;
+        private const int MinimumTokenLifetimeMinutes = 5;
+        private const int MaximumTokenLifetimeMinutes = 1440;
         private const int MinimumPasswordLength = 8;
         private const string PasswordResetTemplateCode = "PasswordReset";
 
@@ -50,9 +57,16 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
                     return result;
                 }
 
+                // Loaded once, up front, so the SAME resolved value both persists as the token's
+                // real expiry below AND is what the email text tells the recipient — an admin
+                // changing this in the Email Templates editor must actually change how long the
+                // link works, not just what the email claims.
+                var template = await emailTemplatesRepository.GetEmailTemplateByCodeAsync(PasswordResetTemplateCode);
+                int lifetimeMinutes = ResolveTokenLifetimeMinutes(template);
+
                 string rawToken = GenerateToken();
                 string tokenHash = HashToken(rawToken);
-                DateTime expiresAtUtc = DateTime.UtcNow.AddMinutes(TokenLifetimeMinutes);
+                DateTime expiresAtUtc = DateTime.UtcNow.AddMinutes(lifetimeMinutes);
 
                 var user = await repository.RequestResetAsync(input.UserName.Trim(), tokenHash, expiresAtUtc);
                 if (user == null || string.IsNullOrWhiteSpace(user.Email))
@@ -75,7 +89,7 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
                     return result;
                 }
 
-                bool emailSent = await SendResetEmailAsync(user, rawToken);
+                bool emailSent = await SendResetEmailAsync(user, rawToken, template, lifetimeMinutes);
                 if (!emailSent)
                 {
                     // The token is already persisted at this point, but the user has no way to use it
@@ -148,7 +162,7 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
                 if (userId <= 0)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = ErrorMessages.InvalidResetToken;
+                    result.StatusMessage = InvalidTokenMessage(userId);
                     return result;
                 }
 
@@ -166,7 +180,70 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
 
         #endregion PUT Methods
 
+        #region GET Methods
+
+        /// <summary>
+        /// Checks a reset token's validity and returns which account it belongs to.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let the Reset Password page confirm/display the account being reset, and reject
+        /// an already-used/expired link immediately, before the visitor submits a new password.
+        /// Request Flow: AcutisPasswordController -> AcutisPasswordService.ValidateResetTokenAsync() -> IAcutisPasswordRepository.ValidateResetTokenAsync().
+        /// Validation Details: Token is required.
+        /// Business Logic: Hashes the supplied token and delegates the read-only lookup to the repository.
+        /// Repository Interaction: Calls IAcutisPasswordRepository.ValidateResetTokenAsync().
+        /// Response Details: MSResultArgs containing the account's email/first name, or BadRequest with a specific already-used/expired/invalid message.
+        /// </remarks>
+        /// <param name="token">Raw reset token from the reset link.</param>
+        /// <returns>MSResultArgs containing the token check outcome.</returns>
+        public async Task<MSResultArgs> ValidateResetTokenAsync(string token)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                string tokenHash = HashToken(token.Trim());
+                (int returnValue, var user) = await repository.ValidateResetTokenAsync(tokenHash);
+                if (returnValue <= 0 || user == null)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = InvalidTokenMessage(returnValue);
+                    return result;
+                }
+
+                result.ResultData = new { email = user.Email, firstName = user.FirstName };
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.ValidateResetTokenFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        #endregion GET Methods
+
         #region Private Helper Methods
+
+        /// <summary>
+        /// Maps a PasswordResetToken stored procedure failure code to a specific, user-facing
+        /// message — shared by ResetPasswordAsync and ValidateResetTokenAsync so both surfaces
+        /// report an already-used or expired link identically.
+        /// </summary>
+        private static string InvalidTokenMessage(int returnValue) => returnValue switch
+        {
+            -2 => ErrorMessages.ResetTokenAlreadyUsed,
+            -3 => ErrorMessages.ResetTokenExpired,
+            _ => ErrorMessages.InvalidResetToken,
+        };
 
         /// <summary>
         /// Generates a cryptographically random 256-bit reset token, hex-encoded.
@@ -179,12 +256,33 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
         private static string HashToken(string rawToken) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
 
         /// <summary>
+        /// Resolves how many minutes a freshly issued reset token should stay valid, from the
+        /// PasswordReset email template's admin-configurable LinkExpiryMinutes — falling back to
+        /// DefaultTokenLifetimeMinutes when the template row is missing, has no value set, or the
+        /// value is somehow outside the same [5, 1440] range EmailTemplatesService enforces on save.
+        /// </summary>
+        private static int ResolveTokenLifetimeMinutes(EmailTemplateOutput? template)
+        {
+            int? configured = template?.LinkExpiryMinutes;
+            if (configured.HasValue && configured.Value >= MinimumTokenLifetimeMinutes && configured.Value <= MaximumTokenLifetimeMinutes)
+            {
+                return configured.Value;
+            }
+
+            return DefaultTokenLifetimeMinutes;
+        }
+
+        /// <summary>
         /// Emails the raw reset link to the matched user, using the configured CFR Admin base URL and the
         /// admin-configurable "PasswordReset" email template (falls back to a built-in default when no
         /// active template row exists, so a missing/deleted template never blocks the reset flow).
         /// </summary>
+        /// <param name="user">The matched account the token was issued for.</param>
+        /// <param name="rawToken">The plain-text token to embed in the reset link.</param>
+        /// <param name="template">The PasswordReset template row already loaded by the caller (avoids a second lookup).</param>
+        /// <param name="lifetimeMinutes">The lifetime already resolved (and used for the real token expiry) by the caller — shown in the email as-is so the text always matches reality.</param>
         /// <returns>True when the email was actually sent; false when it was skipped (missing config) or SMTP delivery failed — the caller must not report success in either case.</returns>
-        private async Task<bool> SendResetEmailAsync(ForgotPasswordUserResult user, string rawToken)
+        private async Task<bool> SendResetEmailAsync(ForgotPasswordUserResult user, string rawToken, EmailTemplateOutput? template, int lifetimeMinutes)
         {
             string baseUrl = (configuration["FrontendSetting:CfrAdminBaseUrl"] ?? string.Empty).TrimEnd('/');
             // Validate the configured base URL is actually a well-formed, absolute http(s) address
@@ -205,12 +303,11 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
             // page ever loads a third-party resource or the user follows an outbound link before
             // using it.
             string resetLink = $"{baseUrl}/reset-password?token={Uri.EscapeDataString(rawToken)}";
-            var template = await emailTemplatesRepository.GetEmailTemplateByCodeAsync(PasswordResetTemplateCode);
             var placeholders = new Dictionary<string, string>
             {
                 ["FirstName"] = user.FirstName ?? string.Empty,
                 ["ResetLink"] = resetLink,
-                ["ExpiryMinutes"] = TokenLifetimeMinutes.ToString(),
+                ["ExpiryMinutes"] = lifetimeMinutes.ToString(),
                 ["AccentColor"] = SMTPMailService.GetAccentColor(),
             };
 

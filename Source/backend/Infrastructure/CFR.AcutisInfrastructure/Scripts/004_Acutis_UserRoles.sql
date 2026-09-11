@@ -115,6 +115,21 @@ BEGIN
 
     IF @ActionId = 2
     BEGIN
+        -- Deactivating a role that's still assigned to active users would silently strand those
+        -- users' sign-in/authorization (a role's ModuleRights stop being a valid grant once its
+        -- own role is inactive) — block it here the same way ActionId 5 (delete) already blocks
+        -- removing an in-use role, rather than letting it happen invisibly.
+        IF @Status = N'inactive' AND EXISTS (
+            SELECT 1
+            FROM [auth].[AcutisUser]
+            WHERE [RoleId] = @RoleId
+              AND [IsDeleted] = 0
+        )
+        BEGIN
+            SET @ReturnValue = -98;
+            RETURN @ReturnValue;
+        END
+
         UPDATE [auth].[AcutisRole]
         SET [IsActive] = CASE WHEN @Status = N'inactive' THEN 0 ELSE 1 END,
             [UpdatedDate] = SYSUTCDATETIME(),
@@ -133,7 +148,8 @@ BEGIN
             r.[RoleName],
             ISNULL(r.[Description], N'') AS [Description],
             CASE WHEN r.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
-            r.[CreatedDate]
+            r.[CreatedDate],
+            (SELECT COUNT(1) FROM [auth].[AcutisUser] AS u WHERE u.[RoleId] = r.[RoleId] AND u.[IsDeleted] = 0) AS [UsersCount]
         FROM [auth].[AcutisRole] AS r
         WHERE r.[RoleId] = @RoleId
           AND r.[IsDeleted] = 0;
@@ -147,7 +163,8 @@ BEGIN
             r.[RoleName],
             ISNULL(r.[Description], N'') AS [Description],
             CASE WHEN r.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
-            r.[CreatedDate]
+            r.[CreatedDate],
+            (SELECT COUNT(1) FROM [auth].[AcutisUser] AS u WHERE u.[RoleId] = r.[RoleId] AND u.[IsDeleted] = 0) AS [UsersCount]
         FROM [auth].[AcutisRole] AS r
         WHERE r.[IsDeleted] = 0
         ORDER BY r.[RoleName], r.[RoleId];

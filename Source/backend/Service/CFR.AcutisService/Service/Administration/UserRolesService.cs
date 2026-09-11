@@ -148,7 +148,7 @@ namespace CFR.AcutisService.Service.Administration
         /// Validation Details: Identifier must be a positive integer.
         /// Business Logic: Delegates the status update to the repository and wraps the result.
         /// Repository Interaction: Calls IUserRolesRepository.UpdateUserRoleStatusAsync().
-        /// Response Details: MSResultArgs containing the role identifier.
+        /// Response Details: MSResultArgs containing the role identifier, or Conflict when deactivating an in-use role.
         /// </remarks>
         /// <param name="input">Status change payload.</param>
         /// <returns>MSResultArgs containing the update outcome.</returns>
@@ -164,7 +164,15 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                result.ResultData = await repository.UpdateUserRoleStatusAsync(input);
+                int updatedId = await repository.UpdateUserRoleStatusAsync(input);
+                if (updatedId == -98)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.RoleInUse;
+                    return result;
+                }
+
+                result.ResultData = updatedId;
             }
             catch (Exception ex)
             {
