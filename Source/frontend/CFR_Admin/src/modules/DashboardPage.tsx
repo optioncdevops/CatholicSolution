@@ -880,8 +880,8 @@ export function DashboardPage() {
           <section id="sectionOrganizationsOverview" className="admin-panel-card">
             <div className="admin-panel-card__header">
               <div>
-                <h2 className="panel-title">Organizations Overview</h2>
-                <p className="panel-subtitle">Top organizations ranked by linked users and active app assignments.</p>
+                <h2 className="panel-title">{topOrganizations.length > 0 ? `Top ${topOrganizations.length} Organization${topOrganizations.length === 1 ? '' : 's'}` : 'Top Organizations'}</h2>
+                <p className="panel-subtitle">Your most active organizations, ranked by linked users and assigned apps.</p>
               </div>
             </div>
             {topOrganizations.length === 0 ? (
@@ -923,8 +923,8 @@ export function DashboardPage() {
           {/* ============================================================================= */}
           <SectionHeading
             id="sectionApplicationAccess"
-            title="Application Access"
-            subtitle="Current entitlement snapshot from lic.OrganizationProduct + auth.UserProduct, not the product catalog"
+            title={rankedAssignments.length > 0 ? `Top ${rankedAssignments.length} Application${rankedAssignments.length === 1 ? '' : 's'}` : 'Top Applications'}
+            subtitle="Your most-used apps, ranked by how many organizations currently have active access"
             right={<Link id="lnkViewAllApplicationAccess" to={PRODUCTS_PATHS.list} className="text-xs font-bold text-[var(--primary)] hover:underline">View all</Link>}
           />
           <section className="admin-panel-card">
