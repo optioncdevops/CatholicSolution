@@ -182,10 +182,10 @@ const AddLicense = () => {
   const handleCancel = async () => {
     if (touched) {
       const confirmed = await confirmAction({
-        title: "Discard this license?",
+        title: "Discard this invoice?",
         description:
-          "You have unsaved license details. Leaving now will discard them.",
-        confirmLabel: "Discard license",
+          "You have unsaved invoice details. Leaving now will discard them.",
+        confirmLabel: "Discard invoice",
         tone: "danger",
       });
       if (!confirmed) return;

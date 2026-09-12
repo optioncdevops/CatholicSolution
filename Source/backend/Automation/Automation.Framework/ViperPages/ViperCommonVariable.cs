@@ -379,9 +379,12 @@ namespace Automation.Framework.ViperPages
             public static string StatusModalOption(string status) => $"//*[@role='dialog' and (.//h3[contains(., 'Change Status')] or .//legend[contains(., 'New Status')])]//fieldset//button[not(@disabled) and (contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ-', 'abcdefghijklmnopqrstuvwxyz '), '{status.ToLowerInvariant().Replace('-', ' ')}') or contains(., '{status}'))]";
             public const string FirstAvailableStatusOption = "//*[@role='dialog' and (.//h3[contains(., 'Change Status')] or .//legend[contains(., 'New Status')])]//fieldset//button[not(@disabled)][1]";
 
-            // SweetAlert2 Confirmation Dialog
-            public const string SwalConfirmButton = "//button[contains(@class, 'admin-swal-confirm') or contains(@class, 'swal2-confirm') or normalize-space()='Confirm status change']";
-            public const string SwalCancelButton = "//button[contains(@class, 'admin-swal-cancel') or contains(@class, 'swal2-cancel') or normalize-space()='Cancel']";
+            // SweetAlert2 Confirmation Dialog — do not require swal2-shown; live
+            // builds only add backdrop-show. Never match the Change Status modal.
+            public const string SwalContainer = "//div[contains(@class, 'swal2-container') and not(contains(@class, 'swal2-backdrop-hide'))]";
+            public const string SwalPopup = "//div[contains(@class, 'swal2-container') and not(contains(@class, 'swal2-backdrop-hide'))]//div[contains(@class, 'swal2-popup') or contains(@class, 'admin-swal-popup')]";
+            public const string SwalConfirmButton = "//div[contains(@class, 'swal2-container') and not(contains(@class, 'swal2-backdrop-hide'))]//button[contains(@class, 'swal2-confirm') or contains(@class, 'admin-swal-confirm')]";
+            public const string SwalCancelButton = "//div[contains(@class, 'swal2-container') and not(contains(@class, 'swal2-backdrop-hide'))]//button[contains(@class, 'swal2-cancel') or contains(@class, 'admin-swal-cancel')]";
 
             // Edit Product Workflow
             public const string BtnEditProduct = "//button[.//span[normalize-space()='Edit'] or normalize-space()='Edit']";
@@ -397,9 +400,10 @@ namespace Automation.Framework.ViperPages
             public static string EditProductRadioOption(string label) => $"//div[@role='radiogroup']//label[contains(., '{label}')] | //label[contains(., '{label}')]//input[@type='radio'] | //label[contains(., '{label}')]";
             public const string BtnEditCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
             public const string BtnEditSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']]";
-            public const string DiscardChangesPopup = "//div[contains(@class, 'admin-swal-popup') or contains(@class, 'swal2-popup')]";
-            public const string DiscardChangesConfirm = "//button[contains(@class, 'admin-swal-confirm') or contains(@class, 'swal2-confirm') or normalize-space()='Discard changes']";
-            public const string DiscardChangesCancel = "//button[contains(@class, 'admin-swal-cancel') or (contains(@class, 'swal2-cancel') and normalize-space()='Cancel')]";
+            public const string DiscardChangesPopup = "//div[contains(@class, 'swal2-container') and not(contains(@class, 'swal2-backdrop-hide'))]//div[contains(@class, 'admin-swal-popup') or contains(@class, 'swal2-popup')]";
+            public const string DiscardChangesConfirm = "//div[contains(@class, 'swal2-container') and not(contains(@class, 'swal2-backdrop-hide'))]//button[contains(@class, 'swal2-confirm') or contains(@class, 'admin-swal-confirm')]";
+            public const string DiscardInvoiceConfirm = "//div[contains(@class, 'swal2-container')]//button[contains(., 'Discard invoice') or contains(., 'Discard license') or contains(., 'Discard changes')]";
+            public const string DiscardChangesCancel = "//div[contains(@class, 'swal2-container') and not(contains(@class, 'swal2-backdrop-hide'))]//button[(contains(@class, 'admin-swal-cancel') or contains(@class, 'swal2-cancel')) and (normalize-space()='Cancel' or contains(., 'Cancel'))]";
 
             // Organizations Sub Tab Workflow
             public const string OrgFilterChipAll = "//div[@role='tabpanel']//button[contains(@class, 'admin-filter-chip') and (contains(., 'All Statuses') or contains(., 'All'))]";
@@ -413,15 +417,15 @@ namespace Automation.Framework.ViperPages
 
             // Invoice Details Sub Tab Workflow
             public static string InvoiceStatusFilterChip(string status) => $"//button[contains(@class, 'admin-filter-chip') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{status.ToLowerInvariant()}')]";
-            public const string BtnCreateInvoice = "//button[contains(., 'Create Invoice')]";
-            public const string InvoiceTitleInput = "//input[@id=//label[contains(text(), 'Product Title')]/@for] | //input[ancestor::div[.//label[contains(text(), 'Product Title')]]] | //label[contains(text(), 'Product Title')]/following::input[1] | //input[@placeholder='Enter title' or @placeholder='Product Title']";
-            public const string InvoiceProductTitleInput = "//input[@id=//label[contains(text(), 'Product Title')]/@for] | //input[ancestor::div[.//label[contains(text(), 'Product Title')]]] | //label[contains(text(), 'Product Title')]/following::input[1] | //input[@placeholder='Product Title' or @aria-label='Product Title']";
+            public const string BtnCreateInvoice = "//button[contains(., 'Create Invoice') or contains(., 'Create License')]";
+            public const string InvoiceTitleInput = "//label[contains(., 'Product Title')]/following::input[1] | //label[contains(., 'Product Title')]/..//input | //input[@id=//label[contains(., 'Product Title')]/@for] | //input[ancestor::div[.//label[contains(., 'Product Title')]]] | //input[@id='invoiceProductTitle' or @placeholder='Enter title' or @placeholder='Product Title']";
+            public const string InvoiceProductTitleInput = "//label[contains(., 'Product Title')]/following::input[1] | //label[contains(., 'Product Title')]/..//input | //input[@id=//label[contains(., 'Product Title')]/@for] | //input[ancestor::div[.//label[contains(., 'Product Title')]]] | //input[@id='invoiceProductTitle' or @placeholder='Product Title' or @aria-label='Product Title'] | //input[@readonly and (@disabled or @aria-disabled='true') and not(@type='hidden')]";
             public const string InvoiceRemarksInput = "//div[@role='textbox' and (ancestor::div[.//h2[contains(., 'Remarks')] or .//label[contains(., 'Remarks')]] or @data-placeholder='Enter remarks...' or @data-placeholder='Start typing here...')] | //textarea[contains(@placeholder, 'remarks') or ancestor::div[.//h2[contains(., 'Remarks')]]]";
             public const string InvoiceOrgDropdown = "//div[@role='combobox' and (ancestor::div[.//label[contains(., 'Organization')]] or contains(., 'Select organization'))] | //button[contains(@id, 'dropdown') or contains(., 'Select organization') or contains(@class, 'admin-dropdown-trigger') or @role='combobox']";
             public const string FirstDropdownOption = "(//button[@role='option'])[1]";
             public const string InvoiceStartDateInput = "//input[@placeholder='Select start date']";
             public const string InvoiceExpiryDateInput = "//input[@placeholder='Select expiry date']";
-            public const string InvoiceOverlapToast = "//*[contains(text(), 'already been created for this duration')]";
+            public const string InvoiceOverlapToast = "//*[contains(text(), 'already been created for this duration') or contains(text(), 'A license has already been created')]";
             public const string BtnInvoiceCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Cancel' or .//span[normalize-space()='Cancel']] | //button[normalize-space()='Cancel']";
             public const string BtnInvoiceSave = "//div[contains(@class, 'admin-sticky-footer')]//button[normalize-space()='Save' or .//span[normalize-space()='Save']] | //button[@type='submit' and contains(., 'Save')]";
 

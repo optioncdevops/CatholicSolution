@@ -27,7 +27,10 @@ namespace Automation.Acutis.Features
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "03_Product", "A short summary of the feature", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new global::System.Globalization.CultureInfo("en-US"), "Features", "03_Product", "  As an Administrator\r\n  I want to manage products, view product details, update " +
+                "status, edit product information, and manage customer licenses and invoices\r\n  S" +
+                "o that product subscriptions and customer access are accurately tracked and main" +
+                "tained", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags, InitializeCucumberMessages());
         
 #line 1 "Product.feature"
 #line hidden
@@ -120,7 +123,7 @@ namespace Automation.Acutis.Features
                     "ganizations, and invoice details workflows", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 5
+#line 7
 this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -130,118 +133,123 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
             else
             {
                 await this.ScenarioStartAsync();
-#line 6
+#line 8
     await testRunner.GivenAsync("Launch the application with URL", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 7
+#line 9
     await testRunner.AndAsync("Enter the UserName and the Password", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 8
+#line 10
     await testRunner.WhenAsync("I click the login button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 9
+#line 11
     await testRunner.WhenAsync("The Dashboard should be open", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 10
+#line 12
     await testRunner.ThenAsync("Click on Products menu and verify Products page is opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 11
+#line 13
     await testRunner.WhenAsync("Navigate through all product filter tabs: Active, Inactive, Coming Soon, and othe" +
                         "r filters", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 12
+#line 14
     await testRunner.AndAsync("Check the search functionality for products", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 13
+#line 15
     await testRunner.AndAsync("Click on View Product icon for the selected product", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 14
+#line 16
     await testRunner.AndAsync("Product Details page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 15
+#line 17
     await testRunner.AndAsync("Click on Back to Products button and verify Products page is opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 16
+#line 18
     await testRunner.WhenAsync("Click on Edit Product icon for the selected product", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 17
-    await testRunner.ThenAsync("Edit Product page should be opened and edit all fields and first click with Cance" +
-                        "l and then click to the Yes", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 18
-    await testRunner.WhenAsync("Click on Edit Product button in product details", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
 #line 19
-    await testRunner.AndAsync("Edit Product page should be opened and update the fields and click on Save button" +
-                        "", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.ThenAsync("Edit Product page should be opened and edit all fields and first click Cancel the" +
+                        "n Discard changes and the confirmation modal should close", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 20
-    await testRunner.AndAsync("Navigate through product sub tabs: Organizations, Invoice Details, Invoice Histor" +
-                        "y, and Product Details", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.WhenAsync("Click on Edit Product button in product details", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 21
-    await testRunner.WhenAsync("Click on Change Status button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.AndAsync("Edit Product page should be opened and update the fields and click on Save button" +
+                        " and any confirmation modal should close", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 22
-    await testRunner.ThenAsync("Change Status modal should open and Click on Cancel button to close", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.AndAsync("Navigate through product sub tabs: Organizations, Invoice Details, Invoice Histor" +
+                        "y, and Product Details", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 23
     await testRunner.WhenAsync("Click on Change Status button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 24
-    await testRunner.AndAsync("Select new status and Click on Continue button", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.ThenAsync("Change Status modal should open and Click on Cancel button to close", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 25
-    await testRunner.ThenAsync("Confirmation popup should open and Click Confirm to update status", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.WhenAsync("Click on Change Status button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 26
-    await testRunner.WhenAsync("Click on Organizations tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.AndAsync("Select new status and Click on Continue button", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 27
+    await testRunner.ThenAsync("Confirmation popup should open and Click Confirm to update status and close the C" +
+                        "hange Status modal", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 28
+    await testRunner.WhenAsync("Click on Organizations tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 29
     await testRunner.AndAsync("Navigate through all organization status filter tabs: Active, Expiring Soon, Expi" +
                         "red, and Users", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 28
+#line 30
     await testRunner.ThenAsync("Click on View Organization icon and verify Organization Details opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 29
+#line 31
     await testRunner.AndAsync("Click on Back to Products button and verify Product Details opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 30
+#line 32
     await testRunner.WhenAsync("Click on Invoice Details tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 31
+#line 33
     await testRunner.AndAsync("Navigate through all invoice status filter tabs", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 32
+#line 34
     await testRunner.WhenAsync("Click on View Invoice icon in Invoice Details tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 33
-    await testRunner.ThenAsync("Invoice details modal should open and click on Close icon to close", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 34
-    await testRunner.WhenAsync("Click on Create Invoice button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
 #line 35
-    await testRunner.ThenAsync("Create Invoice page should be opened and click on Cancel button", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("Invoice details modal should open and click on Close icon to close", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 36
     await testRunner.WhenAsync("Click on Create Invoice button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 37
+    await testRunner.ThenAsync("Create Invoice page should be opened and click on Cancel then Discard invoice and" +
+                        " the confirmation modal should close", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 38
+    await testRunner.WhenAsync("Click on Create Invoice button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 39
+    await testRunner.AndAsync("Product Title should be read only and display the product name", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 40
     await testRunner.AndAsync("Create Invoice page should be opened and enter invoice details and click on Save " +
                         "button", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 38
+#line 41
     await testRunner.WhenAsync("Click on Invoice History tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 39
+#line 42
     await testRunner.AndAsync("Navigate through invoice history filters", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 40
+#line 43
     await testRunner.AndAsync("Click on View Invoice icon in Invoice History tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 41
+#line 44
     await testRunner.ThenAsync("Invoice history modal should open and click on Close icon to close", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
