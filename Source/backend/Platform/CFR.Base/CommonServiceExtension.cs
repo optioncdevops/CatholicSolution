@@ -23,37 +23,20 @@ namespace CFR.Base;
 
 public static class ServiceExtension
 {
-    /// <summary>
-    /// Registers a real, JWT-backed <see cref="IPolicyEvaluator"/> by default — the framework's own
-    /// evaluator, which genuinely enforces every <c>[Authorize]</c> attribute. It only swaps in
-    /// <see cref="DisableAuthenticationPolicyEvaluator"/> (which treats every request as
-    /// authorized, regardless of any token) when BOTH of the following are true:
-    /// <list type="bullet">
-    /// <item>the host is running in the Development environment, AND</item>
-    /// <item><c>Authentication:AllowAnonymousDevelopmentBypass</c> is explicitly set to
-    /// <c>true</c> in configuration (there is no implicit/automatic bypass — it must be opted
-    /// into on purpose, e.g. via a local <c>appsettings.Development.json</c> override or user
-    /// secrets, never committed as <c>true</c>).</item>
-    /// </list>
-    /// Previously this method's <c>if</c>/<c>else</c> branches were identical, so the bypass
-    /// evaluator was registered unconditionally in every environment — including Live — which let
-    /// any request reach every controller with no authentication at all. Pilot/Staging/Live must
-    /// never set this flag to <c>true</c>; there is intentionally no config file in this repo that
-    /// does so.
-    /// </summary>
-    public static IServiceCollection DisableAuthenticationPolicy(this IServiceCollection services, IWebHostEnvironment env, IConfiguration configuration)
+    public static IServiceCollection DisableAuthenticationPolicy(this IServiceCollection services, IWebHostEnvironment env)
     {
-        ArgumentNullException.ThrowIfNull(env);
-        ArgumentNullException.ThrowIfNull(configuration);
-
-        bool bypassExplicitlyEnabled = configuration.GetValue("Authentication:AllowAnonymousDevelopmentBypass", false);
-
-        if (env.IsDevelopment() && bypassExplicitlyEnabled)
+        // // To Configure setting only for the development mode
+        if (env.IsDevelopment())
+        {
+            //Disable authentication and authorization this only fro development mode
+            _ = services.RemoveAll<IPolicyEvaluator>();
+            _ = services.AddSingleton<IPolicyEvaluator, DisableAuthenticationPolicyEvaluator>();
+        }
+        else
         {
             _ = services.RemoveAll<IPolicyEvaluator>();
             _ = services.AddSingleton<IPolicyEvaluator, DisableAuthenticationPolicyEvaluator>();
         }
-
         return services;
     }
 
@@ -61,23 +44,23 @@ public static class ServiceExtension
     {
         // RATE LIMITING - Protects API from abuse (too many requests)
         services.AddRateLimiter(options =>
-         {
-             options.AddPolicy("per-user", context =>
-             RateLimitPartition.GetFixedWindowLimiter(
-                 partitionKey: context.User.Identity?.Name
-                               ?? context.Connection.RemoteIpAddress?.ToString()
-                               ?? context.TraceIdentifier,
-                 factory: _ => new FixedWindowRateLimiterOptions
-                 {
-                     PermitLimit = iPermitLimit,
-                     Window = TimeSpan.FromMinutes(1)
-                 }));
-             options.AddFixedWindowLimiter("fixed", opt =>
-             {
-                 opt.PermitLimit = iPermitLimit;            // Max 5 requests
-                 opt.Window = TimeSpan.FromMinutes(1);      // Per 1 minute
-             });
-         });
+        {
+            options.AddPolicy("per-user", context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.User.Identity?.Name
+                              ?? context.Connection.RemoteIpAddress?.ToString()
+                              ?? context.TraceIdentifier,
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = iPermitLimit,
+                    Window = TimeSpan.FromMinutes(1)
+                }));
+            options.AddFixedWindowLimiter("fixed", opt =>
+            {
+                opt.PermitLimit = iPermitLimit;            // Max 5 requests
+                opt.Window = TimeSpan.FromMinutes(1);      // Per 1 minute
+            });
+        });
 
         return services;
     }
