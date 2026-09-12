@@ -1,6 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
 using OpenQA.Selenium;
+using OpenQA.Selenium.Interactions;
 
 using static Automation.Framework.ViperPages.ViperCommonVariable;
 
@@ -206,7 +207,12 @@ namespace Automation.Framework.ViperPages.Products
 
         public bool IsProductDetailsOpened()
         {
-            return WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Count > 0, 10);
+            return WaitFor(driver =>
+                driver.Url.Contains("/admin/product-details", StringComparison.OrdinalIgnoreCase)
+                || driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Any(e => e.Displayed)
+                || driver.FindElements(By.XPath(XPath_Products.SubTabById(XPath_Products.TabOrganizations))).Any(e => e.Displayed)
+                || driver.FindElements(By.XPath(XPath_Products.SubTabByLabel("Product Details"))).Any(e => e.Displayed),
+                10);
         }
 
         public void NavigateThroughSubTabs(IEnumerable<string>? subTabs = null)
@@ -272,32 +278,262 @@ namespace Automation.Framework.ViperPages.Products
 
         public void SelectStatusAndContinue(string newStatus)
         {
-            var option = _webDriver.FindElements(By.XPath(XPath_Products.StatusModalOption(newStatus))).FirstOrDefault()
-                ?? _webDriver.FindElements(By.XPath(XPath_Products.FirstAvailableStatusOption)).FirstOrDefault();
+            // 1. Ensure Change Status modal is open
+            WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.StatusModal)).Any(e => e.Displayed), 10);
+
+            // 2. Locate and select the requested status option
+            var option = _webDriver.FindElements(By.XPath(XPath_Products.StatusModalOption(newStatus))).FirstOrDefault(e => e.Displayed)
+                ?? _webDriver.FindElements(By.XPath(XPath_Products.FirstAvailableStatusOption)).FirstOrDefault(e => e.Displayed);
 
             if (option != null)
             {
-                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", option);
-                Thread.Sleep(1000);
+                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", option);
+                Thread.Sleep(200);
+                try
+                {
+                    option.Click();
+                }
+                catch
+                {
+                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", option);
+                }
+                Thread.Sleep(800);
             }
 
-            ClickByScript(XPath_Products.BtnStatusModalContinue);
-            WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.SwalConfirmButton)).Count > 0, 10);
-            Thread.Sleep(1000);
+            // 3. Wait for Continue button to be enabled (it is disabled until an option is selected)
+            WaitFor(driver =>
+            {
+                var btn = driver.FindElements(By.XPath(XPath_Products.BtnStatusModalContinue)).FirstOrDefault(e => e.Displayed);
+                return btn != null && btn.Enabled;
+            }, 10);
+
+            var continueBtn = _webDriver.FindElements(By.XPath(XPath_Products.BtnStatusModalContinue)).FirstOrDefault(e => e.Displayed);
+            if (continueBtn != null)
+            {
+                try
+                {
+                    continueBtn.Click();
+                }
+                catch
+                {
+                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", continueBtn);
+                }
+            }
+            else
+            {
+                ClickByScript(XPath_Products.BtnStatusModalContinue);
+            }
+
+            WaitFor(IsAnySwalVisible, 10);
+            Thread.Sleep(400);
         }
 
         public void ConfirmStatusChangePopup()
         {
-            var confirmBtn = _webDriver.FindElements(By.XPath(XPath_Products.SwalConfirmButton)).FirstOrDefault();
-            if (confirmBtn != null)
+            WaitFor(IsAnySwalVisible, 10);
+
+            // Confirm first. Do not close the Change Status modal while this popup
+            // is still open — Escape would leave the confirmation on screen.
+            ClickSwalButton(confirm: true);
+            WaitFor(driver => !IsAnySwalVisible(driver), 10);
+
+            if (IsAnySwalVisible(_webDriver))
             {
-                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", confirmBtn);
+                ClickSwalButton(confirm: true);
+                WaitFor(driver => !IsAnySwalVisible(driver), 5);
             }
-            else
+
+            CloseAllOpenProductDialogs();
+        }
+
+        public void CloseStatusModalIfOpen()
+        {
+            if (IsAnySwalVisible(_webDriver))
             {
-                ClickByScript(XPath_Products.SwalConfirmButton);
+                return;
             }
-            Thread.Sleep(1500);
+
+            if (!_webDriver.FindElements(By.XPath(XPath_Products.StatusModal)).Any(e => e.Displayed))
+            {
+                return;
+            }
+
+            ClickCancelStatusModal();
+
+            if (_webDriver.FindElements(By.XPath(XPath_Products.StatusModal)).Any(e => e.Displayed))
+            {
+                var closeBtn = _webDriver.FindElements(By.XPath("//*[@role='dialog' and (.//h3[contains(., 'Change Status')] or .//legend[contains(., 'New Status')])]//button[@aria-label='Close']")).FirstOrDefault(e => e.Displayed);
+                if (closeBtn != null)
+                {
+                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", closeBtn);
+                }
+
+                WaitFor(driver => !driver.FindElements(By.XPath(XPath_Products.StatusModal)).Any(e => e.Displayed), 8);
+            }
+        }
+
+        public bool IsStatusConfirmationPopupClosed()
+        {
+            return !IsAnySwalVisible(_webDriver);
+        }
+
+        public void CloseAllOpenProductDialogs()
+        {
+            CloseLeftoverConfirmations();
+
+            if (_webDriver.FindElements(By.XPath(XPath_Products.InvoiceModal)).Any(e => e.Displayed))
+            {
+                ClickCloseInvoiceModal();
+            }
+        }
+
+        private void FocusMainBrowserWindow()
+        {
+            var handles = _webDriver.WindowHandles;
+            if (handles.Count == 0)
+            {
+                return;
+            }
+
+            _webDriver.SwitchTo().Window(handles[0]);
+        }
+
+        public void CloseLeftoverConfirmations()
+        {
+            if (IsAnySwalVisible(_webDriver))
+            {
+                ClickSwalButton(confirm: true);
+                if (IsAnySwalVisible(_webDriver))
+                {
+                    ClickSwalButton(confirm: false);
+                }
+
+                WaitFor(driver => !IsAnySwalVisible(driver), 5);
+            }
+
+            CloseStatusModalIfOpen();
+        }
+
+        private bool IsAnySwalVisible(IWebDriver driver)
+        {
+            var previousWait = driver.Manage().Timeouts().ImplicitWait;
+            try
+            {
+                driver.Manage().Timeouts().ImplicitWait = TimeSpan.Zero;
+                return driver.FindElements(By.XPath(XPath_Products.SwalContainer)).Any(IsVisibleSwal)
+                    || driver.FindElements(By.XPath(XPath_Products.SwalPopup)).Any(IsVisibleSwal)
+                    || driver.FindElements(By.XPath(XPath_Products.SwalConfirmButton)).Any(e => e.Displayed)
+                    || driver.FindElements(By.XPath(XPath_Products.SwalCancelButton)).Any(e => e.Displayed);
+            }
+            finally
+            {
+                driver.Manage().Timeouts().ImplicitWait = previousWait;
+            }
+        }
+
+        private static bool IsVisibleSwal(IWebElement element)
+        {
+            try
+            {
+                string cssClass = element.GetAttribute("class") ?? string.Empty;
+                if (cssClass.Contains("swal2-backdrop-hide", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                return element.Displayed;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+        }
+
+        private void ClickSwalButton(bool confirm)
+        {
+            string script = confirm
+                ? @"
+                    var labels = ['confirm status change', 'discard invoice', 'discard license', 'discard changes'];
+                    var buttons = Array.from(document.querySelectorAll('.swal2-container button, .swal2-popup button'));
+                    var btn = buttons.find(function(b) {
+                      var text = (b.innerText || b.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+                      return labels.some(function(label) { return text.indexOf(label) !== -1; });
+                    }) || document.querySelector('.swal2-container .swal2-confirm, .swal2-confirm');
+                    if (!btn) { return false; }
+                    btn.focus();
+                    btn.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true, view: window }));
+                    btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
+                    btn.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, cancelable: true, view: window }));
+                    btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window }));
+                    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                    btn.click();
+                    if (typeof Swal !== 'undefined' && Swal.isVisible && Swal.isVisible()) { Swal.clickConfirm(); }
+                    return true;
+                  "
+                : @"
+                    var buttons = Array.from(document.querySelectorAll('.swal2-container button, .swal2-popup button'));
+                    var btn = buttons.find(function(b) {
+                      var text = (b.innerText || b.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+                      return text === 'cancel' || text.indexOf('cancel') !== -1;
+                    }) || document.querySelector('.swal2-container .swal2-cancel, .swal2-cancel');
+                    if (!btn) { return false; }
+                    btn.focus();
+                    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                    btn.click();
+                    if (typeof Swal !== 'undefined' && Swal.isVisible && Swal.isVisible()) { Swal.clickCancel(); }
+                    return true;
+                  ";
+
+            var buttonXPath = confirm
+                ? XPath_Products.DiscardInvoiceConfirm + " | " + XPath_Products.SwalConfirmButton
+                : XPath_Products.SwalCancelButton;
+            var button = _webDriver.FindElements(By.XPath(buttonXPath)).FirstOrDefault(e => e.Displayed);
+            if (button != null)
+            {
+                try
+                {
+                    new Actions(_webDriver).MoveToElement(button).Pause(TimeSpan.FromMilliseconds(120)).Click().Perform();
+                }
+                catch
+                {
+                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", button);
+                }
+            }
+
+            ((IJavaScriptExecutor)_webDriver).ExecuteScript(script);
+
+            if (WaitFor(driver => !IsAnySwalVisible(driver), 4))
+            {
+                return;
+            }
+
+            ((IJavaScriptExecutor)_webDriver).ExecuteScript(script);
+            if (WaitFor(driver => !IsAnySwalVisible(driver), 3))
+            {
+                return;
+            }
+
+            try
+            {
+                new Actions(_webDriver).SendKeys(Keys.Escape).Perform();
+            }
+            catch
+            {
+                // Ignore
+            }
+
+            if (WaitFor(driver => !IsAnySwalVisible(driver), 2))
+            {
+                return;
+            }
+
+            // Last resort: remove the leftover overlay so the next step is not blocked.
+            ((IJavaScriptExecutor)_webDriver).ExecuteScript(@"
+                document.querySelectorAll('.swal2-container').forEach(function(el) { el.remove(); });
+                document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                document.documentElement.classList.remove('swal2-shown', 'swal2-height-auto');
+            ");
+            WaitFor(driver => !IsAnySwalVisible(driver), 2);
         }
 
         #region Edit Product Workflow
@@ -349,40 +585,28 @@ namespace Automation.Framework.ViperPages.Products
 
         public bool IsDiscardChangesPopupOpened()
         {
-            return WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.DiscardChangesPopup)).Count > 0
-                || driver.FindElements(By.XPath(XPath_Products.DiscardChangesCancel)).Count > 0, 10);
+            return WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.DiscardChangesPopup)).Any(e => e.Displayed)
+                || driver.FindElements(By.XPath(XPath_Products.DiscardChangesCancel)).Any(e => e.Displayed), 10);
         }
 
         public void ClickDiscardChangesCancel()
         {
-            var cancelBtn = _webDriver.FindElements(By.XPath(XPath_Products.DiscardChangesCancel)).FirstOrDefault();
-            if (cancelBtn != null)
-            {
-                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", cancelBtn);
-            }
-            else
-            {
-                ClickByScript(XPath_Products.DiscardChangesCancel);
-            }
-
-            WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.DiscardChangesPopup)).Count == 0, 5);
-            Thread.Sleep(500);
+            ClickSwalButton(confirm: false);
+            WaitFor(driver => !IsAnySwalVisible(driver), 8);
+            Thread.Sleep(300);
         }
 
         public void ClickDiscardChangesConfirm()
         {
-            var discardBtn = _webDriver.FindElements(By.XPath(XPath_Products.DiscardChangesConfirm)).FirstOrDefault();
-            if (discardBtn != null)
+            ClickSwalButton(confirm: true);
+            WaitFor(driver => !IsAnySwalVisible(driver), 10);
+            if (IsAnySwalVisible(_webDriver))
             {
-                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", discardBtn);
-            }
-            else
-            {
-                ClickByScript(XPath_Products.DiscardChangesConfirm);
+                ClickSwalButton(confirm: false);
             }
 
-            WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Count > 0, 15);
-            Thread.Sleep(1000);
+            WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Any(e => e.Displayed), 15);
+            Thread.Sleep(500);
         }
 
         public void ClickCancelEditProductWithConfirmation()
@@ -417,14 +641,14 @@ namespace Automation.Framework.ViperPages.Products
         {
             ClickCancelEditProductButtonOnly();
             Thread.Sleep(800);
-            var discardBtn = _webDriver.FindElements(By.XPath(XPath_Products.DiscardChangesConfirm)).FirstOrDefault();
-            if (discardBtn != null)
+            if (IsAnySwalVisible(_webDriver))
             {
-                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", discardBtn);
+                ClickDiscardChangesConfirm();
+                return;
             }
 
             WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Count > 0, 15);
-            Thread.Sleep(1000);
+            Thread.Sleep(500);
         }
 
         public void UpdateAllProductFields(
@@ -647,7 +871,8 @@ namespace Automation.Framework.ViperPages.Products
             }
 
             WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Count > 0, 15);
-            Thread.Sleep(1000);
+            CloseAllOpenProductDialogs();
+            Thread.Sleep(500);
         }
 
         #endregion Edit Product Workflow
@@ -656,6 +881,7 @@ namespace Automation.Framework.ViperPages.Products
 
         public void ClickOrganizationsTab()
         {
+            CloseLeftoverConfirmations();
             ClickSubTab("Organizations");
             Thread.Sleep(1500);
         }
@@ -723,60 +949,45 @@ namespace Automation.Framework.ViperPages.Products
             {
                 ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", viewBtn);
                 Thread.Sleep(400);
-                try
-                {
-                    viewBtn.Click();
-                }
-                catch
-                {
-                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", viewBtn);
-                }
+                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", viewBtn);
             }
 
             WaitFor(driver =>
-                driver.Url.Contains("/admin/organizations")
-                || driver.FindElements(By.XPath("//button[contains(., 'Back to Products') or contains(., 'Back to Organizations')]")).Count > 0,
+                System.Text.RegularExpressions.Regex.IsMatch(driver.Url, @"/admin/organizations/\d+", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+                || driver.FindElements(By.XPath("//button[contains(., 'Back to Products')]")).Any(e => e.Displayed),
                 15);
-            Thread.Sleep(1000);
+            Thread.Sleep(800);
         }
 
         public bool IsOrganizationDetailsOpened()
         {
             return WaitFor(driver =>
-                driver.Url.Contains("/admin/organizations")
-                || driver.FindElements(By.XPath("//button[contains(., 'Back to Products') or contains(., 'Back to Organizations')]")).Count > 0,
+                System.Text.RegularExpressions.Regex.IsMatch(driver.Url, @"/admin/organizations/\d+", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
+                || driver.FindElements(By.XPath("//button[contains(., 'Back to Products')]")).Any(e => e.Displayed),
                 10);
         }
 
         public void ClickBackToProducts()
         {
-            var backBtn = _webDriver.FindElements(By.XPath("//button[contains(., 'Back to Products')]")).FirstOrDefault();
+            CloseLeftoverConfirmations();
+
+            var backBtn = _webDriver.FindElements(By.XPath("//button[contains(., 'Back to Products')]")).FirstOrDefault(e => e.Displayed);
             if (backBtn != null)
             {
                 ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", backBtn);
                 Thread.Sleep(300);
-                try
-                {
-                    backBtn.Click();
-                }
-                catch
-                {
-                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", backBtn);
-                }
+                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", backBtn);
             }
             else
             {
-                var backToOrgs = _webDriver.FindElements(By.XPath("//button[contains(., 'Back to Organizations')]")).FirstOrDefault();
-                if (backToOrgs != null)
-                {
-                    ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", backToOrgs);
-                    Thread.Sleep(500);
-                }
                 _webDriver.Navigate().Back();
             }
 
-            WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Count > 0, 15);
-            Thread.Sleep(1000);
+            WaitFor(driver =>
+                driver.Url.Contains("/admin/product-details", StringComparison.OrdinalIgnoreCase)
+                || driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Any(e => e.Displayed),
+                15);
+            Thread.Sleep(800);
         }
 
         #endregion Organizations Tab Workflow
@@ -847,7 +1058,9 @@ namespace Automation.Framework.ViperPages.Products
         public bool IsInvoiceProductTitleReadOnly()
         {
             var titleInput = _webDriver.FindElements(By.XPath(XPath_Products.InvoiceProductTitleInput)).FirstOrDefault()
-                ?? _webDriver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).FirstOrDefault();
+                ?? _webDriver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath("//input[@id='invoiceProductTitle' or @name='invoiceProductTitle']")).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath("//form//input[@readonly and (@disabled or @aria-disabled='true') and not(@type='hidden')]")).FirstOrDefault();
 
             if (titleInput == null)
             {
@@ -869,7 +1082,9 @@ namespace Automation.Framework.ViperPages.Products
         public string GetInvoiceProductTitleValue()
         {
             var titleInput = _webDriver.FindElements(By.XPath(XPath_Products.InvoiceProductTitleInput)).FirstOrDefault()
-                ?? _webDriver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).FirstOrDefault();
+                ?? _webDriver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath("//input[@id='invoiceProductTitle' or @name='invoiceProductTitle']")).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath("//form//input[@readonly and (@disabled or @aria-disabled='true') and not(@type='hidden')]")).FirstOrDefault();
 
             if (titleInput == null)
             {
@@ -881,11 +1096,57 @@ namespace Automation.Framework.ViperPages.Products
 
         public void ClickCancelCreateInvoice()
         {
-            var cancelBtn = _webDriver.FindElements(By.XPath(XPath_Products.BtnInvoiceCancel)).FirstOrDefault();
+            // Dirty the form so Cancel opens the discard confirmation.
+            var remarksElement = _webDriver.FindElements(By.XPath(XPath_Products.InvoiceRemarksInput)).FirstOrDefault();
+            if (remarksElement != null)
+            {
+                ((IJavaScriptExecutor)_webDriver).ExecuteScript(
+                    "arguments[0].focus(); arguments[0].dispatchEvent(new Event('input', { bubbles: true }));",
+                    remarksElement);
+                try
+                {
+                    remarksElement.SendKeys(" ");
+                }
+                catch
+                {
+                    // Ignore
+                }
+            }
+
+            ClickInvoiceFormCancel();
+            WaitFor(IsAnySwalVisible, 8);
+            Thread.Sleep(300);
+
+            // Cancel on the discard popup must close it and leave the form open.
+            if (IsAnySwalVisible(_webDriver))
+            {
+                ClickSwalButton(confirm: false);
+                WaitFor(driver => !IsAnySwalVisible(driver), 8);
+            }
+
+            ClickInvoiceFormCancel();
+            WaitFor(IsAnySwalVisible, 8);
+            Thread.Sleep(300);
+
+            // Discard invoice / Discard license must close the popup and leave the page.
+            if (IsAnySwalVisible(_webDriver))
+            {
+                ClickSwalButton(confirm: true);
+            }
+
+            WaitFor(driver => !IsAnySwalVisible(driver), 10);
+            WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnCreateInvoice)).Count > 0
+                || driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Count > 0, 15);
+            Thread.Sleep(500);
+        }
+
+        private void ClickInvoiceFormCancel()
+        {
+            var cancelBtn = _webDriver.FindElements(By.XPath(XPath_Products.BtnInvoiceCancel)).FirstOrDefault(e => e.Displayed);
             if (cancelBtn != null)
             {
                 ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].scrollIntoView(true);", cancelBtn);
-                Thread.Sleep(300);
+                Thread.Sleep(200);
                 ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", cancelBtn);
             }
             else
@@ -893,20 +1154,7 @@ namespace Automation.Framework.ViperPages.Products
                 ClickByScript(XPath_Products.BtnInvoiceCancel);
             }
 
-            Thread.Sleep(800);
-            var discardBtn = _webDriver.FindElements(By.XPath(XPath_Products.DiscardChangesConfirm)).FirstOrDefault();
-            if (discardBtn != null)
-            {
-                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", discardBtn);
-                Thread.Sleep(500);
-            }
-
-            // Wait for swal confirmation dialog and backdrop to fully disappear
-            WaitFor(driver => driver.FindElements(By.XPath("//div[contains(@class, 'swal2-container')]")).Count == 0, 10);
-
-            WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.BtnCreateInvoice)).Count > 0
-                || driver.FindElements(By.XPath(XPath_Products.BtnChangeStatus)).Count > 0, 15);
-            Thread.Sleep(1000);
+            Thread.Sleep(400);
         }
 
         public void SetDatePickerDate(string inputXPath, string mmDdYyyyDate)
@@ -938,6 +1186,8 @@ namespace Automation.Framework.ViperPages.Products
 
         public void EnterInvoiceDetailsAndSave(string invoiceRemarks)
         {
+            FocusMainBrowserWindow();
+
             WaitFor(driver => driver.FindElements(By.XPath(XPath_Products.InvoiceProductTitleInput)).Count > 0
                 || driver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).Count > 0
                 || driver.FindElements(By.XPath(XPath_Products.BtnInvoiceCancel)).Count > 0, 10);
@@ -947,7 +1197,9 @@ namespace Automation.Framework.ViperPages.Products
 
             // Verify Product Title is present and read-only
             var titleInput = _webDriver.FindElements(By.XPath(XPath_Products.InvoiceProductTitleInput)).FirstOrDefault()
-                ?? _webDriver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).FirstOrDefault();
+                ?? _webDriver.FindElements(By.XPath(XPath_Products.InvoiceTitleInput)).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath("//input[@id='invoiceProductTitle' or @name='invoiceProductTitle']")).FirstOrDefault()
+                ?? _webDriver.FindElements(By.XPath("//form//input[@readonly and (@disabled or @aria-disabled='true') and not(@type='hidden')]")).FirstOrDefault();
 
             if (titleInput != null && !IsInvoiceProductTitleReadOnly())
             {
@@ -1117,6 +1369,13 @@ namespace Automation.Framework.ViperPages.Products
 
         public void ClickViewInvoiceInInvoiceDetails()
         {
+            var allChip = _webDriver.FindElements(By.XPath("//button[contains(@class, 'admin-filter-chip') and (contains(., 'All Statuses') or contains(., 'All'))]")).FirstOrDefault();
+            if (allChip != null)
+            {
+                ((IJavaScriptExecutor)_webDriver).ExecuteScript("arguments[0].click();", allChip);
+                Thread.Sleep(600);
+            }
+
             var viewBtn = _webDriver.FindElements(By.XPath(XPath_Products.FirstInvoiceViewButton)).FirstOrDefault();
             if (viewBtn != null)
             {
