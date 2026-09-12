@@ -147,7 +147,7 @@ const AddUsers = () => {
       {isReadOnly ? <ReadOnlyBanner featureName="Users" /> : null}
 
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <InputField
             control={control}
             name="firstName"
@@ -195,7 +195,6 @@ const AddUsers = () => {
             placeholder="Enter contact number"
             rules={usersRules.contactNumber}
             disabled={saving || isReadOnly}
-            wrapperClassName="sm:col-span-2"
           />
           <DatePicker
             control={control}

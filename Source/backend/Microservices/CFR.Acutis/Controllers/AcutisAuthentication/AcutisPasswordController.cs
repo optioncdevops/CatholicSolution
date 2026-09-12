@@ -90,7 +90,7 @@ namespace CFR.Acutis.Controllers.AcutisAuthentication
         [AllowAnonymous]
         [HttpGet]
         [ActionName(API_Acutis.AcutisAuthentication.ValidateResetToken)]
-        public async Task<IActionResult> ValidateResetToken([FromQuery] string token)
+        public async Task<IActionResult> ValidateResetToken([FromQuery]    string token)
         {
             return ApiResultArgs(await service.ValidateResetTokenAsync(token), APIHttpType.HttpGet);
         }

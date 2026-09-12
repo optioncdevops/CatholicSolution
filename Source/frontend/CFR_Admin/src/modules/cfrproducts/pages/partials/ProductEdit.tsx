@@ -448,14 +448,12 @@ function ProductForm({
         </div>
 
         <div className="p-4">
-          <p className="mb-2 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">
-            Product Preview
-          </p>
           <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
             <ProfileImageUpload
               label="Product Logo"
               onFileChange={handleLogoChange}
               removable
+              replaceable
               fallbackInitials={
                 (form.icon?.length ?? 0) <= 2
                   ? form.icon

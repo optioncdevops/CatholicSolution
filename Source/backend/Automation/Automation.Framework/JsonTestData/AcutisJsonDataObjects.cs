@@ -80,6 +80,8 @@ namespace Automation.Framework.JsonTestData
 
         public string? InvoiceTitle { get; set; }
 
+        public string? InvoiceRemarks { get; set; }
+
         public List<string>? SubTabs { get; set; }
     }
 

@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@shared/auth/ProtectedRoute";
 import { AdminDataProvider } from "@/modules/AdminDataContext";
 import { AdminShell } from "@/modules/components/AdminShell";
 import { usersRoutes } from "@/modules/users";
+import { cfrUsersRoutes } from "@/modules/cfrUsers";
 import { userRolesRoutes } from "@/modules/administration/userRoles";
 import { userRightsRoutes } from "@/modules/administration/userRights";
 import { emailTemplatesRoutes } from "@/modules/administration/emailTemplates";
@@ -73,6 +74,7 @@ export default function App() {
           {organizationsRoutes}
           {productsRoutes}
           {usersRoutes}
+          {cfrUsersRoutes}
           {userRolesRoutes}
           {userRightsRoutes}
           {requestsRoutes}

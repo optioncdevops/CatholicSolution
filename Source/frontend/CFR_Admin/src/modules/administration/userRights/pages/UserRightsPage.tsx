@@ -447,9 +447,9 @@ export function UserRightsPage() {
       )}
 
       <div className="admin-sticky-footer">
-        <CommonButton id="btnCancelUserRights" variant="outline" iconLeft={<X size={14} />} onClick={handleDiscard} disabled={dirtyCount === 0 || saving}>
+        {/* <CommonButton id="btnCancelUserRights" variant="outline" iconLeft={<X size={14} />} onClick={handleDiscard} disabled={dirtyCount === 0 || saving}>
           Cancel
-        </CommonButton>
+        </CommonButton> */}
         {!isReadOnly && (
           <CommonButton id="btnSaveUserRights" variant="primary" iconLeft={<Save size={14} />} onClick={() => void handleSave()} loading={saving} disabled={dirtyCount === 0 || saving}>
             Save
