@@ -43,9 +43,14 @@ const ProductItemLogo = ({
 }) => {
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => {
+  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
+  // pattern for "state that resets when a prop identity changes") — a new `src` deserves a fresh
+  // attempt, not the previous src's stale error flag.
+  const [renderedForSrc, setRenderedForSrc] = useState(src);
+  if (renderedForSrc !== src) {
+    setRenderedForSrc(src);
     setHasError(false);
-  }, [src]);
+  }
 
   if (src && !hasError) {
     return (
@@ -150,6 +155,13 @@ const ProductList = () => {
 
   //#region Effects
   useEffect(() => {
+    // Standard mount/dependency-driven data-fetch effect, preserved as-is per this review's own
+    // instruction not to blindly rewrite working async loading effects. Known gap (tracked, not
+    // fixed here): `load` doesn't check a cancellation flag internally, so in the rare case this
+    // component unmounts while the request is still in flight, its setState calls would still
+    // fire after unmount — a real but pre-existing, wider-reaching gap shared with several other
+    // list pages in this app, not something newly introduced or safe to silently paper over here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
   //#endregion

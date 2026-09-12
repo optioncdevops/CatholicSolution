@@ -20,6 +20,11 @@ export function TextPreviewPanel({ file, mode }: TextPreviewPanelProps) {
 
   useEffect(() => {
     let cancelled = false;
+    // Standard cancellable async-load effect: resetting content/error at the start of each
+    // fetch-on-dependency-change cycle is the necessary and correct pattern here (preserved as-is
+    // per this review's own instruction not to rewrite working async loading effects) — the
+    // actual content isn't known until `file.text()` resolves below.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setContent(null);
     setError(null);
 

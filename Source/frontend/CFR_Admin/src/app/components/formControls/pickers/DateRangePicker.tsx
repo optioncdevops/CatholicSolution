@@ -66,23 +66,32 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const label = `${fromLabel} - ${toLabel}`;
   const [isOpen, setIsOpen] = useState(false);
   const [startValue, setStartValue] = useState<string | undefined>(
-    (fromProps as any)?.value ?? (fromProps as any)?.defaultValue,
+    fromProps?.value ?? fromProps?.defaultValue,
   );
   const [endValue, setEndValue] = useState<string | undefined>(
-    (toProps as any)?.value ?? (toProps as any)?.defaultValue,
+    toProps?.value ?? toProps?.defaultValue,
   );
 
-  useEffect(() => {
+  // Sync with controlled values — prop-driven resets, adjusted during render rather than in an
+  // effect (React's own recommended pattern for "state that mirrors a prop when it changes").
+  // Each sentinel tracks every identity change (matching the old effect's dependency array
+  // exactly) but only pushes into the value state when actually defined, so a value that goes
+  // controlled -> uncontrolled -> controlled-with-the-same-value-again still re-syncs correctly.
+  const [renderedForFromValue, setRenderedForFromValue] = useState(fromProps?.value);
+  if (renderedForFromValue !== fromProps?.value) {
+    setRenderedForFromValue(fromProps?.value);
     if (fromProps?.value !== undefined) {
       setStartValue(fromProps.value);
     }
-  }, [fromProps?.value]);
+  }
 
-  useEffect(() => {
+  const [renderedForToValue, setRenderedForToValue] = useState(toProps?.value);
+  if (renderedForToValue !== toProps?.value) {
+    setRenderedForToValue(toProps?.value);
     if (toProps?.value !== undefined) {
       setEndValue(toProps.value);
     }
-  }, [toProps?.value]);
+  }
 
   const startDate = useMemo(() => parseDateString(startValue), [startValue]);
   const endDate = useMemo(() => parseDateString(endValue), [endValue]);

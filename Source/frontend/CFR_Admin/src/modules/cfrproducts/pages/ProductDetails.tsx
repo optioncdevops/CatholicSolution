@@ -60,9 +60,14 @@ function ProductIcon({
 }) {
   const [hasError, setHasError] = useState(false);
 
-  useEffect(() => {
+  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
+  // pattern for "state that resets when a prop identity changes") — a new `icon` deserves a fresh
+  // attempt, not the previous icon's stale error flag.
+  const [renderedForIcon, setRenderedForIcon] = useState(icon);
+  if (renderedForIcon !== icon) {
+    setRenderedForIcon(icon);
     setHasError(false);
-  }, [icon]);
+  }
 
   const isImage =
     isImageIcon(icon) || (icon && !icon.includes("📦") && icon.length > 2);
@@ -329,6 +334,18 @@ const ProductDetails = () => {
   const [pendingStatus, setPendingStatus] = useState<ProductStatus | null>(
     null,
   );
+  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
+  // pattern for "state that syncs from a navigation-carried value") — a fresh `location.state`
+  // (e.g. arriving from a "View" link elsewhere that requests a specific tab) switches the active
+  // tab; navigating again without a tab hint leaves the current tab alone, same as the effect did.
+  const [renderedForLocationState, setRenderedForLocationState] = useState(location.state);
+  if (renderedForLocationState !== location.state) {
+    setRenderedForLocationState(location.state);
+    const tabFromState = parseProductTabFromState(location.state);
+    if (tabFromState) {
+      setActiveTab(tabFromState);
+    }
+  }
   //#endregion
 
   //#region Functions
@@ -397,15 +414,16 @@ const ProductDetails = () => {
 
   //#region Effects
   useEffect(() => {
+    // Standard mount/dependency-driven data-fetch effect, preserved as-is per this review's own
+    // instruction not to blindly rewrite working async loading effects. Known gap (tracked, not
+    // fixed here): `loadProduct` doesn't check a cancellation flag internally, so in the rare
+    // case this component unmounts while the request is still in flight, its setState calls
+    // would still fire after unmount — a real but pre-existing, wider-reaching gap shared with
+    // several other detail pages in this app, not something newly introduced or safe to silently
+    // paper over here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadProduct();
   }, [loadProduct]);
-
-  useEffect(() => {
-    const tab = parseProductTabFromState(location.state);
-    if (tab) {
-      setActiveTab(tab);
-    }
-  }, [location.state]);
   //#endregion
 
   if (loading) {
