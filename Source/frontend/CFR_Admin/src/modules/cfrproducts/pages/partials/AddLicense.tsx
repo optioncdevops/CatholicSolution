@@ -35,11 +35,31 @@ import {
 import { validateLicenseForm } from "../../validator/productValidation";
 
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-function inDays(days: number): string {
-  return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+function inDays(days: number, fromDateStr?: string): string {
+  if (fromDateStr) {
+    const [y, m, d] = fromDateStr.split("-").map(Number);
+    if (y && m && d) {
+      const dt = new Date(y, m - 1, d);
+      dt.setDate(dt.getDate() + days);
+      const ny = dt.getFullYear();
+      const nm = String(dt.getMonth() + 1).padStart(2, "0");
+      const nd = String(dt.getDate()).padStart(2, "0");
+      return `${ny}-${nm}-${nd}`;
+    }
+  }
+  const dt = new Date();
+  dt.setDate(dt.getDate() + days);
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 const AddLicense = () => {
@@ -53,13 +73,14 @@ const AddLicense = () => {
   //#endregion
 
   //#region States
+  const todayDate = today();
   const [product, setProduct] = useState<ProductApiItem | null>(null);
   const [organizations, setOrganizations] = useState<OrganizationApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [orgId, setOrgId] = useState("");
-  const [activationDate, setActivationDate] = useState(today());
-  const [expiryDate, setExpiryDate] = useState(inDays(365));
+  const [activationDate, setActivationDate] = useState(todayDate);
+  const [expiryDate, setExpiryDate] = useState(inDays(365, todayDate));
   const [remarks, setRemarks] = useState("");
   const [touched, setTouched] = useState(false);
   //#endregion
@@ -123,6 +144,7 @@ const AddLicense = () => {
 
   //#region Effects
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadPage();
   }, [loadPage]);
   //#endregion
@@ -327,9 +349,13 @@ const AddLicense = () => {
                     value={activationDate}
                     outputFormat="yyyy-MM-dd"
                     displayFormat="MM/dd/yyyy"
+                    minDate={todayDate}
                     onChange={(value) => {
                       setActivationDate(value);
                       setTouched(true);
+                      if (value && expiryDate && expiryDate < value) {
+                        setExpiryDate(inDays(365, value));
+                      }
                     }}
                   />
                   <DatePicker
@@ -339,6 +365,7 @@ const AddLicense = () => {
                     value={expiryDate}
                     outputFormat="yyyy-MM-dd"
                     displayFormat="MM/dd/yyyy"
+                    minDate={activationDate || todayDate}
                     onChange={(value) => {
                       setExpiryDate(value);
                       setTouched(true);
