@@ -36,7 +36,9 @@ export function RequestInterestModal({ app, onClose, onSubmitted }: RequestInter
     setSubmitted(false);
     setSubmitting(false);
     setForm({ name: user.name, email: user.email, sendToEmail: app.contactEmail || '', reason: '' });
-  }, [app, user.name, user.email]);
+    // Only re-seed when a request is (re)opened for a given app — depending on user.name/email here
+    // wiped whatever the requester had already typed into sendToEmail/reason on any unrelated profile update.
+  }, [app]);
 
   useEffect(() => {
     if (!app) return undefined;
@@ -139,7 +141,7 @@ export function RequestInterestModal({ app, onClose, onSubmitted }: RequestInter
                 <input type="email" name="email" value={form.email} onChange={handleInputChange} disabled={submitting} className="auth-input auth-input--plain" />
               </div>
               <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Send to Email (Optional)</label>
+                <label className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Send to Email</label>
                 <input type="email" name="sendToEmail" value={form.sendToEmail} onChange={handleInputChange} disabled={submitting} placeholder="admin@example.com" className="auth-input auth-input--plain" />
               </div>
               <div className="sm:col-span-2">
