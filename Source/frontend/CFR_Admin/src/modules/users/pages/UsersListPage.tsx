@@ -49,6 +49,14 @@ export function UsersListPage() {
 
   //#region Effects
   useEffect(() => {
+    // Standard mount/dependency-driven data-fetch effect, preserved as-is per this review's own
+    // instruction not to blindly rewrite working async loading effects. Known gap (tracked, not
+    // fixed here): `load` doesn't check a cancellation flag internally, so in the rare case this
+    // component unmounts while the request is still in flight, its `setRows`/`setLoading` calls
+    // would still fire after unmount — the same shape as several other list pages in this app: a
+    // real but pre-existing, wider-reaching gap, not something newly introduced or safe to
+    // silently paper over here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
   //#endregion

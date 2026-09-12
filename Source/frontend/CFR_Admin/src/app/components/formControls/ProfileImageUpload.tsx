@@ -123,12 +123,21 @@ export function ProfileImageUpload({
   const [validationError, setValidationError] = useState("");
   const [clearedExisting, setClearedExisting] = useState(false);
 
-  useEffect(() => {
+  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
+  // pattern for "state that resets when a prop identity changes") — when the parent hands us a
+  // different initial preview URL, any earlier user-initiated "clear" no longer applies to it.
+  const [renderedForInitialPreviewUrl, setRenderedForInitialPreviewUrl] = useState(initialPreviewUrl);
+  if (renderedForInitialPreviewUrl !== initialPreviewUrl) {
+    setRenderedForInitialPreviewUrl(initialPreviewUrl);
     setClearedExisting(false);
-  }, [initialPreviewUrl]);
+  }
 
   useEffect(() => {
     if (!file) {
+      // Genuine external-system sync, not derivable state: revoking the previous blob URL is a
+      // real browser-resource side effect that must happen exactly once per `file` transition —
+      // exactly what effects exist for.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreviewUrl((previous) => {
         revokeObjectUrl(previous);
         return null;

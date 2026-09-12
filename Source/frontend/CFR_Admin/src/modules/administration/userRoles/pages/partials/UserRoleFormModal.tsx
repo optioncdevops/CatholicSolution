@@ -40,6 +40,11 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
   //#region Effects
   useEffect(() => {
     if (!open) return;
+    // Genuine external-library sync, not derivable state: `reset(...)` is react-hook-form's own
+    // imperative API for reinitializing its internal (uncontrolled) form state — not a plain
+    // setState we can move to render time. `setFormError` travels with it since both represent
+    // "the form was just (re)opened for this role."
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormError(null);
     reset(role ? { roleName: role.roleName, description: role.description ?? '' } : userRolesDefaultValues);
   }, [open, role, reset]);

@@ -1,15 +1,35 @@
+import { lazy, Suspense } from "react";
 import { themeCardMutedSurfaceClass } from "@designSystem/theme/styles/componentStyle";
 import { getFileExtension, getOfficeOnlineEmbedUrl } from "../fileUpload.utils";
 import type { UploadPreviewItem } from "../fileUpload.utils";
-import { DocxPreviewPanel } from "../filePreview/DocxPreviewPanel";
 import { TextPreviewPanel } from "../filePreview/TextPreviewPanel";
 import { UnsupportedPreviewPanel } from "../filePreview/UnsupportedPreviewPanel";
-import { XlsxPreviewPanel } from "../filePreview/XlsxPreviewPanel";
 import {
   getFilePreviewKind,
   getPreviewSizeLimitMessage,
   isPreviewSizeAllowed,
 } from "../filePreview/filePreview.utils";
+
+// Split out of the eager formControls bundle: these two panels each pull in a heavy
+// document-parsing library (`docx-preview`, `xlsx`) that only a file-preview modal for a
+// docx/xlsx upload ever needs — every other page that merely renders a FileUpload control
+// (nearly all of them, via the formControls barrel) has no use for either library.
+const DocxPreviewPanel = lazy(() =>
+  import("../filePreview/DocxPreviewPanel").then((m) => ({
+    default: m.DocxPreviewPanel,
+  })),
+);
+const XlsxPreviewPanel = lazy(() =>
+  import("../filePreview/XlsxPreviewPanel").then((m) => ({
+    default: m.XlsxPreviewPanel,
+  })),
+);
+
+function PreviewPanelFallback() {
+  return (
+    <p className="p-6 text-sm text-foreground-muted">Loading preview…</p>
+  );
+}
 
 interface FilePreviewRendererProps {
   item: UploadPreviewItem;
@@ -110,10 +130,18 @@ export function FilePreviewRenderer({
         />
       );
     case "docx":
-      return <DocxPreviewPanel item={item} />;
+      return (
+        <Suspense fallback={<PreviewPanelFallback />}>
+          <DocxPreviewPanel item={item} />
+        </Suspense>
+      );
     case "xlsx":
     case "xls":
-      return <XlsxPreviewPanel file={item.file} />;
+      return (
+        <Suspense fallback={<PreviewPanelFallback />}>
+          <XlsxPreviewPanel file={item.file} />
+        </Suspense>
+      );
     case "csv":
       return <TextPreviewPanel file={item.file} mode="csv" />;
     case "text":
