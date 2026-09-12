@@ -86,8 +86,24 @@ export function validateLicenseForm(values: {
 }): string[] {
   const messages: string[] = [];
   if (!values.orgId) messages.push('Organization is required.');
-  if (!values.activationDate) messages.push('Start date is required.');
-  if (!values.expiryDate) messages.push('Expiry date is required.');
+  if (!values.activationDate) {
+    messages.push('Start date is required.');
+  }
+  if (!values.expiryDate) {
+    messages.push('Expiry date is required.');
+  }
+
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  if (values.activationDate && values.activationDate < today) {
+    messages.push('Start date cannot be in the past.');
+  }
+
+  if (values.activationDate && values.expiryDate && values.expiryDate < values.activationDate) {
+    messages.push('Expiry date cannot be earlier than start date.');
+  }
+
   if (values.remarks && values.remarks.trim().length > 500) {
     messages.push('Remarks must not exceed 500 characters.');
   }
