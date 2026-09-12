@@ -95,9 +95,15 @@ namespace Automation.Acutis.StepDefinitions
 
         [When(@"Confirmation popup should open and Click Confirm to update status")]
         [Then(@"Confirmation popup should open and Click Confirm to update status")]
+        [When(@"Confirmation popup should open and Click Confirm to update status and close the Change Status modal")]
+        [Then(@"Confirmation popup should open and Click Confirm to update status and close the Change Status modal")]
         public void ThenConfirmationPopupShouldOpenAndClickConfirmToUpdateStatus()
         {
             _productPage.ConfirmStatusChangePopup();
+            Assert.That(_productPage.IsStatusConfirmationPopupClosed(), Is.True, "Status confirmation popup remained open after clicking Confirm.");
+            Assert.That(_productPage.IsStatusModalOpened(), Is.False, "Change Status modal remained open after confirming status update.");
+            _productPage.CloseAllOpenProductDialogs();
+            Assert.That(_productPage.IsStatusConfirmationPopupClosed(), Is.True, "A confirmation modal was still open after the status change finished.");
         }
 
         #region Edit Product Steps
@@ -115,6 +121,8 @@ namespace Automation.Acutis.StepDefinitions
         [Then(@"Edit Product page should be opened and click on Cancel button")]
         [When(@"Edit Product page should be opened and edit all fields and first click with Cancel and then click to the Yes")]
         [Then(@"Edit Product page should be opened and edit all fields and first click with Cancel and then click to the Yes")]
+        [When(@"Edit Product page should be opened and edit all fields and first click Cancel then Discard changes and the confirmation modal should close")]
+        [Then(@"Edit Product page should be opened and edit all fields and first click Cancel then Discard changes and the confirmation modal should close")]
         public void ThenEditProductPageShouldBeOpenedAndEditAllFieldsAndFirstClickWithCancelAndThenClickToTheYes()
         {
             Assert.That(_productPage.IsEditProductPageOpened(), Is.True, "Edit Product page failed to open.");
@@ -130,6 +138,7 @@ namespace Automation.Acutis.StepDefinitions
 
             _productPage.UpdateAllProductFields(name, shortName, subtitle, licenseType, navTarget, contact, feature, description);
             _productPage.ClickCancelEditProductWithConfirmation();
+            Assert.That(_productPage.IsStatusConfirmationPopupClosed(), Is.True, "Edit Product confirmation modal remained open after Cancel or Discard changes.");
             Assert.That(_productPage.IsProductDetailsOpened(), Is.True, "Failed to return to Product Details upon discarding changes.");
         }
 
@@ -137,6 +146,8 @@ namespace Automation.Acutis.StepDefinitions
         [Then(@"Edit Product page should be opened and update the fields and click on Save button")]
         [When(@"Edit Product page should be opened and edit all fields and click on Save button")]
         [Then(@"Edit Product page should be opened and edit all fields and click on Save button")]
+        [When(@"Edit Product page should be opened and update the fields and click on Save button and any confirmation modal should close")]
+        [Then(@"Edit Product page should be opened and update the fields and click on Save button and any confirmation modal should close")]
         public void ThenEditProductPageShouldBeOpenedAndUpdateTheFieldsAndClickOnSaveButton()
         {
             Assert.That(_productPage.IsEditProductPageOpened(), Is.True, "Edit Product page failed to open.");
@@ -152,6 +163,7 @@ namespace Automation.Acutis.StepDefinitions
 
             _productPage.UpdateAllProductFields(name, shortName, subtitle, licenseType, navTarget, contact, feature, description);
             _productPage.ClickSaveEditProduct();
+            Assert.That(_productPage.IsStatusConfirmationPopupClosed(), Is.True, "A confirmation modal remained open after Save.");
             Assert.That(_productPage.IsProductDetailsOpened(), Is.True, "Failed to return to Product Details upon saving.");
         }
 
@@ -222,10 +234,13 @@ namespace Automation.Acutis.StepDefinitions
 
         [When(@"Create Invoice page should be opened and click on Cancel button")]
         [Then(@"Create Invoice page should be opened and click on Cancel button")]
+        [When(@"Create Invoice page should be opened and click on Cancel then Discard invoice and the confirmation modal should close")]
+        [Then(@"Create Invoice page should be opened and click on Cancel then Discard invoice and the confirmation modal should close")]
         public void ThenCreateInvoicePageShouldBeOpenedAndClickOnCancelButton()
         {
             Assert.That(_productPage.IsCreateInvoicePageOpened(), Is.True, "Create Invoice page failed to open.");
             _productPage.ClickCancelCreateInvoice();
+            Assert.That(_productPage.IsStatusConfirmationPopupClosed(), Is.True, "Create Invoice confirmation modal remained open after Cancel or Discard invoice.");
         }
 
         [When(@"Create Invoice page should be opened and enter invoice details and click on Save button")]
@@ -276,6 +291,7 @@ namespace Automation.Acutis.StepDefinitions
         {
             Assert.That(_productPage.IsInvoiceModalOpened(), Is.True, "Invoice details modal failed to open.");
             _productPage.ClickCloseInvoiceModal();
+            _productPage.CloseAllOpenProductDialogs();
         }
 
         #endregion Invoice Details Steps
@@ -309,6 +325,7 @@ namespace Automation.Acutis.StepDefinitions
         {
             Assert.That(_productPage.IsInvoiceModalOpened(), Is.True, "Invoice history modal failed to open.");
             _productPage.ClickCloseInvoiceModal();
+            _productPage.CloseAllOpenProductDialogs();
         }
         public void RunProductProcess()
         {
