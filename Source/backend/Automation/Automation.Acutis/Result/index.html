@@ -49,7 +49,7 @@
           </li>
             <li class="m-r-10">
                 <a href="#">
-                    <span class="badge badge-primary">9/11/2026 2:38:20 PM</span>
+                    <span class="badge badge-primary">09/11/2026 09:34:02 PM</span>
                 </a>
             </li>
         </ul>
@@ -118,19 +118,19 @@
 						</div>
 						<div class="open-test">
 							<div class="test-detail"> 
-								<p class="name">01_Login</p> 
-								<p class="duration text-sm">0h:0m:4s+346ms</p> 
-								<span class="datetime">14:38:20 PM</span>
+								<p class="name">03_Product</p> 
+								<p class="duration text-sm">0h:2m:52s+656ms</p> 
+								<span class="datetime">21:34:02 PM</span>
 							</div>
 						</div>
 						<div class="test-contents d-none">
 							<div class="detail-head">
 								<div class="p-v-10 d-inline-block">	
 									<div class="info">
-										<h5 class="test-status text-fail">01_Login</h5>
-										<span class='badge badge-success'>9/11/2026 2:38:20 PM</span>
-										<span class='badge badge-danger'>9/11/2026 2:38:24 PM</span>
-										<span class='badge badge-default'>0h:0m:4s+346ms</span>
+										<h5 class="test-status text-fail">03_Product</h5>
+										<span class='badge badge-success'>09/11/2026 09:34:02 PM</span>
+										<span class='badge badge-danger'>09/11/2026 09:36:55 PM</span>
+										<span class='badge badge-default'>0h:2m:52s+656ms</span>
 									</div>
 																	</div>
 							</div>
@@ -139,7 +139,7 @@
 	<div class="card">
 		<div class="card-header" role="tab">
 			<div class="card-title pl-3">
-				<div class="node">Scenario: 001_Login as a admin with valid user credentials</div>
+				<div class="node">Scenario: 001_Verify Products listing, sub-tabs navigation, status change, edit product, organizations, and invoice details workflows</div>
 				<div class="status-avatar float-left fail-bg">
 					<i class="fa fa-times text-white"></i>
 				</div>
@@ -159,65 +159,191 @@
                                 </span>
                                 <span>Given Enter the UserName and the Password</span>
                             </div>
-			<div class="details"><pre style="white-space:pre-wrap;margin:0;font-family:Consolas,monospace">invalid session id: session deleted as the browser has closed the connection
-from disconnected: not connected to DevTools
-  (Session info: chrome=153.0.8010.36)</pre></div>
-                    </div>
-				</div>
-	</div>
-</div>
-						</div>
-					</li>
-					<li class="test-item" status="fail" author="" device="" tag="" test-id="5"> 
-						<div class="status-avatar fail-bg">
-							<i class="fa fa-times text-white"></i>
-						</div>
-						<div class="open-test">
-							<div class="test-detail"> 
-								<p class="name">02_MenuAccess</p> 
-								<p class="duration text-sm">0h:0m:6s+007ms</p> 
-								<span class="datetime">14:38:29 PM</span>
-							</div>
-						</div>
-						<div class="test-contents d-none">
-							<div class="detail-head">
-								<div class="p-v-10 d-inline-block">	
-									<div class="info">
-										<h5 class="test-status text-fail">02_MenuAccess</h5>
-										<span class='badge badge-success'>9/11/2026 2:38:29 PM</span>
-										<span class='badge badge-danger'>9/11/2026 2:38:35 PM</span>
-										<span class='badge badge-default'>0h:0m:6s+007ms</span>
-									</div>
-																	</div>
-							</div>
-
-<div class="accordion mt-4">
-	<div class="card">
-		<div class="card-header" role="tab">
-			<div class="card-title pl-3">
-				<div class="node">Scenario: 001_Open every menu and check every link as a admin</div>
-				<div class="status-avatar float-left fail-bg">
-					<i class="fa fa-times text-white"></i>
-				</div>
-			</div>
-		</div>
-				<div class="collapse">
-                    <div class="card-body">
-                                                    <div class="d-flex align-items-center justify-content-start given" title="">
+                            <div class="d-flex align-items-center justify-content-start when" title="">
                                 <span class="alert-icon pass-bg">
                                     <i class="fa fa-check text-white"></i>
                                 </span>
-                                <span>Given Launch the application with URL</span>
+                                <span>When I click the login button</span>
                             </div>
-                            <div class="d-flex align-items-center justify-content-start given" title="">
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When The Dashboard should be open</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Click on Products menu and verify Products page is opened</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Navigate through all product filter tabs: Active, Inactive, Coming Soon, and other filters</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Check the search functionality for products</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on View Product icon for the selected product</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Product Details page should be opened</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on Back to Products button and verify Products page is opened</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on Edit Product icon for the selected product</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Edit Product page should be opened and edit all fields and first click with Cancel and then click to the Yes</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on Edit Product button in product details</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Edit Product page should be opened and update the fields and click on Save button</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Navigate through product sub tabs: Organizations, Invoice Details, Invoice History, and Product Details</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on Change Status button</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Change Status modal should open and Click on Cancel button to close</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on Change Status button</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Select new status and Click on Continue button</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Confirmation popup should open and Click Confirm to update status</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on Organizations tab</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Navigate through all organization status filter tabs: Active, Expiring Soon, Expired, and Users</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Click on View Organization icon and verify Organization Details opened</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Click on Back to Products button and verify Product Details opened</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on Invoice Details tab</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Navigate through all invoice status filter tabs</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on View Invoice icon in Invoice Details tab</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Invoice details modal should open and click on Close icon to close</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on Create Invoice button</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start then" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>Then Create Invoice page should be opened and click on Cancel button</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
+                                <span class="alert-icon pass-bg">
+                                    <i class="fa fa-check text-white"></i>
+                                </span>
+                                <span>When Click on Create Invoice button</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-start when" title="">
                                 <span class="alert-icon fail-bg">
                                     <i class="fa fa-times text-white"></i>
                                 </span>
-                                <span>Given Enter the UserName and the Password</span>
+                                <span>When Create Invoice page should be opened and enter invoice details and click on Save button</span>
                             </div>
-			<div class="details"><pre style="white-space:pre-wrap;margin:0;font-family:Consolas,monospace">invalid session id: session deleted as the browser has closed the connection
-from disconnected: not connected to DevTools
-  (Session info: chrome=153.0.8010.36)</pre></div>
+			<div class="details"><pre style="white-space:pre-wrap;margin:0;font-family:Consolas,monospace">  Product Title should be read-only in Create Invoice page.
+Assert.That(_productPage.IsInvoiceProductTitleReadOnly(), Is.True)
+  Expected: True
+  But was:  False
+</pre></div>
                     </div>
 				</div>
 	</div>
@@ -297,9 +423,9 @@ from disconnected: not connected to DevTools
 	                </div>
 	            </div>
 	            <div class="card-footer">
-	                <div><small data-tooltip='50%'><b>2</b> steps passed</small></div>
+	                <div><small data-tooltip='96.875%'><b>31</b> steps passed</small></div>
 	                <div>
-	                    <small data-tooltip='50%'><b>2</b> steps failed, 
+	                    <small data-tooltip='3.125%'><b>1</b> steps failed, 
 	                    <b data-tooltip='0%'>0</b> others
 	                    </small>
                     </div>
@@ -352,7 +478,7 @@ from disconnected: not connected to DevTools
 	                <div class="media justify-content-between">
 						<div>
 							<h6 class="card-title">Start</h6>
-							<h6 class="font-weight-light">9/11/2026 2:38:20 PM</h6>
+							<h6 class="font-weight-light">09/11/2026 09:34:02 PM</h6>
 							<span class="text-semibold text-success font-size-15">
 						</div>
 						<div class="align-self-end">
@@ -368,7 +494,7 @@ from disconnected: not connected to DevTools
 	                <div class="media justify-content-between">
 						<div>
 							<h6 class="card-title">Duration</h6>
-							<h6 class="font-weight-light">00:00:14.7546945</h6>
+							<h6 class="font-weight-light">00:02:53.4514021</h6>
 							<span class="text-semibold text-danger font-size-15">
 						</div>
 						<div class="align-self-end">
@@ -401,10 +527,10 @@ from disconnected: not connected to DevTools
 		skipChild: 0,
 		infoChild: 0,
 		debugChild: 0,
-		exceptionsChild: 2,
-		grandChildCount: 4,
-		passGrandChild: 2,
-		failGrandChild: 2,
+		exceptionsChild: 1,
+		grandChildCount: 32,
+		passGrandChild: 31,
+		failGrandChild: 1,
 		fatalGrandChild: 0,
 		errorGrandChild: 0,
 		warningGrandChild: 0,

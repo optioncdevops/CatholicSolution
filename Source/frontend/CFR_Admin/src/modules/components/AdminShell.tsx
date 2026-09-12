@@ -8,7 +8,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Bell, ChevronDown, Settings } from "lucide-react";
+import { Bell, ChevronDown, Menu, Settings, X } from "lucide-react";
 import { AppLoader } from "@shared/app/components/AppLoader";
 import { Brand } from "@shared/app/components/Brand";
 import { EmptyState } from "@shared/app/components/EmptyState";
@@ -198,6 +198,10 @@ export function AdminShell() {
   const [menuItems, setMenuItems] = useState(
     () => getStoredAcutisAuth()?.resultData?.menuItems ?? [],
   );
+  // Below the `md` breakpoint the horizontal nav strip is replaced by this toggled drawer — the
+  // strip itself only ever scrolled horizontally on narrow screens, with no way to discover items
+  // that scrolled out of view and no actual "mobile menu" control at all.
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     const refresh = () =>
@@ -223,16 +227,28 @@ export function AdminShell() {
       <div className="admin-top-accent" aria-hidden="true" />
       <header className="sticky top-0 z-40 bg-[var(--surface)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--surface)]/80">
         <div
-          className={`flex h-16 items-center gap-4 border-b border-[var(--line-soft)] ${CONTAINER}`}
+          className={`flex h-16 items-center justify-between gap-2 border-b border-[var(--line-soft)] sm:gap-4 ${CONTAINER}`}
         >
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex min-w-0 shrink items-center gap-2 sm:gap-3">
+            <button
+              id="ibtnMobileNavToggle"
+              type="button"
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileNavOpen}
+              aria-controls="menuAdminNavigationMobile"
+              onClick={() => setMobileNavOpen((value) => !value)}
+              className="grid size-9 shrink-0 place-items-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--hover)] md:hidden"
+            >
+              {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
             <Brand compact />
-            <span className="admin-plane-badge hidden sm:inline-flex">
+            {/* Purely decorative — hidden below `md` (the same breakpoint the mobile drawer takes
+                over at) so the header never has to choose between this and the functional
+                notification/profile controls on the right for space on a phone/small tablet. */}
+            <span className="admin-plane-badge hidden md:inline-flex">
               CFR Acutis
             </span>
           </div>
-
-          <div className="flex-1" />
 
           <div className="flex shrink-0 items-center gap-1.5">
             <button
@@ -248,7 +264,7 @@ export function AdminShell() {
           </div>
         </div>
 
-        <div className="admin-nav-strip">
+        <div className="admin-nav-strip hidden md:block">
           <nav
             id="menuAdminNavigation"
             aria-label="Admin navigation"
@@ -280,6 +296,53 @@ export function AdminShell() {
             ) : null}
           </nav>
         </div>
+
+        {mobileNavOpen ? (
+          <nav
+            id="menuAdminNavigationMobile"
+            aria-label="Admin navigation (mobile)"
+            className="admin-nav-mobile md:hidden"
+          >
+            {topItems.map((item) => {
+              const Icon = resolveMenuIcon(item.icon);
+              const active = isTopNavItemActive(item.path, location.pathname);
+              return (
+                <NavLink
+                  key={item.sessionKey || item.path}
+                  id={`menuItemMobile${toMenuIdSuffix(item.title || item.path || "")}`}
+                  to={item.path || "/admin"}
+                  end={item.path === "/admin"}
+                  onClick={() => setMobileNavOpen(false)}
+                  className={`admin-nav-mobile__item ${active ? "admin-nav-mobile__item--active" : ""}`}
+                >
+                  <Icon size={16} />
+                  <span>{item.title}</span>
+                </NavLink>
+              );
+            })}
+            {administrationItems.length > 0 ? (
+              <>
+                <p className="admin-nav-mobile__section">
+                  {administration?.title || "Administration"}
+                </p>
+                {administrationItems.map(({ to, label, icon: Icon }) => (
+                  <NavLink
+                    key={to}
+                    id={`menuItemMobile${toMenuIdSuffix(label)}`}
+                    to={to}
+                    onClick={() => setMobileNavOpen(false)}
+                    className={({ isActive }) =>
+                      `admin-nav-mobile__item admin-nav-mobile__item--nested ${isActive ? "admin-nav-mobile__item--active" : ""}`
+                    }
+                  >
+                    <Icon size={16} />
+                    <span>{label}</span>
+                  </NavLink>
+                ))}
+              </>
+            ) : null}
+          </nav>
+        ) : null}
       </header>
 
       <main className={`flex-1 py-4 ${CONTAINER}`}>
