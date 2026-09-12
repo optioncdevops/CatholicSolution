@@ -30,6 +30,7 @@ Feature: TestAllProcess
     When Click on Edit Product button
     And Edit Product page should be opened and update the fields and click on Save button
     When Click on Organizations tab
+    And Navigate through all organization status filter tabs: Active, Expiring Soon, Expired, and Users
     Then Click on View Organization icon and verify Organization Details opened
     And Click on Back to Products button and verify Product Details opened
     When Click on Invoice Details tab

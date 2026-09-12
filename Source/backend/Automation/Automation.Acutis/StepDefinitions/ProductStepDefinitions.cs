@@ -17,25 +17,37 @@ namespace Automation.Acutis.StepDefinitions
         private readonly ProductPage _productPage = new(driver);
         private readonly AcutisJsonDataObjects _testData = (AcutisJsonDataObjects)JsonDataReader.GetJsonData("Acutis");
 
+        [When(@"Click on Products menu and verify Products page is opened")]
         [Then(@"Click on Products menu and verify Products page is opened")]
         public void ThenClickOnProductsMenuAndVerifyProductsPageIsOpened()
         {
             _productPage.NavigateToProducts();
         }
 
+        [When(@"Navigate through all product filter tabs: Active, Inactive, Coming Soon, and other filters")]
+        [Then(@"Navigate through all product filter tabs: Active, Inactive, Coming Soon, and other filters")]
+        public void WhenNavigateThroughAllProductFilterTabsActiveInactiveComingSoonAndOtherFilters()
+        {
+            _productPage.NavigateThroughAllProductFilterTabs();
+        }
+
+        [When(@"Check the search functionality for products")]
+        [Then(@"Check the search functionality for products")]
+        public void WhenCheckTheSearchFunctionalityForProducts()
+        {
+            string searchProduct = _testData.Product?.SearchProductName ?? "OptionC";
+            _productPage.CheckProductSearch(searchProduct);
+        }
+
         [Then(@"Check in all products and filter by status")]
         public void ThenCheckInAllProductsAndFilterByStatus()
         {
-            string status = _testData.Product?.FilterStatus ?? "Active";
-            _productPage.CheckInAllProductsAndFilter(status);
-
-            string searchProduct = _testData.Product?.SearchProductName ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(searchProduct))
-            {
-                _productPage.SearchProduct(searchProduct);
-            }
+            _productPage.NavigateThroughAllProductFilterTabs();
+            string searchProduct = _testData.Product?.SearchProductName ?? "OptionC";
+            _productPage.CheckProductSearch(searchProduct);
         }
 
+        [When(@"Click on View Product icon for the selected product")]
         [Then(@"Click on View Product icon for the selected product")]
         public void ThenClickOnViewProductIconForTheSelectedProduct()
         {
@@ -43,6 +55,7 @@ namespace Automation.Acutis.StepDefinitions
             _productPage.ClickViewProduct(targetProduct);
         }
 
+        [When(@"Product Details page should be opened")]
         [Then(@"Product Details page should be opened")]
         public void ThenProductDetailsPageShouldBeOpened()
         {
@@ -63,6 +76,7 @@ namespace Automation.Acutis.StepDefinitions
             _productPage.ClickChangeStatus();
         }
 
+        [When(@"Change Status modal should open and Click on Cancel button to close")]
         [Then(@"Change Status modal should open and Click on Cancel button to close")]
         public void ThenChangeStatusModalShouldOpenAndClickOnCancelButtonToClose()
         {
@@ -97,7 +111,9 @@ namespace Automation.Acutis.StepDefinitions
             _productPage.ClickEditProduct();
         }
 
+        [When(@"Edit Product page should be opened and click on Cancel button")]
         [Then(@"Edit Product page should be opened and click on Cancel button")]
+        [When(@"Edit Product page should be opened and edit all fields and first click with Cancel and then click to the Yes")]
         [Then(@"Edit Product page should be opened and edit all fields and first click with Cancel and then click to the Yes")]
         public void ThenEditProductPageShouldBeOpenedAndEditAllFieldsAndFirstClickWithCancelAndThenClickToTheYes()
         {
@@ -150,6 +166,19 @@ namespace Automation.Acutis.StepDefinitions
             _productPage.ClickOrganizationsTab();
         }
 
+        [When(@"Navigate through all organization status filter tabs: Active, Expiring Soon, Expired, and Users")]
+        [Then(@"Navigate through all organization status filter tabs: Active, Expiring Soon, Expired, and Users")]
+        [When(@"Navigate through all organization status filter tabs")]
+        [Then(@"Navigate through all organization status filter tabs")]
+        [When(@"Navigate through organization sub tabs: Active, Expiring Soon, Expired, and Users")]
+        [Then(@"Navigate through organization sub tabs: Active, Expiring Soon, Expired, and Users")]
+        [When(@"Navigate through organization sub tabs")]
+        [Then(@"Navigate through organization sub tabs")]
+        public void WhenNavigateThroughAllOrganizationStatusFilterTabs()
+        {
+            _productPage.NavigateAllOrganizationStatusTabs();
+        }
+
         [When(@"Click on View Organization icon and verify Organization Details opened")]
         [Then(@"Click on View Organization icon and verify Organization Details opened")]
         public void ThenClickOnViewOrganizationIconAndVerifyOrganizationDetailsOpened()
@@ -185,11 +214,13 @@ namespace Automation.Acutis.StepDefinitions
         }
 
         [When(@"Click on Create Invoice button")]
+        [Then(@"Click on Create Invoice button")]
         public void WhenClickOnCreateInvoiceButton()
         {
             _productPage.ClickCreateInvoice();
         }
 
+        [When(@"Create Invoice page should be opened and click on Cancel button")]
         [Then(@"Create Invoice page should be opened and click on Cancel button")]
         public void ThenCreateInvoicePageShouldBeOpenedAndClickOnCancelButton()
         {
@@ -202,8 +233,18 @@ namespace Automation.Acutis.StepDefinitions
         public void ThenCreateInvoicePageShouldBeOpenedAndEnterInvoiceDetailsAndClickOnSaveButton()
         {
             Assert.That(_productPage.IsCreateInvoicePageOpened(), Is.True, "Create Invoice page failed to open.");
-            string invoiceTitle = _testData.Product?.InvoiceTitle ?? "Automated Test Invoice";
-            _productPage.EnterInvoiceDetailsAndSave(invoiceTitle);
+            Assert.That(_productPage.IsInvoiceProductTitleReadOnly(), Is.True, "Product Title should be read-only in Create Invoice page.");
+            string invoiceRemarks = _testData.Product?.InvoiceRemarks ?? _testData.Product?.InvoiceTitle ?? "Automated Test Invoice Renewal";
+            _productPage.EnterInvoiceDetailsAndSave(invoiceRemarks);
+        }
+
+        [When(@"Product Title should be read only and display the product name")]
+        [Then(@"Product Title should be read only and display the product name")]
+        [When(@"Product Title should be read only")]
+        [Then(@"Product Title should be read only")]
+        public void ThenProductTitleShouldBeReadOnly()
+        {
+            Assert.That(_productPage.IsInvoiceProductTitleReadOnly(), Is.True, "Product Title should be read-only in Create Invoice page.");
         }
 
         [When(@"Click on Back to Products button and verify Products page is opened")]
@@ -229,6 +270,7 @@ namespace Automation.Acutis.StepDefinitions
             _productPage.ClickViewInvoiceInInvoiceDetails();
         }
 
+        [When(@"Invoice details modal should open and click on Close icon to close")]
         [Then(@"Invoice details modal should open and click on Close icon to close")]
         public void ThenInvoiceDetailsModalShouldOpenAndClickOnCloseIconToClose()
         {
@@ -261,6 +303,7 @@ namespace Automation.Acutis.StepDefinitions
             _productPage.ClickViewInvoiceInInvoiceHistory();
         }
 
+        [When(@"Invoice history modal should open and click on Close icon to close")]
         [Then(@"Invoice history modal should open and click on Close icon to close")]
         public void ThenInvoiceHistoryModalShouldOpenAndClickOnCloseIconToClose()
         {
@@ -270,7 +313,8 @@ namespace Automation.Acutis.StepDefinitions
         public void RunProductProcess()
         {
             ThenClickOnProductsMenuAndVerifyProductsPageIsOpened();
-            ThenCheckInAllProductsAndFilterByStatus();
+            WhenNavigateThroughAllProductFilterTabsActiveInactiveComingSoonAndOtherFilters();
+            WhenCheckTheSearchFunctionalityForProducts();
             ThenClickOnViewProductIconForTheSelectedProduct();
             ThenProductDetailsPageShouldBeOpened();
             ThenNavigateThroughProductSubTabsOrganizationsInvoiceDetailsInvoiceHistoryAndProductDetails();
@@ -287,6 +331,7 @@ namespace Automation.Acutis.StepDefinitions
             ThenEditProductPageShouldBeOpenedAndUpdateTheFieldsAndClickOnSaveButton();
 
             WhenClickOnOrganizationsTab();
+            WhenNavigateThroughAllOrganizationStatusFilterTabs();
             ThenClickOnViewOrganizationIconAndVerifyOrganizationDetailsOpened();
             ThenClickOnBackToProductsButtonAndVerifyProductDetailsOpened();
 
@@ -296,6 +341,11 @@ namespace Automation.Acutis.StepDefinitions
             ThenCreateInvoicePageShouldBeOpenedAndClickOnCancelButton();
             WhenClickOnCreateInvoiceButton();
             ThenCreateInvoicePageShouldBeOpenedAndEnterInvoiceDetailsAndClickOnSaveButton();
+
+            WhenClickOnInvoiceHistoryTab();
+            ThenNavigateThroughInvoiceHistoryFilters();
+            WhenClickOnViewInvoiceIconInInvoiceHistoryTab();
+            ThenInvoiceHistoryModalShouldOpenAndClickOnCloseIconToClose();
         }
         #endregion Invoice History Steps
     }

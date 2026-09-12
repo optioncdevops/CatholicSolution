@@ -57,11 +57,10 @@ const AddLicense = () => {
   const [organizations, setOrganizations] = useState<OrganizationApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [title, setTitle] = useState("");
   const [orgId, setOrgId] = useState("");
   const [activationDate, setActivationDate] = useState(today());
   const [expiryDate, setExpiryDate] = useState(inDays(365));
-  const [customMessage, setCustomMessage] = useState("");
+  const [remarks, setRemarks] = useState("");
   const [touched, setTouched] = useState(false);
   //#endregion
 
@@ -101,9 +100,6 @@ const AddLicense = () => {
           : normalizeOrganizationsList(orgRes.resultData);
       setProduct(loadedProduct);
       setOrganizations(loadedOrgs);
-      if (loadedProduct) {
-        setTitle(`${loadedProduct.productName} — Invoice`);
-      }
       if (loadedOrgs[0]) {
         setOrgId(String(loadedOrgs[0].orgId));
       } else {
@@ -185,11 +181,10 @@ const AddLicense = () => {
       return;
     }
     const messages = validateLicenseForm({
-      title,
       orgId,
       activationDate,
       expiryDate,
-      customMessage,
+      remarks,
     });
     if (messages.length > 0) {
       showToast(messages, "error");
@@ -223,10 +218,6 @@ const AddLicense = () => {
         return;
       }
 
-      const remarks = [title.trim(), customMessage.trim()]
-        .filter(Boolean)
-        .join("\n")
-        .slice(0, 500);
       const res = await createLicense({
         orgId: Number(orgId),
         productId,
@@ -235,7 +226,7 @@ const AddLicense = () => {
         expiryDate: `${expiryDate}T00:00:00`,
         licenseStatus: DEFAULT_LICENSE_STATUS,
         assignStatus: DEFAULT_LICENSE_STATUS,
-        remarks: remarks || undefined,
+        remarks: remarks.trim() || undefined,
       });
       if (res.statusCode && res.statusCode >= 400) {
         throw res.statusMessage || "Failed to create license.";
@@ -304,20 +295,10 @@ const AddLicense = () => {
               <div>
                 <div className="grid grid-cols-1 gap-2.5 p-3 sm:grid-cols-2 lg:grid-cols-4">
                   <InputField
-                    label="Title"
-                    required
-                    autoFocus
-                    placeholder="Enter title"
-                    value={title}
-                    onChange={(event) => {
-                      setTitle(event.target.value);
-                      setTouched(true);
-                    }}
-                    error={
-                      touched && !title.trim()
-                        ? "Title is required."
-                        : undefined
-                    }
+                    label="Product Title"
+                    value={product.productName}
+                    readOnly
+                    disabled
                   />
                   <Dropdown
                     label="Organization"
@@ -368,16 +349,16 @@ const AddLicense = () => {
 
               <div>
                 <div className="admin-panel-card__header">
-                  <h2 className="panel-title">Custom Message</h2>
+                  <h2 className="panel-title">Remarks</h2>
                 </div>
                 <div className="p-3">
                   <RichTextEditor
-                    label="Custom Message"
+                    label="Remarks"
                     hideLabel
-                    placeholder="Start typing here..."
-                    value={customMessage}
+                    placeholder="Enter remarks..."
+                    value={remarks}
                     onChange={(value) => {
-                      setCustomMessage(value);
+                      setRemarks(value);
                       setTouched(true);
                     }}
                   />
