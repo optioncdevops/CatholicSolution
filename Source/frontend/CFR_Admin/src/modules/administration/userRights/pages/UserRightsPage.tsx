@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Eye, Save, ShieldCheck, ShieldOff, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, Save, ShieldCheck, ShieldOff } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
@@ -227,10 +227,6 @@ export function UserRightsPage() {
     showToast('Filters cleared.', 'success');
   };
 
-  const handleDiscard = () => {
-    setPending(new Map());
-    showToast('Unsaved changes discarded.', 'success');
-  };
 
   // Bulk "apply to all" — scoped to the currently visible (module-filtered) set, matching what's
   // on screen rather than silently touching hidden rows. Read Only only ever lands on
