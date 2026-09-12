@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Controller } from "react-hook-form";
 import type { Control, FieldValues, RegisterOptions } from "react-hook-form";
@@ -348,28 +348,31 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
     setActiveIndex(nextIndex);
   };
 
-  const handleSelect = (val: string) => {
-    if (disabled) {
-      return;
-    }
-    setIsOpen(false);
-    setSearch("");
-    setActiveIndex(-1);
-    if (value === undefined) {
-      setInternalValue(val);
-    }
-    onValueChange?.(val);
-  };
+  const handleSelect = useCallback(
+    (val: string) => {
+      if (disabled) {
+        return;
+      }
+      setIsOpen(false);
+      setSearch("");
+      setActiveIndex(-1);
+      if (value === undefined) {
+        setInternalValue(val);
+      }
+      onValueChange?.(val);
+    },
+    [disabled, value, onValueChange],
+  );
 
-  const commitOption = (
-    optionId: string | number,
-    fieldOnChange?: (value: string) => void,
-  ) => {
-    const serializedId = serializeOptionIdForForm(optionId);
-    fieldOnChange?.(serializedId);
-    handleSelect(serializedId);
-    triggerRef.current?.focus();
-  };
+  const commitOption = useCallback(
+    (optionId: string | number, fieldOnChange?: (value: string) => void) => {
+      const serializedId = serializeOptionIdForForm(optionId);
+      fieldOnChange?.(serializedId);
+      handleSelect(serializedId);
+      triggerRef.current?.focus();
+    },
+    [handleSelect],
+  );
 
   const handleClearSelection = (fieldOnChange?: (value: string) => void) => {
     if (disabled) {
@@ -580,7 +583,7 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
       window.removeEventListener("resize", handleScrollOrResize);
       window.removeEventListener("scroll", handleScrollOrResize, true);
     };
-  }, [isOpen, activeIndex, selectableOptions, searchable]);
+  }, [isOpen, activeIndex, selectableOptions, searchable, commitOption]);
 
   const renderDropdown = (
     fieldValue?: string,
@@ -623,10 +626,12 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
 
       if (event.key === "Tab") {
         if (isOpen) {
-          // eslint-disable-next-line react-hooks/refs -- false positive: this call sits
-          // inside a keydown event handler (not the render path), where reading refs is
-          // safe and standard. The linter's static analysis treats `renderDropdown`'s
-          // direct invocation below as if handlers defined inside it execute during render.
+          // False positive: this call sits inside a keydown event handler (not the render
+          // path), where reading refs is safe and standard. The linter's static analysis
+          // treats `renderDropdown`'s direct invocation below (`return renderDropdown(...)`)
+          // as if every handler defined inside it runs during render, since it can't see that
+          // this closure only actually executes later, on a real keydown event.
+          // eslint-disable-next-line react-hooks/refs
           closeMenu(false);
         }
         return;
@@ -646,15 +651,15 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
           const index = activeIndex >= 0 ? activeIndex : 0;
           const option = selectableOptions[index];
           if (option) {
-            // eslint-disable-next-line react-hooks/refs -- false positive; see comment above
-            // (event handler closure, not render path).
+            // False positive; same renderDropdown-closure cause as the Tab handler above.
+            // eslint-disable-next-line react-hooks/refs
             commitOption(option.id, fieldOnChange);
           } else {
             closeMenu(true);
           }
         } else {
-          // eslint-disable-next-line react-hooks/refs -- false positive; see comment above
-          // (event handler closure, not render path).
+          // False positive; same renderDropdown-closure cause as the Tab handler above.
+          // eslint-disable-next-line react-hooks/refs
           openMenu();
         }
         return;
@@ -828,6 +833,9 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
                   }}
                   onClick={(event) => {
                     event.stopPropagation();
+                    // False positive; same renderDropdown-closure cause as handleTriggerKeyDown
+                    // above (this onClick only runs later, on a real click, never during render).
+                    // eslint-disable-next-line react-hooks/refs
                     handleClearSelection(fieldOnChange);
                   }}
                 >

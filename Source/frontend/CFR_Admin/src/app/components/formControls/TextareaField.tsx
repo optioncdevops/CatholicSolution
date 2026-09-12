@@ -246,7 +246,7 @@ const TextareaFieldInner = <TFieldValues extends FieldValues = FieldValues>({
                 currentTarget: { ...e.currentTarget, value: trimmed },
               } as unknown as React.ChangeEvent<HTMLTextAreaElement>;
               fieldProps?.onChange?.(nextEvent);
-              onChange?.(nextEvent as any);
+              onChange?.(nextEvent);
               e.target.value = trimmed;
             }
           }

@@ -1,6 +1,5 @@
 import React, {
   useCallback,
-  useEffect,
   useId,
   useMemo,
   useRef,
@@ -61,9 +60,14 @@ export const ColorPickerField: React.FC<ColorPickerInnerProps> = ({
   const nativeInputRef = useRef<HTMLInputElement | null>(null);
   const nativePickerEnabled = enableNativePicker || !!showNativePicker;
 
-  useEffect(() => {
+  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
+  // pattern for "state that resets when a prop identity changes") — the draft text mirrors the
+  // committed/normalized value whenever it changes from outside (e.g. a form reset).
+  const [renderedForCommitted, setRenderedForCommitted] = useState(committed);
+  if (renderedForCommitted !== committed) {
+    setRenderedForCommitted(committed);
     setDraft(committed ?? "");
-  }, [committed]);
+  }
 
   const emitChange = useCallback(
     (next: string | null) => {

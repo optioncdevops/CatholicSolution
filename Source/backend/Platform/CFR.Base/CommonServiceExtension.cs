@@ -44,23 +44,23 @@ public static class ServiceExtension
     {
         // RATE LIMITING - Protects API from abuse (too many requests)
         services.AddRateLimiter(options =>
-         {
-             options.AddPolicy("per-user", context =>
-             RateLimitPartition.GetFixedWindowLimiter(
-                 partitionKey: context.User.Identity?.Name
-                               ?? context.Connection.RemoteIpAddress?.ToString()
-                               ?? context.TraceIdentifier,
-                 factory: _ => new FixedWindowRateLimiterOptions
-                 {
-                     PermitLimit = iPermitLimit,
-                     Window = TimeSpan.FromMinutes(1)
-                 }));
-             options.AddFixedWindowLimiter("fixed", opt =>
-             {
-                 opt.PermitLimit = iPermitLimit;            // Max 5 requests
-                 opt.Window = TimeSpan.FromMinutes(1);      // Per 1 minute
-             });
-         });
+        {
+            options.AddPolicy("per-user", context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.User.Identity?.Name
+                              ?? context.Connection.RemoteIpAddress?.ToString()
+                              ?? context.TraceIdentifier,
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = iPermitLimit,
+                    Window = TimeSpan.FromMinutes(1)
+                }));
+            options.AddFixedWindowLimiter("fixed", opt =>
+            {
+                opt.PermitLimit = iPermitLimit;            // Max 5 requests
+                opt.Window = TimeSpan.FromMinutes(1);      // Per 1 minute
+            });
+        });
 
         return services;
     }

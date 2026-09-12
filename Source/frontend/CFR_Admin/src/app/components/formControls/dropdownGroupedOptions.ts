@@ -97,7 +97,7 @@ export const normalizeSelectOptions = (
       .filter((option): option is NormalizedSelectOption => option !== null);
   }
 
-  return (options as any[])
+  return (options as (SelectOptionGroup & { Options?: SelectOption[]; Label?: string; Disabled?: boolean })[])
     .map((group) => {
       const groupOptions = group?.options ?? group?.Options;
       return {
@@ -115,14 +115,16 @@ export const normalizeSelectOptions = (
 };
 
 export const isOptionGroup = <TOption>(
-  item: any,
+  item: unknown,
 ): item is OptionGroupLike<TOption> => {
-  return (
-    typeof item === "object" &&
-    item !== null &&
-    ("options" in item || "Options" in item) &&
-    Array.isArray(item.options ?? item.Options)
-  );
+  if (typeof item !== "object" || item === null) {
+    return false;
+  }
+  if (!("options" in item || "Options" in item)) {
+    return false;
+  }
+  const candidate = item as { options?: unknown; Options?: unknown };
+  return Array.isArray(candidate.options ?? candidate.Options);
 };
 
 export const isGroupedOptionsArray = <TOption>(

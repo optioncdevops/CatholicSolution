@@ -305,7 +305,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
     columnSettingsEnabled,
     orderedColumns,
     legacyHiddenColumnIds,
-    columnSettingsEnabled ? appliedVisibility : EMPTY_COLUMN_VISIBILITY_MAP,
+    appliedVisibility,
   ]);
 
   const applyColumnVisibility = React.useCallback(
@@ -421,7 +421,11 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
     setLockedSelectionColumnWidth((prev) => (prev === null ? prev : null));
   }
 
-  // Snapshot header widths when layout changes (not when sort changes) — stops column "dance" on sort.
+  // Snapshot header widths when layout changes (not when sort changes) — stops column "dance" on
+  // sort. `columnLayoutSignature` is a deliberate proxy for "did the set/order/visibility of
+  // columns change" — adding `visibleColumns` itself would re-run this on every render where its
+  // array identity changes for unrelated reasons (e.g. a sort-triggered re-render), reintroducing
+  // the exact column-width "dance" this effect was written to stop.
   React.useLayoutEffect(() => {
     if (!visibleColumns.length) { return; }
 
@@ -456,6 +460,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
       }
       return nextWidths;
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- see comment above the effect
   }, [columnLayoutSignature, columnWidthLockEpoch, enableRowSelection]);
 
   // Runtime-computed left offsets for frozen columns (based on actual rendered widths)
@@ -705,8 +710,11 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
   });
 
   const displayRows = enablePagination ? pageRows : sortedRows;
-  const resolveGlobalRowIndex = (rowIndex: number) =>
-    enablePagination ? rowIndex + pageIndex * effectivePageSize : rowIndex;
+  const resolveGlobalRowIndex = React.useCallback(
+    (rowIndex: number) =>
+      enablePagination ? rowIndex + pageIndex * effectivePageSize : rowIndex,
+    [enablePagination, pageIndex, effectivePageSize],
+  );
 
   const resolvedMainHeaderCells = React.useMemo(
     () => resolveMainHeaderCells(visibleColumns),
@@ -722,13 +730,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
 
   const bodyCellMatrix = React.useMemo(() => {
     return buildAllBodyCells(visibleColumns, displayRows, resolveGlobalRowIndex);
-  }, [
-    visibleColumns,
-    displayRows,
-    enablePagination,
-    pageIndex,
-    effectivePageSize,
-  ]);
+  }, [visibleColumns, displayRows, resolveGlobalRowIndex]);
 
   const hasNoData = !isLoading && displayRows.length === 0;
 

@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useId, useMemo, useState } from "react";
-import type { Control, FieldValues, RegisterOptions } from "react-hook-form";
+import type {
+  Control,
+  ControllerFieldState,
+  ControllerRenderProps,
+  FieldValues,
+  RegisterOptions,
+} from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { cn } from "@app/utilities/cn";
 import { Tooltip } from "@app/components/tooltips/Tooltip";
@@ -448,21 +454,24 @@ const InputFieldInner = <TFieldValues extends FieldValues = FieldValues>({
   return renderField(undefined, undefined);
 };
 
-interface ControlledInputFieldProps {
-  field: any;
-  fieldState: any;
+interface ControlledInputFieldProps<TFieldValues extends FieldValues = FieldValues> {
+  field: ControllerRenderProps<TFieldValues>;
+  fieldState: ControllerFieldState;
   validationRule?: InputValidationRule;
   applySanitization: (raw: string) => string;
-  renderField: (error?: string, props?: any) => React.ReactNode;
+  renderField: (
+    error?: string,
+    props?: React.InputHTMLAttributes<HTMLInputElement>,
+  ) => React.ReactNode;
 }
 
-const ControlledInputField = ({
+const ControlledInputField = <TFieldValues extends FieldValues = FieldValues>({
   field,
   fieldState,
   validationRule,
   applySanitization,
   renderField,
-}: ControlledInputFieldProps) => {
+}: ControlledInputFieldProps<TFieldValues>) => {
   const { value, onChange } = field;
 
   useEffect(() => {

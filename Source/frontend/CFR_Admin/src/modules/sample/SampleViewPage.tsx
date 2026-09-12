@@ -5,10 +5,18 @@
  * drawer, modal, tooltip, empty state, avatars) with its main option variants. Purely local
  * state, zero dependency on AdminDataContext or any real entity type.
  *
+ * Already scoped to development builds only (App.tsx registers these routes and the
+ * `import.meta.env.DEV`-gated ungated-route exception in menuHelpers.ts only when
+ * `import.meta.env.DEV` is true) — a hosted build (pilot/staging/live) never bundles or exposes
+ * this page. Nav no longer has a static `ADMINISTRATION_ITEMS` list to worry about; the admin nav
+ * is entirely backend-menu-driven now, so there is nothing there referencing this page either.
+ *
  * TO REMOVE THIS ENTIRELY:
  *   1. Delete this file, `SampleAddPage.tsx`, and `sampleData.ts` (the whole `sample/` folder).
- *   2. Remove the two `/admin/administration/component-library/*` routes from `App.tsx`.
- *   3. Remove the two "Component library" entries from `ADMINISTRATION_ITEMS` in `AdminShell.tsx`.
+ *   2. Remove the two `/admin/administration/component-library/*` routes (and their DEV-gated
+ *      lazy imports) from `App.tsx`.
+ *   3. Remove `/admin/administration/component-library` from the DEV-only branch of
+ *      `UNGATED_ROUTE_PREFIXES` in `menuHelpers.ts`.
  * Nothing outside this folder imports from it, so those three edits are the whole removal.
  */
 import { useState } from 'react';

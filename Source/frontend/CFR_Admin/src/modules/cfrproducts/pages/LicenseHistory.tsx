@@ -8,7 +8,8 @@ import { formatDate } from '@/modules/utils/formatDate';
 import { getLicenseDetails } from '../services/productService';
 import type { ProductLicenseApiItem, ProductLicenseHistoryRow } from '../types/productTypes';
 import { toLicenseHistoryRows } from '../utils/productHelpers';
-import { LICENSE_HISTORY_STATUS_FILTERS, InvoiceStatusBadge, type LicenseHistoryStatusFilter } from '../utils/productFilters';
+import { LICENSE_HISTORY_STATUS_FILTERS, type LicenseHistoryStatusFilter } from '../utils/productFilters';
+import { InvoiceStatusBadge } from '../components/InvoiceStatusBadge';
 import { InvoiceDetailModal } from './LicenseDetails';
 import type { AdminApplication, License } from '@/modules/types';
 
@@ -97,6 +98,14 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
 
   //#region Effects
   useEffect(() => {
+    // Standard mount/dependency-driven data-fetch effect, preserved as-is per this review's own
+    // instruction not to blindly rewrite working async loading effects. Known gap (tracked, not
+    // fixed here): `loadHistory` doesn't check a cancellation flag internally, so in the rare case
+    // this component unmounts while the request is still in flight, its state-setting calls would
+    // still fire after unmount — the same shape as several other detail/edit pages in this app: a
+    // real but pre-existing, wider-reaching gap, not something newly introduced or safe to
+    // silently paper over here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadHistory();
   }, [loadHistory]);
   //#endregion

@@ -132,12 +132,19 @@ const DatePickerInner: React.FC<DatePickerInnerProps> = ({
     maxHeight: number;
   }>({ top: 0, left: 0, width: 0, placement: "bottom", maxHeight: 320 });
 
-  // Sync with controlled value
-  useEffect(() => {
+  // Sync with controlled value — prop-driven reset, adjusted during render rather than in an
+  // effect (React's own recommended pattern for "state that mirrors a prop when it changes").
+  // The sentinel tracks every `value` identity change (matching the effect's old `[value]`
+  // dependency exactly), but only pushes it into `internalValue` when actually defined, so a
+  // `value` that goes controlled -> uncontrolled -> controlled-with-the-same-value-again still
+  // re-syncs correctly instead of a stale sentinel silently skipping it.
+  const [renderedForValue, setRenderedForValue] = useState(value);
+  if (renderedForValue !== value) {
+    setRenderedForValue(value);
     if (value !== undefined) {
       setInternalValue(value);
     }
-  }, [value]);
+  }
 
   const effectiveDisplayFormat = displayFormat ?? format ?? DEFAULT_DATE_FORMAT;
 
