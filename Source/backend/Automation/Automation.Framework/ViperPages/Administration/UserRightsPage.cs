@@ -192,13 +192,6 @@ namespace Automation.Framework.ViperPages.Administration
             }
         }
 
-        /// <summary>Discards unsaved permission changes.</summary>
-        public void ClickDiscard()
-        {
-            ClickByScript(XPath_UserRights.Cancel);
-            Thread.Sleep(800);
-        }
-
         /// <summary>Saves queued permission changes.</summary>
         public SaveOutcome ClickSave()
         {

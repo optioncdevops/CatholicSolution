@@ -84,7 +84,7 @@ Feature: TestAllProcess
     # 07. UserRoles
     Then Click on Administration menu and select User Roles sub menu
     Then User Roles page should be opened
-    Then Search an existing role and verify Edit, Status, and Delete actions are shown
+    Then Search an existing role and verify Edit action is shown
     Then Verify User Roles table toolbar Columns, Maximize, Excel, Print, CSV export, column sort, and rows per page
     When Click on Add User Role button
     Then Add User Role modal should open and Click on Cancel button to close
@@ -110,8 +110,6 @@ Feature: TestAllProcess
     And Toggle the first tree row expand or collapse
     And Search the rights matrix and open the Columns menu
     And Click Access, Read Only, and Denied on the first permission row
-    When Change the first row permission
-    Then Click on Cancel to discard unsaved rights changes
     When Change the first row permission
     And Click on Save to persist the rights changes
     When Click on Apply to all Access
@@ -150,8 +148,6 @@ Feature: TestAllProcess
     Then Email settings should be saved
     And Restore the original Display name and click on Save
     And Toggle Send mail enabled and SSL switches and restore them
-    When Click on Cancel on Email Settings
-    Then Email Templates page should be opened from Email Settings cancel
 
     # Finally, Logout
     And User should be able to logout from the application

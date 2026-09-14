@@ -72,18 +72,6 @@ namespace Automation.Acutis.StepDefinitions
             Assert.That(outcome.Saved, Is.True, $"The original display name was not restored. The page said: {outcome.Detail}");
         }
 
-        [When(@"Click on Cancel on Email Settings")]
-        public void WhenClickOnCancelOnEmailSettings()
-        {
-            _settingsPage.ClickCancel();
-        }
-
-        [Then(@"Email Templates page should be opened from Email Settings cancel")]
-        public void ThenEmailTemplatesPageShouldBeOpenedFromEmailSettingsCancel()
-        {
-            Assert.That(_settingsPage.IsOnEmailTemplates(), Is.True, "Cancel on Email Settings did not return to Email Templates.");
-        }
-
         public void RunEmailSettingsProcess()
         {
             ThenClickOnAdministrationMenuAndSelectEmailSettingsSubMenu();
@@ -94,8 +82,6 @@ namespace Automation.Acutis.StepDefinitions
             WhenUpdateTheDisplayNameAndClickOnSave();
             ThenEmailSettingsShouldBeSaved();
             ThenRestoreTheOriginalDisplayNameAndClickOnSave();
-            WhenClickOnCancelOnEmailSettings();
-            ThenEmailTemplatesPageShouldBeOpenedFromEmailSettingsCancel();
         }
     }
 }

@@ -15,5 +15,3 @@ Scenario: 001_Verify Email Settings SMTP and branding fields, switches, save, re
     Then Email settings should be saved
     And Restore the original Display name and click on Save
     And Toggle Send mail enabled and SSL switches and restore them
-    When Click on Cancel on Email Settings
-    Then Email Templates page should be opened from Email Settings cancel

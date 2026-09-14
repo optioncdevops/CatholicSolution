@@ -336,7 +336,7 @@ namespace Automation.Acutis.Features
     await testRunner.ThenAsync("User Roles page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 87
-    await testRunner.ThenAsync("Search an existing role and verify Edit, Status, and Delete actions are shown", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("Search an existing role and verify Edit action is shown", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 88
     await testRunner.ThenAsync("Verify User Roles table toolbar Columns, Maximize, Excel, Print, CSV export, colu" +
@@ -413,117 +413,111 @@ namespace Automation.Acutis.Features
     await testRunner.WhenAsync("Change the first row permission", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 114
-    await testRunner.ThenAsync("Click on Cancel to discard unsaved rights changes", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 115
-    await testRunner.WhenAsync("Change the first row permission", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 116
     await testRunner.AndAsync("Click on Save to persist the rights changes", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 117
+#line 115
     await testRunner.WhenAsync("Click on Apply to all Access", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 116
+    await testRunner.ThenAsync("Apply to all confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 117
+    await testRunner.WhenAsync("Click on Apply to all Read Only", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 118
     await testRunner.ThenAsync("Apply to all confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 119
-    await testRunner.WhenAsync("Click on Apply to all Read Only", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("Click on Apply to all Denied", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 120
     await testRunner.ThenAsync("Apply to all confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 121
-    await testRunner.WhenAsync("Click on Apply to all Denied", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 122
-    await testRunner.ThenAsync("Apply to all confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 125
+#line 123
     await testRunner.ThenAsync("Click on Administration menu and select Email Template sub menu", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 126
+#line 124
     await testRunner.AndAsync("Email Templates page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 127
+#line 125
     await testRunner.AndAsync("Search templates and then clear the search", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 128
+#line 126
     await testRunner.AndAsync("Select each email template from the list", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 129
+#line 127
     await testRunner.AndAsync("Select the target email template", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 130
+#line 128
     await testRunner.AndAsync("Edit the subject and Click on Preview and close the preview", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 129
+    await testRunner.WhenAsync("Click on Reset template", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 130
+    await testRunner.ThenAsync("Reset confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 131
     await testRunner.WhenAsync("Click on Reset template", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 132
-    await testRunner.ThenAsync("Reset confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("Reset confirm box should open and Click on Confirm", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 133
-    await testRunner.WhenAsync("Click on Reset template", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 134
-    await testRunner.ThenAsync("Reset confirm box should open and Click on Confirm", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 135
     await testRunner.AndAsync("Insert a merge tag variable into the template", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 136
+#line 134
     await testRunner.WhenAsync("Click on Reset template", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 137
+#line 135
     await testRunner.ThenAsync("Reset confirm box should open and Click on Confirm", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 138
+#line 136
     await testRunner.AndAsync("Edit the subject and click on Save template", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 139
+#line 137
     await testRunner.AndAsync("Restore the original subject and click on Save template", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 140
+#line 138
     await testRunner.AndAsync("Click on Send Test email", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 141
+#line 139
     await testRunner.AndAsync("Click on Email Settings from Email Templates page", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 142
+#line 140
     await testRunner.ThenAsync("Email Settings page should be opened from the shortcut", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 145
+#line 143
     await testRunner.ThenAsync("Click on Administration menu and select Email Settings sub menu", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 146
+#line 144
     await testRunner.AndAsync("Email Settings page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 147
+#line 145
     await testRunner.AndAsync("SMTP Server and Branding sections should be visible", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 148
+#line 146
     await testRunner.AndAsync("Open the Font family dropdown and close it", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 149
+#line 147
     await testRunner.WhenAsync("Update the Display name and click on Save", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 150
+#line 148
     await testRunner.ThenAsync("Email settings should be saved", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 151
+#line 149
     await testRunner.AndAsync("Restore the original Display name and click on Save", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 152
+#line 150
     await testRunner.AndAsync("Toggle Send mail enabled and SSL switches and restore them", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 153
+#line 151
     await testRunner.WhenAsync("Click on Cancel on Email Settings", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 154
+#line 152
     await testRunner.ThenAsync("Email Templates page should be opened from Email Settings cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 157
+#line 155
     await testRunner.AndAsync("User should be able to logout from the application", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }

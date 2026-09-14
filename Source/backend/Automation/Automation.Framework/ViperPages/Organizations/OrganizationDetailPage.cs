@@ -86,19 +86,6 @@ namespace Automation.Framework.ViperPages.Organizations
                 10);
         }
 
-        // --- Assign App modal (on Products tab) ---
-
-        public bool ClickAssignApp()
-        {
-            ClickByScript(XPath_Organizations.AssignAppBtn);
-            return IsElementVisible(XPath_Organizations.AssignAppModal, 5);
-        }
-
-        public void CancelAssignApp()
-        {
-            ClickByScript(XPath_Organizations.AssignAppCancelBtn);
-            Thread.Sleep(300);
-        }
 
         // --- Edit form (opened from list page Edit button) ---
 

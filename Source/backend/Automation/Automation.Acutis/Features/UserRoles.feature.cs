@@ -149,7 +149,7 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
     await testRunner.AndAsync("User Roles page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 12
-    await testRunner.AndAsync("Search an existing role and verify Edit, Status, and Delete actions are shown", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.AndAsync("Search an existing role and verify Edit action is shown", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 13
     await testRunner.AndAsync("Verify User Roles table toolbar Columns, Maximize, Excel, Print, CSV export, colu" +

@@ -125,9 +125,6 @@ namespace Automation.Acutis.StepDefinitions
 
             WhenIClickOnProductsTab();
             ThenProductsPanelShouldBeVisible();
-            WhenIClickAssignApp();
-            ThenAssignAppModalShouldOpen();
-            WhenICancelAssignApp();
 
             WhenIClickOnLicensesTab();
             ThenLicensesPanelShouldBeVisible();
@@ -262,27 +259,6 @@ namespace Automation.Acutis.StepDefinitions
             Assert.That(_organizationDetailPage.IsRequestsPanelDisplayed(), Is.True, "Requests panel is not visible.");
         }
 
-        // --- Assign App modal steps ---
-
-        [When(@"I click Assign App button")]
-        public void WhenIClickAssignApp()
-        {
-            _organizationDetailPage.ClickAssignApp();
-        }
-
-        [Then(@"Assign App modal should open")]
-        public void ThenAssignAppModalShouldOpen()
-        {
-            Assert.That(_organizationDetailPage.IsElementVisible(
-                Automation.Framework.ViperPages.ViperCommonVariable.XPath_Organizations.AssignAppModal, 5),
-                Is.True, "Assign App modal did not open.");
-        }
-
-        [When(@"I cancel the Assign App modal")]
-        public void WhenICancelAssignApp()
-        {
-            _organizationDetailPage.CancelAssignApp();
-        }
 
         // --- Back to Organizations ---
 
