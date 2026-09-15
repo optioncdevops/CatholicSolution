@@ -1,89 +1,26 @@
 -- Copyright (c) OptionC. All rights reserved.
--- Organization list/get/create/update CRUD against the existing [core].[Organization] table,
--- extended with Website / ContactPerson / ContactPhone (idempotent ALTER — safe to re-run on an
--- already up-to-date database), plus real user/product data sourced from the existing
--- [auth].[UserProduct] / [auth].[User] and [lic].[OrganizationProduct] / [core].[Product] link
--- tables. The Organization Users tab (ActionId 5/13/14) reads/writes [auth].[UserProduct]
--- directly — confirmed via a live query to actually carry FirstName/LastName/RoleId/
--- IsLoginDisabled/OrgName per member — rather than the separate, near-empty
--- [auth].[OrganizationUser] join table (unused by this procedure; kept in the schema, not read
--- here). [auth].[User] only has Email (no FirstName/LastName) and no IsDeleted column. OrgId is
--- NOT an IDENTITY column (matches the MAX+1 pattern already used for
--- auth.AcutisRole and adm.EmailTemplate in this codebase) — Create assigns the next value itself.
+-- Organization list/get/create/update CRUD against [core].[Organization], rebuilt per
+-- 016_Acutis_Organization_Rebuild.sql: the table's key is now [ID] (INT IDENTITY, was [OrgId]
+-- BIGINT manually assigned via MAX+1) and no longer carries OrgStatus / OrgType / Address / City /
+-- State / Zip (moved to [lic].[OrganizationProduct], duplicated per product; OrgType was dropped
+-- entirely). [OrgState]/[OrgCountry] are new org-level fields. [lic].[OrganizationProduct]'s link
+-- column is now [CFROrgId] (was [OrgId]), and its [OrgStatus]/[AssignStatus] are now INT, not
+-- NVARCHAR:
+--   OrganizationProduct.OrgStatus     : 1 = Active,  2 = Inactive, 3 = Suspended
+--   OrganizationProduct.AssignStatus  : 1 = Active,  2 = Suspended, 3 = Revoked
+-- ASSUMPTION — confirm these codes match the actual lookup/enum before relying on this in
+-- production; nothing in the schema itself pins these numbers down.
+--
+-- The @OrgId parameter and the [OrgId] output alias are kept (mapped onto the new [ID] column)
+-- so the existing C# DTOs/repository/frontend contract does not also have to change name-for-name
+-- just to pick up this table rebuild.
+--
+-- Real user/product data is still sourced from [auth].[UserProduct] / [auth].[User] (Organization
+-- Users tab, ActionId 5/13/14) and [lic].[OrganizationProduct] / [core].[Product] (Products/
+-- Licenses tabs) — see 016_Acutis_Organization_Rebuild.sql's header for what is NOT yet migrated
+-- on those two tables (their OrgId columns still hold pre-rebuild values).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Website'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [Website] NVARCHAR(300) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'ContactPerson'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [ContactPerson] NVARCHAR(200) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'ContactPhone'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [ContactPhone] NVARCHAR(30) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Address'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [Address] NVARCHAR(300) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'City'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [City] NVARCHAR(100) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'State'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [State] NVARCHAR(100) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Zip'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [Zip] NVARCHAR(20) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'OrgType'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [OrgType] NVARCHAR(30) NULL;
-END
 GO
 
 IF OBJECT_ID(N'[dbo].[Acutis_Organization_CRUD]', N'P') IS NOT NULL
@@ -91,9 +28,9 @@ IF OBJECT_ID(N'[dbo].[Acutis_Organization_CRUD]', N'P') IS NOT NULL
 GO
 
 -- ActionId 1: Get list of organizations, with real user/product counts.
--- ActionId 2: Get one organization by OrgId.
+-- ActionId 2: Get one organization by OrgId (-> Organization.ID).
 -- ActionId 3: Update an organization's identity and contact fields.
--- ActionId 4: Create a new organization.
+-- ActionId 4: Create a new organization (ID is now IDENTITY — no more MAX+1 assignment).
 -- ActionId 5: Get the real users linked to an organization, sourced from [auth].[UserProduct]
 -- (grouped by CFRUserId — the table carries FirstName/LastName/RoleId/IsLoginDisabled
 -- directly, one row per product assignment, so this collapses those rows into one per member)
@@ -106,9 +43,9 @@ GO
 -- goes through ActionId 8 (Activate) from the unified list, not through this "assign new" list.
 -- ActionId 8: Assign (or reactivate/"Activate") a product for an organization.
 -- ActionId 9: Deactivate (soft-delete) a product assignment from an organization. The mapping
--- row is kept (IsDeleted = 1, AssignStatus = 'revoked' — the CK__Organizat__Assig__436BFEE3
--- check constraint only allows 'active' / 'suspended' / 'revoked', not 'inactive') so
--- history/expiry data is preserved and ActionId 8 can reactivate it later — this is never a hard delete.
+-- row is kept (IsDeleted = 1, AssignStatus = 3/Revoked — the check constraint only allows
+-- Active/Suspended/Revoked, not Inactive) so history/expiry data is preserved and ActionId 8 can
+-- reactivate it later — this is never a hard delete.
 -- ActionId 10: Get the real licenses issued against an organization's assigned products.
 -- ActionId 11: Get every license issued across ALL organizations (same shape as ActionId 10,
 -- plus OrgId/OrgName) — backs the admin dashboard's platform-wide "Licenses" KPI.
@@ -121,19 +58,15 @@ GO
 -- user-detail view.
 CREATE PROCEDURE [dbo].[Acutis_Organization_CRUD]
     @ActionId INT,
-    @OrgId BIGINT = 0,
-    @OrgName NVARCHAR(200) = NULL,
-    @OrgStatus NVARCHAR(20) = NULL,
-    @OrgType NVARCHAR(30) = NULL,
-    @ContactEmail NVARCHAR(256) = NULL,
-    @Website NVARCHAR(300) = NULL,
-    @ContactPerson NVARCHAR(200) = NULL,
-    @ContactPhone NVARCHAR(30) = NULL,
-    @Address NVARCHAR(300) = NULL,
-    @City NVARCHAR(100) = NULL,
-    @State NVARCHAR(100) = NULL,
-    @Zip NVARCHAR(20) = NULL,
-    @UpdatedBy BIGINT = NULL,
+    @OrgId INT = 0,
+    @OrgName NVARCHAR(255) = NULL,
+    @OrgState NVARCHAR(100) = NULL,
+    @OrgCountry NVARCHAR(100) = NULL,
+    @ContactEmail NVARCHAR(255) = NULL,
+    @Website NVARCHAR(500) = NULL,
+    @ContactPerson NVARCHAR(255) = NULL,
+    @ContactPhone NVARCHAR(50) = NULL,
+    @UpdatedBy INT = NULL,
     @ProductId INT = NULL,
     @AuthUserId BIGINT = NULL,
     @ReturnValue INT = NULL OUTPUT
@@ -146,22 +79,18 @@ BEGIN
     IF @ActionId = 1
     BEGIN
         SELECT
-            o.[OrgId],
+            o.[ID] AS [OrgId],
             o.[OrgName],
-            o.[OrgStatus],
-            o.[OrgType],
+            o.[OrgState],
+            o.[OrgCountry],
             o.[ContactEmail],
             o.[Website],
             o.[ContactPerson],
             o.[ContactPhone],
-            o.[Address],
-            o.[City],
-            o.[State],
-            o.[Zip],
             o.[InsertedDate],
             o.[UpdatedDate],
-            (SELECT COUNT(DISTINCT up.[CFRUserId]) FROM [auth].[UserProduct] AS up WHERE up.[OrgId] = o.[OrgId] AND ISNULL(up.[IsDeleted], 0) = 0) AS [UserCount],
-            (SELECT COUNT(*) FROM [lic].[OrganizationProduct] AS op WHERE op.[OrgId] = o.[OrgId] AND op.[IsDeleted] = 0) AS [ProductCount]
+            (SELECT COUNT(DISTINCT up.[CFRUserId]) FROM [auth].[UserProduct] AS up WHERE up.[OrgId] = o.[ID] AND ISNULL(up.[IsDeleted], 0) = 0) AS [UserCount],
+            (SELECT COUNT(*) FROM [lic].[OrganizationProduct] AS op WHERE op.[CFROrgId] = o.[ID] AND op.[IsDeleted] = 0) AS [ProductCount]
         FROM [core].[Organization] AS o
         WHERE o.[IsDeleted] = 0
         ORDER BY o.[OrgName];
@@ -171,24 +100,20 @@ BEGIN
     IF @ActionId = 2
     BEGIN
         SELECT
-            o.[OrgId],
+            o.[ID] AS [OrgId],
             o.[OrgName],
-            o.[OrgStatus],
-            o.[OrgType],
+            o.[OrgState],
+            o.[OrgCountry],
             o.[ContactEmail],
             o.[Website],
             o.[ContactPerson],
             o.[ContactPhone],
-            o.[Address],
-            o.[City],
-            o.[State],
-            o.[Zip],
             o.[InsertedDate],
             o.[UpdatedDate],
-            (SELECT COUNT(DISTINCT up.[CFRUserId]) FROM [auth].[UserProduct] AS up WHERE up.[OrgId] = o.[OrgId] AND ISNULL(up.[IsDeleted], 0) = 0) AS [UserCount],
-            (SELECT COUNT(*) FROM [lic].[OrganizationProduct] AS op WHERE op.[OrgId] = o.[OrgId] AND op.[IsDeleted] = 0) AS [ProductCount]
+            (SELECT COUNT(DISTINCT up.[CFRUserId]) FROM [auth].[UserProduct] AS up WHERE up.[OrgId] = o.[ID] AND ISNULL(up.[IsDeleted], 0) = 0) AS [UserCount],
+            (SELECT COUNT(*) FROM [lic].[OrganizationProduct] AS op WHERE op.[CFROrgId] = o.[ID] AND op.[IsDeleted] = 0) AS [ProductCount]
         FROM [core].[Organization] AS o
-        WHERE o.[OrgId] = @OrgId
+        WHERE o.[ID] = @OrgId
           AND o.[IsDeleted] = 0;
         RETURN 0;
     END
@@ -197,7 +122,7 @@ BEGIN
     BEGIN
         IF NOT EXISTS (
             SELECT 1 FROM [core].[Organization]
-            WHERE [OrgId] = @OrgId AND [IsDeleted] = 0
+            WHERE [ID] = @OrgId AND [IsDeleted] = 0
         )
         BEGIN
             SET @ReturnValue = -99;
@@ -207,43 +132,36 @@ BEGIN
         UPDATE [core].[Organization]
         SET
             [OrgName] = @OrgName,
-            [OrgStatus] = @OrgStatus,
-            [OrgType] = @OrgType,
+            [OrgState] = @OrgState,
+            [OrgCountry] = @OrgCountry,
             [ContactEmail] = @ContactEmail,
             [Website] = @Website,
             [ContactPerson] = @ContactPerson,
             [ContactPhone] = @ContactPhone,
-            [Address] = @Address,
-            [City] = @City,
-            [State] = @State,
-            [Zip] = @Zip,
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UpdatedBy
-        WHERE [OrgId] = @OrgId
+        WHERE [ID] = @OrgId
           AND [IsDeleted] = 0;
 
-        SET @ReturnValue = CAST(@OrgId AS INT);
+        SET @ReturnValue = @OrgId;
         RETURN @ReturnValue;
     END
 
     IF @ActionId = 4
     BEGIN
-        SELECT @OrgId = ISNULL(MAX([OrgId]), 0) + 1 FROM [core].[Organization];
-
         INSERT INTO [core].[Organization]
         (
-            [OrgId], [OrgName], [OrgStatus], [OrgType], [ContactEmail], [Website], [ContactPerson], [ContactPhone],
-            [Address], [City], [State], [Zip],
+            [OrgName], [OrgState], [OrgCountry], [ContactEmail], [Website], [ContactPerson], [ContactPhone],
             [InsertedDate], [InsertedBy], [IsDeleted]
         )
         VALUES
         (
-            @OrgId, @OrgName, @OrgStatus, @OrgType, @ContactEmail, @Website, @ContactPerson, @ContactPhone,
-            @Address, @City, @State, @Zip,
+            @OrgName, @OrgState, @OrgCountry, @ContactEmail, @Website, @ContactPerson, @ContactPhone,
             SYSUTCDATETIME(), @UpdatedBy, 0
         );
 
-        SET @ReturnValue = CAST(@OrgId AS INT);
+        SET @OrgId = CAST(SCOPE_IDENTITY() AS INT);
+        SET @ReturnValue = @OrgId;
         RETURN @ReturnValue;
     END
 
@@ -280,9 +198,9 @@ BEGIN
             (
                 SELECT COUNT(DISTINCT op.[ProductId])
                 FROM [lic].[OrganizationProduct] AS op
-                WHERE op.[OrgId] = @OrgId
+                WHERE op.[CFROrgId] = @OrgId
                   AND op.[IsDeleted] = 0
-                  AND op.[AssignStatus] = N'active'
+                  AND op.[AssignStatus] = 1 -- Active
             ) AS [AppCount],
             (
                 SELECT STRING_AGG(p2.[ProductName], N', ') WITHIN GROUP (ORDER BY p2.[ProductName])
@@ -290,9 +208,9 @@ BEGIN
                 INNER JOIN [core].[Product] AS p2
                     ON p2.[ProductId] = op.[ProductId]
                    AND p2.[IsDeleted] = 0
-                WHERE op.[OrgId] = @OrgId
+                WHERE op.[CFROrgId] = @OrgId
                   AND op.[IsDeleted] = 0
-                  AND op.[AssignStatus] = N'active'
+                  AND op.[AssignStatus] = 1 -- Active
             ) AS [AppNames]
         FROM [auth].[UserProduct] AS up
         LEFT JOIN [auth].[User] AS u ON u.[CFRUserId] = up.[CFRUserId]
@@ -321,7 +239,7 @@ BEGIN
             CASE WHEN op.[ActiveEndDate] >= '9999-01-01' THEN NULL ELSE op.[ActiveEndDate] END AS [ExpiryDate]
         FROM [lic].[OrganizationProduct] AS op
         INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
-        WHERE op.[OrgId] = @OrgId
+        WHERE op.[CFROrgId] = @OrgId
           AND p.[IsDeleted] = 0
         ORDER BY p.[ProductName];
         RETURN 0;
@@ -337,7 +255,7 @@ BEGIN
         WHERE p.[IsDeleted] = 0
           AND NOT EXISTS (
               SELECT 1 FROM [lic].[OrganizationProduct] AS op
-              WHERE op.[OrgId] = @OrgId
+              WHERE op.[CFROrgId] = @OrgId
                 AND op.[ProductId] = p.[ProductId]
           )
         ORDER BY p.[ProductName];
@@ -348,7 +266,7 @@ BEGIN
     BEGIN
         IF EXISTS (
             SELECT 1 FROM [lic].[OrganizationProduct]
-            WHERE [OrgId] = @OrgId AND [ProductId] = @ProductId AND [IsDeleted] = 0
+            WHERE [CFROrgId] = @OrgId AND [ProductId] = @ProductId AND [IsDeleted] = 0
         )
         BEGIN
             SET @ReturnValue = -98;
@@ -357,29 +275,40 @@ BEGIN
 
         IF EXISTS (
             SELECT 1 FROM [lic].[OrganizationProduct]
-            WHERE [OrgId] = @OrgId AND [ProductId] = @ProductId AND [IsDeleted] = 1
+            WHERE [CFROrgId] = @OrgId AND [ProductId] = @ProductId AND [IsDeleted] = 1
         )
         BEGIN
             UPDATE [lic].[OrganizationProduct]
-            SET [AssignStatus] = 'active',
+            SET [AssignStatus] = 1, -- Active
                 [CreatedDate] = SYSUTCDATETIME(),
                 [ActiveStartDate] = SYSUTCDATETIME(),
                 [ActiveEndDate] = '9999-12-31',
                 [IsDeleted] = 0
-            WHERE [OrgId] = @OrgId AND [ProductId] = @ProductId;
+            WHERE [CFROrgId] = @OrgId AND [ProductId] = @ProductId;
         END
         ELSE
         BEGIN
             -- ActiveStartDate/ActiveEndDate are NOT NULL with no default; '9999-12-31' is the
             -- open-ended "no defined end" sentinel until real assignment terms are tracked.
+            -- ProductOrgId has no external-product-system value available here yet — defaulted to
+            -- @OrgId until the individual product integrations supply their own org id.
+            -- OrgName/OrgState/OrgCountry/ContactEmail/ContactPerson/ContactPhone are snapshotted
+            -- from [core].[Organization] at assignment time (OrganizationProduct carries its own
+            -- per-product copy of these). OrgStatus is set to 1/Active alongside AssignStatus.
+            -- Address/City/State/Zip have no source at this point — Organization no longer
+            -- carries them — left NULL until set some other way.
             INSERT INTO [lic].[OrganizationProduct]
             (
-                [OrgId], [ProductId], [AssignStatus], [ActiveStartDate], [ActiveEndDate], [CreatedDate], [IsDeleted]
+                [CFROrgId], [ProductOrgId], [ProductId],
+                [OrgName], [OrgState], [OrgCountry], [ContactEmail], [ContactPerson], [ContactPhone],
+                [OrgStatus], [AssignStatus], [ActiveStartDate], [ActiveEndDate], [CreatedDate], [IsDeleted]
             )
-            VALUES
-            (
-                @OrgId, @ProductId, 'active', SYSUTCDATETIME(), '9999-12-31', SYSUTCDATETIME(), 0
-            );
+            SELECT
+                @OrgId, @OrgId, @ProductId,
+                O.[OrgName], O.[OrgState], O.[OrgCountry], O.[ContactEmail], O.[ContactPerson], O.[ContactPhone],
+                1, 1, SYSUTCDATETIME(), '9999-12-31', SYSUTCDATETIME(), 0
+            FROM [core].[Organization] O
+            WHERE O.[ID] = @OrgId;
         END
 
         SET @ReturnValue = CAST(@ProductId AS INT);
@@ -390,20 +319,19 @@ BEGIN
     BEGIN
         IF NOT EXISTS (
             SELECT 1 FROM [lic].[OrganizationProduct]
-            WHERE [OrgId] = @OrgId AND [ProductId] = @ProductId AND [IsDeleted] = 0
+            WHERE [CFROrgId] = @OrgId AND [ProductId] = @ProductId AND [IsDeleted] = 0
         )
         BEGIN
             SET @ReturnValue = -99;
             RETURN @ReturnValue;
         END
 
-        -- CK__Organizat__Assig__436BFEE3 only allows 'active' / 'suspended' / 'revoked' on
-        -- [AssignStatus] — confirmed against the live database — so Deactivate uses 'revoked',
-        -- not 'inactive'.
+        -- The check constraint only allows Active(1) / Suspended(2) / Revoked(3) on
+        -- [AssignStatus] — Deactivate uses Revoked(3), not an "Inactive" code.
         UPDATE [lic].[OrganizationProduct]
-        SET [AssignStatus] = 'revoked',
+        SET [AssignStatus] = 3, -- Revoked
             [IsDeleted] = 1
-        WHERE [OrgId] = @OrgId AND [ProductId] = @ProductId;
+        WHERE [CFROrgId] = @OrgId AND [ProductId] = @ProductId;
 
         SET @ReturnValue = CAST(@ProductId AS INT);
         RETURN @ReturnValue;
@@ -425,7 +353,7 @@ BEGIN
         FROM [lic].[License] AS l
         INNER JOIN [lic].[OrganizationProduct] AS op ON op.[OrganizationProductId] = l.[OrganizationProductId]
         INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
-        WHERE op.[OrgId] = @OrgId
+        WHERE op.[CFROrgId] = @OrgId
           AND op.[IsDeleted] = 0
         ORDER BY l.[CreatedDate] DESC;
         RETURN 0;
@@ -439,7 +367,7 @@ BEGIN
         SELECT
             l.[LicenseId],
             l.[OrganizationProductId],
-            op.[OrgId],
+            op.[CFROrgId] AS [OrgId],
             o.[OrgName],
             p.[ProductId],
             p.[ProductName],
@@ -452,7 +380,7 @@ BEGIN
         FROM [lic].[License] AS l
         INNER JOIN [lic].[OrganizationProduct] AS op ON op.[OrganizationProductId] = l.[OrganizationProductId]
         INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
-        INNER JOIN [core].[Organization] AS o ON o.[OrgId] = op.[OrgId]
+        INNER JOIN [core].[Organization] AS o ON o.[ID] = op.[CFROrgId]
         WHERE op.[IsDeleted] = 0
         ORDER BY l.[CreatedDate] DESC;
         RETURN 0;
@@ -510,9 +438,9 @@ BEGIN
             p.[SubCategoryName]
         FROM [lic].[OrganizationProduct] AS op
         INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId] AND p.[IsDeleted] = 0
-        WHERE op.[OrgId] = @OrgId
+        WHERE op.[CFROrgId] = @OrgId
           AND op.[IsDeleted] = 0
-          AND op.[AssignStatus] = N'active'
+          AND op.[AssignStatus] = 1 -- Active
         ORDER BY p.[ProductName];
 
         RETURN 0;

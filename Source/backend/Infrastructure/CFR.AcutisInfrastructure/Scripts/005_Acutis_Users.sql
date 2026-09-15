@@ -266,12 +266,14 @@ BEGIN
 
     IF @ActionId = 5
     BEGIN
+        -- Organization no longer has its own OrgStatus (moved to per-product OrganizationProduct
+        -- rows as of 016_Acutis_Organization_Rebuild.sql) — this lookup no longer filters by
+        -- status, it lists every non-deleted organization.
         SELECT
-            CAST(o.[OrgId] AS INT) AS [OrganizationId],
+            o.[ID] AS [OrganizationId],
             o.[OrgName] AS [Name]
         FROM [core].[Organization] AS o
         WHERE o.[IsDeleted] = 0
-          AND o.[OrgStatus] = N'active'
         ORDER BY o.[OrgName];
 
         SELECT r.[RoleId], r.[RoleName]
