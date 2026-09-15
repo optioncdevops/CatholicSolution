@@ -93,7 +93,7 @@ const normalizeHubSection = (value: unknown, row: Record<string, unknown>): HubS
   if (raw === 'available') return 'available';
   if (HUB_SECTIONS.includes(raw as HubSectionValue)) return raw as HubSectionValue;
 
-  // The member Hub endpoint (AccessRequest_CRUD ActionId 6) always sends hubSection, but the
+  // The member Hub endpoint (AccessRequestManage ActionId 6) always sends hubSection, but the
   // admin catalog endpoint (Products/GetProducts, used by the public Request Access page and
   // the sign-in showcase) does not - it only sends ProductStatus/IsActive. Without this, every
   // row from that endpoint fell through to 'future' regardless of its real status.

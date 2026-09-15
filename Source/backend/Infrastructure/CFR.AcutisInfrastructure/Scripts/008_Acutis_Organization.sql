@@ -23,8 +23,8 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
-IF OBJECT_ID(N'[dbo].[Acutis_Organization_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_Organization_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_Organization]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_Organization];
 GO
 
 -- ActionId 1: Get list of organizations, with real user/product counts.
@@ -56,7 +56,7 @@ GO
 -- ActionId 14: Get one member's organization-membership detail (from [auth].[UserProduct]) plus
 -- their effective app access within this organization, for the Organization Users tab's
 -- user-detail view.
-CREATE PROCEDURE [dbo].[Acutis_Organization_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_Organization]
     @ActionId INT,
     @OrgId INT = 0,
     @OrgName NVARCHAR(255) = NULL,
@@ -179,7 +179,7 @@ BEGIN
         -- AppCount only counts products the ORGANIZATION currently has active
         -- (lic.OrganizationProduct) AND that this specific member is individually assigned
         -- (auth.UserProduct) — same org-aware gate as the App Hub's "Your Apps"
-        -- (request.AccessRequest_CRUD ActionId 6).
+        -- (request.AccessRequestManage ActionId 6).
         SELECT
             up.[CFRUserId] AS [AuthUserId],
             u.[Email],

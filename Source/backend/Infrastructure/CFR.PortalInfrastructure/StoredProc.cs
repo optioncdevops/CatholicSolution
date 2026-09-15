@@ -26,17 +26,17 @@ namespace CFR.PortalInfrastructure
             /// <summary>
             /// Assigned products, launch-code create, and code exchange.
             /// </summary>
-            public const string CFRLaunchCrud = "[dbo].[Portal_CFRLaunch_CRUD]";
+            public const string CFRLaunchCrud = "[dbo].[Portal_CFRLaunch]";
         }
 
         public class Administration
         {
-            public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates_CRUD]";
+            public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates]";
         }
 
         public class Requests
         {
-            public const string AccessRequestCrud = "[request].[AccessRequest_CRUD]";
+            public const string AccessRequestCrud = "[request].[AccessRequestManage]";
         }
     }
 }

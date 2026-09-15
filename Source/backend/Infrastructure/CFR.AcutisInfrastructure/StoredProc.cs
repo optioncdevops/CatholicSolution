@@ -20,7 +20,7 @@ namespace CFR.AcutisInfrastructure
             /// <summary>
             /// Requests and completes password reset token operations for an Acutis user.
             /// </summary>
-            public const string PasswordResetCrud = "[dbo].[Acutis_PasswordReset_CRUD]";
+            public const string PasswordResetCrud = "[dbo].[Acutis_PasswordReset]";
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace CFR.AcutisInfrastructure
             /// <summary>
             /// Get, update, and change-password operations for the signed-in user's own account.
             /// </summary>
-            public const string ProfileCrud = "[dbo].[Acutis_Profile_CRUD]";
+            public const string ProfileCrud = "[dbo].[Acutis_Profile]";
         }
 
         /// <summary>
@@ -42,17 +42,17 @@ namespace CFR.AcutisInfrastructure
             /// <summary>
             /// Users list, get, save, status, and lookup operations.
             /// </summary>
-            public const string UsersCrud = "[dbo].[Acutis_Users_CRUD]";
+            public const string UsersCrud = "[dbo].[Acutis_Users]";
 
             /// <summary>
             /// User roles list, get, save, status, and delete operations.
             /// </summary>
-            public const string UserRolesCrud = "[dbo].[Acutis_UserRoles_CRUD]";
+            public const string UserRolesCrud = "[dbo].[Acutis_UserRoles]";
 
             /// <summary>
             /// Email templates list, get by id, get by code, and save operations.
             /// </summary>
-            public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates_CRUD]";
+            public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates]";
 
             /// <summary>
             /// Reads the role/module catalog and per-role feature grants for the User Rights
@@ -79,7 +79,7 @@ namespace CFR.AcutisInfrastructure
             /// Header RequestStatus: 1=pending, 2=in_review, 3=completed, 4=cancelled.
             /// Line LineStatus: 1=pending, 2=approved, 3=rejected.
             /// </summary>
-            public const string AccessRequestCrud = "[request].[AccessRequest_CRUD]";
+            public const string AccessRequestCrud = "[request].[AccessRequestManage]";
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace CFR.AcutisInfrastructure
             /// <summary>
             /// Organization list, get by id, and update operations.
             /// </summary>
-            public const string OrganizationCrud = "[dbo].[Acutis_Organization_CRUD]";
+            public const string OrganizationCrud = "[dbo].[Acutis_Organization]";
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace CFR.AcutisInfrastructure
             /// <summary>
             /// Products and License unified CRUD operations.
             /// </summary>
-            public const string ProductsCrud = "[dbo].[Acutis_Products_CRUD]";
+            public const string ProductsCrud = "[dbo].[Acutis_Products]";
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace CFR.AcutisInfrastructure
             /// Authoritative dashboard summary: platform KPIs, entitlement integrity metrics, and
             /// trend events for a date range. ActionId 1=get summary.
             /// </summary>
-            public const string DashboardCrud = "[dbo].[Acutis_Dashboard_CRUD]";
+            public const string DashboardCrud = "[dbo].[Acutis_Dashboard]";
         }
     }
 }

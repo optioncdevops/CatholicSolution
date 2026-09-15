@@ -2,9 +2,9 @@
 -- Documentation only — no schema objects are created, altered, or dropped by this file.
 --
 -- Ad-hoc verification queries for the CFR Admin Dashboard's authoritative data sources
--- ([dbo].[Acutis_Dashboard_CRUD], see 014_Acutis_DashboardSummary.sql) and for the
+-- ([dbo].[Acutis_Dashboard], see 014_Acutis_DashboardSummary.sql) and for the
 -- [auth.UserProduct] + [lic.OrganizationProduct] approval-provisioning logic in
--- [dbo].[Acutis_AccessRequest_CRUD] ActionId 2 (see 008_AccessRequest.sql).
+-- [request].[AccessRequestManage] ActionId 2 (see 008_AccessRequest.sql).
 --
 -- Each section below is a self-contained batch (separated by GO) so it can be selected and run
 -- on its own in SSMS/Azure Data Studio. Before running section 1, 2, or 3, replace the literal
@@ -100,7 +100,7 @@ GO
 
 -- =============================================================================================
 -- 5) Find every currently-inconsistent grant across the whole platform (the same 8 conditions
---    [dbo].[Acutis_Dashboard_CRUD] ActionId 1 counts for the Access Integrity panel — this
+--    [dbo].[Acutis_Dashboard] ActionId 1 counts for the Access Integrity panel — this
 --    section lists the actual offending rows instead of just a count). No parameters needed.
 -- =============================================================================================
 
@@ -174,7 +174,7 @@ GO
 --    layers — useful for confirming the SQL itself before wiring up the .NET stack, or for
 --    diagnosing a summary API failure). Adjust the date range as needed.
 -- =============================================================================================
-EXEC [dbo].[Acutis_Dashboard_CRUD]
+EXEC [dbo].[Acutis_Dashboard]
     @ActionId = 1,
     @StartDate = '2026-08-01T00:00:00',
     @EndDate = '2026-09-08T23:59:59';

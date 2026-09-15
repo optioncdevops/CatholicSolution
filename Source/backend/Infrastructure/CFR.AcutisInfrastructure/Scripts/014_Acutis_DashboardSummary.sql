@@ -19,7 +19,7 @@
 --   Licenses                     -> [lic].[License] (LicenseStatus, ExpiryDate) joined to
 --                                   [lic].[OrganizationProduct]
 --   Access requests              -> [request].[AccessRequest] + [request].[AccessRequestProduct]
---                                   (same derived-status rule as AccessRequest_CRUD ActionId 3/4:
+--                                   (same derived-status rule as AccessRequestManage ActionId 3/4:
 --                                   header RequestStatus=2 + line LineStatus=1 => info-requested;
 --                                   LineStatus=2 => approved; LineStatus=3 => rejected; else pending)
 --
@@ -30,15 +30,15 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
-IF OBJECT_ID(N'[dbo].[Acutis_Dashboard_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_Dashboard_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_Dashboard]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_Dashboard];
 GO
 
 -- ActionId 1: Get summary — three result sets: (1) platform KPIs, one row; (2) entitlement
 -- integrity metrics, one row; (3) raw trend events within [@StartDate, @EndDate], one row per
 -- event, for the frontend to bucket (daily/weekly/monthly) the same way it already buckets
 -- client-loaded data today.
-CREATE PROCEDURE [dbo].[Acutis_Dashboard_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_Dashboard]
     @ActionId INT,
     @StartDate DATETIME2 = NULL,
     @EndDate DATETIME2 = NULL,
@@ -144,7 +144,7 @@ BEGIN
             WHERE ar.[IsDeleted] = 0
         )
         -- Result set 2: Entitlement integrity metrics (one row). Every count here is a
-        -- should-never-happen condition once AccessRequest_CRUD ActionId 2 correctly provisions
+        -- should-never-happen condition once AccessRequestManage ActionId 2 correctly provisions
         -- access on approval — non-zero values indicate real data drift, not normal operation.
         SELECT
             -- Approved requests that never got an active org-level assignment.

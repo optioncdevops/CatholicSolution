@@ -5,7 +5,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
     /// <summary>
     /// Dapper implementation of IProductsRepository for the Products module.
     /// Infrastructure Responsibility:
-    /// - Uses IDapperHandler to execute the [dbo].[Acutis_Products_CRUD] stored procedure.
+    /// - Uses IDapperHandler to execute the [dbo].[Acutis_Products] stored procedure.
     /// - Stamps InsertedBy / UpdatedBy from ICurrentUserService.UserId.
     /// </summary>
     public class ProductsRepository(IDapperHandler dapperHandler, ICurrentUserService currentUserService): IProductsRepository

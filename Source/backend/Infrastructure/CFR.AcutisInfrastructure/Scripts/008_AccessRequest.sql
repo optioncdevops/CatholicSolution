@@ -60,8 +60,8 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID(N'[request].[AccessRequest_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [request].[AccessRequest_CRUD];
+IF OBJECT_ID(N'[request].[AccessRequestManage]', N'P') IS NOT NULL
+    DROP PROCEDURE [request].[AccessRequestManage];
 GO
 
 -- ActionId 1: Save (insert header, product line, history, optional member comment).
@@ -69,13 +69,13 @@ GO
 -- part of the same transaction — activates/creates the org's [lic].[OrganizationProduct] row and
 -- the requester's [auth].[UserProduct] row for this product — not just a status flag. Without
 -- this the request could be "approved" yet the product would never appear in the member's App
--- Hub / launch flow, since ActionId 6 and Portal_CFRLaunch_CRUD gate purely on those two tables.
+-- Hub / launch flow, since ActionId 6 and Portal_CFRLaunch gate purely on those two tables.
 -- ActionId 3: Get by AccessRequestId (header, timeline, comments).
 -- ActionId 4: Get list.
 -- ActionId 5: Recipients for the AccessRequested email, matched by product name/id.
 -- ActionId 6: App Hub products. [auth].[User] by email -> [auth].[UserProduct] -> [core].[Product].
 -- ActionId 7: Public Request Access save (create/reuse org with address, request header, product lines).
-CREATE PROCEDURE [request].[AccessRequest_CRUD]
+CREATE PROCEDURE [request].[AccessRequestManage]
     @ActionId INT,
     @AccessRequestId BIGINT = 0,
     @ProductId INT = NULL,
@@ -617,15 +617,15 @@ BEGIN
               AND [IsDeleted] = 0;
 
             -- Approving a request must actually GRANT access, not just flip a status flag —
-            -- both gates that [request].[AccessRequest_CRUD] ActionId 6 (App Hub) and
-            -- Portal_CFRLaunch_CRUD check have to be satisfied: an active [lic].[OrganizationProduct]
+            -- both gates that [request].[AccessRequestManage] ActionId 6 (App Hub) and
+            -- Portal_CFRLaunch check have to be satisfied: an active [lic].[OrganizationProduct]
             -- row for the org+product, and an [auth].[UserProduct] row for the member+org+product.
             -- CFRUserId/OrgId are never taken from the client — both come from [request].[AccessRequest]
             -- via @AccessRequestId, resolved above into @HeaderRequestedBy/@HeaderOrgId.
             IF @Status = N'approved'
             BEGIN
-                -- 1) Organization-level license/assignment (mirrors AccessRequest_CRUD's own
-                --    sibling pattern in Acutis_Organization_CRUD ActionId 8 — same columns, same
+                -- 1) Organization-level license/assignment (mirrors AccessRequestManage's own
+                --    sibling pattern in Acutis_Organization ActionId 8 — same columns, same
                 --    active/reactivate/insert shape).
                 SELECT @ExistingOrgProductId = [OrganizationProductId], @ExistingOrgProductIsDeleted = [IsDeleted]
                 FROM [lic].[OrganizationProduct]

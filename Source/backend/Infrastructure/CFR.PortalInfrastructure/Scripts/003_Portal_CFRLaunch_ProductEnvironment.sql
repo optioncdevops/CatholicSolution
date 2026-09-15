@@ -4,7 +4,7 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
-CREATE OR ALTER PROCEDURE [dbo].[Portal_CFRLaunch_CRUD]
+CREATE OR ALTER PROCEDURE [dbo].[Portal_CFRLaunch]
     @ActionId INT,
     @CFRUserId INT = NULL,
     @ProductId INT = NULL,

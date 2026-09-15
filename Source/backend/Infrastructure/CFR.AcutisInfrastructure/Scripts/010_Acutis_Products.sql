@@ -25,11 +25,11 @@ SET QUOTED_IDENTIFIER ON;
 
 GO
 
-IF OBJECT_ID(N'[dbo].[Acutis_Products_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_Products_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_Products]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_Products];
 GO
 
-CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_Products]
     @ActionId INT,
     -- Product Parameters
     @ProductId INT = 0,

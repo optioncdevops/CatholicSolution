@@ -52,7 +52,7 @@ END
 GO
 
 -- A soft-deleted user's email must not block re-registering that same address: the app-level
--- duplicate check in Acutis_Users_CRUD already scopes to IsDeleted = 0, but the table also carries
+-- duplicate check in Acutis_Users already scopes to IsDeleted = 0, but the table also carries
 -- a plain (non-filtered) unique constraint on Email from its original creation, which still blocks
 -- it at the database level. Replace it with a filtered unique index, same pattern as
 -- UQ_ModuleRights_RoleTemplate above.
@@ -100,11 +100,11 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID(N'[dbo].[Acutis_Users_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_Users_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_Users]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_Users];
 GO
 
-CREATE PROCEDURE [dbo].[Acutis_Users_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_Users]
     @ActionId INT,
     @UserId BIGINT = 0,
     @FirstName NVARCHAR(100) = NULL,
