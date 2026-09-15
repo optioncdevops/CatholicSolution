@@ -7,7 +7,7 @@ namespace CFR.AcutisInfrastructure.Models.Output
     /// <summary>
     /// Output DTO mapped from stored procedure StoredProc.Dashboard.DashboardCrud (ActionId 1,
     /// result set 2). One row of entitlement-integrity counts — every count here represents a
-    /// condition that should never occur once AccessRequest_CRUD ActionId 2 correctly provisions
+    /// condition that should never occur once AccessRequestManage ActionId 2 correctly provisions
     /// [lic].[OrganizationProduct] and [auth].[UserProduct] on approval; a non-zero value is real
     /// data drift, not routine dashboard noise, and must never be shown as "all clear".
     /// </summary>

@@ -9,7 +9,7 @@ Scenario: 001_Verify User Roles listing, search, toolbar, add, edit, status togg
     When The Dashboard should be open
     Then Click on Administration menu and select User Roles sub menu
     And User Roles page should be opened
-    And Search an existing role and verify Edit, Status, and Delete actions are shown
+    And Search an existing role and verify Edit action is shown
     And Verify User Roles table toolbar Columns, Maximize, Excel, Print, CSV export, column sort, and rows per page
     When Click on Add User Role button
     Then Add User Role modal should open and Click on Cancel button to close

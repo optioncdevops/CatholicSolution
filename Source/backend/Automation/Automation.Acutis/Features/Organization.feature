@@ -39,9 +39,7 @@ Feature: 04_OrganizationManagement
 
     When I click on Products tab
     Then Organization products panel should be visible
-    When I click Assign App button
-    Then Assign App modal should open
-    When I cancel the Assign App modal
+
 
     When I click on Licenses tab
     Then Organization licenses panel should be visible

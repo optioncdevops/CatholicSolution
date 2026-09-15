@@ -39,7 +39,7 @@ namespace Automation.Framework.ViperPages.Organizations
             FindElementByXPath(XPath_Organizations.ContactEmail, contactEmail);
             FindElementByXPath(XPath_Organizations.Address, address);
             FindElementByXPath(XPath_Organizations.City, city);
-            FindElementByXPath(XPath_Organizations.State, state);
+            SelectDropdownOption("state", state);
             FindElementByXPath(XPath_Organizations.Zip, zip);
         }
 

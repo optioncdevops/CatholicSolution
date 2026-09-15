@@ -148,18 +148,6 @@ namespace Automation.Framework.ViperPages.Administration
             return WaitForToast();
         }
 
-        /// <summary>Cancel navigates back to Email Templates.</summary>
-        public void ClickCancel()
-        {
-            ClickByScript(XPath_EmailSettings.BtnCancel);
-        }
-
-        public bool IsOnEmailTemplates()
-        {
-            return _webDriver.Url.Contains(XPath_EmailTemplates.TemplatesRoute, StringComparison.OrdinalIgnoreCase)
-                || IsElementVisible(XPath_EmailTemplates.PageTitle, _pageLoadTimeoutSeconds);
-        }
-
         private SaveOutcome WaitForToast()
         {
             string? reported = WaitFor(

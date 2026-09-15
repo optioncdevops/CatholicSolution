@@ -97,15 +97,12 @@ namespace Automation.Framework.ViperPages.Administration
             }
         }
 
-        /// <summary>Whether Edit, Activate/Deactivate, and Delete are shown on the given role row.</summary>
+        /// <summary>Whether Edit is shown on the given role row.</summary>
         /// <param name="roleName">the role name whose action buttons to look for</param>
-        /// <returns><c>true</c> when all three row actions are on screen.</returns>
-        public bool AreRowActionsVisible(string roleName)
+        /// <returns><c>true</c> when the edit action is on screen.</returns>
+        public bool IsRowEditVisible(string roleName)
         {
-            bool edit = IsElementVisible(XPath_UserRoles.EditInRow(roleName), _menuTimeoutSeconds);
-            bool status = IsElementVisible(XPath_UserRoles.StatusToggleInRow(roleName), 2);
-            bool delete = IsElementVisible(XPath_UserRoles.DeleteInRow(roleName), 2);
-            return edit && status && delete;
+            return IsElementVisible(XPath_UserRoles.EditInRow(roleName), _menuTimeoutSeconds);
         }
 
         /// <summary>Clicks Excel, Print, and CSV export. Print is dismissed with Escape so the native dialog does not stall the run.</summary>

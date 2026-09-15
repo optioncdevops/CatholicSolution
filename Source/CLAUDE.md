@@ -62,7 +62,7 @@ Client -> {Feature}Controller (HTTP only, one-line return, BaseController.ApiRes
        -> SQL Server stored procedure
 ```
 
-A single stored procedure is commonly reused for a whole CRUD surface via an `ActionId` discriminator parameter (see `Acutis_Users_CRUD` / `UsersRepository.cs` — ActionId 1=save, 2=status update, 3=get by id, 4=list, 5=lookups) rather than one stored procedure per action. Follow that convention when extending an existing feature; check the skill file's per-action stored-procedure naming when creating a brand-new feature.
+A single stored procedure is commonly reused for a whole CRUD surface via an `ActionId` discriminator parameter (see `Acutis_Users` / `UsersRepository.cs` — ActionId 1=save, 2=status update, 3=get by id, 4=list, 5=lookups) rather than one stored procedure per action. Follow that convention when extending an existing feature; check the skill file's per-action stored-procedure naming when creating a brand-new feature.
 
 Controllers never hard-code route/action strings — they use `[ActionName(API_{Module}.{Name})]` constants from `CFR.Common/APIActionName.cs`. Route shape is `api/v1/{Controller}/{Action}` (`BaseController` already sets the controller route).
 

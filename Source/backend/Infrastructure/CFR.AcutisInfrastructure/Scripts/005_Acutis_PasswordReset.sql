@@ -6,11 +6,11 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
-IF OBJECT_ID(N'[dbo].[Acutis_PasswordReset_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_PasswordReset_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_PasswordReset]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_PasswordReset];
 GO
 
-CREATE PROCEDURE [dbo].[Acutis_PasswordReset_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_PasswordReset]
     @ActionId INT,
     @Email NVARCHAR(256) = NULL,
     @TokenHash NVARCHAR(128) = NULL,
@@ -106,7 +106,7 @@ BEGIN
     END
 
     -- ActionId 2: Complete a password reset. Validates the token hash is unused and unexpired,
-    -- updates the password (encrypted the same way as Acutis_Users_CRUD), and marks the token
+    -- updates the password (encrypted the same way as Acutis_Users), and marks the token
     -- consumed so it cannot be replayed.
     -- Claiming the token is a single atomic UPDATE (not a SELECT followed by a separate UPDATE) —
     -- SQL Server row-locks the matched row for the duration of the UPDATE, so two concurrent

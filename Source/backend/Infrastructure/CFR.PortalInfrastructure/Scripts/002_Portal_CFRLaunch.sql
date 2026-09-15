@@ -25,9 +25,9 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID(N'[dbo].[Portal_Sso_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Portal_Sso_CRUD];
+IF OBJECT_ID(N'[dbo].[Portal_Sso]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Portal_Sso];
 GO
 
--- [dbo].[Portal_CFRLaunch_CRUD] is owned by 001_Portal_Sso.sql / 003_Portal_CFRLaunch_ProductEnvironment.sql.
+-- [dbo].[Portal_CFRLaunch] is owned by 001_Portal_Sso.sql / 003_Portal_CFRLaunch_ProductEnvironment.sql.
 -- Do not recreate it here or a later 003 apply would be undone by re-running 002.

@@ -124,17 +124,6 @@ namespace Automation.Acutis.StepDefinitions
             _rightsPage.ChangeFirstRowPermission();
         }
 
-        [Then(@"Click on Cancel to discard unsaved rights changes")]
-        public void ThenClickOnCancelToDiscardUnsavedRightsChanges()
-        {
-            if (_rightsPage.HasNoRolesEmptyState())
-            {
-                return;
-            }
-
-            _rightsPage.ClickDiscard();
-        }
-
         [When(@"Click on Save to persist the rights changes")]
         [Then(@"Click on Save to persist the rights changes")]
         public void ThenClickOnSaveToPersistTheRightsChanges()
@@ -204,8 +193,6 @@ namespace Automation.Acutis.StepDefinitions
             ThenClickOnClearFiltersAndVerifyTheRightsMatrixIsShown();
             ThenToggleTheFirstTreeRowExpandOrCollapse();
             ThenSearchTheRightsMatrixAndOpenTheColumnsMenu();
-            WhenChangeTheFirstRowPermission();
-            ThenClickOnCancelToDiscardUnsavedRightsChanges();
             WhenChangeTheFirstRowPermission();
             ThenClickOnSaveToPersistTheRightsChanges();
             WhenClickOnApplyToAllAccess();

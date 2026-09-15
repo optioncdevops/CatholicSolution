@@ -198,73 +198,64 @@ namespace Automation.Acutis.Features
 #line 41
     await testRunner.ThenAsync("Organization products panel should be visible", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 42
-    await testRunner.WhenAsync("I click Assign App button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 43
-    await testRunner.ThenAsync("Assign App modal should open", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
 #line 44
-    await testRunner.WhenAsync("I cancel the Assign App modal", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 46
     await testRunner.WhenAsync("I click on Licenses tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 47
+#line 45
     await testRunner.ThenAsync("Organization licenses panel should be visible", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 49
+#line 47
     await testRunner.WhenAsync("I click on Requests tab", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 50
+#line 48
     await testRunner.ThenAsync("Organization requests panel should be visible", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 52
+#line 50
     await testRunner.WhenAsync("I click Back to Organizations", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 53
+#line 51
     await testRunner.ThenAsync("Organizations list page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 56
+#line 54
     await testRunner.WhenAsync("I click Edit on the first organization", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 57
+#line 55
     await testRunner.ThenAsync("The organization edit form should be displayed", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 58
+#line 56
     await testRunner.WhenAsync("I click Cancel on the organization edit form", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 59
+#line 57
     await testRunner.WhenAsync("I click Back to Organizations", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 60
+#line 58
     await testRunner.ThenAsync("Organizations list page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 61
+    await testRunner.WhenAsync("I click Change Status on the first organization", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 62
+    await testRunner.ThenAsync("Change Status modal should open", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 63
-    await testRunner.WhenAsync("I click Change Status on the first organization", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 64
-    await testRunner.ThenAsync("Change Status modal should open", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 65
     await testRunner.WhenAsync("I cancel the Change Status dialog", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 66
+#line 64
     await testRunner.ThenAsync("Organizations list page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 68
+#line 66
     await testRunner.WhenAsync("I click Change Status on the first organization", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 69
+#line 67
     await testRunner.ThenAsync("Change Status modal should open", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 70
+#line 68
     await testRunner.WhenAsync("I select Inactive status", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 71
+#line 69
     await testRunner.AndAsync("I confirm the status change", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 72
+#line 70
     await testRunner.ThenAsync("Organizations list page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }

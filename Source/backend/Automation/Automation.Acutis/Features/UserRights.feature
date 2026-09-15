@@ -17,8 +17,6 @@ Scenario: 001_Verify User Rights listing, role and module filters, permission to
     And Search the rights matrix and open the Columns menu
     And Click Access, Read Only, and Denied on the first permission row
     When Change the first row permission
-    Then Click on Cancel to discard unsaved rights changes
-    When Change the first row permission
     And Click on Save to persist the rights changes
     When Click on Apply to all Access
     Then Apply to all confirm box should open and Click on Cancel

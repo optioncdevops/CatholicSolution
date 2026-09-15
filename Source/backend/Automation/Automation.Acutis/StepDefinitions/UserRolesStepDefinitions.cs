@@ -31,8 +31,8 @@ namespace Automation.Acutis.StepDefinitions
             Assert.That(_rolesPage.WaitForRolesList(), Is.True, "The User Roles page did not open from the menu.");
         }
 
-        [Then(@"Search an existing role and verify Edit, Status, and Delete actions are shown")]
-        public void ThenSearchAnExistingRoleAndVerifyEditStatusAndDeleteActionsAreShown()
+        [Then(@"Search an existing role and verify Edit action is shown")]
+        public void ThenSearchAnExistingRoleAndVerifyEditActionIsShown()
         {
             string existing = Roles.ExistingRoleSearch ?? "Admin";
             if (!_rolesPage.IsToolbarVisible())
@@ -45,9 +45,9 @@ namespace Automation.Acutis.StepDefinitions
                 Is.True,
                 $"The existing role '{existing}' is not in the list.");
             Assert.That(
-                _rolesPage.AreRowActionsVisible(existing),
+                _rolesPage.IsRowEditVisible(existing),
                 Is.True,
-                $"Edit, Activate/Deactivate, or Delete is missing on the '{existing}' row.");
+                $"Edit action is missing on the '{existing}' row.");
             _rolesPage.ClearSearch();
         }
 
@@ -176,7 +176,7 @@ namespace Automation.Acutis.StepDefinitions
         {
             ThenClickOnAdministrationMenuAndSelectUserRolesSubMenu();
             ThenUserRolesPageShouldBeOpened();
-            ThenSearchAnExistingRoleAndVerifyEditStatusAndDeleteActionsAreShown();
+            ThenSearchAnExistingRoleAndVerifyEditActionIsShown();
             ThenVerifyUserRolesTableToolbarColumnsMaximizeExcelPrintCsvExportColumnSortAndRowsPerPage();
             WhenClickOnAddUserRoleButton();
             ThenAddUserRoleModalShouldOpenAndClickOnCancelButtonToClose();

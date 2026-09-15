@@ -532,7 +532,6 @@ namespace Automation.Framework.ViperPages
             public const string ApplyAllReadOnly = "//button[@id='btnApplyAllReadOnly']";
             public const string ApplyAllDenied = "//button[@id='btnApplyAllDenied']";
             public const string Save = "//button[@id='btnSaveUserRights']";
-            public const string Cancel = "//button[@id='btnCancelUserRights']";
             public const string RightsTable = "//*[@id='tblUserRights']";
             public const string FirstAccessButton = "(//div[@role='group' and starts-with(@aria-label, 'Access for ')]//button[.//span[normalize-space()='Access'] or normalize-space()='Access'])[1]";
             public const string FirstReadOnlyButton = "(//div[@role='group' and starts-with(@aria-label, 'Access for ')]//button[.//span[normalize-space()='Read Only'] or normalize-space()='Read Only'])[1]";
@@ -599,10 +598,7 @@ namespace Automation.Framework.ViperPages
             public const string ChangeStatusCancelBtn = "//*[@role='dialog']//button[normalize-space()='Cancel']";
             public const string ChangeStatusContinueBtn = "//*[@role='dialog']//button[normalize-space()='Continue']";
             public const string ConfirmStatusChangeBtn = "//*[@role='dialog']//button[normalize-space()='Confirm status change']";
-            // Assign App modal (on Products tab of detail page)
-            public const string AssignAppBtn = "//button[contains(normalize-space(), 'Assign App')]";
-            public const string AssignAppModal = "//*[@role='dialog'][.//*[normalize-space()='Assign App']]";
-            public const string AssignAppCancelBtn = "//*[@role='dialog'][.//*[normalize-space()='Assign App']]//button[normalize-space()='Cancel']";
+
             // Back to Organizations button on detail page
             public const string BackToOrganizationsBtn = "//button[contains(normalize-space(), 'Back to Organizations')]";
             // Edit form on detail page (Profile tab in edit mode)
@@ -638,7 +634,6 @@ namespace Automation.Framework.ViperPages
             public const string ColorPickerButton = "//button[@aria-label='Open color picker']";
             public const string EmailLogo = "//*[normalize-space()='Email logo']";
             public const string BtnSave = "//div[contains(@class, 'admin-sticky-footer')]//button[@type='submit' or .//span[normalize-space()='Save']]";
-            public const string BtnCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[.//span[normalize-space()='Cancel']]";
         }
     }
 }

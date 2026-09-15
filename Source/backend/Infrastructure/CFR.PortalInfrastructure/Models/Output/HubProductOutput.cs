@@ -3,7 +3,7 @@
 namespace CFR.PortalInfrastructure.Models.Output
 {
     /// <summary>
-    /// Output DTO for one App Hub product row from AccessRequest_CRUD ActionId 6.
+    /// Output DTO for one App Hub product row from AccessRequestManage ActionId 6.
     /// HubSection is your when the requester email matches [auth].[User] and that user
     /// has a [auth].[UserProduct] row for the product; otherwise available or future.
     /// </summary>

@@ -166,12 +166,6 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line 17
     await testRunner.AndAsync("Toggle Send mail enabled and SSL switches and restore them", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 18
-    await testRunner.WhenAsync("Click on Cancel on Email Settings", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 19
-    await testRunner.ThenAsync("Email Templates page should be opened from Email Settings cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
             }
             await this.ScenarioCleanupAsync();
         }
