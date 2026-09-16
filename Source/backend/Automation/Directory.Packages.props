@@ -37,4 +37,9 @@
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
+  <ItemGroup Label="Database access - test-only seeding/cleanup for ForgotPassword/ResetPassword">
+    <!-- Same version CFR.DBEngine already references, kept in lockstep. -->
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.1" />
+  </ItemGroup>
+
 </Project>

@@ -43,6 +43,24 @@ namespace Automation.Framework.ViperPages.Organizations
             FindElementByXPath(XPath_Organizations.Zip, zip);
         }
 
+        /// <summary>
+        /// Fills the organization name plus deliberately malformed website/phone/email/ZIP
+        /// values, for the format-validation scenario. The name and type are filled with valid
+        /// values so the resulting errors are isolated to the four format checks rather than
+        /// mixed in with the separate required-field errors.
+        /// </summary>
+        /// <param name="orgName">a valid organization name</param>
+        public void FillInvalidFormatValues(string orgName)
+        {
+            FindElementByXPath(XPath_Organizations.OrgName, orgName);
+            Thread.Sleep(500);
+            SelectDropdownOption("orgType", "Other");
+            FindElementByXPath(XPath_Organizations.Website, "not-a-url");
+            FindElementByXPath(XPath_Organizations.ContactPhone, "1");
+            FindElementByXPath(XPath_Organizations.ContactEmail, "not-an-email");
+            FindElementByXPath(XPath_Organizations.Zip, "!!");
+        }
+
         private void SelectDropdownOption(string controlId, string optionText)
         {
             string trigger = $"//div[@role='combobox'][@id='{controlId}']";
@@ -91,6 +109,48 @@ namespace Automation.Framework.ViperPages.Organizations
         public void ClickCancel()
         {
             ClickByScript(XPath_Organizations.BtnCancel);
+        }
+
+        /// <summary>Reads the required-field error shown under the organization name input.</summary>
+        /// <returns>The error text, or an empty string when none appeared in time.</returns>
+        public string ReadOrgNameError()
+        {
+            return FindFirstDisplayed(XPath_Organizations.OrgNameError, 5)?.Text ?? string.Empty;
+        }
+
+        /// <summary>Reads the format error shown under the website input.</summary>
+        /// <returns>The error text, or an empty string when none appeared in time.</returns>
+        public string ReadWebsiteError()
+        {
+            return FindFirstDisplayed(XPath_Organizations.WebsiteError, 5)?.Text ?? string.Empty;
+        }
+
+        /// <summary>Reads the format error shown under the contact phone input.</summary>
+        /// <returns>The error text, or an empty string when none appeared in time.</returns>
+        public string ReadContactPhoneError()
+        {
+            return FindFirstDisplayed(XPath_Organizations.ContactPhoneError, 5)?.Text ?? string.Empty;
+        }
+
+        /// <summary>Reads the format error shown under the contact email input.</summary>
+        /// <returns>The error text, or an empty string when none appeared in time.</returns>
+        public string ReadContactEmailError()
+        {
+            return FindFirstDisplayed(XPath_Organizations.ContactEmailError, 5)?.Text ?? string.Empty;
+        }
+
+        /// <summary>Reads the format error shown under the ZIP input.</summary>
+        /// <returns>The error text, or an empty string when none appeared in time.</returns>
+        public string ReadZipError()
+        {
+            return FindFirstDisplayed(XPath_Organizations.ZipError, 5)?.Text ?? string.Empty;
+        }
+
+        /// <summary>Reads the toast banner shown after a submit attempt (success or validation summary).</summary>
+        /// <returns>The toast text, or an empty string when none appeared in time.</returns>
+        public string ReadToast()
+        {
+            return FindFirstDisplayed(XPath_Organizations.ToastBanner, 10)?.Text ?? string.Empty;
         }
     }
 }

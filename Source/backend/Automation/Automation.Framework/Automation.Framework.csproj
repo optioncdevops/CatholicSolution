@@ -12,6 +12,9 @@
     <PackageReference Include="DotNetSeleniumExtras.PageObjects.Core" />
     <PackageReference Include="ExtentReports" />
     <PackageReference Include="Newtonsoft.Json" />
+    <!-- Test-only DB seeding/cleanup for the ForgotPassword/ResetPassword scenarios - see
+         DbSupport\PasswordResetTokenTestSupport.cs. -->
+    <PackageReference Include="Microsoft.Data.SqlClient" />
   </ItemGroup>
 
 </Project>

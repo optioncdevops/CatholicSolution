@@ -82,6 +82,8 @@ namespace Automation.Framework.ViperPages
             public const string liSaintoftheDay = nameof(liSaintoftheDay);
             public const string liDataImport = nameof(liDataImport);
             public const string menuProfile = nameof(menuProfile);
+            public const string menuItemProfile = nameof(menuItemProfile);
+            public const string menuItemChangePassword = nameof(menuItemChangePassword);
             public const string menuItemSignOut = nameof(menuItemSignOut);
         }
 
@@ -586,32 +588,208 @@ namespace Automation.Framework.ViperPages
             public const string City = "//input[@name='city']";
             public const string State = "//input[@name='state']";
             public const string Zip = "//input[@name='zip']";
+            public const string SearchInput = "//input[@placeholder='Search' or contains(@placeholder, 'Search organizations')]";
             public const string FirstRowViewBtn = "//tbody/tr[1]//button[@aria-label[contains(., 'View')]]";
             public const string FirstRowEditBtn = "//tbody/tr[1]//button[@aria-label[contains(., 'Edit')]]";
             public const string FirstRowChangeStatusBtn = "//tbody/tr[1]//button[@aria-label[contains(., 'Change status')]]";
+            public const string TableRows = "//main//table//tbody/tr[not(contains(@class, 'animate-pulse'))]";
+            public const string EmptyState = "//*[contains(normalize-space(), 'No organizations found')]";
+
+            /// <summary>A list row holding the given organization name, used to act on a specific
+            /// record rather than "whatever the first row happens to be" - important once more
+            /// than one test-created organization can be present at a time.</summary>
+            public static string RowContaining(string orgName) => $"//main//table//tbody/tr[.//*[normalize-space()='{orgName}']]";
+            public static string ViewButtonInRow(string orgName) => $"{RowContaining(orgName)}//button[starts-with(@aria-label, 'View')]";
+            public static string EditButtonInRow(string orgName) => $"{RowContaining(orgName)}//button[starts-with(@aria-label, 'Edit')]";
+            public static string ChangeStatusButtonInRow(string orgName) => $"{RowContaining(orgName)}//button[starts-with(@aria-label, 'Change status')]";
+
+            /// <summary>That row, further narrowed to only match while it also contains the given
+            /// text - used to assert a status badge or other cell value without knowing that
+            /// cell's exact markup, e.g. confirming a row now shows "Inactive" after a status
+            /// change.</summary>
+            public static string RowContainingBoth(string orgName, string additionalText) => $"//main//table//tbody/tr[.//*[normalize-space()='{orgName}']][.//*[contains(normalize-space(), '{additionalText}')]]";
+
             // Change Status modal
             public const string ChangeStatusModal = "//*[@role='dialog'][.//*[contains(normalize-space(), 'Change Status')]]";
             public const string ChangeStatusInactiveOption = "//*[@role='dialog']//button[contains(normalize-space(), 'Inactive')]";
+            public static string ChangeStatusOption(string statusLabel) => $"//*[@role='dialog']//fieldset//button[contains(normalize-space(), '{statusLabel}')]";
             // The status option matching the organization's current status renders disabled -
-            // clicking it is a no-op, so this is the fallback used when Inactive already is the
-            // current status (e.g. a previous run left it there).
+            // clicking it is a no-op, so this is the fallback used when the target status already
+            // is the organization's current status (e.g. a previous run left it there).
             public const string ChangeStatusAnySelectableOption = "//*[@role='dialog']//fieldset//button[not(@disabled)]";
             public const string ChangeStatusCancelBtn = "//*[@role='dialog']//button[normalize-space()='Cancel']";
             public const string ChangeStatusContinueBtn = "//*[@role='dialog']//button[normalize-space()='Continue']";
             public const string ConfirmStatusChangeBtn = "//*[@role='dialog']//button[normalize-space()='Confirm status change']";
-            // Assign App modal (on Products tab of detail page)
-            public const string AssignAppBtn = "//button[contains(normalize-space(), 'Assign App')]";
-            public const string AssignAppModal = "//*[@role='dialog'][.//*[normalize-space()='Assign App']]";
-            public const string AssignAppCancelBtn = "//*[@role='dialog'][.//*[normalize-space()='Assign App']]//button[normalize-space()='Cancel']";
+
+            // Generic confirm dialog (shared confirmAction() component) - used by Unlink and
+            // Deactivate on this page, and reused wherever else the app renders the same pattern.
+            // Matched by role='dialog', NOT the swal2 classes some older pages use, so this only
+            // ever targets confirmAction()'s own dialog, never a SweetAlert2 popup.
+            public static string ConfirmDialog(string titleContains) => $"//*[@role='dialog'][.//*[contains(normalize-space(), '{titleContains}')]]";
+            public static string ConfirmDialogButton(string label) => $"//*[@role='dialog']//button[normalize-space()='{label}']";
+            public const string ConfirmDialogCancelBtn = "//*[@role='dialog']//button[normalize-space()='Cancel']";
+
             // Back to Organizations button on detail page
             public const string BackToOrganizationsBtn = "//button[contains(normalize-space(), 'Back to Organizations')]";
-            // Edit form on detail page (Profile tab in edit mode)
+
+            // Edit form on detail page (Profile tab in edit mode). orgName/orgType render
+            // disabled in this form (see OrganizationProfilePanel.tsx) - website/contactPerson/
+            // address/city/state/zip are the fields actually editable here. contactPerson is a
+            // custom Dropdown in this form specifically (unlike the plain input the Add
+            // Organization page uses for the same field name).
             public const string OrgNameEdit = "//input[@name='orgName']";
+            public const string ProfileWebsiteEdit = "//input[@name='website']";
+            public const string ProfileAddressEdit = "//input[@name='address']";
+            public const string ProfileCityEdit = "//input[@name='city']";
+            public const string ProfileZipEdit = "//input[@name='zip']";
+            public const string ProfileContactPersonDropdown = "//*[contains(normalize-space(), 'Contact person')]/following::div[@role='combobox'][1]";
             public const string EditSaveBtn = "//div[contains(@class, 'admin-sticky-footer')]//button[@type='submit' or .//span[normalize-space()='Save']]";
             public const string EditCancelBtn = "//div[contains(@class, 'admin-sticky-footer')]//button[.//span[normalize-space()='Cancel']]";
             public const string ProfileEditBtn = "//div[contains(@class, 'admin-panel-card__header')]//button[normalize-space()='Edit']";
+
             // Add Organization page
             public const string AddCancelBtn = "//button[normalize-space()='Cancel']";
+            public const string OrgNameError = "//*[@id='orgName-error']";
+            public const string WebsiteError = "//*[@id='website-error']";
+            public const string ContactPhoneError = "//*[@id='contactPhone-error']";
+            public const string ContactEmailError = "//*[@id='contactEmail-error']";
+            public const string ZipError = "//*[@id='zip-error']";
+
+            // Toast banner shared by every mutating action on this feature (save, status change,
+            // activate/deactivate, unlink) - same structural locator used elsewhere in this app.
+            public const string ToastBanner = "//div[div[contains(@class, 'admin-toast-progress')]]";
+
+            // Users tab ("Members") - view/unlink members linked to the organization. There is no
+            // Add/Edit action here by design (members are not CFR Admin staff users - see
+            // OrganizationUsersPanel.tsx).
+            public const string MembersPanelRows = "//div[@id='panel-users']//table//tbody/tr[not(contains(@class, 'animate-pulse'))]";
+            public const string MembersEmptyState = "//div[@id='panel-users']//*[contains(normalize-space(), 'No users linked')]";
+            public const string FirstMemberViewBtn = "(//div[@id='panel-users']//table//tbody//tr//button[starts-with(@aria-label, 'View')])[1]";
+            public const string FirstMemberUnlinkBtn = "(//div[@id='panel-users']//table//tbody//tr//button[starts-with(@aria-label, 'Unlink')])[1]";
+            public static string MemberViewButtonForName(string memberName) => $"//div[@id='panel-users']//table//tbody/tr[.//*[normalize-space()='{memberName}']]//button[starts-with(@aria-label, 'View')]";
+            public static string MemberUnlinkButtonForName(string memberName) => $"//div[@id='panel-users']//table//tbody/tr[.//*[normalize-space()='{memberName}']]//button[starts-with(@aria-label, 'Unlink')]";
+
+            // Member Detail page (/admin/organizations/{orgId}/members/{authUserId}) - fully
+            // read-only, no actions of its own.
+            public const string MemberDetailBackBtn = "//button[starts-with(normalize-space(), 'Back to ')]";
+            public const string MemberDetailProfileHeading = "//*[normalize-space()='Profile']";
+            public const string MemberDetailMembershipHeading = "//*[normalize-space()='Organization Membership']";
+            public const string MemberDetailAppAccessHeading = "//*[normalize-space()='Effective Application Access']";
+            public const string MemberDetailAppAccessRows = "//table[.//th[contains(normalize-space(), 'App')]]//tbody/tr";
+            public const string MemberDetailEmptyAppAccess = "//*[contains(normalize-space(), 'No effective app access')]";
+
+            // Products tab - every product ever mapped to the organization, active or not, each
+            // with a per-row Activate/Deactivate toggle. There is no "assign a brand-new product"
+            // action in the current frontend (GetAssignableProducts exists on the backend but is
+            // not wired to any button here) - an organization with zero product rows has an empty
+            // Products tab and nothing clickable on it.
+            public const string ProductsPanelRows = "//div[@id='panel-products']//table//tbody/tr[not(contains(@class, 'animate-pulse'))]";
+            public const string ProductsEmptyState = "//div[@id='panel-products']//*[contains(normalize-space(), 'No apps assigned')]";
+            public const string FirstProductActivateBtn = "(//div[@id='panel-products']//table//tbody//tr//button[starts-with(@aria-label, 'Activate')])[1]";
+            public const string FirstProductDeactivateBtn = "(//div[@id='panel-products']//table//tbody//tr//button[starts-with(@aria-label, 'Deactivate')])[1]";
+            public static string ProductActivateButtonForName(string productName) => $"//div[@id='panel-products']//table//tbody/tr[.//*[normalize-space()='{productName}']]//button[starts-with(@aria-label, 'Activate')]";
+            public static string ProductDeactivateButtonForName(string productName) => $"//div[@id='panel-products']//table//tbody/tr[.//*[normalize-space()='{productName}']]//button[starts-with(@aria-label, 'Deactivate')]";
+
+            // Licenses tab - fully read-only besides the status filter chips.
+            public const string LicensesPanelRows = "//div[@id='panel-licenses']//table//tbody/tr[not(contains(@class, 'animate-pulse'))]";
+            public const string LicensesEmptyState = "//div[@id='panel-licenses']//*[contains(normalize-space(), 'No licenses')]";
+            public const string LicensesFilterGroup = "//div[@id='panel-licenses']//*[@role='group'][@aria-label='Filter licenses by status']";
+
+            // Requests tab - read-only list of access requests scoped to this organization.
+            public const string RequestsPanelRows = "//div[@id='panel-requests']//table//tbody/tr[not(contains(@class, 'animate-pulse'))]";
+            public const string RequestsEmptyState = "//div[@id='panel-requests']//*[contains(normalize-space(), 'No requests')]";
+            public const string FirstRequestReviewBtn = "(//div[@id='panel-requests']//table//tbody//tr//button[normalize-space()='Review'])[1]";
+            public const string ViewAllRequestsLink = "//div[@id='panel-requests']//a[contains(normalize-space(), 'View All Requests')]";
+        }
+
+        public static class XPath_ForgotPassword
+        {
+            public const string Route = "/forgot-password";
+
+            public const string txtEmailAddress = nameof(txtEmailAddress);
+            public const string btnSendResetLink = nameof(btnSendResetLink);
+
+            // Shared by client-side validation and the server error banner - both surface
+            // through the same element (see ForgotPasswordPage.tsx's fieldError).
+            public const string EmailError = "//*[@id='" + txtEmailAddress + "-error']";
+
+            public const string Form = "//form[@id='formForgotPassword']";
+
+            // The "Check Your Email" panel replaces the form entirely once a submission
+            // succeeds. It carries no id of its own, so it is matched on its heading.
+            public const string CheckYourEmailPanel = "//h2[normalize-space()='Check Your Email']";
+
+            public const string UseDifferentEmailButton = "//button[normalize-space()='Use a Different Email']";
+            public const string BackToSignInLink = "//a[contains(normalize-space(), 'Back To Sign In')]";
+            public const string ReturnToSignInLink = "//a[contains(normalize-space(), 'Return to Sign In')]";
+
+            // The already-requested case renders the same "Check Your Email" panel as a fresh
+            // send - only the transient toast tells the two apart (info vs. success tone, and
+            // wording), so it has to be read right after submit while it is still on screen.
+            public const string ToastBanner = "//div[div[contains(@class, 'admin-toast-progress')]]";
+        }
+
+        public static class XPath_ResetPassword
+        {
+            public const string Route = "/reset-password";
+
+            public const string txtNewPassword = nameof(txtNewPassword);
+            public const string txtConfirmPassword = nameof(txtConfirmPassword);
+            public const string btnResetPassword = nameof(btnResetPassword);
+
+            // PasswordField gives every field an "{id}-error" element when it carries an error -
+            // see PasswordField.tsx.
+            public const string NewPasswordError = "//*[@id='" + txtNewPassword + "-error']";
+            public const string ConfirmPasswordError = "//*[@id='" + txtConfirmPassword + "-error']";
+
+            public const string Form = "//form[@id='formResetPassword']";
+
+            // Each of these panels replaces the form entirely and carries no id of its own, so
+            // each is matched on its heading. XPath string literals below use double quotes
+            // because the heading text itself contains an apostrophe.
+            public const string LinkIncompletePanel = "//h2[normalize-space()='This Link Is Incomplete']";
+            public const string LinkInvalidPanel = "//h2[normalize-space()=\"This Link Can't Be Used\"]";
+            public const string LinkInvalidMessage = LinkInvalidPanel + "/following-sibling::p[1]";
+            public const string PasswordUpdatedPanel = "//h2[normalize-space()='Password Successfully Updated']";
+
+            public const string AccountEmailDescription = "//p[contains(., 'Choose a new password for')]";
+            public const string ContinueToSignInLink = "//a[contains(normalize-space(), 'Continue to Sign In')]";
+            public const string RequestNewLinkLink = "//a[contains(normalize-space(), 'Request a New Link')]";
+        }
+
+        /// <summary>
+        /// Locators for the Change Password modal (ChangePasswordModal.tsx), reached from the
+        /// account menu (menuProfile -> menuItemChangePassword) or the Profile page's own
+        /// "Change Password" button - both render the same modal.
+        /// </summary>
+        public static class XPath_ChangePassword
+        {
+            public const string Modal = "//*[@id='dlgChangePassword']";
+            public const string Form = "//form[@id='formChangePassword']";
+
+            // InputField resolves its rendered element id from the react-hook-form `name` prop
+            // whenever both `id` and `name` are given - `id={fieldId}` is set after `{...props}`
+            // is spread, so it silently overrides whatever `id` the caller passed (see
+            // InputField.tsx's `fieldId = name ?? props.id ?? ...`). ChangePasswordModal.tsx
+            // passes both id="txtCurrentPassword" (etc.) AND name="currentPassword" on every
+            // field, so the id actually rendered to the DOM is the RHF field name, not the
+            // "txt..." id literal in the JSX - confirmed against a live run, not just the source.
+            public const string txtCurrentPassword = "currentPassword";
+            public const string txtNewPassword = "newPassword";
+            public const string txtConfirmPassword = "confirmPassword";
+            public const string btnUpdatePassword = nameof(btnUpdatePassword);
+            public const string btnCancelChangePassword = nameof(btnCancelChangePassword);
+
+            // InputField's error element is a visually hidden (sr-only) span with id
+            // "{fieldId}-error" - present in the DOM whether or not it is on screen, so it is
+            // read by textContent rather than through this framework's Displayed-based helpers.
+            public const string CurrentPasswordError = "//*[@id='" + txtCurrentPassword + "-error']";
+            public const string NewPasswordError = "//*[@id='" + txtNewPassword + "-error']";
+            public const string ConfirmPasswordError = "//*[@id='" + txtConfirmPassword + "-error']";
+
+            // The general/server error has no id of its own - a direct child <p> of the form,
+            // distinct from InputField's own per-field <span> error elements.
+            public const string ServerError = Form + "/p[contains(@class, 'text-[var(--error)]')]";
         }
 
         public static class XPath_EmailSettings
