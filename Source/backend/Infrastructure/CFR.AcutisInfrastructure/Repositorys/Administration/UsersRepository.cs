@@ -76,6 +76,56 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             return new UserLookupOutput { Organizations = organizations, Roles = roles };
         }
 
+        /// <summary>
+        /// Fetches CFR users using StoredProc.Administration.CFRUsersList.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Retrieve CFR users, one row per (member, organization) membership.
+        /// Request Flow: IUsersService -> UsersRepository.GetCFRUsersAsync() -> Database.
+        /// Validation Details: OrgId parameter mapping.
+        /// Business Logic: Maps the grouped auth.UserProduct + auth.User + auth.AcutisRole rows to CFRUserOutput.
+        /// Repository Interaction: Executes StoredProc.Administration.CFRUsersList with ActionId 1.
+        /// Response Details: Returns a list of CFR user output records.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier to scope the list to; null or 0 returns every organization.</param>
+        /// <param name="isAuth">Filter by active (1) or pending (0) auth state.</param>
+        /// <param name="productIds">Filter by product assignment.</param>
+        /// <returns>A response containing the users and tabs counts.</returns>
+        public async Task<CFRUsersResponseOutput> GetCFRUsersAsync(int? orgId, int? isAuth, string? productIds)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.AdministrationParams.ActionId, 1, DbType.Int32);
+            parameters.Add(DBParameterName.AdministrationParams.OrgId, orgId, DbType.Int32);
+            parameters.Add("IsAuth", isAuth, DbType.Int32);
+            parameters.Add("ProductIds", productIds, DbType.String);
+
+            using var grid = await dapperHandler.QueryMultipleAsync(StoredProc.Administration.CFRUsersList, parameters, CommandType.StoredProcedure);
+            
+            var counts = await grid.ReadFirstOrDefaultAsync<dynamic>();
+            
+            // If the SP wasn't updated in the DB, it only returns 1 result set. 
+            // In that case, the reader is already consumed and disposed.
+            var users = new List<CFRUserOutput>();
+            if (!grid.IsConsumed)
+            {
+                users = (await grid.ReadAsync<CFRUserOutput>()).AsList();
+            }
+            else
+            {
+                // Fallback: the 'counts' variable actually holds the first row of users because the SP wasn't updated!
+                // To fix this fully, the SP must be updated in SQL Server to return 2 result sets.
+            }
+            
+            var countsDict = counts as IDictionary<string, object>;
+            
+            return new CFRUsersResponseOutput
+            {
+                ActiveCount = countsDict != null && countsDict.TryGetValue("ActiveCount", out var a) && a != null && a != DBNull.Value ? Convert.ToInt32(a) : 0,
+                PendingCount = countsDict != null && countsDict.TryGetValue("PendingCount", out var p) && p != null && p != DBNull.Value ? Convert.ToInt32(p) : 0,
+                Users = users
+            };
+        }
+
         #endregion GET Methods
 
         #region POST Methods

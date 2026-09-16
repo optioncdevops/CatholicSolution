@@ -8,6 +8,8 @@ import { saveUserRole } from '../../services/userRolesService';
 import type { UserRolesApiItem, UserRolesFormValues } from '../../types/userRolesTypes';
 import { toSaveUserRolePayload } from '../../utils/userRolesHelpers';
 import { userRolesDefaultValues, userRolesRules } from '../../validator/UserRolesValidator';
+import { useToast } from '@shared/app/components/ToastProvider';
+import type { FieldErrors } from 'react-hook-form';
 
 type UserRoleFormModalProps = {
   open: boolean;
@@ -22,6 +24,8 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   //#endregion
+
+  const { showToast } = useToast();
 
   //#region Form
   const { control, handleSubmit, reset } = useForm<UserRolesFormValues>({
@@ -71,6 +75,22 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
       setSaving(false);
     }
   };
+
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
+    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
+  };
   //#endregion
 
   //#region Render
@@ -84,11 +104,11 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
       footer={(
         <>
           <CommonButton variant="outline" onClick={handleClose} disabled={saving}>{readOnly ? 'Close' : 'Cancel'}</CommonButton>
-          {readOnly ? null : <CommonButton variant="primary" onClick={handleSubmit(onSubmit)} loading={saving} disabled={saving}>Save</CommonButton>}
+          {readOnly ? null : <CommonButton variant="primary" onClick={handleSubmit(onSubmit, onInvalid)} loading={saving} disabled={saving}>Save</CommonButton>}
         </>
       )}
     >
-      <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         {readOnly ? <ReadOnlyBanner featureName="User Roles" /> : null}
         {formError ? <p className="text-xs font-semibold text-[var(--error)]">{formError}</p> : null}
         <InputField control={control} name="roleName" label="Role name" required rules={userRolesRules.roleName} disabled={saving || readOnly} />

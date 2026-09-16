@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler, type FieldErrors } from 'react-hook-form';
 import { AppIcon } from '@app/components/icons';
 import { Badge } from '@app/components/Badge';
 import { CommonButton } from '@app/components/buttons';
@@ -134,12 +134,28 @@ export function ProfilePage() {
     await persistProfile(values, 'Profile updated.');
   };
 
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
+    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
+  };
+
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader title="My Profile" />
       <p className="-mt-2 text-sm text-[var(--text-muted)]">Manage the personal details and photo shown across Catholic Solutions.</p>
 
-      <form onSubmit={(event) => void handleSubmit(onSubmit)(event)} noValidate className="grid gap-6 lg:grid-cols-[17rem_1fr] lg:items-start">
+      <form onSubmit={(event) => void handleSubmit(onSubmit, onInvalid)(event)} noValidate className="grid gap-6 lg:grid-cols-[17rem_1fr] lg:items-start">
         <div className={`${SECTION_CLASS} flex flex-col items-center gap-4 p-6 text-center`}>
           <span className={SECTION_TITLE_CLASS}>Profile Photo</span>
           <ProfileImageUpload

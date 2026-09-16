@@ -6,5 +6,5 @@ export const userRolesDefaultValues: UserRolesFormValues = {
 };
 
 export const userRolesRules = {
-  roleName: { required: 'Role name is required.' },
+  roleName: { required: 'This field is required' },
 };

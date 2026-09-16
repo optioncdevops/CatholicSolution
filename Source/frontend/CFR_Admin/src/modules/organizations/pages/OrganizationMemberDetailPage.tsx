@@ -130,7 +130,7 @@ const OrganizationMemberDetailPage = () => {
             <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3">
               <DetailField label="Organization">{member.orgName}</DetailField>
               <DetailField label="Membership Status">
-                <StatusBadge status={member.memberStatus === 'active' ? 'active' : 'inactive'} kind="user" />
+                <StatusBadge status={member.memberStatus || 'inactive'} kind="user" />
               </DetailField>
               <DetailField label="Linked On">{formatDate(member.linkedDate)}</DetailField>
             </div>

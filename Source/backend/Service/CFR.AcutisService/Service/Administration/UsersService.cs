@@ -123,6 +123,39 @@ namespace CFR.AcutisService.Service.Administration
             return result;
         }
 
+        /// <summary>
+        /// Retrieves CFR users, one row per (member, organization) membership.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the CFR Admin "CFR User" page.
+        /// Request Flow: UsersController -> UsersService.GetCFRUsersAsync() -> IUsersRepository.GetCFRUsersAsync().
+        /// Validation Details: None — orgId is optional; null/0/negative all mean "every organization".
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IUsersRepository.GetCFRUsersAsync().
+        /// Response Details: MSResultArgs containing List of CFRUserOutput, or NoRecordFound.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier to scope the list to; null or 0 returns every organization.</param>
+        /// <param name="isAuth">Filter by active (1) or pending (0) auth state.</param>
+        /// <param name="productIds">Filter by product assignment.</param>
+        /// <returns>MSResultArgs containing the CFR users.</returns>
+        public async Task<MSResultArgs> GetCFRUsersAsync(int? orgId, int? isAuth, string? productIds)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                var data = await repository.GetCFRUsersAsync(orgId, isAuth, productIds);
+                result.ResultData = data ?? new CFRUsersResponseOutput();
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchCFRUsersFailed, orgId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #endregion GET Methods
 
         #region POST Methods

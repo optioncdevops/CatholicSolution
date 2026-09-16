@@ -20,6 +20,8 @@ const columns = (
   readOnly: boolean,
   showRoleColumn: boolean,
   showLinkedOnColumn: boolean,
+  showActionsColumn: boolean,
+  showOrganizationColumn: boolean,
 ): DataTableColumn<ScopedOrgUser>[] => [
   {
     id: 'fullName', header: 'User', width: '16rem',
@@ -48,8 +50,13 @@ const columns = (
   {
     id: 'memberStatus', header: 'Membership',
     value: (user) => user.memberStatus ?? '',
-    cell: (user) => <StatusBadge status={user.memberStatus === 'active' ? 'active' : 'inactive'} kind="user" />,
+    cell: (user) => <StatusBadge status={user.memberStatus || 'inactive'} kind="user" />,
   },
+  ...(showOrganizationColumn ? [{
+    id: 'orgName', header: 'Organization',
+    value: (user: ScopedOrgUser) => user.orgName ?? '',
+    cell: (user: ScopedOrgUser) => <span className="text-[var(--text-secondary)]">{user.orgName || '—'}</span>,
+  } as DataTableColumn<ScopedOrgUser>] : []),
   {
     id: 'appAccess', header: 'App Access', width: '18rem',
     value: (user) => user.appNames ?? '',
@@ -70,7 +77,7 @@ const columns = (
     },
   },
   {
-    id: 'lastLogin', header: 'Last Login',
+    id: 'lastActive', header: 'Last Active',
     value: () => '',
     cell: () => <span className="text-[var(--text-faint)]" title="This platform does not yet track member sign-in timestamps.">Not tracked</span>,
   },
@@ -79,9 +86,9 @@ const columns = (
     value: (user: ScopedOrgUser) => user.linkedDate,
     cell: (user: ScopedOrgUser) => <span className="text-[var(--text-muted)]">{formatDate(user.linkedDate)}</span>,
   } as DataTableColumn<ScopedOrgUser>] : []),
-  {
+  ...(showActionsColumn ? [{
     id: 'actions', header: 'Actions', width: '5.5rem', excludeFromExport: true, sortable: false,
-    cell: (user) => (
+    cell: (user: ScopedOrgUser) => (
       <div className="flex items-center justify-center gap-1.5">
         <CommonIconButton
           aria-label={`View ${user.fullName || user.email}`}
@@ -100,7 +107,7 @@ const columns = (
         />
       </div>
     ),
-  },
+  } as DataTableColumn<ScopedOrgUser>] : []),
 ];
 
 type OrganizationUsersPanelProps = {
@@ -111,6 +118,10 @@ type OrganizationUsersPanelProps = {
   readOnly?: boolean;
   showRoleColumn?: boolean;
   showLinkedOnColumn?: boolean;
+  showActionsColumn?: boolean;
+  showOrganizationColumn?: boolean;
+  exportFileName?: string;
+  exportTitle?: string;
 };
 
 // View + unlink only — linking a user to an organization from here has been removed. There is no
@@ -118,7 +129,7 @@ type OrganizationUsersPanelProps = {
 // Admin's own Users module (auth.AcutisUser, internal staff accounts) and have no editable
 // profile fields in this system today. "Role" shows the real auth.UserProduct.RoleId resolved
 // against auth.AcutisRole when it matches, or a dash when it doesn't — never fabricated. "Last
-// Login" is honestly marked "Not tracked" since member sign-in timestamps aren't recorded
+// Active" is honestly marked "Not tracked" since member sign-in timestamps aren't recorded
 // anywhere in the schema.
 const OrganizationUsersPanel = ({
   orgId,
@@ -128,6 +139,10 @@ const OrganizationUsersPanel = ({
   readOnly = false,
   showRoleColumn = true,
   showLinkedOnColumn = true,
+  showActionsColumn = true,
+  showOrganizationColumn = false,
+  exportFileName = 'organization-users',
+  exportTitle = 'Organization — Users',
 }: OrganizationUsersPanelProps) => {
   //#region Hooks
   const navigate = useNavigate();
@@ -181,10 +196,10 @@ const OrganizationUsersPanel = ({
   return (
     <DataTable
       data={users}
-      columns={columns(handleView, handleUnlink, unlinkingUserId, readOnly, showRoleColumn, showLinkedOnColumn)}
+      columns={columns(handleView, handleUnlink, unlinkingUserId, readOnly, showRoleColumn, showLinkedOnColumn, showActionsColumn, showOrganizationColumn)}
       getRowId={(user) => String(user.authUserId)}
-      exportFileName="organization-users"
-      exportTitle="Organization — Users"
+      exportFileName={exportFileName}
+      exportTitle={exportTitle}
       emptyMessage="No users found."
     />
   );
