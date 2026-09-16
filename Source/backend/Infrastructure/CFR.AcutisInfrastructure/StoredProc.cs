@@ -50,6 +50,14 @@ namespace CFR.AcutisInfrastructure
             public const string UserRolesCrud = "[dbo].[Acutis_UserRoles]";
 
             /// <summary>
+            /// Looks up the signed-in user's own AccessRight (auth.ModuleRights) for a given
+            /// admin page, by that page's auth.ModuleFeatures.RoutingUrl - used to enforce
+            /// server-side, role-based authorization on mutations, independent of the
+            /// authentication-only [Authorize] attribute.
+            /// </summary>
+            public const string GetFeatureAccessRight = "[dbo].[Acutis_GetFeatureAccessRight]";
+
+            /// <summary>
             /// Email templates list, get by id, get by code, and save operations.
             /// </summary>
             public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates]";

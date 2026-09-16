@@ -147,6 +147,16 @@ namespace CFR.AcutisInfrastructure
             /// Organization identifier used to scope the CFR Users list; null or 0 returns every organization.
             /// </summary>
             public const string OrgId = nameof(OrgId);
+
+            /// <summary>
+            /// auth.ModuleFeatures.RoutingUrl of the admin page a feature-access check is for.
+            /// </summary>
+            public const string RoutingUrl = nameof(RoutingUrl);
+
+            /// <summary>
+            /// auth.ModuleRights.AccessRight for the checked (RoleId, feature) pair: 0 = Denied, 1 = Access, 2 = Read Only.
+            /// </summary>
+            public const string AccessRight = nameof(AccessRight);
         }
 
         /// <summary>

@@ -23,6 +23,7 @@ namespace CFR.Common
         public const int CustomMessage = 102;
         public const int BadRequest = 400;
         public const int UnAuthorized = 401;
+        public const int Forbidden = 403;
         public const int NotFound = 404;
         public const int Conflict = 409;
         public const int InternalServerError = 500;
@@ -50,6 +51,8 @@ namespace CFR.Common
         public const string DateOfBirthOutOfRange = "Date of birth must reflect an age between 18 and 120 years.";
         public const string ExistRole = "A role with this name already exists.";
         public const string RoleInUse = "This role is assigned to one or more users.";
+        public const string RoleNotFound = "This role no longer exists.";
+        public const string InsufficientRoleRights = "You do not have permission to manage user roles.";
         public const string Failed = "The request could not be completed.";
         public const string BadRequest = "Invalid request.";
         public const string UnAuthorized = "Unauthorized.";

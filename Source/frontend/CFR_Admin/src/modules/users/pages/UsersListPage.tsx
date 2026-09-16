@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FilterX, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -17,6 +17,8 @@ import type { UsersApiItem } from '../types/usersTypes';
 import { normalizeUsersList } from '../utils/usersHelpers';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 
+const ROLE_FILTER_PARAM = 'roleId';
+
 export function UsersListPage() {
   //#region Hooks
   const { showToast } = useToast();
@@ -26,6 +28,7 @@ export function UsersListPage() {
   // An admin can never deactivate or delete their own account from this list — the backend
   // rejects it too, but disabling it here avoids a round trip just to hit that guard.
   const currentUserId = getStoredAcutisAuth()?.resultData?.user?.userId ?? null;
+  const [searchParams, setSearchParams] = useSearchParams();
   //#endregion
 
   //#region States
@@ -33,10 +36,22 @@ export function UsersListPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [lockedFilter, setLockedFilter] = useState('');
   //#endregion
+
+  // The Role filter lives in the URL (?roleId=), not local state — bookmarkable/shareable, and
+  // lets other pages (User Roles' "Manage Rights"-adjacent Users count) deep-link straight to a
+  // specific role, matching how RequestsListPage already treats its own status filter.
+  const roleFilter = searchParams.get(ROLE_FILTER_PARAM) ?? '';
+  const setRoleFilter = useCallback((next: string) => {
+    setSearchParams((current) => {
+      const params = new URLSearchParams(current);
+      if (!next) params.delete(ROLE_FILTER_PARAM);
+      else params.set(ROLE_FILTER_PARAM, next);
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   //#region Functions
   const load = useCallback(async () => {
@@ -193,13 +208,15 @@ export function UsersListPage() {
   //#endregion
 
   //#region Filters
-  const roleOptions = useMemo(
-    () => Array.from(new Set(rows.map((user) => user.roleName).filter(Boolean))).sort()
-      .map((role) => ({ id: role, value: role })),
-    [rows],
-  );
+  const roleOptions = useMemo(() => {
+    const byRoleId = new Map<number, string>();
+    rows.forEach((user) => { if (!byRoleId.has(user.roleId)) byRoleId.set(user.roleId, user.roleName); });
+    return Array.from(byRoleId.entries())
+      .sort(([, a], [, b]) => a.localeCompare(b))
+      .map(([roleId, roleName]) => ({ id: String(roleId), value: roleName }));
+  }, [rows]);
   const filteredRows = useMemo(() => rows.filter((user) => (
-    (!roleFilter || user.roleName === roleFilter)
+    (!roleFilter || String(user.roleId) === roleFilter)
     && (!statusFilter || user.status === statusFilter)
     && (!lockedFilter || String(user.isLocked) === lockedFilter)
   )), [rows, roleFilter, statusFilter, lockedFilter]);

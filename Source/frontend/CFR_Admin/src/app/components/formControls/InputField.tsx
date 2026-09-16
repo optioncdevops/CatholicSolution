@@ -133,11 +133,14 @@ const InputFieldInner = <TFieldValues extends FieldValues = FieldValues>({
 }: InputFieldProps<TFieldValues>) => {
   const [showPassword, setShowPassword] = useState(false);
   const reactId = useId();
+  // An explicit `id` prop is the caller's deliberate, stable control id (e.g. "txtUserRoleName"
+  // per this app's id-prefix convention) and must win over the RHF `name`, which is chosen for
+  // payload/field-naming reasons unrelated to the DOM id — matching the skill file's own
+  // canonical `<InputField id="txtOrganizationName" name="orgName" .../>` example.
   const fieldId =
+    (typeof props.id === "string" ? props.id : undefined) ??
     name ??
-    (typeof props.id === "string"
-      ? props.id
-      : `input-${reactId.replace(/:/g, "")}`);
+    `input-${reactId.replace(/:/g, "")}`;
 
   const isPassword = type === "password";
   const inputType = isPassword && showPassword ? "text" : type;

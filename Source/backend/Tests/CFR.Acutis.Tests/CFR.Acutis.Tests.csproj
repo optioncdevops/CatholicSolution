@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!--
+    API-level negative tests against a running CFR.Gateway/CFR.Acutis instance, over plain
+    HttpClient - no Selenium/browser involved. Same test runner (NUnit) as
+    Automation/Automation.Acutis, deliberately not a second test framework, but a different layer:
+    this project exercises HTTP status codes and response bodies directly for cases the
+    Selenium-driven UI can no longer reach once the UI itself blocks the action (e.g. a disabled
+    Delete button), and cases that need two different signed-in roles at once.
+  -->
+  <ItemGroup Label="Test platform">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="NUnit" Version="4.4.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
+  </ItemGroup>
+
+</Project>
