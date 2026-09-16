@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm, type FieldErrors } from 'react-hook-form';
+import { useForm} from 'react-hook-form';
 import { Pencil, Save, X } from 'lucide-react';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -207,10 +207,10 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
             placeholder={loadingMembers ? 'Loading members…' : 'Select contact person'}
             options={contactPersonOptions} disabled={saving || loadingMembers} wrapperClassName="md:col-span-4"
           />
-          <InputField control={control} name="address" label="Address" disabled={saving} wrapperClassName="md:col-span-12" />
+          <InputField control={control} name="address" label="Address" rules={organizationRules.address} maxLength={500} disabled={saving} wrapperClassName="md:col-span-12" />
           <InputField control={control} name="city" label="City" disabled={saving} wrapperClassName="md:col-span-4" />
           <Dropdown control={control} name="state" label="State" placeholder="Select state" searchable options={US_STATE_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="zip" label="ZIP code" rules={organizationRules.zip} disabled={saving} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="zip" label="ZIP code" rules={organizationRules.zip} maxLength={6} disabled={saving} wrapperClassName="md:col-span-4" />
         </div>
 
         <div className="admin-sticky-footer">

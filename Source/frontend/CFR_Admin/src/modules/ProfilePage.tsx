@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm, type SubmitHandler, type FieldErrors } from 'react-hook-form';
+import { useForm, type SubmitHandler} from 'react-hook-form';
 import { AppIcon } from '@app/components/icons';
 import { Badge } from '@app/components/Badge';
 import { CommonButton } from '@app/components/buttons';

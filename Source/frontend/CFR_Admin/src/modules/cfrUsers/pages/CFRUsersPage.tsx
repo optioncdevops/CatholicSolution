@@ -143,7 +143,7 @@ const CFRUsersPage = () => {
 
   //#region Handlers
   const handleUsersChanged = async () => {
-    if (orgId !== null) await loadUsers(orgId, activeTab, productId);
+    if (orgId !== null) await loadUsers(orgId, activeTab, productIds);
   };
   //#endregion
 
@@ -169,7 +169,6 @@ const CFRUsersPage = () => {
         </div>
         <div className="w-full max-w-xs">
           <MultiSelect
-            id="filterCFRUserProduct"
             label="Products"
             searchable
             value={productIds}
@@ -193,8 +192,8 @@ const CFRUsersPage = () => {
             activeId={activeTab}
             onChange={setActiveTab}
             tabs={[
-              { id: 'active', label: 'Active Users', count: activeCount },
-              { id: 'pending', label: 'Pending', count: pendingCount },
+              { id: 'active', label: 'AuthO user', count: activeCount },
+              { id: 'pending', label: 'AuthO Pending', count: pendingCount },
             ]}
           />
 

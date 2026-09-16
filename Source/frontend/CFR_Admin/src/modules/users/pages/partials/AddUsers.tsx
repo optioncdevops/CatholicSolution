@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useForm, type FieldErrors } from 'react-hook-form';
+import { useForm} from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
@@ -164,6 +164,7 @@ const AddUsers = () => {
             placeholder="Enter first name"
             autoFocus
             required
+            maxLength={50}
             rules={usersRules.firstName}
             disabled={saving || isReadOnly}
           />
@@ -173,6 +174,7 @@ const AddUsers = () => {
             label="Last name"
             placeholder="Enter last name"
             required
+            maxLength={50}
             rules={usersRules.lastName}
             disabled={saving || isReadOnly}
           />
@@ -202,6 +204,8 @@ const AddUsers = () => {
             label="Contact number"
             type="tel"
             placeholder="Enter contact number"
+            maxLength={10}
+            validationRule="numbersOnly"
             rules={usersRules.contactNumber}
             disabled={saving || isReadOnly}
           />
