@@ -15,15 +15,13 @@ import type {
   ProductApiItem,
   ProductInputPayload,
 } from "../types/productTypes";
-import { EntityAvatar } from "@app/components/EntityAvatar";
 import {
-  DEFAULT_PRODUCT_GRADIENT,
-  DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
   deriveProductStatus,
   formatProductCustomerCount,
   normalizeProductList,
   resolveProductLogoUrl,
+  toAdminApplication,
 } from "../utils/productHelpers";
 import {
   PRODUCT_STATUS_FILTERS,
@@ -33,39 +31,7 @@ import {
 } from "../utils/productFilters";
 import type { ProductStatus } from "@/modules/types";
 import { ProductStatusModal } from "./partials/ProductStatusModal";
-
-const ProductItemLogo = ({
-  src,
-  name,
-}: {
-  src?: string | null;
-  name: string;
-}) => {
-  const [hasError, setHasError] = useState(false);
-
-  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
-  // pattern for "state that resets when a prop identity changes") — a new `src` deserves a fresh
-  // attempt, not the previous src's stale error flag.
-  const [renderedForSrc, setRenderedForSrc] = useState(src);
-  if (renderedForSrc !== src) {
-    setRenderedForSrc(src);
-    setHasError(false);
-  }
-
-  if (src && !hasError) {
-    return (
-      <img
-        src={src}
-        alt=""
-        onError={() => setHasError(true)}
-        className="size-9 shrink-0 rounded-lg object-cover"
-        aria-hidden="true"
-      />
-    );
-  }
-
-  return <EntityAvatar name={name} size={36} square />;
-};
+import { ProductIcon } from "../components";
 
 const ProductList = () => {
   //#region Hooks
@@ -128,7 +94,6 @@ const ProductList = () => {
         subCategoryName: selectedProduct.subCategoryName,
         prodDescription: selectedProduct.prodDescription,
         externalPageUrl: selectedProduct.externalPageUrl,
-        defaultAccessDays: selectedProduct.defaultAccessDays,
         licenseType: selectedProduct.licenseType,
         navigationTarget: selectedProduct.navigationTarget,
         isActive,
@@ -309,7 +274,7 @@ const ProductList = () => {
                       }
                     }}
                   >
-                    <ProductItemLogo src={logoSrc} name={item.productName} />
+                    <ProductIcon icon={logoSrc} name={item.productName} />
                     <div className="min-w-0">
                       <span className="block truncate text-sm font-extrabold text-[var(--text-primary)] hover:underline">
                         {item.productName}
@@ -380,28 +345,7 @@ const ProductList = () => {
 
       {selectedProduct && statusDialogOpen && (
         <ProductStatusModal
-          app={{
-            id: String(selectedProduct.productId),
-            name: selectedProduct.productName,
-            shortName: selectedProduct.productName,
-            category: selectedProduct.subCategoryName || "General",
-            icon:
-              resolveProductLogoUrl(selectedProduct.logoName) ||
-              DEFAULT_PRODUCT_ICON,
-            gradient: DEFAULT_PRODUCT_GRADIENT,
-            description: selectedProduct.prodDescription || "",
-            status: deriveProductStatus(selectedProduct),
-            features: [],
-            productionUrl: selectedProduct.externalPageUrl || "",
-            ownership: "first-party",
-            deploymentModel: "external-saas",
-            licenseType: "licensed",
-            navigationTarget: "same-tab",
-            registryRef: `reg_app_${String(selectedProduct.productId).padStart(4, "0")}`,
-            sourceLocation: selectedProduct.productName.toLowerCase().replace(/\s+/g, "-"),
-            updatedAt:
-              selectedProduct.updatedDate || selectedProduct.createdDate,
-          }}
+          app={toAdminApplication(selectedProduct)}
           pendingStatus={pendingStatus}
           onSelectStatus={setPendingStatus}
           onClose={() => {

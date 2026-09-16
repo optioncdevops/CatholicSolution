@@ -139,7 +139,6 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
     subCategoryName: (item.subCategoryName ?? item.SubCategoryName ?? null) as string | null,
     prodDescription: (item.prodDescription ?? item.ProdDescription ?? null) as string | null,
     externalPageUrl: (item.externalPageUrl ?? item.ExternalPageUrl ?? null) as string | null,
-    defaultAccessDays: Number(item.defaultAccessDays ?? item.DefaultAccessDays ?? 0),
     logoName: (item.logoName ?? item.LogoName ?? null) as string | null,
     isActive: Boolean(item.isActive ?? item.IsActive ?? false),
     productStatus: item.productStatus != null
@@ -196,10 +195,13 @@ function licenseTimestamp(item: ProductLicenseApiItem): string {
 }
 
 function isNewerLicense(candidate: ProductLicenseApiItem, current: ProductLicenseApiItem): boolean {
+  const candidateExpiry = candidate.expiryDate || '';
+  const currentExpiry = current.expiryDate || '';
+  if (candidateExpiry !== currentExpiry) return candidateExpiry > currentExpiry;
   const candidateStamp = licenseTimestamp(candidate);
   const currentStamp = licenseTimestamp(current);
   if (candidateStamp !== currentStamp) return candidateStamp > currentStamp;
-  return candidate.licenseId > current.licenseId;
+  return Number(candidate.licenseId) > Number(current.licenseId);
 }
 
 export function isLicenseSuspended(item: ProductLicenseApiItem): boolean {
@@ -234,126 +236,148 @@ export function toLicenseDetailsRows(items: ProductLicenseApiItem[]): ProductLic
       latestByOrg.set(item.orgId, item);
     }
   }
-  return [...latestByOrg.values()]
-    .filter(isActiveOrUpcomingLicense)
-    .sort((left, right) => {
-      if (isNewerLicense(left, right)) return -1;
-      if (isNewerLicense(right, left)) return 1;
-      return 0;
-    });
+  return [...latestByOrg.values()].sort((left, right) => {
+    if (isNewerLicense(left, right)) return -1;
+    if (isNewerLicense(right, left)) return 1;
+    return 0;
+  });
+}
+
+export interface FormattedLicenseBase {
+  licenseId: number;
+  orgId: number;
+  customerCode: string;
+  customer: string;
+  invoiceNumber: string;
+  startDate: string;
+  expiryDate: string;
+  days: number | null;
+  isOverdue: boolean;
+  isExpiringSoon: boolean;
+  paidOn: string | null;
+  remarks: string | null | undefined;
+}
+
+export function formatLicenseBase(
+  item: ProductLicenseApiItem,
+  usedInvoiceNumbers?: Set<string>,
+  index?: number,
+): FormattedLicenseBase {
+  const startDate = item.activationDate ?? item.createdDate ?? '';
+  const expiryDate = item.expiryDate ?? '';
+  const invoiceNumber = formatInvoiceNumber(
+    startDate || item.createdDate,
+    item.licenseId,
+    usedInvoiceNumbers,
+    index,
+  );
+  const days = expiryDate ? daysUntil(expiryDate) : null;
+  const isOverdue = days !== null && days < 0;
+  const isExpiringSoon = days !== null && days >= 0 && days <= 30;
+  const paidOn = isOverdue
+    ? null
+    : item.createdDate
+      ? formatDateTime(item.createdDate)
+      : item.activationDate
+        ? formatDateTime(item.activationDate)
+        : null;
+
+  return {
+    licenseId: item.licenseId,
+    orgId: item.orgId,
+    customerCode: formatCustomerCodeAsInteger(item.orgId),
+    customer: item.orgName?.trim() || `Organization #${item.orgId}`,
+    invoiceNumber,
+    startDate,
+    expiryDate,
+    days,
+    isOverdue,
+    isExpiringSoon,
+    paidOn,
+    remarks: item.remarks,
+  };
 }
 
 export function toLiveProductLicenseRows(items: ProductLicenseApiItem[]): LiveProductLicense[] {
   const licenses = toLicenseDetailsRows(items);
   const usedInvoiceNumbers = new Set<string>();
   return licenses.map((lic, index) => {
-    const days = lic.expiryDate ? daysUntil(lic.expiryDate) : null;
-    const isOverdue = days !== null && days < 0;
-    const isExpiringSoon = days !== null && days >= 0 && days <= 30;
-    const status = isOverdue
+    const base = formatLicenseBase(lic, usedInvoiceNumbers, index);
+    const status = base.isOverdue
       ? 'overdue'
-      : isExpiringSoon
+      : base.isExpiringSoon
         ? 'expiring-soon'
         : lic.licenseStatus === 'suspended'
           ? 'suspended'
           : 'paid';
-    const paidOn = isOverdue
-      ? null
-      : lic.createdDate
-        ? formatDateTime(lic.createdDate)
-        : lic.activationDate
-          ? formatDateTime(lic.activationDate)
-          : null;
-
-    const startDate = lic.activationDate || '';
-    const invoiceNumber = formatInvoiceNumber(
-      startDate || lic.createdDate,
-      lic.licenseId,
-      usedInvoiceNumbers,
-      index,
-    );
 
     return {
-      id: String(lic.licenseId),
-      orgId: lic.orgId,
-      customerCode: formatCustomerCodeAsInteger(lic.orgId),
-      customer: lic.orgName || `Organization #${lic.orgId}`,
-      invoiceNumber,
-      licenseNumber: `LIC-${String(lic.licenseId).padStart(5, '0')}`,
-      licenseKey: `LIC-${lic.orgId}-${lic.productId}-${String(lic.licenseId).padStart(4, '0')}`,
+      id: String(base.licenseId),
+      orgId: base.orgId,
+      customerCode: base.customerCode,
+      customer: base.customer,
+      invoiceNumber: base.invoiceNumber,
+      licenseNumber: `LIC-${String(base.licenseId).padStart(5, '0')}`,
+      licenseKey: `LIC-${base.orgId}-${lic.productId}-${String(base.licenseId).padStart(4, '0')}`,
       licenseType: lic.licenseType ? (lic.licenseType.charAt(0).toUpperCase() + lic.licenseType.slice(1)) : 'Subscription',
-      startDate,
-      expiryDate: lic.expiryDate || '',
-      days,
-      paidOn,
+      startDate: base.startDate,
+      expiryDate: base.expiryDate,
+      days: base.days,
+      paidOn: base.paidOn,
       status,
-      remarks: lic.remarks,
+      remarks: base.remarks,
     };
   });
 }
 
 export function customerHasActiveLicense(items: ProductLicenseApiItem[], orgId: number): boolean {
-  return toLicenseDetailsRows(items).some((item) => item.orgId === orgId);
+  return items.some((item) => item.orgId === orgId && isActiveOrUpcomingLicense(item));
 }
 
 export function toLicenseHistoryRows(items: ProductLicenseApiItem[]): ProductLicenseHistoryRow[] {
-  const licenses = items.filter((item) => Number(item.licenseId) > 0);
-  const currentByOrg = new Map<number, number>();
+  const licenses = items
+    .filter((item) => Number(item.licenseId) > 0)
+    .sort((left, right) => {
+      if (isNewerLicense(left, right)) return -1;
+      if (isNewerLicense(right, left)) return 1;
+      return 0;
+    });
 
+  const currentByOrg = new Map<number, number>();
   for (const item of licenses) {
-    const existingId = currentByOrg.get(item.orgId);
-    const existing = existingId == null ? undefined : licenses.find((row) => row.licenseId === existingId);
-    const existingStart = existing?.activationDate ?? existing?.createdDate ?? '';
-    const nextStart = item.activationDate ?? item.createdDate ?? '';
-    if (existingId == null || nextStart > existingStart) {
+    if (!currentByOrg.has(item.orgId)) {
       currentByOrg.set(item.orgId, item.licenseId);
     }
   }
 
   const usedInvoiceNumbers = new Set<string>();
   return licenses.map((item, index) => {
-    const startDate = item.activationDate ?? item.createdDate ?? '';
-    const expiryDate = item.expiryDate ?? '';
-    const invoiceNumber = formatInvoiceNumber(
-      startDate,
-      item.licenseId,
-      usedInvoiceNumbers,
-      index,
-    );
-    const days = expiryDate ? daysUntil(expiryDate) : null;
-    const isOverdue = days !== null && days < 0;
+    const base = formatLicenseBase(item, usedInvoiceNumbers, index);
     const rawStatus = (item.licenseStatus ?? '').trim().toLowerCase();
-    const paymentStatus: 'paid' | 'overdue' | 'suspended' | 'unpaid' = isOverdue
+    const paymentStatus: 'paid' | 'overdue' | 'suspended' | 'unpaid' = base.isOverdue
       ? 'overdue'
       : rawStatus === 'unpaid'
         ? 'unpaid'
         : rawStatus === 'suspended'
           ? 'suspended'
           : 'paid';
-    const paidOn = isOverdue
-      ? null
-      : item.createdDate
-        ? formatDateTime(item.createdDate)
-        : item.activationDate
-          ? formatDateTime(item.activationDate)
-          : null;
 
     return {
-      id: String(item.licenseId),
-      licenseId: item.licenseId,
-      invoiceNumber,
-      orgId: String(item.orgId),
-      customerCode: formatCustomerCodeAsInteger(item.orgId),
-      customer: item.orgName?.trim() || `Organization #${item.orgId}`,
-      startDate,
-      expiryDate,
-      days,
-      paidOn,
+      id: String(base.licenseId),
+      licenseId: base.licenseId,
+      invoiceNumber: base.invoiceNumber,
+      orgId: String(base.orgId),
+      customerCode: base.customerCode,
+      customer: base.customer,
+      startDate: base.startDate,
+      expiryDate: base.expiryDate,
+      days: base.days,
+      paidOn: base.paidOn,
       paymentStatus,
-      term: currentByOrg.get(item.orgId) === item.licenseId ? 'Current' : 'Past',
-      status: accessStatusOf(expiryDate),
+      term: currentByOrg.get(base.orgId) === base.licenseId ? 'Current' : 'Past',
+      status: accessStatusOf(base.expiryDate),
       rawStatus: item.licenseStatus,
-      remarks: item.remarks,
+      remarks: base.remarks,
     };
   });
 }
