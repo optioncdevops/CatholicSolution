@@ -39,10 +39,19 @@ const OrganizationAddPage = () => {
   //#endregion
 
   //#region Handlers
-  const onInvalid = (formErrors: FieldErrors<OrganizationFormValues>) => {
-    const messages = Object.values(formErrors)
-      .map((error) => error?.message)
-      .filter((message): message is string => Boolean(message));
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
     showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
 

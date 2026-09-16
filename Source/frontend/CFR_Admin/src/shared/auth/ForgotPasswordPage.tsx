@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldErrors } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, MailIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -51,6 +51,22 @@ export function ForgotPasswordPage() {
     }
   });
 
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
+    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
+  };
+
   const fieldError = errors.email?.message ?? serverError;
 
   return (
@@ -80,7 +96,7 @@ export function ForgotPasswordPage() {
               <h1 className="admin-auth-card__title">Forgot Your Password?</h1>
               <p className="admin-auth-card__description">Enter the email address associated with your account. We&apos;ll send you a link to reset your password.</p>
             </div>
-            <form id="formForgotPassword" onSubmit={submit} className="admin-auth-form" noValidate>
+            <form id="formForgotPassword" onSubmit={(event) => { event.preventDefault(); void submit(event); void handleSubmit(submit, onInvalid)(event); }} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">
                 <label className="admin-auth-label" htmlFor="txtEmailAddress">Email Address</label>
                 <div className="admin-auth-input-wrap">

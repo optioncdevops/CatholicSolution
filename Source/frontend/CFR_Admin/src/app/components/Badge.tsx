@@ -22,7 +22,7 @@ const APPLICATION_STATUS_TONE: Record<string, BadgeTone> = {
   active: 'success', inactive: 'neutral', 'coming-soon': 'info',
 };
 const ORG_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', inactive: 'neutral', suspended: 'danger' };
-const USER_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', inactive: 'neutral' };
+const USER_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', pending: 'warning', inactive: 'neutral' };
 const REQUEST_STATUS_TONE: Record<string, BadgeTone> = {
   pending: 'warning', approved: 'success', rejected: 'danger', 'info-requested': 'info',
 };

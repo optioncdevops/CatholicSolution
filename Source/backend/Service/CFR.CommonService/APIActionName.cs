@@ -41,6 +41,7 @@ namespace CFR.CommonService
             public const string GetUsers = nameof(GetUsers);
             public const string GetUserById = nameof(GetUserById);
             public const string GetUserLookups = nameof(GetUserLookups);
+            public const string GetCFRUsers = nameof(GetCFRUsers);
             public const string SaveUser = nameof(SaveUser);
             public const string UpdateUserStatus = nameof(UpdateUserStatus);
             public const string DeleteUser = nameof(DeleteUser);
