@@ -19,7 +19,6 @@ export interface ProductApiItem {
   subCategoryName: string | null;
   prodDescription: string | null;
   externalPageUrl: string | null;
-  defaultAccessDays: number;
   logoName?: string | null;
   isActive: boolean;
   productStatus?: number | null;
@@ -44,7 +43,6 @@ export interface ProductInputPayload {
   subCategoryName?: string | null;
   prodDescription?: string | null;
   externalPageUrl?: string | null;
-  defaultAccessDays: number;
   logoName?: string | null;
   contactUserId?: number | null;
   features?: string[];

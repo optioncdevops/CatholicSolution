@@ -8,7 +8,9 @@
 -- ActionId 6: License GET by ID
 -- ActionId 7: License POST (Create)
 -- ActionId 8: License PUT (Update)
--- ActionId 9: Product customers from [core].[Organization]
+-- ActionId 9: Product customers from [lic].[OrganizationProduct] + [core].[Organization]
+-- (user counts and contact-email fallback from [auth].[UserProduct] / [auth].[User];
+-- latest license from [lic].[License]). CTEs are limited to orgs assigned to @ProductId.
 -- ActionId 10: Per-product organization assignment counts (active vs. inactive/revoked vs. total
 -- distinct organizations), for the admin dashboard's real App Access Overview — this is genuine
 -- lic.OrganizationProduct assignment data, not inferred from the static product catalog.
@@ -53,7 +55,7 @@ CREATE PROCEDURE [dbo].[Acutis_Products]
     @ActivationDate DATETIME2 = NULL,
     @ExpiryDate DATETIME2 = NULL,
     @LicenseStatus NVARCHAR(50) = NULL,
-    @AssignStatus INT = NULL,
+    @AssignStatus NVARCHAR(50) = NULL,
     @Remarks NVARCHAR(MAX) = NULL,
     -- Audit & Output Parameters
     @InsertedBy BIGINT = NULL,
@@ -77,6 +79,19 @@ BEGIN
     SET @LicenseStatus = NULLIF(LTRIM(RTRIM(@LicenseStatus)), N'');
     SET @Remarks = NULLIF(LTRIM(RTRIM(@Remarks)), N'');
     SET @RequesterEmail = NULLIF(LTRIM(RTRIM(@RequesterEmail)), N'');
+
+    DECLARE @AssignStatusInt INT = NULL;
+    IF @AssignStatus IS NOT NULL
+    BEGIN
+        SET @AssignStatus = LOWER(LTRIM(RTRIM(@AssignStatus)));
+        SET @AssignStatusInt = CASE
+            WHEN @AssignStatus IN (N'1', N'active') THEN 1
+            WHEN @AssignStatus IN (N'2', N'inactive', N'suspended') THEN 2
+            WHEN @AssignStatus IN (N'3', N'revoked', N'cancelled', N'canceled') THEN 3
+            WHEN ISNUMERIC(@AssignStatus) = 1 THEN CAST(@AssignStatus AS INT)
+            ELSE 1
+        END;
+    END;
 
     ---------------------------------------------------------------------------
     -- ActionId 1: Product GET All
@@ -389,12 +404,12 @@ BEGIN
                     @OrgId,
                     @OrgId,
                     @ProductId,
-                    ISNULL(@AssignStatus, 1), -- 1 = Active
-                    @InsertedBy,
+                    ISNULL(@AssignStatusInt, 1),
+                    CASE WHEN @InsertedBy IS NULL OR @InsertedBy > 2147483647 THEN NULL ELSE CAST(@InsertedBy AS INT) END,
                     ISNULL(@ActivationDate, SYSUTCDATETIME()),
                     ISNULL(@ExpiryDate, DATEADD(YEAR, 1, SYSUTCDATETIME())),
                     SYSUTCDATETIME(),
-                    @InsertedBy,
+                    CASE WHEN @InsertedBy IS NULL OR @InsertedBy > 2147483647 THEN NULL ELSE CAST(@InsertedBy AS INT) END,
                     0
                 );
 
@@ -499,11 +514,11 @@ BEGIN
             [UpdatedBy] = @UpdatedBy
         WHERE [LicenseId] = @LicenseId;
 
-        IF @AssignStatus IS NOT NULL
+        IF @AssignStatusInt IS NOT NULL
         BEGIN
             UPDATE op
             SET
-                op.[AssignStatus] = @AssignStatus,
+                op.[AssignStatus] = @AssignStatusInt,
                 op.[UpdatedDate] = SYSUTCDATETIME(),
                 op.[UpdatedBy] = @UpdatedBy
             FROM [lic].[OrganizationProduct] AS op
@@ -520,20 +535,29 @@ BEGIN
     ---------------------------------------------------------------------------
     IF @ActionId = 9
     BEGIN
-        ;WITH UserCounts AS (
+        -- Same output columns. Member counts and contact-email fallback stay on
+        -- [auth].[UserProduct] / [auth].[User] for this ProductId only, so Parish Hub
+        -- (and similar products) do not scan every member row of every assigned org.
+        ;WITH AssignedOrgs AS (
+            SELECT
+                op.[OrganizationProductId],
+                op.[CFROrgId] AS [OrgId],
+                op.[OrgStatus],
+                op.[AssignStatus],
+                op.[CreatedDate]
+            FROM [lic].[OrganizationProduct] AS op
+            WHERE op.[ProductId] = @ProductId
+              AND op.[IsDeleted] = 0
+        ),
+        UserCounts AS (
             SELECT up.[OrgId], COUNT(DISTINCT up.[CFRUserId]) AS [UserCount]
             FROM [auth].[UserProduct] AS up
-            WHERE up.[ProductId] = @ProductId AND (up.[IsDeleted] = 0 OR up.[IsDeleted] IS NULL)
+            WHERE up.[ProductId] = @ProductId
+              AND ISNULL(up.[IsDeleted], 0) = 0
             GROUP BY up.[OrgId]
         ),
-        OrgUserCounts AS (
-            SELECT ou.[OrgId], COUNT(*) AS [OrgUserCount]
-            FROM [auth].[OrganizationUser] AS ou
-            WHERE ou.[IsDeleted] = 0
-            GROUP BY ou.[OrgId]
-        ),
         LatestLicense AS (
-            SELECT 
+            SELECT
                 l2.[OrganizationProductId],
                 l2.[ActivationDate],
                 l2.[ExpiryDate],
@@ -541,42 +565,41 @@ BEGIN
                 l2.[LicenseStatus],
                 ROW_NUMBER() OVER (PARTITION BY l2.[OrganizationProductId] ORDER BY l2.[CreatedDate] DESC) AS rn
             FROM [lic].[License] AS l2
-        ),
-        LatestUser AS (
-            SELECT 
-                ou.[OrgId],
-                usr.[Email],
-                ROW_NUMBER() OVER (PARTITION BY ou.[OrgId] ORDER BY ou.[CreatedDate]) AS rn
-            FROM [auth].[OrganizationUser] AS ou
-            INNER JOIN [auth].[User] AS usr ON usr.[CFRUserId] = ou.[AuthUserId]
-            WHERE ou.[IsDeleted] = 0
+            INNER JOIN AssignedOrgs AS a ON a.[OrganizationProductId] = l2.[OrganizationProductId]
         )
         SELECT
             o.[ID] AS [OrgId],
             o.[OrgName],
-            op.[OrgStatus], -- Organization no longer has its own status; this is the per-product-assignment status (1=Active, 2=Inactive, 3=Suspended)
+            a.[OrgStatus],
             ISNULL(NULLIF(LTRIM(RTRIM(o.[ContactEmail])), N''), u.[Email]) AS [ContactEmail],
             o.[Website],
             o.[ContactPerson],
             o.[ContactPhone],
             o.[InsertedDate],
             o.[UpdatedDate],
-            COALESCE(NULLIF(uc.[UserCount], 0), ouc.[OrgUserCount], 0) AS [UserCount],
+            ISNULL(uc.[UserCount], 0) AS [UserCount],
             CONCAT(N'ORG-', o.[ID]) AS [OrgCode],
-            ISNULL(l.[ActivationDate], ISNULL(op.[CreatedDate], o.[InsertedDate])) AS [StartDate],
+            ISNULL(l.[ActivationDate], ISNULL(a.[CreatedDate], o.[InsertedDate])) AS [StartDate],
             l.[ExpiryDate],
             l.[LicenseType],
-            ISNULL(l.[LicenseStatus], CAST(op.[AssignStatus] AS NVARCHAR(20))) AS [LicenseStatus]
-        FROM [core].[Organization] AS o
-        INNER JOIN [lic].[OrganizationProduct] AS op
-            ON op.[CFROrgId] = o.[ID]
-           AND op.[ProductId] = @ProductId
-           AND op.[IsDeleted] = 0
+            ISNULL(l.[LicenseStatus], CAST(a.[AssignStatus] AS NVARCHAR(20))) AS [LicenseStatus]
+        FROM AssignedOrgs AS a
+        INNER JOIN [core].[Organization] AS o
+            ON o.[ID] = a.[OrgId]
+           AND o.[IsDeleted] = 0
         LEFT JOIN UserCounts AS uc ON uc.[OrgId] = o.[ID]
-        LEFT JOIN OrgUserCounts AS ouc ON ouc.[OrgId] = o.[ID]
-        LEFT JOIN LatestLicense AS l ON l.[OrganizationProductId] = op.[OrganizationProductId] AND l.rn = 1
-        LEFT JOIN LatestUser AS u ON u.[OrgId] = o.[ID] AND u.rn = 1
-        WHERE o.[IsDeleted] = 0
+        LEFT JOIN LatestLicense AS l ON l.[OrganizationProductId] = a.[OrganizationProductId] AND l.rn = 1
+        OUTER APPLY (
+            SELECT TOP (1) usr.[Email]
+            FROM [auth].[UserProduct] AS up
+            INNER JOIN [auth].[User] AS usr ON usr.[CFRUserId] = up.[CFRUserId]
+            WHERE NULLIF(LTRIM(RTRIM(o.[ContactEmail])), N'') IS NULL
+              AND up.[OrgId] = o.[ID]
+              AND up.[ProductId] = @ProductId
+              AND ISNULL(up.[IsDeleted], 0) = 0
+              AND usr.[Email] IS NOT NULL
+            ORDER BY up.[CreatedDate]
+        ) AS u
         ORDER BY o.[OrgName];
 
         RETURN 0;

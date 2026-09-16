@@ -37,7 +37,7 @@ export function CustomerDetails({
   //#endregion
 
   //#region Functions
-  const loadCustomers = useCallback(async () => {
+  const loadCustomers = useCallback(async (signal: AbortSignal) => {
     const productId = Number(app.id);
     if (!Number.isInteger(productId) || productId <= 0) {
       setProductCustomers([]);
@@ -48,17 +48,25 @@ export function CustomerDetails({
 
     setLoading(true);
     try {
-      const res = await getProductCustomers(productId);
+      const res = await getProductCustomers(productId, signal);
+      if (signal.aborted) {
+        return;
+      }
       const rows = normalizeProductCustomerList(res.resultData).map(toProductCustomerRow);
       setProductCustomers(rows);
       onCountChange?.(rows.length);
     } catch (err) {
+      if (signal.aborted) {
+        return;
+      }
       console.error('Error fetching product customers:', err);
       showToast(typeof err === 'string' ? err : 'Failed to load customers.', 'error');
       setProductCustomers([]);
       onCountChange?.(0);
     } finally {
-      setLoading(false);
+      if (!signal.aborted) {
+        setLoading(false);
+      }
     }
   }, [app.id, onCountChange, showToast]);
 
@@ -74,15 +82,9 @@ export function CustomerDetails({
 
   //#region Effects
   useEffect(() => {
-    // Standard mount/dependency-driven data-fetch effect, preserved as-is per this review's own
-    // instruction not to blindly rewrite working async loading effects. Known gap (tracked, not
-    // fixed here): `loadCustomers` doesn't check a cancellation flag internally, so in the rare
-    // case this component unmounts while the request is still in flight, its state-setting calls
-    // would still fire after unmount — the same shape as several other detail/edit pages in this
-    // app: a real but pre-existing, wider-reaching gap, not something newly introduced or safe to
-    // silently paper over here.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadCustomers();
+    const controller = new AbortController();
+    void loadCustomers(controller.signal);
+    return () => controller.abort();
   }, [loadCustomers]);
   //#endregion
 

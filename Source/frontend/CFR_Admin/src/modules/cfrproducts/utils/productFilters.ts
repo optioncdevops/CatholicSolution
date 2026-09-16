@@ -68,12 +68,13 @@ export const LICENSE_DETAILS_STATUS_FILTERS: Array<{
 /**
  * License history status filter options for the License History tab.
  */
-export type LicenseHistoryStatusFilter = 'paid' | 'unpaid' | 'overdue';
+export type LicenseHistoryStatusFilter = 'all' | 'paid' | 'unpaid' | 'overdue';
 
 export const LICENSE_HISTORY_STATUS_FILTERS: Array<{
   id: LicenseHistoryStatusFilter;
   label: string;
 }> = [
+  { id: 'all', label: 'All Invoices' },
   { id: 'paid', label: 'Paid' },
   { id: 'unpaid', label: 'Unpaid' },
   { id: 'overdue', label: 'Overdue' },

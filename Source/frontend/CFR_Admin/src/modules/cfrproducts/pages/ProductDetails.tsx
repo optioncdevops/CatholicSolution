@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Pencil, RefreshCw } from "lucide-react";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { ReadOnlyBanner } from "@shared/app/components/ReadOnlyBanner";
@@ -7,8 +7,6 @@ import { useToast } from "@shared/app/components/ToastProvider";
 import { useFeatureAccessLevel } from "@shared/auth/hooks/useFeatureAccessLevel";
 import { CommonButton } from "@app/components/buttons";
 import { Tabs, TabPanel } from "@app/components/Tabs";
-import { StatusBadge } from "@app/components/Badge";
-import { cn } from "@app/utilities/cn";
 import { formatDate } from "@/modules/utils/formatDate";
 import {
   getProductWarnings,
@@ -34,147 +32,9 @@ import {
   resolveProductLogoUrl,
   toAdminApplication,
 } from "../utils/productHelpers";
-import { EntityAvatar } from "@app/components/EntityAvatar";
 import type { AdminApplication, ProductStatus } from "@/modules/types";
 import { ProductStatusModal } from "./partials/ProductStatusModal";
-
-function isImageIcon(icon: string): boolean {
-  if (!icon) return false;
-  return (
-    icon.startsWith("data:") ||
-    icon.startsWith("blob:") ||
-    icon.startsWith("/") ||
-    /^https?:\/\//i.test(icon)
-  );
-}
-
-function ProductIcon({
-  icon,
-  name,
-  size = 36,
-}: {
-  icon: string;
-  name: string;
-  gradient?: string;
-  size?: number;
-}) {
-  const [hasError, setHasError] = useState(false);
-
-  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
-  // pattern for "state that resets when a prop identity changes") — a new `icon` deserves a fresh
-  // attempt, not the previous icon's stale error flag.
-  const [renderedForIcon, setRenderedForIcon] = useState(icon);
-  if (renderedForIcon !== icon) {
-    setRenderedForIcon(icon);
-    setHasError(false);
-  }
-
-  const isImage =
-    isImageIcon(icon) || (icon && !icon.includes("📦") && icon.length > 2);
-  const resolved = isImage
-    ? icon.startsWith("data:") ||
-      icon.startsWith("blob:") ||
-      /^https?:\/\//i.test(icon)
-      ? icon
-      : resolveProductLogoUrl(icon) || icon
-    : null;
-
-  if (resolved && !hasError) {
-    return (
-      <img
-        src={resolved}
-        alt=""
-        onError={() => setHasError(true)}
-        style={{ width: size, height: size }}
-        className="shrink-0 rounded-lg object-cover"
-        aria-hidden="true"
-      />
-    );
-  }
-
-  return <EntityAvatar name={name} size={size} square />;
-}
-
-function ProductCard({
-  app,
-  linkTo,
-  warningCount = 0,
-  footer,
-  className,
-}: {
-  app: Pick<
-    AdminApplication,
-    "name" | "category" | "icon" | "gradient" | "description" | "status"
-  >;
-  linkTo?: string;
-  warningCount?: number;
-  footer?: ReactNode;
-  className?: string;
-}) {
-  const identity = (
-    <>
-      <ProductIcon icon={app.icon} name={app.name} gradient={app.gradient} />
-      <div className="min-w-0">
-        <span className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              "truncate text-sm font-extrabold text-[var(--text-primary)]",
-              linkTo && "group-hover:underline",
-            )}
-          >
-            {app.name}
-          </span>
-          {warningCount > 0 ? (
-            <span
-              title={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`}
-              aria-label={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`}
-            >
-              <AlertTriangle
-                size={13}
-                className="shrink-0 text-[var(--warning)]"
-              />
-            </span>
-          ) : null}
-        </span>
-        <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">
-          {app.category}
-        </span>
-      </div>
-    </>
-  );
-
-  return (
-    <article
-      className={cn(
-        "admin-product-card",
-        !linkTo && "admin-product-card--static",
-        className,
-      )}
-    >
-      <div className="flex items-start justify-between gap-2.5">
-        {linkTo ? (
-          <Link to={linkTo} className="group flex min-w-0 items-center gap-2.5">
-            {identity}
-          </Link>
-        ) : (
-          <div className="flex min-w-0 items-center gap-2.5">{identity}</div>
-        )}
-        <div className="shrink-0 pt-0.5">
-          <StatusBadge status={app.status} kind="application" />
-        </div>
-      </div>
-      <p className="admin-product-card__description">
-        {app.description || "No description yet."}
-      </p>
-      {footer ? (
-        <div className="mt-auto">
-          <div className="admin-product-card__divider" />
-          {footer}
-        </div>
-      ) : null}
-    </article>
-  );
-}
+import { ProductCard, ProductIcon } from "../components";
 
 function ProductWarningsBanner({ warnings }: { warnings: ProductWarning[] }) {
   if (warnings.length === 0) return null;
@@ -388,7 +248,6 @@ const ProductDetails = () => {
         subCategoryName: product.subCategoryName,
         prodDescription: product.prodDescription,
         externalPageUrl: product.externalPageUrl,
-        defaultAccessDays: product.defaultAccessDays,
         licenseType: product.licenseType,
         navigationTarget: product.navigationTarget,
         isActive,
