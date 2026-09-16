@@ -66,5 +66,36 @@
     "City": "Testville",
     "State": "California",
     "Zip": "90210"
+  },
+  // ForgotPassword/ResetPassword run against the local dev stack (see frontend/CLAUDE.md and
+  // CFR.Acutis's appsettings.Development.json for CfrAdminBaseUrl), not the shared URL Login
+  // above points at. ExistingUserEmail must be replaced with a real, active, unlocked Acutis
+  // staff account in whatever database that local stack's backend connects to - never commit a
+  // real value here. Seeding/cleaning up reset tokens for it also requires the
+  // CFR_ACUTIS_AUTOMATION_DB_CONNECTION_STRING environment variable to be set locally - see
+  // Automation.Framework/DbSupport/PasswordResetTestDatabase.cs.
+  "ForgotPassword": {
+    "URL": "http://localhost:4011",
+    "ExistingUserEmail": "REPLACE_WITH_A_REAL_ACUTIS_STAFF_EMAIL@example.com",
+    "ExistingUserPassword": "REPLACE_WITH_THAT_ACCOUNTS_CURRENT_PASSWORD",
+    "NonExistentEmail": "no-such-user-automation@example.com",
+    "InvalidEmailFormat": "not-an-email"
+  },
+  "ResetPassword": {
+    "NewPassword": "Cfr@Automation1",
+    "WeakPassword": "abc123",
+    "MismatchedConfirmPassword": "Different@123"
+  },
+  // ChangePassword runs against the same signed in session as every other authenticated
+  // feature (Login.URL/UserName/Password above), not the local dev stack ForgotPassword/
+  // ResetPassword use. The scenario changes Login's real account password to NewPassword and
+  // then changes it straight back to Login.Password before finishing, so it never needs a
+  // separate "original password" field of its own - if a run is interrupted before that last
+  // step, the account's real password is left as NewPassword until fixed manually.
+  "ChangePassword": {
+    "WrongCurrentPassword": "NotTheRealPassword1!",
+    "WeakPassword": "abc123",
+    "MismatchedConfirmPassword": "Different@123",
+    "NewPassword": "Cfr@ChangeTest1"
   }
 }

@@ -95,12 +95,30 @@ BEGIN
         -- Compare via DecryptUserPassword (matches how Acutis_DoLogin verifies credentials) —
         -- EncryptUserPassword is not guaranteed deterministic, so re-encrypting and comparing
         -- ciphertext would reject a correct current password.
-        IF NOT EXISTS (
-            SELECT 1 FROM [auth].[AcutisUser]
-            WHERE [UserId] = @UserId
-              AND [IsDeleted] = 0
-              AND dbo.DecryptUserPassword([Password]) = @CurrentPassword
-        )
+        --
+        -- Two differences from the original version of this check, both to match
+        -- Acutis_DoLogin's own proven-working call exactly (see 005_Acutis_Users.sql) instead of
+        -- a guessed variant:
+        --  1) [Password] is explicitly CONVERT(VARBINARY(128), ...) before being decrypted,
+        --     rather than passed to dbo.DecryptUserPassword as-is. Login already does this
+        --     conversion; automated testing showed this procedure throwing a generic error on a
+        --     current-password check for an account that logs in fine, which is consistent with
+        --     DecryptUserPassword needing that same explicit conversion here too.
+        --  2) The stored password is fetched into a variable and decrypted on its own, rather
+        --     than calling dbo.DecryptUserPassword([Password]) directly inside a WHERE clause
+        --     alongside [UserId] = @UserId — SQL Server does not guarantee AND-ed predicates
+        --     evaluate in the order they're written, so a scalar UDF called that way can run
+        --     against other rows before the UserId filter narrows the scan to just this one.
+        --     Isolating the one row first guarantees the function only ever sees this user's
+        --     own data.
+        DECLARE @StoredPassword VARBINARY(128);
+
+        SELECT @StoredPassword = CONVERT(VARBINARY(128), [Password])
+        FROM [auth].[AcutisUser]
+        WHERE [UserId] = @UserId
+          AND [IsDeleted] = 0;
+
+        IF @StoredPassword IS NULL OR dbo.DecryptUserPassword(@StoredPassword) <> @CurrentPassword
         BEGIN
             SET @ReturnValue = -98;
             RETURN @ReturnValue;
