@@ -149,8 +149,13 @@ BEGIN
             ISNULL(r.[Description], N'') AS [Description],
             CASE WHEN r.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             r.[CreatedDate],
+            LTRIM(RTRIM(CONCAT(cb.[FirstName], ' ', cb.[LastName]))) AS [CreatedBy],
+            r.[UpdatedDate] AS [ModifiedDate],
+            LTRIM(RTRIM(CONCAT(mb.[FirstName], ' ', mb.[LastName]))) AS [ModifiedBy],
             (SELECT COUNT(1) FROM [auth].[AcutisUser] AS u WHERE u.[RoleId] = r.[RoleId] AND u.[IsDeleted] = 0) AS [UsersCount]
         FROM [auth].[AcutisRole] AS r
+        LEFT JOIN [auth].[AcutisUser] cb ON r.[InsertedBy] = cb.[UserId]
+        LEFT JOIN [auth].[AcutisUser] mb ON r.[UpdatedBy] = mb.[UserId]
         WHERE r.[RoleId] = @RoleId
           AND r.[IsDeleted] = 0;
         RETURN 0;
@@ -164,8 +169,13 @@ BEGIN
             ISNULL(r.[Description], N'') AS [Description],
             CASE WHEN r.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             r.[CreatedDate],
+            LTRIM(RTRIM(CONCAT(cb.[FirstName], ' ', cb.[LastName]))) AS [CreatedBy],
+            r.[UpdatedDate] AS [ModifiedDate],
+            LTRIM(RTRIM(CONCAT(mb.[FirstName], ' ', mb.[LastName]))) AS [ModifiedBy],
             (SELECT COUNT(1) FROM [auth].[AcutisUser] AS u WHERE u.[RoleId] = r.[RoleId] AND u.[IsDeleted] = 0) AS [UsersCount]
         FROM [auth].[AcutisRole] AS r
+        LEFT JOIN [auth].[AcutisUser] cb ON r.[InsertedBy] = cb.[UserId]
+        LEFT JOIN [auth].[AcutisUser] mb ON r.[UpdatedBy] = mb.[UserId]
         WHERE r.[IsDeleted] = 0
         ORDER BY r.[RoleName], r.[RoleId];
         RETURN 0;

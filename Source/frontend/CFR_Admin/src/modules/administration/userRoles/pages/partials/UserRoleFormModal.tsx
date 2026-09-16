@@ -27,7 +27,7 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
   const { showToast } = useToast();
 
   //#region Form
-  const { control, handleSubmit, reset } = useForm<UserRolesFormValues>({
+  const { control, handleSubmit, reset, formState: { isDirty } } = useForm<UserRolesFormValues>({
     defaultValues: userRolesDefaultValues,
     mode: 'onChange',
   });
@@ -65,6 +65,7 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
         return;
       }
       reset(userRolesDefaultValues);
+      showToast(role ? 'User role updated successfully.' : 'User role added successfully.', 'success');
       handleClose();
       await onSaved();
     } catch (error) {
@@ -103,7 +104,7 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
       footer={(
         <>
           <CommonButton variant="outline" onClick={handleClose} disabled={saving}>{readOnly ? 'Close' : 'Cancel'}</CommonButton>
-          {readOnly ? null : <CommonButton variant="primary" onClick={handleSubmit(onSubmit, onInvalid)} loading={saving} disabled={saving}>Save</CommonButton>}
+          {readOnly ? null : <CommonButton variant="primary" onClick={handleSubmit(onSubmit, onInvalid)} loading={saving} disabled={saving || (Boolean(role) && !isDirty)}>Save</CommonButton>}
         </>
       )}
     >

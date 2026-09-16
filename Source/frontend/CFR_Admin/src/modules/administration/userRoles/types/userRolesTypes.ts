@@ -6,6 +6,9 @@ export interface UserRolesApiItem {
   description: string;
   status: UserRoleStatusValue;
   createdDate: string | null;
+  createdBy?: string | null;
+  modifiedDate?: string | null;
+  modifiedBy?: string | null;
   usersCount: number;
 }
 

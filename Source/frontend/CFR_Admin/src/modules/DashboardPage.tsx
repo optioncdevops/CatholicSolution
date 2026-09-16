@@ -288,7 +288,6 @@ export function DashboardPage() {
       setAnnouncement(errors.length > 0 ? `Dashboard loaded with ${errors.length} section(s) unavailable.` : 'Dashboard loaded.');
       if (isRefresh) {
         if (errors.length > 0) showToast(`Refreshed with issues loading: ${errors.join(', ')}.`, 'error');
-        else showToast('Dashboard refreshed.', 'success');
       }
     }
 

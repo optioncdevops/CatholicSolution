@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Pencil, Plus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -86,9 +87,16 @@ export function UserRolesListPage() {
   const handleToggleActive = useCallback(async (role: UserRolesApiItem) => {
     if (isReadOnly || role.usersCount > 0) return;
     if (role.status !== 'active') {
+      const confirmed = await confirmAction({
+        title: 'Activate this role?',
+        description: `"${role.roleName}" will become assignable to users.`,
+        confirmLabel: 'Activate',
+      });
+      if (!confirmed) return;
+      
       try {
         await updateUserRoleStatus(role.roleId, 'active');
-        showToast(`${role.roleName} activated ✓`);
+        showToast(`${role.roleName} activated`);
         await load();
       } catch (error) {
         console.error('Error activating user role:', error);
@@ -173,9 +181,19 @@ export function UserRolesListPage() {
     {
       id: 'usersCount', header: 'Users', width: '6rem',
       value: (role) => role.usersCount,
-      cell: (role) => <Badge tone={role.usersCount > 0 ? 'info' : 'neutral'}>{role.usersCount}</Badge>,
+      cell: (role) => {
+        if (role.usersCount === 0) return <Badge tone="neutral">0</Badge>;
+        return (
+          <Link to="/admin/users" state={{ roleId: role.roleId }} className="hover:opacity-80 transition-opacity inline-block cursor-pointer" title="View Users">
+            <Badge tone="info">{role.usersCount}</Badge>
+          </Link>
+        );
+      },
     },
-    { id: 'createdAt', header: 'Created', value: (role) => role.createdDate ?? '—', cell: (role) => <span className="text-[var(--text-muted)]">{role.createdDate ? formatDate(role.createdDate) : '—'}</span> },
+    { id: 'createdAt', header: 'Created Date', value: (role) => role.createdDate ?? '—', cell: (role) => <span className="text-[var(--text-muted)]">{role.createdDate ? formatDate(role.createdDate) : '—'}</span> },
+    { id: 'createdBy', header: 'Created By', value: (role) => role.createdBy ?? '—', cell: (role) => <span className="text-[var(--text-secondary)]">{role.createdBy ?? '—'}</span> },
+    { id: 'modifiedDate', header: 'Modified Date', value: (role) => role.modifiedDate ?? '—', cell: (role) => <span className="text-[var(--text-muted)]">{role.modifiedDate ? formatDate(role.modifiedDate) : '—'}</span> },
+    { id: 'modifiedBy', header: 'Modified By', value: (role) => role.modifiedBy ?? '—', cell: (role) => <span className="text-[var(--text-secondary)]">{role.modifiedBy ?? '—'}</span> },
     { id: 'status', header: 'Status', value: (role) => role.status, cell: (role) => <Badge tone={role.status === 'active' ? 'success' : 'neutral'}>{role.status === 'active' ? 'Active' : 'Inactive'}</Badge> },
   ], [handleDelete, handleToggleActive, isReadOnly]);
   //#endregion

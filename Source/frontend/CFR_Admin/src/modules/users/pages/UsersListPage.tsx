@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -22,6 +22,9 @@ export function UsersListPage() {
   const navigate = useNavigate();
   const accessLevel = useFeatureAccessLevel('/admin/users');
   const isReadOnly = accessLevel === 'readOnly';
+  const location = useLocation();
+  const filterRoleId = location.state?.roleId as number | undefined;
+
   // An admin can never deactivate or delete their own account from this list — the backend
   // rejects it too, but disabling it here avoids a round trip just to hit that guard.
   const currentUserId = getStoredAcutisAuth()?.resultData?.user?.userId ?? null;
@@ -36,7 +39,11 @@ export function UsersListPage() {
   const load = useCallback(async () => {
     try {
       const { resultData, statusCode } = await getUsers();
-      setRows(statusCode === 204 ? [] : normalizeUsersList(resultData));
+      let usersList = statusCode === 204 ? [] : normalizeUsersList(resultData);
+      if (filterRoleId) {
+        usersList = usersList.filter((u) => u.roleId === filterRoleId);
+      }
+      setRows(usersList);
     } catch (error) {
       console.error('Error loading users:', error);
       showToast('Failed to load users.');
@@ -44,7 +51,7 @@ export function UsersListPage() {
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, filterRoleId]);
   //#endregion
 
   //#region Effects
