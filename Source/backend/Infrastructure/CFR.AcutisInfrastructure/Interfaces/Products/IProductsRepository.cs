@@ -185,5 +185,24 @@ namespace CFR.AcutisInfrastructure.Interfaces.Products
         Task<long> UpdateLicenseAsync(ProductLicenseInput input);
 
         #endregion PUT Methods
+
+        #region DELETE Methods
+
+        /// <summary>
+        /// Soft-deletes a license using StoredProc.Products.ProductsCrud (ActionId 11).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Mark a license as deleted without removing its row.
+        /// Request Flow: IProductsService -> IProductsRepository.DeleteLicenseAsync() -> SQL Database.
+        /// Validation Details: LicenseId parameter mapping.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with ActionId 11.
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
+        /// Response Details: Returns the deleted LicenseId, or -95 if not found.
+        /// </remarks>
+        /// <param name="licenseId">License identifier.</param>
+        /// <returns>Deleted LicenseId or negative error code.</returns>
+        Task<long> DeleteLicenseAsync(long licenseId);
+
+        #endregion DELETE Methods
     }
 }

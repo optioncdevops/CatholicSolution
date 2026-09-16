@@ -8,9 +8,10 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { DatePicker, Dropdown, InputField, MandatoryIndicator, RadioGroup } from '@app/components/formControls';
+import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { getUserById, getUserLookups, saveUser } from '../../services/usersService';
 import type { RoleLookupItem, UsersFormValues } from '../../types/usersTypes';
-import { toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
+import { getTodayDateOnly, toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
 import { usersDefaultValues, usersRules } from '../../validator/UsersValidator';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 
@@ -34,7 +35,7 @@ const AddUsers = () => {
   //#endregion
 
   //#region Form
-  const { control, handleSubmit, reset } = useForm<UsersFormValues>({
+  const { control, handleSubmit, reset, setError, formState: { isDirty } } = useForm<UsersFormValues>({
     defaultValues: usersDefaultValues,
     mode: 'onChange',
   });
@@ -44,6 +45,14 @@ const AddUsers = () => {
   const navigateToList = useCallback(() => {
     navigate('/admin/users', { replace: true });
   }, [navigate]);
+
+  const handleCancel = async () => {
+    if (isDirty) {
+      const confirmed = await confirmDiscardChanges();
+      if (!confirmed) return;
+    }
+    navigateToList();
+  };
   //#endregion
 
   //#region Effects
@@ -77,7 +86,7 @@ const AddUsers = () => {
             contactNumber?: string | null;
           } | null;
           if (!row) {
-            showToast('Failed to load user.');
+            showToast('Failed to load user.', 'error');
             navigateToList();
             return;
           }
@@ -102,7 +111,7 @@ const AddUsers = () => {
       } catch (error) {
         if (cancelled) return;
         console.error('Error loading user form:', error);
-        showToast(typeof error === 'string' ? error : 'Failed to load user form.');
+        showToast(typeof error === 'string' ? error : 'Failed to load user form.', 'error');
       }
     })();
     return () => {
@@ -134,14 +143,16 @@ const AddUsers = () => {
     try {
       const response = await saveUser(toSaveUserPayload(values, isEdit ? userId : 0));
       if (response.statusCode === 409) {
-        showToast(response.statusMessage || 'A user with this email already exists.');
+        const msg = response.statusMessage || 'A user with this email already exists.';
+        showToast(msg, 'conflict');
+        setError('eMail', { type: 'manual', message: msg });
         return;
       }
       showToast(isEdit ? 'User updated successfully.' : 'User added successfully.');
       navigateToList();
     } catch (error) {
       console.error('Error saving user:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to save user.');
+      showToast(typeof error === 'string' ? error : 'Failed to save user.', 'error');
     } finally {
       setSaving(false);
     }
@@ -155,7 +166,7 @@ const AddUsers = () => {
 
       {isReadOnly ? <ReadOnlyBanner featureName="Users" /> : null}
 
-      <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
+      <form noValidate autoComplete="off" onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <InputField
             control={control}
@@ -187,16 +198,18 @@ const AddUsers = () => {
             required
             rules={usersRules.eMail}
             disabled={saving || isReadOnly}
+            autoComplete="off"
           />
           <InputField
             control={control}
             name="password"
             label="Password"
             type="password"
-            placeholder={isEdit ? 'Leave blank to keep the current password' : 'Enter password'}
+            placeholder={isEdit ? 'Enter password' : 'Enter password'}
             required={!isEdit}
             rules={isEdit ? undefined : usersRules.password}
             disabled={saving || isReadOnly}
+            autoComplete="new-password"
           />
           <InputField
             control={control}
@@ -219,6 +232,7 @@ const AddUsers = () => {
             outputFormat="yyyy-MM-dd"
             required
             rules={usersRules.dateOfBirth}
+            maxDate={getTodayDateOnly()}
             disabled={saving || isReadOnly}
           />
           <Dropdown
@@ -242,7 +256,7 @@ const AddUsers = () => {
             rules={usersRules.isActive}
             options={[
               { id: '1', value: 'Active' },
-              { id: '0', value: 'Inactive' },
+              { id: '0', value: 'InActive' },
             ]}
             disabled={saving || isReadOnly || isEditingSelf}
           />
@@ -265,9 +279,9 @@ const AddUsers = () => {
         ) : null}
 
         <div className="admin-sticky-footer">
-          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={saving}>Cancel</CommonButton>
+          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={() => void handleCancel()} disabled={saving}>Cancel</CommonButton>
           {!isReadOnly && (
-            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || !isDirty}>Save</CommonButton>
           )}
         </div>
       </form>

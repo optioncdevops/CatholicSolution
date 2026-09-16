@@ -5,6 +5,13 @@ export const toDateOnly = (value?: string | null): string => {
   return value.trim().slice(0, 10);
 };
 
+export const getTodayDateOnly = (): string => {
+  const today = new Date();
+  const month = `${today.getMonth() + 1}`.padStart(2, '0');
+  const day = `${today.getDate()}`.padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
+};
+
 export const normalizeUsersList = (resultData: unknown): UsersApiItem[] => {
   if (!Array.isArray(resultData)) return [];
   return resultData.map((row) => normalizeUser(row)).filter((row): row is UsersApiItem => row != null);

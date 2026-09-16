@@ -122,6 +122,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public long? UpdatedBy { get; set; }
 
         /// <summary>
+        /// Gets or sets the display name of the user who last updated the record, resolved from [auth].[AcutisUser].
+        /// </summary>
+        [JsonPropertyName("updatedByName")]
+        public string? UpdatedByName { get; set; }
+
+        /// <summary>
         /// Gets or sets the deleted flag.
         /// </summary>
         [JsonPropertyName("isDeleted")]

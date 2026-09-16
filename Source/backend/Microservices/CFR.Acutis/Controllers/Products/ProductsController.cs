@@ -300,5 +300,33 @@ namespace CFR.Acutis.Controllers.Products
         }
 
         #endregion PUT Methods
+
+        #region DELETE Methods
+
+        /// <summary>
+        /// Soft-deletes a license.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Mark a license as deleted without removing its row.
+        /// Request Flow: Client API DELETE -> ProductsController.DeleteLicense() -> IProductsService.DeleteLicenseAsync() -> Database.
+        /// Validation Details: LicenseId must be greater than zero.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IProductsService.DeleteLicenseAsync().
+        /// Response Details: Standard API result representing the delete outcome.
+        /// </remarks>
+        /// <param name="licenseId">License identifier.</param>
+        /// <returns>Standardized success or failure response.</returns>
+        /// <response code="200">Successfully deleted the license.</response>
+        /// <response code="400">Invalid license identifier.</response>
+        /// <response code="404">License not found.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpDelete]
+        [ActionName(API_Product.DeleteLicense)]
+        public async Task<IActionResult> DeleteLicense(long licenseId)
+        {
+            return ApiResultArgs(await service.DeleteLicenseAsync(licenseId), APIHttpType.HttpDelete);
+        }
+
+        #endregion DELETE Methods
     }
 }

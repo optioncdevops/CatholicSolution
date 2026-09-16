@@ -40,7 +40,18 @@ export const usersRules = {
     validate: (value: string) => passwordScore(value) >= 3 || PASSWORD_STRENGTH_HINT,
   },
   roleId: { required: 'This field is required' },
-  dateOfBirth: { required: 'This field is required' },
+  dateOfBirth: { 
+    required: 'This field is required',
+    validate: (value: string) => {
+      if (!value) return true;
+      const [year, month, day] = value.split('-').map(Number);
+      if (!year || !month || !day) return true;
+      const selectedLocal = new Date(year, month - 1, day);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return selectedLocal <= today || 'Date of birth cannot be in the future';
+    }
+  },
   isActive: { required: 'This field is required' },
   isLocked: { required: 'This field is required' },
   contactNumber: {

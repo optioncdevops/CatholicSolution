@@ -52,6 +52,7 @@ namespace CFR.Common
             EIGHT = 8,
             NINE = 9,
             TEN = 10,
+            ELEVEN = 11,
             NEGATIVEONE = -1
         }
     }

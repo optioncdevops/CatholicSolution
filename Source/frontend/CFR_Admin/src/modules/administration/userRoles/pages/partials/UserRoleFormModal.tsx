@@ -4,6 +4,7 @@ import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { CommonButton } from '@app/components/buttons';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { InputField, TextareaField } from '@app/components/formControls';
+import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { saveUserRole } from '../../services/userRolesService';
 import type { UserRolesApiItem, UserRolesFormValues } from '../../types/userRolesTypes';
 import { toSaveUserRolePayload } from '../../utils/userRolesHelpers';
@@ -34,7 +35,11 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
   //#endregion
 
   //#region Functions
-  const handleClose = () => {
+  const handleClose = async () => {
+    if (isDirty) {
+      const confirmed = await confirmDiscardChanges();
+      if (!confirmed) return;
+    }
     setFormError(null);
     onClose();
   };
@@ -111,7 +116,7 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         {readOnly ? <ReadOnlyBanner featureName="User Roles" /> : null}
         {formError ? <p className="text-xs font-semibold text-[var(--error)]">{formError}</p> : null}
-        <InputField control={control} name="roleName" label="Role name" required rules={userRolesRules.roleName} maxLength={50} disabled={saving || readOnly} />
+        <InputField control={control} name="roleName" label="Role name" required autoFocus rules={userRolesRules.roleName} maxLength={50} disabled={saving || readOnly} />
         <TextareaField control={control} name="description" label="Description" rows={3} rules={userRolesRules.description} maxLength={250} showCharCount={true} disabled={saving || readOnly} />
       </form>
     </BaseModal>

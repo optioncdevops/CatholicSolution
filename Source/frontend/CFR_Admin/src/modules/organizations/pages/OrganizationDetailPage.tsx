@@ -57,7 +57,7 @@ const OrganizationDetailPage = () => {
   const [products, setProducts] = useState<OrganizationProductApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState((location.state as { tab?: string } | undefined)?.tab ?? 'profile');
   //#endregion
 
   const numericOrgId = Number(orgId);

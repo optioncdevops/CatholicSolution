@@ -449,7 +449,7 @@ export function DashboardPage() {
   // list length (the Organizations Overview table below still uses the real list for per-org rows).
   const orgStatusPieData = [
     { key: 'active', name: 'Active', value: kpis?.activeOrganizations ?? 0, color: CHART_STATUS_COLORS.success, filter: 'active' },
-    { key: 'inactive', name: 'Inactive', value: kpis?.inactiveOrganizations ?? 0, color: CHART_STATUS_COLORS.neutral, filter: 'inactive' },
+    { key: 'inactive', name: 'InActive', value: kpis?.inactiveOrganizations ?? 0, color: CHART_STATUS_COLORS.neutral, filter: 'inactive' },
     { key: 'suspended', name: 'Suspended', value: kpis?.suspendedOrganizations ?? 0, color: CHART_STATUS_COLORS.danger, filter: 'suspended' },
   ];
   const totalOrgsForDonut = kpis?.totalOrganizations ?? 0;
@@ -937,7 +937,7 @@ export function DashboardPage() {
                     <tr>
                       <th scope="col">Product</th>
                       <th scope="col">Active Orgs</th>
-                      <th scope="col">Inactive/Revoked</th>
+                      <th scope="col">InActive/Revoked</th>
                       <th scope="col">Total Ever Assigned</th>
                       <th scope="col">% Active</th>
                     </tr>

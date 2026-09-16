@@ -46,7 +46,7 @@ export function UsersListPage() {
       setRows(usersList);
     } catch (error) {
       console.error('Error loading users:', error);
-      showToast('Failed to load users.');
+      showToast('Failed to load users.', 'error');
       setRows([]);
     } finally {
       setLoading(false);
@@ -84,6 +84,13 @@ export function UsersListPage() {
         tone: 'danger',
       });
       if (!confirmed) return;
+    } else {
+      const confirmed = await confirmAction({
+        title: 'Activate user?',
+        description: `${user.fullName} will regain access to their account.`,
+        confirmLabel: 'Activate',
+      });
+      if (!confirmed) return;
     }
     try {
       await updateUserStatus(user.userId, nextIsActive);
@@ -91,7 +98,7 @@ export function UsersListPage() {
       await load();
     } catch (error) {
       console.error('Error updating user status:', error);
-      showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.');
+      showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.', 'error');
     }
   }, [load, showToast, isReadOnly, currentUserId]);
 
@@ -114,7 +121,7 @@ export function UsersListPage() {
       await load();
     } catch (error) {
       console.error('Error deleting user:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to delete user.');
+      showToast(typeof error === 'string' ? error : 'Failed to delete user.', 'error');
     }
   }, [load, showToast, isReadOnly, currentUserId]);
   //#endregion

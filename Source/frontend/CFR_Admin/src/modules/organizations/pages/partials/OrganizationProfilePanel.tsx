@@ -6,6 +6,7 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField } from '@app/components/formControls';
 import { StatusBadge } from '@app/components/Badge';
+import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { getOrganizationUsers, updateOrganization } from '../../services/organizationsService';
 import type { OrganizationApiItem, OrganizationFormValues, OrganizationUserApiItem } from '../../types/organizationTypes';
 import { composeOrganizationAddress, formatOrgCode, ORG_TYPE_OPTIONS, orgTypeLabel, stateLabel, US_STATE_OPTIONS } from '../../utils/organizationHelpers';
@@ -41,7 +42,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
   //#endregion
 
   //#region Form
-  const { control, handleSubmit, reset } = useForm<OrganizationFormValues>({
+  const { control, handleSubmit, reset, formState: { isDirty } } = useForm<OrganizationFormValues>({
     defaultValues: {
       orgName: organization.orgName,
       orgStatus: organization.orgStatus,
@@ -106,7 +107,11 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
     setEditing(true);
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    if (isDirty) {
+      const confirmed = await confirmDiscardChanges();
+      if (!confirmed) return;
+    }
     setEditing(false);
   };
 
@@ -201,7 +206,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
         <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
           <InputField control={control} name="orgName" label="Organization name" required rules={organizationRules.orgName} disabled wrapperClassName="md:col-span-8" />
           <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" required searchable={false} clearable={false} rules={organizationRules.orgType} options={ORG_TYPE_OPTIONS} disabled wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving} autoFocus wrapperClassName="md:col-span-4" />
           <Dropdown
             control={control} name="contactPerson" label="Contact person"
             placeholder={loadingMembers ? 'Loading members…' : 'Select contact person'}
@@ -214,8 +219,8 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
         </div>
 
         <div className="admin-sticky-footer">
-          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={handleCancel} disabled={saving}>Cancel</CommonButton>
-          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={() => void handleCancel()} disabled={saving}>Cancel</CommonButton>
+          <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || !isDirty}>Save</CommonButton>
         </div>
       </form>
     </section>

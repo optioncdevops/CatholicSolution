@@ -45,6 +45,9 @@ export const saveUser = async (value: SaveUserPayload): Promise<ApiResponse> => 
     return response.data;
   } catch (error: unknown) {
     const err = error as ApiError;
+    if (err.response?.status === 409) {
+      return { statusCode: 409, statusMessage: err.response?.data?.statusMessage || 'A user with this email already exists.', resultData: null };
+    }
     throw err.response?.data?.statusMessage || err.message || 'Failed to save user';
   }
 };

@@ -672,6 +672,62 @@ namespace CFR.AcutisService.Service.Products
 
         #endregion PUT Methods
 
+        #region DELETE Methods
+
+        /// <summary>
+        /// Soft-deletes a license via IProductsRepository.DeleteLicenseAsync().
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Business-layer wrapper around the license soft-delete operation.
+        /// Request Flow: ProductsController -> ProductsService.DeleteLicenseAsync() -> IProductsRepository.DeleteLicenseAsync().
+        /// Validation Details: LicenseId must be greater than zero.
+        /// Business Logic: Validates license existence and marks it deleted.
+        /// Repository Interaction: Calls IProductsRepository.DeleteLicenseAsync.
+        /// Response Details: MSResultArgs containing the deleted LicenseId.
+        /// </remarks>
+        /// <param name="licenseId">License identifier.</param>
+        /// <returns>MSResultArgs containing the deleted LicenseId.</returns>
+        public async Task<MSResultArgs> DeleteLicenseAsync(long licenseId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (licenseId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                long deletedId = await repository.DeleteLicenseAsync(licenseId);
+                if (deletedId == -95)
+                {
+                    result.StatusCode = ErrorCodes.NotFound;
+                    result.StatusMessage = ErrorMessages.LicenseNotFound;
+                    return result;
+                }
+
+                if (deletedId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.Failed;
+                    result.StatusMessage = ErrorMessages.Failed;
+                    return result;
+                }
+
+                result.ResultData = licenseId;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.DeleteLicenseFailed, licenseId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        #endregion DELETE Methods
+
         #region Private Helper Methods
 
         private string GetProductDocBasePath()

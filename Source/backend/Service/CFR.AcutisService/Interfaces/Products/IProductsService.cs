@@ -201,5 +201,24 @@ namespace CFR.AcutisService.Interfaces.Products
         Task<MSResultArgs> UpdateLicenseAsync(ProductLicenseInput input);
 
         #endregion PUT Methods
+
+        #region DELETE Methods
+
+        /// <summary>
+        /// Soft-deletes a license in lic.License.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Mark a license as deleted without removing its row.
+        /// Request Flow: ProductsController -> IProductsService.DeleteLicenseAsync() -> IProductsRepository.DeleteLicenseAsync().
+        /// Validation Details: LicenseId must be greater than zero.
+        /// Business Logic: Returns NotFound when license does not exist, otherwise marks it deleted.
+        /// Repository Interaction: Calls IProductsRepository.DeleteLicenseAsync().
+        /// Response Details: MSResultArgs representing delete status.
+        /// </remarks>
+        /// <param name="licenseId">License identifier.</param>
+        /// <returns>MSResultArgs representing delete status.</returns>
+        Task<MSResultArgs> DeleteLicenseAsync(long licenseId);
+
+        #endregion DELETE Methods
     }
 }

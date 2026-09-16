@@ -152,6 +152,7 @@ namespace CFR.Common
             public const string FetchLicenseByIdFailed = "Error while fetching license {LicenseId}";
             public const string CreateLicenseFailed = "Error while creating license";
             public const string UpdateLicenseFailed = "Error while updating license {LicenseId}";
+            public const string DeleteLicenseFailed = "Error while deleting license {LicenseId}";
             public const string UpdateProductFailed = "Error while updating product {ProductId}";
             public const string UploadProductLogoFailed = "Error while uploading product logo";
             public const string FetchProductLogoFailed = "Error while fetching product logo";
