@@ -184,6 +184,10 @@ function EmailSettingsPage() {
           <div className="flex flex-col gap-4">
             <ProfileImageUpload
               label="Email logo"
+              variant="rectangle"
+              uploadLabel="Upload logo"
+              replaceLabel="Change logo"
+              existingPreviewAlt="Current email logo"
               initialPreviewUrl={logoImageUrl ?? undefined}
               onFileChange={(file) => void handleLogoFileChange(file)}
               disabled={uploadingLogo || saving || isReadOnly}

@@ -34,6 +34,18 @@ interface ProfileImageUploadProps {
   /** Shown when no profile image is available (e.g. first + last initials). */
   fallbackInitials?: string;
   tabIndex?: number;
+  /**
+   * "circle" (default) is the real profile-photo crop this component was built for. "rectangle"
+   * is for a wide brand/banner image (e.g. an email logo) that a circular avatar crop would
+   * distort — same component, no separate image-upload widget needed.
+   */
+  variant?: "circle" | "rectangle";
+  /** Overrides the "Upload photo" link text — defaults preserved for existing profile-photo usage. */
+  uploadLabel?: string;
+  /** Overrides the "Change photo" link text — defaults preserved for existing profile-photo usage. */
+  replaceLabel?: string;
+  /** Overrides the `alt` text on an already-uploaded image's preview. */
+  existingPreviewAlt?: string;
 }
 
 const PROFILE_ACCEPT = "image/jpeg,image/png,.jpg,.jpeg,.png";
@@ -47,8 +59,15 @@ const PROFILE_HELPER_TEXT = formatFileUploadHelperText({
 const CARD_CLASS =
   "inline-flex w-fit max-w-[220px] flex-col items-center rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3 shadow-sm";
 
-const AVATAR_CLASS =
-  "h-24 w-24 rounded-full border border-[var(--line)] object-cover shadow-sm ring-2 ring-[var(--surface)]";
+const AVATAR_CLASS_BY_VARIANT: Record<"circle" | "rectangle", string> = {
+  circle: "h-24 w-24 rounded-full border border-[var(--line)] object-cover shadow-sm ring-2 ring-[var(--surface)]",
+  rectangle: "h-16 w-40 rounded-lg border border-[var(--line)] object-contain bg-[var(--surface-muted)] shadow-sm ring-2 ring-[var(--surface)]",
+};
+
+const EMPTY_STATE_CLASS_BY_VARIANT: Record<"circle" | "rectangle", string> = {
+  circle: "flex h-24 w-24 items-center justify-center rounded-full border border-dashed border-[var(--line)] bg-[var(--surface-muted)] shadow-sm ring-2 ring-[var(--surface)]",
+  rectangle: "flex h-16 w-40 items-center justify-center rounded-lg border border-dashed border-[var(--line)] bg-[var(--surface-muted)] shadow-sm ring-2 ring-[var(--surface)]",
+};
 
 const OVERLAY_BTN_CLASS =
   "inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/65 disabled:cursor-not-allowed disabled:bg-black/35 disabled:text-white/70 disabled:hover:bg-black/35";
@@ -114,7 +133,13 @@ export function ProfileImageUpload({
   initialPreviewUrl,
   fallbackInitials,
   tabIndex,
+  variant = "circle",
+  uploadLabel = "Upload photo",
+  replaceLabel = "Change photo",
+  existingPreviewAlt = "Current profile",
 }: ProfileImageUploadProps) {
+  const avatarClass = AVATAR_CLASS_BY_VARIANT[variant];
+  const emptyStateClass = EMPTY_STATE_CLASS_BY_VARIANT[variant];
   const reactId = useId().replace(/:/g, "");
   const inputBase = `profile-image-${reactId}`;
   const [file, setFile] = useState<File | null>(null);
@@ -232,7 +257,7 @@ export function ProfileImageUpload({
           }
         }}
       >
-        Change photo
+        {replaceLabel}
         <input
           id={`${inputBase}-replace`}
           type="file"
@@ -254,7 +279,7 @@ export function ProfileImageUpload({
             <img
               src={previewUrl ?? undefined}
               alt={file.name}
-              className={AVATAR_CLASS}
+              className={avatarClass}
             />
             <ProfileOverlayActions
               disabled={disabled}
@@ -295,8 +320,8 @@ export function ProfileImageUpload({
           <div className="relative mx-auto">
             <img
               src={existingPreviewUrl}
-              alt="Current profile"
-              className={AVATAR_CLASS}
+              alt={existingPreviewAlt}
+              className={avatarClass}
             />
             {previewable || removable ? (
               <ProfileOverlayActions
@@ -332,7 +357,7 @@ export function ProfileImageUpload({
             }
           }}
         >
-          <div className="flex h-24 w-24 items-center justify-center rounded-full border border-dashed border-[var(--line)] bg-[var(--surface-muted)] shadow-sm ring-2 ring-[var(--surface)]">
+          <div className={emptyStateClass}>
             {fallbackInitials ? (
               <span className="text-xl font-bold uppercase tracking-wide text-[var(--primary)]">
                 {fallbackInitials}
@@ -347,7 +372,7 @@ export function ProfileImageUpload({
             )}
           </div>
           <span className={cn(UPLOAD_LINK_CLASS, "text-center")}>
-            Upload photo
+            {uploadLabel}
           </span>
           {helperBlock}
           <input
