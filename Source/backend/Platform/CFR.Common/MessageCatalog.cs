@@ -43,6 +43,11 @@ namespace CFR.Common
         public const string ExistUser = "A user with this email already exists.";
         public const string CannotModifySelfStatus = "You cannot deactivate or lock your own account. Ask another administrator to do this.";
         public const string CannotDeleteSelf = "You cannot delete your own account. Ask another administrator to do this.";
+        public const string CannotDeactivateLastAdmin = "You cannot deactivate the last active administrator. Assign another user as administrator first.";
+        public const string CannotDeleteLastAdmin = "You cannot delete the last active administrator. Assign another user as administrator first.";
+        public const string InvalidEmailFormat = "Enter a valid email address.";
+        public const string FutureDateOfBirth = "Date of birth cannot be in the future.";
+        public const string DateOfBirthOutOfRange = "Date of birth must reflect an age between 18 and 120 years.";
         public const string ExistRole = "A role with this name already exists.";
         public const string RoleInUse = "This role is assigned to one or more users.";
         public const string Failed = "The request could not be completed.";

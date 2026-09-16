@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Pencil, Plus, Power, Trash2 } from 'lucide-react';
+import { FilterX, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
@@ -9,6 +9,7 @@ import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel'
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { StatusBadge, Badge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
+import { Dropdown } from '@app/components/formControls';
 import { confirmAction } from '../../lib/confirm';
 import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { deleteUser, getUsers, updateUserStatus } from '../services/usersService';
@@ -30,17 +31,30 @@ export function UsersListPage() {
   //#region States
   const [rows, setRows] = useState<UsersApiItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [lockedFilter, setLockedFilter] = useState('');
   //#endregion
 
   //#region Functions
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const { resultData, statusCode } = await getUsers();
-      setRows(statusCode === 204 ? [] : normalizeUsersList(resultData));
+      const nextRows = statusCode === 204 ? [] : normalizeUsersList(resultData);
+      setRows(nextRows);
+      setLoadError(null);
+      setAnnouncement(nextRows.length === 0 ? 'No users found.' : `${nextRows.length} users loaded.`);
     } catch (error) {
       console.error('Error loading users:', error);
-      showToast('Failed to load users.');
-      setRows([]);
+      const message = typeof error === 'string' ? error : 'Failed to load users.';
+      // Preserve any previously loaded rows — an unrelated failed refresh should not blank out
+      // data the admin was already looking at.
+      setLoadError(message);
+      showToast(message, 'error');
+      setAnnouncement(message);
     } finally {
       setLoading(false);
     }
@@ -84,7 +98,8 @@ export function UsersListPage() {
       await load();
     } catch (error) {
       console.error('Error updating user status:', error);
-      showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.');
+      const fallback = nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.';
+      showToast(typeof error === 'string' ? error : fallback, 'error');
     }
   }, [load, showToast, isReadOnly, currentUserId]);
 
@@ -107,7 +122,7 @@ export function UsersListPage() {
       await load();
     } catch (error) {
       console.error('Error deleting user:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to delete user.');
+      showToast(typeof error === 'string' ? error : 'Failed to delete user.', 'error');
     }
   }, [load, showToast, isReadOnly, currentUserId]);
   //#endregion
@@ -177,6 +192,20 @@ export function UsersListPage() {
   ], [handleDelete, handleToggleStatus, navigate, isReadOnly, currentUserId]);
   //#endregion
 
+  //#region Filters
+  const roleOptions = useMemo(
+    () => Array.from(new Set(rows.map((user) => user.roleName).filter(Boolean))).sort()
+      .map((role) => ({ id: role, value: role })),
+    [rows],
+  );
+  const filteredRows = useMemo(() => rows.filter((user) => (
+    (!roleFilter || user.roleName === roleFilter)
+    && (!statusFilter || user.status === statusFilter)
+    && (!lockedFilter || String(user.isLocked) === lockedFilter)
+  )), [rows, roleFilter, statusFilter, lockedFilter]);
+  const hasActiveFilters = Boolean(roleFilter || statusFilter || lockedFilter);
+  //#endregion
+
   //#region Render
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -185,18 +214,93 @@ export function UsersListPage() {
         action={!isReadOnly && <CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/add-users')}>Add User</CommonButton>}
       />
 
+      <span className="sr-only" role="status" aria-live="polite">{announcement}</span>
+
       {isReadOnly ? <ReadOnlyBanner featureName="Users" /> : null}
 
-      {!loading && rows.length === 0 ? (
+      {rows.length > 0 && (
+        <div className="flex flex-wrap gap-4">
+          <div className="w-full max-w-xs">
+            <Dropdown
+              id="filterUsersRole"
+              label="Role"
+              searchable={false}
+              clearable={false}
+              value={roleFilter || 'all'}
+              onValueChange={(value) => setRoleFilter(!value || value === 'all' ? '' : value)}
+              options={[{ id: 'all', value: 'All Roles' }, ...roleOptions]}
+              className="min-h-8"
+            />
+          </div>
+          <div className="w-full max-w-xs">
+            <Dropdown
+              id="filterUsersStatus"
+              label="Status"
+              searchable={false}
+              clearable={false}
+              value={statusFilter || 'all'}
+              onValueChange={(value) => setStatusFilter(!value || value === 'all' ? '' : value)}
+              options={[
+                { id: 'all', value: 'All Statuses' },
+                { id: 'active', value: 'Active' },
+                { id: 'inactive', value: 'Inactive' },
+              ]}
+              className="min-h-8"
+            />
+          </div>
+          <div className="w-full max-w-xs">
+            <Dropdown
+              id="filterUsersLocked"
+              label="Locked"
+              searchable={false}
+              clearable={false}
+              value={lockedFilter || 'all'}
+              onValueChange={(value) => setLockedFilter(!value || value === 'all' ? '' : value)}
+              options={[
+                { id: 'all', value: 'All' },
+                { id: '1', value: 'Yes' },
+                { id: '0', value: 'No' },
+              ]}
+              className="min-h-8"
+            />
+          </div>
+          {hasActiveFilters ? (
+            <div className="flex shrink-0 items-end pb-0.5">
+              <CommonButton
+                id="btnClearUsersFilters"
+                variant="clearFilter"
+                size="sm"
+                iconLeft={<FilterX size={14} />}
+                onClick={() => { setRoleFilter(''); setStatusFilter(''); setLockedFilter(''); }}
+              >
+                Clear filter
+              </CommonButton>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {loadError && rows.length === 0 ? (
+        <EmptyState icon="⚠️" title="Couldn't load users" description={loadError} actionLabel="Retry" onAction={() => void load()} />
+      ) : !loading && rows.length === 0 ? (
         <EmptyState icon="🙍" title="No users found" description="Add a user to get started." />
+      ) : !loading && hasActiveFilters && filteredRows.length === 0 ? (
+        <EmptyState
+          icon="🔍"
+          title="No users match the selected filters"
+          description="Try a different Role, Status, or Locked combination."
+          actionLabel="Clear filters"
+          onAction={() => { setRoleFilter(''); setStatusFilter(''); setLockedFilter(''); }}
+        />
       ) : (
         <DataTable
-          data={rows}
+          data={filteredRows}
           columns={columns}
           getRowId={(user) => String(user.userId)}
           exportFileName="catholic-solutions-users"
           exportTitle="Catholic Solutions — Users"
           emptyMessage="No users found."
+          loading={loading}
         />
       )}
     </div>

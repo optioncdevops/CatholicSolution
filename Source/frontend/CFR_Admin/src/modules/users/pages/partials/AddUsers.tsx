@@ -6,11 +6,12 @@ import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
+import { PASSWORD_STRENGTH_HINT } from '@shared/auth/validators';
 import { CommonButton } from '@app/components/buttons';
 import { DatePicker, Dropdown, InputField, MandatoryIndicator, RadioGroup } from '@app/components/formControls';
 import { getUserById, getUserLookups, saveUser } from '../../services/usersService';
 import type { RoleLookupItem, UsersFormValues } from '../../types/usersTypes';
-import { toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
+import { maxAllowedDateOfBirth, minAllowedDateOfBirth, toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
 import { usersDefaultValues, usersRules } from '../../validator/UsersValidator';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 
@@ -34,10 +35,14 @@ const AddUsers = () => {
   //#endregion
 
   //#region Form
-  const { control, handleSubmit, reset } = useForm<UsersFormValues>({
+  const { control, handleSubmit, reset, setError, clearErrors, watch } = useForm<UsersFormValues>({
     defaultValues: usersDefaultValues,
     mode: 'onChange',
   });
+  // Tracks the email value a duplicate-email API error was raised for, so the inline error clears
+  // as soon as the user changes the address instead of lingering after a successful edit.
+  const [duplicateEmail, setDuplicateEmail] = useState<string | null>(null);
+  const eMailValue = watch('eMail');
   //#endregion
 
   //#region Functions
@@ -77,7 +82,7 @@ const AddUsers = () => {
             contactNumber?: string | null;
           } | null;
           if (!row) {
-            showToast('Failed to load user.');
+            showToast('Failed to load user.', 'error');
             navigateToList();
             return;
           }
@@ -102,13 +107,20 @@ const AddUsers = () => {
       } catch (error) {
         if (cancelled) return;
         console.error('Error loading user form:', error);
-        showToast(typeof error === 'string' ? error : 'Failed to load user form.');
+        showToast(typeof error === 'string' ? error : 'Failed to load user form.', 'error');
       }
     })();
     return () => {
       cancelled = true;
     };
   }, [isEdit, reset, showToast, userId, navigateToList]);
+
+  useEffect(() => {
+    if (duplicateEmail && eMailValue !== duplicateEmail) {
+      clearErrors('eMail');
+      setDuplicateEmail(null);
+    }
+  }, [eMailValue, duplicateEmail, clearErrors]);
   //#endregion
 
   //#region Handlers
@@ -132,16 +144,20 @@ const AddUsers = () => {
     if (isReadOnly) return;
     setSaving(true);
     try {
-      const response = await saveUser(toSaveUserPayload(values, isEdit ? userId : 0));
-      if (response.statusCode === 409) {
-        showToast(response.statusMessage || 'A user with this email already exists.');
-        return;
-      }
+      await saveUser(toSaveUserPayload(values, isEdit ? userId : 0));
       showToast(isEdit ? 'User updated successfully.' : 'User added successfully.');
       navigateToList();
     } catch (error) {
       console.error('Error saving user:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to save user.');
+      // usersService throws the backend's statusMessage as a plain string for any non-2xx
+      // response (including 409 Conflict for a duplicate email) — never a resolved response,
+      // so the duplicate-email case has to be detected here, not via a statusCode branch.
+      const message = typeof error === 'string' ? error : 'Failed to save user.';
+      if (/email/i.test(message)) {
+        setError('eMail', { type: 'server', message });
+        setDuplicateEmail(values.eMail);
+      }
+      showToast(message, 'error');
     } finally {
       setSaving(false);
     }
@@ -155,13 +171,14 @@ const AddUsers = () => {
 
       {isReadOnly ? <ReadOnlyBanner featureName="Users" /> : null}
 
-      <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
+      <form noValidate autoComplete="off" onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <InputField
             control={control}
             name="firstName"
             label="First name"
             placeholder="Enter first name"
+            autoComplete="given-name"
             autoFocus
             required
             maxLength={50}
@@ -173,6 +190,7 @@ const AddUsers = () => {
             name="lastName"
             label="Last name"
             placeholder="Enter last name"
+            autoComplete="family-name"
             required
             maxLength={50}
             rules={usersRules.lastName}
@@ -184,26 +202,35 @@ const AddUsers = () => {
             label="Email address"
             type="email"
             placeholder="Enter email address"
+            // "username"/"email" autocomplete here would let the browser offer to fill this field
+            // with the signed-in admin's own login email — this form creates/edits OTHER accounts,
+            // so autocomplete is turned off rather than hinting at the admin's own credentials.
+            autoComplete="off"
             required
             rules={usersRules.eMail}
             disabled={saving || isReadOnly}
           />
-          <InputField
-            control={control}
-            name="password"
-            label="Password"
-            type="password"
-            placeholder={isEdit ? 'Leave blank to keep the current password' : 'Enter password'}
-            required={!isEdit}
-            rules={isEdit ? undefined : usersRules.password}
-            disabled={saving || isReadOnly}
-          />
+          <div className="flex flex-col gap-1">
+            <InputField
+              control={control}
+              name="password"
+              label="Password"
+              type="password"
+              placeholder={isEdit ? 'Leave blank to keep the current password' : 'Enter password'}
+              autoComplete="new-password"
+              required={!isEdit}
+              rules={isEdit ? undefined : usersRules.password}
+              disabled={saving || isReadOnly}
+            />
+            {!isReadOnly ? <p className="text-xs text-[var(--text-muted)]">{PASSWORD_STRENGTH_HINT}</p> : null}
+          </div>
           <InputField
             control={control}
             name="contactNumber"
             label="Contact number"
             type="tel"
             placeholder="Enter contact number"
+            autoComplete="tel"
             maxLength={10}
             validationRule="numbersOnly"
             rules={usersRules.contactNumber}
@@ -214,10 +241,17 @@ const AddUsers = () => {
             name="dateOfBirth"
             label="Date of birth"
             placeholder="Select date of birth"
-            // Without this the picker hands the form its display format (dd/MM/yyyy), which
-            // SaveUser cannot bind to its DateTime field and rejects with a 400.
+            // Visible format must stay MM/DD/YYYY (US) — the picker's own default is dd/MM/yyyy.
+            displayFormat="MM/dd/yyyy"
+            // Without this the picker hands the form its display format, which SaveUser cannot
+            // bind to its DateTime field and rejects with a 400 — converted back to MM/DD/YYYY for
+            // display everywhere else (list page, this field) via formatDate/toDateOnly.
             outputFormat="yyyy-MM-dd"
-            required
+            // US convention for a staff/admin account: must be an adult (18+) and a realistic age
+            // (<=120) — the calendar itself blocks out-of-range days, and UsersValidator repeats
+            // the same check for anything typed in manually; the backend enforces it too.
+            maxDate={maxAllowedDateOfBirth()}
+            minDate={minAllowedDateOfBirth()}
             rules={usersRules.dateOfBirth}
             disabled={saving || isReadOnly}
           />
