@@ -534,7 +534,6 @@ namespace Automation.Framework.ViperPages
             public const string ApplyAllReadOnly = "//button[@id='btnApplyAllReadOnly']";
             public const string ApplyAllDenied = "//button[@id='btnApplyAllDenied']";
             public const string Save = "//button[@id='btnSaveUserRights']";
-            public const string Cancel = "//button[@id='btnCancelUserRights']";
             public const string RightsTable = "//*[@id='tblUserRights']";
             public const string FirstAccessButton = "(//div[@role='group' and starts-with(@aria-label, 'Access for ')]//button[.//span[normalize-space()='Access'] or normalize-space()='Access'])[1]";
             public const string FirstReadOnlyButton = "(//div[@role='group' and starts-with(@aria-label, 'Access for ')]//button[.//span[normalize-space()='Read Only'] or normalize-space()='Read Only'])[1]";
@@ -816,7 +815,6 @@ namespace Automation.Framework.ViperPages
             public const string ColorPickerButton = "//button[@aria-label='Open color picker']";
             public const string EmailLogo = "//*[normalize-space()='Email logo']";
             public const string BtnSave = "//div[contains(@class, 'admin-sticky-footer')]//button[@type='submit' or .//span[normalize-space()='Save']]";
-            public const string BtnCancel = "//div[contains(@class, 'admin-sticky-footer')]//button[.//span[normalize-space()='Cancel']]";
         }
     }
 }

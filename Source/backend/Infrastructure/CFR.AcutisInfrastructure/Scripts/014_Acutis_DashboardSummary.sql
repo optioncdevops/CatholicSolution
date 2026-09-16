@@ -5,7 +5,10 @@
 -- themselves are queried within [@StartDate, @EndDate], not fetched unbounded and filtered later).
 --
 -- Authoritative tables per KPI:
---   Organizations                -> [core].[Organization] (OrgStatus)
+--   Organizations                -> [core].[Organization] (rebuilt per 016_Acutis_Organization_
+--                                   Rebuild.sql: key is now [ID], no org-level status column
+--                                   anymore — status only exists per product assignment on
+--                                   [lic].[OrganizationProduct].[OrgStatus] now)
 --   Acutis/admin users           -> [auth].[AcutisUser] (IsActive, IsLocked, IsDeleted)
 --   Organization member mappings -> [auth].[UserProduct] (CFRUserId+OrgId+ProductId — the real
 --                                   member/product mapping the portal's "Your Apps" reads; NOT
@@ -16,7 +19,7 @@
 --   Licenses                     -> [lic].[License] (LicenseStatus, ExpiryDate) joined to
 --                                   [lic].[OrganizationProduct]
 --   Access requests              -> [request].[AccessRequest] + [request].[AccessRequestProduct]
---                                   (same derived-status rule as AccessRequest_CRUD ActionId 3/4:
+--                                   (same derived-status rule as AccessRequestManage ActionId 3/4:
 --                                   header RequestStatus=2 + line LineStatus=1 => info-requested;
 --                                   LineStatus=2 => approved; LineStatus=3 => rejected; else pending)
 --
@@ -27,15 +30,15 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
-IF OBJECT_ID(N'[dbo].[Acutis_Dashboard_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_Dashboard_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_Dashboard]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_Dashboard];
 GO
 
 -- ActionId 1: Get summary — three result sets: (1) platform KPIs, one row; (2) entitlement
 -- integrity metrics, one row; (3) raw trend events within [@StartDate, @EndDate], one row per
 -- event, for the frontend to bucket (daily/weekly/monthly) the same way it already buckets
 -- client-loaded data today.
-CREATE PROCEDURE [dbo].[Acutis_Dashboard_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_Dashboard]
     @ActionId INT,
     @StartDate DATETIME2 = NULL,
     @EndDate DATETIME2 = NULL,
@@ -67,11 +70,17 @@ BEGIN
             WHERE ar.[IsDeleted] = 0
         )
         -- Result set 1: Platform KPIs (one row).
+        -- Active/Inactive/Suspended Organizations: Organization itself carries no status anymore
+        -- (moved to per-product OrganizationProduct.OrgStatus) — these now count DISTINCT
+        -- organizations that have at least one non-deleted product assignment at that status.
+        -- An org with assignments in more than one status bucket (or none at all) means these
+        -- three numbers will not necessarily sum to TotalOrganizations. ASSUMPTION — confirm this
+        -- derivation matches how "organization status" should be reported now.
         SELECT
             (SELECT COUNT(*) FROM [core].[Organization]) AS [TotalOrganizations],
-            (SELECT COUNT(*) FROM [core].[Organization] WHERE [OrgStatus] = N'active') AS [ActiveOrganizations],
-            (SELECT COUNT(*) FROM [core].[Organization] WHERE [OrgStatus] = N'inactive') AS [InactiveOrganizations],
-            (SELECT COUNT(*) FROM [core].[Organization] WHERE [OrgStatus] = N'suspended') AS [SuspendedOrganizations],
+            (SELECT COUNT(DISTINCT [CFROrgId]) FROM [lic].[OrganizationProduct] WHERE [IsDeleted] = 0 AND [OrgStatus] = 1) AS [ActiveOrganizations],
+            (SELECT COUNT(DISTINCT [CFROrgId]) FROM [lic].[OrganizationProduct] WHERE [IsDeleted] = 0 AND [OrgStatus] = 2) AS [InactiveOrganizations],
+            (SELECT COUNT(DISTINCT [CFROrgId]) FROM [lic].[OrganizationProduct] WHERE [IsDeleted] = 0 AND [OrgStatus] = 3) AS [SuspendedOrganizations],
 
             (SELECT COUNT(*) FROM [auth].[AcutisUser] WHERE [IsDeleted] = 0) AS [TotalAcutisUsers],
             (SELECT COUNT(*) FROM [auth].[AcutisUser] WHERE [IsDeleted] = 0 AND [IsActive] = 1 AND [IsLocked] = 0) AS [ActiveAcutisUsers],
@@ -95,9 +104,9 @@ BEGIN
             -- number always reconciles: ActiveProducts + UpcomingProducts + InactiveProducts = TotalProducts.
             (SELECT COUNT(*) FROM [core].[Product] WHERE [IsDeleted] = 0 AND [IsActive] = 0) AS [InactiveProducts],
 
-            (SELECT COUNT(*) FROM [lic].[OrganizationProduct] WHERE [IsDeleted] = 0 AND [AssignStatus] = N'active') AS [ActiveOrganizationProductAssignments],
-            (SELECT COUNT(*) FROM [lic].[OrganizationProduct] WHERE NOT ([IsDeleted] = 0 AND [AssignStatus] = N'active')) AS [InactiveOrganizationProductAssignments],
-            (SELECT COUNT(DISTINCT [ProductId]) FROM [lic].[OrganizationProduct] WHERE [IsDeleted] = 0 AND [AssignStatus] = N'active') AS [TotalAssignedProducts],
+            (SELECT COUNT(*) FROM [lic].[OrganizationProduct] WHERE [IsDeleted] = 0 AND [AssignStatus] = 1) AS [ActiveOrganizationProductAssignments],
+            (SELECT COUNT(*) FROM [lic].[OrganizationProduct] WHERE NOT ([IsDeleted] = 0 AND [AssignStatus] = 1)) AS [InactiveOrganizationProductAssignments],
+            (SELECT COUNT(DISTINCT [ProductId]) FROM [lic].[OrganizationProduct] WHERE [IsDeleted] = 0 AND [AssignStatus] = 1) AS [TotalAssignedProducts],
 
             (SELECT COUNT(*) FROM [lic].[License]) AS [TotalLicenses],
             (SELECT COUNT(*) FROM [lic].[License]
@@ -135,13 +144,13 @@ BEGIN
             WHERE ar.[IsDeleted] = 0
         )
         -- Result set 2: Entitlement integrity metrics (one row). Every count here is a
-        -- should-never-happen condition once AccessRequest_CRUD ActionId 2 correctly provisions
+        -- should-never-happen condition once AccessRequestManage ActionId 2 correctly provisions
         -- access on approval — non-zero values indicate real data drift, not normal operation.
         SELECT
             -- Approved requests that never got an active org-level assignment.
             (SELECT COUNT(*) FROM RequestLines RL WHERE RL.[DerivedStatus] = N'approved' AND NOT EXISTS (
                 SELECT 1 FROM [lic].[OrganizationProduct] op
-                WHERE op.[OrgId] = RL.[OrgId] AND op.[ProductId] = RL.[ProductId] AND op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active'
+                WHERE op.[CFROrgId] = RL.[OrgId] AND op.[ProductId] = RL.[ProductId] AND op.[IsDeleted] = 0 AND op.[AssignStatus] = 1
             )) AS [ApprovedRequestsMissingOrganizationProduct],
 
             -- Approved requests that never got the member's own product mapping.
@@ -152,14 +161,14 @@ BEGIN
 
             -- Org-level assignments that are active but no member is actually mapped to them.
             (SELECT COUNT(*) FROM [lic].[OrganizationProduct] op
-                WHERE op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active' AND NOT EXISTS (
-                    SELECT 1 FROM [auth].[UserProduct] up WHERE up.[OrgId] = op.[OrgId] AND up.[ProductId] = op.[ProductId] AND ISNULL(up.[IsDeleted], 0) = 0
+                WHERE op.[IsDeleted] = 0 AND op.[AssignStatus] = 1 AND NOT EXISTS (
+                    SELECT 1 FROM [auth].[UserProduct] up WHERE up.[OrgId] = op.[CFROrgId] AND up.[ProductId] = op.[ProductId] AND ISNULL(up.[IsDeleted], 0) = 0
                 )) AS [ActiveOrganizationProductsWithoutMembers],
 
             -- Member mappings that are active but the organization's own assignment isn't.
             (SELECT COUNT(*) FROM [auth].[UserProduct] up
                 WHERE ISNULL(up.[IsDeleted], 0) = 0 AND NOT EXISTS (
-                    SELECT 1 FROM [lic].[OrganizationProduct] op WHERE op.[OrgId] = up.[OrgId] AND op.[ProductId] = up.[ProductId] AND op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active'
+                    SELECT 1 FROM [lic].[OrganizationProduct] op WHERE op.[CFROrgId] = up.[OrgId] AND op.[ProductId] = up.[ProductId] AND op.[IsDeleted] = 0 AND op.[AssignStatus] = 1
                 )) AS [ActiveUserProductsWithoutActiveOrganizationProduct],
 
             -- Extra rows beyond the first for the same (member, org, product) — should be exactly one.
@@ -183,12 +192,16 @@ BEGIN
                 WHERE LOWER(ISNULL(l.[LicenseStatus], N'active')) <> N'suspended'
                   AND l.[ExpiryDate] IS NOT NULL
                   AND DATEDIFF(DAY, CAST(SYSUTCDATETIME() AS DATE), CAST(l.[ExpiryDate] AS DATE)) < 0
-                  AND op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active') AS [ExpiredLicensesWithActiveOrganizationProduct],
+                  AND op.[IsDeleted] = 0 AND op.[AssignStatus] = 1) AS [ExpiredLicensesWithActiveOrganizationProduct],
 
             -- Organizations that are inactive/suspended but still carry an active app assignment.
-            (SELECT COUNT(DISTINCT op.[OrgId]) FROM [lic].[OrganizationProduct] op
-                INNER JOIN [core].[Organization] o ON o.[OrgId] = op.[OrgId]
-                WHERE op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active' AND o.[OrgStatus] IN (N'inactive', N'suspended')) AS [InactiveOrganizationsWithActiveProductAssignments];
+            -- Organization has no status of its own anymore, so "inactive/suspended" here now
+            -- means the SAME OrganizationProduct row disagrees with itself: its own [OrgStatus]
+            -- (2=Inactive/3=Suspended) says the org side is down, but [AssignStatus] (1=Active)
+            -- still says the assignment is live. ASSUMPTION — confirm this is the right
+            -- replacement for what used to be a genuine org-vs-assignment cross-check.
+            (SELECT COUNT(DISTINCT op.[CFROrgId]) FROM [lic].[OrganizationProduct] op
+                WHERE op.[IsDeleted] = 0 AND op.[AssignStatus] = 1 AND op.[OrgStatus] IN (2, 3)) AS [InactiveOrganizationsWithActiveProductAssignments];
 
         -- Result set 3: Raw trend events within the requested range — one row per event, for the
         -- frontend's existing bucketing utilities to group into daily/weekly/monthly series, and
@@ -198,7 +211,7 @@ BEGIN
         -- multi-line access request has no one product at the header level).
         SELECT
             N'OrgCreated' AS [EventType], o.[InsertedDate] AS [EventDate],
-            o.[OrgId], o.[OrgName],
+            o.[ID] AS [OrgId], o.[OrgName],
             CAST(NULL AS INT) AS [ProductId], CAST(NULL AS NVARCHAR(200)) AS [ProductName]
         FROM [core].[Organization] o
         WHERE o.[InsertedDate] BETWEEN @StartDate AND @EndDate
@@ -234,11 +247,11 @@ BEGIN
 
         SELECT
             N'LicenseCreated', l.[CreatedDate],
-            op.[OrgId], lo.[OrgName],
+            op.[CFROrgId], lo.[OrgName],
             op.[ProductId], lp.[ProductName]
         FROM [lic].[License] l
         INNER JOIN [lic].[OrganizationProduct] op ON op.[OrganizationProductId] = l.[OrganizationProductId]
-        LEFT JOIN [core].[Organization] lo ON lo.[OrgId] = op.[OrgId]
+        LEFT JOIN [core].[Organization] lo ON lo.[ID] = op.[CFROrgId]
         LEFT JOIN [core].[Product] lp ON lp.[ProductId] = op.[ProductId]
         WHERE l.[CreatedDate] BETWEEN @StartDate AND @EndDate
 
@@ -246,10 +259,10 @@ BEGIN
 
         SELECT
             N'OrgProductAssignmentCreated', op.[CreatedDate],
-            op.[OrgId], ao.[OrgName],
+            op.[CFROrgId], ao.[OrgName],
             op.[ProductId], ap.[ProductName]
         FROM [lic].[OrganizationProduct] op
-        LEFT JOIN [core].[Organization] ao ON ao.[OrgId] = op.[OrgId]
+        LEFT JOIN [core].[Organization] ao ON ao.[ID] = op.[CFROrgId]
         LEFT JOIN [core].[Product] ap ON ap.[ProductId] = op.[ProductId]
         WHERE op.[IsDeleted] = 0 AND op.[CreatedDate] BETWEEN @StartDate AND @EndDate;
 
@@ -268,14 +281,14 @@ BEGIN
         IF @IssueKey = N'activeOrganizationProductsWithoutMembers'
         BEGIN
             SELECT
-                op.[OrgId], o.[OrgName], op.[ProductId], p.[ProductName],
+                op.[CFROrgId] AS [OrgId], o.[OrgName], op.[ProductId], p.[ProductName],
                 CAST(NULL AS BIGINT) AS [MemberUserId], CAST(NULL AS NVARCHAR(200)) AS [MemberName],
                 N'Active app assignment with no member mapped' AS [Detail]
             FROM [lic].[OrganizationProduct] op
-            INNER JOIN [core].[Organization] o ON o.[OrgId] = op.[OrgId]
+            INNER JOIN [core].[Organization] o ON o.[ID] = op.[CFROrgId]
             INNER JOIN [core].[Product] p ON p.[ProductId] = op.[ProductId]
-            WHERE op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active' AND NOT EXISTS (
-                SELECT 1 FROM [auth].[UserProduct] up WHERE up.[OrgId] = op.[OrgId] AND up.[ProductId] = op.[ProductId] AND ISNULL(up.[IsDeleted], 0) = 0
+            WHERE op.[IsDeleted] = 0 AND op.[AssignStatus] = 1 AND NOT EXISTS (
+                SELECT 1 FROM [auth].[UserProduct] up WHERE up.[OrgId] = op.[CFROrgId] AND up.[ProductId] = op.[ProductId] AND ISNULL(up.[IsDeleted], 0) = 0
             )
             ORDER BY o.[OrgName], p.[ProductName];
             RETURN 0;
@@ -290,7 +303,7 @@ BEGIN
             FROM [auth].[UserProduct] up
             INNER JOIN [core].[Product] p ON p.[ProductId] = up.[ProductId]
             WHERE ISNULL(up.[IsDeleted], 0) = 0 AND NOT EXISTS (
-                SELECT 1 FROM [lic].[OrganizationProduct] op WHERE op.[OrgId] = up.[OrgId] AND op.[ProductId] = up.[ProductId] AND op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active'
+                SELECT 1 FROM [lic].[OrganizationProduct] op WHERE op.[CFROrgId] = up.[OrgId] AND op.[ProductId] = up.[ProductId] AND op.[IsDeleted] = 0 AND op.[AssignStatus] = 1
             )
             ORDER BY up.[OrgName], p.[ProductName];
             RETURN 0;
@@ -314,17 +327,17 @@ BEGIN
         IF @IssueKey = N'expiredLicensesWithActiveOrganizationProduct'
         BEGIN
             SELECT
-                op.[OrgId], o.[OrgName], op.[ProductId], p.[ProductName],
+                op.[CFROrgId] AS [OrgId], o.[OrgName], op.[ProductId], p.[ProductName],
                 CAST(NULL AS BIGINT) AS [MemberUserId], CAST(NULL AS NVARCHAR(200)) AS [MemberName],
                 CONCAT(N'License expired ', DATEDIFF(DAY, CAST(l.[ExpiryDate] AS DATE), CAST(SYSUTCDATETIME() AS DATE)), N' day(s) ago, but the app assignment is still active') AS [Detail]
             FROM [lic].[License] l
             INNER JOIN [lic].[OrganizationProduct] op ON op.[OrganizationProductId] = l.[OrganizationProductId]
-            INNER JOIN [core].[Organization] o ON o.[OrgId] = op.[OrgId]
+            INNER JOIN [core].[Organization] o ON o.[ID] = op.[CFROrgId]
             INNER JOIN [core].[Product] p ON p.[ProductId] = op.[ProductId]
             WHERE LOWER(ISNULL(l.[LicenseStatus], N'active')) <> N'suspended'
               AND l.[ExpiryDate] IS NOT NULL
               AND DATEDIFF(DAY, CAST(SYSUTCDATETIME() AS DATE), CAST(l.[ExpiryDate] AS DATE)) < 0
-              AND op.[IsDeleted] = 0 AND op.[AssignStatus] = N'active'
+              AND op.[IsDeleted] = 0 AND op.[AssignStatus] = 1
             ORDER BY l.[ExpiryDate];
             RETURN 0;
         END
@@ -332,12 +345,12 @@ BEGIN
         IF @IssueKey = N'expiredLicenses'
         BEGIN
             SELECT
-                op.[OrgId], o.[OrgName], op.[ProductId], p.[ProductName],
+                op.[CFROrgId] AS [OrgId], o.[OrgName], op.[ProductId], p.[ProductName],
                 CAST(NULL AS BIGINT) AS [MemberUserId], CAST(NULL AS NVARCHAR(200)) AS [MemberName],
                 CONCAT(N'License expired ', DATEDIFF(DAY, CAST(l.[ExpiryDate] AS DATE), CAST(SYSUTCDATETIME() AS DATE)), N' day(s) ago') AS [Detail]
             FROM [lic].[License] l
             INNER JOIN [lic].[OrganizationProduct] op ON op.[OrganizationProductId] = l.[OrganizationProductId]
-            INNER JOIN [core].[Organization] o ON o.[OrgId] = op.[OrgId]
+            INNER JOIN [core].[Organization] o ON o.[ID] = op.[CFROrgId]
             INNER JOIN [core].[Product] p ON p.[ProductId] = op.[ProductId]
             WHERE LOWER(ISNULL(l.[LicenseStatus], N'active')) <> N'suspended'
               AND l.[ExpiryDate] IS NOT NULL

@@ -173,30 +173,24 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
     await testRunner.WhenAsync("Change the first row permission", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 20
-    await testRunner.ThenAsync("Click on Cancel to discard unsaved rights changes", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 21
-    await testRunner.WhenAsync("Change the first row permission", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 22
     await testRunner.AndAsync("Click on Save to persist the rights changes", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 23
+#line 21
     await testRunner.WhenAsync("Click on Apply to all Access", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 22
+    await testRunner.ThenAsync("Apply to all confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 23
+    await testRunner.WhenAsync("Click on Apply to all Read Only", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 24
     await testRunner.ThenAsync("Apply to all confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 25
-    await testRunner.WhenAsync("Click on Apply to all Read Only", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
-#line hidden
-#line 26
-    await testRunner.ThenAsync("Apply to all confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
-#line hidden
-#line 27
     await testRunner.WhenAsync("Click on Apply to all Denied", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 28
+#line 26
     await testRunner.ThenAsync("Apply to all confirm box should open and Click on Cancel", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }

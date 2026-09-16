@@ -10,41 +10,10 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Address'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [Address] NVARCHAR(300) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'City'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [City] NVARCHAR(100) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'State'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [State] NVARCHAR(50) NULL;
-END
-GO
-
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = 'core' AND TABLE_NAME = 'Organization' AND COLUMN_NAME = 'Zip'
-)
-BEGIN
-    ALTER TABLE [core].[Organization] ADD [Zip] NVARCHAR(20) NULL;
-END
-GO
+-- [core].[Organization] no longer has Address/City/State/Zip as of
+-- 016_Acutis_Organization_Rebuild.sql (moved to [lic].[OrganizationProduct], duplicated per
+-- product) — the idempotent ALTERs that used to add them here were removed; @Address/@City/
+-- @State/@Zip below now only feed the AccessRequest header, not an Organization row.
 
 IF NOT EXISTS (
     SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
@@ -91,8 +60,8 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID(N'[request].[AccessRequest_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [request].[AccessRequest_CRUD];
+IF OBJECT_ID(N'[request].[AccessRequestManage]', N'P') IS NOT NULL
+    DROP PROCEDURE [request].[AccessRequestManage];
 GO
 
 -- ActionId 1: Save (insert header, product line, history, optional member comment).
@@ -100,13 +69,13 @@ GO
 -- part of the same transaction — activates/creates the org's [lic].[OrganizationProduct] row and
 -- the requester's [auth].[UserProduct] row for this product — not just a status flag. Without
 -- this the request could be "approved" yet the product would never appear in the member's App
--- Hub / launch flow, since ActionId 6 and Portal_CFRLaunch_CRUD gate purely on those two tables.
+-- Hub / launch flow, since ActionId 6 and Portal_CFRLaunch gate purely on those two tables.
 -- ActionId 3: Get by AccessRequestId (header, timeline, comments).
 -- ActionId 4: Get list.
 -- ActionId 5: Recipients for the AccessRequested email, matched by product name/id.
 -- ActionId 6: App Hub products. [auth].[User] by email -> [auth].[UserProduct] -> [core].[Product].
 -- ActionId 7: Public Request Access save (create/reuse org with address, request header, product lines).
-CREATE PROCEDURE [request].[AccessRequest_CRUD]
+CREATE PROCEDURE [request].[AccessRequestManage]
     @ActionId INT,
     @AccessRequestId BIGINT = 0,
     @ProductId INT = NULL,
@@ -288,7 +257,7 @@ BEGIN
     IF @ActionId = 7
     BEGIN
         DECLARE @PublicRequestedBy BIGINT;
-        DECLARE @PublicOrgId BIGINT;
+        DECLARE @PublicOrgId INT;
         DECLARE @PublicRequestId BIGINT;
         DECLARE @PublicActorId BIGINT;
         DECLARE @ContactPerson NVARCHAR(200);
@@ -381,12 +350,12 @@ BEGIN
             END CATCH
         END
 
-        SELECT TOP (1) @PublicOrgId = o.[OrgId]
+        SELECT TOP (1) @PublicOrgId = o.[ID]
         FROM [core].[Organization] o
         WHERE o.[IsDeleted] = 0
           AND LOWER(LTRIM(RTRIM(o.[OrgName]))) = LOWER(@OrganizationName)
           AND LOWER(LTRIM(RTRIM(ISNULL(o.[ContactEmail], N'')))) = LOWER(@RequesterEmail)
-        ORDER BY o.[OrgId];
+        ORDER BY o.[ID];
 
         SET @ContactPerson = LTRIM(RTRIM(ISNULL(@FirstName, N'') + N' ' + ISNULL(@LastName, N'')));
         SET @PublicActorId = ISNULL(@InsertedBy, @PublicRequestedBy);
@@ -420,20 +389,24 @@ BEGIN
 
             IF @PublicOrgId IS NULL
             BEGIN
-                SELECT @PublicOrgId = ISNULL(MAX([OrgId]), 0) + 1 FROM [core].[Organization];
-
+                -- ID is now IDENTITY (016_Acutis_Organization_Rebuild.sql) — no more MAX+1.
+                -- OrgStatus/Address/City/Zip no longer exist on Organization (status moved to
+                -- per-product OrganizationProduct rows, created later at approval; Address/City/
+                -- Zip have no home on Organization in the new schema — @Address/@City/@Zip are
+                -- NOT persisted here. @State is mapped onto the new OrgState column as the closest
+                -- equivalent; there is no @Country input on this form, so OrgCountry is left NULL.
                 INSERT INTO [core].[Organization]
                 (
-                    [OrgId], [OrgName], [OrgStatus], [ContactEmail], [ContactPerson], [ContactPhone],
-                    [Address], [City], [State], [Zip],
+                    [OrgName], [OrgState], [ContactEmail], [ContactPerson], [ContactPhone],
                     [InsertedDate], [InsertedBy], [IsDeleted]
                 )
                 VALUES
                 (
-                    @PublicOrgId, @OrganizationName, N'inactive', @RequesterEmail, @ContactPerson, @Phone,
-                    @Address, @City, @State, @Zip,
+                    @OrganizationName, @State, @RequesterEmail, @ContactPerson, @Phone,
                     SYSUTCDATETIME(), @PublicActorId, 0
                 );
+
+                SET @PublicOrgId = CAST(SCOPE_IDENTITY() AS INT);
             END
             ELSE
             BEGIN
@@ -442,13 +415,10 @@ BEGIN
                     [ContactEmail] = ISNULL(@RequesterEmail, [ContactEmail]),
                     [ContactPerson] = ISNULL(NULLIF(@ContactPerson, N''), [ContactPerson]),
                     [ContactPhone] = ISNULL(@Phone, [ContactPhone]),
-                    [Address] = ISNULL(@Address, [Address]),
-                    [City] = ISNULL(@City, [City]),
-                    [State] = ISNULL(@State, [State]),
-                    [Zip] = ISNULL(@Zip, [Zip]),
+                    [OrgState] = ISNULL(@State, [OrgState]),
                     [UpdatedDate] = SYSUTCDATETIME(),
                     [UpdatedBy] = @PublicActorId
-                WHERE [OrgId] = @PublicOrgId
+                WHERE [ID] = @PublicOrgId
                   AND [IsDeleted] = 0;
             END
 
@@ -647,24 +617,24 @@ BEGIN
               AND [IsDeleted] = 0;
 
             -- Approving a request must actually GRANT access, not just flip a status flag —
-            -- both gates that [request].[AccessRequest_CRUD] ActionId 6 (App Hub) and
-            -- Portal_CFRLaunch_CRUD check have to be satisfied: an active [lic].[OrganizationProduct]
+            -- both gates that [request].[AccessRequestManage] ActionId 6 (App Hub) and
+            -- Portal_CFRLaunch check have to be satisfied: an active [lic].[OrganizationProduct]
             -- row for the org+product, and an [auth].[UserProduct] row for the member+org+product.
             -- CFRUserId/OrgId are never taken from the client — both come from [request].[AccessRequest]
             -- via @AccessRequestId, resolved above into @HeaderRequestedBy/@HeaderOrgId.
             IF @Status = N'approved'
             BEGIN
-                -- 1) Organization-level license/assignment (mirrors AccessRequest_CRUD's own
-                --    sibling pattern in Acutis_Organization_CRUD ActionId 8 — same columns, same
+                -- 1) Organization-level license/assignment (mirrors AccessRequestManage's own
+                --    sibling pattern in Acutis_Organization ActionId 8 — same columns, same
                 --    active/reactivate/insert shape).
                 SELECT @ExistingOrgProductId = [OrganizationProductId], @ExistingOrgProductIsDeleted = [IsDeleted]
                 FROM [lic].[OrganizationProduct]
-                WHERE [OrgId] = @HeaderOrgId AND [ProductId] = @LineProductId;
+                WHERE [CFROrgId] = @HeaderOrgId AND [ProductId] = @LineProductId;
 
                 IF @ExistingOrgProductId IS NOT NULL AND @ExistingOrgProductIsDeleted = 1
                 BEGIN
                     UPDATE [lic].[OrganizationProduct]
-                    SET [AssignStatus] = N'active',
+                    SET [AssignStatus] = 1, -- Active
                         [CreatedDate] = SYSUTCDATETIME(),
                         [ActiveStartDate] = SYSUTCDATETIME(),
                         [ActiveEndDate] = '9999-12-31',
@@ -673,14 +643,25 @@ BEGIN
                 END
                 ELSE IF @ExistingOrgProductId IS NULL
                 BEGIN
+                    -- ProductOrgId has no external-product-system value available here yet —
+                    -- defaulted to @HeaderOrgId until the individual product integrations supply
+                    -- their own org id. OrgName/OrgState/OrgCountry/ContactEmail/ContactPerson/
+                    -- ContactPhone are snapshotted from [core].[Organization] at approval time,
+                    -- and OrgStatus is set to 1/Active alongside AssignStatus — Address/City/
+                    -- State/Zip have no source here (Organization no longer carries them) and are
+                    -- left NULL.
                     INSERT INTO [lic].[OrganizationProduct]
                     (
-                        [OrgId], [ProductId], [AssignStatus], [ActiveStartDate], [ActiveEndDate], [CreatedDate], [IsDeleted]
+                        [CFROrgId], [ProductOrgId], [ProductId],
+                        [OrgName], [OrgState], [OrgCountry], [ContactEmail], [ContactPerson], [ContactPhone],
+                        [OrgStatus], [AssignStatus], [ActiveStartDate], [ActiveEndDate], [CreatedDate], [IsDeleted]
                     )
-                    VALUES
-                    (
-                        @HeaderOrgId, @LineProductId, N'active', SYSUTCDATETIME(), '9999-12-31', SYSUTCDATETIME(), 0
-                    );
+                    SELECT
+                        @HeaderOrgId, @HeaderOrgId, @LineProductId,
+                        O.[OrgName], O.[OrgState], O.[OrgCountry], O.[ContactEmail], O.[ContactPerson], O.[ContactPhone],
+                        1, 1, SYSUTCDATETIME(), '9999-12-31', SYSUTCDATETIME(), 0
+                    FROM [core].[Organization] O
+                    WHERE O.[ID] = @HeaderOrgId;
                 END
                 -- else: already active — nothing to do.
 
@@ -770,10 +751,14 @@ BEGIN
             CAST(ar.[OrgId] AS INT) AS [OrganizationId],
             ISNULL(o.[OrgName], N'') AS [OrganizationName],
             ar.[OrganizationType] AS [OrganizationType],
-            o.[Address] AS [Address],
-            o.[City] AS [City],
-            o.[State] AS [State],
-            o.[Zip] AS [Zip],
+            -- Organization no longer carries Address/City/Zip (016_Acutis_Organization_Rebuild.sql
+            -- removed them; nothing currently repersists the request's original mailing address
+            -- anywhere) — surfaced as NULL rather than silently reading a nonexistent column.
+            -- [State] now comes from Organization's own OrgState, the closest surviving field.
+            CAST(NULL AS NVARCHAR(300)) AS [Address],
+            CAST(NULL AS NVARCHAR(100)) AS [City],
+            o.[OrgState] AS [State],
+            CAST(NULL AS NVARCHAR(20)) AS [Zip],
             ar.[ContactPhone] AS [Phone],
             COALESCE(
                 NULLIF(LTRIM(RTRIM(ISNULL(ar.[RequesterFirstName], N'') + N' ' + ISNULL(ar.[RequesterLastName], N''))), N''),
@@ -799,7 +784,7 @@ BEGIN
             ON arp.[AccessRequestId] = ar.[AccessRequestId]
            AND arp.[IsDeleted] = 0
         LEFT JOIN [core].[Organization] o
-            ON o.[OrgId] = ar.[OrgId]
+            ON o.[ID] = ar.[OrgId]
         LEFT JOIN [auth].[User] u
             ON u.[CFRUserId] = ar.[RequestedBy]
         OUTER APPLY (
@@ -890,10 +875,14 @@ BEGIN
             CAST(ar.[OrgId] AS INT) AS [OrganizationId],
             ISNULL(o.[OrgName], N'') AS [OrganizationName],
             ar.[OrganizationType] AS [OrganizationType],
-            o.[Address] AS [Address],
-            o.[City] AS [City],
-            o.[State] AS [State],
-            o.[Zip] AS [Zip],
+            -- Organization no longer carries Address/City/Zip (016_Acutis_Organization_Rebuild.sql
+            -- removed them; nothing currently repersists the request's original mailing address
+            -- anywhere) — surfaced as NULL rather than silently reading a nonexistent column.
+            -- [State] now comes from Organization's own OrgState, the closest surviving field.
+            CAST(NULL AS NVARCHAR(300)) AS [Address],
+            CAST(NULL AS NVARCHAR(100)) AS [City],
+            o.[OrgState] AS [State],
+            CAST(NULL AS NVARCHAR(20)) AS [Zip],
             ar.[ContactPhone] AS [Phone],
             COALESCE(
                 NULLIF(LTRIM(RTRIM(ISNULL(ar.[RequesterFirstName], N'') + N' ' + ISNULL(ar.[RequesterLastName], N''))), N''),
@@ -919,7 +908,7 @@ BEGIN
             ON arp.[AccessRequestId] = ar.[AccessRequestId]
            AND arp.[IsDeleted] = 0
         LEFT JOIN [core].[Organization] o
-            ON o.[OrgId] = ar.[OrgId]
+            ON o.[ID] = ar.[OrgId]
         LEFT JOIN [auth].[User] u
             ON u.[CFRUserId] = ar.[RequestedBy]
         OUTER APPLY (
@@ -1061,10 +1050,10 @@ BEGIN
             SELECT DISTINCT up.[ProductId]
             FROM [auth].[UserProduct] up
             INNER JOIN [lic].[OrganizationProduct] op
-                ON op.[OrgId] = up.[OrgId]
+                ON op.[CFROrgId] = up.[OrgId]
                AND op.[ProductId] = up.[ProductId]
                AND op.[IsDeleted] = 0
-               AND op.[AssignStatus] = N'active'
+               AND op.[AssignStatus] = 1 -- Active
             WHERE @HubUserId IS NOT NULL
               AND up.[CFRUserId] = @HubUserId
               AND ISNULL(up.[IsDeleted], 0) = 0

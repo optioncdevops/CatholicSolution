@@ -84,9 +84,9 @@ export function RequestInterestModal({ app, onClose, onSubmitted }: RequestInter
     }
     setSubmitting(true);
     try {
-      const message = await saveAccessRequest(payload);
+      await saveAccessRequest(payload);
       setSubmitted(true);
-      onSubmitted(app, message);
+      onSubmitted(app);
     } catch (error) {
       console.error('Error submitting access request:', error);
       showToast(typeof error === 'string' ? error : 'Failed to submit access request.');

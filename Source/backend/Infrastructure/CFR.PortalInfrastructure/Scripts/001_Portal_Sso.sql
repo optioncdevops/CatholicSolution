@@ -70,11 +70,11 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID(N'[dbo].[Portal_CFRLaunch_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Portal_CFRLaunch_CRUD];
+IF OBJECT_ID(N'[dbo].[Portal_CFRLaunch]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Portal_CFRLaunch];
 GO
 
-CREATE PROCEDURE [dbo].[Portal_CFRLaunch_CRUD]
+CREATE PROCEDURE [dbo].[Portal_CFRLaunch]
     @ActionId INT,
     @CFRUserId INT = NULL,
     @ProductId INT = NULL,

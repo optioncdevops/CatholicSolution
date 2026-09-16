@@ -36,7 +36,7 @@ namespace CFR.AcutisInfrastructure.Models.Output
 
         /// <summary>
         /// True when a reset token was already issued for this user within the resend cooldown
-        /// window (see Acutis_PasswordReset_CRUD's @ResendCooldownSeconds) — no new token was
+        /// window (see Acutis_PasswordReset's @ResendCooldownSeconds) — no new token was
         /// issued and no new email should be sent; the still-active link from the earlier request
         /// remains the one to use.
         /// </summary>

@@ -4,11 +4,11 @@ SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
-IF OBJECT_ID(N'[dbo].[Acutis_UserRoles_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_UserRoles_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_UserRoles]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_UserRoles];
 GO
 
-CREATE PROCEDURE [dbo].[Acutis_UserRoles_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_UserRoles]
     @ActionId INT,
     @RoleId INT = 0,
     @RoleName NVARCHAR(100) = NULL,

@@ -27,15 +27,15 @@ GO
 -- writes those four columns; a template is Subject/Body content only. The columns themselves are
 -- deliberately left in place on [adm].[EmailTemplate] (not dropped) rather than risk an
 -- irreversible schema change — they're just unused dead columns now.
-IF OBJECT_ID(N'[dbo].[Acutis_EmailTemplates_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_EmailTemplates]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_EmailTemplates];
 GO
 
 -- ActionId 1: Save (insert when @TemplateId = 0, otherwise update Subject/Body/Status).
 -- ActionId 2: Get by TemplateId.
 -- ActionId 3: Get list (all templates).
 -- ActionId 4: Get by TemplateCode (used internally by AcutisPasswordService to load PasswordReset).
-CREATE PROCEDURE [dbo].[Acutis_EmailTemplates_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_EmailTemplates]
     @ActionId INT,
     @TemplateId INT = 0,
     @TemplateCode NVARCHAR(50) = NULL,

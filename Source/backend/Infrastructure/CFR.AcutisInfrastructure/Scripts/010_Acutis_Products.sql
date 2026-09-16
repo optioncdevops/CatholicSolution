@@ -1,7 +1,7 @@
 -- Copyright (c) OptionC. All rights reserved.
 -- CRUD for [core].[Product] and [lic].[License] / [lic].[OrganizationProduct].
--- ActionId 1: Product GET All (CustomerCount = distinct OrgId, same filters as ActionId 5)
--- ActionId 2: Product GET by ID (CustomerCount = distinct OrgId, same filters as ActionId 5)
+-- ActionId 1: Product GET All (CustomerCount = distinct CFROrgId, same filters as ActionId 5)
+-- ActionId 2: Product GET by ID (CustomerCount = distinct CFROrgId, same filters as ActionId 5)
 -- ActionId 3: Product PUT (Update)
 -- ActionId 4: Product Check Name
 -- ActionId 5: License GET All
@@ -12,16 +12,24 @@
 -- ActionId 10: Per-product organization assignment counts (active vs. inactive/revoked vs. total
 -- distinct organizations), for the admin dashboard's real App Access Overview — this is genuine
 -- lic.OrganizationProduct assignment data, not inferred from the static product catalog.
+--
+-- Rebuilt per 016_Acutis_Organization_Rebuild.sql: [core].[Organization]'s key is now [ID] (was
+-- [OrgId]), and [lic].[OrganizationProduct]'s link column is now [CFROrgId] (was [OrgId]).
+-- [OrganizationProduct].[AssignStatus] is now INT, not NVARCHAR:
+--   1 = Active, 2 = Suspended, 3 = Revoked   -- ASSUMPTION, confirm against the real enum/lookup.
+-- Organization no longer has its own [OrgStatus] (moved to OrganizationProduct, per product
+-- assignment) — ActionId 9's per-org "status" below now comes from the license/assignment data
+-- instead of a removed org-level column.
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 
 GO
 
-IF OBJECT_ID(N'[dbo].[Acutis_Products_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_Products_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_Products]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_Products];
 GO
 
-CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_Products]
     @ActionId INT,
     -- Product Parameters
     @ProductId INT = 0,
@@ -40,12 +48,12 @@ CREATE PROCEDURE [dbo].[Acutis_Products_CRUD]
     -- License Parameters
     @LicenseId BIGINT = 0,
     @OrganizationProductId BIGINT = 0,
-    @OrgId BIGINT = 0,
+    @OrgId INT = 0,
     @LicenseType NVARCHAR(50) = NULL,
     @ActivationDate DATETIME2 = NULL,
     @ExpiryDate DATETIME2 = NULL,
     @LicenseStatus NVARCHAR(50) = NULL,
-    @AssignStatus NVARCHAR(50) = NULL,
+    @AssignStatus INT = NULL,
     @Remarks NVARCHAR(MAX) = NULL,
     -- Audit & Output Parameters
     @InsertedBy BIGINT = NULL,
@@ -67,7 +75,6 @@ BEGIN
     SET @LicenseType = NULLIF(LTRIM(RTRIM(@LicenseType)), N'');
     SET @NavigationTarget = NULLIF(LTRIM(RTRIM(@NavigationTarget)), N'');
     SET @LicenseStatus = NULLIF(LTRIM(RTRIM(@LicenseStatus)), N'');
-    SET @AssignStatus = NULLIF(LTRIM(RTRIM(@AssignStatus)), N'');
     SET @Remarks = NULLIF(LTRIM(RTRIM(@Remarks)), N'');
     SET @RequesterEmail = NULLIF(LTRIM(RTRIM(@RequesterEmail)), N'');
 
@@ -92,10 +99,10 @@ BEGIN
             p.[ContactUserId],
             NULLIF(LTRIM(RTRIM(ISNULL(cu.[FirstName], N'') + N' ' + ISNULL(cu.[LastName], N''))), N'') AS [ContactPerson],
             (
-                SELECT COUNT(DISTINCT op.[OrgId])
+                SELECT COUNT(DISTINCT op.[CFROrgId])
                 FROM [lic].[OrganizationProduct] AS op
                 INNER JOIN [core].[Product] AS prod ON prod.[ProductId] = op.[ProductId]
-                INNER JOIN [core].[Organization] AS o ON o.[OrgId] = op.[OrgId]
+                INNER JOIN [core].[Organization] AS o ON o.[ID] = op.[CFROrgId]
                 WHERE op.[ProductId] = p.[ProductId]
                   AND op.[IsDeleted] = 0
                   AND prod.[IsDeleted] = 0
@@ -136,10 +143,10 @@ BEGIN
             p.[ContactUserId],
             NULLIF(LTRIM(RTRIM(ISNULL(cu.[FirstName], N'') + N' ' + ISNULL(cu.[LastName], N''))), N'') AS [ContactPerson],
             (
-                SELECT COUNT(DISTINCT op.[OrgId])
+                SELECT COUNT(DISTINCT op.[CFROrgId])
                 FROM [lic].[OrganizationProduct] AS op
                 INNER JOIN [core].[Product] AS prod ON prod.[ProductId] = op.[ProductId]
-                INNER JOIN [core].[Organization] AS o ON o.[OrgId] = op.[OrgId]
+                INNER JOIN [core].[Organization] AS o ON o.[ID] = op.[CFROrgId]
                 WHERE op.[ProductId] = p.[ProductId]
                   AND op.[IsDeleted] = 0
                   AND prod.[IsDeleted] = 0
@@ -293,7 +300,7 @@ BEGIN
         SELECT
             ISNULL(l.[LicenseId], 0) AS [LicenseId],
             op.[OrganizationProductId],
-            op.[OrgId],
+            op.[CFROrgId] AS [OrgId],
             ISNULL(o.[OrgName], N'') AS [OrgName],
             op.[ProductId],
             ISNULL(p.[ProductName], N'') AS [ProductName],
@@ -307,10 +314,10 @@ BEGIN
             ISNULL(l.[CreatedDate], op.[CreatedDate]) AS [CreatedDate]
         FROM [lic].[OrganizationProduct] AS op
         INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
-        INNER JOIN [core].[Organization] AS o ON o.[OrgId] = op.[OrgId]
+        INNER JOIN [core].[Organization] AS o ON o.[ID] = op.[CFROrgId]
         LEFT JOIN [lic].[License] AS l ON l.[OrganizationProductId] = op.[OrganizationProductId]
         WHERE (@ProductId = 0 OR op.[ProductId] = @ProductId)
-          AND (@OrgId = 0 OR op.[OrgId] = @OrgId)
+          AND (@OrgId = 0 OR op.[CFROrgId] = @OrgId)
           AND op.[IsDeleted] = 0
           AND p.[IsDeleted] = 0
         ORDER BY ISNULL(l.[CreatedDate], op.[CreatedDate]) DESC, ISNULL(l.[LicenseId], 0) DESC;
@@ -326,7 +333,7 @@ BEGIN
         SELECT
             l.[LicenseId],
             op.[OrganizationProductId],
-            op.[OrgId],
+            op.[CFROrgId] AS [OrgId],
             ISNULL(o.[OrgName], N'') AS [OrgName],
             op.[ProductId],
             ISNULL(p.[ProductName], N'') AS [ProductName],
@@ -341,7 +348,7 @@ BEGIN
         FROM [lic].[License] AS l
         INNER JOIN [lic].[OrganizationProduct] AS op ON op.[OrganizationProductId] = l.[OrganizationProductId]
         INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
-        INNER JOIN [core].[Organization] AS o ON o.[OrgId] = op.[OrgId]
+        INNER JOIN [core].[Organization] AS o ON o.[ID] = op.[CFROrgId]
         WHERE l.[LicenseId] = @LicenseId;
 
         RETURN 0;
@@ -356,15 +363,18 @@ BEGIN
         BEGIN
             SELECT @OrganizationProductId = ISNULL([OrganizationProductId], 0)
             FROM [lic].[OrganizationProduct]
-            WHERE [OrgId] = @OrgId
+            WHERE [CFROrgId] = @OrgId
               AND [ProductId] = @ProductId
               AND [IsDeleted] = 0;
 
             IF ISNULL(@OrganizationProductId, 0) = 0
             BEGIN
+                -- ProductOrgId has no external-product-system value available here yet —
+                -- defaulted to @OrgId until the individual product integrations supply their own.
                 INSERT INTO [lic].[OrganizationProduct]
                 (
-                    [OrgId],
+                    [CFROrgId],
+                    [ProductOrgId],
                     [ProductId],
                     [AssignStatus],
                     [AssignedBy],
@@ -377,12 +387,9 @@ BEGIN
                 VALUES
                 (
                     @OrgId,
+                    @OrgId,
                     @ProductId,
-                    CASE LOWER(ISNULL(@AssignStatus, N'active'))
-                        WHEN N'suspended' THEN N'suspended'
-                        WHEN N'revoked' THEN N'revoked'
-                        ELSE N'active'
-                    END,
+                    ISNULL(@AssignStatus, 1), -- 1 = Active
                     @InsertedBy,
                     ISNULL(@ActivationDate, SYSUTCDATETIME()),
                     ISNULL(@ExpiryDate, DATEADD(YEAR, 1, SYSUTCDATETIME())),
@@ -396,7 +403,7 @@ BEGIN
                 BEGIN
                     SELECT @OrganizationProductId = [OrganizationProductId]
                     FROM [lic].[OrganizationProduct]
-                    WHERE [OrgId] = @OrgId
+                    WHERE [CFROrgId] = @OrgId
                       AND [ProductId] = @ProductId
                       AND [IsDeleted] = 0;
                 END
@@ -545,9 +552,9 @@ BEGIN
             WHERE ou.[IsDeleted] = 0
         )
         SELECT
-            o.[OrgId],
+            o.[ID] AS [OrgId],
             o.[OrgName],
-            o.[OrgStatus],
+            op.[OrgStatus], -- Organization no longer has its own status; this is the per-product-assignment status (1=Active, 2=Inactive, 3=Suspended)
             ISNULL(NULLIF(LTRIM(RTRIM(o.[ContactEmail])), N''), u.[Email]) AS [ContactEmail],
             o.[Website],
             o.[ContactPerson],
@@ -555,20 +562,20 @@ BEGIN
             o.[InsertedDate],
             o.[UpdatedDate],
             COALESCE(NULLIF(uc.[UserCount], 0), ouc.[OrgUserCount], 0) AS [UserCount],
-            CONCAT(N'ORG-', o.[OrgId]) AS [OrgCode],
+            CONCAT(N'ORG-', o.[ID]) AS [OrgCode],
             ISNULL(l.[ActivationDate], ISNULL(op.[CreatedDate], o.[InsertedDate])) AS [StartDate],
             l.[ExpiryDate],
             l.[LicenseType],
-            ISNULL(l.[LicenseStatus], ISNULL(op.[AssignStatus], o.[OrgStatus])) AS [LicenseStatus]
+            ISNULL(l.[LicenseStatus], CAST(op.[AssignStatus] AS NVARCHAR(20))) AS [LicenseStatus]
         FROM [core].[Organization] AS o
         INNER JOIN [lic].[OrganizationProduct] AS op
-            ON op.[OrgId] = o.[OrgId]
+            ON op.[CFROrgId] = o.[ID]
            AND op.[ProductId] = @ProductId
            AND op.[IsDeleted] = 0
-        LEFT JOIN UserCounts AS uc ON uc.[OrgId] = o.[OrgId]
-        LEFT JOIN OrgUserCounts AS ouc ON ouc.[OrgId] = o.[OrgId]
+        LEFT JOIN UserCounts AS uc ON uc.[OrgId] = o.[ID]
+        LEFT JOIN OrgUserCounts AS ouc ON ouc.[OrgId] = o.[ID]
         LEFT JOIN LatestLicense AS l ON l.[OrganizationProductId] = op.[OrganizationProductId] AND l.rn = 1
-        LEFT JOIN LatestUser AS u ON u.[OrgId] = o.[OrgId] AND u.rn = 1
+        LEFT JOIN LatestUser AS u ON u.[OrgId] = o.[ID] AND u.rn = 1
         WHERE o.[IsDeleted] = 0
         ORDER BY o.[OrgName];
 
@@ -584,20 +591,20 @@ BEGIN
             p.[ProductId],
             p.[ProductName],
             (
-                SELECT COUNT(DISTINCT op.[OrgId])
+                SELECT COUNT(DISTINCT op.[CFROrgId])
                 FROM [lic].[OrganizationProduct] AS op
                 WHERE op.[ProductId] = p.[ProductId]
                   AND op.[IsDeleted] = 0
-                  AND op.[AssignStatus] = N'active'
+                  AND op.[AssignStatus] = 1 -- Active
             ) AS [ActiveOrgCount],
             (
-                SELECT COUNT(DISTINCT op.[OrgId])
+                SELECT COUNT(DISTINCT op.[CFROrgId])
                 FROM [lic].[OrganizationProduct] AS op
                 WHERE op.[ProductId] = p.[ProductId]
-                  AND (op.[IsDeleted] = 1 OR op.[AssignStatus] <> N'active')
+                  AND (op.[IsDeleted] = 1 OR op.[AssignStatus] <> 1)
             ) AS [InactiveOrgCount],
             (
-                SELECT COUNT(DISTINCT op.[OrgId])
+                SELECT COUNT(DISTINCT op.[CFROrgId])
                 FROM [lic].[OrganizationProduct] AS op
                 WHERE op.[ProductId] = p.[ProductId]
             ) AS [TotalOrgCount]

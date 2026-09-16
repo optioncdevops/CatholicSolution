@@ -1,6 +1,6 @@
 -- Copyright (c) OptionC. All rights reserved.
 -- Self-service profile (get/update) and change-password CRUD for the signed-in Acutis user,
--- against the existing [auth].[AcutisUser] table (same table Acutis_DoLogin/Acutis_Users_CRUD use).
+-- against the existing [auth].[AcutisUser] table (same table Acutis_DoLogin/Acutis_Users use).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -23,14 +23,14 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID(N'[dbo].[Acutis_Profile_CRUD]', N'P') IS NOT NULL
-    DROP PROCEDURE [dbo].[Acutis_Profile_CRUD];
+IF OBJECT_ID(N'[dbo].[Acutis_Profile]', N'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[Acutis_Profile];
 GO
 
 -- ActionId 1: Get the signed-in user's profile.
 -- ActionId 2: Update the signed-in user's FirstName/LastName/Email/ProfileImageUrl/ContactNumber.
 -- ActionId 3: Change the signed-in user's password after verifying the current one.
-CREATE PROCEDURE [dbo].[Acutis_Profile_CRUD]
+CREATE PROCEDURE [dbo].[Acutis_Profile]
     @ActionId INT,
     @UserId BIGINT,
     @FirstName NVARCHAR(100) = NULL,
