@@ -141,7 +141,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         /// Fetches product customers from [core].[Organization] using StoredProc.Products.ProductsCrud (EnumVariables.ProductAction.GetCustomers).
         /// </summary>
         /// <remarks>
-        /// Purpose: Retrieve organizations assigned to this product, with the latest license fields and user counts.
+        /// Purpose: Retrieve organizations assigned to this product, with the latest license fields and user counts from [auth].[UserProduct] / [auth].[User] / [lic].[License].
         /// Request Flow: IProductsService -> ProductsRepository.GetProductCustomersAsync() -> Database.
         /// Validation Details: ProductId parameter mapping.
         /// Business Logic: Executes StoredProc.Products.ProductsCrud with EnumVariables.ProductAction.GetCustomers.
@@ -202,7 +202,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.SEVEN, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.OrganizationProductId, input.OrganizationProductId, DbType.Int64);
-            parameters.Add(DBParameterName.ProductParams.OrgId, input.OrgId, DbType.Int64);
+            parameters.Add(DBParameterName.ProductParams.OrgId, input.OrgId, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, input.ProductId, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.LicenseType, input.LicenseType?.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.ActivationDate, input.ActivationDate, DbType.DateTime2);

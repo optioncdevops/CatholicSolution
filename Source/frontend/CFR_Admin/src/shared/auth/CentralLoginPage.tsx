@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm} from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { environment } from '@shared/platform/config/environment';
@@ -86,6 +86,7 @@ export function CentralLoginPage() {
     }
   };
 
+  
   const submit = handleSubmit(async (values) => {
     setFormError(null);
     setSubmitting(true);

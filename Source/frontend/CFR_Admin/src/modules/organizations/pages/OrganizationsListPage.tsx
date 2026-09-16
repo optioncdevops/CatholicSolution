@@ -411,8 +411,8 @@ export function OrganizationsListPage() {
           getRowId={(org) => String(org.orgId)}
           onRowClick={(org) => handleView(org)}
           initialSort={[{ id: 'insertedDate', desc: true }]}
-          exportFileName="catholic-solutions-organizations"
-          exportTitle="Catholic Solutions — Organizations"
+          exportFileName="Organization_List"
+          exportTitle="Organization List"
           emptyMessage="No organizations found."
         />
       )}

@@ -77,6 +77,28 @@ namespace CFR.Acutis.Controllers.Administration
             return ApiResultArgs(await service.GetUserLookupsAsync(), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves CFR users, one row per (member, organization) membership.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the CFR Admin "CFR User" page.
+        /// Request Flow: Client API GET -> UsersController.GetCFRUsers() -> IUsersService.GetCFRUsersAsync() -> Database.
+        /// Validation Details: Query parameter binding maps the optional organization identifier.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IUsersService.GetCFRUsersAsync().
+        /// Response Details: Standard API result enclosing List of CFRUserOutput with status 200 or 500.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier to scope the list to; omit or pass 0 for every organization.</param>
+        /// <returns>A consistent API response containing the CFR users.</returns>
+        /// <response code="200">Successfully fetched the CFR users.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Administration.GetCFRUsers)]
+        public async Task<IActionResult> GetCFRUsers(int? orgId, int? isAuth, string? productIds)
+        {
+            return ApiResultArgs(await service.GetCFRUsersAsync(orgId, isAuth, productIds), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
 
         #region POST Methods

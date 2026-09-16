@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm, type FieldErrors } from 'react-hook-form';
+import { useForm} from 'react-hook-form';
 import { Pencil, Save, X } from 'lucide-react';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -110,10 +110,19 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
     setEditing(false);
   };
 
-  const onInvalid = (formErrors: FieldErrors<OrganizationFormValues>) => {
-    const messages = Object.values(formErrors)
-      .map((error) => error?.message)
-      .filter((message): message is string => Boolean(message));
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
     showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
 
@@ -198,10 +207,10 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
             placeholder={loadingMembers ? 'Loading members…' : 'Select contact person'}
             options={contactPersonOptions} disabled={saving || loadingMembers} wrapperClassName="md:col-span-4"
           />
-          <InputField control={control} name="address" label="Address" disabled={saving} wrapperClassName="md:col-span-12" />
+          <InputField control={control} name="address" label="Address" rules={organizationRules.address} maxLength={500} disabled={saving} wrapperClassName="md:col-span-12" />
           <InputField control={control} name="city" label="City" disabled={saving} wrapperClassName="md:col-span-4" />
           <Dropdown control={control} name="state" label="State" placeholder="Select state" searchable options={US_STATE_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="zip" label="ZIP code" rules={organizationRules.zip} disabled={saving} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="zip" label="ZIP code" rules={organizationRules.zip} maxLength={6} disabled={saving} wrapperClassName="md:col-span-4" />
         </div>
 
         <div className="admin-sticky-footer">

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useForm, type FieldErrors } from 'react-hook-form';
+import { useForm} from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
@@ -112,10 +112,19 @@ const AddUsers = () => {
   //#endregion
 
   //#region Handlers
-  const onInvalid = (formErrors: FieldErrors<UsersFormValues>) => {
-    const messages = Object.values(formErrors)
-      .map((error) => error?.message)
-      .filter((message): message is string => Boolean(message));
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
     showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
 
@@ -155,6 +164,7 @@ const AddUsers = () => {
             placeholder="Enter first name"
             autoFocus
             required
+            maxLength={50}
             rules={usersRules.firstName}
             disabled={saving || isReadOnly}
           />
@@ -164,6 +174,7 @@ const AddUsers = () => {
             label="Last name"
             placeholder="Enter last name"
             required
+            maxLength={50}
             rules={usersRules.lastName}
             disabled={saving || isReadOnly}
           />
@@ -193,6 +204,8 @@ const AddUsers = () => {
             label="Contact number"
             type="tel"
             placeholder="Enter contact number"
+            maxLength={10}
+            validationRule="numbersOnly"
             rules={usersRules.contactNumber}
             disabled={saving || isReadOnly}
           />

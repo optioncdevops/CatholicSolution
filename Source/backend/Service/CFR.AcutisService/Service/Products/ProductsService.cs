@@ -478,10 +478,7 @@ namespace CFR.AcutisService.Service.Products
                         input.LogoName = Path.GetFileName(existingLogo.Replace('\\', '/'));
                     }
                     input.ContactUserId ??= existingProduct.ContactUserId;
-                    if (input.DefaultAccessDays <= 0)
-                    {
-                        input.DefaultAccessDays = existingProduct.DefaultAccessDays > 0 ? existingProduct.DefaultAccessDays : 365;
-                    }
+
                 }
 
                 int updatedId = await repository.UpdateProductAsync(input);

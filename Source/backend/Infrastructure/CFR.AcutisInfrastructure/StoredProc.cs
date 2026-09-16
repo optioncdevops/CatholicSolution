@@ -55,6 +55,15 @@ namespace CFR.AcutisInfrastructure
             public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates]";
 
             /// <summary>
+            /// CFR user list across (or scoped to) organizations for the CFR Admin "CFR User"
+            /// page, with Status derived from [auth].[User].[AuthOId] (active/pending). Reads a
+            /// completely different table family than UsersCrud ([auth].[User]/[auth].[UserProduct]
+            /// vs [auth].[AcutisUser]), so it is its own stored procedure even though it is
+            /// exposed through this same Users controller/service/repository.
+            /// </summary>
+            public const string CFRUsersList = "[dbo].[Acutis_CFRUsers]";
+
+            /// <summary>
             /// Reads the role/module catalog and per-role feature grants for the User Rights
             /// screen. Lives in the [auth] schema, not [dbo] — legacy procedure, not part of the
             /// @ActionId CRUD convention used elsewhere.

@@ -21,7 +21,7 @@ export function LicenseHistory({ app }: { app: AdminApplication }) {
   //#region States
   const [historyRows, setHistoryRows] = useState<ProductLicenseHistoryRow[]>([]);
   const [customerFilter, setCustomerFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState<LicenseHistoryStatusFilter>('paid');
+  const [statusFilter, setStatusFilter] = useState<LicenseHistoryStatusFilter>('all');
   const [viewingInvoice, setViewingInvoice] = useState<License | null>(null);
   //#endregion
 

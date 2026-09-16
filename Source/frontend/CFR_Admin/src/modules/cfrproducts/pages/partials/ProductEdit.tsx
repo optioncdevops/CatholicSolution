@@ -3,10 +3,10 @@ import {
   useEffect,
   useMemo,
   useState,
-  type ReactNode,
 } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowLeft, Save, X } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft, Save, X } from "lucide-react";
+import { ProductCard, isImageIcon } from "../../components";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { ReadOnlyBanner } from "@shared/app/components/ReadOnlyBanner";
 import { useToast } from "@shared/app/components/ToastProvider";
@@ -20,8 +20,6 @@ import {
   TextareaField,
   Dropdown,
 } from "@app/components/formControls";
-import { StatusBadge } from "@app/components/Badge";
-import { cn } from "@app/utilities/cn";
 import { confirmAction } from "@/modules/lib/confirm";
 import {
   validateProductForm,
@@ -54,147 +52,13 @@ import {
   PRODUCT_LICENSE_TYPE_OPTIONS,
   PRODUCT_NAVIGATION_OPTIONS,
 } from "../../utils/productFilters";
-import { EntityAvatar } from "@app/components/EntityAvatar";
 import type {
   AdminApplication,
   ProductLicenseType,
   ProductNavigationTarget,
 } from "@/modules/types";
 
-function isImageIcon(icon: string): boolean {
-  if (!icon) return false;
-  return (
-    icon.startsWith("data:") ||
-    icon.startsWith("blob:") ||
-    icon.startsWith("/") ||
-    /^https?:\/\//i.test(icon)
-  );
-}
 
-function ProductIcon({
-  icon,
-  name,
-}: {
-  icon: string;
-  name: string;
-  gradient?: string;
-}) {
-  const [hasError, setHasError] = useState(false);
-
-  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
-  // pattern for "state that resets when a prop identity changes") — a new `icon` deserves a fresh
-  // attempt, not the previous icon's stale error flag.
-  const [renderedForIcon, setRenderedForIcon] = useState(icon);
-  if (renderedForIcon !== icon) {
-    setRenderedForIcon(icon);
-    setHasError(false);
-  }
-
-  const isImage =
-    isImageIcon(icon) || (icon && !icon.includes("📦") && icon.length > 2);
-  const resolved = isImage
-    ? icon.startsWith("data:") ||
-      icon.startsWith("blob:") ||
-      /^https?:\/\//i.test(icon)
-      ? icon
-      : resolveProductLogoUrl(icon) || icon
-    : null;
-
-  if (resolved && !hasError) {
-    return (
-      <img
-        src={resolved}
-        alt=""
-        onError={() => setHasError(true)}
-        className="size-9 shrink-0 rounded-lg object-cover"
-        aria-hidden="true"
-      />
-    );
-  }
-
-  return <EntityAvatar name={name} size={36} square />;
-}
-
-function ProductCard({
-  app,
-  linkTo,
-  warningCount = 0,
-  footer,
-  className,
-}: {
-  app: Pick<
-    AdminApplication,
-    "name" | "category" | "icon" | "gradient" | "description" | "status"
-  >;
-  linkTo?: string;
-  warningCount?: number;
-  footer?: ReactNode;
-  className?: string;
-}) {
-  const identity = (
-    <>
-      <ProductIcon icon={app.icon} name={app.name} gradient={app.gradient} />
-      <div className="min-w-0">
-        <span className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              "truncate text-sm font-extrabold text-[var(--text-primary)]",
-              linkTo && "group-hover:underline",
-            )}
-          >
-            {app.name}
-          </span>
-          {warningCount > 0 ? (
-            <span
-              title={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`}
-              aria-label={`${warningCount} data quality warning${warningCount === 1 ? "" : "s"}`}
-            >
-              <AlertTriangle
-                size={13}
-                className="shrink-0 text-[var(--warning)]"
-              />
-            </span>
-          ) : null}
-        </span>
-        <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">
-          {app.category}
-        </span>
-      </div>
-    </>
-  );
-
-  return (
-    <article
-      className={cn(
-        "admin-product-card",
-        !linkTo && "admin-product-card--static",
-        className,
-      )}
-    >
-      <div className="flex items-start justify-between gap-2.5">
-        {linkTo ? (
-          <Link to={linkTo} className="group flex min-w-0 items-center gap-2.5">
-            {identity}
-          </Link>
-        ) : (
-          <div className="flex min-w-0 items-center gap-2.5">{identity}</div>
-        )}
-        <div className="shrink-0 pt-0.5">
-          <StatusBadge status={app.status} kind="application" />
-        </div>
-      </div>
-      <p className="admin-product-card__description">
-        {app.description || "No description yet."}
-      </p>
-      {footer ? (
-        <div className="mt-auto">
-          <div className="admin-product-card__divider" />
-          {footer}
-        </div>
-      ) : null}
-    </article>
-  );
-}
 
 function TagList({
   label,
@@ -362,102 +226,102 @@ function ProductForm({
   return (
     <section className="admin-panel-card">
       <fieldset disabled={readOnly} className="contents">
-      <div className="flex flex-col divide-y divide-[var(--line-soft)]">
-        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
-          <InputField
-            label="Product Name"
-            readOnly
-            placeholder="Enter product name"
-            value={form.name}
-            onChange={(event) => onUpdate("name", event.target.value)}
-          />
-          <InputField
-            label="Short Name"
-            readOnly
-            placeholder="Enter short name"
-            value={form.shortName}
-            onChange={(event) => onUpdate("shortName", event.target.value)}
-          />
-          <InputField
-            label="Product Subtitle"
-            readOnly
-            placeholder="Enter product subtitle"
-            value={form.category}
-            onChange={(event) => onUpdate("category", event.target.value)}
-          />
-          <InputField
-            label="Production URL"
-            autoFocus
-            value={form.productionUrl}
-            onChange={(event) => onUpdate("productionUrl", event.target.value)}
-            placeholder="Enter production URL"
-            error={touched ? errors.productionUrl : undefined}
-          />
-          <RadioGroup
-            label="License Type"
-            options={PRODUCT_LICENSE_TYPE_OPTIONS}
-            value={form.licenseType}
-            onValueChange={(value) =>
-              onUpdate("licenseType", value as ProductLicenseType)
-            }
-          />
-          <RadioGroup
-            label="Navigation Target"
-            options={PRODUCT_NAVIGATION_OPTIONS}
-            value={form.navigationTarget}
-            onValueChange={(value) =>
-              onUpdate("navigationTarget", value as ProductNavigationTarget)
-            }
-          />
-          <Dropdown
-            label="Contact Person"
-            placeholder="Select contact person"
-            searchable
-            clearable
-            value={form.contactUserId || form.contactPersonName || ""}
-            onValueChange={(value) => {
-              const selectedValue = value ?? "";
-              const selected = contactUsers.find(
-                (user) =>
-                  String(user.userId) === selectedValue ||
-                  user.fullName.trim().toLowerCase() ===
-                    selectedValue.trim().toLowerCase(),
-              );
-              onUpdate(
-                "contactUserId",
-                selected ? String(selected.userId) : selectedValue,
-              );
-              onUpdate(
-                "contactPersonName",
-                selected?.fullName ?? selectedValue,
-              );
-            }}
-            options={contactOptions}
-          />
-          <div className="col-span-full">
-            <TagList
-              label="Features"
-              values={form.features ?? []}
-              draft={featureDraft}
-              onDraftChange={setFeatureDraft}
-              onAdd={addFeature}
-              onRemove={removeFeature}
-              maxLength={100}
+        <div className="flex flex-col divide-y divide-[var(--line-soft)]">
+          <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
+            <InputField
+              label="Product Name"
+              readOnly
+              placeholder="Enter product name"
+              value={form.name}
+              onChange={(event) => onUpdate("name", event.target.value)}
             />
+            <InputField
+              label="Short Name"
+              readOnly
+              placeholder="Enter short name"
+              value={form.shortName}
+              onChange={(event) => onUpdate("shortName", event.target.value)}
+            />
+            <InputField
+              label="Product Subtitle"
+              readOnly
+              placeholder="Enter product subtitle"
+              value={form.category}
+              onChange={(event) => onUpdate("category", event.target.value)}
+            />
+            <InputField
+              label="Production URL"
+              autoFocus
+              value={form.productionUrl}
+              onChange={(event) => onUpdate("productionUrl", event.target.value)}
+              placeholder="Enter production URL"
+              error={touched ? errors.productionUrl : undefined}
+            />
+            <RadioGroup
+              label="License Type"
+              options={PRODUCT_LICENSE_TYPE_OPTIONS}
+              value={form.licenseType}
+              onValueChange={(value) =>
+                onUpdate("licenseType", value as ProductLicenseType)
+              }
+            />
+            <RadioGroup
+              label="Navigation Target"
+              options={PRODUCT_NAVIGATION_OPTIONS}
+              value={form.navigationTarget}
+              onValueChange={(value) =>
+                onUpdate("navigationTarget", value as ProductNavigationTarget)
+              }
+            />
+            <Dropdown
+              label="Contact Person"
+              placeholder="Select contact person"
+              searchable
+              clearable
+              value={form.contactUserId || form.contactPersonName || ""}
+              onValueChange={(value) => {
+                const selectedValue = value ?? "";
+                const selected = contactUsers.find(
+                  (user) =>
+                    String(user.userId) === selectedValue ||
+                    user.fullName.trim().toLowerCase() ===
+                    selectedValue.trim().toLowerCase(),
+                );
+                onUpdate(
+                  "contactUserId",
+                  selected ? String(selected.userId) : selectedValue,
+                );
+                onUpdate(
+                  "contactPersonName",
+                  selected?.fullName ?? selectedValue,
+                );
+              }}
+              options={contactOptions}
+            />
+            <div className="col-span-full">
+              <TagList
+                label="Features"
+                values={form.features ?? []}
+                draft={featureDraft}
+                onDraftChange={setFeatureDraft}
+                onAdd={addFeature}
+                onRemove={removeFeature}
+                maxLength={100}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="p-4">
-          <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
-            <ProfileImageUpload
-              label="Product Logo"
-              onFileChange={handleLogoChange}
-              removable
-              replaceable
-              fallbackInitials={
-                (form.icon?.length ?? 0) <= 2
-                  ? form.icon
-                  : (form.name || "")
+          <div className="p-4">
+            <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
+              <ProfileImageUpload
+                label="Product Logo"
+                onFileChange={handleLogoChange}
+                removable
+                replaceable
+                fallbackInitials={
+                  (form.icon?.length ?? 0) <= 2
+                    ? form.icon
+                    : (form.name || "")
                       .trim()
                       .split(/\s+/)
                       .filter(Boolean)
@@ -465,26 +329,27 @@ function ProductForm({
                       .slice(0, 2)
                       .join("")
                       .toUpperCase() || "PR"
-              }
-              initialPreviewUrl={previewUrl}
+                }
+                initialPreviewUrl={previewUrl}
+              />
+              <ProductCard app={form} className="max-w-xs" />
+            </div>
+          </div>
+
+          <div className="p-4">
+            <TextareaField
+              label="Description"
+              required
+              value={form.description}
+              onChange={(event) => onUpdate("description", event.target.value)}
+              rows={3}
+              maxLength={500}
+              showCharCount={true}
+              placeholder="Enter Description"
+              error={touched ? errors.description : undefined}
             />
-            <ProductCard app={form} className="max-w-xs" />
           </div>
         </div>
-
-        <div className="p-4">
-          <TextareaField
-            label="Description"
-            required
-            value={form.description}
-            onChange={(event) => onUpdate("description", event.target.value)}
-            rows={3}
-            showCharCount={false}
-            placeholder="What does this product do?"
-            error={touched ? errors.description : undefined}
-          />
-        </div>
-      </div>
       </fieldset>
     </section>
   );
@@ -649,8 +514,6 @@ const ProductEdit = () => {
         finalLogoName = null;
       }
 
-      const defaultAccessDays =
-        product.defaultAccessDays > 0 ? product.defaultAccessDays : 365;
       const payload: ProductInputPayload = {
         productId: product.productId,
         productName: form.name.trim(),
@@ -658,7 +521,6 @@ const ProductEdit = () => {
         subCategoryName: form.category?.trim() || null,
         prodDescription: form.description?.trim() || null,
         externalPageUrl: form.productionUrl?.trim() || null,
-        defaultAccessDays,
         licenseType: form.licenseType,
         navigationTarget: form.navigationTarget,
         logoName: finalLogoName,

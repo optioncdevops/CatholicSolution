@@ -1,4 +1,5 @@
 import axiosInstance from '@app/config/AxiosInstance';
+import { isAxiosError } from 'axios';
 import type { ApiError, ApiResponse } from '@app/pages/types/CommonTypes';
 import type { ProductInputPayload, ProductLicenseInputPayload } from '../types/productTypes';
 
@@ -42,14 +43,18 @@ export const getProductById = async (productId: number): Promise<ApiResponse> =>
   }
 };
 
-export const getProductCustomers = async (productId: number): Promise<ApiResponse> => {
+export const getProductCustomers = async (productId: number, signal?: AbortSignal): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductCustomers`, {
       params: { productId },
+      signal,
     });
     const { statusCode, statusMessage, resultData } = response.data;
     return { statusCode, statusMessage, resultData };
   } catch (error: unknown) {
+    if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+      throw error;
+    }
     const err = error as ApiError;
     throw err.response?.data?.statusMessage || err.message || 'Failed to fetch product customers';
   }
@@ -90,18 +95,6 @@ export const getLicenseDetails = async (productId: number): Promise<ApiResponse>
   }
 };
 
-export const getLicenseById = async (licenseId: number): Promise<ApiResponse> => {
-  try {
-    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetLicenseById`, {
-      params: { licenseId },
-    });
-    const { statusCode, statusMessage, resultData } = response.data;
-    return { statusCode, statusMessage, resultData };
-  } catch (error: unknown) {
-    const err = error as ApiError;
-    throw err.response?.data?.statusMessage || err.message || 'Failed to fetch license';
-  }
-};
 
 export const createLicense = async (payload: ProductLicenseInputPayload): Promise<ApiResponse> => {
   try {
@@ -126,16 +119,6 @@ export const updateProduct = async (payload: ProductInputPayload): Promise<ApiRe
   }
 };
 
-export const updateLicense = async (payload: ProductLicenseInputPayload): Promise<ApiResponse> => {
-  try {
-    const response = await axiosInstance.put<ApiResponse>(`${controller}/UpdateLicense`, payload);
-    const { statusCode, statusMessage, resultData } = response.data;
-    return { statusCode, statusMessage, resultData };
-  } catch (error: unknown) {
-    const err = error as ApiError;
-    throw err.response?.data?.statusMessage || err.message || 'Failed to update license';
-  }
-};
 
 
 export const uploadProductLogo = async (file: File, productId: number): Promise<string> => {

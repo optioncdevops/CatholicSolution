@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch} from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, LockIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { PasswordField } from '@shared/app/components/PasswordField';
@@ -106,6 +106,22 @@ export function ResetPasswordPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per mount against this token
   }, []);
 
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
+    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
+  };
+
   const submit = handleSubmit(async (values) => {
     setServerError('');
     setSubmitting(true);
@@ -120,7 +136,7 @@ export function ResetPasswordPage() {
     } finally {
       setSubmitting(false);
     }
-  });
+  }, onInvalid);
 
   if (!token) {
     return (

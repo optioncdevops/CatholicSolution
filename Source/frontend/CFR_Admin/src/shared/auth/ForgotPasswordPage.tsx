@@ -11,11 +11,6 @@ interface ForgotPasswordFormValues {
   email: string;
 }
 
-// /forgot-password is only ever reached by an in-app link from /login (never a direct external
-// landing target), and none of client_id/entry/returnUrl affect anything on this page itself — so
-// unlike /reset-password (which genuinely arrives via an external emailed link), there's nothing
-// worth carrying forward here. "Back to Sign In" goes to plain /login rather than forwarding
-// whatever query string this page happened to be reached with.
 const LOGIN_TARGET = '/login';
 
 export function ForgotPasswordPage() {
@@ -29,16 +24,28 @@ export function ForgotPasswordPage() {
     mode: 'onChange',
   });
 
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
+    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
+  };
+
   const submit = handleSubmit(async (values) => {
     const trimmedEmail = values.email.trim();
     setServerError('');
     setSubmitting(true);
     try {
       const { statusMessage, resultData } = await forgotPassword({ userName: trimmedEmail });
-      // The backend flags resultData.alreadyRequested when a previously issued link for this
-      // account is still active — nothing new was sent, so this is informational, not a fresh
-      // "email sent" success; it gets its own message and toast tone rather than the green
-      // success banner implying a brand new email just went out.
       const alreadyRequested = Boolean((resultData as { alreadyRequested?: boolean } | null | undefined)?.alreadyRequested);
       showToast(statusMessage || 'Password reset instructions sent.', alreadyRequested ? 'info' : 'success');
       setSubmittedEmail(trimmedEmail);
@@ -49,7 +56,7 @@ export function ForgotPasswordPage() {
     } finally {
       setSubmitting(false);
     }
-  });
+  }, onInvalid);
 
   const fieldError = errors.email?.message ?? serverError;
 
