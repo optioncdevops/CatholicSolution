@@ -1,7 +1,7 @@
 import { Badge } from '@app/components/Badge';
 
 /**
- * Status badge for Invoices in Invoice Details and Invoice History tabs.
+ * Status badge for Invoices in the License Details and License History tabs.
  */
 export function InvoiceStatusBadge({ status }: { status: string }) {
   if (status === 'paid') {

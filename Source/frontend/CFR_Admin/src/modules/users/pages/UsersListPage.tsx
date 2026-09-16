@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -22,6 +22,9 @@ export function UsersListPage() {
   const navigate = useNavigate();
   const accessLevel = useFeatureAccessLevel('/admin/users');
   const isReadOnly = accessLevel === 'readOnly';
+  const location = useLocation();
+  const filterRoleId = location.state?.roleId as number | undefined;
+
   // An admin can never deactivate or delete their own account from this list — the backend
   // rejects it too, but disabling it here avoids a round trip just to hit that guard.
   const currentUserId = getStoredAcutisAuth()?.resultData?.user?.userId ?? null;
@@ -36,15 +39,19 @@ export function UsersListPage() {
   const load = useCallback(async () => {
     try {
       const { resultData, statusCode } = await getUsers();
-      setRows(statusCode === 204 ? [] : normalizeUsersList(resultData));
+      let usersList = statusCode === 204 ? [] : normalizeUsersList(resultData);
+      if (filterRoleId) {
+        usersList = usersList.filter((u) => u.roleId === filterRoleId);
+      }
+      setRows(usersList);
     } catch (error) {
       console.error('Error loading users:', error);
-      showToast('Failed to load users.');
+      showToast('Failed to load users.', 'error');
       setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, filterRoleId]);
   //#endregion
 
   //#region Effects
@@ -77,6 +84,13 @@ export function UsersListPage() {
         tone: 'danger',
       });
       if (!confirmed) return;
+    } else {
+      const confirmed = await confirmAction({
+        title: 'Activate user?',
+        description: `${user.fullName} will regain access to their account.`,
+        confirmLabel: 'Activate',
+      });
+      if (!confirmed) return;
     }
     try {
       await updateUserStatus(user.userId, nextIsActive);
@@ -84,7 +98,7 @@ export function UsersListPage() {
       await load();
     } catch (error) {
       console.error('Error updating user status:', error);
-      showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.');
+      showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.', 'error');
     }
   }, [load, showToast, isReadOnly, currentUserId]);
 
@@ -107,7 +121,7 @@ export function UsersListPage() {
       await load();
     } catch (error) {
       console.error('Error deleting user:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to delete user.');
+      showToast(typeof error === 'string' ? error : 'Failed to delete user.', 'error');
     }
   }, [load, showToast, isReadOnly, currentUserId]);
   //#endregion

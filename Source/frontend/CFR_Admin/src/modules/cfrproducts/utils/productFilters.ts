@@ -1,5 +1,4 @@
 import type {
-  ProductLicenseType,
   ProductNavigationTarget,
   ProductStatus,
 } from '@/modules/types';
@@ -12,7 +11,7 @@ export type ProductStatusFilter = 'all' | 'active' | 'inactive' | 'coming-soon';
 export const PRODUCT_STATUS_FILTERS: Array<{ id: ProductStatusFilter; label: string }> = [
   { id: 'all', label: 'All Statuses' },
   { id: 'active', label: 'Active' },
-  { id: 'inactive', label: 'Inactive' },
+  { id: 'inactive', label: 'InActive' },
   { id: 'coming-soon', label: 'Coming Soon' },
 ];
 
@@ -53,7 +52,7 @@ export const CUSTOMER_STATUS_FILTERS: Array<{
 ];
 
 /**
- * License status filter pills for the Invoice Details tab.
+ * License status filter pills for the License Details tab.
  */
 export const LICENSE_DETAILS_STATUS_FILTERS: Array<{
   id: string;
@@ -78,14 +77,6 @@ export const LICENSE_HISTORY_STATUS_FILTERS: Array<{
   { id: 'paid', label: 'Paid' },
   { id: 'unpaid', label: 'Unpaid' },
   { id: 'overdue', label: 'Overdue' },
-];
-
-/**
- * Form dropdown options for Product Edit form.
- */
-export const PRODUCT_LICENSE_TYPE_OPTIONS: Array<{ id: ProductLicenseType; value: string }> = [
-  { id: 'free', value: 'Free' },
-  { id: 'licensed', value: 'Licensed' },
 ];
 
 export const PRODUCT_NAVIGATION_OPTIONS: Array<{ id: ProductNavigationTarget; value: string }> = [

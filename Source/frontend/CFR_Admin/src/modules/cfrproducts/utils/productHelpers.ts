@@ -78,7 +78,7 @@ export function normalizeProductContactUsers(resultData: unknown): ProductContac
     .filter((row): row is ProductContactUser => row != null);
 }
 
-export const PRODUCT_DETAILS_TABS = ['details', 'customers', 'invoice-details', 'invoice-history'] as const;
+export const PRODUCT_DETAILS_TABS = ['details', 'customers', 'license-details', 'license-history'] as const;
 
 export function parseProductTabFromState(state: unknown): ProductDetailsTab | null {
   if (!state || typeof state !== 'object') {
@@ -156,6 +156,7 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
     insertedBy: item.insertedBy != null ? Number(item.insertedBy) : item.InsertedBy != null ? Number(item.InsertedBy) : null,
     updatedDate: item.updatedDate ? String(item.updatedDate) : item.UpdatedDate ? String(item.UpdatedDate) : null,
     updatedBy: item.updatedBy != null ? Number(item.updatedBy) : item.UpdatedBy != null ? Number(item.UpdatedBy) : null,
+    updatedByName: (item.updatedByName ?? item.UpdatedByName ?? null) as string | null,
     isDeleted: Boolean(item.isDeleted ?? item.IsDeleted ?? false),
   };
 }
@@ -489,6 +490,7 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     registryRef: `reg_app_${String(item.productId).padStart(4, '0')}`,
     sourceLocation: productName.toLowerCase().replace(/\s+/g, '-'),
     updatedAt: item.updatedDate || item.createdDate,
+    updatedByName: item.updatedByName || '',
     contactUserId: item.contactUserId != null ? String(item.contactUserId) : '',
     contactPersonName: item.contactPerson || '',
   };

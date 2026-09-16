@@ -8,6 +8,7 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField, MandatoryIndicator } from '@app/components/formControls';
+import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { createOrganization } from '../services/organizationsService';
 import type { OrganizationFormValues } from '../types/organizationTypes';
 import { ORG_STATUS_OPTIONS, ORG_TYPE_OPTIONS, US_STATE_OPTIONS } from '../utils/organizationHelpers';
@@ -26,7 +27,7 @@ const OrganizationAddPage = () => {
   //#endregion
 
   //#region Form
-  const { control, handleSubmit } = useForm<OrganizationFormValues>({
+  const { control, handleSubmit, formState: { isDirty } } = useForm<OrganizationFormValues>({
     defaultValues: organizationDefaultValues,
     mode: 'onChange',
   });
@@ -35,6 +36,14 @@ const OrganizationAddPage = () => {
   //#region Functions
   const navigateToList = () => {
     navigate('/admin/organizations', { replace: true });
+  };
+
+  const handleCancel = async () => {
+    if (isDirty) {
+      const confirmed = await confirmDiscardChanges();
+      if (!confirmed) return;
+    }
+    navigateToList();
   };
   //#endregion
 
@@ -117,7 +126,7 @@ const OrganizationAddPage = () => {
         </div>
 
         <div className="admin-sticky-footer">
-          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={saving}>Cancel</CommonButton>
+          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={() => void handleCancel()} disabled={saving}>Cancel</CommonButton>
           {!isReadOnly && (
             <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
           )}

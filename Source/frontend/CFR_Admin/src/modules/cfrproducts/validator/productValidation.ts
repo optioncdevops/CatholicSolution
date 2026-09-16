@@ -15,6 +15,11 @@ function hostnameOf(url: string): string | null {
   }
 }
 
+/** Requires a real-looking domain (at least one dot, alphabetic TLD of 2+ letters) — mirrors how email addresses are validated, rejecting a bare single-label host like "trytytytytyty". */
+function isRealisticHostname(hostname: string): boolean {
+  return /^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(hostname);
+}
+
 function protocolOf(url: string): string | null {
   try {
     return new URL(url).protocol;
@@ -75,6 +80,15 @@ export function validateProductForm(form: Partial<AdminApplication>): ProductFor
   if (!form.name?.trim()) errors.name = 'Product name is required.';
   if (!form.category?.trim()) errors.category = 'Subtitle is required.';
   if (!form.description?.trim()) errors.description = 'Description is required.';
+
+  const productionUrl = form.productionUrl?.trim();
+  if (productionUrl) {
+    const hostname = hostnameOf(productionUrl);
+    if (!hostname || !isRealisticHostname(hostname)) {
+      errors.productionUrl = 'Enter a valid production URL.';
+    }
+  }
+
   return errors;
 }
 

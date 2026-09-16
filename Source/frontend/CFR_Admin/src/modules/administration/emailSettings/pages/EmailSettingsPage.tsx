@@ -26,6 +26,7 @@ function EmailSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
   const [form, setForm] = useState<EmailSettingsFormValues>(formFromEmailSettings(null));
+  const [originalForm, setOriginalForm] = useState<EmailSettingsFormValues>(formFromEmailSettings(null));
   const [logoImageUrl, setLogoImageUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   //#endregion
@@ -38,7 +39,9 @@ function EmailSettingsPage() {
         const { resultData } = await getEmailSettings();
         if (cancelled) return;
         const item = (resultData ?? null) as EmailSettingsApiItem | null;
-        setForm(formFromEmailSettings(item));
+        const newForm = formFromEmailSettings(item);
+        setForm(newForm);
+        setOriginalForm(newForm);
         setHasPassword(Boolean(item?.hasPassword));
         setLogoImageUrl(item?.logoImageUrl ?? null);
       } catch (error) {
@@ -74,7 +77,10 @@ function EmailSettingsPage() {
       await saveEmailSettings(payloadFromForm(form));
       showToast('Email settings saved.', 'success');
       setHasPassword(hasPassword || Boolean(form.password.trim()));
-      setForm((prev) => ({ ...prev, password: '' }));
+      
+      const newForm = { ...form, password: '' };
+      setForm(newForm);
+      setOriginalForm(newForm);
     } catch (error) {
       console.error('Error saving email settings:', error);
       showToast(typeof error === 'string' ? error : 'Failed to save email settings.', 'error');
@@ -215,7 +221,17 @@ function EmailSettingsPage() {
 
         {!isReadOnly && (
           <div className="admin-sticky-footer">
-            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+            <CommonButton 
+              type="submit" 
+              variant="primary" 
+              size="sm" 
+              iconLeft={<Save size={14} />} 
+              onClick={() => void handleSave()}
+              loading={saving} 
+              disabled={saving || isReadOnly || JSON.stringify(form) === JSON.stringify(originalForm)}
+            >
+              Save
+            </CommonButton>
           </div>
         )}
       </form>

@@ -4,6 +4,7 @@ import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { CommonButton } from '@app/components/buttons';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { InputField, TextareaField } from '@app/components/formControls';
+import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { saveUserRole } from '../../services/userRolesService';
 import type { UserRolesApiItem, UserRolesFormValues } from '../../types/userRolesTypes';
 import { toSaveUserRolePayload } from '../../utils/userRolesHelpers';
@@ -27,14 +28,18 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
   const { showToast } = useToast();
 
   //#region Form
-  const { control, handleSubmit, reset } = useForm<UserRolesFormValues>({
+  const { control, handleSubmit, reset, formState: { isDirty } } = useForm<UserRolesFormValues>({
     defaultValues: userRolesDefaultValues,
     mode: 'onChange',
   });
   //#endregion
 
   //#region Functions
-  const handleClose = () => {
+  const handleClose = async () => {
+    if (isDirty) {
+      const confirmed = await confirmDiscardChanges();
+      if (!confirmed) return;
+    }
     setFormError(null);
     onClose();
   };
@@ -65,6 +70,7 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
         return;
       }
       reset(userRolesDefaultValues);
+      showToast(role ? 'User role updated successfully.' : 'User role added successfully.', 'success');
       handleClose();
       await onSaved();
     } catch (error) {
@@ -103,14 +109,14 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
       footer={(
         <>
           <CommonButton variant="outline" onClick={handleClose} disabled={saving}>{readOnly ? 'Close' : 'Cancel'}</CommonButton>
-          {readOnly ? null : <CommonButton variant="primary" onClick={handleSubmit(onSubmit, onInvalid)} loading={saving} disabled={saving}>Save</CommonButton>}
+          {readOnly ? null : <CommonButton variant="primary" onClick={handleSubmit(onSubmit, onInvalid)} loading={saving} disabled={saving || (Boolean(role) && !isDirty)}>Save</CommonButton>}
         </>
       )}
     >
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         {readOnly ? <ReadOnlyBanner featureName="User Roles" /> : null}
         {formError ? <p className="text-xs font-semibold text-[var(--error)]">{formError}</p> : null}
-        <InputField control={control} name="roleName" label="Role name" required rules={userRolesRules.roleName} maxLength={50} disabled={saving || readOnly} />
+        <InputField control={control} name="roleName" label="Role name" required autoFocus rules={userRolesRules.roleName} maxLength={50} disabled={saving || readOnly} />
         <TextareaField control={control} name="description" label="Description" rows={3} rules={userRolesRules.description} maxLength={250} showCharCount={true} disabled={saving || readOnly} />
       </form>
     </BaseModal>
