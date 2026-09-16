@@ -14,8 +14,20 @@ export const usersDefaultValues: UsersFormValues = {
 };
 
 export const usersRules = {
-  firstName: { required: 'This field is required' },
-  lastName: { required: 'This field is required' },
+  firstName: {
+    required: 'This field is required',
+    maxLength: {
+      value: 50,
+      message: 'First name cannot exceed 50 characters',
+    },
+  },
+  lastName: {
+    required: 'This field is required',
+    maxLength: {
+      value: 50,
+      message: 'Last name cannot exceed 50 characters',
+    },
+  },
   eMail: {
     required: 'This field is required',
     pattern: {
@@ -32,6 +44,6 @@ export const usersRules = {
   isActive: { required: 'This field is required' },
   isLocked: { required: 'This field is required' },
   contactNumber: {
-    pattern: { value: /^[+()\d][\d\s().-]{6,19}$/, message: 'Enter a valid contact number.' },
+    pattern: { value: /^[0-9]{10}$/, message: 'Enter Contact Number.' },
   },
 };

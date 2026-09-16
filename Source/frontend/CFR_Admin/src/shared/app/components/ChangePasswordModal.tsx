@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm, useWatch, type SubmitHandler, type FieldErrors } from 'react-hook-form';
+import { useForm, useWatch, type SubmitHandler} from 'react-hook-form';
 import { CommonButton } from '@app/components/buttons';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { InputField } from '@app/components/formControls';

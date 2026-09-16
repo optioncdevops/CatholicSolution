@@ -134,19 +134,19 @@ export function RequestInterestModal({ app, onClose, onSubmitted }: RequestInter
             <div className="mt-4 grid grid-cols-1 gap-4 text-left sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Requester Name</label>
-                <input type="text" name="name" value={form.name} onChange={handleInputChange} disabled={submitting} className="auth-input auth-input--plain" />
+                <input type="text" name="name" value={form.name} onChange={handleInputChange} disabled className="auth-input auth-input--plain" />
               </div>
               <div>
                 <label className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Requester Email</label>
-                <input type="email" name="email" value={form.email} onChange={handleInputChange} disabled={submitting} className="auth-input auth-input--plain" />
+                <input type="email" name="email" value={form.email} onChange={handleInputChange} disabled className="auth-input auth-input--plain" />
               </div>
               <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Send to Email</label>
-                <input type="email" name="sendToEmail" value={form.sendToEmail} onChange={handleInputChange} disabled={submitting} placeholder="admin@example.com" className="auth-input auth-input--plain" />
+                <input type="email" name="sendToEmail" value={form.sendToEmail} onChange={handleInputChange} disabled placeholder="admin@example.com" className="auth-input auth-input--plain" />
               </div>
               <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Reason / Additional Information</label>
-                <textarea name="reason" value={form.reason} onChange={handleInputChange} disabled={submitting} rows={3} className="auth-input auth-input--plain py-2.5 resize-y"></textarea>
+                <textarea name="reason" value={form.reason} onChange={handleInputChange} disabled={submitting} maxLength={250} rows={3} className="auth-input auth-input--plain py-2.5 resize-y"></textarea>
               </div>
             </div>
             <div className="hub-request-modal__notice">

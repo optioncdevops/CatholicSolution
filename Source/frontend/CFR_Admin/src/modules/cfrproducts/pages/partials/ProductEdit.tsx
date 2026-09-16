@@ -362,102 +362,102 @@ function ProductForm({
   return (
     <section className="admin-panel-card">
       <fieldset disabled={readOnly} className="contents">
-      <div className="flex flex-col divide-y divide-[var(--line-soft)]">
-        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
-          <InputField
-            label="Product Name"
-            readOnly
-            placeholder="Enter product name"
-            value={form.name}
-            onChange={(event) => onUpdate("name", event.target.value)}
-          />
-          <InputField
-            label="Short Name"
-            readOnly
-            placeholder="Enter short name"
-            value={form.shortName}
-            onChange={(event) => onUpdate("shortName", event.target.value)}
-          />
-          <InputField
-            label="Product Subtitle"
-            readOnly
-            placeholder="Enter product subtitle"
-            value={form.category}
-            onChange={(event) => onUpdate("category", event.target.value)}
-          />
-          <InputField
-            label="Production URL"
-            autoFocus
-            value={form.productionUrl}
-            onChange={(event) => onUpdate("productionUrl", event.target.value)}
-            placeholder="Enter production URL"
-            error={touched ? errors.productionUrl : undefined}
-          />
-          <RadioGroup
-            label="License Type"
-            options={PRODUCT_LICENSE_TYPE_OPTIONS}
-            value={form.licenseType}
-            onValueChange={(value) =>
-              onUpdate("licenseType", value as ProductLicenseType)
-            }
-          />
-          <RadioGroup
-            label="Navigation Target"
-            options={PRODUCT_NAVIGATION_OPTIONS}
-            value={form.navigationTarget}
-            onValueChange={(value) =>
-              onUpdate("navigationTarget", value as ProductNavigationTarget)
-            }
-          />
-          <Dropdown
-            label="Contact Person"
-            placeholder="Select contact person"
-            searchable
-            clearable
-            value={form.contactUserId || form.contactPersonName || ""}
-            onValueChange={(value) => {
-              const selectedValue = value ?? "";
-              const selected = contactUsers.find(
-                (user) =>
-                  String(user.userId) === selectedValue ||
-                  user.fullName.trim().toLowerCase() ===
-                    selectedValue.trim().toLowerCase(),
-              );
-              onUpdate(
-                "contactUserId",
-                selected ? String(selected.userId) : selectedValue,
-              );
-              onUpdate(
-                "contactPersonName",
-                selected?.fullName ?? selectedValue,
-              );
-            }}
-            options={contactOptions}
-          />
-          <div className="col-span-full">
-            <TagList
-              label="Features"
-              values={form.features ?? []}
-              draft={featureDraft}
-              onDraftChange={setFeatureDraft}
-              onAdd={addFeature}
-              onRemove={removeFeature}
-              maxLength={100}
+        <div className="flex flex-col divide-y divide-[var(--line-soft)]">
+          <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 items-start">
+            <InputField
+              label="Product Name"
+              readOnly
+              placeholder="Enter product name"
+              value={form.name}
+              onChange={(event) => onUpdate("name", event.target.value)}
             />
+            <InputField
+              label="Short Name"
+              readOnly
+              placeholder="Enter short name"
+              value={form.shortName}
+              onChange={(event) => onUpdate("shortName", event.target.value)}
+            />
+            <InputField
+              label="Product Subtitle"
+              readOnly
+              placeholder="Enter product subtitle"
+              value={form.category}
+              onChange={(event) => onUpdate("category", event.target.value)}
+            />
+            <InputField
+              label="Production URL"
+              autoFocus
+              value={form.productionUrl}
+              onChange={(event) => onUpdate("productionUrl", event.target.value)}
+              placeholder="Enter production URL"
+              error={touched ? errors.productionUrl : undefined}
+            />
+            <RadioGroup
+              label="License Type"
+              options={PRODUCT_LICENSE_TYPE_OPTIONS}
+              value={form.licenseType}
+              onValueChange={(value) =>
+                onUpdate("licenseType", value as ProductLicenseType)
+              }
+            />
+            <RadioGroup
+              label="Navigation Target"
+              options={PRODUCT_NAVIGATION_OPTIONS}
+              value={form.navigationTarget}
+              onValueChange={(value) =>
+                onUpdate("navigationTarget", value as ProductNavigationTarget)
+              }
+            />
+            <Dropdown
+              label="Contact Person"
+              placeholder="Select contact person"
+              searchable
+              clearable
+              value={form.contactUserId || form.contactPersonName || ""}
+              onValueChange={(value) => {
+                const selectedValue = value ?? "";
+                const selected = contactUsers.find(
+                  (user) =>
+                    String(user.userId) === selectedValue ||
+                    user.fullName.trim().toLowerCase() ===
+                    selectedValue.trim().toLowerCase(),
+                );
+                onUpdate(
+                  "contactUserId",
+                  selected ? String(selected.userId) : selectedValue,
+                );
+                onUpdate(
+                  "contactPersonName",
+                  selected?.fullName ?? selectedValue,
+                );
+              }}
+              options={contactOptions}
+            />
+            <div className="col-span-full">
+              <TagList
+                label="Features"
+                values={form.features ?? []}
+                draft={featureDraft}
+                onDraftChange={setFeatureDraft}
+                onAdd={addFeature}
+                onRemove={removeFeature}
+                maxLength={100}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="p-4">
-          <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
-            <ProfileImageUpload
-              label="Product Logo"
-              onFileChange={handleLogoChange}
-              removable
-              replaceable
-              fallbackInitials={
-                (form.icon?.length ?? 0) <= 2
-                  ? form.icon
-                  : (form.name || "")
+          <div className="p-4">
+            <div className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-center">
+              <ProfileImageUpload
+                label="Product Logo"
+                onFileChange={handleLogoChange}
+                removable
+                replaceable
+                fallbackInitials={
+                  (form.icon?.length ?? 0) <= 2
+                    ? form.icon
+                    : (form.name || "")
                       .trim()
                       .split(/\s+/)
                       .filter(Boolean)
@@ -465,26 +465,27 @@ function ProductForm({
                       .slice(0, 2)
                       .join("")
                       .toUpperCase() || "PR"
-              }
-              initialPreviewUrl={previewUrl}
+                }
+                initialPreviewUrl={previewUrl}
+              />
+              <ProductCard app={form} className="max-w-xs" />
+            </div>
+          </div>
+
+          <div className="p-4">
+            <TextareaField
+              label="Description"
+              required
+              value={form.description}
+              onChange={(event) => onUpdate("description", event.target.value)}
+              rows={3}
+              maxLength={500}
+              showCharCount={true}
+              placeholder="Enter Description"
+              error={touched ? errors.description : undefined}
             />
-            <ProductCard app={form} className="max-w-xs" />
           </div>
         </div>
-
-        <div className="p-4">
-          <TextareaField
-            label="Description"
-            required
-            value={form.description}
-            onChange={(event) => onUpdate("description", event.target.value)}
-            rows={3}
-            showCharCount={false}
-            placeholder="What does this product do?"
-            error={touched ? errors.description : undefined}
-          />
-        </div>
-      </div>
       </fieldset>
     </section>
   );

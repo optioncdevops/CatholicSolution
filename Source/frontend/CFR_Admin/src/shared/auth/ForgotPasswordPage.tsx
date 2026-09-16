@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm, type FieldErrors } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, MailIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -11,11 +11,6 @@ interface ForgotPasswordFormValues {
   email: string;
 }
 
-// /forgot-password is only ever reached by an in-app link from /login (never a direct external
-// landing target), and none of client_id/entry/returnUrl affect anything on this page itself — so
-// unlike /reset-password (which genuinely arrives via an external emailed link), there's nothing
-// worth carrying forward here. "Back to Sign In" goes to plain /login rather than forwarding
-// whatever query string this page happened to be reached with.
 const LOGIN_TARGET = '/login';
 
 export function ForgotPasswordPage() {
@@ -27,28 +22,6 @@ export function ForgotPasswordPage() {
   const { register, handleSubmit, formState: { errors } } = useForm<ForgotPasswordFormValues>({
     defaultValues: { email: '' },
     mode: 'onChange',
-  });
-
-  const submit = handleSubmit(async (values) => {
-    const trimmedEmail = values.email.trim();
-    setServerError('');
-    setSubmitting(true);
-    try {
-      const { statusMessage, resultData } = await forgotPassword({ userName: trimmedEmail });
-      // The backend flags resultData.alreadyRequested when a previously issued link for this
-      // account is still active — nothing new was sent, so this is informational, not a fresh
-      // "email sent" success; it gets its own message and toast tone rather than the green
-      // success banner implying a brand new email just went out.
-      const alreadyRequested = Boolean((resultData as { alreadyRequested?: boolean } | null | undefined)?.alreadyRequested);
-      showToast(statusMessage || 'Password reset instructions sent.', alreadyRequested ? 'info' : 'success');
-      setSubmittedEmail(trimmedEmail);
-    } catch (err) {
-      const message = typeof err === 'string' ? err : 'Something went wrong. Please try again.';
-      setServerError(message);
-      showToast(message, 'error');
-    } finally {
-      setSubmitting(false);
-    }
   });
 
   const onInvalid = (formErrors: any) => {
@@ -66,6 +39,24 @@ export function ForgotPasswordPage() {
     }).filter(Boolean);
     showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
+
+  const submit = handleSubmit(async (values) => {
+    const trimmedEmail = values.email.trim();
+    setServerError('');
+    setSubmitting(true);
+    try {
+      const { statusMessage, resultData } = await forgotPassword({ userName: trimmedEmail });
+      const alreadyRequested = Boolean((resultData as { alreadyRequested?: boolean } | null | undefined)?.alreadyRequested);
+      showToast(statusMessage || 'Password reset instructions sent.', alreadyRequested ? 'info' : 'success');
+      setSubmittedEmail(trimmedEmail);
+    } catch (err) {
+      const message = typeof err === 'string' ? err : 'Something went wrong. Please try again.';
+      setServerError(message);
+      showToast(message, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  }, onInvalid);
 
   const fieldError = errors.email?.message ?? serverError;
 
@@ -96,7 +87,7 @@ export function ForgotPasswordPage() {
               <h1 className="admin-auth-card__title">Forgot Your Password?</h1>
               <p className="admin-auth-card__description">Enter the email address associated with your account. We&apos;ll send you a link to reset your password.</p>
             </div>
-            <form id="formForgotPassword" onSubmit={(event) => { event.preventDefault(); void submit(event); void handleSubmit(submit, onInvalid)(event); }} className="admin-auth-form" noValidate>
+            <form id="formForgotPassword" onSubmit={submit} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">
                 <label className="admin-auth-label" htmlFor="txtEmailAddress">Email Address</label>
                 <div className="admin-auth-input-wrap">

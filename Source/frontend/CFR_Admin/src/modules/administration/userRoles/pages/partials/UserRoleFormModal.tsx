@@ -9,7 +9,6 @@ import type { UserRolesApiItem, UserRolesFormValues } from '../../types/userRole
 import { toSaveUserRolePayload } from '../../utils/userRolesHelpers';
 import { userRolesDefaultValues, userRolesRules } from '../../validator/UserRolesValidator';
 import { useToast } from '@shared/app/components/ToastProvider';
-import type { FieldErrors } from 'react-hook-form';
 
 type UserRoleFormModalProps = {
   open: boolean;
@@ -111,8 +110,8 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         {readOnly ? <ReadOnlyBanner featureName="User Roles" /> : null}
         {formError ? <p className="text-xs font-semibold text-[var(--error)]">{formError}</p> : null}
-        <InputField control={control} name="roleName" label="Role name" required rules={userRolesRules.roleName} disabled={saving || readOnly} />
-        <TextareaField control={control} name="description" label="Description" rows={3} showCharCount={false} disabled={saving || readOnly} />
+        <InputField control={control} name="roleName" label="Role name" required rules={userRolesRules.roleName} maxLength={50} disabled={saving || readOnly} />
+        <TextareaField control={control} name="description" label="Description" rows={3} rules={userRolesRules.description} maxLength={250} showCharCount={true} disabled={saving || readOnly} />
       </form>
     </BaseModal>
   );

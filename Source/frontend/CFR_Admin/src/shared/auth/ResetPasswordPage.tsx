@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useWatch, type FieldErrors } from 'react-hook-form';
+import { useForm, useWatch} from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, LockIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { PasswordField } from '@shared/app/components/PasswordField';
@@ -106,22 +106,6 @@ export function ResetPasswordPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per mount against this token
   }, []);
 
-  const submit = handleSubmit(async (values) => {
-    setServerError('');
-    setSubmitting(true);
-    try {
-      await resetPassword({ token, newPassword: values.password, confirmPassword: values.confirmPassword });
-      showToast('Your password has been reset.', 'success');
-      setComplete(true);
-    } catch (err) {
-      const message = typeof err === 'string' ? err : 'This reset link is invalid or has expired.';
-      setServerError(message);
-      showToast(message, 'error');
-    } finally {
-      setSubmitting(false);
-    }
-  });
-
   const onInvalid = (formErrors: any) => {
     const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
       if (error?.message === 'This field is required') {
@@ -137,6 +121,22 @@ export function ResetPasswordPage() {
     }).filter(Boolean);
     showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
+
+  const submit = handleSubmit(async (values) => {
+    setServerError('');
+    setSubmitting(true);
+    try {
+      await resetPassword({ token, newPassword: values.password, confirmPassword: values.confirmPassword });
+      showToast('Your password has been reset.', 'success');
+      setComplete(true);
+    } catch (err) {
+      const message = typeof err === 'string' ? err : 'This reset link is invalid or has expired.';
+      setServerError(message);
+      showToast(message, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  }, onInvalid);
 
   if (!token) {
     return (
@@ -212,7 +212,7 @@ export function ResetPasswordPage() {
                 {accountEmail ? <>Choose a new password for <strong>{accountEmail}</strong>.</> : 'Choose a new password for your account.'}
               </p>
             </div>
-            <form id="formResetPassword" onSubmit={(event) => { event.preventDefault(); void submit(event); void handleSubmit(submit, onInvalid)(event); }} className="admin-auth-form" noValidate>
+            <form id="formResetPassword" onSubmit={submit} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">
                 <PasswordField
                   id="txtNewPassword"
