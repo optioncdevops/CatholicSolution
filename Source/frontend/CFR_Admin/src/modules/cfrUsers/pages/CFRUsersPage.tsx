@@ -4,35 +4,26 @@ import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
-import { Dropdown } from '@app/components/formControls';
-import { StatusBadge } from '@app/components/Badge';
-import { CommonButton } from '@app/components/buttons';
-import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
+import { Dropdown, MultiSelect } from '@app/components/formControls';
 import { Tabs, TabPanel } from '@app/components/Tabs';
-import { formatDate } from '@/modules/utils/formatDate';
-import {
-  getOrganizationById,
-  getOrganizations,
-  getOrganizationUsers,
-} from '@/modules/organizations/services/organizationsService';
-import { normalizeOrganization, normalizeOrganizationsList } from '@/modules/organizations/utils/organizationHelpers';
+import { getOrganizations } from '@/modules/organizations/services/organizationsService';
+import { normalizeOrganizationsList } from '@/modules/organizations/utils/organizationHelpers';
 import type { OrganizationApiItem, OrganizationUserApiItem } from '@/modules/organizations/types/organizationTypes';
 import OrganizationUsersPanel from '@/modules/organizations/pages/partials/OrganizationUsersPanel';
-import { getAccessRequests, normalizeAccessRequestList, type AccessRequestApiItem } from '@/modules/requests';
-import RequestReviewModal from '@/modules/requests/pages/partials/RequestReviewModal';
+import { getProducts } from '@/modules/cfrproducts/services/productService';
+import type { ProductApiItem } from '@/modules/cfrproducts/types/productTypes';
+import { getCFRUsers } from '../services/cfrUsersService';
+import type { CFRUserApiItem } from '../types/cfrUsersTypes';
 
 const CFR_USERS_ROUTE = '/admin/cfr-users';
 const ALL_ORGS = 'all' as const;
-const ALL_PRODUCTS = 'all' as const;
 
 type ScopedOrgUser = OrganizationUserApiItem & { orgId: number; orgName: string };
 
-// "Pending" here means pending ACCESS REQUESTS (AccessRequest.status === 'pending') scoped to the
-// selected organization -- auth.UserProduct/OrganizationUserApiItem has no pending/invited state
-// of its own (memberStatus is only ever 'active' | 'inactive'), so a request row is the only real
-// "awaiting approval" population this system tracks. Same org-scoping recipe already used by
-// OrganizationRequestsPanel: fetch the flat global request list and filter client-side, since
-// there is no per-organization requests endpoint.
+// Users/GetCFRUsers (hosted on the existing Users/Administration controller, not a separate
+// service) -- Status here comes from [auth].[User].[AuthOId]: populated -> "active", NULL ->
+// "pending". A single call returns every organization when no orgId is sent, so there is no
+// per-organization fan-out here.
 const CFRUsersPage = () => {
   //#region Hooks
   const { showToast } = useToast();
@@ -42,21 +33,19 @@ const CFRUsersPage = () => {
 
   //#region States
   const [organizations, setOrganizations] = useState<OrganizationApiItem[]>([]);
+  const [products, setProducts] = useState<ProductApiItem[]>([]);
   const [orgId, setOrgId] = useState<number | typeof ALL_ORGS | null>(null);
-  const [organization, setOrganization] = useState<OrganizationApiItem | null>(null);
+  const [productIds, setProductIds] = useState<string[]>([]);
   const [users, setUsers] = useState<ScopedOrgUser[]>([]);
-  const [productFilter, setProductFilter] = useState<string>(ALL_PRODUCTS);
-  const [requests, setRequests] = useState<AccessRequestApiItem[]>([]);
   const [loadingOrgs, setLoadingOrgs] = useState(true);
   const [loadingOrgData, setLoadingOrgData] = useState(false);
   const [activeTab, setActiveTab] = useState('active');
-  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
+  const [activeCount, setActiveCount] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   //#endregion
 
   //#region Functions
-  // Organization defaults to the first org loaded, same as before "All" existed -- "All" is an
-  // explicit opt-in from the dropdown, not the default, since it fans out one request per
-  // organization (GetOrganizationUsers has no bulk-across-organizations endpoint).
+  // Organization defaults to the first org loaded -- "All" is an explicit opt-in from the dropdown.
   const loadOrganizations = useCallback(async () => {
     try {
       const { resultData, statusCode } = await getOrganizations();
@@ -71,35 +60,39 @@ const CFRUsersPage = () => {
     }
   }, [showToast]);
 
-  const loadOrgScopedData = useCallback(async (id: number | typeof ALL_ORGS, orgList: OrganizationApiItem[]) => {
+  const loadUsers = useCallback(async (
+    id: number | typeof ALL_ORGS, 
+    tabId: string, 
+    prods: string[]
+  ) => {
     setLoadingOrgData(true);
     try {
-      if (id === ALL_ORGS) {
-        const [usersByOrg, requestsResult] = await Promise.all([
-          Promise.all(orgList.map(async (org) => {
-            const usersResult = await getOrganizationUsers(org.orgId);
-            const list = Array.isArray(usersResult.resultData) ? usersResult.resultData as OrganizationUserApiItem[] : [];
-            return list.map((user): ScopedOrgUser => ({ ...user, orgId: org.orgId, orgName: org.orgName }));
-          })),
-          getAccessRequests(),
-        ]);
-        setOrganization(null);
-        setUsers(usersByOrg.flat());
-        const allRequests = requestsResult.statusCode === 204 ? [] : normalizeAccessRequestList(requestsResult.resultData);
-        setRequests(allRequests);
-      } else {
-        const [orgResult, usersResult, requestsResult] = await Promise.all([
-          getOrganizationById(id),
-          getOrganizationUsers(id),
-          getAccessRequests(),
-        ]);
-        const org = orgResult.statusCode === 204 ? null : normalizeOrganization(orgResult.resultData);
-        setOrganization(org);
-        const list = Array.isArray(usersResult.resultData) ? usersResult.resultData as OrganizationUserApiItem[] : [];
-        setUsers(list.map((user): ScopedOrgUser => ({ ...user, orgId: id, orgName: org?.orgName ?? '' })));
-        const allRequests = requestsResult.statusCode === 204 ? [] : normalizeAccessRequestList(requestsResult.resultData);
-        setRequests(allRequests.filter((request) => request.organizationId === id));
-      }
+      const isAuth = tabId === 'active' ? 1 : 0;
+      const { resultData, statusCode } = await getCFRUsers(
+        id === ALL_ORGS ? undefined : id, 
+        isAuth,
+        prods.length > 0 ? prods.join(',') : undefined
+      );
+      
+      const data = resultData as { users?: CFRUserApiItem[], activeCount?: number, pendingCount?: number };
+      const rawUsers = data?.users ?? [];
+      const list = statusCode === 204 || !Array.isArray(rawUsers) ? [] : rawUsers;
+      
+      setUsers(list.map((user): ScopedOrgUser => ({
+        authUserId: user.authUserId,
+        email: user.email ?? '',
+        fullName: user.fullName,
+        roleName: user.roleName,
+        memberStatus: user.status,
+        linkedDate: user.linkedDate,
+        appCount: user.appCount,
+        appNames: user.appNames,
+        orgId: user.orgId,
+        orgName: user.orgName,
+      })));
+      
+      setActiveCount(data?.activeCount ?? 0);
+      setPendingCount(data?.pendingCount ?? 0);
     } catch (error) {
       console.error('Error loading CFR users:', error);
       showToast(typeof error === 'string' ? error : 'Failed to load users.', 'error');
@@ -110,13 +103,26 @@ const CFRUsersPage = () => {
   //#endregion
 
   //#region Effects
-  useEffect(() => {
-    void loadOrganizations();
-  }, [loadOrganizations]);
+  const loadProducts = useCallback(async () => {
+    try {
+      const { resultData, statusCode } = await getProducts();
+      if (statusCode !== 204 && Array.isArray(resultData)) {
+        setProducts(resultData as ProductApiItem[]);
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      showToast('Failed to load products.', 'error');
+    }
+  }, [showToast]);
 
   useEffect(() => {
-    if (orgId !== null) void loadOrgScopedData(orgId, organizations);
-  }, [orgId, organizations, loadOrgScopedData]);
+    void loadOrganizations();
+    void loadProducts();
+  }, [loadOrganizations, loadProducts]);
+
+  useEffect(() => {
+    if (orgId !== null) void loadUsers(orgId, activeTab, productIds);
+  }, [orgId, activeTab, productIds, loadUsers]);
   //#endregion
 
   //#region Derived data
@@ -128,67 +134,16 @@ const CFRUsersPage = () => {
     [organizations],
   );
 
-  const productOptions = useMemo(() => {
-    const names = new Set<string>();
-    users.forEach((user) => {
-      (user.appNames ? user.appNames.split(', ').filter(Boolean) : []).forEach((name) => names.add(name));
-    });
-    return [
-      { id: ALL_PRODUCTS, value: 'All Products' },
-      ...Array.from(names).sort().map((name) => ({ id: name, value: name })),
-    ];
-  }, [users]);
-
-  const filteredUsers = useMemo(() => {
-    if (productFilter === ALL_PRODUCTS) return users;
-    return users.filter((user) => (user.appNames ? user.appNames.split(', ').filter(Boolean) : []).includes(productFilter));
-  }, [users, productFilter]);
-
-  const pendingRequests = useMemo(
-    () => requests.filter((request) => request.status === 'pending'),
-    [requests],
+  const productOptions = useMemo(
+    () => products.map((prod) => ({ id: String(prod.productId), value: prod.productName })),
+    [products],
   );
 
-  const pendingColumns: DataTableColumn<AccessRequestApiItem>[] = [
-    {
-      id: 'requester', header: 'Requester', width: '15rem',
-      value: (request) => `${request.requesterName} (${request.requesterEmail})`,
-      cell: (request) => (
-        <span>
-          <span className="block font-bold text-[var(--text-primary)]">{request.requesterName}</span>
-          <span className="block text-xs text-[var(--text-muted)]">{request.requesterEmail}</span>
-        </span>
-      ),
-    },
-    {
-      id: 'app', header: 'Application',
-      value: (request) => request.productName || request.productId,
-      cell: (request) => <span className="text-[var(--text-secondary)]">{request.productName || request.productId}</span>,
-    },
-    {
-      id: 'status', header: 'Status',
-      value: (request) => request.status,
-      cell: (request) => <StatusBadge status={request.status} kind="request" />,
-    },
-    {
-      id: 'submittedAt', header: 'Submitted',
-      value: (request) => request.submittedAt,
-      cell: (request) => <span className="text-[var(--text-muted)]">{formatDate(request.submittedAt)}</span>,
-    },
-    {
-      id: 'review', header: 'Review', sortable: false, excludeFromExport: true,
-      cell: (request) => <CommonButton variant="outline" size="sm" onClick={() => setSelectedRequestId(request.accessRequestId)}>Review</CommonButton>,
-    },
-  ];
   //#endregion
 
   //#region Handlers
   const handleUsersChanged = async () => {
-    if (orgId !== null) await loadOrgScopedData(orgId, organizations);
-  };
-
-  const handleRequestResolved = async () => {
-    if (orgId !== null) await loadOrgScopedData(orgId, organizations);
+    if (orgId !== null) await loadUsers(orgId, activeTab, productId);
   };
   //#endregion
 
@@ -212,16 +167,15 @@ const CFRUsersPage = () => {
             className="min-h-8"
           />
         </div>
-
         <div className="w-full max-w-xs">
-          <Dropdown
+          <MultiSelect
             id="filterCFRUserProduct"
-            label="Product"
+            label="Products"
             searchable
-            clearable={false}
-            value={productFilter}
-            onValueChange={(value) => setProductFilter(value || ALL_PRODUCTS)}
+            value={productIds}
+            onValueChange={(value) => setProductIds(value)}
             options={productOptions}
+            placeholder="All Products"
             className="min-h-8"
           />
         </div>
@@ -239,8 +193,8 @@ const CFRUsersPage = () => {
             activeId={activeTab}
             onChange={setActiveTab}
             tabs={[
-              { id: 'active', label: 'Active Users', count: filteredUsers.length },
-              { id: 'pending', label: 'Pending', count: pendingRequests.length },
+              { id: 'active', label: 'Active Users', count: activeCount },
+              { id: 'pending', label: 'Pending', count: pendingCount },
             ]}
           />
 
@@ -251,44 +205,36 @@ const CFRUsersPage = () => {
           ) : (
             <>
               <TabPanel id="active" activeId={activeTab}>
-                {orgId !== null ? (
-                  <OrganizationUsersPanel
-                    orgId={orgId === ALL_ORGS ? undefined : orgId}
-                    organization={organization ?? undefined}
-                    users={filteredUsers}
-                    onChanged={handleUsersChanged}
-                    readOnly={isReadOnly}
-                    showRoleColumn={false}
-                    showLinkedOnColumn={false}
-                  />
-                ) : null}
+                <OrganizationUsersPanel
+                  users={users}
+                  onChanged={handleUsersChanged}
+                  readOnly={isReadOnly}
+                  showRoleColumn={false}
+                  showLinkedOnColumn={false}
+                  showActionsColumn={false}
+                  showOrganizationColumn={true}
+                  exportFileName="CFR_User"
+                  exportTitle="CFR User"
+                />
               </TabPanel>
 
               <TabPanel id="pending" activeId={activeTab}>
-                {pendingRequests.length === 0 ? (
-                  <EmptyState icon="📥" title="No pending requests" description="Pending access requests from this organization will appear here." />
-                ) : (
-                  <DataTable
-                    data={pendingRequests}
-                    columns={pendingColumns}
-                    getRowId={(request) => String(request.accessRequestId)}
-                    initialSort={[{ id: 'submittedAt', desc: true }]}
-                    exportFileName="cfr-user-pending-requests"
-                    exportTitle="CFR User — Pending Requests"
-                    emptyMessage="No pending requests."
-                  />
-                )}
+                <OrganizationUsersPanel
+                  users={users}
+                  onChanged={handleUsersChanged}
+                  readOnly={isReadOnly}
+                  showRoleColumn={false}
+                  showLinkedOnColumn={false}
+                  showActionsColumn={false}
+                  showOrganizationColumn={true}
+                  exportFileName="CFR_User_Pending"
+                  exportTitle="CFR User - Pending"
+                />
               </TabPanel>
             </>
           )}
         </>
       )}
-
-      <RequestReviewModal
-        accessRequestId={selectedRequestId}
-        onClose={() => setSelectedRequestId(null)}
-        onResolved={handleRequestResolved}
-      />
     </div>
   );
   //#endregion

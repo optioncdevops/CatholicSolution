@@ -67,7 +67,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <Toaster position="top-right" gutter={10} containerStyle={{ top: 16, right: 16 }} />
+      <Toaster position="top-right" gutter={10} containerStyle={{ top: 16, right: 16, zIndex: 999999 }} />
     </ToastContext.Provider>
   );
 }

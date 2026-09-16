@@ -56,6 +56,23 @@ namespace CFR.AcutisService.Interfaces.Administration
         /// <returns>MSResultArgs containing lookup lists.</returns>
         Task<MSResultArgs> GetUserLookupsAsync();
 
+        /// <summary>
+        /// Retrieves CFR users, one row per (member, organization) membership.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the CFR Admin "CFR User" page.
+        /// Request Flow: UsersController -> IUsersService.GetCFRUsersAsync() -> IUsersRepository.GetCFRUsersAsync().
+        /// Validation Details: None — orgId is optional; null/0/negative all mean "every organization".
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IUsersRepository.GetCFRUsersAsync().
+        /// Response Details: MSResultArgs containing List of CFRUserOutput, or NoRecordFound.
+        /// </remarks>
+        /// <param name="orgId">Organization identifier to scope the list to; null or 0 returns every organization.</param>
+        /// <param name="isAuth">Filter by active (1) or pending (0) auth state.</param>
+        /// <param name="productIds">Filter by product assignment.</param>
+        /// <returns>MSResultArgs containing the CFR users.</returns>
+        Task<MSResultArgs> GetCFRUsersAsync(int? orgId, int? isAuth, string? productIds);
+
         #endregion GET Methods
 
         #region POST Methods

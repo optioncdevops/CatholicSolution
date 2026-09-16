@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm, useWatch, type SubmitHandler } from 'react-hook-form';
+import { useForm, useWatch, type SubmitHandler, type FieldErrors } from 'react-hook-form';
 import { CommonButton } from '@app/components/buttons';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { InputField } from '@app/components/formControls';
@@ -79,6 +79,22 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
     }
   };
 
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
+    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
+  };
+
   const score = passwordScore(newPasswordValue);
 
   return (
@@ -95,7 +111,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
         </>
       )}
     >
-      <form id="formChangePassword" onSubmit={(event) => void passwordForm.handleSubmit(onPasswordSubmit)(event)} className="flex flex-col gap-4" noValidate>
+      <form id="formChangePassword" onSubmit={(event) => void passwordForm.handleSubmit(onPasswordSubmit, onInvalid)(event)} className="flex flex-col gap-4" noValidate>
         <p className="-mt-2 text-xs text-[var(--text-muted)]">Choose a strong password you do not use elsewhere.</p>
 
         <InputField id="txtCurrentPassword" control={passwordForm.control} name="currentPassword" type="password" label="Current password" rules={passwordRules.currentPassword} disabled={passwordSaving} required />

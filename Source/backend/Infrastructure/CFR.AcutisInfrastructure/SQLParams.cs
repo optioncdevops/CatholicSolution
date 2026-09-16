@@ -142,6 +142,11 @@ namespace CFR.AcutisInfrastructure
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);
+
+            /// <summary>
+            /// Organization identifier used to scope the CFR Users list; null or 0 returns every organization.
+            /// </summary>
+            public const string OrgId = nameof(OrgId);
         }
 
         /// <summary>

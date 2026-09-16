@@ -14,23 +14,23 @@ export const usersDefaultValues: UsersFormValues = {
 };
 
 export const usersRules = {
-  firstName: { required: 'First name is required.' },
-  lastName: { required: 'Last name is required.' },
+  firstName: { required: 'This field is required' },
+  lastName: { required: 'This field is required' },
   eMail: {
-    required: 'Email address is required.',
+    required: 'This field is required',
     pattern: {
       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
       message: 'Invalid email address.',
     },
   },
   password: {
-    required: 'Password is required.',
+    required: 'This field is required',
     validate: (value: string) => passwordScore(value) >= 3 || PASSWORD_STRENGTH_HINT,
   },
-  roleId: { required: 'Role is required.' },
-  dateOfBirth: { required: 'Date of birth is required.' },
-  isActive: { required: 'Status is required.' },
-  isLocked: { required: 'Locked is required.' },
+  roleId: { required: 'This field is required' },
+  dateOfBirth: { required: 'This field is required' },
+  isActive: { required: 'This field is required' },
+  isLocked: { required: 'This field is required' },
   contactNumber: {
     pattern: { value: /^[+()\d][\d\s().-]{6,19}$/, message: 'Enter a valid contact number.' },
   },

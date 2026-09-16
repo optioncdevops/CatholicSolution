@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch, type FieldErrors } from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, LockIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { PasswordField } from '@shared/app/components/PasswordField';
@@ -122,6 +122,22 @@ export function ResetPasswordPage() {
     }
   });
 
+  const onInvalid = (formErrors: any) => {
+    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
+      if (error?.message === 'This field is required') {
+        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
+        if (key === 'eMail' || key === 'email') fieldName = 'email address';
+        if (key === 'roleId') fieldName = 'role';
+        if (key === 'isActive') fieldName = 'status';
+        if (key === 'isLocked') fieldName = 'locked';
+        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
+        return `${fieldName} is required.`;
+      }
+      return error?.message;
+    }).filter(Boolean);
+    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
+  };
+
   if (!token) {
     return (
       <AdminAuthShell>
@@ -196,7 +212,7 @@ export function ResetPasswordPage() {
                 {accountEmail ? <>Choose a new password for <strong>{accountEmail}</strong>.</> : 'Choose a new password for your account.'}
               </p>
             </div>
-            <form id="formResetPassword" onSubmit={submit} className="admin-auth-form" noValidate>
+            <form id="formResetPassword" onSubmit={(event) => { event.preventDefault(); void submit(event); void handleSubmit(submit, onInvalid)(event); }} className="admin-auth-form" noValidate>
               <div className="admin-auth-field">
                 <PasswordField
                   id="txtNewPassword"
