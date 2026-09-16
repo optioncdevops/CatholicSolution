@@ -19,6 +19,12 @@ namespace Automation.Framework.JsonTestData
         public EmailSettingsData? EmailSettings { get; set; }
 
         public OrganizationData? Organization { get; set; }
+
+        public ForgotPasswordData? ForgotPassword { get; set; }
+
+        public ResetPasswordData? ResetPassword { get; set; }
+
+        public ChangePasswordData? ChangePassword { get; set; }
     }
 
     public class JsonLogin
@@ -131,5 +137,62 @@ namespace Automation.Framework.JsonTestData
         public string? City { get; set; }
         public string? State { get; set; }
         public string? Zip { get; set; }
+    }
+
+    public class ForgotPasswordData
+    {
+        /// <summary>Base URL of the CFR Admin frontend under test, e.g. http://localhost:4011 -
+        /// kept separate from Login.URL since these pages are reached without signing in.</summary>
+        public string? URL { get; set; }
+
+        /// <summary>
+        /// An existing, active, unlocked Acutis staff account's email - used for the successful
+        /// submission and already-requested scenarios, and reused by ResetPassword below since
+        /// completing a reset changes this same account's password. Must be set to a real
+        /// account in whatever database URL's backend points at; never commit a real one here.
+        /// </summary>
+        public string? ExistingUserEmail { get; set; }
+
+        /// <summary>The password ExistingUserEmail's account currently has - restored once the
+        /// Reset Password tests are done changing it.</summary>
+        public string? ExistingUserPassword { get; set; }
+
+        /// <summary>A syntactically valid email address that does not match any account.</summary>
+        public string? NonExistentEmail { get; set; }
+
+        /// <summary>A value that fails the email format check before any request is sent.</summary>
+        public string? InvalidEmailFormat { get; set; }
+    }
+
+    public class ResetPasswordData
+    {
+        /// <summary>A password that satisfies the length/complexity rule, distinct from
+        /// ForgotPassword.ExistingUserPassword so the reset is a genuine change.</summary>
+        public string? NewPassword { get; set; }
+
+        /// <summary>A password too weak to pass the strength rule.</summary>
+        public string? WeakPassword { get; set; }
+
+        /// <summary>A confirm-password value that does not match NewPassword.</summary>
+        public string? MismatchedConfirmPassword { get; set; }
+    }
+
+    public class ChangePasswordData
+    {
+        /// <summary>
+        /// An incorrect current password, distinct from Login.Password - the signed in
+        /// account's real current password (and the value the scenario restores at the end)
+        /// comes from Login.Password rather than being repeated here.
+        /// </summary>
+        public string? WrongCurrentPassword { get; set; }
+
+        /// <summary>A password too weak to pass the strength rule.</summary>
+        public string? WeakPassword { get; set; }
+
+        /// <summary>A confirm-password value that does not match NewPassword.</summary>
+        public string? MismatchedConfirmPassword { get; set; }
+
+        /// <summary>A strong password to change to, then change back from at the end of the scenario.</summary>
+        public string? NewPassword { get; set; }
     }
 }
