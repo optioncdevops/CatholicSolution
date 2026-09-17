@@ -7,7 +7,7 @@ namespace CFR.AcutisService.Service.Products
     /// Repository Responsibility:
     /// - Invokes IProductsRepository for database querying on Core.Product.
     /// </summary>
-    public class ProductsService(IProductsRepository repository, IFileHandlerService fileHandler, ILogger<ProductsService> logger, IConfiguration configuration, IWebHostEnvironment environment): IProductsService
+    public class ProductsService(IProductsRepository repository, IFileHandlerService fileHandler, ILogger<ProductsService> logger, IWebHostEnvironment environment): IProductsService
     {
         #region GET Methods
 
@@ -732,15 +732,17 @@ namespace CFR.AcutisService.Service.Products
 
         private string GetProductDocBasePath()
         {
-            string? configuredPath = configuration["ApplicationFilePath:Doc_BasePath"]
-                ?? configuration["ApplicationFilePath:Doc_Basepath"];
-            if (!string.IsNullOrWhiteSpace(configuredPath))
-            {
-                return configuredPath;
-            }
-
-            return environment.WebRootPath
-                ?? Path.Combine(AppContext.BaseDirectory, "wwwroot");
+            // ApplicationFilePath:Doc_BasePath is a per-developer absolute path (e.g. a personal
+            // drive letter or local clone location) committed to source control - it only ever
+            // resolves correctly on whichever machine it was written for. Every other machine hit
+            // Directory.CreateDirectory throwing in SaveProductLogoFile, surfaced as an opaque 500
+            // from UpdateProductLogo. ProfileService.GetUploadsDirectory never had this problem
+            // because it never trusted that config value in the first place - it always resolves
+            // relative to the running app's own wwwroot, which exists on every machine by
+            // definition. Product logos now follow that same, simpler, portable pattern.
+            return !string.IsNullOrWhiteSpace(environment.WebRootPath)
+                ? environment.WebRootPath
+                : Path.Combine(environment.ContentRootPath, "wwwroot");
         }
 
         private byte[]? ReadLogoBytes(string safeName)

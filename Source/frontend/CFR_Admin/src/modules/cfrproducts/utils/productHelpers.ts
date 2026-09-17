@@ -1,7 +1,7 @@
 import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab, LiveProductLicense } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
 import { accessStatusOf, daysUntil, effectiveLicenseStatus, formatDateTime } from '@/modules/utils/formatDate';
-import { getAcutisPublicUrl } from '@app/config/gateway';
+import { getAcutisPublicUrl, getAcutisApiBaseUrl } from '@app/config/gateway';
 export * from './productFilters';
 export type { LiveProductLicense } from '../types/productTypes';
 
@@ -403,6 +403,7 @@ export function toStoredProductLogoPath(logoName: string | null | undefined): st
 export function resolveProductLogoUrl(
   logoName: string | null | undefined,
   cacheKey?: string | number | null,
+  productId?: number | null,
 ): string | null {
   if (!logoName || typeof logoName !== 'string' || !logoName.trim()) {
     return null;
@@ -410,6 +411,15 @@ export function resolveProductLogoUrl(
   const trimmed = logoName.trim();
   if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
     return trimmed;
+  }
+
+  if (productId && productId > 0) {
+    const baseUrl = getAcutisApiBaseUrl().replace(/\/$/, '');
+    const url = `${baseUrl}/Products/GetProductLogo?productId=${productId}`;
+    if (cacheKey == null || cacheKey === '') {
+      return url;
+    }
+    return `${url}&v=${encodeURIComponent(String(cacheKey))}`;
   }
 
   const relativePath = toPublicProductLogoPath(trimmed);
@@ -466,7 +476,7 @@ function isProductLogoFileName(name: string): boolean {
 
 export function toAdminApplication(item: ProductApiItem): AdminApplication {
   const storedLogo = pickProductLogoUrl(item) || '';
-  const logoUrl = resolveProductLogoUrl(storedLogo, item.updatedDate) || storedLogo;
+  const logoUrl = resolveProductLogoUrl(storedLogo, item.updatedDate, item.productId) || storedLogo;
   const productName = item.productName || '';
   return {
     id: String(item.productId),

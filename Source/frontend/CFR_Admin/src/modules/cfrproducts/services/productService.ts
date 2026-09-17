@@ -141,23 +141,13 @@ export const updateProduct = async (payload: ProductInputPayload): Promise<ApiRe
 export const uploadProductLogo = async (file: File, productId: number): Promise<string> => {
   try {
     const formData = new FormData();
-    formData.append('File', file);
-    formData.append('ProductId', String(productId));
+    formData.append('file', file);
+    formData.append('productId', String(productId));
     const response = await axiosInstance.put<ApiResponse<string>>(
       `${controller}/UpdateProductLogo`,
       formData,
       {
-        transformRequest: [
-          (data, headers) => {
-            if (headers && typeof headers.set === 'function') {
-              headers.set('Content-Type', false);
-            } else if (headers) {
-              delete headers['Content-Type'];
-              delete headers['content-type'];
-            }
-            return data;
-          },
-        ],
+        headers: { 'Content-Type': 'multipart/form-data' },
       },
     );
     const uploadedPath = readUploadedLogoPath(response.data.resultData);

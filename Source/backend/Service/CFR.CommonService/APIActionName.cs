@@ -63,6 +63,7 @@ namespace CFR.CommonService
             public const string SaveAccessRequest = nameof(SaveAccessRequest);
             public const string UpdateAccessRequestStatus = nameof(UpdateAccessRequestStatus);
             public const string GetHubProducts = nameof(GetHubProducts);
+            public const string GetDioceses = nameof(GetDioceses);
             public const string GetProducts = nameof(GetProducts);
             public const string GetUserRights = nameof(GetUserRights);
             public const string SaveUserRights = nameof(SaveUserRights);

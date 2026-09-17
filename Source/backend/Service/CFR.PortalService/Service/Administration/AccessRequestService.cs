@@ -1,5 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using System.Net.Http.Json;
+
 namespace CFR.PortalService.Service.Administration
 {
     /// <summary>
@@ -8,9 +10,10 @@ namespace CFR.PortalService.Service.Administration
     /// - Invokes IAccessRequestRepository for stored procedure execution.
     /// - Invokes IEmailTemplatesRepository and ISMTPMailService to send admin/requester emails from configurable templates.
     /// </summary>
-    public class AccessRequestService(IAccessRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, ISMTPMailService mailService, IConfiguration configuration, ILogger<AccessRequestService> logger): IAccessRequestService
+    public class AccessRequestService(IAccessRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, ISMTPMailService mailService, IConfiguration configuration, IHttpClientFactory httpClientFactory, ILogger<AccessRequestService> logger): IAccessRequestService
     {
         private const string AccessRequestedTemplateCode = "AccessRequested";
+        private const string ExternalOrganizationApiHttpClientName = "ExternalOrganizationApi";
 
         /// <summary>
         /// Retrieves App Hub products for a member email.
@@ -36,6 +39,36 @@ namespace CFR.PortalService.Service.Administration
             catch (Exception ex)
             {
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.FetchHubProductsFailed, requesterEmail);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieves every non-deleted diocese for the Request Access page's Diocese dropdown.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown on the public Request Access page.
+        /// Request Flow: AccessRequestController -> AccessRequestService.GetDiocesesListAsync() -> IAccessRequestRepository.GetDiocesesListAsync().
+        /// Validation Details: None.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IAccessRequestRepository.GetDiocesesListAsync().
+        /// Response Details: MSResultArgs containing List of DioceseOutput.
+        /// </remarks>
+        /// <returns>MSResultArgs containing the diocese list.</returns>
+        public async Task<MSResultArgs> GetDiocesesListAsync()
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                var data = await repository.GetDiocesesListAsync();
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.FetchDiocesesFailed);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
@@ -160,6 +193,11 @@ namespace CFR.PortalService.Service.Administration
                 {
                     await NotifyAdminsOfNewRequestAsync(savedId, input.SendToEmail);
                 }
+
+                if (isPublicRequest)
+                {
+                    await SendExternalOrganizationRequestAsync(savedId, input);
+                }
             }
             catch (Exception ex)
             {
@@ -176,6 +214,50 @@ namespace CFR.PortalService.Service.Administration
 
 
         #region Private Helper Methods
+
+        /// <summary>
+        /// Sends the new organization/contact details to the external organization-registration API
+        /// for a public Request Access submission. Never throws - a failure here must not fail the
+        /// access request save itself, matching how NotifyAdminsOfNewRequestAsync's mail failures
+        /// are handled. No-ops silently when ExternalOrganizationApiSettings:ApiUrl isn't configured.
+        /// </summary>
+        private async Task SendExternalOrganizationRequestAsync(int accessRequestId, AccessRequestInput input)
+        {
+            try
+            {
+                string? apiUrl = configuration["ExternalOrganizationApiSettings:ApiUrl"];
+                if (string.IsNullOrWhiteSpace(apiUrl))
+                {
+                    return;
+                }
+
+                var payload = new ExternalOrganizationRequestPayload
+                {
+                    UserName = $"{input.FirstName} {input.LastName}".Trim(),
+                    FirstName = input.FirstName ?? string.Empty,
+                    LastName = input.LastName ?? string.Empty,
+                    DioId = input.DioceseId?.ToString() ?? string.Empty,
+                    OrganizationName = input.OrganizationName ?? string.Empty,
+                    ContactNo = input.Phone ?? string.Empty,
+                    EmailAddress = input.RequesterEmail ?? string.Empty,
+                    Address = input.Address ?? string.Empty,
+                    City = input.City ?? string.Empty,
+                    State = input.State ?? string.Empty,
+                    PostalCode = input.Zip ?? string.Empty,
+                };
+
+                var client = httpClientFactory.CreateClient(ExternalOrganizationApiHttpClientName);
+                using var response = await client.PostAsJsonAsync(apiUrl, payload);
+                if (!response.IsSuccessStatusCode)
+                {
+                    AppLogger.LogError(logger, null, SerilogErrorMessages.PortalLogMessages.ExternalOrganizationRequestFailed, accessRequestId);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.ExternalOrganizationRequestFailed, accessRequestId);
+            }
+        }
 
         /// <summary>
         /// Emails users matched to the requested product that a new access request needs review, using the AccessRequested template.

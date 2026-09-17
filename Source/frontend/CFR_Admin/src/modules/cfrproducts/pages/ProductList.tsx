@@ -273,6 +273,7 @@ const ProductList = () => {
             const logoSrc = resolveProductLogoUrl(
               item.logoName,
               item.updatedDate,
+              item.productId,
             );
 
             return (

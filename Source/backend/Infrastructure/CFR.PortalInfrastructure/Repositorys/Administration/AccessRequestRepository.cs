@@ -87,6 +87,35 @@ namespace CFR.PortalInfrastructure.Repositorys.Administration
             return result.ToList();
         }
 
+        /// <summary>
+        /// Fetches the diocese lookup list via inline SQL text (no stored procedure).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown on the public Request Access page.
+        /// Request Flow: IAccessRequestService -> AccessRequestRepository.GetDiocesesListAsync() -> Database.
+        /// Validation Details: None.
+        /// Business Logic: None; returns core.Diocese rows as-is.
+        /// Repository Interaction: Runs a plain SELECT against core.Diocese (CommandType.Text) - deliberately not a stored procedure.
+        /// Response Details: Returns a list of DioceseOutput records, ordered by name.
+        /// </remarks>
+        /// <returns>A list of diocese output records.</returns>
+        public async Task<List<DioceseOutput>> GetDiocesesListAsync()
+        {
+            const string sql = @"
+                SELECT
+                    [DioceseId],
+                    [DioceseName],
+                    [Address],
+                    [City],
+                    [State]
+                FROM [core].[Diocese]
+                WHERE [IsDeleted] = 0
+                ORDER BY [DioceseName];";
+
+            var result = await dapperHandler.QueryAsync<DioceseOutput>(sql, null, CommandType.Text);
+            return result.ToList();
+        }
+
         #endregion GET Methods
 
         #region POST Methods

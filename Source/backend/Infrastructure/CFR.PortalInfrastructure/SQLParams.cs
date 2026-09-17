@@ -87,6 +87,7 @@ namespace CFR.PortalInfrastructure
             public const string Zip = nameof(Zip);
             public const string Phone = nameof(Phone);
             public const string ProductsJson = nameof(ProductsJson);
+            public const string DioceseId = nameof(DioceseId);
             public const string Status = nameof(Status);
             public const string Note = nameof(Note);
             public const string InsertedBy = nameof(InsertedBy);

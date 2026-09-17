@@ -59,6 +59,20 @@ namespace CFR.PortalInfrastructure.Interfaces.Administration
         /// <returns>A list of hub product output records.</returns>
         Task<List<HubProductOutput>> GetHubProductsAsync(string? requesterEmail);
 
+        /// <summary>
+        /// Retrieves every non-deleted diocese for the Request Access page's Diocese dropdown.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown on the public Request Access page.
+        /// Request Flow: IAccessRequestService -> IAccessRequestRepository.GetDiocesesListAsync() -> SQL Database.
+        /// Validation Details: None.
+        /// Business Logic: None; returns core.Diocese rows as-is.
+        /// Repository Interaction: Executes StoredProc.Core.DioceseManage with ActionId 1.
+        /// Response Details: Returns a list of DioceseOutput records, ordered by name.
+        /// </remarks>
+        /// <returns>A list of diocese output records.</returns>
+        Task<List<DioceseOutput>> GetDiocesesListAsync();
+
         #endregion GET Methods
 
         #region POST Methods

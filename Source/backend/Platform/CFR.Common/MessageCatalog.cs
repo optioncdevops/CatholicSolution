@@ -171,7 +171,9 @@ namespace CFR.Common
             public const string FetchAccessRequestsFailed = "Error while fetching access requests";
             public const string FetchAccessRequestByIdFailed = "Error while fetching access request {RequestId}";
             public const string FetchHubProductsFailed = "Error while fetching App Hub products for {RequesterEmail}";
+            public const string FetchDiocesesFailed = "Error while fetching diocese list";
             public const string SaveAccessRequestFailed = "Error while saving access request";
+            public const string ExternalOrganizationRequestFailed = "Error while sending external organization request for access request {AccessRequestId}";
             public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
         }

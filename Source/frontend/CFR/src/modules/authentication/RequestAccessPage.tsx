@@ -18,10 +18,11 @@ import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { getProducts } from '@/modules/products/services/productsService';
 import { productsFromApiResponse } from '@/modules/products/utils/productsHelpers';
-import { saveAccessRequest } from '@/modules/requests/services/accessRequestService';
+import { getDioceses, saveAccessRequest } from '@/modules/requests/services/accessRequestService';
 import { toPublicAccessRequestPayload } from '@/modules/requests/utils/accessRequestHelpers';
 import { validatePublicAccessRequest } from '@/modules/requests/validator/AccessRequestValidator';
 import type { CatalogApp } from '@shared/app/types/app';
+import type { DioceseOption } from '@/modules/requests/types/accessRequestTypes';
 
 const organizationTypes = ['Catholic School', 'Parish', 'Diocese / Archdiocese', 'Ministry / Nonprofit', 'Other'] as const;
 
@@ -32,6 +33,7 @@ export function RequestAccessPage() {
   const { showToast } = useToast();
   const requestedProduct = searchParams.get('product');
   const [apps, setApps] = useState<CatalogApp[]>([]);
+  const [dioceses, setDioceses] = useState<DioceseOption[]>([]);
   // Coming-soon products aren't requestable yet - only offer the ones already live.
   const requestableApps = useMemo(() => apps.filter((app) => app.hubSection !== 'future'), [apps]);
   // Only pre-select a product when the page was opened with ?product=<id> (e.g. a "Request
@@ -53,6 +55,23 @@ export function RequestAccessPage() {
       } catch (error) {
         console.error('Error loading products:', error);
         if (!cancelled) setApps(productsFromApiResponse([]));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await getDioceses();
+        const list = (response?.resultData ?? response?.ResultData ?? []) as DioceseOption[];
+        if (!cancelled) setDioceses(Array.isArray(list) ? list : []);
+      } catch (error) {
+        console.error('Error loading dioceses:', error);
+        if (!cancelled) setDioceses([]);
       }
     })();
     return () => {
@@ -86,6 +105,7 @@ export function RequestAccessPage() {
       city: readFormValue(form, 'city'),
       state: readFormValue(form, 'state'),
       zip: readFormValue(form, 'zip'),
+      dioceseId: readFormValue(form, 'dioceseId'),
       email: readFormValue(form, 'workEmail'),
       phone: readFormValue(form, 'phone'),
       notes: readFormValue(form, 'notes'),
@@ -141,6 +161,12 @@ export function RequestAccessPage() {
                   <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required />
                   <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required />
                   <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required />
+                  <SelectField
+                    label="Diocese"
+                    name="dioceseId"
+                    options={dioceses.map((d) => ({ value: String(d.dioceseId), label: d.dioceseName }))}
+                    placeholder="Select diocese (optional)"
+                  />
                   <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required />
                   <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" />
                 </div>
