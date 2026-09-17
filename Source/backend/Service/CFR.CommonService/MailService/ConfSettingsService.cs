@@ -87,6 +87,15 @@ namespace CFR.CommonService.MailService
         /// Platform-wide email body base font size in px. Falls back to 13 when unset/zero.
         /// </summary>
         public int BaseFontSize { get; set; }
+
+        /// <summary>
+        /// Full name of the admin who last saved these settings (SaveEmailSettings only - logo
+        /// upload/remove don't touch this). Never the SMTP password or any other secret.
+        /// </summary>
+        public string? LastUpdatedByName { get; set; }
+
+        /// <summary>UTC timestamp of the last SaveEmailSettings call.</summary>
+        public DateTime? LastUpdatedDate { get; set; }
     }
 
     public interface IConfSettingsService

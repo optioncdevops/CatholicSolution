@@ -136,6 +136,7 @@ namespace CFR.Common
             public const string SaveEmailSettingsFailed = "Error while saving email settings";
             public const string UploadEmailLogoFailed = "Error while uploading email logo";
             public const string RemoveEmailLogoFailed = "Error while removing email logo";
+            public const string TestSmtpConnectionFailed = "Error while testing SMTP connection";
             public const string FetchEmailLogoFailed = "Error while fetching email logo";
             public const string FetchProfileFailed = "Error while fetching profile for user {UserId}";
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";

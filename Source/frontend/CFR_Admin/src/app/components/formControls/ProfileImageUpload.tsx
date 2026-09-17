@@ -46,6 +46,16 @@ interface ProfileImageUploadProps {
   replaceLabel?: string;
   /** Overrides the `alt` text on an already-uploaded image's preview. */
   existingPreviewAlt?: string;
+  /** Overrides the "Preview profile image" accessible label on the overlay preview button. */
+  previewAriaLabel?: string;
+  /** Overrides the "Remove profile image" accessible label on the overlay remove button. */
+  removeAriaLabel?: string;
+  /**
+   * When provided, awaited before an actual removal (overlay trash button, or the preview
+   * modal's own Remove) proceeds — resolving `false` cancels it. Omitted by default so the other
+   * three consumers of this component keep their existing immediate-remove behavior unchanged.
+   */
+  confirmRemove?: () => Promise<boolean>;
 }
 
 const PROFILE_ACCEPT = "image/jpeg,image/png,.jpg,.jpeg,.png";
@@ -81,6 +91,8 @@ interface ProfileOverlayActionsProps {
   removable?: boolean;
   onPreview?: () => void;
   onRemove?: () => void;
+  previewAriaLabel?: string;
+  removeAriaLabel?: string;
 }
 
 function ProfileOverlayActions({
@@ -89,6 +101,8 @@ function ProfileOverlayActions({
   removable,
   onPreview,
   onRemove,
+  previewAriaLabel = "Preview profile image",
+  removeAriaLabel = "Remove profile image",
 }: ProfileOverlayActionsProps) {
   if (!canPreview && !removable) { return null; }
 
@@ -100,7 +114,7 @@ function ProfileOverlayActions({
           disabled={disabled}
           onClick={onPreview}
           className={OVERLAY_BTN_CLASS}
-          aria-label="Preview profile image"
+          aria-label={previewAriaLabel}
           title="Preview"
         >
           <AppIcon name="eye" size={12} />
@@ -112,7 +126,7 @@ function ProfileOverlayActions({
           disabled={disabled}
           onClick={onRemove}
           className={cn(OVERLAY_BTN_CLASS, "hover:bg-[var(--error)]")}
-          aria-label="Remove profile image"
+          aria-label={removeAriaLabel}
           title="Remove"
         >
           <AppIcon name="trash2" size={12} />
@@ -137,6 +151,9 @@ export function ProfileImageUpload({
   uploadLabel = "Upload photo",
   replaceLabel = "Change photo",
   existingPreviewAlt = "Current profile",
+  previewAriaLabel = "Preview profile image",
+  removeAriaLabel = "Remove profile image",
+  confirmRemove,
 }: ProfileImageUploadProps) {
   const avatarClass = AVATAR_CLASS_BY_VARIANT[variant];
   const emptyStateClass = EMPTY_STATE_CLASS_BY_VARIANT[variant];
@@ -147,14 +164,20 @@ export function ProfileImageUpload({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [clearedExisting, setClearedExisting] = useState(false);
+  // Whether the existing (already-uploaded, server-hosted) preview image failed to load — a
+  // stale/removed/invalid file on the server would otherwise show the browser's own broken-image
+  // icon; fall back to the same empty-state placeholder used when there's no image at all.
+  const [existingPreviewFailed, setExistingPreviewFailed] = useState(false);
 
   // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
   // pattern for "state that resets when a prop identity changes") — when the parent hands us a
-  // different initial preview URL, any earlier user-initiated "clear" no longer applies to it.
+  // different initial preview URL, any earlier user-initiated "clear" (or load failure) no longer
+  // applies to it.
   const [renderedForInitialPreviewUrl, setRenderedForInitialPreviewUrl] = useState(initialPreviewUrl);
   if (renderedForInitialPreviewUrl !== initialPreviewUrl) {
     setRenderedForInitialPreviewUrl(initialPreviewUrl);
     setClearedExisting(false);
+    setExistingPreviewFailed(false);
   }
 
   useEffect(() => {
@@ -178,7 +201,7 @@ export function ProfileImageUpload({
   }, [file]);
 
   const existingPreviewUrl =
-    !file && !clearedExisting ? initialPreviewUrl?.trim() || null : null;
+    !file && !clearedExisting && !existingPreviewFailed ? initialPreviewUrl?.trim() || null : null;
 
   const previewItems: UploadPreviewItem[] = useMemo(() => {
     if (file) {
@@ -186,8 +209,23 @@ export function ProfileImageUpload({
     }
 
     if (existingPreviewUrl) {
-      const fileName =
-        existingPreviewUrl.split("/").pop()?.split("?")[0] || "profile-image.png";
+      // The real file name often lives in a query parameter (e.g. GetEmailLogo?fileName=...),
+      // not the last path segment - naively splitting the URL on "/" and "?" picked up the raw
+      // endpoint/action name ("GetEmailLogo") as the display name instead. Parse it as a real URL
+      // and prefer its `fileName` query param; only fall back to the last path segment (still
+      // safe for a plain static-file URL with no query string) if that's absent.
+      const fileName = (() => {
+        try {
+          const parsed = new URL(existingPreviewUrl, window.location.origin);
+          const queryFileName = parsed.searchParams.get("fileName");
+          if (queryFileName) { return queryFileName; }
+          const pathSegment = parsed.pathname.split("/").pop();
+          if (pathSegment) { return pathSegment; }
+        } catch {
+          // Not a parseable URL - fall through to the naive split below.
+        }
+        return existingPreviewUrl.split("/").pop()?.split("?")[0] || "profile-image.png";
+      })();
       const ext = fileName.includes(".")
         ? fileName.slice(fileName.lastIndexOf(".")).toLowerCase()
         : ".png";
@@ -215,6 +253,23 @@ export function ProfileImageUpload({
     setValidationError("");
     setFile(next);
     onFileChange?.(next);
+  };
+
+  // Shared by the overlay trash button and the preview modal's own Remove button - both trigger
+  // the exact same "clear the current image" action, so both go through the same optional
+  // confirmation gate.
+  const handleRemoveClick = () => {
+    if (confirmRemove) {
+      void confirmRemove().then((confirmed) => {
+        if (!confirmed) { return; }
+        setClearedExisting(true);
+        setSelectedFile(null);
+      });
+      return;
+    }
+
+    setClearedExisting(true);
+    setSelectedFile(null);
   };
 
   const pickFile = (files: File[]) => {
@@ -286,10 +341,9 @@ export function ProfileImageUpload({
               canPreview={previewable}
               removable={removable}
               onPreview={() => { setIsPreviewOpen(true); }}
-              onRemove={() => {
-                setClearedExisting(true);
-                setSelectedFile(null);
-              }}
+              onRemove={handleRemoveClick}
+              previewAriaLabel={previewAriaLabel}
+              removeAriaLabel={removeAriaLabel}
             />
           </div>
 
@@ -322,6 +376,7 @@ export function ProfileImageUpload({
               src={existingPreviewUrl}
               alt={existingPreviewAlt}
               className={avatarClass}
+              onError={() => setExistingPreviewFailed(true)}
             />
             {previewable || removable ? (
               <ProfileOverlayActions
@@ -329,10 +384,9 @@ export function ProfileImageUpload({
                 canPreview={previewable}
                 removable={removable}
                 onPreview={() => { setIsPreviewOpen(true); }}
-                onRemove={() => {
-                  setClearedExisting(true);
-                  setSelectedFile(null);
-                }}
+                onRemove={handleRemoveClick}
+                previewAriaLabel={previewAriaLabel}
+                removeAriaLabel={removeAriaLabel}
               />
             ) : null}
           </div>
@@ -398,9 +452,8 @@ export function ProfileImageUpload({
         currentIndex={0}
         onClose={() => { setIsPreviewOpen(false); }}
         onRemoveCurrent={() => {
-          setClearedExisting(true);
-          setSelectedFile(null);
           setIsPreviewOpen(false);
+          handleRemoveClick();
         }}
       />
     </div>

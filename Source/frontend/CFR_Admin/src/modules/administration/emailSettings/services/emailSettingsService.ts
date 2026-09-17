@@ -58,3 +58,15 @@ export const saveEmailSettings = async (payload: SaveEmailSettingsPayload): Prom
     throw err.response?.data?.statusMessage || err.message || 'Failed to save email settings';
   }
 };
+
+// Reuses the exact same payload shape as saveEmailSettings — the backend tests the in-progress
+// (possibly unsaved) SMTP fields, not necessarily what's already persisted.
+export const testSmtpConnection = async (payload: SaveEmailSettingsPayload): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.post<ApiResponse>(`${controller}/TestConnection`, payload);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to test SMTP connection';
+  }
+};

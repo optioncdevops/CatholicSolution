@@ -58,6 +58,7 @@ namespace CFR.CommonService
             public const string SaveEmailSettings = nameof(SaveEmailSettings);
             public const string UploadEmailLogo = nameof(UploadEmailLogo);
             public const string RemoveEmailLogo = nameof(RemoveEmailLogo);
+            public const string TestConnection = nameof(TestConnection);
             public const string GetAccessRequests = nameof(GetAccessRequests);
             public const string GetAccessRequestById = nameof(GetAccessRequestById);
             public const string SaveAccessRequest = nameof(SaveAccessRequest);
