@@ -140,6 +140,29 @@ namespace CFR.Acutis.Controllers.Administration
             return ApiResultArgs(await service.RemoveEmailLogoAsync(), APIHttpType.HttpPost);
         }
 
+        /// <summary>
+        /// Verifies SMTP connectivity and authentication without sending a real email.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let an admin confirm server/port/SSL/credentials work before enabling Send Mail.
+        /// Request Flow: Client API POST -> EmailSettingsController.TestConnection() -> IEmailSettingsService.TestSmtpConnectionAsync().
+        /// Validation Details: SMTP server and username are required, same as save.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IEmailSettingsService.TestSmtpConnectionAsync(input).
+        /// Response Details: Standard API result enclosing a success flag and a safe status message.
+        /// </remarks>
+        /// <param name="input">The in-progress form values to test.</param>
+        /// <returns>Result of the connection test.</returns>
+        /// <response code="200">The test ran (result may still be success=false).</response>
+        /// <response code="400">Required fields are missing.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpPost]
+        [ActionName(API_Administration.TestConnection)]
+        public async Task<IActionResult> TestConnection([FromBody] EmailSettingsInput input)
+        {
+            return ApiResultArgs(await service.TestSmtpConnectionAsync(input), APIHttpType.HttpPost);
+        }
+
         #endregion POST Methods
     }
 }

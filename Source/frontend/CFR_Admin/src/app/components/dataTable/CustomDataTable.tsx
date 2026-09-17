@@ -959,6 +959,7 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
               showCellBorders && DATA_TABLE_BORDERED_LAYOUT_CLASS,
             )}
           >
+            {pageName ? <caption className="sr-only">{pageName}</caption> : null}
             <thead
               className={cn(
                 themeDataTableHeadClass,
@@ -1110,6 +1111,16 @@ export function CustomDataTable<T>(props: CustomDataTableProps<T>) {
                       key={col.id}
                         colSpan={colSpan > 1 ? colSpan : undefined}
                         rowSpan={rowSpan > 1 ? rowSpan : undefined}
+                        scope="col"
+                        aria-sort={
+                          col.sortable
+                            ? isSorted === "asc"
+                              ? "ascending"
+                              : isSorted === "desc"
+                                ? "descending"
+                                : "none"
+                            : undefined
+                        }
                       ref={(el) => {
                         headerCellRefs.current[colIndex] = el;
                       }}

@@ -1,18 +1,35 @@
-import { useEffect, useState } from 'react';
-import { Save } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { PlugZap, RotateCcw, Save } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { ColorPicker, CommonSwitch, Dropdown, InputField, MandatoryIndicator, ProfileImageUpload } from '@app/components/formControls';
-import { getEmailSettings, removeEmailLogo, saveEmailSettings, uploadEmailLogo } from '../services/emailSettingsService';
-import type { EmailSettingsApiItem, EmailSettingsFormValues } from '../types/emailSettingsTypes';
+import { confirmAction } from '../../../lib/confirm';
+import { formatDateTime } from '../../../utils/formatDate';
+import { getEmailSettings, removeEmailLogo, saveEmailSettings, testSmtpConnection, uploadEmailLogo } from '../services/emailSettingsService';
+import type { EmailSettingsApiItem, EmailSettingsFormValues, TestSmtpConnectionResult } from '../types/emailSettingsTypes';
 import { DEFAULT_EMAIL_ACCENT_COLOR, DEFAULT_EMAIL_FONT_FAMILY, EMAIL_FONT_FAMILY_OPTIONS, formFromEmailSettings, payloadFromForm } from '../utils/emailSettingsHelpers';
-import { validateEmailSettings } from '../validator/EmailSettingsValidator';
+import type { EmailSettingsFieldErrors } from '../validator/EmailSettingsValidator';
+import { validateEmailSettingsFields } from '../validator/EmailSettingsValidator';
 
 const SECTION_LABEL_CLASS = 'mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]';
 const SECTION_HINT_CLASS = 'mb-3 text-xs text-[var(--text-muted)]';
+const SMTP_TEST_SUCCESS_MESSAGE = 'SMTP connection successful.';
+const SMTP_TEST_FAILURE_MESSAGE = 'SMTP connection failed. Please verify server, port, credentials, and SSL/TLS settings.';
+
+// Order to check when scrolling to the first invalid field on Save — top-to-bottom as the fields
+// appear in the form below.
+const FIELD_FOCUS_ORDER: Array<keyof EmailSettingsFormValues> = [
+  'smtpServer', 'smtpPort', 'username', 'ccMailId', 'contactUsMailId', 'apiBaseUrl', 'baseFontSize',
+];
+
+// Fields that affect what an actual SMTP handshake would use — editing any of these invalidates an
+// earlier successful Test Connection result, since it no longer reflects the current form values.
+const SMTP_RELEVANT_FIELDS: Array<keyof EmailSettingsFormValues> = ['smtpServer', 'smtpPort', 'username', 'password', 'isSslEnabled'];
+
+const fieldElementId = (field: keyof EmailSettingsFormValues): string => `email-settings-${field}`;
 
 function EmailSettingsPage() {
   //#region Hooks
@@ -27,11 +44,23 @@ function EmailSettingsPage() {
   const [hasPassword, setHasPassword] = useState(false);
   const [form, setForm] = useState<EmailSettingsFormValues>(formFromEmailSettings(null));
   const [originalForm, setOriginalForm] = useState<EmailSettingsFormValues>(formFromEmailSettings(null));
+  const [fieldErrors, setFieldErrors] = useState<EmailSettingsFieldErrors>({});
   const [logoImageUrl, setLogoImageUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [smtpTested, setSmtpTested] = useState(false);
+  const [lastUpdatedByName, setLastUpdatedByName] = useState<string | null>(null);
+  const [lastUpdatedDate, setLastUpdatedDate] = useState<string | null>(null);
+  const isDirtyRef = useRef(false);
   //#endregion
 
+  const isDirty = JSON.stringify(form) !== JSON.stringify(originalForm);
+
   //#region Effects
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -44,6 +73,8 @@ function EmailSettingsPage() {
         setOriginalForm(newForm);
         setHasPassword(Boolean(item?.hasPassword));
         setLogoImageUrl(item?.logoImageUrl ?? null);
+        setLastUpdatedByName(item?.lastUpdatedByName ?? null);
+        setLastUpdatedDate(item?.lastUpdatedDate ?? null);
       } catch (error) {
         if (cancelled) return;
         console.error('Error loading email settings:', error);
@@ -57,18 +88,45 @@ function EmailSettingsPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only fetch
   }, []);
+
+  // Covers leaving the page entirely (tab close, refresh, typed URL) while there are unsaved
+  // changes — the browser's own confirmation dialog is the only mechanism available for that; its
+  // text isn't customizable by design. There's no in-app link away from this page to intercept.
+  useEffect(() => {
+    if (isReadOnly) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDirtyRef.current) return;
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isReadOnly]);
   //#endregion
 
   const updateField = <K extends keyof EmailSettingsFormValues>(field: K, value: EmailSettingsFormValues[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+    if (SMTP_RELEVANT_FIELDS.includes(field)) setSmtpTested(false);
   };
 
   //#region Handlers
+  const focusFirstInvalidField = (errors: EmailSettingsFieldErrors) => {
+    const firstField = FIELD_FOCUS_ORDER.find((field) => errors[field]);
+    if (!firstField) return;
+    const element = document.getElementById(fieldElementId(firstField));
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element.focus({ preventScroll: true });
+  };
+
   const handleSave = async () => {
     if (isReadOnly) return;
-    const validationErrors = validateEmailSettings(form);
-    if (validationErrors.length > 0) {
-      showToast(validationErrors, 'error');
+    const errors = validateEmailSettingsFields(form);
+    setFieldErrors(errors);
+    const errorMessages = Object.values(errors).filter((value): value is string => Boolean(value));
+    if (errorMessages.length > 0) {
+      showToast(errorMessages, 'error');
+      focusFirstInvalidField(errors);
       return;
     }
 
@@ -77,10 +135,20 @@ function EmailSettingsPage() {
       await saveEmailSettings(payloadFromForm(form));
       showToast('Email settings saved.', 'success');
       setHasPassword(hasPassword || Boolean(form.password.trim()));
-      
       const newForm = { ...form, password: '' };
       setForm(newForm);
       setOriginalForm(newForm);
+      // Re-fetch just the audit stamp so "Last updated by/at" reflects the save that just
+      // happened — left showing the previous stamp until this resolves, rather than blanking it
+      // first, so the line doesn't flicker away and back.
+      try {
+        const { resultData } = await getEmailSettings();
+        const item = (resultData ?? null) as EmailSettingsApiItem | null;
+        setLastUpdatedByName(item?.lastUpdatedByName ?? null);
+        setLastUpdatedDate(item?.lastUpdatedDate ?? null);
+      } catch {
+        // Non-fatal — the save itself already succeeded and was confirmed by the toast above.
+      }
     } catch (error) {
       console.error('Error saving email settings:', error);
       showToast(typeof error === 'string' ? error : 'Failed to save email settings.', 'error');
@@ -88,6 +156,64 @@ function EmailSettingsPage() {
       setSaving(false);
     }
   };
+
+  const handleReset = async () => {
+    if (isReadOnly || !isDirty) return;
+    const confirmed = await confirmAction({
+      title: 'Discard changes?',
+      description: 'Discard your unsaved Email Settings changes?',
+      confirmLabel: 'Discard changes',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
+    setForm(originalForm);
+    setFieldErrors({});
+  };
+
+  const handleTestConnection = async () => {
+    if (isReadOnly) return;
+    const errors = validateEmailSettingsFields(form);
+    const smtpErrors: EmailSettingsFieldErrors = {
+      smtpServer: errors.smtpServer,
+      smtpPort: errors.smtpPort,
+      username: errors.username,
+    };
+    setFieldErrors((prev) => ({ ...prev, ...smtpErrors }));
+    const smtpErrorMessages = Object.values(smtpErrors).filter((value): value is string => Boolean(value));
+    if (smtpErrorMessages.length > 0) {
+      showToast(smtpErrorMessages, 'error');
+      focusFirstInvalidField(smtpErrors);
+      return;
+    }
+
+    setTestingConnection(true);
+    try {
+      const { resultData } = await testSmtpConnection(payloadFromForm(form));
+      const success = Boolean((resultData as TestSmtpConnectionResult | null)?.success);
+      setSmtpTested(success);
+      showToast(success ? SMTP_TEST_SUCCESS_MESSAGE : SMTP_TEST_FAILURE_MESSAGE, success ? 'success' : 'error');
+    } catch (error) {
+      console.error('Error testing SMTP connection:', error);
+      setSmtpTested(false);
+      showToast(typeof error === 'string' ? error : SMTP_TEST_FAILURE_MESSAGE, 'error');
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
+  const handleSendMailToggle = (value: boolean) => {
+    updateField('sendMailEnabled', value);
+    if (value && !smtpTested) {
+      showToast('SMTP configuration has not been tested. Please run Test Connection before enabling email delivery.', 'info');
+    }
+  };
+
+  const handleRemoveLogoConfirm = async (): Promise<boolean> => confirmAction({
+    title: 'Remove Email Logo?',
+    description: 'Are you sure you want to remove the Email Logo?',
+    confirmLabel: 'Remove Logo',
+    tone: 'danger',
+  });
 
   const handleLogoFileChange = async (file: File | null) => {
     if (isReadOnly) return;
@@ -151,35 +277,87 @@ function EmailSettingsPage() {
           <p className={SECTION_HINT_CLASS}>Shared by every outgoing email — password reset, welcome, access request, and access decision messages all send through this configuration.</p>
 
           <div className="flex flex-col gap-3">
-            <CommonSwitch label="Send mail enabled" checked={form.sendMailEnabled} onCheckedChange={(value) => updateField('sendMailEnabled', value)} disabled={saving || isReadOnly} />
+            <CommonSwitch label="Send mail enabled" checked={form.sendMailEnabled} onCheckedChange={handleSendMailToggle} disabled={saving || isReadOnly} />
 
             <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-3">
-              <InputField label="SMTP server" required value={form.smtpServer} onChange={(event) => updateField('smtpServer', event.target.value)} placeholder="smtp.example.com" disabled={saving || isReadOnly} />
-              <InputField label="SMTP port" type="number" value={form.smtpPort} onChange={(event) => updateField('smtpPort', event.target.value)} placeholder="587" disabled={saving || isReadOnly} />
+              <InputField
+                id={fieldElementId('smtpServer')} label="SMTP server" required
+                value={form.smtpServer}
+                onChange={(event) => updateField('smtpServer', event.target.value)}
+                placeholder="smtp.example.com"
+                disabled={saving || isReadOnly}
+                error={fieldErrors.smtpServer}
+              />
+              <InputField
+                id={fieldElementId('smtpPort')} label="SMTP port" type="number" min={1} max={65535}
+                value={form.smtpPort}
+                onChange={(event) => updateField('smtpPort', event.target.value)}
+                placeholder="587"
+                disabled={saving || isReadOnly}
+                error={fieldErrors.smtpPort}
+              />
               <InputField label="Display name" value={form.displayName} onChange={(event) => updateField('displayName', event.target.value)} placeholder="Catholic Solutions" disabled={saving || isReadOnly} />
-              <InputField label="Username" required value={form.username} onChange={(event) => updateField('username', event.target.value)} placeholder="notifications@example.com" disabled={saving || isReadOnly} />
+              <InputField
+                id={fieldElementId('username')} label="Username" required
+                value={form.username}
+                onChange={(event) => updateField('username', event.target.value)}
+                placeholder="notifications@example.com"
+                helperText="Some SMTP providers use a non-email username — enter it exactly as issued."
+                disabled={saving || isReadOnly}
+                error={fieldErrors.username}
+              />
               <InputField
                 label="Password" type="password"
+                autoComplete="new-password"
                 value={form.password}
                 onChange={(event) => updateField('password', event.target.value)}
                 placeholder={hasPassword ? '••••••••  (leave blank to keep current)' : 'Enter a password'}
                 helperText={hasPassword ? 'A password is already set — leave this blank to keep it unchanged.' : 'No password is set yet.'}
                 disabled={saving || isReadOnly}
               />
-              <InputField label="CC address" value={form.ccMailId} onChange={(event) => updateField('ccMailId', event.target.value)} placeholder="cc@example.com" disabled={saving || isReadOnly} />
-              <InputField label="Contact us address" value={form.contactUsMailId} onChange={(event) => updateField('contactUsMailId', event.target.value)} placeholder="support@example.com" disabled={saving || isReadOnly} />
               <InputField
-                label="API base URL"
+                id={fieldElementId('ccMailId')} label="CC address" type="email"
+                value={form.ccMailId}
+                onChange={(event) => updateField('ccMailId', event.target.value)}
+                placeholder="cc@example.com"
+                disabled={saving || isReadOnly}
+                error={fieldErrors.ccMailId}
+              />
+              <InputField
+                id={fieldElementId('contactUsMailId')} label="Contact us address" type="email"
+                value={form.contactUsMailId}
+                onChange={(event) => updateField('contactUsMailId', event.target.value)}
+                placeholder="support@example.com"
+                disabled={saving || isReadOnly}
+                error={fieldErrors.contactUsMailId}
+              />
+              <InputField
+                id={fieldElementId('apiBaseUrl')} label="API base URL" type="url"
                 value={form.apiBaseUrl}
                 onChange={(event) => updateField('apiBaseUrl', event.target.value)}
                 placeholder="https://api.example.org/acutis"
                 helperText="This API's own public address (not the admin site's URL) — used to build the email logo's image link. Must be reachable by recipients' email clients, so never a localhost or private-network address, even while testing locally."
                 disabled={saving || isReadOnly}
+                error={fieldErrors.apiBaseUrl}
                 wrapperClassName="sm:col-span-2"
               />
             </div>
 
             <CommonSwitch label="SSL/TLS enabled" checked={form.isSslEnabled} onCheckedChange={(value) => updateField('isSslEnabled', value)} disabled={saving || isReadOnly} />
+
+            {!isReadOnly && (
+              <div>
+                <CommonButton
+                  type="button" variant="outline" size="sm"
+                  iconLeft={<PlugZap size={14} />}
+                  loading={testingConnection}
+                  disabled={testingConnection || saving}
+                  onClick={() => void handleTestConnection()}
+                >
+                  Test Connection
+                </CommonButton>
+              </div>
+            )}
           </div>
         </div>
 
@@ -190,6 +368,13 @@ function EmailSettingsPage() {
           <div className="flex flex-col gap-4">
             <ProfileImageUpload
               label="Email logo"
+              variant="rectangle"
+              uploadLabel="Upload Email Logo"
+              replaceLabel="Change Email Logo"
+              existingPreviewAlt="Current Email Logo"
+              previewAriaLabel="Preview Email Logo"
+              removeAriaLabel="Remove Email Logo"
+              confirmRemove={handleRemoveLogoConfirm}
               initialPreviewUrl={logoImageUrl ?? undefined}
               onFileChange={(file) => void handleLogoFileChange(file)}
               disabled={uploadingLogo || saving || isReadOnly}
@@ -201,10 +386,11 @@ function EmailSettingsPage() {
                 <ColorPicker label="Accent color" value={form.accentColor} onChange={(value) => updateField('accentColor', value ?? DEFAULT_EMAIL_ACCENT_COLOR)} enableNativePicker />
               </div>
               <InputField
-                label="Base font size (px)" type="number"
+                id={fieldElementId('baseFontSize')} label="Base font size (px)" type="number"
                 value={form.baseFontSize}
                 onChange={(event) => updateField('baseFontSize', event.target.value)}
                 disabled={saving || isReadOnly}
+                error={fieldErrors.baseFontSize}
               />
               <Dropdown
                 label="Font family"
@@ -219,19 +405,18 @@ function EmailSettingsPage() {
           </div>
         </div>
 
+        {(lastUpdatedByName || lastUpdatedDate) && (
+          <p className="text-xs text-[var(--text-muted)]">
+            {lastUpdatedByName ? `Last updated by: ${lastUpdatedByName}` : null}
+            {lastUpdatedByName && lastUpdatedDate ? ' · ' : null}
+            {lastUpdatedDate ? `Last updated at: ${formatDateTime(lastUpdatedDate)}` : null}
+          </p>
+        )}
+
         {!isReadOnly && (
-          <div className="admin-sticky-footer">
-            <CommonButton 
-              type="submit" 
-              variant="primary" 
-              size="sm" 
-              iconLeft={<Save size={14} />} 
-              onClick={() => void handleSave()}
-              loading={saving} 
-              disabled={saving || isReadOnly || JSON.stringify(form) === JSON.stringify(originalForm)}
-            >
-              Save
-            </CommonButton>
+          <div className="admin-sticky-footer flex items-center gap-2">
+            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || !isDirty}>Save</CommonButton>
+            <CommonButton type="button" variant="outline" size="sm" iconLeft={<RotateCcw size={14} />} onClick={() => void handleReset()} disabled={!isDirty || saving}>Reset</CommonButton>
           </div>
         )}
       </form>

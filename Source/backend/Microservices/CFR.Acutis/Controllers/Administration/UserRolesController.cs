@@ -8,6 +8,7 @@ namespace CFR.Acutis.Controllers.Administration
     /// Service Responsibility:
     /// - IUserRolesService retrieves data, applies validation, and returns ResultArgs.
     /// </summary>
+    [Authorize]
     [ApiExplorerSettings(GroupName = SwaggerModuleDoc.CFRAcutisAdministration)]
     public class UserRolesController(IUserRolesService service): BaseController
     {

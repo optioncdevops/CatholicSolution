@@ -45,7 +45,7 @@ namespace CFR.CommonService.Services
         {
             string BasePath = Path.Combine(GetGatewayRoot(), directoryPath);
 
-            if (file == null || string.IsNullOrEmpty(file.FileName))
+            if (file == null || string.IsNullOrEmpty(file.FileName) || file.Length == 0)
             {
                 throw new ArgumentException("File is invalid.");
             }
@@ -62,6 +62,21 @@ namespace CFR.CommonService.Services
             using (var fileStream = new FileStream(fullPath, FileMode.Create))
             {
                 file.CopyTo(fileStream);
+            }
+
+            // Defense-in-depth against a 0-byte file ever being referenced by a caller: if the
+            // copy somehow produced an empty file (disk full, client disconnect mid-upload, etc.),
+            // fail loudly here rather than silently returning a path to a broken file that a
+            // caller (e.g. EmailSettingsService) would otherwise persist as if the upload succeeded.
+            var writtenInfo = new FileInfo(fullPath);
+            if (!writtenInfo.Exists || writtenInfo.Length == 0)
+            {
+                if (writtenInfo.Exists)
+                {
+                    File.Delete(fullPath);
+                }
+
+                throw new IOException($"Uploaded file '{file.FileName}' was written as 0 bytes to '{fullPath}'.");
             }
 
             return fullPath;
@@ -174,7 +189,11 @@ namespace CFR.CommonService.Services
 
             if (File.Exists(fullPath))
             {
-                return File.ReadAllBytes(fullPath);
+                byte[] bytes = File.ReadAllBytes(fullPath);
+                // A 0-byte file on disk is not a valid file to any caller - treat it the same as
+                // "does not exist" so every caller's existing null-check already handles it,
+                // instead of each one having to separately remember to also check Length.
+                return bytes.Length == 0 ? null : bytes;
             }
             return null;
         }

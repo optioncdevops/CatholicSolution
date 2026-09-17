@@ -192,6 +192,11 @@ namespace Automation.Framework.ViperPages
 
             public const string UsersForm = "//form//*[@id='" + txtfirstname + "']";
 
+            // The list page's Role/Status/Locked filters, deep-linked to from User Roles via
+            // ?roleId= - see UsersListPage.tsx.
+            public const string RoleFilterDropdown = "filterUsersRole";
+            public const string ClearFiltersButton = "//button[@id='btnClearUsersFilters']";
+
             /// <summary>A grid row holding the given text, used to wait out a search.</summary>
             /// <param name="text">the cell text to look for</param>
             /// <returns>An xpath matching the row.</returns>
@@ -496,10 +501,19 @@ namespace Automation.Framework.ViperPages
             public const string PageTitle = "//h1[contains(@class, 'admin-panel-header__title')][contains(., 'User Roles')]";
             public const string AddUserRole = "//button[.//span[normalize-space()='Add User Role']]";
             public const string RoleFormModal = "//*[@role='dialog'][.//h3[contains(., 'User Role')]]";
-            public const string txtRoleName = "roleName";
+
+            // Stable ids (InputField's explicit `id` now wins over the RHF `name` it's paired
+            // with - see the InputField id-priority fix from the duplicate-role-name work - so
+            // these must match the JSX `id` props in UserRoleFormModal.tsx exactly, not the RHF
+            // field names "roleName"/"description" the DOM used to render before that fix).
+            public const string txtRoleName = "txtUserRoleName";
+            public const string txtRoleNameError = "txtUserRoleName-error";
+            public const string txtRoleNameCounter = "txtUserRoleName-counter";
             public const string txtDescription = "description";
-            public const string ModalSave = "//*[@role='dialog']//button[.//span[normalize-space()='Save']]";
-            public const string ModalCancel = "//*[@role='dialog']//button[.//span[normalize-space()='Cancel']]";
+            public const string StatusBadge = "badgeUserRoleStatus";
+            public const string ModalSave = "//button[@id='btnSaveUserRole']";
+            public const string ModalCancel = "//button[@id='btnCancelUserRole']";
+            public const string ModalClose = "//button[@id='btnCloseUserRoleModal']";
             public const string FieldError = "//*[@role='dialog']//p[@role='alert'] | //*[@role='dialog']//p[contains(@class, 'text-[var(--error)]')]";
             public const string RowEdit = "(//button[starts-with(@aria-label, 'Edit ')])[1]";
             public const string RowDelete = "(//button[starts-with(@aria-label, 'Delete ')])[1]";
@@ -521,6 +535,19 @@ namespace Automation.Framework.ViperPages
 
             public static string StatusToggleInRow(string roleName) =>
                 $"//main//table//tbody/tr[.//*[normalize-space()='{roleName}']]//button[starts-with(@aria-label, 'Deactivate ') or starts-with(@aria-label, 'Activate ')]";
+
+            public static string UsersCountButtonInRow(string roleName) =>
+                $"//main//table//tbody/tr[.//*[normalize-space()='{roleName}']]//button[starts-with(@aria-label, 'View ')]";
+
+            public static string UsersCountBadgeInRow(string roleName) =>
+                $"//main//table//tbody/tr[.//*[normalize-space()='{roleName}']]//td[.//*[contains(@class,'rounded-full')]][5]";
+
+            public static string ManageRightsInRow(int roleId) => $"//*[@id='ibtnManageRightsUserRole{roleId}']";
+
+            /// <summary>Locates Manage Rights by its accessible name instead of the numeric RoleId,
+            /// for tests that only know the role by name.</summary>
+            public static string ManageRightsInRowByName(string roleName) =>
+                $"//main//table//tbody/tr[.//*[normalize-space()='{roleName}']]//button[@aria-label='Manage rights for {roleName}']";
         }
 
         public static class XPath_UserRights
@@ -766,16 +793,16 @@ namespace Automation.Framework.ViperPages
             public const string Modal = "//*[@id='dlgChangePassword']";
             public const string Form = "//form[@id='formChangePassword']";
 
-            // InputField resolves its rendered element id from the react-hook-form `name` prop
-            // whenever both `id` and `name` are given - `id={fieldId}` is set after `{...props}`
-            // is spread, so it silently overrides whatever `id` the caller passed (see
-            // InputField.tsx's `fieldId = name ?? props.id ?? ...`). ChangePasswordModal.tsx
-            // passes both id="txtCurrentPassword" (etc.) AND name="currentPassword" on every
-            // field, so the id actually rendered to the DOM is the RHF field name, not the
-            // "txt..." id literal in the JSX - confirmed against a live run, not just the source.
-            public const string txtCurrentPassword = "currentPassword";
-            public const string txtNewPassword = "newPassword";
-            public const string txtConfirmPassword = "confirmPassword";
+            // InputField now resolves its rendered element id from an explicit `id` prop first,
+            // falling back to the react-hook-form `name` only when no `id` is given (fixed during
+            // the User Roles duplicate-name-error work - previously `id={fieldId}` used
+            // `fieldId = name ?? props.id ?? ...`, so an explicit id like "txtCurrentPassword"
+            // was silently overridden by the RHF field name). ChangePasswordModal.tsx passes both
+            // id="txtCurrentPassword" (etc.) AND name="currentPassword" on every field, so the id
+            // actually rendered to the DOM is now the "txt..." literal from the JSX, matching it.
+            public const string txtCurrentPassword = nameof(txtCurrentPassword);
+            public const string txtNewPassword = nameof(txtNewPassword);
+            public const string txtConfirmPassword = nameof(txtConfirmPassword);
             public const string btnUpdatePassword = nameof(btnUpdatePassword);
             public const string btnCancelChangePassword = nameof(btnCancelChangePassword);
 

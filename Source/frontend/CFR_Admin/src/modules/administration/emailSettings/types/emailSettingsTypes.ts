@@ -14,6 +14,12 @@ export interface EmailSettingsApiItem {
   logoFileName: string | null;
   logoImageUrl: string | null;
   apiBaseUrl: string | null;
+  lastUpdatedByName: string | null;
+  lastUpdatedDate: string | null;
+}
+
+export interface TestSmtpConnectionResult {
+  success: boolean;
 }
 
 export interface EmailSettingsFormValues {

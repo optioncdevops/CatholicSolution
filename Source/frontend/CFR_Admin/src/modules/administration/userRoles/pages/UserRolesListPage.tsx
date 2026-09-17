@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Pencil, Plus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Pencil, Plus, ShieldCheck, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
@@ -19,6 +19,7 @@ import { normalizeUserRolesList } from '../utils/userRolesHelpers';
 export function UserRolesListPage() {
   //#region Hooks
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const accessLevel = useFeatureAccessLevel('/admin/administration-user-roles');
   const isReadOnly = accessLevel === 'readOnly';
   //#endregion
@@ -106,14 +107,14 @@ export function UserRolesListPage() {
     }
     const confirmed = await confirmAction({
       title: 'Deactivate this role?',
-      description: `"${role.roleName}" will no longer be assignable to users.`,
+      description: 'This role will no longer be assignable to users.',
       confirmLabel: 'Deactivate',
       tone: 'danger',
     });
     if (!confirmed) return;
     try {
       await updateUserRoleStatus(role.roleId, 'inactive');
-      showToast(`${role.roleName} deactivated`);
+      showToast('Role deactivated successfully.');
       await load();
     } catch (error) {
       console.error('Error deactivating user role:', error);
@@ -125,7 +126,7 @@ export function UserRolesListPage() {
     if (isReadOnly || role.usersCount > 0) return;
     const confirmed = await confirmAction({
       title: 'Delete this role?',
-      description: `"${role.roleName}" will be permanently removed from the role catalog.`,
+      description: 'This role will be permanently removed from the role catalog.',
       confirmLabel: 'Delete role',
       tone: 'danger',
     });
@@ -136,7 +137,7 @@ export function UserRolesListPage() {
         showToast(response.statusMessage || 'This role is assigned to one or more users.', 'conflict');
         return;
       }
-      showToast(`${role.roleName} deleted`);
+      showToast('Role deleted successfully.');
       await load();
     } catch (error) {
       console.error('Error deleting user role:', error);
@@ -155,14 +156,36 @@ export function UserRolesListPage() {
       excludeFromExport: true,
       cell: (role) => {
         const inUse = role.usersCount > 0;
+        const isActive = role.status === 'active';
         return (
           <div className="flex items-center gap-0.5">
             <CommonIconButton aria-label={`Edit ${role.roleName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleOpenEdit(role)} />
-            {!isReadOnly && !inUse && (
-              <CommonIconButton aria-label={role.status === 'active' ? `Deactivate ${role.roleName}` : `Activate ${role.roleName}`} tooltip={role.status === 'active' ? 'Deactivate' : 'Activate'} variant={role.status === 'active' ? 'danger' : 'ghost'} icon={role.status === 'active' ? <ToggleRight size={16} /> : <ToggleLeft size={16} />} onClick={() => void handleToggleActive(role)} />
+            <CommonIconButton
+              id={`ibtnManageRightsUserRole${role.roleId}`}
+              aria-label={`Manage rights for ${role.roleName}`}
+              tooltip="Manage Rights"
+              icon={<ShieldCheck size={14} />}
+              onClick={() => navigate(`/admin/administration-rights?roleId=${role.roleId}`)}
+            />
+            {!isReadOnly && (
+              <CommonIconButton
+                aria-label={isActive ? `Deactivate ${role.roleName}` : `Activate ${role.roleName}`}
+                tooltip={inUse ? 'Cannot deactivate: users are assigned to this role. Reassign users first.' : (isActive ? 'Deactivate' : 'Activate')}
+                variant={isActive ? 'danger' : 'ghost'}
+                icon={isActive ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                onClick={() => void handleToggleActive(role)}
+                disabled={inUse}
+              />
             )}
-            {!isReadOnly && !inUse && (
-              <CommonIconButton aria-label={`Delete ${role.roleName}`} tooltip="Delete" variant="danger" icon={<Trash2 size={14} />} onClick={() => void handleDelete(role)} />
+            {!isReadOnly && (
+              <CommonIconButton
+                aria-label={`Delete ${role.roleName}`}
+                tooltip={inUse ? 'Cannot delete: users are assigned to this role. Reassign users first.' : 'Delete'}
+                variant="danger"
+                icon={<Trash2 size={14} />}
+                onClick={() => void handleDelete(role)}
+                disabled={inUse}
+              />
             )}
           </div>
         );

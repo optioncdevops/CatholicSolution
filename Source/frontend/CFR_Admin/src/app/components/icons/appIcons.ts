@@ -67,6 +67,7 @@ import {
   QrCode,
   Receipt,
   RefreshCw,
+  RotateCcw,
   Save,
   Search,
   SearchX,
@@ -86,6 +87,8 @@ import {
   User,
   X,
   XCircle,
+  ZoomIn,
+  ZoomOut,
   type LucideIcon,
 } from "lucide-react";
 
@@ -168,6 +171,7 @@ export const APP_ICONS = {
   receipt: Receipt,
   redo2: Redo2,
   refreshCw: RefreshCw,
+  rotateCcw: RotateCcw,
   rowDragHandle: GripVertical,
   rowRemove: X,
   save: Save,
@@ -191,6 +195,8 @@ export const APP_ICONS = {
   user: User,
   x: X,
   xCircle: XCircle,
+  zoomIn: ZoomIn,
+  zoomOut: ZoomOut,
 } satisfies Record<string, LucideIcon>;
 
 export type AppIconName = keyof typeof APP_ICONS;

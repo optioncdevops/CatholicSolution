@@ -41,7 +41,8 @@
     "EditRoleName": "CFR-AutoRole-Edit",
     "Description": "Automated test role created by Selenium.",
     "EditDescription": "Automated test role updated by Selenium.",
-    "ExistingRoleSearch": "Admin"
+    "ExistingRoleSearch": "Admin",
+    "RoleWithAssignedUsers": "Admin"
   },
   "UserRights": {
     "RoleName": "test1",

@@ -9,6 +9,10 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
     /// </summary>
     public class UserRolesRepository(IDapperHandler dapperHandler, ICurrentUserService currentUserService): IUserRolesRepository
     {
+        // Matches frontend/CFR_Admin's userRoles routes/index.tsx route path exactly - this is
+        // what auth.ModuleFeatures.RoutingUrl for the User Roles admin page must equal.
+        private const string UserRolesFeatureRoutingUrl = "/admin/administration-user-roles";
+
         #region GET Methods
 
         /// <summary>
@@ -50,6 +54,30 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.AdministrationParams.ActionId, 3, DbType.Int32);
             parameters.Add(DBParameterName.AdministrationParams.RoleId, roleId, DbType.Int32);
             var result = await dapperHandler.QueryAsync<UserRolesOutput>(StoredProc.Administration.UserRolesCrud, parameters, CommandType.StoredProcedure);
+            return result.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Fetches the signed-in user's own AccessRight for the User Roles admin page using
+        /// StoredProc.Administration.GetFeatureAccessRight.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Server-side authorization check, independent of the authentication-only
+        /// [Authorize] attribute - confirms the caller's role actually has write (Access) rights
+        /// to this feature before a mutation is allowed to proceed.
+        /// Request Flow: IUserRolesService -> UserRolesRepository.GetCurrentUserAccessRightAsync() -> Database.
+        /// Validation Details: Keyed by ICurrentUserService.RoleId and this feature's fixed RoutingUrl.
+        /// Business Logic: None - the stored procedure resolves Denied/Access/Read Only.
+        /// Repository Interaction: Executes StoredProc.Administration.GetFeatureAccessRight.
+        /// Response Details: Returns 0 (Denied), 1 (Access), or 2 (Read Only).
+        /// </remarks>
+        /// <returns>The caller's AccessRight for the User Roles admin page.</returns>
+        public async Task<int> GetCurrentUserAccessRightAsync()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.AdministrationParams.RoleId, currentUserService.RoleId, DbType.Int32);
+            parameters.Add(DBParameterName.AdministrationParams.RoutingUrl, UserRolesFeatureRoutingUrl, DbType.String);
+            var result = await dapperHandler.QueryAsync<int>(StoredProc.Administration.GetFeatureAccessRight, parameters, CommandType.StoredProcedure);
             return result.FirstOrDefault();
         }
 

@@ -9,10 +9,12 @@
   <Folder Name="/Infrastructure/">
     <Project Path="Infrastructure/CFR.AcutisInfrastructure/CFR.AcutisInfrastructure.csproj" Id="5b369e69-40b5-4a0c-a021-1b4e89ba40fa" />
     <Project Path="Infrastructure/CFR.PortalInfrastructure/CFR.PortalInfrastructure.csproj" Id="5da51d3b-9888-4004-acb6-179d7435b7b2" />
+    <Project Path="Infrastructure/CFR.SyncInfrastructure/CFR.SyncInfrastructure.csproj" />
   </Folder>
   <Folder Name="/Microservices/">
     <Project Path="Microservices/CFR.Acutis/CFR.Acutis.csproj" Id="b075ce09-9660-4a8a-8669-378583b47d98" />
     <Project Path="Microservices/CFR.Portal/CFR.Portal.csproj" Id="9c1c772e-bb0a-4e66-95d5-4bde4e09da38" />
+    <Project Path="Microservices/CFR.Sync/CFR.Sync.csproj" />
   </Folder>
   <Folder Name="/Platform/">
     <Project Path="Platform/CFR.Base/CFR.Base.csproj" />
@@ -23,5 +25,9 @@
     <Project Path="Service/CFR.AcutisService/CFR.AcutisService.csproj" Id="6f1fbf2e-726b-446a-b4f2-35aab88c9db1" />
     <Project Path="Service/CFR.CommonService/CFR.CommonService.csproj" />
     <Project Path="Service/CFR.PortalService/CFR.PortalService.csproj" Id="56ff7d75-4b4f-4f51-9dc0-9cbed3742d00" />
+    <Project Path="Service/CFR.SyncService/CFR.SyncService.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/CFR.Acutis.Tests/CFR.Acutis.Tests.csproj" />
   </Folder>
 </Solution>

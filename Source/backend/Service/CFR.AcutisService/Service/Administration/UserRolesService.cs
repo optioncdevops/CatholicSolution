@@ -88,6 +88,34 @@ namespace CFR.AcutisService.Service.Administration
 
         #endregion GET Methods
 
+        /// <summary>
+        /// Confirms the signed-in user's own role has write (Access) rights to the User Roles
+        /// admin page before a mutation proceeds.
+        /// </summary>
+        /// <remarks>
+        /// [Authorize] on the controller only confirms the request is authenticated - any signed-in
+        /// user, regardless of role, would otherwise be able to add/edit/deactivate/delete roles.
+        /// This re-checks auth.ModuleRights fresh on every mutating request (not from the JWT,
+        /// which only carries RoleId - see Acutis_GetFeatureAccessRight) rather than trusting the
+        /// client's own cached copy from login, since a stale or tampered client value must not be
+        /// able to bypass this.
+        /// </remarks>
+        /// <param name="result">The in-progress result to populate with Forbidden when access is denied.</param>
+        /// <returns>Whether the caller may proceed with the mutation.</returns>
+        private async Task<bool> EnsureCurrentUserCanMutateRolesAsync(MSResultArgs result)
+        {
+            const int AccessRightAccess = 1;
+            int accessRight = await repository.GetCurrentUserAccessRightAsync();
+            if (accessRight == AccessRightAccess)
+            {
+                return true;
+            }
+
+            result.StatusCode = ErrorCodes.Forbidden;
+            result.StatusMessage = ErrorMessages.InsufficientRoleRights;
+            return false;
+        }
+
         #region POST Methods
 
         /// <summary>
@@ -115,11 +143,23 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                if (!await EnsureCurrentUserCanMutateRolesAsync(result))
+                {
+                    return result;
+                }
+
                 int savedId = await repository.SaveUserRoleAsync(input);
                 if (savedId == -99)
                 {
                     result.StatusCode = ErrorCodes.Conflict;
                     result.StatusMessage = ErrorMessages.ExistRole;
+                    return result;
+                }
+
+                if (savedId == -96)
+                {
+                    result.StatusCode = ErrorCodes.NotFound;
+                    result.StatusMessage = ErrorMessages.RoleNotFound;
                     return result;
                 }
 
@@ -164,11 +204,23 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                if (!await EnsureCurrentUserCanMutateRolesAsync(result))
+                {
+                    return result;
+                }
+
                 int updatedId = await repository.UpdateUserRoleStatusAsync(input);
                 if (updatedId == -98)
                 {
                     result.StatusCode = ErrorCodes.Conflict;
                     result.StatusMessage = ErrorMessages.RoleInUse;
+                    return result;
+                }
+
+                if (updatedId == -96)
+                {
+                    result.StatusCode = ErrorCodes.NotFound;
+                    result.StatusMessage = ErrorMessages.RoleNotFound;
                     return result;
                 }
 
@@ -213,11 +265,23 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                if (!await EnsureCurrentUserCanMutateRolesAsync(result))
+                {
+                    return result;
+                }
+
                 int deletedId = await repository.DeleteUserRoleAsync(roleId);
                 if (deletedId == -98)
                 {
                     result.StatusCode = ErrorCodes.Conflict;
                     result.StatusMessage = ErrorMessages.RoleInUse;
+                    return result;
+                }
+
+                if (deletedId == -96)
+                {
+                    result.StatusCode = ErrorCodes.NotFound;
+                    result.StatusMessage = ErrorMessages.RoleNotFound;
                     return result;
                 }
 

@@ -58,6 +58,7 @@ namespace CFR.CommonService
             public const string SaveEmailSettings = nameof(SaveEmailSettings);
             public const string UploadEmailLogo = nameof(UploadEmailLogo);
             public const string RemoveEmailLogo = nameof(RemoveEmailLogo);
+            public const string TestConnection = nameof(TestConnection);
             public const string GetAccessRequests = nameof(GetAccessRequests);
             public const string GetAccessRequestById = nameof(GetAccessRequestById);
             public const string SaveAccessRequest = nameof(SaveAccessRequest);
@@ -127,6 +128,16 @@ namespace CFR.CommonService
         {
             public const string GetDashboardSummary = nameof(GetDashboardSummary);
             public const string GetIntegrityIssueDetail = nameof(GetIntegrityIssueDetail);
+        }
+
+        public static class API_UserSync
+        {
+            public const string CreateUser = nameof(CreateUser);
+            public const string UpdateUser = nameof(UpdateUser);
+            public const string PatchUser = nameof(PatchUser);
+            public const string DeactivateUser = nameof(DeactivateUser);
+            public const string ReactivateUser = nameof(ReactivateUser);
+            public const string GetUser = nameof(GetUser);
         }
     }
 }

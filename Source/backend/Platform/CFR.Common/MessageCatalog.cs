@@ -23,8 +23,11 @@ namespace CFR.Common
         public const int CustomMessage = 102;
         public const int BadRequest = 400;
         public const int UnAuthorized = 401;
+        public const int Forbidden = 403;
         public const int NotFound = 404;
         public const int Conflict = 409;
+        public const int UnprocessableEntity = 422;
+        public const int PreconditionFailed = 412;
         public const int InternalServerError = 500;
     }
 
@@ -43,8 +46,15 @@ namespace CFR.Common
         public const string ExistUser = "A user with this email already exists.";
         public const string CannotModifySelfStatus = "You cannot deactivate or lock your own account. Ask another administrator to do this.";
         public const string CannotDeleteSelf = "You cannot delete your own account. Ask another administrator to do this.";
+        public const string CannotDeactivateLastAdmin = "You cannot deactivate the last active administrator. Assign another user as administrator first.";
+        public const string CannotDeleteLastAdmin = "You cannot delete the last active administrator. Assign another user as administrator first.";
+        public const string InvalidEmailFormat = "Enter a valid email address.";
+        public const string FutureDateOfBirth = "Date of birth cannot be in the future.";
+        public const string DateOfBirthOutOfRange = "Date of birth must reflect an age between 18 and 120 years.";
         public const string ExistRole = "A role with this name already exists.";
         public const string RoleInUse = "This role is assigned to one or more users.";
+        public const string RoleNotFound = "This role no longer exists.";
+        public const string InsufficientRoleRights = "You do not have permission to manage user roles.";
         public const string Failed = "The request could not be completed.";
         public const string BadRequest = "Invalid request.";
         public const string UnAuthorized = "Unauthorized.";
@@ -58,6 +68,7 @@ namespace CFR.Common
         public const string PasswordMismatch = "The new passwords do not match or do not meet the minimum length.";
         public const string PasswordTooWeak = "Use at least 8 characters with upper/lowercase letters, a number, and preferably a symbol.";
         public const string ExistEmailTemplateCode = "A template with this code already exists.";
+        public const string InvalidTemplateBodyContent = "The template body contains a script, event-handler attribute, or javascript/data link, which is not allowed.";
         public const string LinkExpiryMinutesOutOfRange = "Link expiry must be between 5 and 1440 minutes (24 hours).";
         public const string InvalidCurrentPassword = "Your current password is incorrect.";
         public const string ProfileUpdated = "Profile updated successfully.";
@@ -96,6 +107,50 @@ namespace CFR.Common
         public const string EmailLogoInvalidType = "Only JPG and PNG images are allowed.";
         public const string DashboardInvalidDateRange = "Start date must be on or before the end date.";
         public const string DashboardDateRangeTooLarge = "The selected date range is too large. Choose a range of 366 days or fewer.";
+
+        // CFR.Sync — HMAC auth + user sync
+        public const string Unauthenticated = "Authentication failed.";
+        public const string ScopeDenied = "The API client is not authorized for this operation.";
+        public const string ProductScopeViolation = "productId is not accepted in the request body.";
+        public const string ValidationFailed = "The request failed validation.";
+        public const string InvalidEmail = "The email address is not a valid format.";
+        public const string OrgNotOnboarded = "The organization is not onboarded for this product.";
+        public const string OrgInactive = "The organization is not active for this product.";
+        public const string SyncUserAlreadyExists = "A user with this externalUserId already exists for this organization.";
+        public const string SyncUserNotFound = "No user was found for the given externalUserId and productOrgId.";
+        public const string RoleNotFound = "The specified roleId was not found.";
+        public const string ConcurrencyConflict = "The record was modified by another request. Refresh and try again.";
+        public const string IdempotencyKeyReuse = "The Idempotency-Key was already used with a different request body.";
+        public const string DuplicateInFile = "Duplicate externalUserId/productOrgId within the same file.";
+        public const string RateLimitExceeded = "Too many requests. Try again later.";
+        public const string PayloadTooLarge = "The request body exceeds the maximum allowed size.";
+        public const string EmailRebindConflict = "This email now belongs to a different CFR identity that already has an active membership for this organization.";
+    }
+
+    /// <summary>
+    /// Stable, machine-readable error codes for the CFR.Sync product-facing API. Carried as an
+    /// <c>ErrorDetail</c> with <c>Field == "code"</c> inside <c>MSResultArgs.Errors</c> so downstream
+    /// products can branch on a fixed string rather than the numeric StatusCode alone.
+    /// </summary>
+    public static class SyncErrorCodes
+    {
+        public const string Unauthenticated = "UNAUTHENTICATED";
+        public const string ScopeDenied = "SCOPE_DENIED";
+        public const string ProductScopeViolation = "PRODUCT_SCOPE_VIOLATION";
+        public const string ValidationFailed = "VALIDATION_FAILED";
+        public const string InvalidEmail = "INVALID_EMAIL";
+        public const string OrgNotOnboarded = "ORG_NOT_ONBOARDED";
+        public const string OrgInactive = "ORG_INACTIVE";
+        public const string UserAlreadyExists = "USER_ALREADY_EXISTS";
+        public const string UserNotFound = "USER_NOT_FOUND";
+        public const string RoleNotFound = "ROLE_NOT_FOUND";
+        public const string ConcurrencyConflict = "CONCURRENCY_CONFLICT";
+        public const string IdempotencyKeyReuse = "IDEMPOTENCY_KEY_REUSE";
+        public const string DuplicateInFile = "DUPLICATE_IN_FILE";
+        public const string RateLimitExceeded = "RATE_LIMIT_EXCEEDED";
+        public const string PayloadTooLarge = "PAYLOAD_TOO_LARGE";
+        public const string InternalError = "INTERNAL_ERROR";
+        public const string EmailRebindConflict = "EMAIL_REBIND_CONFLICT";
     }
 
     public static class SerilogErrorMessages
@@ -127,6 +182,7 @@ namespace CFR.Common
             public const string SaveEmailSettingsFailed = "Error while saving email settings";
             public const string UploadEmailLogoFailed = "Error while uploading email logo";
             public const string RemoveEmailLogoFailed = "Error while removing email logo";
+            public const string TestSmtpConnectionFailed = "Error while testing SMTP connection";
             public const string FetchEmailLogoFailed = "Error while fetching email logo";
             public const string FetchProfileFailed = "Error while fetching profile for user {UserId}";
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
@@ -160,6 +216,17 @@ namespace CFR.Common
             public const string FetchUserRightsFailed = "Error while fetching user rights";
             public const string SaveUserRightsFailed = "Error while saving user rights";
             public const string FetchDashboardSummaryFailed = "Error while fetching dashboard summary";
+        }
+
+        public static class SyncLogMessages
+        {
+            public const string AuthenticationFailed = "HMAC authentication failed for ClientId {ClientId}";
+            public const string CreateUserFailed = "Error while creating synced user for productOrgId {ProductOrgId}";
+            public const string UpdateUserFailed = "Error while updating synced user {ExternalUserId}";
+            public const string PatchUserFailed = "Error while patching synced user {ExternalUserId}";
+            public const string DeactivateUserFailed = "Error while deactivating synced user {ExternalUserId}";
+            public const string ReactivateUserFailed = "Error while reactivating synced user {ExternalUserId}";
+            public const string GetUserFailed = "Error while fetching synced user {ExternalUserId}";
         }
 
         public static class PortalLogMessages
