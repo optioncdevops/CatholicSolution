@@ -20,6 +20,8 @@ namespace CFR.AcutisService.Service.Profile
         ILogger<ProfileService> logger): IProfileService
     {
         private const int MinimumPasswordLength = 8;
+        private const int MaxNameLength = 50;
+        private const int UsContactNumberDigitLength = 10;
 
         #region GET Methods
 
@@ -104,6 +106,22 @@ namespace CFR.AcutisService.Service.Profile
                     return result;
                 }
 
+                // Re-checked here since this action can be called directly - the frontend's own
+                // maxLength/pattern checks can be bypassed by a hand-crafted request.
+                if (input.FirstName.Trim().Length > MaxNameLength || input.LastName.Trim().Length > MaxNameLength)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.NameTooLong;
+                    return result;
+                }
+
+                if (!string.IsNullOrWhiteSpace(input.ContactNumber) && !IsValidUsContactNumber(input.ContactNumber))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.InvalidContactNumber;
+                    return result;
+                }
+
                 var existingProfile = await repository.GetProfileAsync(currentUserService.UserId);
 
                 string? profileImageUrl = existingProfile?.ProfileImageUrl;
@@ -157,9 +175,9 @@ namespace CFR.AcutisService.Service.Profile
         /// Purpose: Let the account owner set a new password.
         /// Request Flow: ProfileController -> ProfileService.ChangePasswordAsync() -> IProfileRepository.ChangePasswordAsync().
         /// Validation Details: All three fields are required; new password must match confirmation and meet the minimum length rule; rejects the request when no signed-in user id is available.
-        /// Business Logic: Delegates verification and the password update to the repository.
+        /// Business Logic: Delegates verification and the password update to the repository, which also rejects a new password identical to the current one (-97).
         /// Repository Interaction: Calls IProfileRepository.ChangePasswordAsync().
-        /// Response Details: MSResultArgs indicating success, UnAuthorized, or BadRequest when the current password does not match or the new passwords are invalid.
+        /// Response Details: MSResultArgs indicating success, UnAuthorized, or BadRequest when the current password does not match, the new password equals the current one, or the new passwords are invalid.
         /// </remarks>
         /// <param name="input">Input DTO containing the current and new password.</param>
         /// <returns>MSResultArgs containing the change outcome.</returns>
@@ -204,6 +222,13 @@ namespace CFR.AcutisService.Service.Profile
                     return result;
                 }
 
+                if (updatedId == -97)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.NewPasswordSameAsCurrent;
+                    return result;
+                }
+
                 result.StatusMessage = ErrorMessages.PasswordChanged;
                 result.ResultData = updatedId;
             }
@@ -220,6 +245,25 @@ namespace CFR.AcutisService.Service.Profile
         #endregion PUT Methods
 
         #region Private Helper Methods
+
+        /// <summary>
+        /// Validates a contact number as a real 10-digit US phone number - a bare string of
+        /// symbols/parentheses with no digits (e.g. "+()()-.") must not pass just because it
+        /// matches a loose punctuation-shaped pattern. A leading US country code digit ("1") is
+        /// stripped first so either a 10-digit or an 11-digit (1 + 10) value is accepted.
+        /// </summary>
+        /// <param name="contactNumber">Raw contact number, in whatever punctuation the client sent.</param>
+        /// <returns>True when exactly 10 digits remain after stripping non-digits and any leading US country code.</returns>
+        private static bool IsValidUsContactNumber(string contactNumber)
+        {
+            string digits = new string(contactNumber.Where(char.IsDigit).ToArray());
+            if (digits.Length == UsContactNumberDigitLength + 1 && digits.StartsWith('1'))
+            {
+                digits = digits[1..];
+            }
+
+            return digits.Length == UsContactNumberDigitLength;
+        }
 
         /// <summary>
         /// Validates an uploaded profile image against the allowed size and extension rules.

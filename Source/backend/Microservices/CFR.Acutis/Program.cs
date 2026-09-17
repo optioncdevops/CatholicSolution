@@ -6,6 +6,8 @@ builder.Configuration.AddConfiguration(ConfigurationLoader.LoadConfiguration());
 
 builder.Services.AddCommonServicesSetup();
 
+builder.Services.AddAuthEndpointRateLimiting();
+
 builder.Services.AddDIServicesSetup();
 
 // JWT Authentication

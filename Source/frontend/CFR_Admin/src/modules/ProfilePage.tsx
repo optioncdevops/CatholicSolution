@@ -11,6 +11,8 @@ import { useCurrentUser } from '@shared/app/context/UserContext';
 import { getProfile, updateProfile, updateStoredAcutisUser } from '@shared/auth/services/authService';
 import { resolveProfileImageUrl } from '@shared/auth/profileImage';
 import type { ProfileApiItem } from '@shared/auth/types/authTypes';
+import { isValidUsPhoneNumber, US_PHONE_MASKED_MAX_LENGTH, US_PHONE_MASK_PLACEHOLDER } from '@app/utilities/inputValidation';
+import { confirmAction } from './lib/confirm';
 import { formatDateTime } from './utils/formatDate';
 
 interface ProfileFormValues {
@@ -30,13 +32,17 @@ interface ProfileSaveOverrides {
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_MAX_LENGTH = 50;
 
 const profileRules = {
-  firstName: { required: 'First name is required.' },
-  lastName: { required: 'Last name is required.' },
+  firstName: { required: 'First name is required.', maxLength: { value: NAME_MAX_LENGTH, message: `First name cannot exceed ${NAME_MAX_LENGTH} characters.` } },
+  lastName: { required: 'Last name is required.', maxLength: { value: NAME_MAX_LENGTH, message: `Last name cannot exceed ${NAME_MAX_LENGTH} characters.` } },
   email: { required: 'Email is required.', pattern: { value: EMAIL_PATTERN, message: 'Enter a valid email address.' } },
   contactNumber: {
-    pattern: { value: /^[+()\d][\d\s().-]{6,19}$/, message: 'Enter a valid contact number.' },
+    // Not required — a phone number can be left blank — but if one is entered, it must be a real
+    // 10-digit US number, not just something shaped like a phone number (e.g. "+()()-." matches no
+    // digits at all and used to pass the old, purely punctuation-based pattern).
+    validate: (value: string) => !value.trim() || isValidUsPhoneNumber(value) || 'Enter a valid 10-digit contact number.',
   },
 };
 
@@ -165,6 +171,13 @@ export function ProfilePage() {
             initialPreviewUrl={resolveProfileImageUrl(currentImageUrl) ?? undefined}
             fallbackInitials={initials}
             helperText="JPG or PNG, up to 2MB — saves automatically."
+            previewTitle="Profile photo"
+            confirmRemove={() => confirmAction({
+              title: 'Remove profile photo?',
+              description: 'Are you sure you want to remove your profile photo?',
+              confirmLabel: 'Remove photo',
+              tone: 'danger',
+            })}
           />
           <div className="flex flex-col items-center gap-1.5 border-t border-[var(--line-soft)] pt-4">
             <span className="text-sm font-bold text-[var(--text-primary)]">{user.name}</span>
@@ -196,6 +209,7 @@ export function ProfilePage() {
                 disabled={loading || saving}
                 required
                 autoFocus
+                maxLength={NAME_MAX_LENGTH}
                 startIcon={<AppIcon name="user" size="controlField" decorative />}
                 wrapperClassName="md:col-span-4"
               />
@@ -206,6 +220,7 @@ export function ProfilePage() {
                 rules={profileRules.lastName}
                 disabled={loading || saving}
                 required
+                maxLength={NAME_MAX_LENGTH}
                 startIcon={<AppIcon name="user" size="controlField" decorative />}
                 wrapperClassName="md:col-span-4"
               />
@@ -214,7 +229,9 @@ export function ProfilePage() {
                 name="contactNumber"
                 type="tel"
                 label="Contact number"
-                placeholder="Enter contact number"
+                placeholder={US_PHONE_MASK_PLACEHOLDER}
+                validationRule="usPhoneNumber"
+                maxLength={US_PHONE_MASKED_MAX_LENGTH}
                 rules={profileRules.contactNumber}
                 disabled={loading || saving}
                 startIcon={<AppIcon name="phone" size="controlField" decorative />}

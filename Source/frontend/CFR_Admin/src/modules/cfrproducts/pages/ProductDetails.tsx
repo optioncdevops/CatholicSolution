@@ -272,7 +272,7 @@ const ProductDetails = () => {
       await updateProduct(payload);
       await loadProduct();
       showToast(
-        `${product.productName} status changed to ${status.replace("-", " ")}.`,
+        `Product status changed to ${status.replace("-", " ")}.`,
       );
     } catch (error) {
       showToast(

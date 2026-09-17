@@ -12,10 +12,12 @@
     "ContactUsMailId": "",
     "ReceiverMail": null,
     "DefaultToAddress": "",
-    "LogoUrl": "catholic-solutions-logo.png",
-    "ApiBaseUrl": "https://cfrapi.allnewoptionc.com",
+    "LogoUrl": "email-logo_17092026.png",
+    "ApiBaseUrl": "https://localhost:5050/acutis",
     "AccentColor": "#1d4ed8",
     "FontFamily": "Verdana, Arial, Helvetica, sans-serif",
-    "BaseFontSize": 13
+    "BaseFontSize": 13,
+    "LastUpdatedByName": null,
+    "LastUpdatedDate": null
   }
 }

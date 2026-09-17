@@ -124,6 +124,16 @@ BEGIN
             RETURN @ReturnValue;
         END
 
+        IF @NewPassword = dbo.DecryptUserPassword(@StoredPassword)
+        BEGIN
+            -- The current-password check above already confirms @CurrentPassword matches the
+            -- stored password, so comparing @NewPassword against that same decrypted value is
+            -- exactly "is the new password the same as the current one" - distinct from -98
+            -- (wrong current password) so the API/UI can show a specific message for this case.
+            SET @ReturnValue = -97;
+            RETURN @ReturnValue;
+        END
+
         UPDATE [auth].[AcutisUser]
         SET
             [Password] = dbo.EncryptUserPassword(@NewPassword),

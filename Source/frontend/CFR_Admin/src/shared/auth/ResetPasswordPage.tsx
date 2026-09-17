@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useWatch} from 'react-hook-form';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, LockIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
@@ -22,8 +22,6 @@ export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const rawToken = searchParams.get('token')?.trim() ?? '';
   const token = TOKEN_PATTERN.test(rawToken) ? rawToken : '';
-  const returnUrl = searchParams.get('returnUrl');
-  const clientId = searchParams.get('client_id');
   const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -53,20 +51,12 @@ export function ResetPasswordPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only passwordValue should retrigger this
   }, [passwordValue]);
 
-  const loginTarget = useMemo(() => {
-    const params = new URLSearchParams();
-    if (returnUrl) params.set('returnUrl', returnUrl);
-    if (clientId) params.set('client_id', clientId);
-    if (!returnUrl && !clientId) params.set('entry', 'platform');
-    return `/login?${params.toString()}`;
-  }, [returnUrl, clientId]);
-
-  const recoveryTarget = useMemo(() => {
-    const params = new URLSearchParams();
-    if (returnUrl) params.set('returnUrl', returnUrl);
-    if (clientId) params.set('client_id', clientId);
-    return `/forgot-password${params.size ? `?${params.toString()}` : ''}`;
-  }, [returnUrl, clientId]);
+  // client_id/returnUrl used to be threaded through here from the query string, but this app's
+  // own CentralLoginPage/ForgotPasswordPage never read either of them (and the backend's reset
+  // email never sends them either — see AcutisPasswordService.GenerateToken's resetLink, which is
+  // token-only) — they were dead weight in the URL.
+  const loginTarget = '/login?entry=platform';
+  const recoveryTarget = '/forgot-password';
 
   // Strip the token out of the visible URL/browser history as soon as it's read into state — a
   // single-use secret has no reason to keep sitting in the address bar or a bookmark/history

@@ -18,14 +18,14 @@ namespace CFR.AcutisInfrastructure.Interfaces.AcutisAuthentication
         /// Purpose: Persist a hashed, time-limited reset token for a forgot-password request.
         /// Request Flow: IAcutisPasswordService -> AcutisPasswordRepository.RequestResetAsync() -> Database.
         /// Validation Details: Parameter names match stored procedure arguments.
-        /// Business Logic: Executes StoredProc.AcutisAuth.PasswordResetCrud with ActionId 1; invalidates prior tokens for the user.
+        /// Business Logic: Executes StoredProc.AcutisAuth.PasswordResetCrud with ActionId 1; invalidates prior tokens for the user. No token is persisted when the matched account is deactivated or locked (IsActive/IsLocked on the returned row) — the caller must not issue a reset link for it.
         /// Repository Interaction: Executes StoredProc.AcutisAuth.PasswordResetCrud.
-        /// Response Details: Returns the matched user's identity, or null when no active account matches the email.
+        /// Response Details: Returns null only when no account (or a soft-deleted one) matches the email. Returns a row — with IsActive/IsLocked reflecting the real account state — for any existing account, including a deactivated/locked one, so the service layer can email that account's real owner a distinct notice instead of a reset link, without the HTTP response itself ever differing from the "no account" case.
         /// </remarks>
         /// <param name="email">Account email address.</param>
         /// <param name="tokenHash">SHA-256 hash of the raw reset token.</param>
         /// <param name="expiresAtUtc">UTC expiry for the token.</param>
-        /// <returns>The matched user's identity, or null when not found.</returns>
+        /// <returns>The matched user's identity (with IsActive/IsLocked reflecting whether a token was actually issued), or null when no account matches.</returns>
         Task<ForgotPasswordUserResult?> RequestResetAsync(string email, string tokenHash, DateTime expiresAtUtc);
 
         #endregion POST Methods

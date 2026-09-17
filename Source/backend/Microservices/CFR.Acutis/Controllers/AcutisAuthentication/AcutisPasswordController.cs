@@ -22,15 +22,16 @@ namespace CFR.Acutis.Controllers.AcutisAuthentication
         /// Validation Details: Model binding maps ForgotPasswordInput from the request body.
         /// Business Logic: None at the controller level; delegates to the service layer.
         /// Service Interaction: Calls IAcutisPasswordService.ForgotPasswordAsync().
-        /// Response Details: Standard API result confirming the email was sent, or a not-found result when no account matches the email.
+        /// Response Details: Standard API result with an identical generic success message whether or not an account matches the email — see AcutisPasswordService.ForgotPasswordAsync for why this deliberately never reveals account existence.
         /// </remarks>
         /// <param name="input">Input DTO containing the account email address.</param>
         /// <returns>An API response confirming the request was processed.</returns>
-        /// <response code="200">Reset instructions were sent to the account's email address.</response>
+        /// <response code="200">Always returned for a well-formed request, regardless of whether the account exists.</response>
         /// <response code="400">Invalid request.</response>
-        /// <response code="404">No account matches the given email address.</response>
+        /// <response code="429">Too many requests from this client — rate-limited.</response>
         /// <response code="500">Internal server error occurred.</response>
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
         [HttpPost]
         [ActionName(API_Acutis.AcutisAuthentication.ForgotPassword)]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordInput input)
@@ -59,6 +60,7 @@ namespace CFR.Acutis.Controllers.AcutisAuthentication
         /// <response code="400">The token is invalid or expired, or the passwords do not meet the rules.</response>
         /// <response code="500">Internal server error occurred.</response>
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
         [HttpPut]
         [ActionName(API_Acutis.AcutisAuthentication.ResetPassword)]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordInput input)
@@ -88,6 +90,7 @@ namespace CFR.Acutis.Controllers.AcutisAuthentication
         /// <response code="400">The token is missing, invalid, already used, or expired.</response>
         /// <response code="500">Internal server error occurred.</response>
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
         [HttpGet]
         [ActionName(API_Acutis.AcutisAuthentication.ValidateResetToken)]
         public async Task<IActionResult> ValidateResetToken([FromQuery]    string token)

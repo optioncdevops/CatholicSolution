@@ -25,6 +25,8 @@ interface FilePreviewModalProps {
   onIndexChange?: (index: number) => void;
   onRemoveCurrent?: (index: number) => void;
   enableDocumentPreview?: boolean;
+  /** Friendly caption shown instead of the raw file name (e.g. a hashed storage filename). */
+  title?: string;
 }
 
 export function FilePreviewModal({
@@ -35,6 +37,7 @@ export function FilePreviewModal({
   onIndexChange,
   onRemoveCurrent,
   enableDocumentPreview = false,
+  title,
 }: FilePreviewModalProps) {
   const [zoom, setZoom] = useState(1);
   const [viewMode, setViewMode] = useState<"fit" | "actual">("fit");
@@ -119,7 +122,7 @@ export function FilePreviewModal({
                 themeFormControlTextClass,
               )}
             >
-              {item.file.name}
+              {title ?? item.file.name}
             </p>
             <p className="text-xs text-white/80">
               {safeIndex + 1} of {items.length} •{" "}
@@ -194,8 +197,11 @@ export function FilePreviewModal({
               onClick={() => { setZoom((z) => Math.min(3, z + 0.25)); }}
               disabled={!zoomEnabled}
             />
+            {/* Not the {...BUTTON_PRESETS.cancel} spread used elsewhere in this file — that preset
+                bundles its own leading "x" iconLeft (meant for an actual Cancel button), which
+                rendered ahead of each button's own icon+label below as a stray "x" glyph. */}
             <CommonButton
-              {...BUTTON_PRESETS.cancel}
+              variant="outline"
               type="button"
               size="sm"
               onClick={() => { setViewMode("fit"); }}
@@ -207,7 +213,7 @@ export function FilePreviewModal({
               </span>
             </CommonButton>
             <CommonButton
-              {...BUTTON_PRESETS.cancel}
+              variant="outline"
               type="button"
               size="sm"
               onClick={() => { setViewMode("actual"); }}
@@ -219,7 +225,7 @@ export function FilePreviewModal({
               </span>
             </CommonButton>
             <CommonButton
-              {...BUTTON_PRESETS.cancel}
+              variant="outline"
               type="button"
               size="sm"
               onClick={() => {

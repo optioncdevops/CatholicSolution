@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
-import { getRequestedClientId, getSafeReturnUrl } from './centralAuth';
+import { getRequestedClientId, getSafeReturnUrl, storeCentralAuthHandoff } from './centralAuth';
 
 export function CentralLogoutPage() {
   const { signOut } = useAuth();
@@ -17,9 +17,11 @@ export function CentralLogoutPage() {
     const returnUrl = getSafeReturnUrl(location.search, '/apps');
     signOut();
 
-    const params = new URLSearchParams({ client_id: clientId, returnUrl });
-    if (clientId === 'platform') params.set('entry', 'platform');
-    navigate(`/login?${params.toString()}`, { replace: true });
+    // Handed off via sessionStorage instead of re-appended to the URL — this hop to /login is
+    // same-origin (a plain react-router navigate), so the next page can read it back without
+    // either value ever sitting in the address bar or an access log.
+    storeCentralAuthHandoff({ clientId, returnUrl });
+    navigate(clientId === 'platform' ? '/login?entry=platform' : '/login', { replace: true });
   }, [location.search, navigate, signOut]);
 
   return <div className="min-h-screen bg-slate-50" aria-busy="true" aria-label="Signing out" />;

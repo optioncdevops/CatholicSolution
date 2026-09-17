@@ -57,10 +57,7 @@ export function AdminLoginCard({
         </div>
 
         <div className="admin-auth-field">
-          <div className="admin-auth-field__label-row">
-            <label className="admin-auth-label" htmlFor="txtPassword">Password</label>
-            <Link id="lnkForgotPassword" to={forgotHref} className="admin-auth-forgot">Forgot Password?</Link>
-          </div>
+          <label className="admin-auth-label" htmlFor="txtPassword">Password</label>
           <div className="admin-auth-input-wrap">
             <span className="admin-auth-input-icon"><LockIcon size={15} /></span>
             <input
@@ -97,6 +94,11 @@ export function AdminLoginCard({
             </>
           )}
         </button>
+
+        {/* Deliberately placed after the Sign In button in DOM/tab order (email -> password ->
+            show/hide toggle -> Sign In -> Forgot Password) rather than between the fields, where
+            it used to sit ahead of the password input in tab order. */}
+        <Link id="lnkForgotPassword" to={forgotHref} className="admin-auth-forgot admin-auth-forgot--below">Forgot Password?</Link>
       </form>
     </section>
   );

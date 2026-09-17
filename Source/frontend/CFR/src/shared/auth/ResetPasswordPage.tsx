@@ -1,8 +1,9 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, EyeIcon, EyeOffIcon, LockIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { AuthShell } from './AuthShell';
+import { getRequestedClientId, getSafeReturnUrl, storeCentralAuthHandoff } from './centralAuth';
 
 function passwordScore(value: string) {
   return [
@@ -14,10 +15,14 @@ function passwordScore(value: string) {
 }
 
 export function ResetPasswordPage() {
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const email = searchParams.get('email')?.trim() ?? '';
-  const returnUrl = searchParams.get('returnUrl');
-  const clientId = searchParams.get('client_id');
+  // Falls back to the sessionStorage handoff (see centralAuth.ts) set by the pages earlier in
+  // this chain, instead of requiring client_id/returnUrl to still be sitting in this page's own
+  // query string.
+  const clientId = useMemo(() => getRequestedClientId(location.search), [location.search]);
+  const returnUrl = useMemo(() => getSafeReturnUrl(location.search, ''), [location.search]);
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,16 +31,13 @@ export function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [complete, setComplete] = useState(false);
   const score = useMemo(() => passwordScore(password), [password]);
-  const loginParams = new URLSearchParams();
-  if (returnUrl) loginParams.set('returnUrl', returnUrl);
-  if (clientId) loginParams.set('client_id', clientId);
-  if (!returnUrl && !clientId) loginParams.set('entry', 'platform');
-  const loginTarget = `/login?${loginParams.toString()}`;
-  const recoveryParams = new URLSearchParams();
-  if (email) recoveryParams.set('email', email);
-  if (returnUrl) recoveryParams.set('returnUrl', returnUrl);
-  if (clientId) recoveryParams.set('client_id', clientId);
-  const recoveryTarget = `/forgot-password${recoveryParams.size ? `?${recoveryParams.toString()}` : ''}`;
+
+  useEffect(() => {
+    storeCentralAuthHandoff({ clientId, returnUrl: returnUrl || undefined });
+  }, [clientId, returnUrl]);
+
+  const loginTarget = returnUrl ? '/login' : '/login?entry=platform';
+  const recoveryTarget = email ? `/forgot-password?${new URLSearchParams({ email }).toString()}` : '/forgot-password';
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
