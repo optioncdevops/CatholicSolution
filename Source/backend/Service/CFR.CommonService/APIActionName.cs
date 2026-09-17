@@ -128,5 +128,15 @@ namespace CFR.CommonService
             public const string GetDashboardSummary = nameof(GetDashboardSummary);
             public const string GetIntegrityIssueDetail = nameof(GetIntegrityIssueDetail);
         }
+
+        public static class API_UserSync
+        {
+            public const string CreateUser = nameof(CreateUser);
+            public const string UpdateUser = nameof(UpdateUser);
+            public const string PatchUser = nameof(PatchUser);
+            public const string DeactivateUser = nameof(DeactivateUser);
+            public const string ReactivateUser = nameof(ReactivateUser);
+            public const string GetUser = nameof(GetUser);
+        }
     }
 }
