@@ -4,7 +4,7 @@ import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { CommonButton } from '@app/components/buttons';
 import { Badge } from '@app/components/Badge';
 import { BaseModal } from '@app/components/modal/BaseModal';
-import { InputField, TextareaField } from '@app/components/formControls';
+import { CharacterCount, InputField, TextareaField } from '@app/components/formControls';
 import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { saveUserRole } from '../../services/userRolesService';
 import type { UserRolesApiItem, UserRolesFormValues } from '../../types/userRolesTypes';
@@ -34,7 +34,7 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
   const { showToast } = useToast();
 
   //#region Form
-  const { control, handleSubmit, reset, formState: { isDirty } } = useForm<UserRolesFormValues>({
+  const { control, handleSubmit, reset, setError, clearErrors, watch, formState: { isValid, isDirty } } = useForm<UserRolesFormValues>({
     defaultValues: userRolesDefaultValues,
     mode: 'onChange',
   });
@@ -46,11 +46,9 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
   //#endregion
 
   //#region Functions
-  const handleClose = async () => {
-    if (isDirty) {
-      const confirmed = await confirmDiscardChanges();
-      if (!confirmed) return;
-    }
+  // The unconditional close, used once a save has already gone through (or on mount cleanup) -
+  // there is nothing left to discard, so this never prompts.
+  const closeWithoutPrompt = () => {
     setFormError(null);
     onClose();
   };
@@ -63,12 +61,7 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
   // still reflect the pre-reset value in the closure that scheduled this call.
   const handleClose = async () => {
     if (!readOnly && isDirty) {
-      const confirmed = await confirmAction({
-        title: 'Discard unsaved changes?',
-        description: 'Your changes to this role have not been saved.',
-        confirmLabel: 'Discard changes',
-        tone: 'danger',
-      });
+      const confirmed = await confirmDiscardChanges();
       if (!confirmed) return;
     }
     closeWithoutPrompt();
@@ -124,8 +117,8 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
         return;
       }
       reset(userRolesDefaultValues);
+      closeWithoutPrompt();
       showToast(role ? 'User role updated successfully.' : 'User role added successfully.', 'success');
-      handleClose();
       await onSaved();
     } catch (error) {
       console.error('Error saving user role:', error);
@@ -161,15 +154,31 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
       showMandatory={!readOnly}
       footer={(
         <>
-          <CommonButton variant="outline" onClick={handleClose} disabled={saving}>{readOnly ? 'Close' : 'Cancel'}</CommonButton>
-          {readOnly ? null : <CommonButton variant="primary" onClick={handleSubmit(onSubmit, onInvalid)} loading={saving} disabled={saving || (Boolean(role) && !isDirty)}>Save</CommonButton>}
+          <CommonButton id={readOnly ? 'btnCloseUserRoleModal' : 'btnCancelUserRole'} variant="outline" onClick={handleClose} disabled={saving}>{readOnly ? 'Close' : 'Cancel'}</CommonButton>
+          {readOnly ? null : <CommonButton id="btnSaveUserRole" variant="primary" onClick={handleSubmit(onSubmit, onInvalid)} loading={saving} disabled={saveDisabled}>Save</CommonButton>}
         </>
       )}
     >
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         {readOnly ? <ReadOnlyBanner featureName="User Roles" /> : null}
         {formError ? <p className="text-xs font-semibold text-[var(--error)]">{formError}</p> : null}
-        <InputField control={control} name="roleName" label="Role name" required autoFocus rules={userRolesRules.roleName} maxLength={50} disabled={saving || readOnly} />
+        {role ? (
+          // Read-only — status is changed via the list page's Activate/Deactivate action (which
+          // also enforces the role-in-use guard), not edited inline here. The Save button below
+          // never touches status: toSaveUserRolePayload always resends `role.status` unchanged.
+          <div className="flex items-center gap-2">
+            <span className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-muted)]">Status</span>
+            <Badge id="badgeUserRoleStatus" tone={role.status === 'active' ? 'success' : 'neutral'}>
+              {role.status === 'active' ? 'Active' : 'Inactive'}
+            </Badge>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-1">
+          <InputField id="txtUserRoleName" control={control} name="roleName" label="Role name" required autoFocus rules={userRolesRules.roleName} maxLength={ROLE_NAME_MAX_LENGTH} disabled={saving || readOnly} />
+          <div className="flex justify-end">
+            <CharacterCount id="txtUserRoleName-counter" length={roleNameValue?.length ?? 0} maxLength={ROLE_NAME_MAX_LENGTH} />
+          </div>
+        </div>
         <TextareaField control={control} name="description" label="Description" rows={3} rules={userRolesRules.description} maxLength={250} showCharCount={true} disabled={saving || readOnly} />
       </form>
     </BaseModal>

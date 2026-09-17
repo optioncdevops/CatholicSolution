@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Pencil, Plus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Pencil, Plus, ShieldCheck, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';

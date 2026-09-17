@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Pencil, Plus, Power, Trash2 } from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { FilterX, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
@@ -26,7 +26,6 @@ export function UsersListPage() {
   const accessLevel = useFeatureAccessLevel('/admin/users');
   const isReadOnly = accessLevel === 'readOnly';
   const location = useLocation();
-  const filterRoleId = location.state?.roleId as number | undefined;
 
   // An admin can never deactivate or delete their own account from this list — the backend
   // rejects it too, but disabling it here avoids a round trip just to hit that guard.
@@ -56,24 +55,38 @@ export function UsersListPage() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  // User Roles' "Users" count column links here with the role passed via router state rather
+  // than a query param — fold it into the same URL-based filter on arrival so the Role dropdown
+  // above reflects it instead of silently filtering behind an unchanged "All Roles" display.
+  useEffect(() => {
+    const stateRoleId = (location.state as { roleId?: number } | null)?.roleId;
+    if (stateRoleId && !searchParams.get(ROLE_FILTER_PARAM)) {
+      setRoleFilter(String(stateRoleId));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once for the state this page was entered with
+  }, []);
+
   //#region Functions
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const { resultData, statusCode } = await getUsers();
-      let usersList = statusCode === 204 ? [] : normalizeUsersList(resultData);
-      if (filterRoleId) {
-        usersList = usersList.filter((u) => u.roleId === filterRoleId);
-      }
-      setRows(usersList);
+      const nextRows = statusCode === 204 ? [] : normalizeUsersList(resultData);
+      setRows(nextRows);
+      setLoadError(null);
+      setAnnouncement(nextRows.length === 0 ? 'No users found.' : `${nextRows.length} users loaded.`);
     } catch (error) {
       console.error('Error loading users:', error);
-      showToast('Failed to load users.', 'error');
-      setRows([]);
+      const message = typeof error === 'string' ? error : 'Failed to load users.';
+      // Preserve any previously loaded rows — an unrelated failed refresh should not blank out
+      // data the admin was already looking at.
+      setLoadError(message);
+      showToast(message, 'error');
+      setAnnouncement(message);
     } finally {
       setLoading(false);
     }
-  }, [showToast, filterRoleId]);
+  }, [showToast]);
   //#endregion
 
   //#region Effects
@@ -120,7 +133,8 @@ export function UsersListPage() {
       await load();
     } catch (error) {
       console.error('Error updating user status:', error);
-      showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.', 'error');
+      const fallback = nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.';
+      showToast(typeof error === 'string' ? error : fallback, 'error');
     }
   }, [load, showToast, isReadOnly, currentUserId]);
 

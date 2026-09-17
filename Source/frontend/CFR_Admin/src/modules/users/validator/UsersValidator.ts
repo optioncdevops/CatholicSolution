@@ -41,17 +41,28 @@ export const usersRules = {
     validate: (value: string) => passwordScore(value) >= 3 || PASSWORD_STRENGTH_HINT,
   },
   roleId: { required: 'This field is required' },
-  dateOfBirth: { 
-    required: 'This field is required',
+  // Not required: legacy users saved before this field existed have no date of birth on file, and
+  // re-saving their record (e.g. a status change) must not force one to be entered retroactively.
+  dateOfBirth: {
     validate: (value: string) => {
       if (!value) return true;
-      const [year, month, day] = value.split('-').map(Number);
-      if (!year || !month || !day) return true;
-      const selectedLocal = new Date(year, month - 1, day);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      return selectedLocal <= today || 'Date of birth cannot be in the future';
-    }
+      const dob = new Date(`${value}T00:00:00`);
+      if (dob > today) return 'Date of birth cannot be in the future.';
+
+      let age = today.getFullYear() - dob.getFullYear();
+      const hasNotHadBirthdayYet = (
+        today.getMonth() < dob.getMonth()
+        || (today.getMonth() === dob.getMonth() && today.getDate() < dob.getDate())
+      );
+      if (hasNotHadBirthdayYet) age -= 1;
+
+      // US convention for a staff/admin account: must be an adult, and a realistic age.
+      if (age < MIN_USER_AGE_YEARS) return `Must be at least ${MIN_USER_AGE_YEARS} years old.`;
+      if (age > MAX_USER_AGE_YEARS) return 'Enter a valid date of birth.';
+      return true;
+    },
   },
   isActive: { required: 'This field is required' },
   isLocked: { required: 'This field is required' },

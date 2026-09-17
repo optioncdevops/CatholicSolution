@@ -12,7 +12,7 @@ import { DatePicker, Dropdown, InputField, MandatoryIndicator, RadioGroup } from
 import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { getUserById, getUserLookups, saveUser } from '../../services/usersService';
 import type { RoleLookupItem, UsersFormValues } from '../../types/usersTypes';
-import { getTodayDateOnly, toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
+import { maxAllowedDateOfBirth, minAllowedDateOfBirth, toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
 import { usersDefaultValues, usersRules } from '../../validator/UsersValidator';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 
@@ -36,7 +36,7 @@ const AddUsers = () => {
   //#endregion
 
   //#region Form
-  const { control, handleSubmit, reset, setError, formState: { isDirty } } = useForm<UsersFormValues>({
+  const { control, handleSubmit, reset, setError, clearErrors, watch, formState: { isDirty } } = useForm<UsersFormValues>({
     defaultValues: usersDefaultValues,
     mode: 'onChange',
   });
@@ -158,6 +158,7 @@ const AddUsers = () => {
         const msg = response.statusMessage || 'A user with this email already exists.';
         showToast(msg, 'conflict');
         setError('eMail', { type: 'manual', message: msg });
+        setDuplicateEmail(values.eMail);
         return;
       }
       showToast(isEdit ? 'User updated successfully.' : 'User added successfully.');
@@ -216,19 +217,21 @@ const AddUsers = () => {
             required
             rules={usersRules.eMail}
             disabled={saving || isReadOnly}
-            autoComplete="off"
           />
-          <InputField
-            control={control}
-            name="password"
-            label="Password"
-            type="password"
-            placeholder={isEdit ? 'Enter password' : 'Enter password'}
-            required={!isEdit}
-            rules={isEdit ? undefined : usersRules.password}
-            disabled={saving || isReadOnly}
-            autoComplete="new-password"
-          />
+          <div className="flex flex-col gap-1">
+            <InputField
+              control={control}
+              name="password"
+              label="Password"
+              type="password"
+              placeholder={isEdit ? 'Leave blank to keep the current password' : 'Enter password'}
+              autoComplete="new-password"
+              required={!isEdit}
+              rules={isEdit ? undefined : usersRules.password}
+              disabled={saving || isReadOnly}
+            />
+            {!isReadOnly ? <p className="text-xs text-[var(--text-muted)]">{PASSWORD_STRENGTH_HINT}</p> : null}
+          </div>
           <InputField
             control={control}
             name="contactNumber"
@@ -258,7 +261,6 @@ const AddUsers = () => {
             maxDate={maxAllowedDateOfBirth()}
             minDate={minAllowedDateOfBirth()}
             rules={usersRules.dateOfBirth}
-            maxDate={getTodayDateOnly()}
             disabled={saving || isReadOnly}
           />
           <Dropdown
