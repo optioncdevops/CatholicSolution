@@ -178,6 +178,34 @@ BEGIN
             RETURN @ReturnValue;
         END
 
+        -- Last-active-admin protection: block deactivating this user via the edit form if they are
+        -- currently the only active Platform Admin (same rule ActionId 2/6 enforce for
+        -- status-toggle/delete, repeated here since Save doubles as the edit-status path).
+        IF @IsActive = 0 AND EXISTS (
+            SELECT 1
+            FROM [auth].[AcutisUser] AS u
+            INNER JOIN [auth].[AcutisRole] AS r ON r.[RoleId] = u.[RoleId]
+            WHERE u.[UserId] = @UserId
+              AND u.[IsDeleted] = 0
+              AND u.[IsActive] = 1
+              AND r.[RoleName] = N'Platform Admin'
+        )
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM [auth].[AcutisUser] AS u2
+                INNER JOIN [auth].[AcutisRole] AS r2 ON r2.[RoleId] = u2.[RoleId]
+                WHERE u2.[UserId] <> @UserId
+                  AND u2.[IsDeleted] = 0
+                  AND u2.[IsActive] = 1
+                  AND r2.[RoleName] = N'Platform Admin'
+            )
+            BEGIN
+                SET @ReturnValue = -97;
+                RETURN @ReturnValue;
+            END
+        END
+
         UPDATE [auth].[AcutisUser]
         SET
             [FirstName] = @FirstName,
@@ -203,6 +231,34 @@ BEGIN
 
     IF @ActionId = 2
     BEGIN
+        -- Last-active-admin protection: refuse to deactivate the only remaining active Platform
+        -- Admin. -99 is already used for duplicate-email; use -97 for this distinct failure so the
+        -- service layer can map it to its own error message.
+        IF @IsActive = 0 AND EXISTS (
+            SELECT 1
+            FROM [auth].[AcutisUser] AS u
+            INNER JOIN [auth].[AcutisRole] AS r ON r.[RoleId] = u.[RoleId]
+            WHERE u.[UserId] = @UserId
+              AND u.[IsDeleted] = 0
+              AND u.[IsActive] = 1
+              AND r.[RoleName] = N'Platform Admin'
+        )
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM [auth].[AcutisUser] AS u2
+                INNER JOIN [auth].[AcutisRole] AS r2 ON r2.[RoleId] = u2.[RoleId]
+                WHERE u2.[UserId] <> @UserId
+                  AND u2.[IsDeleted] = 0
+                  AND u2.[IsActive] = 1
+                  AND r2.[RoleName] = N'Platform Admin'
+            )
+            BEGIN
+                SET @ReturnValue = -97;
+                RETURN @ReturnValue;
+            END
+        END
+
         UPDATE [auth].[AcutisUser]
         SET [IsActive] = CASE WHEN @IsActive = 0 THEN 0 ELSE 1 END,
             [UpdatedDate] = SYSUTCDATETIME(),
@@ -286,6 +342,32 @@ BEGIN
 
     IF @ActionId = 6
     BEGIN
+        -- Last-active-admin protection: refuse to delete the only remaining active Platform Admin.
+        IF EXISTS (
+            SELECT 1
+            FROM [auth].[AcutisUser] AS u
+            INNER JOIN [auth].[AcutisRole] AS r ON r.[RoleId] = u.[RoleId]
+            WHERE u.[UserId] = @UserId
+              AND u.[IsDeleted] = 0
+              AND u.[IsActive] = 1
+              AND r.[RoleName] = N'Platform Admin'
+        )
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM [auth].[AcutisUser] AS u2
+                INNER JOIN [auth].[AcutisRole] AS r2 ON r2.[RoleId] = u2.[RoleId]
+                WHERE u2.[UserId] <> @UserId
+                  AND u2.[IsDeleted] = 0
+                  AND u2.[IsActive] = 1
+                  AND r2.[RoleName] = N'Platform Admin'
+            )
+            BEGIN
+                SET @ReturnValue = -97;
+                RETURN @ReturnValue;
+            END
+        END
+
         UPDATE [auth].[AcutisUser]
         SET [IsDeleted] = 1,
             [IsActive] = 0,

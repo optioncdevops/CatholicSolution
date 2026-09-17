@@ -40,6 +40,20 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         /// <returns>The matching role, or null when not found.</returns>
         Task<UserRolesOutput?> GetUserRoleByIdAsync(int roleId);
 
+        /// <summary>
+        /// Retrieves the signed-in user's own AccessRight for the User Roles admin page.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Server-side authorization check ahead of a mutation.
+        /// Request Flow: IUserRolesService -> IUserRolesRepository.GetCurrentUserAccessRightAsync() -> SQL Database.
+        /// Validation Details: Keyed by ICurrentUserService.RoleId and this feature's fixed RoutingUrl.
+        /// Business Logic: Directly retrieves the resolved AccessRight.
+        /// Repository Interaction: Executes StoredProc.Administration.GetFeatureAccessRight.
+        /// Response Details: Returns 0 (Denied), 1 (Access), or 2 (Read Only).
+        /// </remarks>
+        /// <returns>The caller's AccessRight for the User Roles admin page.</returns>
+        Task<int> GetCurrentUserAccessRightAsync();
+
         #endregion GET Methods
 
         #region POST Methods

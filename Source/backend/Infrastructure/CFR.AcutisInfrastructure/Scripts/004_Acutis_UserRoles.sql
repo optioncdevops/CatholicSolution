@@ -109,6 +109,15 @@ BEGIN
         WHERE [RoleId] = @RoleId
           AND [IsDeleted] = 0;
 
+        -- @RoleId <> 0 got here past the duplicate-name check above, but that check only looked
+        -- at OTHER rows (RoleId <> @RoleId) - a deleted/nonexistent RoleId matches zero rows in
+        -- both checks and would otherwise fall through to a false "success" below.
+        IF @@ROWCOUNT = 0
+        BEGIN
+            SET @ReturnValue = -96;
+            RETURN @ReturnValue;
+        END
+
         SET @ReturnValue = @RoleId;
         RETURN @ReturnValue;
     END
@@ -136,6 +145,12 @@ BEGIN
             [UpdatedBy] = @UpdatedBy
         WHERE [RoleId] = @RoleId
           AND [IsDeleted] = 0;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            SET @ReturnValue = -96;
+            RETURN @ReturnValue;
+        END
 
         SET @ReturnValue = @RoleId;
         RETURN @ReturnValue;
@@ -201,6 +216,12 @@ BEGIN
             [UpdatedBy] = @UpdatedBy
         WHERE [RoleId] = @RoleId
           AND [IsDeleted] = 0;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            SET @ReturnValue = -96;
+            RETURN @ReturnValue;
+        END
 
         UPDATE [auth].[ModuleRights]
         SET [IsDeleted] = 1,

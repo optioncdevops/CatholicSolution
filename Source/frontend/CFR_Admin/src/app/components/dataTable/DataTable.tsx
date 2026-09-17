@@ -36,6 +36,8 @@ interface DataTableProps<T> {
   /** Caps the scrollable body height (e.g. '480px', '60vh') instead of growing the page indefinitely. */
   maxHeight?: string;
   initialSort?: DataTableSort[];
+  /** Shows the table's loading skeleton/spinner instead of the empty message while data is in flight. */
+  loading?: boolean;
 }
 
 /**
@@ -45,7 +47,7 @@ interface DataTableProps<T> {
  * call site. Add new `CustomDataTable` features here, not by bypassing this component.
  */
 export function DataTable<T>({
-  data, columns, getRowId, onRowClick, pageSize = 25, exportFileName = 'export', exportTitle, emptyMessage = 'No results found.', maxHeight, initialSort,
+  data, columns, getRowId, onRowClick, pageSize = 25, exportFileName = 'export', exportTitle, emptyMessage = 'No results found.', maxHeight, initialSort, loading,
 }: DataTableProps<T>) {
   const mappedColumns = useMemo<ColumnDef<T>[]>(() => columns.map((column) => ({
     id: column.id,
@@ -76,6 +78,7 @@ export function DataTable<T>({
       emptyMessage={emptyMessage}
       innerScroll={Boolean(maxHeight)}
       innerScrollMaxHeight={maxHeight}
+      loading={loading}
     />
   );
 }

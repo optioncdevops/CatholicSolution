@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Pencil, Plus, Power, Trash2 } from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { FilterX, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
@@ -9,12 +9,15 @@ import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel'
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { StatusBadge, Badge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
+import { Dropdown } from '@app/components/formControls';
 import { confirmAction } from '../../lib/confirm';
 import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { deleteUser, getUsers, updateUserStatus } from '../services/usersService';
 import type { UsersApiItem } from '../types/usersTypes';
 import { normalizeUsersList } from '../utils/usersHelpers';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
+
+const ROLE_FILTER_PARAM = 'roleId';
 
 export function UsersListPage() {
   //#region Hooks
@@ -23,35 +26,67 @@ export function UsersListPage() {
   const accessLevel = useFeatureAccessLevel('/admin/users');
   const isReadOnly = accessLevel === 'readOnly';
   const location = useLocation();
-  const filterRoleId = location.state?.roleId as number | undefined;
 
   // An admin can never deactivate or delete their own account from this list — the backend
   // rejects it too, but disabling it here avoids a round trip just to hit that guard.
   const currentUserId = getStoredAcutisAuth()?.resultData?.user?.userId ?? null;
+  const [searchParams, setSearchParams] = useSearchParams();
   //#endregion
 
   //#region States
   const [rows, setRows] = useState<UsersApiItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [lockedFilter, setLockedFilter] = useState('');
   //#endregion
+
+  // The Role filter lives in the URL (?roleId=), not local state — bookmarkable/shareable, and
+  // lets other pages (User Roles' "Manage Rights"-adjacent Users count) deep-link straight to a
+  // specific role, matching how RequestsListPage already treats its own status filter.
+  const roleFilter = searchParams.get(ROLE_FILTER_PARAM) ?? '';
+  const setRoleFilter = useCallback((next: string) => {
+    setSearchParams((current) => {
+      const params = new URLSearchParams(current);
+      if (!next) params.delete(ROLE_FILTER_PARAM);
+      else params.set(ROLE_FILTER_PARAM, next);
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  // User Roles' "Users" count column links here with the role passed via router state rather
+  // than a query param — fold it into the same URL-based filter on arrival so the Role dropdown
+  // above reflects it instead of silently filtering behind an unchanged "All Roles" display.
+  useEffect(() => {
+    const stateRoleId = (location.state as { roleId?: number } | null)?.roleId;
+    if (stateRoleId && !searchParams.get(ROLE_FILTER_PARAM)) {
+      setRoleFilter(String(stateRoleId));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once for the state this page was entered with
+  }, []);
 
   //#region Functions
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const { resultData, statusCode } = await getUsers();
-      let usersList = statusCode === 204 ? [] : normalizeUsersList(resultData);
-      if (filterRoleId) {
-        usersList = usersList.filter((u) => u.roleId === filterRoleId);
-      }
-      setRows(usersList);
+      const nextRows = statusCode === 204 ? [] : normalizeUsersList(resultData);
+      setRows(nextRows);
+      setLoadError(null);
+      setAnnouncement(nextRows.length === 0 ? 'No users found.' : `${nextRows.length} users loaded.`);
     } catch (error) {
       console.error('Error loading users:', error);
-      showToast('Failed to load users.', 'error');
-      setRows([]);
+      const message = typeof error === 'string' ? error : 'Failed to load users.';
+      // Preserve any previously loaded rows — an unrelated failed refresh should not blank out
+      // data the admin was already looking at.
+      setLoadError(message);
+      showToast(message, 'error');
+      setAnnouncement(message);
     } finally {
       setLoading(false);
     }
-  }, [showToast, filterRoleId]);
+  }, [showToast]);
   //#endregion
 
   //#region Effects
@@ -98,7 +133,8 @@ export function UsersListPage() {
       await load();
     } catch (error) {
       console.error('Error updating user status:', error);
-      showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.', 'error');
+      const fallback = nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.';
+      showToast(typeof error === 'string' ? error : fallback, 'error');
     }
   }, [load, showToast, isReadOnly, currentUserId]);
 
@@ -191,6 +227,22 @@ export function UsersListPage() {
   ], [handleDelete, handleToggleStatus, navigate, isReadOnly, currentUserId]);
   //#endregion
 
+  //#region Filters
+  const roleOptions = useMemo(() => {
+    const byRoleId = new Map<number, string>();
+    rows.forEach((user) => { if (!byRoleId.has(user.roleId)) byRoleId.set(user.roleId, user.roleName); });
+    return Array.from(byRoleId.entries())
+      .sort(([, a], [, b]) => a.localeCompare(b))
+      .map(([roleId, roleName]) => ({ id: String(roleId), value: roleName }));
+  }, [rows]);
+  const filteredRows = useMemo(() => rows.filter((user) => (
+    (!roleFilter || String(user.roleId) === roleFilter)
+    && (!statusFilter || user.status === statusFilter)
+    && (!lockedFilter || String(user.isLocked) === lockedFilter)
+  )), [rows, roleFilter, statusFilter, lockedFilter]);
+  const hasActiveFilters = Boolean(roleFilter || statusFilter || lockedFilter);
+  //#endregion
+
   //#region Render
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -199,18 +251,93 @@ export function UsersListPage() {
         action={!isReadOnly && <CommonButton variant="headerSecondary" iconLeft={<Plus size={14} />} onClick={() => navigate('/admin/add-users')}>Add User</CommonButton>}
       />
 
+      <span className="sr-only" role="status" aria-live="polite">{announcement}</span>
+
       {isReadOnly ? <ReadOnlyBanner featureName="Users" /> : null}
 
-      {!loading && rows.length === 0 ? (
+      {rows.length > 0 && (
+        <div className="flex flex-wrap gap-4">
+          <div className="w-full max-w-xs">
+            <Dropdown
+              id="filterUsersRole"
+              label="Role"
+              searchable={false}
+              clearable={false}
+              value={roleFilter || 'all'}
+              onValueChange={(value) => setRoleFilter(!value || value === 'all' ? '' : value)}
+              options={[{ id: 'all', value: 'All Roles' }, ...roleOptions]}
+              className="min-h-8"
+            />
+          </div>
+          <div className="w-full max-w-xs">
+            <Dropdown
+              id="filterUsersStatus"
+              label="Status"
+              searchable={false}
+              clearable={false}
+              value={statusFilter || 'all'}
+              onValueChange={(value) => setStatusFilter(!value || value === 'all' ? '' : value)}
+              options={[
+                { id: 'all', value: 'All Statuses' },
+                { id: 'active', value: 'Active' },
+                { id: 'inactive', value: 'Inactive' },
+              ]}
+              className="min-h-8"
+            />
+          </div>
+          <div className="w-full max-w-xs">
+            <Dropdown
+              id="filterUsersLocked"
+              label="Locked"
+              searchable={false}
+              clearable={false}
+              value={lockedFilter || 'all'}
+              onValueChange={(value) => setLockedFilter(!value || value === 'all' ? '' : value)}
+              options={[
+                { id: 'all', value: 'All' },
+                { id: '1', value: 'Yes' },
+                { id: '0', value: 'No' },
+              ]}
+              className="min-h-8"
+            />
+          </div>
+          {hasActiveFilters ? (
+            <div className="flex shrink-0 items-end pb-0.5">
+              <CommonButton
+                id="btnClearUsersFilters"
+                variant="clearFilter"
+                size="sm"
+                iconLeft={<FilterX size={14} />}
+                onClick={() => { setRoleFilter(''); setStatusFilter(''); setLockedFilter(''); }}
+              >
+                Clear filter
+              </CommonButton>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {loadError && rows.length === 0 ? (
+        <EmptyState icon="⚠️" title="Couldn't load users" description={loadError} actionLabel="Retry" onAction={() => void load()} />
+      ) : !loading && rows.length === 0 ? (
         <EmptyState icon="🙍" title="No users found" description="Add a user to get started." />
+      ) : !loading && hasActiveFilters && filteredRows.length === 0 ? (
+        <EmptyState
+          icon="🔍"
+          title="No users match the selected filters"
+          description="Try a different Role, Status, or Locked combination."
+          actionLabel="Clear filters"
+          onAction={() => { setRoleFilter(''); setStatusFilter(''); setLockedFilter(''); }}
+        />
       ) : (
         <DataTable
-          data={rows}
+          data={filteredRows}
           columns={columns}
           getRowId={(user) => String(user.userId)}
           exportFileName="catholic-solutions-users"
           exportTitle="Catholic Solutions — Users"
           emptyMessage="No users found."
+          loading={loading}
         />
       )}
     </div>

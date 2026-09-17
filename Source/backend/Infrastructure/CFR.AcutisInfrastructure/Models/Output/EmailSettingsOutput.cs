@@ -107,5 +107,18 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("apiBaseUrl")]
         public string? ApiBaseUrl { get; set; }
+
+        /// <summary>
+        /// Gets or sets the full name of the admin who last saved these settings, or null if
+        /// they have never been saved through the editor (e.g. still on their file defaults).
+        /// </summary>
+        [JsonPropertyName("lastUpdatedByName")]
+        public string? LastUpdatedByName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the UTC timestamp these settings were last saved.
+        /// </summary>
+        [JsonPropertyName("lastUpdatedDate")]
+        public DateTime? LastUpdatedDate { get; set; }
     }
 }

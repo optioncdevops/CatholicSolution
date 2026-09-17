@@ -13,6 +13,8 @@ namespace CFR.AcutisService.Service.Administration
     public class EmailSettingsService(
         IConfSettingsService confSettingsService,
         IFileHandlerService fileHandler,
+        ICurrentUserService currentUserService,
+        ISMTPMailService smtpMailService,
         ILogger<EmailSettingsService> logger): IEmailSettingsService
     {
         private static string GetEmailLogoRelativePath() => Path.Combine("Acutis", "Attachment", "EmailSettings");
@@ -34,6 +36,8 @@ namespace CFR.AcutisService.Service.Administration
             LogoFileName = string.IsNullOrWhiteSpace(smtp?.LogoUrl) || string.Equals(smtp.LogoUrl, "none", StringComparison.OrdinalIgnoreCase) ? null : smtp.LogoUrl,
             LogoImageUrl = SMTPMailService.GetLogoImageUrl(smtp),
             ApiBaseUrl = smtp?.ApiBaseUrl,
+            LastUpdatedByName = smtp?.LastUpdatedByName,
+            LastUpdatedDate = smtp?.LastUpdatedDate,
         };
 
         #region GET Methods
@@ -151,18 +155,54 @@ namespace CFR.AcutisService.Service.Administration
                     return Task.FromResult(result);
                 }
 
-                // ApiBaseUrl is embedded as an <img src> in every real outgoing email (see
-                // SMTPMailService.BuildLogoImageUrl) — a loopback/private-network address only
-                // this machine can reach produces a permanently broken logo for every recipient.
-                // Rejected here too, not just in the frontend validator, since this action can be
-                // called directly.
-                if (!string.IsNullOrWhiteSpace(input.ApiBaseUrl)
-                    && Uri.TryCreate(input.ApiBaseUrl.Trim(), UriKind.Absolute, out var apiBaseUri)
-                    && (apiBaseUri.IsLoopback || apiBaseUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)))
+                // Format validation, re-checked server-side since this action can be called
+                // directly - the frontend's own checks (EmailSettingsValidator.ts) can be
+                // bypassed by a hand-crafted request.
+                if (!string.IsNullOrWhiteSpace(input.CcMailId) && !EmailValidator.IsValidFormat(input.CcMailId))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = "API base URL cannot be a localhost address — recipients' email clients cannot reach it.";
+                    result.StatusMessage = "CC address is not a valid email address.";
                     return Task.FromResult(result);
+                }
+
+                if (!string.IsNullOrWhiteSpace(input.ContactUsMailId) && !EmailValidator.IsValidFormat(input.ContactUsMailId))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = "Contact us address is not a valid email address.";
+                    return Task.FromResult(result);
+                }
+
+                if (!string.IsNullOrWhiteSpace(input.ApiBaseUrl))
+                {
+                    string trimmedApiBaseUrl = input.ApiBaseUrl.Trim();
+                    if (!Uri.TryCreate(trimmedApiBaseUrl, UriKind.Absolute, out var apiBaseUri)
+                        || (apiBaseUri.Scheme != Uri.UriSchemeHttp && apiBaseUri.Scheme != Uri.UriSchemeHttps))
+                    {
+                        result.StatusCode = ErrorCodes.BadRequest;
+                        result.StatusMessage = "API base URL must be a valid absolute URL, e.g. https://api.example.com.";
+                        return Task.FromResult(result);
+                    }
+
+                    // https:// required unless this environment's own configuration explicitly
+                    // allows plain http - no such override exists today, so this defaults to the
+                    // safer, stricter rule rather than silently permitting http.
+                    if (apiBaseUri.Scheme != Uri.UriSchemeHttps)
+                    {
+                        result.StatusCode = ErrorCodes.BadRequest;
+                        result.StatusMessage = "API base URL must start with https://.";
+                        return Task.FromResult(result);
+                    }
+
+                    // ApiBaseUrl is embedded as an <img src> in every real outgoing email (see
+                    // SMTPMailService.BuildLogoImageUrl) — a loopback/private-network address only
+                    // this machine can reach produces a permanently broken logo for every
+                    // recipient.
+                    if (apiBaseUri.IsLoopback || apiBaseUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.StatusCode = ErrorCodes.BadRequest;
+                        result.StatusMessage = "API base URL cannot be a localhost address — recipients' email clients cannot reach it.";
+                        return Task.FromResult(result);
+                    }
                 }
 
                 var settings = confSettingsService.LoadData();
@@ -186,6 +226,10 @@ namespace CFR.AcutisService.Service.Administration
                 smtp.FontFamily = input.FontFamily ?? string.Empty;
                 smtp.BaseFontSize = input.BaseFontSize ?? 0;
                 smtp.ApiBaseUrl = input.ApiBaseUrl ?? string.Empty;
+
+                string actingUserName = $"{currentUserService.FirstName} {currentUserService.LastName}".Trim();
+                smtp.LastUpdatedByName = string.IsNullOrWhiteSpace(actingUserName) ? currentUserService.UserName : actingUserName;
+                smtp.LastUpdatedDate = DateTime.UtcNow;
 
                 settings.SMTPMailConfig = smtp;
                 confSettingsService.SaveData(settings);
@@ -311,6 +355,77 @@ namespace CFR.AcutisService.Service.Administration
             }
 
             return Task.FromResult(result);
+        }
+
+        /// <summary>
+        /// Verifies SMTP connectivity and authentication without sending a real email.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let an admin confirm server/port/SSL/credentials work before enabling Send Mail.
+        /// Request Flow: EmailSettingsController -> EmailSettingsService.TestSmtpConnectionAsync() -> ISMTPMailService.TestConnectionAsync().
+        /// Validation Details: SMTP server and username are required, same as save.
+        /// Business Logic: Tests the in-progress form values; a blank password falls back to the currently stored one so a blank UI field never sends an empty password.
+        /// Repository Interaction: None — reads _configurationSettings.json via IConfSettingsService for the password fallback only.
+        /// Response Details: MSResultArgs containing a success flag and a safe message.
+        /// </remarks>
+        /// <param name="input">The in-progress form values to test.</param>
+        /// <returns>MSResultArgs containing the test outcome.</returns>
+        public async Task<MSResultArgs> TestSmtpConnectionAsync(EmailSettingsInput input)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (input == null || string.IsNullOrWhiteSpace(input.SmtpServer) || string.IsNullOrWhiteSpace(input.Username))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                if (input.SmtpPort is < 1 or > 65535)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                var settings = confSettingsService.LoadData();
+                var storedSmtp = settings?.SMTPMailConfig;
+
+                var testConfig = new SMTPMailConfig
+                {
+                    SendMailFlag = "0",
+                    SMTPServer = input.SmtpServer,
+                    SMTPPort = input.SmtpPort.ToString(),
+                    DisplayName = input.DisplayName,
+                    MUserName = input.Username,
+                    // Never send an empty password merely because the UI field was left blank -
+                    // same "blank means keep existing" rule Save uses.
+                    MPassword = !string.IsNullOrWhiteSpace(input.Password) ? input.Password : storedSmtp?.MPassword ?? string.Empty,
+                    IsSSLEnabled = input.IsSslEnabled ? "1" : "0",
+                };
+
+                (bool success, string message) = await smtpMailService.TestConnectionAsync(testConfig);
+                result.StatusMessage = message;
+                if (!success)
+                {
+                    // Not a server error - a failed connectivity/auth test is an expected, valid
+                    // outcome the admin needs to see, so this stays 200 with Success=false in the
+                    // message rather than surfacing as a BadRequest/500 toast.
+                    result.ResultData = new { success };
+                    return result;
+                }
+
+                result.ResultData = new { success };
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.TestSmtpConnectionFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
         }
 
         #endregion POST Methods

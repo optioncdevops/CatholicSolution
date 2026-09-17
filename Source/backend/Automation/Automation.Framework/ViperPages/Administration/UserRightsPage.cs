@@ -19,6 +19,15 @@ namespace Automation.Framework.ViperPages.Administration
             WaitForRightsPage();
         }
 
+        /// <summary>The browser's current URL, e.g. to confirm a deep link's ?roleId= landed.</summary>
+        public string CurrentUrl => _webDriver.Url;
+
+        /// <summary>Reads the "Editing rights for {role}" banner, confirming which role is loaded.</summary>
+        public string ReadEditingRightsForText()
+        {
+            return FindFirstDisplayed(XPath_UserRights.EditingRightsFor, _pageLoadTimeoutSeconds)?.Text ?? string.Empty;
+        }
+
         /// <summary>Waits for the rights page (matrix, empty roles, or error) to finish loading.</summary>
         /// <returns><c>true</c> when the page is on screen.</returns>
         public bool WaitForRightsPage()

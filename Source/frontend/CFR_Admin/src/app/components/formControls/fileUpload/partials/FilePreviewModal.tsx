@@ -180,7 +180,7 @@ export function FilePreviewModal({
             <CommonIconButton
               aria-label="Zoom out"
               type="button"
-              iconName="searchX"
+              iconName="zoomOut"
               onClick={() => { setZoom((z) => Math.max(0.5, z - 0.25)); }}
               disabled={!zoomEnabled}
             />
@@ -190,7 +190,7 @@ export function FilePreviewModal({
             <CommonIconButton
               aria-label="Zoom in"
               type="button"
-              iconName="search"
+              iconName="zoomIn"
               onClick={() => { setZoom((z) => Math.min(3, z + 0.25)); }}
               disabled={!zoomEnabled}
             />
@@ -202,7 +202,7 @@ export function FilePreviewModal({
               disabled={!zoomEnabled}
             >
               <span className="inline-flex items-center gap-1">
-                <AppIcon name="minimize" size={14} />
+                <AppIcon name="minimize2" size={14} />
                 Fit
               </span>
             </CommonButton>
@@ -214,7 +214,7 @@ export function FilePreviewModal({
               disabled={!zoomEnabled}
             >
               <span className="inline-flex items-center gap-1">
-                <AppIcon name="expand" size={14} />
+                <AppIcon name="maximize2" size={14} />
                 Actual
               </span>
             </CommonButton>
@@ -228,7 +228,10 @@ export function FilePreviewModal({
               }}
               disabled={!zoomEnabled}
             >
-              Reset
+              <span className="inline-flex items-center gap-1">
+                <AppIcon name="rotateCcw" size={14} />
+                Reset
+              </span>
             </CommonButton>
             {onRemoveCurrent ? (
               <CommonButton
@@ -240,14 +243,6 @@ export function FilePreviewModal({
                 Remove
               </CommonButton>
             ) : null}
-            <CommonButton
-              {...BUTTON_PRESETS.cancel}
-              type="button"
-              size="sm"
-              onClick={onClose}
-            >
-              Close
-            </CommonButton>
           </div>
         </div>
       </div>

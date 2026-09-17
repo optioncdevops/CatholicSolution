@@ -54,6 +54,7 @@ function RichTextEditorField({
 }: RichTextEditorFieldProps) {
   const reactId = useId();
   const fieldId = idProp ?? `rich-text-${reactId.replace(/:/g, "")}`;
+  const labelId = `${fieldId}-label`;
   const editorRef = useRef<HTMLDivElement>(null);
   const isControlled = value !== undefined;
   const [uncontrolledHtml, setUncontrolledHtml] = useState(defaultValue ?? "");
@@ -111,6 +112,7 @@ function RichTextEditorField({
   return (
     <div className={cn(themeFieldWrapperClass, className)}>
       <FormFieldLabel
+        id={labelId}
         label={label}
         htmlFor={fieldId}
         required={required}
@@ -141,6 +143,11 @@ function RichTextEditorField({
           id={fieldId}
           role="textbox"
           aria-multiline
+          // A native <label for> only reliably names labelable form elements (input/textarea/
+          // select/...) - a custom role="textbox" div isn't one, so screen readers can't be
+          // relied on to pick up the visible label through htmlFor alone; aria-labelledby is the
+          // WAI-ARIA-authoring-practices-correct way to name a custom textbox widget.
+          aria-labelledby={hideLabel ? undefined : labelId}
           aria-label={hideLabel ? label : undefined}
           aria-readonly={readOnly || undefined}
           aria-disabled={disabled || undefined}

@@ -15,9 +15,9 @@ export function formatStatusLabel(status: string): string {
   return status.toLowerCase() === 'inactive' ? 'InActive' : status.replace('-', ' ');
 }
 
-export function Badge({ tone, children }: { tone: BadgeTone; children: ReactNode }) {
+export function Badge({ id, tone, children }: { id?: string; tone: BadgeTone; children: ReactNode }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-bold capitalize leading-tight ${TONE_CLASSES[tone]}`}>
+    <span id={id} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-bold capitalize leading-tight ${TONE_CLASSES[tone]}`}>
       {children}
     </span>
   );

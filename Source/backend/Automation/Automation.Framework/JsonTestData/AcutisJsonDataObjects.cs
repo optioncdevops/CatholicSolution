@@ -102,6 +102,11 @@ namespace Automation.Framework.JsonTestData
         public string? EditDescription { get; set; }
 
         public string? ExistingRoleSearch { get; set; }
+
+        // A role known to have at least one assigned user, for the Users-count deep-link check -
+        // defaults to the signed-in automation account's own role (ExistingRoleSearch) when unset,
+        // since that role always has at least itself assigned.
+        public string? RoleWithAssignedUsers { get; set; }
     }
 
     public class UserRightsData
