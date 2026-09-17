@@ -109,6 +109,15 @@ BEGIN
         WHERE [RoleId] = @RoleId
           AND [IsDeleted] = 0;
 
+        -- @RoleId <> 0 got here past the duplicate-name check above, but that check only looked
+        -- at OTHER rows (RoleId <> @RoleId) - a deleted/nonexistent RoleId matches zero rows in
+        -- both checks and would otherwise fall through to a false "success" below.
+        IF @@ROWCOUNT = 0
+        BEGIN
+            SET @ReturnValue = -96;
+            RETURN @ReturnValue;
+        END
+
         SET @ReturnValue = @RoleId;
         RETURN @ReturnValue;
     END
@@ -137,6 +146,12 @@ BEGIN
         WHERE [RoleId] = @RoleId
           AND [IsDeleted] = 0;
 
+        IF @@ROWCOUNT = 0
+        BEGIN
+            SET @ReturnValue = -96;
+            RETURN @ReturnValue;
+        END
+
         SET @ReturnValue = @RoleId;
         RETURN @ReturnValue;
     END
@@ -149,8 +164,13 @@ BEGIN
             ISNULL(r.[Description], N'') AS [Description],
             CASE WHEN r.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             r.[CreatedDate],
+            LTRIM(RTRIM(CONCAT(cb.[FirstName], ' ', cb.[LastName]))) AS [CreatedBy],
+            r.[UpdatedDate] AS [ModifiedDate],
+            LTRIM(RTRIM(CONCAT(mb.[FirstName], ' ', mb.[LastName]))) AS [ModifiedBy],
             (SELECT COUNT(1) FROM [auth].[AcutisUser] AS u WHERE u.[RoleId] = r.[RoleId] AND u.[IsDeleted] = 0) AS [UsersCount]
         FROM [auth].[AcutisRole] AS r
+        LEFT JOIN [auth].[AcutisUser] cb ON r.[InsertedBy] = cb.[UserId]
+        LEFT JOIN [auth].[AcutisUser] mb ON r.[UpdatedBy] = mb.[UserId]
         WHERE r.[RoleId] = @RoleId
           AND r.[IsDeleted] = 0;
         RETURN 0;
@@ -164,8 +184,13 @@ BEGIN
             ISNULL(r.[Description], N'') AS [Description],
             CASE WHEN r.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             r.[CreatedDate],
+            LTRIM(RTRIM(CONCAT(cb.[FirstName], ' ', cb.[LastName]))) AS [CreatedBy],
+            r.[UpdatedDate] AS [ModifiedDate],
+            LTRIM(RTRIM(CONCAT(mb.[FirstName], ' ', mb.[LastName]))) AS [ModifiedBy],
             (SELECT COUNT(1) FROM [auth].[AcutisUser] AS u WHERE u.[RoleId] = r.[RoleId] AND u.[IsDeleted] = 0) AS [UsersCount]
         FROM [auth].[AcutisRole] AS r
+        LEFT JOIN [auth].[AcutisUser] cb ON r.[InsertedBy] = cb.[UserId]
+        LEFT JOIN [auth].[AcutisUser] mb ON r.[UpdatedBy] = mb.[UserId]
         WHERE r.[IsDeleted] = 0
         ORDER BY r.[RoleName], r.[RoleId];
         RETURN 0;
@@ -191,6 +216,12 @@ BEGIN
             [UpdatedBy] = @UpdatedBy
         WHERE [RoleId] = @RoleId
           AND [IsDeleted] = 0;
+
+        IF @@ROWCOUNT = 0
+        BEGIN
+            SET @ReturnValue = -96;
+            RETURN @ReturnValue;
+        END
 
         UPDATE [auth].[ModuleRights]
         SET [IsDeleted] = 1,

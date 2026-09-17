@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pencil, Plus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Pencil, Plus, ShieldCheck, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
-import { Badge } from '@app/components/Badge';
+import { Badge, formatStatusLabel } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { confirmAction } from '../../../lib/confirm';
 import { formatDate } from '../../../utils/formatDate';
@@ -18,6 +19,7 @@ import { normalizeUserRolesList } from '../utils/userRolesHelpers';
 export function UserRolesListPage() {
   //#region Hooks
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const accessLevel = useFeatureAccessLevel('/admin/administration-user-roles');
   const isReadOnly = accessLevel === 'readOnly';
   //#endregion
@@ -36,7 +38,7 @@ export function UserRolesListPage() {
       setRows(statusCode === 204 ? [] : normalizeUserRolesList(resultData));
     } catch (error) {
       console.error('Error loading user roles:', error);
-      showToast('Failed to load user roles.');
+      showToast('Failed to load user roles.', 'error');
       setRows([]);
     } finally {
       setLoading(false);
@@ -55,7 +57,7 @@ export function UserRolesListPage() {
       } catch (error) {
         if (cancelled) return;
         console.error('Error loading user roles:', error);
-        showToast('Failed to load user roles.');
+        showToast('Failed to load user roles.', 'error');
         setRows([]);
       } finally {
         if (!cancelled) setLoading(false);
@@ -86,30 +88,37 @@ export function UserRolesListPage() {
   const handleToggleActive = useCallback(async (role: UserRolesApiItem) => {
     if (isReadOnly || role.usersCount > 0) return;
     if (role.status !== 'active') {
+      const confirmed = await confirmAction({
+        title: 'Activate this role?',
+        description: `"${role.roleName}" will become assignable to users.`,
+        confirmLabel: 'Activate',
+      });
+      if (!confirmed) return;
+      
       try {
         await updateUserRoleStatus(role.roleId, 'active');
-        showToast(`${role.roleName} activated ✓`);
+        showToast(`${role.roleName} activated`);
         await load();
       } catch (error) {
         console.error('Error activating user role:', error);
-        showToast('Failed to activate user role.');
+        showToast('Failed to activate user role.', 'error');
       }
       return;
     }
     const confirmed = await confirmAction({
       title: 'Deactivate this role?',
-      description: `"${role.roleName}" will no longer be assignable to users.`,
+      description: 'This role will no longer be assignable to users.',
       confirmLabel: 'Deactivate',
       tone: 'danger',
     });
     if (!confirmed) return;
     try {
       await updateUserRoleStatus(role.roleId, 'inactive');
-      showToast(`${role.roleName} deactivated`);
+      showToast('Role deactivated successfully.');
       await load();
     } catch (error) {
       console.error('Error deactivating user role:', error);
-      showToast('Failed to deactivate user role.');
+      showToast('Failed to deactivate user role.', 'error');
     }
   }, [load, showToast, isReadOnly]);
 
@@ -117,7 +126,7 @@ export function UserRolesListPage() {
     if (isReadOnly || role.usersCount > 0) return;
     const confirmed = await confirmAction({
       title: 'Delete this role?',
-      description: `"${role.roleName}" will be permanently removed from the role catalog.`,
+      description: 'This role will be permanently removed from the role catalog.',
       confirmLabel: 'Delete role',
       tone: 'danger',
     });
@@ -125,14 +134,14 @@ export function UserRolesListPage() {
     try {
       const response = await deleteUserRole(role.roleId);
       if (response.statusCode === 409) {
-        showToast(response.statusMessage || 'This role is assigned to one or more users.');
+        showToast(response.statusMessage || 'This role is assigned to one or more users.', 'conflict');
         return;
       }
-      showToast(`${role.roleName} deleted`);
+      showToast('Role deleted successfully.');
       await load();
     } catch (error) {
       console.error('Error deleting user role:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to delete user role.');
+      showToast(typeof error === 'string' ? error : 'Failed to delete user role.', 'error');
     }
   }, [load, showToast, isReadOnly]);
   //#endregion
@@ -147,14 +156,36 @@ export function UserRolesListPage() {
       excludeFromExport: true,
       cell: (role) => {
         const inUse = role.usersCount > 0;
+        const isActive = role.status === 'active';
         return (
           <div className="flex items-center gap-0.5">
             <CommonIconButton aria-label={`Edit ${role.roleName}`} tooltip="Edit" icon={<Pencil size={14} />} onClick={() => handleOpenEdit(role)} />
-            {!isReadOnly && !inUse && (
-              <CommonIconButton aria-label={role.status === 'active' ? `Deactivate ${role.roleName}` : `Activate ${role.roleName}`} tooltip={role.status === 'active' ? 'Deactivate' : 'Activate'} variant={role.status === 'active' ? 'danger' : 'ghost'} icon={role.status === 'active' ? <ToggleRight size={16} /> : <ToggleLeft size={16} />} onClick={() => void handleToggleActive(role)} />
+            <CommonIconButton
+              id={`ibtnManageRightsUserRole${role.roleId}`}
+              aria-label={`Manage rights for ${role.roleName}`}
+              tooltip="Manage Rights"
+              icon={<ShieldCheck size={14} />}
+              onClick={() => navigate(`/admin/administration-rights?roleId=${role.roleId}`)}
+            />
+            {!isReadOnly && (
+              <CommonIconButton
+                aria-label={isActive ? `Deactivate ${role.roleName}` : `Activate ${role.roleName}`}
+                tooltip={inUse ? 'Cannot deactivate: users are assigned to this role. Reassign users first.' : (isActive ? 'Deactivate' : 'Activate')}
+                variant={isActive ? 'danger' : 'ghost'}
+                icon={isActive ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                onClick={() => void handleToggleActive(role)}
+                disabled={inUse}
+              />
             )}
-            {!isReadOnly && !inUse && (
-              <CommonIconButton aria-label={`Delete ${role.roleName}`} tooltip="Delete" variant="danger" icon={<Trash2 size={14} />} onClick={() => void handleDelete(role)} />
+            {!isReadOnly && (
+              <CommonIconButton
+                aria-label={`Delete ${role.roleName}`}
+                tooltip={inUse ? 'Cannot delete: users are assigned to this role. Reassign users first.' : 'Delete'}
+                variant="danger"
+                icon={<Trash2 size={14} />}
+                onClick={() => void handleDelete(role)}
+                disabled={inUse}
+              />
             )}
           </div>
         );
@@ -173,10 +204,20 @@ export function UserRolesListPage() {
     {
       id: 'usersCount', header: 'Users', width: '6rem',
       value: (role) => role.usersCount,
-      cell: (role) => <Badge tone={role.usersCount > 0 ? 'info' : 'neutral'}>{role.usersCount}</Badge>,
+      cell: (role) => {
+        if (role.usersCount === 0) return <Badge tone="neutral">0</Badge>;
+        return (
+          <Link to="/admin/users" state={{ roleId: role.roleId }} className="hover:opacity-80 transition-opacity inline-block cursor-pointer" title="View Users">
+            <Badge tone="info">{role.usersCount}</Badge>
+          </Link>
+        );
+      },
     },
-    { id: 'createdAt', header: 'Created', value: (role) => role.createdDate ?? '—', cell: (role) => <span className="text-[var(--text-muted)]">{role.createdDate ? formatDate(role.createdDate) : '—'}</span> },
-    { id: 'status', header: 'Status', value: (role) => role.status, cell: (role) => <Badge tone={role.status === 'active' ? 'success' : 'neutral'}>{role.status === 'active' ? 'Active' : 'Inactive'}</Badge> },
+    { id: 'createdAt', header: 'Created Date', value: (role) => role.createdDate ?? '—', cell: (role) => <span className="text-[var(--text-muted)]">{role.createdDate ? formatDate(role.createdDate) : '—'}</span> },
+    { id: 'createdBy', header: 'Created By', value: (role) => role.createdBy ?? '—', cell: (role) => <span className="text-[var(--text-secondary)]">{role.createdBy ?? '—'}</span> },
+    { id: 'modifiedDate', header: 'Modified Date', value: (role) => role.modifiedDate ?? '—', cell: (role) => <span className="text-[var(--text-muted)]">{role.modifiedDate ? formatDate(role.modifiedDate) : '—'}</span> },
+    { id: 'modifiedBy', header: 'Modified By', value: (role) => role.modifiedBy ?? '—', cell: (role) => <span className="text-[var(--text-secondary)]">{role.modifiedBy ?? '—'}</span> },
+    { id: 'status', header: 'Status', value: (role) => role.status, cell: (role) => <Badge tone={role.status === 'active' ? 'success' : 'neutral'}>{formatStatusLabel(role.status)}</Badge> },
   ], [handleDelete, handleToggleActive, isReadOnly]);
   //#endregion
 

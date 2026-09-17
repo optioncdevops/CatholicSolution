@@ -27,6 +27,21 @@ namespace Automation.Framework.ViperPages.Administration
             //Assert.AreEqual("Customer Directory", ReadElementValuesByXPath("//*[text()='Customer Directory']"));
         }
 
+        /// <summary>The browser's current URL, e.g. to confirm a deep link's ?roleId= landed.</summary>
+        public string CurrentUrl => _webDriver.Url;
+
+        /// <summary>Whether the grid currently shows at least one row.</summary>
+        public bool HasAnyGridRow()
+        {
+            return IsElementVisible(XPath_UserDetails.UsersGrid, _menuTimeoutSeconds);
+        }
+
+        /// <summary>Clicks the shared "Clear filter" action, if a filter is currently active.</summary>
+        public void ClearRoleFilterIfPresent()
+        {
+            ClickFirstDisplayed(XPath_UserDetails.ClearFiltersButton, 2);
+        }
+
         /// <summary>
         /// Opens the users list from the nav bar.
         /// </summary>

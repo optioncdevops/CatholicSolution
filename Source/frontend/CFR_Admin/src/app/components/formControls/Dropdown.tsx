@@ -163,6 +163,7 @@ interface BaseDropdownProps
    * Disable in multi-row tables where a new blank row should stay empty.
    */
   autoSelectSingleOption?: boolean;
+  autoFocus?: boolean;
 }
 
 export interface DropdownProps<
@@ -206,6 +207,7 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
   autoSelectSingleOption = true,
   rules,
   tabIndex,
+  autoFocus,
 }: DropdownProps<TFieldValues>) => {
   const generatedId = useId();
   const fieldId = id ?? name ?? `dropdown-${generatedId}`;
@@ -441,6 +443,13 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
     }
     optionRefs.current[activeIndex]?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, isOpen]);
+
+  // Auto focus
+  useEffect(() => {
+    if (autoFocus && triggerRef.current) {
+      triggerRef.current.focus();
+    }
+  }, [autoFocus]);
 
   useEffect(() => {
     if (!isOpen || typeof window === "undefined" || !document.body) {

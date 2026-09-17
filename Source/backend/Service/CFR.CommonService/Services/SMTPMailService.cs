@@ -3,6 +3,8 @@
 using CFR.CommonService.MailService;
 using System.Net;
 using System.Net.Mail;
+using System.Net.Security;
+using System.Net.Sockets;
 
 namespace CFR.CommonService.Services
 {
@@ -15,6 +17,17 @@ namespace CFR.CommonService.Services
         /// <param name="fontFamily">Per-template CSS font-family override; null uses the built-in default.</param>
         /// <param name="baseFontSize">Per-template base body font size (pixels) override; null uses the built-in default.</param>
         Task<bool> SendMailAsync(string mailSubject, string mailContent, string toAddress, string cCAddress = "", string attachmentFile = "", string bCCAddress = "", string? templateLogoUrl = null, string? fontFamily = null, int? baseFontSize = null);
+
+        /// <summary>
+        /// Verifies SMTP connectivity and authentication (server, port, SSL/TLS, credentials)
+        /// without sending a real email - a raw SMTP handshake (EHLO/STARTTLS/AUTH LOGIN/QUIT)
+        /// against the given configuration.
+        /// </summary>
+        /// <param name="config">The SMTP configuration to test - typically the currently-saved
+        /// one, with the password swapped in by the caller when the Email Settings form's own
+        /// password field was left blank (never sent as empty just because the UI field is).</param>
+        /// <returns>Whether the test succeeded, and a message safe to show the caller (never the password or a raw stack trace).</returns>
+        Task<(bool Success, string Message)> TestConnectionAsync(SMTPMailConfig config);
     }
 
     public class SMTPMailService : ISMTPMailService
@@ -345,6 +358,146 @@ namespace CFR.CommonService.Services
             }
 
             return isSuccess;
+        }
+
+        /// <inheritdoc />
+        public async Task<(bool Success, string Message)> TestConnectionAsync(SMTPMailConfig config)
+        {
+            ArgumentNullException.ThrowIfNull(config);
+
+            string smtpServer = config.SMTPServer ?? string.Empty;
+            int smtpPort = int.TryParse(config.SMTPPort, out int parsedPort) ? parsedPort : 0;
+            string username = config.MUserName ?? string.Empty;
+            string password = config.MPassword ?? string.Empty;
+            // Same enableSsl/STARTTLS heuristic SendMailAsync itself uses, so a successful test
+            // reflects the exact same connection settings a real send would use.
+            string sslFlag = config.IsSSLEnabled ?? string.Empty;
+            bool enableSsl = sslFlag == "0"
+                || smtpServer.Contains("gmail", StringComparison.OrdinalIgnoreCase)
+                || smtpPort == 587;
+            bool implicitSsl = smtpPort == 465;
+
+            if (string.IsNullOrWhiteSpace(smtpServer) || smtpPort is <= 0 or > 65535)
+            {
+                return (false, "SMTP server and a valid port (1-65535) are required.");
+            }
+
+            TcpClient? tcpClient = null;
+            Stream? stream = null;
+            try
+            {
+                tcpClient = new TcpClient();
+                var connectTask = tcpClient.ConnectAsync(smtpServer, smtpPort);
+                if (await Task.WhenAny(connectTask, Task.Delay(TimeSpan.FromSeconds(10))) != connectTask)
+                {
+                    return (false, "SMTP connection failed. Please verify server, port, credentials, and SSL/TLS settings.");
+                }
+
+                await connectTask;
+                stream = tcpClient.GetStream();
+
+                if (implicitSsl)
+                {
+                    stream = await UpgradeToTlsAsync(stream, smtpServer);
+                }
+
+                var (reader, writer) = CreateSmtpReaderWriter(stream);
+
+                string? greeting = await reader.ReadLineAsync();
+                if (greeting == null || !greeting.StartsWith("220", StringComparison.Ordinal))
+                {
+                    return (false, "SMTP server did not respond with a valid greeting.");
+                }
+
+                string? ehloResponse = await SendCommandAsync(writer, reader, $"EHLO {Dns.GetHostName()}");
+                if (ehloResponse == null || !ehloResponse.StartsWith("250", StringComparison.Ordinal))
+                {
+                    return (false, "SMTP server rejected the EHLO greeting.");
+                }
+
+                if (enableSsl && !implicitSsl)
+                {
+                    string? startTlsResponse = await SendCommandAsync(writer, reader, "STARTTLS");
+                    if (startTlsResponse == null || !startTlsResponse.StartsWith("220", StringComparison.Ordinal))
+                    {
+                        return (false, "SMTP server does not support STARTTLS on this port.");
+                    }
+
+                    stream = await UpgradeToTlsAsync(stream, smtpServer);
+                    (reader, writer) = CreateSmtpReaderWriter(stream);
+
+                    ehloResponse = await SendCommandAsync(writer, reader, $"EHLO {Dns.GetHostName()}");
+                    if (ehloResponse == null || !ehloResponse.StartsWith("250", StringComparison.Ordinal))
+                    {
+                        return (false, "SMTP server rejected the EHLO greeting after STARTTLS.");
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(username))
+                {
+                    string? authPrompt = await SendCommandAsync(writer, reader, "AUTH LOGIN");
+                    if (authPrompt == null || !authPrompt.StartsWith("334", StringComparison.Ordinal))
+                    {
+                        return (false, "SMTP server does not support AUTH LOGIN.");
+                    }
+
+                    authPrompt = await SendCommandAsync(writer, reader, Convert.ToBase64String(Encoding.UTF8.GetBytes(username)));
+                    if (authPrompt == null || !authPrompt.StartsWith("334", StringComparison.Ordinal))
+                    {
+                        return (false, "SMTP connection failed. Please verify server, port, credentials, and SSL/TLS settings.");
+                    }
+
+                    string? authResult = await SendCommandAsync(writer, reader, Convert.ToBase64String(Encoding.UTF8.GetBytes(password)));
+                    if (authResult == null || !authResult.StartsWith("235", StringComparison.Ordinal))
+                    {
+                        return (false, "SMTP connection failed. Please verify server, port, credentials, and SSL/TLS settings.");
+                    }
+                }
+
+                await writer.WriteLineAsync("QUIT");
+                return (true, "SMTP connection successful.");
+            }
+            catch (Exception)
+            {
+                // Deliberately no exception details (message/stack trace) surfaced to the caller -
+                // could otherwise leak internal host/network information. Callers with their own
+                // logger should log the exception themselves before discarding it here.
+                return (false, "SMTP connection failed. Please verify server, port, credentials, and SSL/TLS settings.");
+            }
+            finally
+            {
+                stream?.Dispose();
+                tcpClient?.Dispose();
+            }
+        }
+
+        private static async Task<SslStream> UpgradeToTlsAsync(Stream stream, string smtpServer)
+        {
+            var sslStream = new SslStream(stream, leaveInnerStreamOpen: false);
+            await sslStream.AuthenticateAsClientAsync(smtpServer);
+            return sslStream;
+        }
+
+        private static (StreamReader Reader, StreamWriter Writer) CreateSmtpReaderWriter(Stream stream)
+        {
+            var reader = new StreamReader(stream, Encoding.ASCII, false, 1024, leaveOpen: true);
+            var writer = new StreamWriter(stream, Encoding.ASCII, leaveOpen: true) { AutoFlush = true, NewLine = "\r\n" };
+            return (reader, writer);
+        }
+
+        /// <summary>Sends one SMTP command line and reads back its (possibly multi-line) response.</summary>
+        private static async Task<string?> SendCommandAsync(StreamWriter writer, StreamReader reader, string command)
+        {
+            await writer.WriteLineAsync(command);
+            string? line = await reader.ReadLineAsync();
+            // Multi-line SMTP responses use "250-..." for every line except the last, which uses
+            // "250 ..." (a space, not a hyphen, in the 4th character) - keep reading until that.
+            while (line != null && line.Length > 3 && line[3] == '-')
+            {
+                line = await reader.ReadLineAsync();
+            }
+
+            return line;
         }
     }
 }

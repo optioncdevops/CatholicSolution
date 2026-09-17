@@ -105,19 +105,19 @@ namespace Automation.Acutis.Features
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/UserRoles.feature.ndjson", 3);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("Features/UserRoles.feature.ndjson", 4);
         }
         
         [global::NUnit.Framework.TestAttribute()]
-        [global::NUnit.Framework.DescriptionAttribute("001_Verify User Roles listing, search, toolbar, add, edit, status toggle, and del" +
-            "ete workflows")]
-        public async global::System.Threading.Tasks.Task _001_VerifyUserRolesListingSearchToolbarAddEditStatusToggleAndDeleteWorkflows()
+        [global::NUnit.Framework.DescriptionAttribute("001_Verify User Roles listing, search, toolbar, stable ids, and read-only deep li" +
+            "nks")]
+        public async global::System.Threading.Tasks.Task _001_VerifyUserRolesListingSearchToolbarStableIdsAndRead_OnlyDeepLinks()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "0";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("001_Verify User Roles listing, search, toolbar, add, edit, status toggle, and del" +
-                    "ete workflows", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("001_Verify User Roles listing, search, toolbar, stable ids, and read-only deep li" +
+                    "nks", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 5
@@ -131,10 +131,10 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
             {
                 await this.ScenarioStartAsync();
 #line 6
-    await testRunner.GivenAsync("Launch the application with URL", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("Launch the application for the detected environment", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 7
-    await testRunner.AndAsync("Enter the UserName and the Password", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.AndAsync("Enter the environment-configured username and password", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 8
     await testRunner.WhenAsync("I click the login button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
@@ -162,38 +162,177 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
     await testRunner.ThenAsync("Add User Role modal should open and Click on Cancel button to close", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 16
-    await testRunner.WhenAsync("Click on Add User Role button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.ThenAsync("The Manage Rights action for an existing role uses a stable id", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 17
-    await testRunner.AndAsync("Add User Role modal should be opened and enter the role details", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.WhenAsync("I click Manage Rights for an existing role", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 18
-    await testRunner.AndAsync("click on Save in the User Role form and the record should be saved", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.ThenAsync("The Rights page should open with that role already selected", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 19
-    await testRunner.AndAsync("Search Role and Click on Edit button and update the fields and click on Save butt" +
-                        "on", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.WhenAsync("I go back to User Roles", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 20
-    await testRunner.AndAsync("Search Role and Click on Deactivate and Click on Cancel in the confirm box", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.AndAsync("Search an existing role that has assigned users", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 21
-    await testRunner.AndAsync("Search Role and Click on Deactivate and Click on Confirm in the confirm box", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.ThenAsync("Its Users count should be a clickable link", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 22
-    await testRunner.AndAsync("Search Role and Click on Activate button", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.WhenAsync("I click that role\'s Users count", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 23
-    await testRunner.AndAsync("Search Role and Click on Delete Button to delete the records", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.ThenAsync("The Users page should open filtered to that RoleId", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 24
-    await testRunner.ThenAsync("Role Delete Confirm box should open and Click on the Cancel button", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.AndAsync("User should be able to logout from the application", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 25
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::NUnit.Framework.TestAttribute()]
+        [global::NUnit.Framework.DescriptionAttribute("002_Verify Add/Edit User Role dirty-state guards, counter, and duplicate-name han" +
+            "dling")]
+        public async global::System.Threading.Tasks.Task _002_VerifyAddEditUserRoleDirty_StateGuardsCounterAndDuplicate_NameHandling()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "1";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("002_Verify Add/Edit User Role dirty-state guards, counter, and duplicate-name han" +
+                    "dling", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 26
+this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 27
+    await testRunner.GivenAsync("Mutating scenarios are permitted for User Roles in this environment", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 28
+    await testRunner.AndAsync("Launch the application for the detected environment", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 29
+    await testRunner.AndAsync("Enter the environment-configured username and password", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 30
+    await testRunner.WhenAsync("I click the login button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 31
+    await testRunner.WhenAsync("The Dashboard should be open", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 32
+    await testRunner.ThenAsync("Click on Administration menu and select User Roles sub menu", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 33
+    await testRunner.AndAsync("User Roles page should be opened", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 34
+    await testRunner.WhenAsync("Click on Add User Role button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 35
+    await testRunner.ThenAsync("The Role Name counter should read 0 of 50", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 36
+    await testRunner.WhenAsync("I type a role name without saving", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 37
+    await testRunner.ThenAsync("The Role Name counter should update to match what was typed", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 38
+    await testRunner.AndAsync("The Save button should be enabled once the name is valid", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 39
+    await testRunner.WhenAsync("I click Cancel on the dirty add form", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 40
+    await testRunner.ThenAsync("A discard-changes confirmation should appear", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 41
+    await testRunner.WhenAsync("I keep editing instead of discarding", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 42
+    await testRunner.ThenAsync("The add form should still be open with the typed name preserved", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 43
+    await testRunner.WhenAsync("I press Escape on the dirty add form", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 44
+    await testRunner.ThenAsync("A discard-changes confirmation should appear", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 45
+    await testRunner.WhenAsync("I confirm discarding the changes", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 46
+    await testRunner.ThenAsync("The add form should be closed", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 47
+    await testRunner.AndAsync("Focus should return to the Add User Role button", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 48
+    await testRunner.WhenAsync("Click on Add User Role button", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 49
+    await testRunner.AndAsync("Add User Role modal should be opened and enter the role details", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 50
+    await testRunner.AndAsync("click on Save in the User Role form and the record should be saved", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 51
+    await testRunner.AndAsync("Search Role and Click on Edit button", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 52
+    await testRunner.ThenAsync("The read-only status badge should show the role\'s current status", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 53
+    await testRunner.AndAsync("The Save button should be disabled because nothing changed", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 54
+    await testRunner.WhenAsync("I change the Role Name to an existing role\'s name and save", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 55
+    await testRunner.ThenAsync("A duplicate-role-name error should appear under Role Name", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 56
+    await testRunner.WhenAsync("I change the Role Name again", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 57
+    await testRunner.ThenAsync("The duplicate-role-name error should clear", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 58
+    await testRunner.WhenAsync("I close the edit form without saving", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 59
+    await testRunner.AndAsync("Search Role and Click on Deactivate and Click on Cancel in the confirm box", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 60
+    await testRunner.AndAsync("Search Role and Click on Deactivate and Click on Confirm in the confirm box", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 61
+    await testRunner.AndAsync("Search Role and Click on Activate button", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 62
     await testRunner.AndAsync("Search Role and Click on Delete Button to delete the records", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 26
+#line 63
+    await testRunner.ThenAsync("Role Delete Confirm box should open and Click on the Cancel button", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 64
+    await testRunner.AndAsync("Search Role and Click on Delete Button to delete the records", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+#line 65
     await testRunner.ThenAsync("Role Delete Confirm box should open and Click on the Confirm button", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 66
+    await testRunner.AndAsync("User should be able to logout from the application", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

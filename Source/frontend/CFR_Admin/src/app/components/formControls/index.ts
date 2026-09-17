@@ -16,7 +16,7 @@ export { OtpInputField } from "./OtpInputField";
 export { InputWithSuffixField } from "./InputWithSuffixField";
 export type { InputWithSuffixFieldProps } from "./InputWithSuffixField";
 export { Dropdown } from "./Dropdown";
-export { TextareaField } from "./TextareaField";
+export { TextareaField, CharacterCount } from "./TextareaField";
 export { CheckboxGroup } from "./CheckboxGroup";
 export { RadioGroup } from "./RadioGroup";
 export { CommonCheckbox } from "./CommonCheckbox";

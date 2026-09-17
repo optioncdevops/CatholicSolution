@@ -50,8 +50,12 @@ namespace Automation.Acutis.StepDefinitions
             // 3. Product
             _productSteps.RunProductProcess();
 
-            // 4. OrganizationManagement
-            _organizationSteps.RunOrganizationProcess();
+            // 4. OrganizationManagement - safe (non-mutating) checks only. The mutating
+            // lifecycle/product-toggle scenarios have their own environment-aware login and
+            // mutation gate (Assert.Ignore, which would abort this entire master scenario if
+            // called from here without one) - they run independently via Organization.feature.
+            _organizationSteps.RunOrganizationSafeChecks();
+            _organizationSteps.RunOrganizationAddValidationChecks();
 
             // 5. UserDetail
             _userDetailSteps.RunUserDetailProcess();

@@ -14,6 +14,7 @@
 -- ActionId 10: Per-product organization assignment counts (active vs. inactive/revoked vs. total
 -- distinct organizations), for the admin dashboard's real App Access Overview — this is genuine
 -- lic.OrganizationProduct assignment data, not inferred from the static product catalog.
+-- ActionId 11: License DELETE (soft delete via [lic].[License].[IsDeleted])
 --
 -- Rebuilt per 016_Acutis_Organization_Rebuild.sql: [core].[Organization]'s key is now [ID] (was
 -- [OrgId]), and [lic].[OrganizationProduct]'s link column is now [CFROrgId] (was [OrgId]).
@@ -25,6 +26,15 @@
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = N'lic' AND TABLE_NAME = N'License' AND COLUMN_NAME = N'IsDeleted'
+)
+BEGIN
+    ALTER TABLE [lic].[License] ADD [IsDeleted] BIT NOT NULL CONSTRAINT DF_License_IsDeleted DEFAULT (0);
+END
 GO
 
 IF OBJECT_ID(N'[dbo].[Acutis_Products]', N'P') IS NOT NULL
@@ -126,11 +136,14 @@ BEGIN
             p.[InsertedBy],
             p.[UpdatedDate],
             p.[UpdatedBy],
+            NULLIF(LTRIM(RTRIM(ISNULL(ub.[FirstName], N'') + N' ' + ISNULL(ub.[LastName], N''))), N'') AS [UpdatedByName],
             p.[IsDeleted]
         FROM [core].[Product] AS p
         LEFT JOIN [auth].[AcutisUser] AS cu
             ON cu.[UserId] = p.[ContactUserId]
            AND cu.[IsDeleted] = 0
+        LEFT JOIN [auth].[AcutisUser] AS ub
+            ON ub.[UserId] = p.[UpdatedBy]
         WHERE p.[IsDeleted] = 0
         ORDER BY p.[ProductName];
 
@@ -170,11 +183,14 @@ BEGIN
             p.[InsertedBy],
             p.[UpdatedDate],
             p.[UpdatedBy],
+            NULLIF(LTRIM(RTRIM(ISNULL(ub.[FirstName], N'') + N' ' + ISNULL(ub.[LastName], N''))), N'') AS [UpdatedByName],
             p.[IsDeleted]
         FROM [core].[Product] AS p
         LEFT JOIN [auth].[AcutisUser] AS cu
             ON cu.[UserId] = p.[ContactUserId]
            AND cu.[IsDeleted] = 0
+        LEFT JOIN [auth].[AcutisUser] AS ub
+            ON ub.[UserId] = p.[UpdatedBy]
         WHERE p.[ProductId] = @ProductId
           AND p.[IsDeleted] = 0;
 
@@ -335,6 +351,7 @@ BEGIN
           AND (@OrgId = 0 OR op.[CFROrgId] = @OrgId)
           AND op.[IsDeleted] = 0
           AND p.[IsDeleted] = 0
+          AND (l.[LicenseId] IS NULL OR l.[IsDeleted] = 0)
         ORDER BY ISNULL(l.[CreatedDate], op.[CreatedDate]) DESC, ISNULL(l.[LicenseId], 0) DESC;
 
         RETURN 0;
@@ -364,7 +381,8 @@ BEGIN
         INNER JOIN [lic].[OrganizationProduct] AS op ON op.[OrganizationProductId] = l.[OrganizationProductId]
         INNER JOIN [core].[Product] AS p ON p.[ProductId] = op.[ProductId]
         INNER JOIN [core].[Organization] AS o ON o.[ID] = op.[CFROrgId]
-        WHERE l.[LicenseId] = @LicenseId;
+        WHERE l.[LicenseId] = @LicenseId
+          AND l.[IsDeleted] = 0;
 
         RETURN 0;
     END
@@ -435,6 +453,7 @@ BEGIN
             SELECT 1
             FROM [lic].[License] AS l
             WHERE l.[OrganizationProductId] = @OrganizationProductId
+              AND l.[IsDeleted] = 0
               AND LOWER(ISNULL(l.[LicenseStatus], N'active')) NOT IN (N'cancelled')
               AND CAST(@ActivationDate AS DATE) <= CAST(ISNULL(l.[ExpiryDate], '9999-12-31') AS DATE)
               AND CAST(@ExpiryDate AS DATE) >= CAST(ISNULL(l.[ActivationDate], '1900-01-01') AS DATE)
@@ -497,6 +516,7 @@ BEGIN
         IF @LicenseId <= 0 OR NOT EXISTS (
             SELECT 1 FROM [lic].[License]
             WHERE [LicenseId] = @LicenseId
+              AND [IsDeleted] = 0
         )
         BEGIN
             SET @ReturnValue = -95;
@@ -566,6 +586,7 @@ BEGIN
                 ROW_NUMBER() OVER (PARTITION BY l2.[OrganizationProductId] ORDER BY l2.[CreatedDate] DESC) AS rn
             FROM [lic].[License] AS l2
             INNER JOIN AssignedOrgs AS a ON a.[OrganizationProductId] = l2.[OrganizationProductId]
+            WHERE l2.[IsDeleted] = 0
         )
         SELECT
             o.[ID] AS [OrgId],
@@ -636,6 +657,32 @@ BEGIN
         ORDER BY p.[ProductName];
 
         RETURN 0;
+    END
+
+    ---------------------------------------------------------------------------
+    -- ActionId 11: License DELETE (soft delete)
+    ---------------------------------------------------------------------------
+    IF @ActionId = 11
+    BEGIN
+        IF @LicenseId <= 0 OR NOT EXISTS (
+            SELECT 1 FROM [lic].[License]
+            WHERE [LicenseId] = @LicenseId
+              AND [IsDeleted] = 0
+        )
+        BEGIN
+            SET @ReturnValue = -95;
+            RETURN @ReturnValue;
+        END
+
+        UPDATE [lic].[License]
+        SET
+            [IsDeleted] = 1,
+            [UpdatedDate] = SYSUTCDATETIME(),
+            [UpdatedBy] = @UpdatedBy
+        WHERE [LicenseId] = @LicenseId;
+
+        SET @ReturnValue = CAST(@LicenseId AS INT);
+        RETURN @ReturnValue;
     END
 END
 GO

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, Pencil, Plus, RefreshCw, ShieldAlert } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -326,12 +326,34 @@ export function OrganizationsListPage() {
     {
       id: 'userCount', header: 'Users',
       value: (org) => org.userCount,
-      cell: (org) => <span className="text-[var(--text-secondary)]">{org.userCount}</span>,
+      cell: (org) => (org.userCount > 0 ? (
+        <Link 
+          to="/admin/cfr-users" 
+          state={{ orgId: org.orgId }}
+          className="text-[var(--primary)] hover:underline font-medium"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {org.userCount}
+        </Link>
+      ) : (
+        <span className="text-[var(--text-secondary)]">{org.userCount}</span>
+      )),
     },
     {
       id: 'productCount', header: 'Products',
       value: (org) => org.productCount,
-      cell: (org) => <span className="text-[var(--text-secondary)]">{org.productCount}</span>,
+      cell: (org) => (org.productCount > 0 ? (
+        <Link 
+          to={`/admin/organizations/${org.orgId}`}
+          state={{ tab: 'products' }}
+          className="text-[var(--primary)] hover:underline font-medium"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {org.productCount}
+        </Link>
+      ) : (
+        <span className="text-[var(--text-secondary)]">{org.productCount}</span>
+      )),
     },
     {
       id: 'insertedDate', header: 'Created On',

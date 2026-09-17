@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Eye, Save, ShieldCheck, ShieldOff } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -81,9 +82,15 @@ export function UserRightsPage() {
   //#endregion
 
   //#region States
+  // Deep-linkable role selection (?roleId=), same convention RequestsListPage uses for its status
+  // filter — lets other pages (e.g. User Roles' "Manage Rights" action) land here with a specific
+  // role already selected instead of always defaulting to the first one.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialRoleIdFromUrl = Number(searchParams.get('roleId')) || null;
+
   const [roles, setRoles] = useState<UserRolesApiItem[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
-  const [roleId, setRoleId] = useState<number | null>(null);
+  const [roleId, setRoleId] = useState<number | null>(initialRoleIdFromUrl);
 
   const [status, setStatus] = useState<PageStatus>('loading');
   const [tree, setTree] = useState<UserRightsFeatureNode[]>([]);
@@ -138,6 +145,15 @@ export function UserRightsPage() {
     })();
     return () => { cancelled = true; };
   }, [showToast]);
+
+  useEffect(() => {
+    setSearchParams((current) => {
+      const params = new URLSearchParams(current);
+      if (roleId == null) params.delete('roleId');
+      else params.set('roleId', String(roleId));
+      return params;
+    }, { replace: true });
+  }, [roleId, setSearchParams]);
 
   useEffect(() => {
     if (roleId == null) return;

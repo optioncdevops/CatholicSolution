@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useForm, type SubmitHandler, type FieldErrors } from 'react-hook-form';
+import { useForm, type SubmitHandler} from 'react-hook-form';
 import { AppIcon } from '@app/components/icons';
-import { Badge } from '@app/components/Badge';
+import { Badge, formatStatusLabel } from '@app/components/Badge';
 import { CommonButton } from '@app/components/buttons';
 import { InputField, ProfileImageUpload } from '@app/components/formControls';
 import { ChangePasswordModal } from '@shared/app/components/ChangePasswordModal';
@@ -174,7 +174,7 @@ export function ProfilePage() {
           <dl className="grid w-full grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 border-t border-[var(--line-soft)] pt-4 text-left text-xs">
             <dt className="font-semibold text-[var(--text-faint)]">Status</dt>
             <dd className="justify-self-end">
-              <Badge tone={user.status.toLowerCase() === 'active' ? 'success' : 'neutral'}>{user.status || 'Unknown'}</Badge>
+              <Badge tone={user.status.toLowerCase() === 'active' ? 'success' : 'neutral'}>{user.status ? formatStatusLabel(user.status) : 'Unknown'}</Badge>
             </dd>
             <dt className="font-semibold text-[var(--text-faint)]">Last active</dt>
             <dd className="justify-self-end text-[var(--text-secondary)]">{formatDateTime(user.lastActiveAt)}</dd>
@@ -195,6 +195,7 @@ export function ProfilePage() {
                 rules={profileRules.firstName}
                 disabled={loading || saving}
                 required
+                autoFocus
                 startIcon={<AppIcon name="user" size="controlField" decorative />}
                 wrapperClassName="md:col-span-4"
               />

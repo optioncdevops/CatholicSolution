@@ -366,5 +366,93 @@ namespace Automation.Framework.ViperPages.Administration
 
             return null;
         }
+
+        // ── Dirty-form / confirmation-dialog coverage ──────────────────────────────────────
+
+        /// <summary>Types only into Role Name, leaving Description untouched - enough to dirty the form.</summary>
+        public void TypeRoleNameOnly(string value)
+        {
+            SetValueByScriptById(XPath_UserRoles.txtRoleName, value);
+        }
+
+        /// <summary>Whether the shared discard/delete-style SweetAlert2 confirm popup is on screen.</summary>
+        public bool IsDiscardChangesConfirmVisible()
+        {
+            return IsElementVisible(XPath_DataTable.DeleteConfirmPopup, _menuTimeoutSeconds);
+        }
+
+        /// <summary>Presses Escape on the currently open modal.</summary>
+        public void PressEscape()
+        {
+            _webDriver.FindElement(By.TagName("body")).SendKeys(Keys.Escape);
+        }
+
+        /// <summary>The id of the element currently holding focus, e.g. to verify focus restoration.</summary>
+        public string ReadActiveElementId()
+        {
+            var js = (IJavaScriptExecutor)_webDriver;
+            return js.ExecuteScript("return document.activeElement && document.activeElement.id;") as string ?? string.Empty;
+        }
+
+        // ── Role Name field feedback ────────────────────────────────────────────────────────
+
+        /// <summary>Reads the inline Role Name error text (empty when none is shown).</summary>
+        public string ReadRoleNameFieldError()
+        {
+            return FindFirstDisplayed($"//*[@id='{XPath_UserRoles.txtRoleNameError}']", _menuTimeoutSeconds)?.Text ?? string.Empty;
+        }
+
+        /// <summary>Reads the "current/max" Role Name character counter text.</summary>
+        public string ReadRoleNameCounterText()
+        {
+            return FindFirstDisplayed($"//*[@id='{XPath_UserRoles.txtRoleNameCounter}']", _menuTimeoutSeconds)?.Text ?? string.Empty;
+        }
+
+        /// <summary>Whether the Save button is currently disabled.</summary>
+        public bool IsSaveButtonDisabled()
+        {
+            var save = FindFirstDisplayed(XPath_UserRoles.ModalSave, _menuTimeoutSeconds);
+            return save is null || save.GetAttribute("disabled") is not null;
+        }
+
+        /// <summary>Reads the Active/Inactive text of the read-only status badge shown in Edit mode.</summary>
+        public string ReadStatusBadgeText()
+        {
+            return FindFirstDisplayed($"//*[@id='{XPath_UserRoles.StatusBadge}']", _menuTimeoutSeconds)?.Text ?? string.Empty;
+        }
+
+        // ── Deep links from the Users column and the Manage Rights action ──────────────────
+
+        /// <summary>Whether the given role's Users count renders as a clickable link (usersCount &gt; 0).</summary>
+        public bool IsUsersCountClickable(string roleName)
+        {
+            return IsElementVisible(XPath_UserRoles.UsersCountButtonInRow(roleName), _menuTimeoutSeconds);
+        }
+
+        /// <summary>Clicks the Users count for the given role, which deep-links to /admin/users?roleId=.</summary>
+        public void ClickUsersCount(string roleName)
+        {
+            ClickByScript(XPath_UserRoles.UsersCountButtonInRow(roleName));
+        }
+
+        /// <summary>Clicks the Manage Rights action for the given role id, deep-linking to /admin/administration-rights?roleId=.</summary>
+        public void ClickManageRights(int roleId)
+        {
+            ClickByScript(XPath_UserRoles.ManageRightsInRow(roleId));
+        }
+
+        /// <summary>Clicks the Manage Rights action for the given role, found by its row/name rather than a known RoleId.</summary>
+        public void ClickManageRightsByRoleName(string roleName)
+        {
+            ClickByScript(XPath_UserRoles.ManageRightsInRowByName(roleName));
+        }
+
+        /// <summary>Whether the Manage Rights action for the given role uses the stable
+        /// ibtnManageRightsUserRole{RoleId} id convention.</summary>
+        public bool HasStableManageRightsId(string roleName)
+        {
+            var button = FindFirstDisplayed(XPath_UserRoles.ManageRightsInRowByName(roleName), _menuTimeoutSeconds);
+            return (button?.GetAttribute("id") ?? string.Empty).StartsWith("ibtnManageRightsUserRole", StringComparison.Ordinal);
+        }
     }
 }

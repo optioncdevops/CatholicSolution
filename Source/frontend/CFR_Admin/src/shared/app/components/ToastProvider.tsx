@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, type CSSProperties, type PropsWithChildren } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
-export type ToastVariant = 'success' | 'error' | 'info';
+export type ToastVariant = 'success' | 'error' | 'conflict' | 'warning' | 'info';
 
 type ToastContextValue = { showToast: (message: string | string[], variant?: ToastVariant) => void };
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -11,6 +11,8 @@ const DEFAULT_DURATION = 3800;
 const VARIANT_TONE: Record<ToastVariant, { label: string; background: string }> = {
   success: { label: 'Success', background: '#16a34a' },
   error: { label: 'Error', background: 'var(--error, #dc2626)' },
+  conflict: { label: 'Conflict', background: '#d97706' },
+  warning: { label: 'Warning', background: 'var(--warning, #b45309)' },
   info: { label: 'Info', background: '#2563eb' },
 };
 
@@ -29,7 +31,7 @@ const BANNER_STYLE: CSSProperties = {
 function ToastBanner({ variant, messages, duration, onDismiss }: { variant: ToastVariant; messages: string[]; duration: number; onDismiss: () => void }) {
   const tone = VARIANT_TONE[variant];
   return (
-    <div role={variant === 'error' ? 'alert' : 'status'} aria-live={variant === 'error' ? 'assertive' : 'polite'} style={{ ...BANNER_STYLE, background: tone.background }}>
+    <div role={variant === 'error' || variant === 'conflict' || variant === 'warning' ? 'alert' : 'status'} aria-live={variant === 'error' || variant === 'conflict' || variant === 'warning' ? 'assertive' : 'polite'} style={{ ...BANNER_STYLE, background: tone.background }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
         <span style={{ fontSize: '0.8125rem', fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase' }}>{tone.label}</span>
         <button
@@ -58,7 +60,7 @@ function ToastBanner({ variant, messages, duration, onDismiss }: { variant: Toas
 export function ToastProvider({ children }: PropsWithChildren) {
   const showToast = useCallback((message: string | string[], variant: ToastVariant = 'success') => {
     const messages = (Array.isArray(message) ? message : [message]).filter(Boolean);
-    const duration = variant === 'error' ? 4500 : DEFAULT_DURATION;
+    const duration = variant === 'error' || variant === 'conflict' || variant === 'warning' ? 4500 : DEFAULT_DURATION;
     toast.custom((t) => <ToastBanner variant={variant} messages={messages} duration={duration} onDismiss={() => toast.dismiss(t.id)} />, { duration });
   }, []);
 

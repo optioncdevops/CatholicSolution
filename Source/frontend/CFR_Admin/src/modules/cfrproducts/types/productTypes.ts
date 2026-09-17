@@ -1,4 +1,4 @@
-export type ProductDetailsTab = 'details' | 'customers' | 'invoice-details' | 'invoice-history';
+export type ProductDetailsTab = 'details' | 'customers' | 'license-details' | 'license-history';
 
 export interface ProductLocationState {
   productId: number;
@@ -32,6 +32,7 @@ export interface ProductApiItem {
   insertedBy: number | null;
   updatedDate: string | null;
   updatedBy: number | null;
+  updatedByName?: string | null;
   isDeleted: boolean;
 }
 

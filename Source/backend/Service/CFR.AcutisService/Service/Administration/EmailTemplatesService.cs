@@ -1,5 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using System.Text.RegularExpressions;
+
 namespace CFR.AcutisService.Service.Administration
 {
     /// <summary>
@@ -24,6 +26,26 @@ namespace CFR.AcutisService.Service.Administration
         /// "time-limited" link.
         /// </summary>
         private const int MaximumLinkExpiryMinutes = 1440;
+
+        /// <summary>
+        /// True when the body contains a script tag, an inline event-handler attribute, or a
+        /// javascript:/data: URL - the same constructs the client-side rich-text editor already
+        /// refuses to produce (sanitizeHtml/sanitizeRichTextUrl), checked again here since a
+        /// direct API call never passes through that editor at all.
+        /// </summary>
+        /// <param name="body">The template body HTML to check.</param>
+        /// <returns>Whether the body contains a disallowed construct.</returns>
+        private static bool ContainsDisallowedHtmlContent(string body)
+        {
+            if (string.IsNullOrEmpty(body))
+            {
+                return false;
+            }
+
+            return Regex.IsMatch(body, "<\\s*script", RegexOptions.IgnoreCase)
+                || Regex.IsMatch(body, "on(error|load|click|mouseover)\\s*=", RegexOptions.IgnoreCase)
+                || Regex.IsMatch(body, "(href|src)\\s*=\\s*[\"']?\\s*(javascript|data):", RegexOptions.IgnoreCase);
+        }
 
         #region GET Methods
 
@@ -144,6 +166,19 @@ namespace CFR.AcutisService.Service.Administration
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                // The rich-text editor already blocks script tags and javascript:/data: links
+                // client-side (sanitizeHtml/sanitizeRichTextUrl), but that only runs when content
+                // passes through the React editor - a direct API call bypasses it entirely. This
+                // is a backstop, not full HTML sanitization: it rejects the same dangerous
+                // constructs the client already refuses to produce, so a saved template body can't
+                // carry a stored-XSS payload even via a hand-crafted request.
+                if (ContainsDisallowedHtmlContent(input.Body))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.InvalidTemplateBodyContent;
                     return result;
                 }
 

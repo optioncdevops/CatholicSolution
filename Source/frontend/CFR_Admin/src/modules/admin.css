@@ -532,6 +532,13 @@
   color: var(--primary);
 }
 .admin-email-template-item--active .admin-email-template-item__icon { background: var(--primary); color: #fff; }
+/* The template a search filtered out of the list below, but that's still open in the editor pane
+   — pinned above the search box's own list so "which one is selected" never silently vanishes. */
+.admin-email-template-item--pinned {
+  margin: 0 0.4rem 0.4rem;
+  width: calc(100% - 0.8rem);
+  border-style: dashed;
+}
 .admin-email-template-item__title {
   font-size: 0.8125rem;
   font-weight: 750;
@@ -644,6 +651,22 @@
 /* The body renders the template's own HTML (buttons, links) verbatim so the preview matches the
    real email — cursor:default keeps it from reading as a live/clickable app control. */
 .admin-email-preview-card__body a { cursor: default; }
+.admin-email-preview-card__body a {
+  color: var(--brand);
+  text-decoration: underline;
+}
+
+/* Tailwind's preflight reset strips the browser's default link color/underline app-wide, so an
+   <a> a template author inserts via the rich-text editor's toolbar renders as plain, unstyled
+   text with no visual sign it's a link at all — restore it, scoped to just the editor's own
+   contentEditable area rather than reverting the reset globally. */
+.rich-text-editor__content a {
+  color: var(--brand);
+  text-decoration: underline;
+}
+.rich-text-editor__content a:hover {
+  text-decoration: none;
+}
 
 /* Mirrors SMTPMailService.FormatMailContent's send-time wrapper (gradient band, brand header,
    white content card, disclaimer footer) — keep visually in sync with that method. */

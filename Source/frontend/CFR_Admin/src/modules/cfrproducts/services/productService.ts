@@ -103,7 +103,24 @@ export const createLicense = async (payload: ProductLicenseInputPayload): Promis
     return { statusCode, statusMessage, resultData };
   } catch (error: unknown) {
     const err = error as ApiError;
+    if (err.response?.status === 409) {
+      return { statusCode: 409, statusMessage: err.response?.data?.statusMessage || 'A license has already been created for this duration.', resultData: null };
+    }
     throw err.response?.data?.statusMessage || err.message || 'Failed to create license';
+  }
+};
+
+export const updateLicense = async (payload: ProductLicenseInputPayload & { licenseId: number }): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.put<ApiResponse>(`${controller}/UpdateLicense`, payload);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    if (err.response?.status === 409) {
+      return { statusCode: 409, statusMessage: err.response?.data?.statusMessage || 'A license has already been created for this duration.', resultData: null };
+    }
+    throw err.response?.data?.statusMessage || err.message || 'Failed to update license';
   }
 };
 

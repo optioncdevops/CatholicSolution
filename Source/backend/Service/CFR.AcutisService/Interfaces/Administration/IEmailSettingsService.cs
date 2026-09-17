@@ -90,6 +90,21 @@ namespace CFR.AcutisService.Interfaces.Administration
         /// <returns>MSResultArgs containing the updated email settings.</returns>
         Task<MSResultArgs> RemoveEmailLogoAsync();
 
+        /// <summary>
+        /// Verifies SMTP connectivity and authentication without sending a real email.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let an admin confirm server/port/SSL/credentials work before enabling Send Mail.
+        /// Request Flow: EmailSettingsController -> IEmailSettingsService.TestSmtpConnectionAsync() -> ISMTPMailService.TestConnectionAsync().
+        /// Validation Details: SMTP server and username are required, same as save.
+        /// Business Logic: Tests against the submitted (possibly unsaved) form values; a blank password falls back to the currently stored one, never an empty string.
+        /// Repository Interaction: None — reads _configurationSettings.json via IConfSettingsService for the password fallback only.
+        /// Response Details: MSResultArgs containing a success flag and a safe (no password, no stack trace) message.
+        /// </remarks>
+        /// <param name="input">The in-progress form values to test.</param>
+        /// <returns>MSResultArgs containing the test outcome.</returns>
+        Task<MSResultArgs> TestSmtpConnectionAsync(EmailSettingsInput input);
+
         #endregion POST Methods
     }
 }

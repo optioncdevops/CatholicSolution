@@ -185,6 +185,27 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                if (!EmailValidator.IsValidFormat(input.EMail))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.InvalidEmailFormat;
+                    return result;
+                }
+
+                if (input.DateOfBirth.HasValue && input.DateOfBirth.Value.Date > DateTime.UtcNow.Date)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.FutureDateOfBirth;
+                    return result;
+                }
+
+                if (input.DateOfBirth.HasValue && !AgePolicy.IsWithinAllowedAgeRange(input.DateOfBirth.Value))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.DateOfBirthOutOfRange;
+                    return result;
+                }
+
                 if (input.UserId == 0 && string.IsNullOrWhiteSpace(input.Password))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
@@ -212,6 +233,13 @@ namespace CFR.AcutisService.Service.Administration
                 {
                     result.StatusCode = ErrorCodes.Conflict;
                     result.StatusMessage = ErrorMessages.ExistUser;
+                    return result;
+                }
+
+                if (savedId == -97)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.CannotDeactivateLastAdmin;
                     return result;
                 }
 
@@ -263,7 +291,15 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                result.ResultData = await repository.UpdateUserStatusAsync(input);
+                int updatedId = await repository.UpdateUserStatusAsync(input);
+                if (updatedId == -97)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.CannotDeactivateLastAdmin;
+                    return result;
+                }
+
+                result.ResultData = updatedId;
             }
             catch (Exception ex)
             {
@@ -311,7 +347,15 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                result.ResultData = await repository.DeleteUserAsync(userId);
+                int deletedId = await repository.DeleteUserAsync(userId);
+                if (deletedId == -97)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.CannotDeleteLastAdmin;
+                    return result;
+                }
+
+                result.ResultData = deletedId;
             }
             catch (Exception ex)
             {

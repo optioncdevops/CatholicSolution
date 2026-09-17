@@ -42,3 +42,15 @@ export async function confirmAction({ title, description, confirmLabel, tone = '
 
   return result.isConfirmed;
 }
+
+/**
+ * Standard "discard unsaved changes" confirmation for Cancel/Close on a dirty form or modal.
+ */
+export function confirmDiscardChanges(): Promise<boolean> {
+  return confirmAction({
+    title: 'Discard changes?',
+    description: 'You have unsaved changes that will be lost. Are you sure you want to cancel?',
+    confirmLabel: 'Discard changes',
+    tone: 'danger',
+  });
+}

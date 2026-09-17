@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { CommonButton } from '@app/components/buttons';
+import { Badge } from '@app/components/Badge';
 import { BaseModal } from '@app/components/modal/BaseModal';
-import { InputField, TextareaField } from '@app/components/formControls';
+import { CharacterCount, InputField, TextareaField } from '@app/components/formControls';
+import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { saveUserRole } from '../../services/userRolesService';
 import type { UserRolesApiItem, UserRolesFormValues } from '../../types/userRolesTypes';
 import { toSaveUserRolePayload } from '../../utils/userRolesHelpers';
 import { userRolesDefaultValues, userRolesRules } from '../../validator/UserRolesValidator';
 import { useToast } from '@shared/app/components/ToastProvider';
-import type { FieldErrors } from 'react-hook-form';
+
+const ROLE_NAME_MAX_LENGTH = 50;
 
 type UserRoleFormModalProps = {
   open: boolean;
@@ -23,21 +26,45 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
   //#region States
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // Tracks the role name a duplicate-name API error was raised for, so the inline error clears
+  // as soon as the user edits the name instead of lingering after it's already been changed.
+  const [duplicateRoleName, setDuplicateRoleName] = useState<string | null>(null);
   //#endregion
 
   const { showToast } = useToast();
 
   //#region Form
-  const { control, handleSubmit, reset } = useForm<UserRolesFormValues>({
+  const { control, handleSubmit, reset, setError, clearErrors, watch, formState: { isValid, isDirty } } = useForm<UserRolesFormValues>({
     defaultValues: userRolesDefaultValues,
     mode: 'onChange',
   });
+  const roleNameValue = watch('roleName');
+  const isEdit = Boolean(role);
+  // Add: enabled once the form is valid. Edit: also requires an actual change — re-saving an
+  // untouched role is a no-op the user shouldn't be able to trigger.
+  const saveDisabled = saving || !isValid || (isEdit && !isDirty);
   //#endregion
 
   //#region Functions
-  const handleClose = () => {
+  // The unconditional close, used once a save has already gone through (or on mount cleanup) -
+  // there is nothing left to discard, so this never prompts.
+  const closeWithoutPrompt = () => {
     setFormError(null);
     onClose();
+  };
+
+  // Single choke point for every voluntary way to leave the modal - the footer Cancel/Close
+  // button, the header X, and Escape all call BaseModal's one `onClose` prop, so gating it here
+  // covers all three without needing separate handlers for each. Never called from the
+  // successful-save path: a synchronous, un-awaited call here would race the confirm dialog
+  // against the save's own toast/close, and `isDirty` read after `reset()` in the same tick can
+  // still reflect the pre-reset value in the closure that scheduled this call.
+  const handleClose = async () => {
+    if (!readOnly && isDirty) {
+      const confirmed = await confirmDiscardChanges();
+      if (!confirmed) return;
+    }
+    closeWithoutPrompt();
   };
   //#endregion
 
@@ -50,46 +77,70 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
     // "the form was just (re)opened for this role."
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormError(null);
+    setDuplicateRoleName(null);
     reset(role ? { roleName: role.roleName, description: role.description ?? '' } : userRolesDefaultValues);
   }, [open, role, reset]);
+
+  useEffect(() => {
+    if (duplicateRoleName && roleNameValue !== duplicateRoleName) {
+      clearErrors('roleName');
+      setDuplicateRoleName(null);
+    }
+  }, [roleNameValue, duplicateRoleName, clearErrors]);
+
+  // "Navigates away" beyond the modal's own Cancel/Close/Escape (which handleClose already
+  // guards) means leaving the page entirely — a tab close, refresh, or typed URL. The browser's
+  // own confirmation dialog is the only mechanism for that; its text isn't customizable by design.
+  useEffect(() => {
+    if (!open || readOnly || !isDirty) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [open, readOnly, isDirty]);
   //#endregion
 
   //#region Handlers
   const onSubmit = async (values: UserRolesFormValues) => {
-    if (readOnly) return;
+    // Guards against a double-submit slipping through before the disabled button re-renders
+    // (e.g. a fast double-click/double-Enter), on top of the `disabled={saveDisabled}` below.
+    if (readOnly || saving) return;
     setSaving(true);
     setFormError(null);
     try {
       const response = await saveUserRole(toSaveUserRolePayload(values, role?.roleId ?? 0, role?.status ?? 'active'));
       if (response.statusCode === 409) {
-        setFormError(response.statusMessage || 'A role with this name already exists.');
+        const message = response.statusMessage || 'A role with this name already exists.';
+        setError('roleName', { type: 'manual', message });
+        setDuplicateRoleName(values.roleName);
         return;
       }
       reset(userRolesDefaultValues);
-      handleClose();
+      closeWithoutPrompt();
+      showToast(role ? 'User role updated successfully.' : 'User role added successfully.', 'success');
       await onSaved();
     } catch (error) {
       console.error('Error saving user role:', error);
-      setFormError(typeof error === 'string' ? error : 'Failed to save user role.');
+      const message = typeof error === 'string' ? error : 'Failed to save user role.';
+      setFormError(message);
+      showToast(message, 'error');
     } finally {
       setSaving(false);
     }
   };
 
+  // Required-field messages already render inline under the field itself (InputField's/
+  // TextareaField's own fieldState.error) - toasting them too would show the same "required"
+  // complaint twice, once inline and once in a banner. Only surface a toast for anything that
+  // wouldn't otherwise be visible.
   const onInvalid = (formErrors: any) => {
-    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
-      if (error?.message === 'This field is required') {
-        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
-        if (key === 'eMail' || key === 'email') fieldName = 'email address';
-        if (key === 'roleId') fieldName = 'role';
-        if (key === 'isActive') fieldName = 'status';
-        if (key === 'isLocked') fieldName = 'locked';
-        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
-        return `${fieldName} is required.`;
-      }
-      return error?.message;
-    }).filter(Boolean);
-    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
+    const messages = Object.values(formErrors)
+      .map((error: any) => error?.message)
+      .filter((message): message is string => Boolean(message) && message !== 'This field is required');
+    if (messages.length > 0) {
+      showToast(messages, 'error');
+    }
   };
   //#endregion
 
@@ -103,16 +154,32 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
       showMandatory={!readOnly}
       footer={(
         <>
-          <CommonButton variant="outline" onClick={handleClose} disabled={saving}>{readOnly ? 'Close' : 'Cancel'}</CommonButton>
-          {readOnly ? null : <CommonButton variant="primary" onClick={handleSubmit(onSubmit, onInvalid)} loading={saving} disabled={saving}>Save</CommonButton>}
+          <CommonButton id={readOnly ? 'btnCloseUserRoleModal' : 'btnCancelUserRole'} variant="outline" onClick={handleClose} disabled={saving}>{readOnly ? 'Close' : 'Cancel'}</CommonButton>
+          {readOnly ? null : <CommonButton id="btnSaveUserRole" variant="primary" onClick={handleSubmit(onSubmit, onInvalid)} loading={saving} disabled={saveDisabled}>Save</CommonButton>}
         </>
       )}
     >
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)} className="flex flex-col gap-4">
         {readOnly ? <ReadOnlyBanner featureName="User Roles" /> : null}
         {formError ? <p className="text-xs font-semibold text-[var(--error)]">{formError}</p> : null}
-        <InputField control={control} name="roleName" label="Role name" required rules={userRolesRules.roleName} disabled={saving || readOnly} />
-        <TextareaField control={control} name="description" label="Description" rows={3} showCharCount={false} disabled={saving || readOnly} />
+        {role ? (
+          // Read-only — status is changed via the list page's Activate/Deactivate action (which
+          // also enforces the role-in-use guard), not edited inline here. The Save button below
+          // never touches status: toSaveUserRolePayload always resends `role.status` unchanged.
+          <div className="flex items-center gap-2">
+            <span className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-muted)]">Status</span>
+            <Badge id="badgeUserRoleStatus" tone={role.status === 'active' ? 'success' : 'neutral'}>
+              {role.status === 'active' ? 'Active' : 'Inactive'}
+            </Badge>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-1">
+          <InputField id="txtUserRoleName" control={control} name="roleName" label="Role name" required autoFocus rules={userRolesRules.roleName} maxLength={ROLE_NAME_MAX_LENGTH} disabled={saving || readOnly} />
+          <div className="flex justify-end">
+            <CharacterCount id="txtUserRoleName-counter" length={roleNameValue?.length ?? 0} maxLength={ROLE_NAME_MAX_LENGTH} />
+          </div>
+        </div>
+        <TextareaField control={control} name="description" label="Description" rows={3} rules={userRolesRules.description} maxLength={250} showCharCount={true} disabled={saving || readOnly} />
       </form>
     </BaseModal>
   );

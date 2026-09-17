@@ -203,9 +203,7 @@ BEGIN
         @SeedTemplateId,
         N'Welcome',
         N'Welcome to Catholic Solutions',
-        N'Hi [FirstName],
-
-Your Catholic Solutions account is ready. Sign in to get started with your organization''s workspace.',
+        N'<p>Hi [FirstName],</p><p>Your Catholic Solutions account is ready. Sign in to get started with your organization''s workspace.</p>',
         1,
         SYSUTCDATETIME(),
         0
@@ -222,9 +220,7 @@ BEGIN
         @SeedTemplateId,
         N'AccessApproved',
         N'Your application access request was approved',
-        N'Hi [FirstName],
-
-Your request for access to [AppName] has been approved. You can now launch it from App Hub.',
+        N'<p>Hi [FirstName],</p><p>Your request for access to [AppName] has been approved. You can now launch it from App Hub.</p>',
         1,
         SYSUTCDATETIME(),
         0
@@ -241,11 +237,7 @@ BEGIN
         @SeedTemplateId,
         N'AccessInfo',
         N'More information needed for your request',
-        N'Hi [FirstName],
-
-We need a bit more information to process your request for [AppName]:
-
-[Note]',
+        N'<p>Hi [FirstName],</p><p>We need a bit more information to process your request for [AppName]:</p><p>[Note]</p>',
         1,
         SYSUTCDATETIME(),
         0

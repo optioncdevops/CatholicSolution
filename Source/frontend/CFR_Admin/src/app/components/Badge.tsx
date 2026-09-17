@@ -10,9 +10,14 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
   info: 'bg-[var(--info-bg)] text-[var(--info)]',
 };
 
-export function Badge({ tone, children }: { tone: BadgeTone; children: ReactNode }) {
+/** "inactive" is spelled out as "InActive" everywhere it's displayed, per product convention. */
+export function formatStatusLabel(status: string): string {
+  return status.toLowerCase() === 'inactive' ? 'InActive' : status.replace('-', ' ');
+}
+
+export function Badge({ id, tone, children }: { id?: string; tone: BadgeTone; children: ReactNode }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-bold capitalize leading-tight ${TONE_CLASSES[tone]}`}>
+    <span id={id} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-bold capitalize leading-tight ${TONE_CLASSES[tone]}`}>
       {children}
     </span>
   );
@@ -45,5 +50,33 @@ const TONE_MAP_BY_KIND: Record<StatusKind, Record<string, BadgeTone>> = {
 type StatusKind = 'application' | 'organization' | 'user' | 'request' | 'license' | 'access' | 'permission';
 
 export function StatusBadge({ status, kind }: { status: string; kind: StatusKind }) {
-  return <Badge tone={TONE_MAP_BY_KIND[kind][status] ?? 'neutral'}>{status.replace('-', ' ')}</Badge>;
+  return <Badge tone={TONE_MAP_BY_KIND[kind][status] ?? 'neutral'}>{formatStatusLabel(status)}</Badge>;
+}
+
+const TONE_BORDER_CLASSES: Record<BadgeTone, string> = {
+  success: 'border-[var(--success)]',
+  warning: 'border-[var(--warning)]',
+  neutral: 'border-[var(--line-strong)]',
+  danger: 'border-[var(--error)]',
+  info: 'border-[var(--info)]',
+};
+
+const TONE_SOLID_CLASSES: Record<BadgeTone, string> = {
+  success: 'bg-[var(--success)] text-white',
+  warning: 'bg-[var(--warning)] text-white',
+  neutral: 'bg-[var(--text-secondary)] text-white',
+  danger: 'bg-[var(--error)] text-white',
+  info: 'bg-[var(--info)] text-white',
+};
+
+/** Background + border classes matching a status's badge tone, for highlighting "the current status" in a picker. */
+export function getStatusHighlightClasses(status: string, kind: StatusKind): string {
+  const tone = TONE_MAP_BY_KIND[kind][status] ?? 'neutral';
+  return `${TONE_CLASSES[tone]} ${TONE_BORDER_CLASSES[tone]}`;
+}
+
+/** Solid, high-contrast classes (matching a status's tone) for a "Current" chip sitting on top of {@link getStatusHighlightClasses}. */
+export function getStatusSolidClasses(status: string, kind: StatusKind): string {
+  const tone = TONE_MAP_BY_KIND[kind][status] ?? 'neutral';
+  return TONE_SOLID_CLASSES[tone];
 }

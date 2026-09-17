@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { EmptyState } from '@shared/app/components/EmptyState';
@@ -29,12 +30,14 @@ const CFRUsersPage = () => {
   const { showToast } = useToast();
   const accessLevel = useFeatureAccessLevel(CFR_USERS_ROUTE);
   const isReadOnly = accessLevel === 'readOnly';
+  const location = useLocation();
+  const filterOrgId = location.state?.orgId as number | undefined;
   //#endregion
 
   //#region States
   const [organizations, setOrganizations] = useState<OrganizationApiItem[]>([]);
   const [products, setProducts] = useState<ProductApiItem[]>([]);
-  const [orgId, setOrgId] = useState<number | typeof ALL_ORGS | null>(null);
+  const [orgId, setOrgId] = useState<number | typeof ALL_ORGS | null>(filterOrgId ?? null);
   const [productIds, setProductIds] = useState<string[]>([]);
   const [users, setUsers] = useState<ScopedOrgUser[]>([]);
   const [loadingOrgs, setLoadingOrgs] = useState(true);
@@ -51,14 +54,14 @@ const CFRUsersPage = () => {
       const { resultData, statusCode } = await getOrganizations();
       const list = statusCode === 204 ? [] : normalizeOrganizationsList(resultData);
       setOrganizations(list);
-      setOrgId((current) => current ?? list[0]?.orgId ?? null);
+      setOrgId((current) => current ?? filterOrgId ?? list[0]?.orgId ?? null);
     } catch (error) {
       console.error('Error loading organizations:', error);
       showToast(typeof error === 'string' ? error : 'Failed to load organizations.', 'error');
     } finally {
       setLoadingOrgs(false);
     }
-  }, [showToast]);
+  }, [showToast, filterOrgId]);
 
   const loadUsers = useCallback(async (
     id: number | typeof ALL_ORGS, 
@@ -143,7 +146,7 @@ const CFRUsersPage = () => {
 
   //#region Handlers
   const handleUsersChanged = async () => {
-    if (orgId !== null) await loadUsers(orgId, activeTab, productId);
+    if (orgId !== null) await loadUsers(orgId, activeTab, productIds);
   };
   //#endregion
 
@@ -169,7 +172,6 @@ const CFRUsersPage = () => {
         </div>
         <div className="w-full max-w-xs">
           <MultiSelect
-            id="filterCFRUserProduct"
             label="Products"
             searchable
             value={productIds}
@@ -193,8 +195,8 @@ const CFRUsersPage = () => {
             activeId={activeTab}
             onChange={setActiveTab}
             tabs={[
-              { id: 'active', label: 'Active Users', count: activeCount },
-              { id: 'pending', label: 'Pending', count: pendingCount },
+              { id: 'active', label: 'AuthO user', count: activeCount },
+              { id: 'pending', label: 'AuthO Pending', count: pendingCount },
             ]}
           />
 

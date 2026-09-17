@@ -27,4 +27,7 @@
     <Project Path="Service/CFR.PortalService/CFR.PortalService.csproj" Id="56ff7d75-4b4f-4f51-9dc0-9cbed3742d00" />
     <Project Path="Service/CFR.SyncService/CFR.SyncService.csproj" />
   </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/CFR.Acutis.Tests/CFR.Acutis.Tests.csproj" />
+  </Folder>
 </Solution>

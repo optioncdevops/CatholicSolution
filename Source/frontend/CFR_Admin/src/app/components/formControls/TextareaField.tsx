@@ -71,12 +71,16 @@ const countStatusClasses: Record<CountStatus, string> = {
   danger: "text-danger-600 font-semibold dark:text-danger-400",
 };
 
-function CharacterCount({
+/** Exported so other single-line fields (e.g. InputField-based forms) can show the same
+ * live "current/max" counter without duplicating the status-color thresholds. */
+export function CharacterCount({
   length,
   maxLength,
+  id,
 }: {
   length: number;
   maxLength: number;
+  id?: string;
 }) {
   const ratio = maxLength > 0 ? length / maxLength : 0;
   const status: CountStatus =
@@ -85,6 +89,7 @@ function CharacterCount({
 
   return (
     <span
+      id={id}
       className={cn(
         "shrink-0 text-[11px] tabular-nums tracking-wide transition-colors duration-200",
         "select-none",

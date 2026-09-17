@@ -1,20 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Plus } from "lucide-react";
+import { Eye, Pencil, Plus } from "lucide-react";
 import { EmptyState } from "@shared/app/components/EmptyState";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { CommonButton, CommonIconButton } from "@app/components/buttons";
-import { StatusBadge } from "@app/components/Badge";
 import { Dropdown } from "@app/components/formControls";
 import {
   DataTable,
   type DataTableColumn,
 } from "@app/components/dataTable/DataTable";
-import {
-  formatDate,
-  formatDaysLabel,
-  effectiveLicenseStatus,
-} from "@/modules/utils/formatDate";
+import { formatDate } from "@/modules/utils/formatDate";
 import { DetailField } from "@app/components/DetailField";
 import { BaseModal } from "@app/components/modal/BaseModal";
 import { useAdminData } from "@/modules/AdminDataContext";
@@ -28,6 +23,7 @@ import {
 } from "../utils/productHelpers";
 import { LICENSE_DETAILS_STATUS_FILTERS } from "../utils/productFilters";
 import { InvoiceStatusBadge } from "../components/InvoiceStatusBadge";
+import { EditLicenseModal } from "./partials/EditLicenseModal";
 import type {
   AdminApplication,
   License,
@@ -44,8 +40,7 @@ export function InvoiceDetailModal({
   if (!invoice) return null;
 
   const org = getOrganization(invoice.orgId);
-  const status = effectiveLicenseStatus(invoice.status, invoice.expiryDate);
-  const customerCode = formatCustomerCodeAsInteger(invoice.orgId || org?.code);
+  const organizationCode = formatCustomerCodeAsInteger(invoice.orgId || org?.code);
 
   return (
     <BaseModal
@@ -55,25 +50,16 @@ export function InvoiceDetailModal({
       size="md"
     >
       <div className="flex flex-col gap-4">
-        {org?.name ? (
-          <p className="-mt-2 text-xs text-[var(--text-muted)]">{org.name}</p>
-        ) : null}
-        <div className="flex items-center gap-2">
-          <StatusBadge status={status} kind="license" />
-          {status !== "suspended" && status !== "expired" ? (
-            <span className="text-xs font-semibold text-[var(--text-muted)]">
-              {formatDaysLabel(invoice.expiryDate)}
-            </span>
-          ) : null}
-        </div>
         <div className="grid grid-cols-2 gap-3">
-          <DetailField label="Invoice #" value={invoice.licenseNumber} />
-          <DetailField label="Customer code" value={customerCode} />
+          <DetailField label="Invoice No" value={invoice.licenseNumber} />
+          <DetailField label="Organization Code" value={organizationCode} />
           <DetailField
-            label="Customer"
+            label="Organization Name"
             value={
               org?.name ?? invoice.title?.split("—")[0]?.trim() ?? invoice.orgId
             }
+            wrap
+            className="col-span-2"
           />
           <DetailField
             label="Start date"
@@ -112,6 +98,7 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState("all");
   const [viewingInvoice, setViewingInvoice] = useState<License | null>(null);
+  const [editingLicense, setEditingLicense] = useState<ProductLicenseApiItem | null>(null);
   //#endregion
 
   //#region Functions
@@ -194,29 +181,42 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
       id: "actions",
       header: "Actions",
       pinLeft: true,
-      width: "4rem",
+      width: "5rem",
       excludeFromExport: true,
       cell: (lic) => (
-        <CommonIconButton
-          aria-label={`View invoice ${lic.invoiceNumber}`}
-          tooltip="View"
-          icon={<Eye size={15} />}
-          onClick={() => {
-            const licenseModalData: License = {
-              id: lic.id,
-              licenseNumber: lic.invoiceNumber,
-              licenseKey: lic.licenseKey,
-              orgId: String(lic.orgId),
-              appId: app.id,
-              title: `${app.name} — ${lic.invoiceNumber}`,
-              startDate: lic.startDate,
-              expiryDate: lic.expiryDate,
-              status: lic.status === "active" ? "active" : "suspended",
-              customMessage: lic.remarks || undefined,
-            };
-            setViewingInvoice(licenseModalData);
-          }}
-        />
+        <div className="flex items-center gap-0.5">
+          <CommonIconButton
+            aria-label={`View invoice ${lic.invoiceNumber}`}
+            tooltip="View"
+            icon={<Eye size={15} />}
+            onClick={() => {
+              const licenseModalData: License = {
+                id: lic.id,
+                licenseNumber: lic.invoiceNumber,
+                licenseKey: lic.licenseKey,
+                orgId: String(lic.orgId),
+                appId: app.id,
+                title: `${app.name} — ${lic.invoiceNumber}`,
+                startDate: lic.startDate,
+                expiryDate: lic.expiryDate,
+                status: lic.status === "active" ? "active" : "suspended",
+                customMessage: lic.remarks || undefined,
+              };
+              setViewingInvoice(licenseModalData);
+            }}
+          />
+          {!readOnly && (
+            <CommonIconButton
+              aria-label={`Edit license ${lic.invoiceNumber}`}
+              tooltip="Edit"
+              icon={<Pencil size={14} />}
+              onClick={() => {
+                const raw = dbLicenses.find((item) => String(item.licenseId) === lic.id) ?? null;
+                setEditingLicense(raw);
+              }}
+            />
+          )}
+        </div>
       ),
     },
     {
@@ -363,7 +363,7 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
             iconLeft={<Plus size={14} />}
             onClick={() =>
               navigate(PRODUCTS_PATHS.addLicense, {
-                state: { productId: Number(app.id), tab: "invoice-details" },
+                state: { productId: Number(app.id), tab: "license-details" },
               })
             }
             disabled={readOnly}
@@ -393,6 +393,13 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
       <InvoiceDetailModal
         invoice={viewingInvoice}
         onClose={() => setViewingInvoice(null)}
+      />
+
+      <EditLicenseModal
+        license={editingLicense}
+        onClose={() => setEditingLicense(null)}
+        onSaved={fetchLicenses}
+        readOnly={readOnly}
       />
     </div>
   );

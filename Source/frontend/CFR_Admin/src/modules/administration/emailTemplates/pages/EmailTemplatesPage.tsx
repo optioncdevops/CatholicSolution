@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle, CheckCircle2, Eye, KeyRound, Mail, MailCheck, MailQuestion, RotateCcw, Save, Search, Send, Settings, Sparkles, Wand2,
 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
-import { Badge } from '@app/components/Badge';
+import { Badge, formatStatusLabel } from '@app/components/Badge';
 import { BaseModal } from '@app/components/modal/BaseModal';
-import { InputField, RichTextEditor } from '@app/components/formControls';
+import { CharacterCount, InputField, RichTextEditor } from '@app/components/formControls';
 // The ported formControls InputField doesn't forward a ref to the underlying element, which the
 // merge-tag "insert at cursor" feature below needs for the Subject field — keep the local
 // ref-forwarding one. The Body field is now the shared RichTextEditor (WYSIWYG, standard
@@ -48,6 +48,7 @@ const draftFromTemplate = (item: EmailTemplateApiItem): EmailTemplateFormValues 
 function EmailTemplatesPage() {
   //#region Hooks
   const { showToast } = useToast();
+  const navigate = useNavigate();
   // Real enforcement, not just a label: a Read Only grant for this page (set on the User Rights
   // page) disables every action that would change the template itself — Save, Reset, and the
   // Subject/Body fields. Preview and Send Test both stay available since neither one writes
@@ -66,6 +67,8 @@ function EmailTemplatesPage() {
   const [sendingTest, setSendingTest] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [logoImageUrl, setLogoImageUrl] = useState<string | null>(null);
+  const [logoImageFailed, setLogoImageFailed] = useState(false);
+  const [subjectError, setSubjectError] = useState<string | null>(null);
   const subjectRef = useRef<HTMLInputElement>(null);
   //#endregion
 
@@ -119,6 +122,7 @@ function EmailTemplatesPage() {
         if (cancelled) return;
         const item = (resultData ?? null) as EmailSettingsApiItem | null;
         setLogoImageUrl(item?.logoImageUrl ?? null);
+        setLogoImageFailed(false);
       } catch (error) {
         if (!cancelled) console.error('Error loading email logo for preview:', error);
       }
@@ -138,10 +142,35 @@ function EmailTemplatesPage() {
   );
   const storedAuthEmail = getStoredAcutisAuth()?.resultData?.user?.eMail;
 
+  // Whether ANY template (not just the one currently open) has an unsaved edit — dirty tracking
+  // itself only ever compares the selected template against its own draft, so switching templates
+  // never loses anything, but nothing warns before leaving the page entirely while some other
+  // template's edit is still sitting unsaved in `drafts`.
+  const hasAnyUnsavedChanges = useMemo(() => templates.some((item) => {
+    const itemDraft = drafts[item.templateId];
+    if (!itemDraft) return false;
+    return itemDraft.subject !== item.subject
+      || itemDraft.body !== item.body
+      || itemDraft.linkExpiryMinutes !== (item.linkExpiryMinutes != null ? String(item.linkExpiryMinutes) : '');
+  }), [templates, drafts]);
+
   const unsupportedPlaceholders = useMemo(
     () => (template ? getUnsupportedPlaceholders(template.templateCode, draft.subject, draft.body) : []),
     [template, draft.subject, draft.body],
   );
+
+  // Covers leaving the page entirely (tab close, refresh, typed URL) while any template has an
+  // unsaved edit — the browser's own confirmation dialog is the only mechanism available for
+  // that; its text isn't customizable by design. In-app navigation via the Email Settings link
+  // below is intercepted separately since this can't catch a React Router navigation.
+  useEffect(() => {
+    if (isReadOnly || !hasAnyUnsavedChanges) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isReadOnly, hasAnyUnsavedChanges]);
 
   const filteredTemplates = useMemo(() => {
     const needle = search.trim().toLowerCase();
@@ -149,8 +178,15 @@ function EmailTemplatesPage() {
     return templates.filter((item) => templateDisplayLabel(item.templateCode).toLowerCase().includes(needle) || templateDescription(item.templateCode).toLowerCase().includes(needle));
   }, [templates, search]);
 
+  // The editor pane keeps showing the selected template regardless of the search text (it reads
+  // from the full `templates` array, not `filteredTemplates`), but the list's own "which one is
+  // selected" highlight vanishes the moment a search filters that row out — nothing then shows
+  // it's still open. Surface a small pinned indicator instead of leaving that silent.
+  const selectedOutsideFilter = Boolean(template) && !filteredTemplates.some((item) => item.templateId === template!.templateId);
+
   const updateField = <K extends keyof EmailTemplateFormValues>(field: K, value: EmailTemplateFormValues[K]) => {
     if (!template) return;
+    if (field === 'subject') setSubjectError(null);
     setDrafts((prev) => ({ ...prev, [template.templateId]: { ...prev[template.templateId], [field]: value } }));
   };
 
@@ -184,8 +220,13 @@ function EmailTemplatesPage() {
     if (!template || isReadOnly) return;
     const isLinkExpiryTemplate = template.templateCode === LINK_EXPIRY_TEMPLATE_CODE;
     const validationErrors = validateEmailTemplate(draft.subject, draft.body, isLinkExpiryTemplate ? draft.linkExpiryMinutes : undefined);
+    // Subject errors render inline under the field itself (red border + message, matching the
+    // Users module) instead of only a toast — the toast still carries anything else.
+    const subjectValidationError = validationErrors.find((message) => message.startsWith('Subject'));
+    setSubjectError(subjectValidationError ?? null);
     if (validationErrors.length > 0) {
-      showToast(validationErrors, 'error');
+      const remainingErrors = validationErrors.filter((message) => message !== subjectValidationError);
+      if (remainingErrors.length > 0) showToast(remainingErrors, 'error');
       return;
     }
 
@@ -219,6 +260,7 @@ function EmailTemplatesPage() {
     });
     if (!confirmed) return;
     setDrafts((prev) => ({ ...prev, [template.templateId]: draftFromTemplate(template) }));
+    setSubjectError(null);
     showToast(`${templateDisplayLabel(template.templateCode)} reset to last saved version.`, 'success');
   };
 
@@ -247,6 +289,21 @@ function EmailTemplatesPage() {
     }
   };
 
+  // Intercepts the in-app "Email Settings" navigation — a React Router <Link> click never fires
+  // beforeunload, so unsaved edits would otherwise be silently discarded on leaving this page for
+  // another admin screen, exactly as reported.
+  const handleEmailSettingsLinkClick = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!hasAnyUnsavedChanges) return;
+    event.preventDefault();
+    const confirmed = await confirmAction({
+      title: 'Discard unsaved changes?',
+      description: 'You have unsaved template edits. Leaving this page now will discard them.',
+      confirmLabel: 'Discard changes',
+      tone: 'danger',
+    });
+    if (confirmed) navigate('/admin/administration-email-settings');
+  };
+
   //#endregion
 
   //#region Render
@@ -258,7 +315,7 @@ function EmailTemplatesPage() {
       <PanelHeader
         title="Email Templates"
         action={(
-          <Link to="/admin/administration-email-settings">
+          <Link to="/admin/administration-email-settings" onClick={(event) => void handleEmailSettingsLinkClick(event)}>
             <CommonButton variant="outline" size="sm" iconLeft={<Settings size={13} />}>Email Settings</CommonButton>
           </Link>
         )}
@@ -276,6 +333,19 @@ function EmailTemplatesPage() {
               className="min-h-8 text-xs placeholder:text-xs"
             />
           </div>
+          {selectedOutsideFilter && template ? (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="admin-email-template-item admin-email-template-item--active admin-email-template-item--pinned"
+              title="Still open — clear the search to see it in the list"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="admin-email-template-item__title truncate">{templateDisplayLabel(template.templateCode)}</span>
+                <span className="admin-email-template-item__desc">Still open — outside the current search. Click to clear search.</span>
+              </span>
+            </button>
+          ) : null}
           <div className="admin-email-list">
             {loading ? (
               Array.from({ length: 4 }).map((_, index) => <div key={index} className="admin-skeleton h-12 w-full rounded-[var(--radius-control)]" />)
@@ -290,6 +360,7 @@ function EmailTemplatesPage() {
               const edited = Boolean(itemDraft) && (
                 itemDraft.subject !== item.subject
                 || itemDraft.body !== item.body
+                || itemDraft.linkExpiryMinutes !== (item.linkExpiryMinutes != null ? String(item.linkExpiryMinutes) : '')
               );
               const ItemIcon = TEMPLATE_ICON[item.templateCode] ?? Mail;
               const isActive = item.templateId === selectedId;
@@ -297,7 +368,7 @@ function EmailTemplatesPage() {
                 <button
                   key={item.templateId}
                   type="button"
-                  onClick={() => setSelectedId(item.templateId)}
+                  onClick={() => { setSelectedId(item.templateId); setSubjectError(null); }}
                   aria-current={isActive ? 'true' : undefined}
                   className={`admin-email-template-item ${isActive ? 'admin-email-template-item--active' : ''}`}
                 >
@@ -323,7 +394,7 @@ function EmailTemplatesPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="panel-title truncate">{templateDisplayLabel(template.templateCode)}</h2>
-                    <Badge tone={template.status === 'active' ? 'success' : 'neutral'}>{template.status}</Badge>
+                    <Badge tone={template.status === 'active' ? 'success' : 'neutral'}>{formatStatusLabel(template.status)}</Badge>
                   </div>
                   <p className="panel-subtitle truncate">{templateDescription(template.templateCode)}</p>
                 </div>
@@ -364,15 +435,20 @@ function EmailTemplatesPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                 <div className="sm:w-2/5">
                   <SubjectField
+                    id="txtEmailTemplateSubject"
                     label="Subject" required
                     ref={subjectRef}
                     value={draft.subject}
                     onChange={(event) => updateField('subject', event.target.value)}
                     placeholder="Enter the email subject line"
-                    hint="Shown as the message subject line — keep it short and specific."
+                    hint="Shown as the message subject line — keep it short and specific. Most inboxes truncate around 60–78 characters."
                     maxLength={SUBJECT_MAX_LENGTH}
+                    error={subjectError ?? undefined}
                     disabled={isReadOnly}
                   />
+                  <div className="mt-1 flex justify-end">
+                    <CharacterCount id="txtEmailTemplateSubject-counter" length={draft.subject.length} maxLength={SUBJECT_MAX_LENGTH} />
+                  </div>
                   {template.templateCode === LINK_EXPIRY_TEMPLATE_CODE ? (
                     <div className="mt-3">
                       <SubjectField
@@ -458,9 +534,17 @@ function EmailTemplatesPage() {
                   // overrides, but the logo image itself is the same one configured there, so the
                   // preview matches exactly what recipients see.
                   <div className="admin-email-preview-card__envelope">
-                    {logoImageUrl ? (
+                    {logoImageUrl && !logoImageFailed ? (
                       <div className="admin-email-preview-card__logo-image">
-                        <img src={logoImageUrl} alt="Catholic Solutions" />
+                        <img
+                          src={logoImageUrl}
+                          alt="Catholic Solutions"
+                          // A broken/404'd logo URL would otherwise show the browser's own
+                          // broken-image icon at the top of every preview (and every real sent
+                          // email) — fall back to the same intentional text brand mark used when
+                          // no logo is configured at all, rather than a visibly broken image.
+                          onError={() => setLogoImageFailed(true)}
+                        />
                       </div>
                     ) : (
                       <div className="admin-email-preview-card__brand">Catholic Solutions</div>

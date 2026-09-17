@@ -17,6 +17,10 @@ export const organizationDefaultValues: OrganizationFormValues = {
 export const organizationRules = {
   orgName: {
     required: 'Organization name is required.',
+    maxLength: {
+      value: 100,
+      message: 'Organization name cannot exceed 100 characters.',
+    },
   },
   orgType: {
     required: 'Organization type is required.',
@@ -33,16 +37,28 @@ export const organizationRules = {
       message: 'Enter a valid domain, e.g. example.org.',
     },
   },
+  contactPerson: {
+    maxLength: {
+      value: 50,
+      message: 'Contact person cannot exceed 50 characters.',
+    },
+  },
   contactPhone: {
     pattern: {
-      value: /^[+()\d][\d\s().-]{6,19}$/,
-      message: 'Enter a valid phone number.',
+      value: /^[0-9]{10}$/,
+      message: 'Enter Contact Number.',
     },
   },
   zip: {
     pattern: {
-      value: /^[A-Z0-9][A-Z0-9\s-]{2,9}$/i,
-      message: 'Enter a valid ZIP/postal code.',
+      value: /^\d{5}$/,
+      message: 'Enter exactly 5 digits for the ZIP code.',
+    },
+  },
+  address: {
+    maxLength: {
+      value: 500,
+      message: 'Address cannot exceed 500 characters.',
     },
   },
 };

@@ -6,10 +6,10 @@ import { EmptyState } from "@shared/app/components/EmptyState";
 import { ReadOnlyBanner } from "@shared/app/components/ReadOnlyBanner";
 import { useToast } from "@shared/app/components/ToastProvider";
 import { useFeatureAccessLevel } from "@shared/auth/hooks/useFeatureAccessLevel";
-import { CommonIconButton } from "@app/components/buttons";
+import { CommonButton, CommonIconButton } from "@app/components/buttons";
 import { InputField, Dropdown } from "@app/components/formControls";
 import { StatusBadge } from "@app/components/Badge";
-import { formatDate } from "@/modules/utils/formatDate";
+import { formatDateTime } from "@/modules/utils/formatDate";
 import { getProducts, updateProduct } from "../services/productService";
 import type {
   ProductApiItem,
@@ -44,6 +44,7 @@ const ProductList = () => {
   //#region States
   const [products, setProducts] = useState<ProductApiItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>("all");
   const [sortBy, setSortBy] = useState<ProductSortOption>("default");
@@ -57,16 +58,19 @@ const ProductList = () => {
   //#endregion
 
   //#region Functions
-  const load = useCallback(async () => {
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
     try {
       const { resultData, statusCode } = await getProducts();
       setProducts(statusCode === 204 ? [] : normalizeProductList(resultData));
+      if (isRefresh) showToast("Products refreshed.", "success");
     } catch (error) {
       console.error("Error loading products:", error);
       showToast("Failed to load products.", "error");
       setProducts([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [showToast]);
 
@@ -132,6 +136,8 @@ const ProductList = () => {
   //#endregion
 
   //#region Handlers
+  const handleRefresh = () => { void load(true); };
+
   const filteredProducts = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const filtered = products
@@ -173,7 +179,19 @@ const ProductList = () => {
   //#region Render
   return (
     <div className="admin-reveal flex flex-col gap-2.5">
-      <PanelHeader title="Products" />
+      <PanelHeader
+        title="Products"
+        action={
+          <CommonButton
+            variant="headerSecondary"
+            iconLeft={<RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />}
+            onClick={handleRefresh}
+            disabled={refreshing || loading}
+          >
+            {refreshing ? "Refreshing…" : "Refresh"}
+          </CommonButton>
+        }
+      />
 
       {isReadOnly ? <ReadOnlyBanner featureName="Products" /> : null}
 
@@ -306,9 +324,16 @@ const ProductList = () => {
                   </span>
 
                   <div className="admin-product-card__footer">
-                    <span className="truncate text-xs font-semibold text-[var(--text-faint)]">
-                      Updated {formatDate(item.updatedDate || item.createdDate)}
-                    </span>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="truncate text-xs font-semibold text-[var(--text-faint)]">
+                        Updated {formatDateTime(item.updatedDate || item.createdDate)}
+                      </span>
+                      {item.updatedByName ? (
+                        <span className="truncate text-xs font-semibold text-[var(--text-faint)]">
+                          By {item.updatedByName}
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="flex items-center gap-0.5">
                       <CommonIconButton
                         aria-label={`View ${item.productName}`}

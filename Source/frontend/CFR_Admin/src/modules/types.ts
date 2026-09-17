@@ -37,6 +37,7 @@ export interface AdminApplication {
   navigationTarget: ProductNavigationTarget;
   status: ProductStatus;
   updatedAt: string;
+  updatedByName?: string;
   contactUserId?: string;
   contactPersonName?: string;
 }

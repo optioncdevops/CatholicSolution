@@ -18,7 +18,7 @@ export const normalizeOrganization = (resultData: unknown): OrganizationApiItem 
 // database (attempting to save it fails the constraint and surfaces as a 500).
 export const ORG_STATUS_OPTIONS: Array<{ id: string; value: string }> = [
   { id: 'active', value: 'Active' },
-  { id: 'inactive', value: 'Inactive' },
+  { id: 'inactive', value: 'InActive' },
   { id: 'suspended', value: 'Suspended' },
 ];
 

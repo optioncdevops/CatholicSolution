@@ -41,6 +41,24 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public DateTime? CreatedDate { get; set; }
 
         /// <summary>
+        /// Gets or sets the name of the user who created the role.
+        /// </summary>
+        [JsonPropertyName("createdBy")]
+        public string? CreatedBy { get; set; }
+
+        /// <summary>
+        /// Gets or sets the modified timestamp.
+        /// </summary>
+        [JsonPropertyName("modifiedDate")]
+        public DateTime? ModifiedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the user who modified the role.
+        /// </summary>
+        [JsonPropertyName("modifiedBy")]
+        public string? ModifiedBy { get; set; }
+
+        /// <summary>
         /// Gets or sets the number of active Acutis users currently assigned this role.
         /// </summary>
         [JsonPropertyName("usersCount")]
