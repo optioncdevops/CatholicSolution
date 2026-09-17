@@ -2,8 +2,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import { AccountModals, type AccountModal } from './AccountModals';
 import { ChevronDownIcon, LockIcon, LogOutIcon, UserIcon } from './UiIcons';
-import { useAuth } from '@shared/auth/AuthProvider';
-import { buildCentralLogoutUrl } from '@shared/auth/centralAuth';
+import { AUTH0_LOGOUT_PATH, buildCentralLogoutUrl, isAuth0Session, useAuth } from '@/modules/authentication';
 
 interface ProfileMenuProps {
   gradient?: string;
@@ -39,6 +38,10 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
 
   const handleSignOut = () => {
     setOpen(false);
+    if (isAuth0Session()) {
+      window.location.replace(AUTH0_LOGOUT_PATH);
+      return;
+    }
     signOut();
     const target = buildCentralLogoutUrl(window.location.href);
     if (target) window.location.replace(target);

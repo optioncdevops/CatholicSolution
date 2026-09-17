@@ -2,11 +2,15 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, MailIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
-import { AuthShell } from './AuthShell';
+import { AuthShell } from '../components/AuthShell';
 
-export function ForgotPasswordPage() {
+const ForgotPasswordPage = () => {
+  //#region Hooks
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  //#endregion
+
+  //#region States
   const initialEmail = searchParams.get('email')?.trim() ?? '';
   const returnUrl = searchParams.get('returnUrl');
   const clientId = searchParams.get('client_id');
@@ -20,12 +24,16 @@ export function ForgotPasswordPage() {
     if (clientId) params.set('client_id', clientId);
     return `/reset-password?${params.toString()}`;
   }, [submittedEmail, returnUrl, clientId]);
+  //#endregion
 
+  //#region Handlers
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmittedEmail(email.trim());
   };
+  //#endregion
 
+  //#region Render
   return (
     <AuthShell>
       <div className="auth-login-stack">
@@ -70,4 +78,7 @@ export function ForgotPasswordPage() {
       </div>
     </AuthShell>
   );
-}
+  //#endregion
+};
+
+export default ForgotPasswordPage;

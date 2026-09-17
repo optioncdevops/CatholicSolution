@@ -114,7 +114,6 @@ export function AuthShell({
         <section className="auth-form-panel">
           <div className="auth-form-panel__topbar">
             <div className="lg:hidden"><Brand compact to="/login" local /></div>
-            
           </div>
           <div className="auth-form-panel__body">{children}</div>
         </section>

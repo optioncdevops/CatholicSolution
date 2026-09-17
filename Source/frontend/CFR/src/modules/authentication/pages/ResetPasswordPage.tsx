@@ -1,20 +1,17 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, EyeIcon, EyeOffIcon, LockIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, LockIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
-import { AuthShell } from './AuthShell';
+import { AuthShell } from '../components/AuthShell';
+import { passwordScore, validateResetPassword } from '../validator/AuthenticationValidator';
+import { ResetPasswordField } from './partials/ResetPasswordField';
 
-function passwordScore(value: string) {
-  return [
-    value.length >= 8,
-    /[A-Z]/.test(value) && /[a-z]/.test(value),
-    /[0-9]/.test(value),
-    /[^A-Za-z0-9]/.test(value),
-  ].filter(Boolean).length;
-}
-
-export function ResetPasswordPage() {
+const ResetPasswordPage = () => {
+  //#region Hooks
   const [searchParams] = useSearchParams();
+  //#endregion
+
+  //#region States
   const email = searchParams.get('email')?.trim() ?? '';
   const returnUrl = searchParams.get('returnUrl');
   const clientId = searchParams.get('client_id');
@@ -36,16 +33,22 @@ export function ResetPasswordPage() {
   if (returnUrl) recoveryParams.set('returnUrl', returnUrl);
   if (clientId) recoveryParams.set('client_id', clientId);
   const recoveryTarget = `/forgot-password${recoveryParams.size ? `?${recoveryParams.toString()}` : ''}`;
+  //#endregion
 
+  //#region Handlers
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (code.trim().length < 6) { setError('Enter the 6-digit verification code from your recovery email.'); return; }
-    if (score < 3) { setError('Use at least 8 characters with upper/lowercase letters, a number, and preferably a symbol.'); return; }
-    if (password !== confirmPassword) { setError('The new passwords do not match.'); return; }
+    const messages = validateResetPassword(code, password, confirmPassword);
+    if (messages.length) {
+      setError(messages[0]);
+      return;
+    }
     setError('');
     setComplete(true);
   };
+  //#endregion
 
+  //#region Render
   return (
     <AuthShell>
       <div className="auth-login-stack">
@@ -79,13 +82,13 @@ export function ResetPasswordPage() {
                   <p className="auth-field-hint">Use the code sent to your recovery email. Codes should expire after a short period when connected to the identity service.</p>
                 </div>
 
-                <PasswordField id="new-password" label="New password" value={password} onChange={setPassword} visible={showPassword} onToggle={() => setShowPassword((value) => !value)} />
+                <ResetPasswordField id="new-password" label="New password" value={password} onChange={setPassword} visible={showPassword} onToggle={() => setShowPassword((value) => !value)} />
                 <div className="auth-password-strength" aria-label={`Password strength ${score} of 4`}>
                   {[1, 2, 3, 4].map((bar) => <span key={bar} className={bar <= score ? `is-active is-level-${score}` : ''} />)}
                 </div>
                 <p className="auth-field-hint">8+ characters with upper/lowercase letters and a number. A symbol is recommended.</p>
 
-                <PasswordField id="confirm-password" label="Confirm new password" value={confirmPassword} onChange={setConfirmPassword} visible={showConfirm} onToggle={() => setShowConfirm((value) => !value)} />
+                <ResetPasswordField id="confirm-password" label="Confirm new password" value={confirmPassword} onChange={setConfirmPassword} visible={showConfirm} onToggle={() => setShowConfirm((value) => !value)} />
                 {error ? <div className="auth-form-error" role="alert">{error}</div> : null}
 
                 <button type="submit" className="auth-primary-button auth-primary-button--large">Reset password <ArrowRightIcon size={17} /></button>
@@ -97,24 +100,7 @@ export function ResetPasswordPage() {
       </div>
     </AuthShell>
   );
-}
+  //#endregion
+};
 
-function PasswordField({ id, label, value, onChange, visible, onToggle }: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  visible: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div>
-      <label className="auth-label" htmlFor={id}>{label}</label>
-      <div className="auth-input-wrap mt-2">
-        <span className="auth-input-icon"><LockIcon size={17} /></span>
-        <input id={id} type={visible ? 'text' : 'password'} value={value} onChange={(event) => onChange(event.target.value)} className="auth-input auth-input--with-action" autoComplete="new-password" required />
-        <button type="button" className="auth-input-action" onClick={onToggle} aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}>{visible ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}</button>
-      </div>
-    </div>
-  );
-}
+export default ResetPasswordPage;

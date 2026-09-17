@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --mode development",
+    "dev": "vite --mode development --port 4001 --strictPort",
     "build": "tsc -b && vite build --mode live",
     "build:development": "tsc -b && vite build --mode development",
     "build:pilot": "tsc -b && vite build --mode pilot",
@@ -15,17 +15,18 @@
     "preview": "vite preview --mode live"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.25.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
-    "@eslint/js": "^10.0.1",
     "eslint": "^10.8.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.4",

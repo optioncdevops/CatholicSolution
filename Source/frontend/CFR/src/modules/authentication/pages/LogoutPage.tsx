@@ -1,14 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthProvider';
-import { getRequestedClientId, getSafeReturnUrl } from './centralAuth';
+import { useAuth } from '../context/AuthProvider';
+import { getRequestedClientId, getSafeReturnUrl } from '../utils/authenticationHelpers';
 
-export function CentralLogoutPage() {
+const LogoutPage = () => {
+  //#region Hooks
   const { signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const handled = useRef(false);
+  //#endregion
 
+  //#region Effects
   useEffect(() => {
     if (handled.current) return;
     handled.current = true;
@@ -21,6 +24,11 @@ export function CentralLogoutPage() {
     if (clientId === 'platform') params.set('entry', 'platform');
     navigate(`/login?${params.toString()}`, { replace: true });
   }, [location.search, navigate, signOut]);
+  //#endregion
 
+  //#region Render
   return <div className="min-h-screen bg-slate-50" aria-busy="true" aria-label="Signing out" />;
-}
+  //#endregion
+};
+
+export default LogoutPage;

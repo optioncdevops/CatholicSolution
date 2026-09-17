@@ -46,13 +46,8 @@ export function toAbsoluteReturnUrl(returnUrl: string) {
   return new URL(returnUrl, base).toString();
 }
 
-export function buildCentralLoginUrl(returnUrl?: string) {
-  const origin = configuredLoginOrigin();
-  if (!origin || typeof window === 'undefined') return '';
-  const url = new URL('/login', origin);
-  url.searchParams.set('client_id', environment.appId);
-  url.searchParams.set('returnUrl', returnUrl || window.location.href);
-  return url.toString();
+export function isAbsoluteUrl(value: string) {
+  return /^https?:\/\//i.test(value);
 }
 
 export function buildCentralLogoutUrl(returnUrl?: string) {
@@ -86,7 +81,6 @@ export function createPreviewSession(remember = true) {
 export function clearPreviewSession() {
   if (typeof document === 'undefined') return;
   document.cookie = `${PREVIEW_SESSION_COOKIE}=; ${cookieAttributes(true)}`;
-  // Also clear a host-only copy left by older/local builds.
   document.cookie = `${PREVIEW_SESSION_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0`;
 }
 

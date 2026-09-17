@@ -1,18 +1,4 @@
-export type RuntimeEnvironment = 'development' | 'pilot' | 'staging' | 'live';
-export type ConfiguredAuthMode = 'mock' | 'preview' | 'sso';
-
-export interface PlatformOrigins {
-  platform: string;
-  platformAdmin: string;
-}
-
-interface AppAuthConfig {
-  authMode: ConfiguredAuthMode;
-  loginOrigin: string;
-  authOrigin: string;
-  sessionCookieDomain?: string;
-  origins: PlatformOrigins;
-}
+import type { AppAuthConfig, PlatformOrigins, RuntimeEnvironment } from '../types/authenticationTypes';
 
 const developmentOrigins: PlatformOrigins = {
   platform: 'http://localhost:4001',

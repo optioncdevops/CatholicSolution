@@ -1,3 +1,4 @@
+import { useAuth0 } from '@auth0/auth0-react';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -5,48 +6,79 @@ import { ArrowRightIcon, EyeIcon, EyeOffIcon, LockIcon, MailIcon } from '@shared
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { environment } from '@shared/platform/config/environment';
 import { SOLUTION_REGISTRY } from '@shared/platform/config/solutionRegistry';
-import { AuthShell } from './AuthShell';
-import { useAuth } from './AuthProvider';
-import { getRequestedClientId, getSafeReturnUrl, toAbsoluteReturnUrl } from './centralAuth';
+import { AuthShell } from '../components/AuthShell';
+import { useAuth } from '../context/AuthProvider';
+import { getAuth0SocialConnection, loginAuth0Password } from '../services/auth0AuthService';
+import type { SignInProvider } from '../types/authenticationTypes';
+import { AUTH0_LOGIN_PATH, AUTH0_POST_LOGIN_PATH } from '../utils/auth0Session';
+import { getRequestedClientId, getSafeReturnUrl, isAbsoluteUrl, toAbsoluteReturnUrl } from '../utils/authenticationHelpers';
+import { validateLoginCredentials } from '../validator/AuthenticationValidator';
 
-function isAbsolute(value: string) {
-  return /^https?:\/\//i.test(value);
-}
-
-export function CentralLoginPage() {
+const LoginPage = () => {
+  //#region Hooks
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated, signIn } = useAuth();
+  const { loginWithRedirect } = useAuth0();
+  const { showToast } = useToast();
+  const isAuth0Login = location.pathname.replace(/\/+$/, '') === AUTH0_LOGIN_PATH;
+  //#endregion
+
+  //#region States
   const clientId = useMemo(() => getRequestedClientId(location.search), [location.search]);
   const destination = useMemo(() => getSafeReturnUrl(location.search, '/apps'), [location.search]);
   const requiresInteractiveSignIn = useMemo(() => {
     const params = new URLSearchParams(location.search);
-    return (clientId === 'platform' || clientId === 'cfr-admin') && params.get('entry') === 'platform';
-  }, [clientId, location.search]);
+    return isAuth0Login || ((clientId === 'platform' || clientId === 'cfr-admin') && params.get('entry') === 'platform');
+  }, [clientId, isAuth0Login, location.search]);
   const client = SOLUTION_REGISTRY[clientId];
-  const { isAuthenticated, signIn } = useAuth();
-  const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [interactiveSignInCompleted, setInteractiveSignInCompleted] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [email, setEmail] = useState(environment.authMode === 'mock' ? 'carl.lapp@optionc.com' : '');
-  const [password, setPassword] = useState(environment.authMode === 'mock' ? 'demo1234' : '');
+  const [email, setEmail] = useState(!isAuth0Login && environment.authMode === 'mock' ? 'carl.lapp@optionc.com' : '');
+  const [password, setPassword] = useState(!isAuth0Login && environment.authMode === 'mock' ? 'demo1234' : '');
+  //#endregion
 
+  //#region Functions
   const completeCentralReturn = useCallback(() => {
-    if (!isAbsolute(destination)) {
+    if (!isAbsoluteUrl(destination)) {
       navigate(destination, { replace: true });
       return;
     }
     window.location.replace(destination);
   }, [destination, navigate]);
+  //#endregion
 
+  //#region Effects
   useEffect(() => {
     if (isAuthenticated && (!requiresInteractiveSignIn || interactiveSignInCompleted)) {
       completeCentralReturn();
     }
   }, [completeCentralReturn, interactiveSignInCompleted, isAuthenticated, requiresInteractiveSignIn]);
+  //#endregion
 
-  const completeSignIn = async (provider: 'password' | 'google' | 'microsoft') => {
+  //#region Handlers
+  const completeSignIn = async (provider: SignInProvider) => {
+    const messages = provider === 'password' ? validateLoginCredentials(email, password) : [];
+    if (messages.length) {
+      showToast(messages[0]);
+      return;
+    }
     try {
+      if (isAuth0Login) {
+        if (provider === 'password') {
+          await loginAuth0Password(email, password, remember);
+          showToast('Signed in to Catholic Solutions');
+          window.location.replace(AUTH0_POST_LOGIN_PATH);
+          return;
+        }
+        await loginWithRedirect({
+          authorizationParams: {
+            connection: getAuth0SocialConnection(provider),
+          },
+        });
+        return;
+      }
       const result = await signIn({
         email,
         password,
@@ -70,7 +102,9 @@ export function CentralLoginPage() {
     event.preventDefault();
     void completeSignIn('password');
   };
+  //#endregion
 
+  //#region Render
   return (
     <AuthShell>
       <div className="auth-login-stack">
@@ -120,9 +154,10 @@ export function CentralLoginPage() {
             <PlatformLink to="/request-access" className="auth-access-callout__action">Request access <ArrowRightIcon size={15} /></PlatformLink>
           </section>
         ) : null}
-
-        {/* {environment.authMode === 'mock' ? <p className="auth-prototype-note">Development authentication · Central preview session is enabled.</p> : null} */}
       </div>
     </AuthShell>
   );
-}
+  //#endregion
+};
+
+export default LoginPage;

@@ -1,23 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 import { environment } from '@shared/platform/config/environment';
-import { canRedirectToExternalIdentityProvider, clearPreviewSession, createPreviewSession, hasPreviewSession } from './centralAuth';
 import { clearPortalSession } from '@app/config/appPortalClient';
-import { loginPortal } from '@/modules/authentication/services/portalAuthService';
-
-export interface SignInRequest {
-  email: string;
-  password?: string;
-  remember?: boolean;
-  provider?: 'password' | 'google' | 'microsoft';
-  clientId?: string;
-  returnUrl?: string;
-}
-
-interface AuthContextValue {
-  isAuthenticated: boolean;
-  signIn: (request: SignInRequest) => Promise<'authenticated' | 'redirected' | 'unavailable'>;
-  signOut: () => void;
-}
+import { loginPortal } from '../services/portalAuthService';
+import type { AuthContextValue, SignInRequest } from '../types/authenticationTypes';
+import { clearAuth0SessionFlag } from '../utils/auth0Session';
+import { canRedirectToExternalIdentityProvider, clearPreviewSession, createPreviewSession, hasPreviewSession } from '../utils/authenticationHelpers';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const sessionChannelName = `catholic-solutions.auth.${environment.appId}.sync`;
@@ -81,6 +68,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     signOut() {
       clearPortalSession();
       clearPreviewSession();
+      clearAuth0SessionFlag();
       setAuthenticated(false);
       sessionSync()?.postMessage('signed-out');
     },
