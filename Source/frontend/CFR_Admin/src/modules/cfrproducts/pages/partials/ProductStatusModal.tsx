@@ -1,6 +1,6 @@
 import { BaseModal } from "@app/components/modal/BaseModal";
 import { CommonButton } from "@app/components/buttons";
-import { StatusBadge } from "@app/components/Badge";
+import { formatStatusLabel, getStatusHighlightClasses, getStatusSolidClasses, StatusBadge } from "@app/components/Badge";
 import { confirmAction } from "@/modules/lib/confirm";
 import {
   STATUS_IMPACT,
@@ -40,7 +40,7 @@ export const ProductStatusModal = ({
       isOpen={Boolean(app)}
       onClose={onClose}
       title={app ? `Change Status — ${app.name}` : ""}
-      size="sm"
+      size="md"
       closeOnOverlayClick={false}
       autoFocus={false}
       footer={
@@ -77,15 +77,19 @@ export const ProductStatusModal = ({
                   aria-pressed={isSelected}
                   className={`flex items-center justify-between gap-3 rounded-xl border-2 px-3.5 py-2.5 text-left transition-all ${
                     isCurrent
-                      ? "border-[var(--line-soft)] bg-[var(--primary-muted)] cursor-not-allowed"
+                      ? `border-transparent shadow-md ${getStatusSolidClasses(status, "application")} cursor-not-allowed`
                       : isSelected
                         ? "border-[var(--primary)] bg-[var(--primary-muted)] shadow-xs ring-2 ring-[var(--primary)]/20 cursor-pointer"
                         : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--primary)]/60 hover:bg-[var(--hover)] cursor-pointer"
                   }`}
                 >
-                  <StatusBadge status={status} kind="application" />
                   {isCurrent ? (
-                    <span className="rounded-full bg-[var(--primary)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                    <span className="text-[0.8125rem] font-bold capitalize text-white">{formatStatusLabel(status)}</span>
+                  ) : (
+                    <StatusBadge status={status} kind="application" />
+                  )}
+                  {isCurrent ? (
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusHighlightClasses(status, "application")}`}>
                       Current
                     </span>
                   ) : isSelected ? (

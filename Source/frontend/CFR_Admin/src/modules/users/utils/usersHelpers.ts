@@ -5,24 +5,12 @@ export const toDateOnly = (value?: string | null): string => {
   return value.trim().slice(0, 10);
 };
 
-// US business-application convention for a Date of Birth field: the account holder must be an
-// adult (18+, the standard US age of majority) and the date must be realistic (no more than 120
-// years old) — mirrored server-side in UsersService.SaveUserAsync so the rule can't be bypassed
-// by a direct API call.
-export const MIN_USER_AGE_YEARS = 18;
-export const MAX_USER_AGE_YEARS = 120;
-
-const isoDateYearsAgo = (years: number): string => {
-  const date = new Date();
-  date.setFullYear(date.getFullYear() - years);
-  return date.toISOString().slice(0, 10);
+export const getTodayDateOnly = (): string => {
+  const today = new Date();
+  const month = `${today.getMonth() + 1}`.padStart(2, '0');
+  const day = `${today.getDate()}`.padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
 };
-
-/** Latest DOB a user may enter and still be at least {@link MIN_USER_AGE_YEARS} old, today. */
-export const maxAllowedDateOfBirth = (): string => isoDateYearsAgo(MIN_USER_AGE_YEARS);
-
-/** Earliest DOB considered realistic — {@link MAX_USER_AGE_YEARS} years ago. */
-export const minAllowedDateOfBirth = (): string => isoDateYearsAgo(MAX_USER_AGE_YEARS);
 
 export const normalizeUsersList = (resultData: unknown): UsersApiItem[] => {
   if (!Array.isArray(resultData)) return [];

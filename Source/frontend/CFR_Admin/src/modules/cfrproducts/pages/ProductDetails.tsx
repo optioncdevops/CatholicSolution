@@ -7,7 +7,7 @@ import { useToast } from "@shared/app/components/ToastProvider";
 import { useFeatureAccessLevel } from "@shared/auth/hooks/useFeatureAccessLevel";
 import { CommonButton } from "@app/components/buttons";
 import { Tabs, TabPanel } from "@app/components/Tabs";
-import { formatDate } from "@/modules/utils/formatDate";
+import { formatDateTime } from "@/modules/utils/formatDate";
 import {
   getProductWarnings,
   type ProductWarning,
@@ -115,14 +115,14 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
           <Fact label="Short Name" value={app.shortName} />
           <Fact label="Product Subtitle" value={app.category} />
           <ProductionUrlFact url={app.productionUrl} />
-          <Fact label="License Type" value={app.licenseType} />
           <Fact
             label="Navigation Target"
             value={app.navigationTarget === "new-tab" ? "New Tab" : "Same Tab"}
           />
           <Fact label="Contact Person" value={app.contactPersonName || ""} />
           <Fact label="Status" value={app.status.replace("-", " ")} />
-          <Fact label="Last updated" value={formatDate(app.updatedAt)} />
+          <Fact label="Last Updated" value={formatDateTime(app.updatedAt)} />
+          <Fact label="Last Updated By" value={app.updatedByName || ""} />
         </div>
 
         <div className="p-4">
@@ -166,7 +166,22 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
                 <ProductIcon icon={app.icon} name={app.name} size={44} />
               </div>
             </div>
-            <ProductCard app={app} className="max-w-xs" />
+            <ProductCard
+              app={app}
+              className="max-w-xs"
+              footer={
+                <div className="flex flex-col gap-0.5">
+                  <span className="truncate text-xs font-semibold text-[var(--text-faint)]">
+                    Updated {formatDateTime(app.updatedAt)}
+                  </span>
+                  {app.updatedByName ? (
+                    <span className="truncate text-xs font-semibold text-[var(--text-faint)]">
+                      By {app.updatedByName}
+                    </span>
+                  ) : null}
+                </div>
+              }
+            />
           </div>
         </div>
       </div>
@@ -367,8 +382,8 @@ const ProductDetails = () => {
         tabs={[
           { id: "details", label: "Product Details" },
           { id: "customers", label: "Organizations" },
-          { id: "invoice-details", label: "Invoice Details" },
-          { id: "invoice-history", label: "Invoice History" },
+          { id: "license-details", label: "License Details" },
+          { id: "license-history", label: "License History" },
         ]}
       />
 
@@ -380,11 +395,11 @@ const ProductDetails = () => {
         <CustomerDetails app={app} />
       </TabPanel>
 
-      <TabPanel id="invoice-details" activeId={activeTab}>
+      <TabPanel id="license-details" activeId={activeTab}>
         <LicenseDetails app={app} readOnly={isReadOnly} />
       </TabPanel>
 
-      <TabPanel id="invoice-history" activeId={activeTab}>
+      <TabPanel id="license-history" activeId={activeTab}>
         <LicenseHistory app={app} />
       </TabPanel>
 

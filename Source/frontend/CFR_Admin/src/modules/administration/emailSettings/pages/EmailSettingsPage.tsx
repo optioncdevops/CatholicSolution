@@ -43,8 +43,7 @@ function EmailSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
   const [form, setForm] = useState<EmailSettingsFormValues>(formFromEmailSettings(null));
-  const [initialForm, setInitialForm] = useState<EmailSettingsFormValues>(formFromEmailSettings(null));
-  const [fieldErrors, setFieldErrors] = useState<EmailSettingsFieldErrors>({});
+  const [originalForm, setOriginalForm] = useState<EmailSettingsFormValues>(formFromEmailSettings(null));
   const [logoImageUrl, setLogoImageUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
@@ -68,9 +67,9 @@ function EmailSettingsPage() {
         const { resultData } = await getEmailSettings();
         if (cancelled) return;
         const item = (resultData ?? null) as EmailSettingsApiItem | null;
-        const nextForm = formFromEmailSettings(item);
-        setForm(nextForm);
-        setInitialForm(nextForm);
+        const newForm = formFromEmailSettings(item);
+        setForm(newForm);
+        setOriginalForm(newForm);
         setHasPassword(Boolean(item?.hasPassword));
         setLogoImageUrl(item?.logoImageUrl ?? null);
         setLastUpdatedByName(item?.lastUpdatedByName ?? null);
@@ -135,20 +134,10 @@ function EmailSettingsPage() {
       await saveEmailSettings(payloadFromForm(form));
       showToast('Email settings saved.', 'success');
       setHasPassword(hasPassword || Boolean(form.password.trim()));
-      const savedForm = { ...form, password: '' };
-      setForm(savedForm);
-      setInitialForm(savedForm);
-      // Re-fetch just the audit stamp so "Last updated by/at" reflects the save that just
-      // happened — left showing the previous stamp until this resolves, rather than blanking it
-      // first, so the line doesn't flicker away and back.
-      try {
-        const { resultData } = await getEmailSettings();
-        const item = (resultData ?? null) as EmailSettingsApiItem | null;
-        setLastUpdatedByName(item?.lastUpdatedByName ?? null);
-        setLastUpdatedDate(item?.lastUpdatedDate ?? null);
-      } catch {
-        // Non-fatal — the save itself already succeeded and was confirmed by the toast above.
-      }
+      
+      const newForm = { ...form, password: '' };
+      setForm(newForm);
+      setOriginalForm(newForm);
     } catch (error) {
       console.error('Error saving email settings:', error);
       showToast(typeof error === 'string' ? error : 'Failed to save email settings.', 'error');
@@ -414,9 +403,18 @@ function EmailSettingsPage() {
         )}
 
         {!isReadOnly && (
-          <div className="admin-sticky-footer flex items-center gap-2">
-            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
-            <CommonButton type="button" variant="outline" size="sm" iconLeft={<RotateCcw size={14} />} onClick={() => void handleReset()} disabled={!isDirty || saving}>Reset</CommonButton>
+          <div className="admin-sticky-footer">
+            <CommonButton 
+              type="submit" 
+              variant="primary" 
+              size="sm" 
+              iconLeft={<Save size={14} />} 
+              onClick={() => void handleSave()}
+              loading={saving} 
+              disabled={saving || isReadOnly || JSON.stringify(form) === JSON.stringify(originalForm)}
+            >
+              Save
+            </CommonButton>
           </div>
         )}
       </form>

@@ -116,6 +116,7 @@ namespace CFR.CommonService
             public const string GetLicenseById = nameof(GetLicenseById);
             public const string CreateLicense = nameof(CreateLicense);
             public const string UpdateLicense = nameof(UpdateLicense);
+            public const string DeleteLicense = nameof(DeleteLicense);
             public const string UpdateProductLogo = nameof(UpdateProductLogo);
             public const string UpdateProduct = nameof(UpdateProduct);
             public const string GetProductLogo = nameof(GetProductLogo);

@@ -9,9 +9,10 @@ import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel'
 import { PASSWORD_STRENGTH_HINT } from '@shared/auth/validators';
 import { CommonButton } from '@app/components/buttons';
 import { DatePicker, Dropdown, InputField, MandatoryIndicator, RadioGroup } from '@app/components/formControls';
+import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { getUserById, getUserLookups, saveUser } from '../../services/usersService';
 import type { RoleLookupItem, UsersFormValues } from '../../types/usersTypes';
-import { maxAllowedDateOfBirth, minAllowedDateOfBirth, toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
+import { getTodayDateOnly, toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
 import { usersDefaultValues, usersRules } from '../../validator/UsersValidator';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
 
@@ -35,7 +36,7 @@ const AddUsers = () => {
   //#endregion
 
   //#region Form
-  const { control, handleSubmit, reset, setError, clearErrors, watch } = useForm<UsersFormValues>({
+  const { control, handleSubmit, reset, setError, formState: { isDirty } } = useForm<UsersFormValues>({
     defaultValues: usersDefaultValues,
     mode: 'onChange',
   });
@@ -49,6 +50,14 @@ const AddUsers = () => {
   const navigateToList = useCallback(() => {
     navigate('/admin/users', { replace: true });
   }, [navigate]);
+
+  const handleCancel = async () => {
+    if (isDirty) {
+      const confirmed = await confirmDiscardChanges();
+      if (!confirmed) return;
+    }
+    navigateToList();
+  };
   //#endregion
 
   //#region Effects
@@ -144,20 +153,18 @@ const AddUsers = () => {
     if (isReadOnly) return;
     setSaving(true);
     try {
-      await saveUser(toSaveUserPayload(values, isEdit ? userId : 0));
+      const response = await saveUser(toSaveUserPayload(values, isEdit ? userId : 0));
+      if (response.statusCode === 409) {
+        const msg = response.statusMessage || 'A user with this email already exists.';
+        showToast(msg, 'conflict');
+        setError('eMail', { type: 'manual', message: msg });
+        return;
+      }
       showToast(isEdit ? 'User updated successfully.' : 'User added successfully.');
       navigateToList();
     } catch (error) {
       console.error('Error saving user:', error);
-      // usersService throws the backend's statusMessage as a plain string for any non-2xx
-      // response (including 409 Conflict for a duplicate email) — never a resolved response,
-      // so the duplicate-email case has to be detected here, not via a statusCode branch.
-      const message = typeof error === 'string' ? error : 'Failed to save user.';
-      if (/email/i.test(message)) {
-        setError('eMail', { type: 'server', message });
-        setDuplicateEmail(values.eMail);
-      }
-      showToast(message, 'error');
+      showToast(typeof error === 'string' ? error : 'Failed to save user.', 'error');
     } finally {
       setSaving(false);
     }
@@ -209,21 +216,19 @@ const AddUsers = () => {
             required
             rules={usersRules.eMail}
             disabled={saving || isReadOnly}
+            autoComplete="off"
           />
-          <div className="flex flex-col gap-1">
-            <InputField
-              control={control}
-              name="password"
-              label="Password"
-              type="password"
-              placeholder={isEdit ? 'Leave blank to keep the current password' : 'Enter password'}
-              autoComplete="new-password"
-              required={!isEdit}
-              rules={isEdit ? undefined : usersRules.password}
-              disabled={saving || isReadOnly}
-            />
-            {!isReadOnly ? <p className="text-xs text-[var(--text-muted)]">{PASSWORD_STRENGTH_HINT}</p> : null}
-          </div>
+          <InputField
+            control={control}
+            name="password"
+            label="Password"
+            type="password"
+            placeholder={isEdit ? 'Enter password' : 'Enter password'}
+            required={!isEdit}
+            rules={isEdit ? undefined : usersRules.password}
+            disabled={saving || isReadOnly}
+            autoComplete="new-password"
+          />
           <InputField
             control={control}
             name="contactNumber"
@@ -253,6 +258,7 @@ const AddUsers = () => {
             maxDate={maxAllowedDateOfBirth()}
             minDate={minAllowedDateOfBirth()}
             rules={usersRules.dateOfBirth}
+            maxDate={getTodayDateOnly()}
             disabled={saving || isReadOnly}
           />
           <Dropdown
@@ -276,7 +282,7 @@ const AddUsers = () => {
             rules={usersRules.isActive}
             options={[
               { id: '1', value: 'Active' },
-              { id: '0', value: 'Inactive' },
+              { id: '0', value: 'InActive' },
             ]}
             disabled={saving || isReadOnly || isEditingSelf}
           />
@@ -299,9 +305,9 @@ const AddUsers = () => {
         ) : null}
 
         <div className="admin-sticky-footer">
-          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={navigateToList} disabled={saving}>Cancel</CommonButton>
+          <CommonButton type="button" variant="outline" size="sm" iconLeft={<X size={14} />} onClick={() => void handleCancel()} disabled={saving}>Cancel</CommonButton>
           {!isReadOnly && (
-            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving}>Save</CommonButton>
+            <CommonButton type="submit" variant="primary" size="sm" iconLeft={<Save size={14} />} loading={saving} disabled={saving || !isDirty}>Save</CommonButton>
           )}
         </div>
       </form>

@@ -4,6 +4,7 @@ import { CommonButton } from '@app/components/buttons';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { InputField } from '@app/components/formControls';
 import { changePassword } from '@shared/auth/services/authService';
+import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { useToast } from './ToastProvider';
 
 interface ChangePasswordModalProps { open: boolean; onClose: () => void; }
@@ -97,16 +98,24 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
 
   const score = passwordScore(newPasswordValue);
 
+  const handleClose = async () => {
+    if (passwordForm.formState.isDirty) {
+      const confirmed = await confirmDiscardChanges();
+      if (!confirmed) return;
+    }
+    onClose();
+  };
+
   return (
     <BaseModal
       id="dlgChangePassword"
       isOpen={open}
-      onClose={onClose}
+      onClose={() => void handleClose()}
       title="Change Password"
       size="sm"
       footer={(
         <>
-          <CommonButton id="btnCancelChangePassword" variant="outline" onClick={onClose} disabled={passwordSaving}>Cancel</CommonButton>
+          <CommonButton id="btnCancelChangePassword" variant="outline" onClick={() => void handleClose()} disabled={passwordSaving}>Cancel</CommonButton>
           <CommonButton id="btnUpdatePassword" variant="primary" type="submit" form="formChangePassword" loading={passwordSaving} disabled={passwordSaving}>Update password</CommonButton>
         </>
       )}

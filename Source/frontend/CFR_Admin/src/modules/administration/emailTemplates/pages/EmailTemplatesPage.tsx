@@ -6,7 +6,7 @@ import {
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
-import { Badge } from '@app/components/Badge';
+import { Badge, formatStatusLabel } from '@app/components/Badge';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { CharacterCount, InputField, RichTextEditor } from '@app/components/formControls';
 // The ported formControls InputField doesn't forward a ref to the underlying element, which the
@@ -394,7 +394,7 @@ function EmailTemplatesPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="panel-title truncate">{templateDisplayLabel(template.templateCode)}</h2>
-                    <Badge tone={template.status === 'active' ? 'success' : 'neutral'}>{template.status}</Badge>
+                    <Badge tone={template.status === 'active' ? 'success' : 'neutral'}>{formatStatusLabel(template.status)}</Badge>
                   </div>
                   <p className="panel-subtitle truncate">{templateDescription(template.templateCode)}</p>
                 </div>

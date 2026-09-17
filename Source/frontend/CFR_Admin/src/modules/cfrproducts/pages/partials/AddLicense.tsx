@@ -90,7 +90,7 @@ const AddLicense = () => {
     const productId = product?.productId || stateProductId;
     if (productId) {
       navigate(PRODUCTS_PATHS.details, {
-        state: { productId, tab: "invoice-details" },
+        state: { productId, tab: "license-details" },
       });
       return;
     }
@@ -236,7 +236,7 @@ const AddLicense = () => {
       });
 
       if (hasDurationOverlap) {
-        showToast("A license has already been created for this duration.", "error");
+        showToast("A license has already been created for this duration.", "warning");
         return;
       }
 
@@ -250,6 +250,10 @@ const AddLicense = () => {
         assignStatus: DEFAULT_LICENSE_STATUS,
         remarks: remarks.trim() || undefined,
       });
+      if (res.statusCode === 409) {
+        showToast(res.statusMessage || "A license has already been created for this duration.", "warning");
+        return;
+      }
       if (res.statusCode && res.statusCode >= 400) {
         throw res.statusMessage || "Failed to create license.";
       }
@@ -325,6 +329,7 @@ const AddLicense = () => {
                   <Dropdown
                     label="Organization"
                     required
+                    autoFocus
                     placeholder={organizations.length === 0 ? "No available organizations" : "Select organization"}
                     value={orgId}
                     disabled={organizations.length === 0}

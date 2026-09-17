@@ -1,7 +1,7 @@
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { CommonButton } from '@app/components/buttons';
 import { StatusBadge } from '@app/components/Badge';
-import { confirmAction } from '@/modules/lib/confirm';
+import { confirmAction, confirmDiscardChanges } from '@/modules/lib/confirm';
 import { ORG_STATUS_OPTIONS } from '../../utils/organizationHelpers';
 import type { OrganizationApiItem } from '../../types/organizationTypes';
 
@@ -32,17 +32,25 @@ export function OrganizationStatusDialog({ organization, onClose, onConfirm, pen
     if (confirmed) onConfirm(pendingStatus);
   };
 
+  const handleClose = async () => {
+    if (pendingStatus) {
+      const confirmed = await confirmDiscardChanges();
+      if (!confirmed) return;
+    }
+    onClose();
+  };
+
   return (
     <BaseModal
       isOpen={Boolean(organization)}
-      onClose={onClose}
+      onClose={() => void handleClose()}
       title={organization ? `Change Status — ${organization.orgName}` : ''}
       size="sm"
       closeOnOverlayClick={false}
       autoFocus={false}
       footer={(
         <>
-          <CommonButton variant="outline" onClick={onClose}>Cancel</CommonButton>
+          <CommonButton variant="outline" onClick={() => void handleClose()}>Cancel</CommonButton>
           <CommonButton variant="primary" disabled={!pendingStatus} onClick={() => void commitStatusChange()}>Continue</CommonButton>
         </>
       )}

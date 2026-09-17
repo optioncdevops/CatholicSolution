@@ -322,5 +322,33 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         }
 
         #endregion PUT Methods
+
+        #region DELETE Methods
+
+        /// <summary>
+        /// Soft-deletes a license using StoredProc.Products.ProductsCrud (EnumVariables.ProductAction.DeleteLicense).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Mark a license as deleted without removing its row, matching this app's IsDeleted convention.
+        /// Request Flow: IProductsService -> ProductsRepository.DeleteLicenseAsync() -> Database.
+        /// Validation Details: LicenseId parameter mapping.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with EnumVariables.ProductAction.DeleteLicense and LicenseId > 0.
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
+        /// Response Details: Returns the deleted LicenseId, or -95 if not found.
+        /// </remarks>
+        /// <param name="licenseId">License identifier.</param>
+        /// <returns>Deleted LicenseId or negative status code.</returns>
+        public async Task<long> DeleteLicenseAsync(long licenseId)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.ELEVEN, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.LicenseId, licenseId, DbType.Int64);
+            parameters.Add(DBParameterName.ProductParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
+            parameters.Add(DBParameterName.ProductParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
+            _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
+            return parameters.Get<int>(DBParameterName.ProductParams.ReturnValue);
+        }
+
+        #endregion DELETE Methods
     }
 }

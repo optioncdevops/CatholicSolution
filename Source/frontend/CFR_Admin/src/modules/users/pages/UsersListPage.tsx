@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FilterX, Pencil, Plus, Power, Trash2 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
@@ -25,6 +25,9 @@ export function UsersListPage() {
   const navigate = useNavigate();
   const accessLevel = useFeatureAccessLevel('/admin/users');
   const isReadOnly = accessLevel === 'readOnly';
+  const location = useLocation();
+  const filterRoleId = location.state?.roleId as number | undefined;
+
   // An admin can never deactivate or delete their own account from this list — the backend
   // rejects it too, but disabling it here avoids a round trip just to hit that guard.
   const currentUserId = getStoredAcutisAuth()?.resultData?.user?.userId ?? null;
@@ -58,22 +61,19 @@ export function UsersListPage() {
     setLoading(true);
     try {
       const { resultData, statusCode } = await getUsers();
-      const nextRows = statusCode === 204 ? [] : normalizeUsersList(resultData);
-      setRows(nextRows);
-      setLoadError(null);
-      setAnnouncement(nextRows.length === 0 ? 'No users found.' : `${nextRows.length} users loaded.`);
+      let usersList = statusCode === 204 ? [] : normalizeUsersList(resultData);
+      if (filterRoleId) {
+        usersList = usersList.filter((u) => u.roleId === filterRoleId);
+      }
+      setRows(usersList);
     } catch (error) {
       console.error('Error loading users:', error);
-      const message = typeof error === 'string' ? error : 'Failed to load users.';
-      // Preserve any previously loaded rows — an unrelated failed refresh should not blank out
-      // data the admin was already looking at.
-      setLoadError(message);
-      showToast(message, 'error');
-      setAnnouncement(message);
+      showToast('Failed to load users.', 'error');
+      setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, filterRoleId]);
   //#endregion
 
   //#region Effects
@@ -106,6 +106,13 @@ export function UsersListPage() {
         tone: 'danger',
       });
       if (!confirmed) return;
+    } else {
+      const confirmed = await confirmAction({
+        title: 'Activate user?',
+        description: `${user.fullName} will regain access to their account.`,
+        confirmLabel: 'Activate',
+      });
+      if (!confirmed) return;
     }
     try {
       await updateUserStatus(user.userId, nextIsActive);
@@ -113,8 +120,7 @@ export function UsersListPage() {
       await load();
     } catch (error) {
       console.error('Error updating user status:', error);
-      const fallback = nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.';
-      showToast(typeof error === 'string' ? error : fallback, 'error');
+      showToast(nextIsActive === 1 ? 'Failed to activate user.' : 'Failed to deactivate user.', 'error');
     }
   }, [load, showToast, isReadOnly, currentUserId]);
 

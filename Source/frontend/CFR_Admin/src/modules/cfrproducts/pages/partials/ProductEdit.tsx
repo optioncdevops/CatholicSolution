@@ -49,12 +49,10 @@ import {
   toProductContactUserId,
 } from "../../utils/productHelpers";
 import {
-  PRODUCT_LICENSE_TYPE_OPTIONS,
   PRODUCT_NAVIGATION_OPTIONS,
 } from "../../utils/productFilters";
 import type {
   AdminApplication,
-  ProductLicenseType,
   ProductNavigationTarget,
 } from "@/modules/types";
 
@@ -256,14 +254,6 @@ function ProductForm({
               onChange={(event) => onUpdate("productionUrl", event.target.value)}
               placeholder="Enter production URL"
               error={touched ? errors.productionUrl : undefined}
-            />
-            <RadioGroup
-              label="License Type"
-              options={PRODUCT_LICENSE_TYPE_OPTIONS}
-              value={form.licenseType}
-              onValueChange={(value) =>
-                onUpdate("licenseType", value as ProductLicenseType)
-              }
             />
             <RadioGroup
               label="Navigation Target"
