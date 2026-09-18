@@ -135,8 +135,8 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
         status,
         note: note || (status === 'info-requested' ? 'More information requested.' : undefined),
       });
-      const verb = status === 'approved' ? 'Approved' : status === 'rejected' ? 'Rejected' : 'Requested more information for';
-      showToast(`${verb} ${detail.productName} request from ${detail.requesterName}.`);
+      const verb = status === 'approved' ? 'approved' : status === 'rejected' ? 'rejected' : 'sent an information request for';
+      showToast(`Successfully ${verb} this access request.`);
       await onResolved();
       if (status === 'info-requested') {
         await loadDetail(detail.accessRequestId);

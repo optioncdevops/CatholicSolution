@@ -6,7 +6,6 @@
  * Archived: hidden from normal product listings.
  */
 export type ProductStatus = 'active' | 'inactive' | 'coming-soon';
-export type ProductLicenseType = 'free' | 'licensed';
 export type ProductOwnership = 'first-party' | 'partner';
 export type ProductDeploymentModel = 'external-saas';
 export type ProductNavigationTarget = 'same-tab' | 'new-tab';
@@ -33,7 +32,6 @@ export interface AdminApplication {
   ownership: ProductOwnership;
   /** Read-only in this prototype. */
   deploymentModel: ProductDeploymentModel;
-  licenseType: ProductLicenseType;
   navigationTarget: ProductNavigationTarget;
   status: ProductStatus;
   updatedAt: string;

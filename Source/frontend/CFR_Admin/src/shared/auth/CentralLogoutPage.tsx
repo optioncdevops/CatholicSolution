@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
-import { getRequestedClientId, getSafeReturnUrl } from './centralAuth';
+import { getRequestedClientId } from './centralAuth';
 
 export function CentralLogoutPage() {
   const { signOut } = useAuth();
@@ -13,13 +13,13 @@ export function CentralLogoutPage() {
     if (handled.current) return;
     handled.current = true;
 
+    // client_id/returnUrl are read only to decide `entry` below — this app's own CentralLoginPage
+    // never reads either of them itself (it always renders the fixed Admin sign-in experience and
+    // hardcodes its own post-login destination), so neither needs to travel in the outgoing URL.
     const clientId = getRequestedClientId(location.search);
-    const returnUrl = getSafeReturnUrl(location.search, '/apps');
     signOut();
 
-    const params = new URLSearchParams({ client_id: clientId, returnUrl });
-    if (clientId === 'platform') params.set('entry', 'platform');
-    navigate(`/login?${params.toString()}`, { replace: true });
+    navigate(clientId === 'platform' ? '/login?entry=platform' : '/login', { replace: true });
   }, [location.search, navigate, signOut]);
 
   return <div className="min-h-screen bg-slate-50" aria-busy="true" aria-label="Signing out" />;

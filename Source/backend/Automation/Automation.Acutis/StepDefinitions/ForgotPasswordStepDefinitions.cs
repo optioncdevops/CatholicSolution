@@ -72,14 +72,18 @@ namespace Automation.Acutis.StepDefinitions
                 "Submitting a malformed email did not show the format validation message.");
         }
 
-        [Then(@"Submit the Forgot Password form with an email that does not exist and verify the account not found message")]
-        public void ThenSubmitTheForgotPasswordFormWithAnEmailThatDoesNotExistAndVerifyTheAccountNotFoundMessage()
+        [Then(@"Submit the Forgot Password form with an email that does not exist and verify the same Check Your Email panel is shown as for a real account")]
+        public void ThenSubmitTheForgotPasswordFormWithAnEmailThatDoesNotExistAndVerifyTheSameCheckYourEmailPanelIsShownAsForARealAccount()
         {
+            // Deliberately asserts the SAME success panel a real account gets (see
+            // AcutisPasswordService.ForgotPasswordAsync) — this response must never be
+            // distinguishable from a real account's, or the form becomes an account-enumeration
+            // oracle for an attacker probing admin email addresses.
             _forgotPasswordPage.SubmitForgotPasswordForm(Data.NonExistentEmail ?? "no-such-user-automation@example.com");
             Assert.That(
-                _forgotPasswordPage.ReadEmailError(),
-                Does.Contain("No account found"),
-                "Submitting an email with no matching account did not show the account-not-found message.");
+                _forgotPasswordPage.WaitForCheckYourEmailPanel(),
+                Is.True,
+                "Submitting an email with no matching account did not show the same Check Your Email panel as a real account — this leaks account existence.");
         }
 
         [Then(@"Submit the Forgot Password form with the existing test account email and verify the Check Your Email panel is shown")]
@@ -114,7 +118,7 @@ namespace Automation.Acutis.StepDefinitions
             {
                 Assert.That(
                     toast,
-                    Does.Contain("already on its way").Or.Contain("sent to your email"),
+                    Does.Contain("already on its way").Or.Contain("instructions have been sent"),
                     "The second submission did not report a recognized outcome.");
             }
         }
@@ -146,7 +150,7 @@ namespace Automation.Acutis.StepDefinitions
             GivenLaunchTheApplicationAtTheForgotPasswordPage();
             ThenSubmitTheForgotPasswordFormWithAnEmptyEmailAndVerifyTheValidationMessage();
             ThenSubmitTheForgotPasswordFormWithAnInvalidEmailFormatAndVerifyTheValidationMessage();
-            ThenSubmitTheForgotPasswordFormWithAnEmailThatDoesNotExistAndVerifyTheAccountNotFoundMessage();
+            ThenSubmitTheForgotPasswordFormWithAnEmailThatDoesNotExistAndVerifyTheSameCheckYourEmailPanelIsShownAsForARealAccount();
         }
 
         public void RunForgotPasswordMutatingProcess()

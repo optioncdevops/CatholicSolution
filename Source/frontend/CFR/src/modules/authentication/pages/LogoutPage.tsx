@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider';
-import { getRequestedClientId, getSafeReturnUrl } from '../utils/authenticationHelpers';
+import { getRequestedClientId, getSafeReturnUrl, storeCentralAuthHandoff } from '../utils/authenticationHelpers';
 
 const LogoutPage = () => {
   //#region Hooks
@@ -20,9 +20,11 @@ const LogoutPage = () => {
     const returnUrl = getSafeReturnUrl(location.search, '/apps');
     signOut();
 
-    const params = new URLSearchParams({ client_id: clientId, returnUrl });
-    if (clientId === 'platform') params.set('entry', 'platform');
-    navigate(`/login?${params.toString()}`, { replace: true });
+    // Handed off via sessionStorage instead of re-appended to the URL — this hop to /login is
+    // same-origin (a plain react-router navigate), so the next page can read it back without
+    // either value ever sitting in the address bar or an access log.
+    storeCentralAuthHandoff({ clientId, returnUrl });
+    navigate(clientId === 'platform' ? '/login?entry=platform' : '/login', { replace: true });
   }, [location.search, navigate, signOut]);
   //#endregion
 

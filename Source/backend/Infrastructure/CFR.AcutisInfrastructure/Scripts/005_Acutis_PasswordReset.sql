@@ -25,24 +25,54 @@ BEGIN
     DECLARE @Scope NVARCHAR(20) = N'staff';
 
     -- ActionId 1: Request a password reset. Invalidates prior unused tokens for the matched
-    -- user and stores the new token hash. Returns one row only when an active, unlocked account
-    -- matches @Email; the API layer reports "no account found" when no row comes back (this app
-    -- deliberately reveals account existence on this internal admin endpoint).
+    -- user and stores the new token hash. A row comes back for any account that exists (and is
+    -- not soft-deleted) regardless of its active/locked status — [IsActive]/[IsLocked] tell the
+    -- caller whether to actually issue a token, or instead notify the real account owner by
+    -- email that their account is restricted. The API layer's outward HTTP response is
+    -- deliberately IDENTICAL whether no row comes back at all or a row comes back blocked — this
+    -- is a public, unauthenticated endpoint, and letting the response distinguish "no account" /
+    -- "locked account" / "deactivated account" would turn it into an account-enumeration oracle.
     IF @ActionId = 1
     BEGIN
         DECLARE @UserId BIGINT;
+        DECLARE @IsActive BIT;
+        DECLARE @IsLocked BIT;
         DECLARE @HasActiveToken BIT = 0;
 
-        SELECT TOP (1) @UserId = u.[UserId]
+        SELECT TOP (1)
+            @UserId = u.[UserId],
+            @IsActive = u.[IsActive],
+            @IsLocked = u.[IsLocked]
         FROM [auth].[AcutisUser] AS u
         WHERE u.[Email] = @Email
-          AND u.[IsActive] = 1
-          AND u.[IsLocked] = 0
           AND u.[IsDeleted] = 0;
 
         IF @UserId IS NULL
         BEGIN
+            -- No account at all with this email (soft-deleted counts as no account) - identical
+            -- outcome, by design, to the blocked-account branch below.
             SET @ReturnValue = 0;
+            RETURN @ReturnValue;
+        END
+
+        IF @IsActive = 0 OR @IsLocked = 1
+        BEGIN
+            -- A real account exists but is deactivated/locked. No token is issued and no reset
+            -- link is ever generated for it - the row is returned only so the service layer can
+            -- email the real account owner a distinct "your account is restricted" notice
+            -- instead, without changing what the API caller sees.
+            SELECT
+                u.[UserId],
+                u.[Email],
+                u.[FirstName],
+                u.[LastName],
+                CAST(0 AS BIT) AS [RateLimited],
+                u.[IsActive],
+                u.[IsLocked]
+            FROM [auth].[AcutisUser] AS u
+            WHERE u.[UserId] = @UserId;
+
+            SET @ReturnValue = @UserId;
             RETURN @ReturnValue;
         END
 
@@ -75,7 +105,9 @@ BEGIN
                 u.[Email],
                 u.[FirstName],
                 u.[LastName],
-                CAST(1 AS BIT) AS [RateLimited]
+                CAST(1 AS BIT) AS [RateLimited],
+                u.[IsActive],
+                u.[IsLocked]
             FROM [auth].[AcutisUser] AS u
             WHERE u.[UserId] = @UserId;
 
@@ -97,7 +129,9 @@ BEGIN
             u.[Email],
             u.[FirstName],
             u.[LastName],
-            CAST(0 AS BIT) AS [RateLimited]
+            CAST(0 AS BIT) AS [RateLimited],
+            u.[IsActive],
+            u.[IsLocked]
         FROM [auth].[AcutisUser] AS u
         WHERE u.[UserId] = @UserId;
 

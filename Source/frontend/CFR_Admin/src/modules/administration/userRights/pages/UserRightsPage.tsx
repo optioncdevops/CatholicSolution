@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Eye, Save, ShieldCheck, ShieldOff } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, FilterX, Save, ShieldCheck, ShieldOff } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
@@ -208,6 +208,8 @@ export function UserRightsPage() {
 
   const rows = useMemo(() => flattenUserRightsTree(visibleTree, 0, expanded), [visibleTree, expanded]);
 
+  const hasActiveFilters = moduleFilter !== 'all';
+
   const dirtyCount = pending.size;
 
   // Real counts across every feature currently loaded for this role, pending-change aware — not
@@ -240,7 +242,6 @@ export function UserRightsPage() {
 
   const handleClearFilters = () => {
     setModuleFilter('all');
-    showToast('Filters cleared.', 'success');
   };
 
 
@@ -258,7 +259,7 @@ export function UserRightsPage() {
     const scopeLabel = moduleFilter === 'all' ? 'every module' : moduleOptions.find((option) => option.id === String(moduleFilter))?.value ?? 'this module';
     const confirmed = await confirmAction({
       title: `Set ${ACCESS_LEVEL_LABEL[level]} for ${scopeLabel}?`,
-      description: `This queues ${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} to ${ACCESS_LEVEL_LABEL[level].toLowerCase()} for ${selectedRole?.roleName ?? 'this role'}.`
+      description: `This queues ${featureIds.length} feature${featureIds.length === 1 ? '' : 's'} to ${ACCESS_LEVEL_LABEL[level].toLowerCase()} for this role.`
         + (skippedCount > 0 ? ` ${skippedCount} module/activity-level row${skippedCount === 1 ? '' : 's'} in scope don't support Read Only and will be left as-is.` : '')
         + ' Review the matrix and click Save to persist it.',
       confirmLabel: `Set all to ${ACCESS_LEVEL_LABEL[level]}`,
@@ -282,7 +283,7 @@ export function UserRightsPage() {
     try {
       const changes = toPendingChangeList(pending);
       await saveUserRights(roleId, changes);
-      showToast(`Rights updated for ${selectedRole?.roleName ?? 'this role'}.`, 'success');
+      showToast('Rights updated successfully.', 'success');
       await loadRights(roleId);
     } catch (error) {
       console.error('Error saving user rights:', error);
@@ -399,9 +400,19 @@ export function UserRightsPage() {
                 disabled={status === 'loading'}
               />
             </div>
-            <CommonButton id="btnClearUserRightsFilters" variant="outline" size="sm" onClick={handleClearFilters}>
-              Clear Filters
-            </CommonButton>
+            {hasActiveFilters ? (
+              <div className="flex shrink-0 items-end pb-0.5">
+                <CommonButton
+                  id="btnClearUserRightsFilters"
+                  variant="clearFilter"
+                  size="sm"
+                  iconLeft={<FilterX size={14} />}
+                  onClick={handleClearFilters}
+                >
+                  Clear filter
+                </CommonButton>
+              </div>
+            ) : null}
           </div>
 
           {!isReadOnly && (

@@ -56,6 +56,13 @@ interface ProfileImageUploadProps {
    * three consumers of this component keep their existing immediate-remove behavior unchanged.
    */
   confirmRemove?: () => Promise<boolean>;
+  /**
+   * Friendly caption shown in the preview modal's title instead of the raw storage filename
+   * (e.g. `user_5_0ff714ed52ad4ef7a2ae5c2092e7a7f7_20260917074248.jpeg`), which otherwise leaks
+   * the internal storage naming convention. Falls back to the filename when omitted, preserving
+   * existing behavior for consumers that don't pass it.
+   */
+  previewTitle?: string;
 }
 
 const PROFILE_ACCEPT = "image/jpeg,image/png,.jpg,.jpeg,.png";
@@ -154,6 +161,7 @@ export function ProfileImageUpload({
   previewAriaLabel = "Preview profile image",
   removeAriaLabel = "Remove profile image",
   confirmRemove,
+  previewTitle,
 }: ProfileImageUploadProps) {
   const avatarClass = AVATAR_CLASS_BY_VARIANT[variant];
   const emptyStateClass = EMPTY_STATE_CLASS_BY_VARIANT[variant];
@@ -203,6 +211,33 @@ export function ProfileImageUpload({
   const existingPreviewUrl =
     !file && !clearedExisting && !existingPreviewFailed ? initialPreviewUrl?.trim() || null : null;
 
+  // The real bytes for a server-hosted image are never downloaded here (the <img> tag loads them
+  // directly) - only its byte length, read from the response's Content-Length header, so the
+  // preview modal's header can show the real size instead of "0 Bytes" (there's no local File to
+  // read a .size from for an image that already lives on the server).
+  const [existingFileSize, setExistingFileSize] = useState<number | null>(null);
+  useEffect(() => {
+    if (!existingPreviewUrl) {
+      // Genuine external-system sync, not derivable state: this fires whenever the URL to fetch
+      // changes (including when it disappears), same as the file/previewUrl effect above.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setExistingFileSize(null);
+      return;
+    }
+    let cancelled = false;
+    // Clears a stale size from a previous URL immediately, rather than showing it briefly while
+    // the new one is in flight.
+    setExistingFileSize(null);
+    void fetch(existingPreviewUrl)
+      .then((response) => {
+        if (cancelled) { return; }
+        const length = response.headers.get("content-length");
+        setExistingFileSize(length ? Number(length) : null);
+      })
+      .catch(() => { /* Non-fatal - the size line just stays blank. */ });
+    return () => { cancelled = true; };
+  }, [existingPreviewUrl]);
+
   const previewItems: UploadPreviewItem[] = useMemo(() => {
     if (file) {
       return [{ file, url: previewUrl, isImage: isImageFile(file) }];
@@ -237,9 +272,13 @@ export function ProfileImageUpload({
             : ext === ".svg"
               ? "image/svg+xml"
               : "image/jpeg";
+      // A zero-length File is still used as the content placeholder (the modal renders the real
+      // image from `url`, not from this File's bytes) - only its reported `.size` needs to be
+      // real, via a same-length filler buffer once the actual byte count is known.
+      const sizedContent = new Uint8Array(existingFileSize ?? 0);
       return [
         {
-          file: new File([], fileName, { type: mimeType }),
+          file: new File([sizedContent], fileName, { type: mimeType }),
           url: existingPreviewUrl,
           isImage: true,
         },
@@ -247,7 +286,7 @@ export function ProfileImageUpload({
     }
 
     return [];
-  }, [existingPreviewUrl, file, previewUrl]);
+  }, [existingPreviewUrl, existingFileSize, file, previewUrl]);
 
   const setSelectedFile = (next: File | null) => {
     setValidationError("");
@@ -449,6 +488,7 @@ export function ProfileImageUpload({
       <FilePreviewModal
         isOpen={isPreviewOpen}
         items={previewItems}
+        title={previewTitle}
         currentIndex={0}
         onClose={() => { setIsPreviewOpen(false); }}
         onRemoveCurrent={() => {

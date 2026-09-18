@@ -13,6 +13,7 @@ global using CFR.CommonService;
 global using CFR.DBEngine;
 global using Microsoft.AspNetCore.Authorization;
 global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.AspNetCore.RateLimiting;
 global using Microsoft.Extensions.Options;
 global using Swashbuckle.AspNetCore.SwaggerGen;
 global using System.Reflection;

@@ -90,14 +90,14 @@ export function UserRolesListPage() {
     if (role.status !== 'active') {
       const confirmed = await confirmAction({
         title: 'Activate this role?',
-        description: `"${role.roleName}" will become assignable to users.`,
+        description: 'This role will become assignable to users.',
         confirmLabel: 'Activate',
       });
       if (!confirmed) return;
-      
+
       try {
         await updateUserRoleStatus(role.roleId, 'active');
-        showToast(`${role.roleName} activated`);
+        showToast('Role activated successfully.');
         await load();
       } catch (error) {
         console.error('Error activating user role:', error);
@@ -125,9 +125,9 @@ export function UserRolesListPage() {
   const handleDelete = useCallback(async (role: UserRolesApiItem) => {
     if (isReadOnly || role.usersCount > 0) return;
     const confirmed = await confirmAction({
-      title: 'Delete this role?',
-      description: 'This role will be permanently removed from the role catalog.',
-      confirmLabel: 'Delete role',
+      title: 'Delete this record?',
+      description: 'Are you sure you want to delete this record? This action cannot be undone.',
+      confirmLabel: 'Delete',
       tone: 'danger',
     });
     if (!confirmed) return;

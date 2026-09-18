@@ -5,12 +5,12 @@ import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
-import { ColorPicker, CommonSwitch, Dropdown, InputField, MandatoryIndicator, ProfileImageUpload } from '@app/components/formControls';
+import { CommonSwitch, InputField, MandatoryIndicator, ProfileImageUpload } from '@app/components/formControls';
 import { confirmAction } from '../../../lib/confirm';
 import { formatDateTime } from '../../../utils/formatDate';
 import { getEmailSettings, removeEmailLogo, saveEmailSettings, testSmtpConnection, uploadEmailLogo } from '../services/emailSettingsService';
 import type { EmailSettingsApiItem, EmailSettingsFormValues, TestSmtpConnectionResult } from '../types/emailSettingsTypes';
-import { DEFAULT_EMAIL_ACCENT_COLOR, DEFAULT_EMAIL_FONT_FAMILY, EMAIL_FONT_FAMILY_OPTIONS, formFromEmailSettings, payloadFromForm } from '../utils/emailSettingsHelpers';
+import { formFromEmailSettings, payloadFromForm } from '../utils/emailSettingsHelpers';
 import type { EmailSettingsFieldErrors } from '../validator/EmailSettingsValidator';
 import { validateEmailSettingsFields } from '../validator/EmailSettingsValidator';
 
@@ -22,7 +22,7 @@ const SMTP_TEST_FAILURE_MESSAGE = 'SMTP connection failed. Please verify server,
 // Order to check when scrolling to the first invalid field on Save — top-to-bottom as the fields
 // appear in the form below.
 const FIELD_FOCUS_ORDER: Array<keyof EmailSettingsFormValues> = [
-  'smtpServer', 'smtpPort', 'username', 'ccMailId', 'contactUsMailId', 'apiBaseUrl', 'baseFontSize',
+  'smtpServer', 'smtpPort', 'username', 'ccMailId', 'contactUsMailId', 'apiBaseUrl',
 ];
 
 // Fields that affect what an actual SMTP handshake would use — editing any of these invalidates an
@@ -244,6 +244,7 @@ function EmailSettingsPage() {
       setUploadingLogo(false);
     }
   };
+
   //#endregion
 
   //#region Render
@@ -336,7 +337,7 @@ function EmailSettingsPage() {
                 value={form.apiBaseUrl}
                 onChange={(event) => updateField('apiBaseUrl', event.target.value)}
                 placeholder="https://api.example.org/acutis"
-                helperText="This API's own public address (not the admin site's URL) — used to build the email logo's image link. Must be reachable by recipients' email clients, so never a localhost or private-network address, even while testing locally."
+                helperText="This API's own public address (not the admin site's URL) — used to build the email logo's image link. If this API is only reachable through a reverse proxy/gateway (e.g. https://cfrapi.example.com/acutis), include that path here too, or the logo link will 404. Must be reachable by recipients' email clients, so never a localhost or private-network address, even while testing locally."
                 disabled={saving || isReadOnly}
                 error={fieldErrors.apiBaseUrl}
                 wrapperClassName="sm:col-span-2"
@@ -362,47 +363,23 @@ function EmailSettingsPage() {
         </div>
 
         <div className="border-t border-[var(--line-soft)] pt-4">
-          <p className={SECTION_LABEL_CLASS}>Branding</p>
-          <p className={SECTION_HINT_CLASS}>Applied to every email template — logo, accent color, font, and size are no longer set per-template.</p>
+          <p className={SECTION_LABEL_CLASS}>Email Logo</p>
+          <p className={SECTION_HINT_CLASS}>Shown at the top of every outgoing email and in the Email Templates preview.</p>
 
-          <div className="flex flex-col gap-4">
-            <ProfileImageUpload
-              label="Email logo"
-              variant="rectangle"
-              uploadLabel="Upload Email Logo"
-              replaceLabel="Change Email Logo"
-              existingPreviewAlt="Current Email Logo"
-              previewAriaLabel="Preview Email Logo"
-              removeAriaLabel="Remove Email Logo"
-              confirmRemove={handleRemoveLogoConfirm}
-              initialPreviewUrl={logoImageUrl ?? undefined}
-              onFileChange={(file) => void handleLogoFileChange(file)}
-              disabled={uploadingLogo || saving || isReadOnly}
-              helperText="JPG or PNG, up to 2MB. Shown at the top of every outgoing email — leave empty to show a text brand mark instead."
-            />
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className={isReadOnly ? 'pointer-events-none opacity-60' : undefined}>
-                <ColorPicker label="Accent color" value={form.accentColor} onChange={(value) => updateField('accentColor', value ?? DEFAULT_EMAIL_ACCENT_COLOR)} enableNativePicker />
-              </div>
-              <InputField
-                id={fieldElementId('baseFontSize')} label="Base font size (px)" type="number"
-                value={form.baseFontSize}
-                onChange={(event) => updateField('baseFontSize', event.target.value)}
-                disabled={saving || isReadOnly}
-                error={fieldErrors.baseFontSize}
-              />
-              <Dropdown
-                label="Font family"
-                searchable={false}
-                clearable={false}
-                value={form.fontFamily}
-                onValueChange={(value) => updateField('fontFamily', value ?? DEFAULT_EMAIL_FONT_FAMILY)}
-                options={EMAIL_FONT_FAMILY_OPTIONS}
-                disabled={saving || isReadOnly}
-              />
-            </div>
-          </div>
+          <ProfileImageUpload
+            label="Email logo"
+            variant="rectangle"
+            uploadLabel="Upload Email Logo"
+            replaceLabel="Change Email Logo"
+            existingPreviewAlt="Current Email Logo"
+            previewAriaLabel="Preview Email Logo"
+            removeAriaLabel="Remove Email Logo"
+            confirmRemove={handleRemoveLogoConfirm}
+            initialPreviewUrl={logoImageUrl ?? undefined}
+            onFileChange={(file) => void handleLogoFileChange(file)}
+            disabled={uploadingLogo || saving || isReadOnly}
+            helperText="JPG or PNG, up to 2MB. Leave empty to show a text brand mark instead."
+          />
         </div>
 
         {(lastUpdatedByName || lastUpdatedDate) && (

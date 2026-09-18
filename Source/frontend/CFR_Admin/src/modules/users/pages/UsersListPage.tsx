@@ -114,7 +114,7 @@ export function UsersListPage() {
     if (nextIsActive === 0) {
       const confirmed = await confirmAction({
         title: 'Deactivate user?',
-        description: `${user.fullName} will lose access to their account.`,
+        description: 'This user will lose access to their account.',
         confirmLabel: 'Deactivate',
         tone: 'danger',
       });
@@ -122,14 +122,14 @@ export function UsersListPage() {
     } else {
       const confirmed = await confirmAction({
         title: 'Activate user?',
-        description: `${user.fullName} will regain access to their account.`,
+        description: 'This user will regain access to their account.',
         confirmLabel: 'Activate',
       });
       if (!confirmed) return;
     }
     try {
       await updateUserStatus(user.userId, nextIsActive);
-      showToast(nextIsActive === 1 ? `${user.fullName} activated.` : `${user.fullName} deactivated.`);
+      showToast(nextIsActive === 1 ? 'User activated successfully.' : 'User deactivated successfully.');
       await load();
     } catch (error) {
       console.error('Error updating user status:', error);
@@ -145,15 +145,15 @@ export function UsersListPage() {
       return;
     }
     const confirmed = await confirmAction({
-      title: 'Delete this user?',
-      description: `${user.fullName} will be removed and will no longer be able to sign in.`,
-      confirmLabel: 'Delete user',
+      title: 'Delete this record?',
+      description: 'Are you sure you want to delete this record? This action cannot be undone.',
+      confirmLabel: 'Delete',
       tone: 'danger',
     });
     if (!confirmed) return;
     try {
       await deleteUser(user.userId);
-      showToast(`${user.fullName} deleted.`);
+      showToast('User deleted successfully.');
       await load();
     } catch (error) {
       console.error('Error deleting user:', error);

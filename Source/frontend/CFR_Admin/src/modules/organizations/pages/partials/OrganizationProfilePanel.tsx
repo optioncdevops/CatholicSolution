@@ -149,7 +149,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
         state: values.state.trim(),
         zip: values.zip.trim(),
       });
-      showToast(`${values.orgName.trim()} updated.`, 'success');
+      showToast('Organization updated successfully.', 'success');
       setEditing(false);
       await onSaved();
     } catch (error) {

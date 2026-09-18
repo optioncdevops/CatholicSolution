@@ -49,6 +49,8 @@ namespace CFR.Common
         public const string CannotDeactivateLastAdmin = "You cannot deactivate the last active administrator. Assign another user as administrator first.";
         public const string CannotDeleteLastAdmin = "You cannot delete the last active administrator. Assign another user as administrator first.";
         public const string InvalidEmailFormat = "Enter a valid email address.";
+        public const string NameTooLong = "First and last name cannot exceed 50 characters.";
+        public const string InvalidContactNumber = "Enter a valid 10-digit US contact number.";
         public const string FutureDateOfBirth = "Date of birth cannot be in the future.";
         public const string DateOfBirthOutOfRange = "Date of birth must reflect an age between 18 and 120 years.";
         public const string ExistRole = "A role with this name already exists.";
@@ -58,10 +60,9 @@ namespace CFR.Common
         public const string Failed = "The request could not be completed.";
         public const string BadRequest = "Invalid request.";
         public const string UnAuthorized = "Unauthorized.";
-        public const string ResetInstructionsSent = "Password reset instructions have been sent to your email address.";
+        public const string ResetInstructionsSent = "If an account exists for this email address, password reset instructions have been sent to it.";
         public const string ResetEmailSendFailed = "We couldn't send the password reset email. Please try again in a few minutes.";
         public const string ResetAlreadyRequestedRecently = "A password reset link is already on its way to this email address and is still valid. Check your inbox (and spam folder) for that link before requesting a new one.";
-        public const string AccountNotFound = "No account found with this email address.";
         public const string InvalidResetToken = "This reset link is invalid or has expired.";
         public const string ResetTokenAlreadyUsed = "This reset link has already been used. Please request a new one.";
         public const string ResetTokenExpired = "This reset link has expired. Please request a new one.";
@@ -71,6 +72,7 @@ namespace CFR.Common
         public const string InvalidTemplateBodyContent = "The template body contains a script, event-handler attribute, or javascript/data link, which is not allowed.";
         public const string LinkExpiryMinutesOutOfRange = "Link expiry must be between 5 and 1440 minutes (24 hours).";
         public const string InvalidCurrentPassword = "Your current password is incorrect.";
+        public const string NewPasswordSameAsCurrent = "Your new password must be different from your current password.";
         public const string ProfileUpdated = "Profile updated successfully.";
         public const string PasswordChanged = "Password changed successfully.";
         public const string OrganizationUpdated = "Organization updated successfully.";
@@ -118,6 +120,7 @@ namespace CFR.Common
         public const string OrgInactive = "The organization is not active for this product.";
         public const string SyncUserAlreadyExists = "A user with this externalUserId already exists for this organization.";
         public const string SyncUserNotFound = "No user was found for the given externalUserId and productOrgId.";
+        public const string SyncRoleNotFound = "The specified roleId was not found.";
         public const string ConcurrencyConflict = "The record was modified by another request. Refresh and try again.";
         public const string IdempotencyKeyReuse = "The Idempotency-Key was already used with a different request body.";
         public const string DuplicateInFile = "Duplicate externalUserId/productOrgId within the same file.";

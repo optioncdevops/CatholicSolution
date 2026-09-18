@@ -169,7 +169,7 @@ export function OrganizationsListPage() {
       });
       await loadOrganizations();
       const statusLabel = ORG_STATUS_OPTIONS.find((option) => option.id === status)?.value ?? status;
-      showToast(`${changingStatusOrg.orgName} status changed to ${statusLabel}.`, 'success');
+      showToast(`Organization status changed to ${statusLabel}.`, 'success');
     } catch (error) {
       console.error('Error changing organization status:', error);
       showToast(typeof error === 'string' ? error : 'Failed to change status.', 'error');

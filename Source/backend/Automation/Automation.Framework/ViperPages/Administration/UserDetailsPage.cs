@@ -328,5 +328,30 @@ namespace Automation.Framework.ViperPages.Administration
                     .All(popup => !popup.Displayed),
                 _menuTimeoutSeconds);
         }
+
+        public void UserPrcess(string editFirstName, string editLastName)
+        {
+            if (ClickFirstDisplayed(XPath_UserDetails.UserDetailsTopMenu, 2))
+            {
+                return;
+            }
+
+            int groupCount = _webDriver.FindElements(By.XPath(XPath_UserDetails.NavDropDownTrigger)).Count;
+            for (int index = 1; index <= groupCount; index++)
+            {
+                ClickByScript($"({XPath_UserDetails.NavDropDownTrigger})[{index}]");
+                if (ClickFirstDisplayed(XPath_UserDetails.UserDetailsMenu, 2))
+                {
+                    return;
+                }
+            }
+            ClickByScript(XPath_UserDetails.AddNewUser);
+            WaitForUserForm();
+
+            SetValueByScriptById(XPath_UserDetails.txtfirstname, editFirstName);
+            SetValueByScriptById(XPath_UserDetails.txtlastname, editLastName);
+
+            ClickByScript(XPath_UserDetails.Save);
+        }
     }
 }

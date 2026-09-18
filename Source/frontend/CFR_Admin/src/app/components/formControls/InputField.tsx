@@ -283,6 +283,9 @@ const InputFieldInner = <TFieldValues extends FieldValues = FieldValues>({
               );
             }}
             onBlur={(e) => {
+              // Re-mask a revealed password as soon as focus leaves the field, rather than
+              // leaving it in plaintext indefinitely while the user edits other fields.
+              if (isPassword && showPassword) { setShowPassword(false); }
               if (e.target.value && typeof e.target.value === "string") {
                 const trimmed = e.target.value.trim();
                 if (trimmed !== e.target.value) {
@@ -360,6 +363,10 @@ const InputFieldInner = <TFieldValues extends FieldValues = FieldValues>({
                     ? "text-foreground-muted"
                     : "text-muted-foreground",
                 )}
+                // Without this, clicking the toggle blurs the input first (native focus-move on
+                // mousedown), which the input's own onBlur now uses to re-mask a shown password —
+                // that would immediately undo a "hide" click by re-toggling straight back to shown.
+                onMouseDown={(e) => { e.preventDefault(); }}
                 onClick={() => { setShowPassword((prev) => !prev); }}
                 tabIndex={-1}
                 aria-label={showPassword ? "Hide password" : "Show password"}

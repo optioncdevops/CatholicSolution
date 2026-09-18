@@ -491,7 +491,7 @@ export function DashboardPage() {
   const handleQuickAction = async (request: AccessRequestApiItem, nextStatus: 'approved' | 'rejected') => {
     const confirmed = await confirmAction({
       title: nextStatus === 'approved' ? 'Approve this request?' : 'Reject this request?',
-      description: `${request.requesterName}'s request for ${request.productName} at ${request.organizationName} will be marked ${nextStatus}. This cannot be undone from here.`,
+      description: `This request will be marked ${nextStatus}. This cannot be undone from here.`,
       confirmLabel: nextStatus === 'approved' ? 'Approve' : 'Reject',
       tone: nextStatus === 'approved' ? 'primary' : 'danger',
     });
@@ -500,7 +500,7 @@ export function DashboardPage() {
     setActingRequestId(request.accessRequestId);
     try {
       await updateAccessRequestStatus({ accessRequestId: request.accessRequestId, status: nextStatus });
-      showToast(`${request.requesterName}'s request ${nextStatus}.`, 'success');
+      showToast(`Request ${nextStatus} successfully.`, 'success');
       await loadDashboard(true);
     } catch (error) {
       console.error('Error updating access request:', error);

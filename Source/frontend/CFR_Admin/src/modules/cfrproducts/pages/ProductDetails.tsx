@@ -263,7 +263,6 @@ const ProductDetails = () => {
         subCategoryName: product.subCategoryName,
         prodDescription: product.prodDescription,
         externalPageUrl: product.externalPageUrl,
-        licenseType: product.licenseType,
         navigationTarget: product.navigationTarget,
         isActive,
         productStatus,
@@ -272,7 +271,7 @@ const ProductDetails = () => {
       await updateProduct(payload);
       await loadProduct();
       showToast(
-        `${product.productName} status changed to ${status.replace("-", " ")}.`,
+        `Product status changed to ${status.replace("-", " ")}.`,
       );
     } catch (error) {
       showToast(

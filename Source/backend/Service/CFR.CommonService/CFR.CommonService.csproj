@@ -15,6 +15,10 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="NPOI" Version="2.8.0" />
+    <!-- NPOI 2.8.0 drags in Microsoft.SourceLink.GitHub 8.0.0 -> Microsoft.Build.Tasks.Git 8.0.0,
+         which is flagged by GHSA-23fw-v26w-5fgq (NU1902). Pinning the patched line here lifts it for
+         every project that references CFR.CommonService. Remove once NPOI ships a fixed dependency. -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.10" />
     <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>
