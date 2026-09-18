@@ -18,6 +18,7 @@ export interface SaveAccessRequestPayload {
   city?: string;
   state?: string;
   zip?: string;
+  dioceseId?: number;
   phone?: string;
   products?: AccessRequestProductItem[];
 }
@@ -31,7 +32,16 @@ export interface PublicAccessRequestFormValues {
   city: string;
   state: string;
   zip: string;
+  dioceseId: string;
   email: string;
   phone: string;
   notes: string;
+}
+
+export interface DioceseOption {
+  dioceseId: number;
+  dioceseName: string;
+  address?: string;
+  city?: string;
+  state?: string;
 }

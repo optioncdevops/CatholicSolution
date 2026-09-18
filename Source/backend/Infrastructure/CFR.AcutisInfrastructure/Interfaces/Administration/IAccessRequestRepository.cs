@@ -60,5 +60,49 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         Task<int> UpdateAccessRequestStatusAsync(AccessRequestStatusInput input);
 
         #endregion PUT Methods
+
+        #region GET Methods (Org Setup)
+
+        /// <summary>
+        /// Fetches the contact/org fields needed to call SMS's SetupNewOrganizationByCFR at approval time.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Supply firstName/lastName/organizationName/contactNo/emailAddress/state/cfrOrgID/cfrUserID/productName for the external call.
+        /// Request Flow: IAccessRequestService -> IAccessRequestRepository.GetOrgSetupContextAsync() -> SQL Database.
+        /// Validation Details: AccessRequestId parameter mapping.
+        /// Business Logic: ProductName comes from the request's first (lowest AccessRequestProductId) line item, so the caller can route to a product-specific SMS setup endpoint (e.g. Parish Hub).
+        /// Repository Interaction: Runs a plain SELECT joining request.AccessRequest to auth.User, request.AccessRequestProduct, and core.Product (CommandType.Text) - deliberately not a stored procedure.
+        /// Response Details: Returns OrgSetupContextOutput, or null when not found.
+        /// </remarks>
+        /// <param name="accessRequestId">Access request identifier.</param>
+        /// <returns>The org-setup context, or null when the request doesn't exist.</returns>
+        Task<OrgSetupContextOutput?> GetOrgSetupContextAsync(int accessRequestId);
+
+        #endregion GET Methods (Org Setup)
+
+        #region PUT Methods (Org Setup)
+
+        /// <summary>
+        /// Writes the OrgId returned by SMS's SetupNewOrganizationByCFR back into CFR's own
+        /// license rows once provisioning succeeds. SMS's returned UserId is deliberately not used
+        /// anywhere - only OrgId matters to this process.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Record the product-side org identifier so App Hub / launch (gated on
+        /// [lic].[OrganizationProduct]) can use it.
+        /// Request Flow: IAccessRequestService -> IAccessRequestRepository.PersistOrgSetupResultAsync() -> SQL Database.
+        /// Validation Details: AccessRequestId/OrgId parameter mapping.
+        /// Business Logic: Creates [core].[Organization] from the org fields staged on
+        /// [request].[AccessRequest] if one doesn't exist yet for this request, points
+        /// [request].[AccessRequest].[OrgId] at it, then creates/reactivates
+        /// [lic].[OrganizationProduct] with [ProductOrgId] set to the real SMS OrgId.
+        /// Repository Interaction: Runs plain SELECT/UPDATE/INSERT statements (CommandType.Text) - deliberately not a stored procedure.
+        /// Response Details: None.
+        /// </remarks>
+        /// <param name="accessRequestId">Access request identifier.</param>
+        /// <param name="orgId">The OrgId returned by SMS.</param>
+        Task PersistOrgSetupResultAsync(int accessRequestId, int orgId);
+
+        #endregion PUT Methods (Org Setup)
     }
 }

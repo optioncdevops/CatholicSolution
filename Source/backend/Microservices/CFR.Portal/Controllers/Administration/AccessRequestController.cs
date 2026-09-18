@@ -37,6 +37,28 @@ namespace CFR.Portal.Controllers.Administration
             return ApiResultArgs(await service.GetHubProductsAsync(requesterEmail), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves every non-deleted diocese for the Request Access page's Diocese dropdown.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown on the public Request Access page.
+        /// Request Flow: Client API GET -> AccessRequestController.GetDioceses() -> IAccessRequestService.GetDiocesesListAsync() -> Database.
+        /// Validation Details: None.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IAccessRequestService.GetDiocesesListAsync().
+        /// Response Details: Standard API result enclosing List of DioceseOutput with status 200 or 500.
+        /// </remarks>
+        /// <returns>A consistent API response containing the diocese dataset.</returns>
+        /// <response code="200">Successfully fetched dioceses.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [AllowAnonymous]
+        [ActionName(API_Administration.GetDioceses)]
+        public async Task<IActionResult> GetDioceses()
+        {
+            return ApiResultArgs(await service.GetDiocesesListAsync(), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
 
         #region POST Methods

@@ -1,4 +1,4 @@
-export type ProductDetailsTab = 'details' | 'customers' | 'license-details' | 'license-history';
+export type ProductDetailsTab = 'details' | 'customers' | 'license-details' | 'license-history' | 'api-integration';
 
 export interface ProductLocationState {
   productId: number;
@@ -91,6 +91,19 @@ export interface ProductCustomerRow {
   createdAt: string;
   expiryDate: string;
   status: 'active' | 'trial' | 'suspended';
+}
+
+export interface ProductApiIntegrationApiItem {
+  site: string;
+  siteUrl?: string | null;
+  siteDescription?: string | null;
+}
+
+export interface ProductApiIntegrationRow {
+  id: string;
+  site: string;
+  siteUrl: string;
+  siteDescription: string;
 }
 
 export interface ProductAssignmentSummaryApiItem {

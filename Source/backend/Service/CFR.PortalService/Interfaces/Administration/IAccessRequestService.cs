@@ -28,6 +28,19 @@ namespace CFR.PortalService.Interfaces.Administration
         /// <returns>MSResultArgs containing the hub product list.</returns>
         Task<MSResultArgs> GetHubProductsAsync(string? requesterEmail);
 
+        /// <summary>
+        /// Retrieves every non-deleted diocese for the Request Access page's Diocese dropdown.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown on the public Request Access page.
+        /// Request Flow: AccessRequestController -> IAccessRequestService.GetDiocesesListAsync() -> IAccessRequestRepository.GetDiocesesListAsync().
+        /// Validation Details: None.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IAccessRequestRepository.GetDiocesesListAsync().
+        /// Response Details: MSResultArgs containing List of DioceseOutput.
+        /// </remarks>
+        /// <returns>MSResultArgs containing the diocese list.</returns>
+        Task<MSResultArgs> GetDiocesesListAsync();
 
         #region POST Methods
 

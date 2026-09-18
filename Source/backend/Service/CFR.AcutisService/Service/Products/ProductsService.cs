@@ -7,7 +7,7 @@ namespace CFR.AcutisService.Service.Products
     /// Repository Responsibility:
     /// - Invokes IProductsRepository for database querying on Core.Product.
     /// </summary>
-    public class ProductsService(IProductsRepository repository, IFileHandlerService fileHandler, ILogger<ProductsService> logger, IConfiguration configuration, IWebHostEnvironment environment): IProductsService
+    public class ProductsService(IProductsRepository repository, IFileHandlerService fileHandler, ILogger<ProductsService> logger, IWebHostEnvironment environment, IConfiguration configuration): IProductsService
     {
         #region GET Methods
 
@@ -358,6 +358,44 @@ namespace CFR.AcutisService.Service.Products
             catch (Exception ex)
             {
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchProductLogoFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Retrieves [core].[ProductEnvironment] rows for a product, scoped to the currently configured environment.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch the Site / Site Url / Site Description rows for the Api Integration tab.
+        /// Request Flow: ProductsController -> ProductsService.GetProductApiIntegrationsAsync() -> IProductsRepository.GetProductApiIntegrationsAsync().
+        /// Validation Details: ProductId must be greater than zero.
+        /// Business Logic: Reads the current environment from IConfiguration["Environment"] and wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IProductsRepository.GetProductApiIntegrationsAsync().
+        /// Response Details: MSResultArgs containing List of ProductApiIntegrationOutput.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <returns>MSResultArgs containing the product API integration records list.</returns>
+        public async Task<MSResultArgs> GetProductApiIntegrationsAsync(int productId)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (productId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                var data = await repository.GetProductApiIntegrationsAsync(productId, configuration["Environment"] ?? string.Empty);
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.FetchProductApiIntegrationsFailed, productId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
@@ -732,15 +770,17 @@ namespace CFR.AcutisService.Service.Products
 
         private string GetProductDocBasePath()
         {
-            string? configuredPath = configuration["ApplicationFilePath:Doc_BasePath"]
-                ?? configuration["ApplicationFilePath:Doc_Basepath"];
-            if (!string.IsNullOrWhiteSpace(configuredPath))
-            {
-                return configuredPath;
-            }
-
-            return environment.WebRootPath
-                ?? Path.Combine(AppContext.BaseDirectory, "wwwroot");
+            // ApplicationFilePath:Doc_BasePath is a per-developer absolute path (e.g. a personal
+            // drive letter or local clone location) committed to source control - it only ever
+            // resolves correctly on whichever machine it was written for. Every other machine hit
+            // Directory.CreateDirectory throwing in SaveProductLogoFile, surfaced as an opaque 500
+            // from UpdateProductLogo. ProfileService.GetUploadsDirectory never had this problem
+            // because it never trusted that config value in the first place - it always resolves
+            // relative to the running app's own wwwroot, which exists on every machine by
+            // definition. Product logos now follow that same, simpler, portable pattern.
+            return !string.IsNullOrWhiteSpace(environment.WebRootPath)
+                ? environment.WebRootPath
+                : Path.Combine(environment.ContentRootPath, "wwwroot");
         }
 
         private byte[]? ReadLogoBytes(string safeName)

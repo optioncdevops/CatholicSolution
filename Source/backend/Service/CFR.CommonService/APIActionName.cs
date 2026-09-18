@@ -64,6 +64,7 @@ namespace CFR.CommonService
             public const string SaveAccessRequest = nameof(SaveAccessRequest);
             public const string UpdateAccessRequestStatus = nameof(UpdateAccessRequestStatus);
             public const string GetHubProducts = nameof(GetHubProducts);
+            public const string GetDioceses = nameof(GetDioceses);
             public const string GetProducts = nameof(GetProducts);
             public const string GetUserRights = nameof(GetUserRights);
             public const string SaveUserRights = nameof(SaveUserRights);
@@ -91,6 +92,7 @@ namespace CFR.CommonService
             public const string GetOrganizationLicenses = nameof(GetOrganizationLicenses);
             public const string GetAllLicenses = nameof(GetAllLicenses);
             public const string UnlinkOrganizationUser = nameof(UnlinkOrganizationUser);
+            public const string GetDioceses = nameof(GetDioceses);
         }
 
         public static class API_Portal
@@ -121,6 +123,7 @@ namespace CFR.CommonService
             public const string UpdateProduct = nameof(UpdateProduct);
             public const string GetProductLogo = nameof(GetProductLogo);
             public const string GetProductCustomers = nameof(GetProductCustomers);
+            public const string GetProductApiIntegrations = nameof(GetProductApiIntegrations);
         }
 
         public static class API_Dashboard

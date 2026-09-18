@@ -115,6 +115,22 @@ namespace CFR.AcutisInfrastructure.Interfaces.Products
         /// <returns>A list of per-product organization assignment summaries.</returns>
         Task<List<ProductAssignmentSummaryOutput>> GetProductAssignmentSummaryAsync();
 
+        /// <summary>
+        /// Retrieves [core].[ProductEnvironment] + [core].[Product] rows for a product, scoped to one environment, using StoredProc.Products.ApiIntegrationLookup.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch the Api Integration tab's Site / Site Url / Site Description rows.
+        /// Request Flow: IProductsService -> IProductsRepository.GetProductApiIntegrationsAsync() -> SQL Database.
+        /// Validation Details: ProductId and environmentName parameter mapping.
+        /// Business Logic: Executes the standalone StoredProc.Products.ApiIntegrationLookup procedure, filtered to the given environmentName.
+        /// Repository Interaction: Executes StoredProc.Products.ApiIntegrationLookup.
+        /// Response Details: Returns a list of ProductApiIntegrationOutput records.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <param name="environmentName">Environment name matching appsettings Environment (Development, Pilot, Staging, Live).</param>
+        /// <returns>A list of product API integration records.</returns>
+        Task<List<ProductApiIntegrationOutput>> GetProductApiIntegrationsAsync(int productId, string environmentName);
+
         #endregion GET Methods
 
         #region POST Methods

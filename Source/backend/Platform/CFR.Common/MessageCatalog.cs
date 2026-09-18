@@ -191,6 +191,7 @@ namespace CFR.Common
             public const string UpdateProfileFailed = "Error while updating profile for user {UserId}";
             public const string ChangePasswordFailed = "Error while changing password for user {UserId}";
             public const string FetchOrganizationsFailed = "Error while fetching organizations";
+            public const string FetchDiocesesFailed = "Error while fetching dioceses";
             public const string FetchOrganizationByIdFailed = "Error while fetching organization {OrganizationId}";
             public const string FetchOrganizationUsersFailed = "Error while fetching organization users for organization {OrgId}";
             public const string FetchOrganizationUserDetailFailed = "Error while fetching organization user detail for organization {OrgId}, user {AuthUserId}";
@@ -200,6 +201,7 @@ namespace CFR.Common
             public const string FetchOrganizationLicensesFailed = "Error while fetching licenses for organization {OrgId}";
             public const string FetchAllLicensesFailed = "Error while fetching licenses across all organizations";
             public const string FetchProductAssignmentSummaryFailed = "Error while fetching product assignment summary";
+            public const string FetchProductApiIntegrationsFailed = "Error while fetching API integrations for product {ProductId}";
             public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string CreateOrganizationFailed = "Error while creating organization";
             public const string AssignOrganizationProductFailed = "Error while assigning product to organization {OrgId}";
@@ -241,7 +243,12 @@ namespace CFR.Common
             public const string FetchAccessRequestsFailed = "Error while fetching access requests";
             public const string FetchAccessRequestByIdFailed = "Error while fetching access request {RequestId}";
             public const string FetchHubProductsFailed = "Error while fetching App Hub products for {RequesterEmail}";
+            public const string FetchDiocesesFailed = "Error while fetching diocese list";
             public const string SaveAccessRequestFailed = "Error while saving access request";
+            public const string ExternalOrganizationRequestFailed = "Error while sending external organization request for access request {AccessRequestId}";
+            public const string ExternalOrganizationRequestRejected = "SMS rejected external organization request for access request {AccessRequestId}: {ResponseBody}";
+            public const string OrgSetupResultPersistFailed = "Error while persisting SMS org setup result (OrgId {OrgId}) for access request {AccessRequestId}";
+            public const string ExternalOrganizationRequestMissingFields = "Org setup request for access request {AccessRequestId} is missing required fields: {MissingFields}";
             public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
         }

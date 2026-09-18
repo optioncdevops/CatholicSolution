@@ -338,6 +338,11 @@ namespace CFR.AcutisInfrastructure
             public const string Zip = nameof(Zip);
 
             /// <summary>
+            /// Diocese identifier (core.Diocese.DioceseId), the organization's parent diocese.
+            /// </summary>
+            public const string DioceseId = nameof(DioceseId);
+
+            /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);
@@ -452,6 +457,51 @@ namespace CFR.AcutisInfrastructure
             /// Optional reviewer note.
             /// </summary>
             public const string Note = nameof(Note);
+
+            /// <summary>
+            /// [core].[Organization].[OrgId] created for the request, or the SMS-issued org id (context-dependent).
+            /// </summary>
+            public const string OrgId = nameof(OrgId);
+
+            /// <summary>
+            /// [request].[AccessRequest].[OrgId] / [core].[Organization].[OrgId] resolved for the SMS org-setup call.
+            /// </summary>
+            public const string CFROrgId = nameof(CFROrgId);
+
+            /// <summary>
+            /// Organization name staged on the request, used to create/update [core].[Organization] and [lic].[OrganizationProduct].
+            /// </summary>
+            public const string OrgName = nameof(OrgName);
+
+            /// <summary>
+            /// Organization state staged on the request, used to create/update [core].[Organization] and [lic].[OrganizationProduct].
+            /// </summary>
+            public const string OrgState = nameof(OrgState);
+
+            /// <summary>
+            /// Contact email staged on the request, used to create/update [core].[Organization] and [lic].[OrganizationProduct].
+            /// </summary>
+            public const string ContactEmail = nameof(ContactEmail);
+
+            /// <summary>
+            /// Contact person name (first + last), used to create/update [core].[Organization] and [lic].[OrganizationProduct].
+            /// </summary>
+            public const string ContactPerson = nameof(ContactPerson);
+
+            /// <summary>
+            /// Contact phone staged on the request, used to create/update [core].[Organization] and [lic].[OrganizationProduct].
+            /// </summary>
+            public const string ContactPhone = nameof(ContactPhone);
+
+            /// <summary>
+            /// SMS-issued organization identifier written to [lic].[OrganizationProduct].[ProductOrgId].
+            /// </summary>
+            public const string ProductOrgId = nameof(ProductOrgId);
+
+            /// <summary>
+            /// [lic].[OrganizationProduct].[OrganizationProductId] of an existing org/product assignment row.
+            /// </summary>
+            public const string OrganizationProductId = nameof(OrganizationProductId);
 
             /// <summary>
             /// Logged-in user who created the row (ICurrentUserService.UserId).
@@ -598,6 +648,11 @@ namespace CFR.AcutisInfrastructure
             /// Output return value from the stored procedure.
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);
+
+            /// <summary>
+            /// [core].[ProductEnvironment].EnvironmentName matching appsettings Environment (Development, Pilot, Staging, Live).
+            /// </summary>
+            public const string EnvironmentName = nameof(EnvironmentName);
         }
 
         /// <summary>
