@@ -9,6 +9,7 @@ import { CommonButton } from '@app/components/buttons';
 import { Badge, formatStatusLabel } from '@app/components/Badge';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { CharacterCount, InputField, RichTextEditor } from '@app/components/formControls';
+import { Tooltip } from '@app/components/tooltips/Tooltip';
 // The ported formControls InputField doesn't forward a ref to the underlying element, which the
 // merge-tag "insert at cursor" feature below needs for the Subject field — keep the local
 // ref-forwarding one. The Body field is now the shared RichTextEditor (WYSIWYG, standard
@@ -240,7 +241,7 @@ function EmailTemplatesPage() {
         status: template.status,
         linkExpiryMinutes: isLinkExpiryTemplate && draft.linkExpiryMinutes.trim() ? Number(draft.linkExpiryMinutes) : null,
       });
-      showToast(`${templateDisplayLabel(template.templateCode)} saved.`, 'success');
+      showToast('Template saved successfully.', 'success');
       await load();
     } catch (error) {
       console.error('Error saving email template:', error);
@@ -254,14 +255,14 @@ function EmailTemplatesPage() {
     if (!template || isReadOnly) return;
     const confirmed = await confirmAction({
       title: 'Reset this template?',
-      description: `"${templateDisplayLabel(template.templateCode)}" will be restored to its last saved subject and body. Unsaved changes will be lost.`,
+      description: 'This template will be restored to its last saved subject and body. Unsaved changes will be lost.',
       confirmLabel: 'Reset template',
       tone: 'danger',
     });
     if (!confirmed) return;
     setDrafts((prev) => ({ ...prev, [template.templateId]: draftFromTemplate(template) }));
     setSubjectError(null);
-    showToast(`${templateDisplayLabel(template.templateCode)} reset to last saved version.`, 'success');
+    showToast('Template reset to last saved version.', 'success');
   };
 
   const handleSendTest = async () => {
@@ -471,18 +472,18 @@ function EmailTemplatesPage() {
                   </p>
                   <div className="admin-email-tag-group">
                     {(EMAIL_TEMPLATE_VARIABLES[template.templateCode] ?? []).map((variable) => (
-                      <button
-                        key={variable.token}
-                        type="button"
-                        disabled={isReadOnly}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => insertVariable(variable.token)}
-                        className="admin-email-template-tag"
-                        title={`Insert ${variable.label} at the cursor`}
-                      >
-                        <code>{variable.token}</code>
-                        {variable.label}
-                      </button>
+                      <Tooltip key={variable.token} content={`${variable.label} — insert at the cursor`} side="top">
+                        <button
+                          type="button"
+                          disabled={isReadOnly}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => insertVariable(variable.token)}
+                          className="admin-email-template-tag"
+                          aria-label={`Insert ${variable.label} at the cursor`}
+                        >
+                          <code>{variable.token}</code>
+                        </button>
+                      </Tooltip>
                     ))}
                   </div>
                 </div>
@@ -522,8 +523,11 @@ function EmailTemplatesPage() {
                     <span className="admin-email-preview-card__meta-label">To</span>
                     <span className="admin-email-preview-card__meta-value">{storedAuthEmail || '—'}</span>
                   </div>
+                  <div className="admin-email-preview-card__meta-row">
+                    <span className="admin-email-preview-card__meta-label">Subject</span>
+                    <span className="admin-email-preview-card__meta-value">{draft.subject || 'Untitled subject'}</span>
+                  </div>
                 </div>
-                <p className="admin-email-preview-card__subject">{draft.subject || 'Untitled subject'}</p>
                 {draft.body ? (
                   // Mirrors SMTPMailService.FormatMailContent's actual send-time wrapper (gradient
                   // band, brand header, white content card, disclaimer footer) so this preview

@@ -506,9 +506,6 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     productionUrl: item.externalPageUrl || '',
     ownership: 'first-party',
     deploymentModel: 'external-saas',
-    licenseType: (item.licenseType === 'free' || item.licenseType === 'licensed')
-      ? item.licenseType
-      : 'licensed',
     navigationTarget: (item.navigationTarget === 'new-tab' || item.navigationTarget === 'same-tab')
       ? item.navigationTarget
       : 'same-tab',

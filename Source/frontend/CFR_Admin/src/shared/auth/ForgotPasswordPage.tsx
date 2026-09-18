@@ -47,7 +47,7 @@ export function ForgotPasswordPage() {
     try {
       const { statusMessage, resultData } = await forgotPassword({ userName: trimmedEmail });
       const alreadyRequested = Boolean((resultData as { alreadyRequested?: boolean } | null | undefined)?.alreadyRequested);
-      showToast(statusMessage || 'Password reset instructions sent.', alreadyRequested ? 'info' : 'success');
+      showToast(statusMessage || 'If an account exists for this email address, password reset instructions have been sent to it.', alreadyRequested ? 'info' : 'success');
       setSubmittedEmail(trimmedEmail);
     } catch (err) {
       const message = typeof err === 'string' ? err : 'Something went wrong. Please try again.';
@@ -68,7 +68,7 @@ export function ForgotPasswordPage() {
             <span className="admin-auth-success__icon"><CheckIcon size={22} /></span>
             <span className="admin-auth-card__kicker">Recovery Requested</span>
             <h2>Check Your Email</h2>
-            <p>A secure password reset link has been sent to <strong>{submittedEmail}</strong>. For your security, the link will expire after a limited time and can only be used once.</p>
+            <p>If an account exists for <strong>{submittedEmail}</strong>, a secure password reset link has been sent to it. For your security, the link will expire after a limited time and can only be used once.</p>
             <div className="admin-auth-success__actions">
               <Link to={LOGIN_TARGET} className="admin-auth-submit admin-auth-submit--link">
                 Return to Sign In <ArrowRightIcon size={15} />

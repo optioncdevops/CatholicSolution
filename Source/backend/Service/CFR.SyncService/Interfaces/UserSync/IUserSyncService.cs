@@ -64,25 +64,21 @@ namespace CFR.SyncService.Interfaces.UserSync
         /// Partially updates an existing synced membership.
         /// </summary>
         /// <remarks>
-        /// Purpose: Update only the fields present in the request body.
+        /// Purpose: Update FirstName, LastName, RoleId, IsLoginDisabled, IsActive in full — identical
+        /// to UpdateUserFullAsync, kept as a distinct route only for the PATCH verb's semantics.
         /// Request Flow: UsersController -> IUserSyncService.UpdateUserPartialAsync() -> IUserSyncRepository.UpdateUserPartialAsync().
-        /// Validation Details: The *Supplied flags mark which fields were present in the raw JSON body.
+        /// Validation Details: Required fields and the productId-in-body hard rule.
         /// Business Logic: Applies the If-Match RowVersion check and maps the ResultCode.
         /// Repository Interaction: Calls IUserSyncRepository.UpdateUserPartialAsync().
         /// Response Details: MSResultArgs containing the updated user, or the mapped error.
         /// </remarks>
         /// <param name="externalUserId">The product's own user identifier.</param>
-        /// <param name="input">Input DTO containing the supplied fields.</param>
-        /// <param name="firstNameSupplied">Whether firstName was present in the raw JSON body.</param>
-        /// <param name="lastNameSupplied">Whether lastName was present in the raw JSON body.</param>
-        /// <param name="roleIdSupplied">Whether roleId was present in the raw JSON body.</param>
-        /// <param name="isLoginDisabledSupplied">Whether isLoginDisabled was present in the raw JSON body.</param>
-        /// <param name="isActiveSupplied">Whether isActive was present in the raw JSON body.</param>
+        /// <param name="input">Input DTO containing the replacement fields.</param>
         /// <param name="ifMatchRowVersionBase64">If-Match header value, or null to skip the concurrency check.</param>
         /// <param name="traceId">W3C trace id.</param>
         /// <param name="sourceIp">Caller IP.</param>
         /// <returns>MSResultArgs containing the updated user, or an error.</returns>
-        Task<MSResultArgs> UpdateUserPartialAsync(string externalUserId, UserSyncInput input, bool firstNameSupplied, bool lastNameSupplied, bool roleIdSupplied, bool isLoginDisabledSupplied, bool isActiveSupplied, string? ifMatchRowVersionBase64, string traceId, string? sourceIp);
+        Task<MSResultArgs> UpdateUserPartialAsync(string externalUserId, UserSyncInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp);
 
         #endregion PATCH Methods
 

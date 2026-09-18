@@ -88,7 +88,7 @@ BEGIN
 
             (SELECT COUNT(DISTINCT [CFRUserId]) FROM [auth].[UserProduct] WHERE ISNULL([IsDeleted], 0) = 0) AS [TotalOrganizationMembers],
             (SELECT COUNT(DISTINCT [CFRUserId]) FROM [auth].[UserProduct]
-                WHERE ISNULL([IsDeleted], 0) = 0 AND ISNULL([IsLoginDisabled], 0) = 0 AND ISNULL([IsLockedOut], 0) = 0) AS [ActiveOrganizationMembers],
+                WHERE ISNULL([IsDeleted], 0) = 0 AND ISNULL([IsLoginDisabled], 0) = 0 AND ISNULL([IsActive], 1) = 1) AS [ActiveOrganizationMembers],
 
             (SELECT COUNT(*) FROM [core].[Product] WHERE [IsDeleted] = 0) AS [TotalProducts],
             (SELECT COUNT(*) FROM [core].[Product] WHERE [IsDeleted] = 0 AND [IsActive] = 1) AS [ActiveCatalogProducts],

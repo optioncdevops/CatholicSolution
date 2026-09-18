@@ -20,7 +20,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     features: ['Attendance', 'Gradebook', 'Report cards', 'Parent portal'],
     productionUrl: 'https://optionc-sms.optioncapp.com',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'same-tab',
-    status: 'active', licenseType: 'licensed', updatedAt: '2026-08-12',
+    status: 'active', updatedAt: '2026-08-12',
   },
   {
     id: 'optionc-parish', registryRef: 'reg_app_0002', sourceLocation: 'optionc-parish',
@@ -30,7 +30,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     features: ['Sacrament records', 'Family directory', 'Mass intentions', 'Certificates'],
     productionUrl: 'https://optionc-parish.optioncapp.com',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'same-tab',
-    status: 'active', licenseType: 'licensed', updatedAt: '2026-08-09',
+    status: 'active', updatedAt: '2026-08-09',
   },
   {
     id: 'matt-money', registryRef: 'reg_app_0003', sourceLocation: 'matt-money',
@@ -40,7 +40,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     features: ['Online payments', 'Tuition billing', 'Donations', 'Auto-reconcile'],
     productionUrl: 'https://matt-money.optioncapp.com',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'same-tab',
-    status: 'inactive', licenseType: 'licensed', updatedAt: '2026-08-05',
+    status: 'inactive', updatedAt: '2026-08-05',
   },
   {
     id: 'arc-alerts', registryRef: 'reg_app_0004', sourceLocation: 'arc-alerts',
@@ -52,7 +52,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     // "duplicate domain" validation warning surfaced in Product Details.
     productionUrl: 'https://matt-money.optioncapp.com',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'same-tab',
-    status: 'coming-soon', licenseType: 'licensed', updatedAt: '2026-07-30',
+    status: 'coming-soon', updatedAt: '2026-07-30',
   },
   {
     id: 'catholic-content', registryRef: 'reg_app_0005', sourceLocation: 'catholic-content',
@@ -62,7 +62,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     features: ['Workbooks', 'Coloring pages', 'Videos', 'Search by grade'],
     productionUrl: 'https://catholic-content.optioncapp.com',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'same-tab',
-    status: 'coming-soon', licenseType: 'free', updatedAt: '2026-07-22',
+    status: 'coming-soon', updatedAt: '2026-07-22',
   },
   {
     id: 'unified-directory', registryRef: 'reg_app_0006', sourceLocation: 'unified-directory',
@@ -72,7 +72,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     features: ['Active/inactive users', 'SaaS app access', 'Groups', 'Membership management'],
     productionUrl: 'https://directory.optioncapp.com',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'same-tab',
-    status: 'inactive', licenseType: 'free', updatedAt: '2026-07-18',
+    status: 'inactive', updatedAt: '2026-07-18',
   },
   {
     id: 'support-center', registryRef: 'reg_app_0007', sourceLocation: 'support-center',
@@ -84,7 +84,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     // domain to demonstrate two other validation warnings.
     productionUrl: 'http://support-center.optioncapp.com',
     ownership: 'partner', deploymentModel: 'external-saas', navigationTarget: 'same-tab',
-    status: 'coming-soon', licenseType: 'licensed', updatedAt: '2026-07-02',
+    status: 'coming-soon', updatedAt: '2026-07-02',
   },
   {
     id: 'ai-lesson-plan', registryRef: 'reg_app_0008', sourceLocation: 'ai-lesson-plan',
@@ -95,7 +95,7 @@ export const MOCK_APPLICATIONS: AdminApplication[] = [
     // Intentionally blank to demonstrate the "missing production URL" warning.
     productionUrl: '',
     ownership: 'first-party', deploymentModel: 'external-saas', navigationTarget: 'new-tab',
-    status: 'inactive', licenseType: 'free', updatedAt: '2026-06-28',
+    status: 'inactive', updatedAt: '2026-06-28',
   },
 ];
 

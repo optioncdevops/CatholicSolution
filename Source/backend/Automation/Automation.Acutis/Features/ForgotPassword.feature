@@ -2,11 +2,11 @@ Feature: 11_ForgotPassword
 
 A short summary of the feature
 
-Scenario: 001_Verify Forgot Password field validation and the account-not-found message
+Scenario: 001_Verify Forgot Password field validation and that a non-existent email does not reveal account existence
     Given Launch the application at the Forgot Password page
     Then Submit the Forgot Password form with an empty email and verify the validation message
     And Submit the Forgot Password form with an invalid email format and verify the validation message
-    And Submit the Forgot Password form with an email that does not exist and verify the account not found message
+    And Submit the Forgot Password form with an email that does not exist and verify the same Check Your Email panel is shown as for a real account
 
 Scenario: 002_Verify a successful Forgot Password submission and the already-requested message
     Given Mutating scenarios are permitted for Forgot Password in this environment

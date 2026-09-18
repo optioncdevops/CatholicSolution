@@ -46,6 +46,13 @@ namespace CFR.SyncInfrastructure.Models.Input
         [JsonPropertyName("isActive")]
         public bool? IsActive { get; set; }
 
+        /// <summary>
+        /// Legacy password blob, already re-encrypted by the product with its own passphrase-based
+        /// scheme — stored as-is on auth.User at identity creation only; CFR never sees plaintext.
+        /// </summary>
+        [JsonPropertyName("passwordEncrypted")]
+        public byte[]? PasswordEncrypted { get; set; }
+
         /// <summary>Catch-all for unrecognized body fields — used only to detect a rejected "productId".</summary>
         [JsonExtensionData]
         public Dictionary<string, JsonElement>? ExtraFields { get; set; }

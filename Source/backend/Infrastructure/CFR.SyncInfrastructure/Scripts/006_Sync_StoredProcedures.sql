@@ -32,7 +32,6 @@ CREATE PROCEDURE [sec].[Security_Manage]
     @ClientSecretEncrypted VARBINARY(200) = NULL,
     @ProductId INT = NULL,
     @DisplayName NVARCHAR(255) = NULL,
-    @AllowedScopes NVARCHAR(500) = NULL,
     @RateLimitPerMinute INT = NULL,
     @InsertedBy NVARCHAR(100) = NULL,
     @ReturnValue INT = NULL OUTPUT
@@ -44,7 +43,7 @@ BEGIN
     BEGIN
         SELECT
             [ApiClientId], [ClientId], [ClientSecretEncrypted], [ProductId],
-            [AllowedScopes], [RateLimitPerMinute], [IsActive],
+            [RateLimitPerMinute], [IsActive],
             [PreviousSecretEncrypted], [PreviousSecretExpiresDate]
         FROM [sec].[ApiClient]
         WHERE [ClientId] = @ClientId;
@@ -78,9 +77,9 @@ BEGIN
     IF @ActionId = 5
     BEGIN
         INSERT INTO [sec].[ApiClient]
-            ([ClientId], [ClientSecretEncrypted], [ProductId], [DisplayName], [AllowedScopes], [RateLimitPerMinute], [InsertedBy])
+            ([ClientId], [ClientSecretEncrypted], [ProductId], [DisplayName], [RateLimitPerMinute], [InsertedBy])
         VALUES
-            (@ClientId, @ClientSecretEncrypted, @ProductId, @DisplayName, @AllowedScopes, ISNULL(@RateLimitPerMinute, 60), @InsertedBy);
+            (@ClientId, @ClientSecretEncrypted, @ProductId, @DisplayName, ISNULL(@RateLimitPerMinute, 60), @InsertedBy);
 
         SET @ReturnValue = SCOPE_IDENTITY();
         RETURN 0;
@@ -124,11 +123,7 @@ CREATE PROCEDURE [dbo].[Sync_UserProductUpsert]
     @RoleId INT = NULL,
     @IsLoginDisabled BIT = NULL,
     @IsActive BIT = NULL,
-    @IsFieldSupplied_FirstName BIT = 1,
-    @IsFieldSupplied_LastName BIT = 1,
-    @IsFieldSupplied_RoleId BIT = 1,
-    @IsFieldSupplied_IsLoginDisabled BIT = 1,
-    @IsFieldSupplied_IsActive BIT = 1,
+    @PasswordEncrypted VARBINARY(300) = NULL,
     @ExpectedRowVersion BINARY(8) = NULL,
     @SourceIp NVARCHAR(64) = NULL
 AS
@@ -264,8 +259,11 @@ BEGIN
 
         IF @CFRUserId IS NULL
         BEGIN
+            -- Password is set only at identity creation — CFR owns it exclusively from then on,
+            -- so a later sync of the same identity never overwrites a password the user may have
+            -- already changed inside CFR.
             INSERT INTO [auth].[User] ([Email], [Password], [CreatedDate], [InsertedBy])
-            VALUES (@Email, NULL, SYSUTCDATETIME(), @ApiClientId);
+            VALUES (@Email, @PasswordEncrypted, SYSUTCDATETIME(), @ApiClientId);
 
             SET @CFRUserId = SCOPE_IDENTITY();
         END
@@ -341,16 +339,14 @@ BEGIN
                 FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
             );
 
-            DECLARE @NewFirstName NVARCHAR(200), @NewLastName NVARCHAR(200), @NewRoleId INT,
-                    @NewIsLoginDisabled BIT, @NewIsActive BIT;
-
-            SELECT
-                @NewFirstName = CASE WHEN @IsFieldSupplied_FirstName = 1 THEN @FirstName ELSE [FirstName] END,
-                @NewLastName = CASE WHEN @IsFieldSupplied_LastName = 1 THEN @LastName ELSE [LastName] END,
-                @NewRoleId = CASE WHEN @IsFieldSupplied_RoleId = 1 THEN @RoleId ELSE [RoleId] END,
-                @NewIsLoginDisabled = CASE WHEN @IsFieldSupplied_IsLoginDisabled = 1 THEN ISNULL(@IsLoginDisabled, 0) ELSE [IsLoginDisabled] END,
-                @NewIsActive = CASE WHEN @IsFieldSupplied_IsActive = 1 THEN ISNULL(@IsActive, 1) ELSE [IsActive] END
-            FROM [auth].[UserProduct] WHERE [CFRUserDetailId] = @CFRUserDetailId;
+            -- Both PUT and PATCH now always apply the caller's values as a full replace — the
+            -- per-field "was it actually supplied" tracking this used to need (@IsFieldSupplied_*)
+            -- added parameter-mapping surface no real caller used, so it was removed.
+            DECLARE @NewFirstName NVARCHAR(200) = @FirstName,
+                    @NewLastName NVARCHAR(200) = @LastName,
+                    @NewRoleId INT = @RoleId,
+                    @NewIsLoginDisabled BIT = ISNULL(@IsLoginDisabled, 0),
+                    @NewIsActive BIT = ISNULL(@IsActive, 1);
 
             IF @ExistingIsDeleted = 0
                AND @ExistingCFRUserId = @CFRUserId
@@ -413,12 +409,7 @@ BEGIN
                 @ActionId = @ActionId, @ProductId = @ProductId, @ProductOrgId = @ProductOrgId,
                 @ApiClientId = @ApiClientId, @TraceId = @TraceId, @ExternalUserId = @ExternalUserId,
                 @Email = @Email, @FirstName = @FirstName, @LastName = @LastName, @RoleId = @RoleId,
-                @IsLoginDisabled = @IsLoginDisabled, @IsActive = @IsActive,
-                @IsFieldSupplied_FirstName = @IsFieldSupplied_FirstName,
-                @IsFieldSupplied_LastName = @IsFieldSupplied_LastName,
-                @IsFieldSupplied_RoleId = @IsFieldSupplied_RoleId,
-                @IsFieldSupplied_IsLoginDisabled = @IsFieldSupplied_IsLoginDisabled,
-                @IsFieldSupplied_IsActive = @IsFieldSupplied_IsActive,
+                @IsLoginDisabled = @IsLoginDisabled, @IsActive = @IsActive, @PasswordEncrypted = @PasswordEncrypted,
                 @ExpectedRowVersion = @ExpectedRowVersion, @SourceIp = @SourceIp;
             RETURN;
         END;

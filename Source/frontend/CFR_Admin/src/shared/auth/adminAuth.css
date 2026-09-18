@@ -221,6 +221,10 @@
   color: var(--primary);
 }
 .admin-auth-forgot:hover { text-decoration: underline; }
+.admin-auth-forgot--below {
+  align-self: center;
+  margin-top: -0.3rem;
+}
 
 .admin-auth-submit {
   display: inline-flex;

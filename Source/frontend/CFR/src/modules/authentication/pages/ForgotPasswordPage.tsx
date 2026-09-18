@@ -1,8 +1,9 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, MailIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { AuthShell } from '../components/AuthShell';
+import { getRequestedClientId, getSafeReturnUrl, storeCentralAuthHandoff } from '../utils/authenticationHelpers';
 
 const ForgotPasswordPage = () => {
   //#region Hooks
@@ -12,18 +13,20 @@ const ForgotPasswordPage = () => {
 
   //#region States
   const initialEmail = searchParams.get('email')?.trim() ?? '';
-  const returnUrl = searchParams.get('returnUrl');
-  const clientId = searchParams.get('client_id');
+  // Falls back to the sessionStorage handoff (see centralAuth.ts) when arriving here via the
+  // in-app "Forgot password?" link, which no longer repeats client_id/returnUrl in its own URL.
+  const clientId = useMemo(() => getRequestedClientId(location.search), [location.search]);
+  const returnUrl = useMemo(() => getSafeReturnUrl(location.search, ''), [location.search]);
   const [email, setEmail] = useState(initialEmail);
   const [submittedEmail, setSubmittedEmail] = useState('');
-  const loginTarget = useMemo(() => `/login${location.search}`, [location.search]);
-  const resetTarget = useMemo(() => {
-    if (!submittedEmail) return '/reset-password';
-    const params = new URLSearchParams({ email: submittedEmail });
-    if (returnUrl) params.set('returnUrl', returnUrl);
-    if (clientId) params.set('client_id', clientId);
-    return `/reset-password?${params.toString()}`;
-  }, [submittedEmail, returnUrl, clientId]);
+
+  // Re-stash for the next hop (Return to sign in / the reset-password page after submitting).
+  useEffect(() => {
+    storeCentralAuthHandoff({ clientId, returnUrl: returnUrl || undefined });
+  }, [clientId, returnUrl]);
+
+  const loginTarget = '/login';
+  const resetTarget = submittedEmail ? `/reset-password?${new URLSearchParams({ email: submittedEmail }).toString()}` : '/reset-password';
   //#endregion
 
   //#region Handlers

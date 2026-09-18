@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { createPortal } from 'react-dom';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import { resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
+import { storeCentralAuthHandoff } from '@/modules/authentication/utils/authenticationHelpers';
 import { useToast } from './ToastProvider';
 
 export type AccountModal = 'profile' | 'password' | null;
@@ -82,7 +83,10 @@ export function AccountModals({ modal, onClose }: AccountModalsProps) {
     setPasswordError(''); onClose(); showToast('Password updated successfully ✓');
   };
   const toggleVisible = (key: string) => setVisible((state) => ({ ...state, [key]: !state[key] }));
-  const recoveryUrl = resolvePlatformUrl(`/forgot-password${typeof window !== 'undefined' ? `?returnUrl=${encodeURIComponent(window.location.href)}` : ''}`);
+  // Handed off via sessionStorage instead of a ?returnUrl= query param — /forgot-password is on
+  // this same platform origin, so it can read the value back without it sitting in the URL.
+  if (typeof window !== 'undefined') storeCentralAuthHandoff({ returnUrl: window.location.href });
+  const recoveryUrl = resolvePlatformUrl('/forgot-password');
 
   if (modal === 'profile') return (
     <DialogShell

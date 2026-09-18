@@ -30,6 +30,7 @@ namespace CFR.Acutis.Controllers.AcutisAuthentication
         /// <response code="401">Invalid email or password.</response>
         /// <response code="500">Internal server error occurred.</response>
         [AllowAnonymous]
+        [EnableRateLimiting("auth-sensitive")]
         [HttpPost]
         [ActionName(API_Acutis.AcutisAuthentication.LoginAuthentication)]
         public async Task<IActionResult> LoginAuthentication([FromBody] AcutisAuthenticationInput request)

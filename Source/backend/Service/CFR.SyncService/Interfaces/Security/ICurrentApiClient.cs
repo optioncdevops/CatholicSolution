@@ -18,8 +18,6 @@ namespace CFR.SyncService.Interfaces.Security
 
         int ProductId { get; set; }
 
-        List<string> AllowedScopes { get; set; }
-
         string ClientIPAddress { get; set; }
     }
 }

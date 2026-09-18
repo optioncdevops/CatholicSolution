@@ -511,6 +511,9 @@ BEGIN
         DECLARE @MemberLastName NVARCHAR(100);
         DECLARE @MemberRoleId INT;
         DECLARE @MemberIsLoginDisabled BIT;
+        DECLARE @MemberIsLockedOut BIT;
+        DECLARE @ExistingOrgProductId BIGINT;
+        DECLARE @ExistingOrgProductIsDeleted BIT;
 
         IF @AccessRequestId <= 0 OR @Status NOT IN (N'approved', N'rejected', N'info-requested', N'in-review')
         BEGIN

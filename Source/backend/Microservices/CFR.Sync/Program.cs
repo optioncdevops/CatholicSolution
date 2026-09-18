@@ -13,6 +13,8 @@ builder.Configuration.AddConfiguration(ConfigurationLoader.LoadConfiguration());
 
 builder.Services.AddCommonServicesSetup();
 
+builder.Services.AddAuthEndpointRateLimiting();
+
 builder.Services.AddDIServicesSetup();
 
 // No JWT/cookie auth here — every request is verified by HmacAuthenticationMiddleware instead.

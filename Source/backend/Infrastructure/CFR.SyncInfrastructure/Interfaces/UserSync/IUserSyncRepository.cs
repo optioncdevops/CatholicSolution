@@ -64,27 +64,23 @@ namespace CFR.SyncInfrastructure.Interfaces.UserSync
         /// Partially updates an existing synced membership.
         /// </summary>
         /// <remarks>
-        /// Purpose: Update only the fields the caller supplied.
+        /// Purpose: Update FirstName, LastName, RoleId, IsLoginDisabled, IsActive in full — identical
+        /// to UpdateUserFullAsync, kept as a distinct ActionId only for the PATCH route's semantics.
         /// Request Flow: IUserSyncService -> UserSyncRepository.UpdateUserPartialAsync() -> SQL Database.
-        /// Validation Details: The IsFieldSupplied* flags mark which fields to change vs. leave alone.
+        /// Validation Details: Parameter names match stored procedure arguments.
         /// Business Logic: Executes the partial-update action of the upsert stored procedure.
         /// Repository Interaction: Executes StoredProc.UserSync.UserProductUpsert with ActionId 3.
         /// Response Details: Returns a UserProductUpsertResult with ResultCode OK or an error code.
         /// </remarks>
         /// <param name="productId">ProductId resolved from the authenticated ApiClient.</param>
         /// <param name="externalUserId">The product's own user identifier.</param>
-        /// <param name="input">Input DTO containing the supplied user fields.</param>
-        /// <param name="firstNameSupplied">Whether FirstName was present in the request body.</param>
-        /// <param name="lastNameSupplied">Whether LastName was present in the request body.</param>
-        /// <param name="roleIdSupplied">Whether RoleId was present in the request body.</param>
-        /// <param name="isLoginDisabledSupplied">Whether IsLoginDisabled was present in the request body.</param>
-        /// <param name="isActiveSupplied">Whether IsActive was present in the request body.</param>
+        /// <param name="input">Input DTO containing the replacement user fields.</param>
         /// <param name="apiClientId">Internal identifier of the authenticated ApiClient.</param>
         /// <param name="traceId">W3C trace id, carried into the audit row.</param>
         /// <param name="expectedRowVersion">Client-supplied If-Match RowVersion, or null to skip the check.</param>
         /// <param name="sourceIp">Caller IP, carried into the audit row.</param>
         /// <returns>The upsert result.</returns>
-        Task<UserProductUpsertResult> UpdateUserPartialAsync(int productId, string externalUserId, UserSyncInput input, bool firstNameSupplied, bool lastNameSupplied, bool roleIdSupplied, bool isLoginDisabledSupplied, bool isActiveSupplied, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp);
+        Task<UserProductUpsertResult> UpdateUserPartialAsync(int productId, string externalUserId, UserSyncInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp);
 
         #endregion PATCH Methods
 

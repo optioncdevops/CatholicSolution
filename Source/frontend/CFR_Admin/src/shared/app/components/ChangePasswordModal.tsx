@@ -17,7 +17,9 @@ const STRENGTH_COLORS = ['var(--line-soft)', 'var(--error)', 'var(--warning)', '
 const passwordScore = (value: string) => [
   value.length >= 8,
   /[0-9]/.test(value),
-  /[^A-Za-z0-9]/.test(value),
+  // Whitespace must not count as a "symbol" - "Abcd 123" (a space, no real special character)
+  // was scoring the same as a genuine symbol, inflating its strength rating to "Strong".
+  /[^A-Za-z0-9\s]/.test(value),
   /[a-z]/.test(value) && /[A-Z]/.test(value),
 ].filter(Boolean).length;
 
@@ -27,7 +29,12 @@ const passwordRules = {
   currentPassword: { required: 'Current password is required.' },
   newPassword: {
     required: 'New password is required.',
-    validate: (value: string) => passwordScore(value) >= 3 || 'Use at least 8 characters with upper/lowercase letters, a number, and preferably a symbol.',
+    validate: (value: string, formValues: PasswordFormValues) => {
+      if (value && formValues.currentPassword && value === formValues.currentPassword) {
+        return 'New password must be different from your current password.';
+      }
+      return passwordScore(value) >= 3 || 'Use at least 8 characters, including upper- and lower-case letters and a number. Symbols recommended.';
+    },
   },
   confirmPassword: {
     required: 'Please confirm your new password.',
@@ -41,6 +48,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
   const [passwordSaving, setPasswordSaving] = useState(false);
   const passwordForm = useForm<PasswordFormValues>({ defaultValues: passwordDefaultValues, mode: 'onChange' });
   const newPasswordValue = useWatch({ control: passwordForm.control, name: 'newPassword', defaultValue: '' });
+  const currentPasswordValue = useWatch({ control: passwordForm.control, name: 'currentPassword', defaultValue: '' });
 
   // Reset the form (and transient error state) whenever the modal opens. This component stays
   // mounted across opens/closes (the parent just toggles `open`), so this is adjusted during
@@ -57,12 +65,27 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
 
   // Re-check the confirm-password field as the new password changes, so a stale
   // "passwords do not match" error clears/appears immediately instead of on its own next keystroke.
+  // Also clears the manually-set "must be different from your current password" server error
+  // (see onPasswordSubmit's catch block below) as soon as the user edits the field again.
   useEffect(() => {
     if (passwordForm.formState.dirtyFields.confirmPassword) {
       void passwordForm.trigger('confirmPassword');
     }
+    if (passwordForm.formState.errors.newPassword?.type === 'server') {
+      passwordForm.clearErrors('newPassword');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only newPasswordValue should retrigger this
   }, [newPasswordValue]);
+
+  // The server-side "current password is incorrect" error is set manually (see onPasswordSubmit's
+  // catch block below) — clear it as soon as the user edits the field again, instead of leaving a
+  // stale error attached to a value they've already changed.
+  useEffect(() => {
+    if (passwordForm.formState.errors.currentPassword?.type === 'server') {
+      passwordForm.clearErrors('currentPassword');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only currentPasswordValue should retrigger this
+  }, [currentPasswordValue]);
 
   const onPasswordSubmit: SubmitHandler<PasswordFormValues> = async (values) => {
     setPasswordError('');
@@ -73,7 +96,16 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
       onClose();
     } catch (error) {
       const message = typeof error === 'string' ? error : 'Failed to change password.';
-      setPasswordError(message);
+      // Both of these are about one specific field — anchor each at its own input (aria-invalid +
+      // aria-describedby via InputField's own error prop) instead of leaving it as a banner at the
+      // bottom of the form, disconnected from the field it's actually about.
+      if (/current password is incorrect/i.test(message)) {
+        passwordForm.setError('currentPassword', { type: 'server', message });
+      } else if (/must be different from your current password/i.test(message)) {
+        passwordForm.setError('newPassword', { type: 'server', message });
+      } else {
+        setPasswordError(message);
+      }
       showToast(message, 'error');
     } finally {
       setPasswordSaving(false);
@@ -132,7 +164,7 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
               <span key={bar} className="h-1 flex-1 rounded-full" style={{ background: bar <= score ? STRENGTH_COLORS[score] : STRENGTH_COLORS[0] }} />
             ))}
           </div>
-          <p className="mt-1 text-xs font-semibold text-[var(--text-faint)]">{newPasswordValue ? STRENGTH_LABELS[Math.max(score - 1, 0)] : 'Use 8+ characters with a number and a symbol.'}</p>
+          <p className="mt-1 text-xs font-semibold text-[var(--text-faint)]">{newPasswordValue ? STRENGTH_LABELS[Math.max(score - 1, 0)] : 'At least 8 characters, including upper- and lower-case letters and a number. Symbols recommended.'}</p>
         </div>
 
         <InputField id="txtConfirmPassword" control={passwordForm.control} name="confirmPassword" type="password" label="Confirm new password" rules={passwordRules.confirmPassword} disabled={passwordSaving} required />

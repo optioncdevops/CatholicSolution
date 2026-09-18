@@ -39,9 +39,9 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
         /// Purpose: Issue a time-limited reset token and email it to the account owner.
         /// Request Flow: AcutisPasswordController -> AcutisPasswordService.ForgotPasswordAsync() -> IAcutisPasswordRepository.RequestResetAsync().
         /// Validation Details: Rejects a missing or empty UserName.
-        /// Business Logic: Generates a random token, hashes it, persists the hash, and emails the raw token as a reset link. Returns NotFound when no active, unlocked account matches the email (this internal admin endpoint deliberately reveals account existence).
+        /// Business Logic: Generates a random token, hashes it, persists the hash, and emails the raw token as a reset link. When no account matches the email, or the matched account is deactivated/locked, responds with the exact same success message as a real, active account instead of anything distinguishable — this is a public, unauthenticated endpoint, and a distinguishable response here lets an attacker enumerate valid admin accounts and their active/locked status (a real credential-harvesting/phishing precursor for a console holding parish and school data). A deactivated/locked account's real owner still gets a private, industry-standard "account restricted, contact your administrator" email instead of a reset link — that notice just never shows up in the HTTP response itself.
         /// Repository Interaction: Calls IAcutisPasswordRepository.RequestResetAsync().
-        /// Response Details: MSResultArgs confirming the email was sent, NotFound, or BadRequest / InternalServerError.
+        /// Response Details: MSResultArgs confirming the request was received (identical wording whether the account doesn't exist, is deactivated/locked, or is active), or BadRequest / InternalServerError.
         /// </remarks>
         /// <param name="input">Input DTO containing the account email address.</param>
         /// <returns>MSResultArgs containing the confirmation result.</returns>
@@ -71,8 +71,25 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
                 var user = await repository.RequestResetAsync(input.UserName.Trim(), tokenHash, expiresAtUtc);
                 if (user == null || string.IsNullOrWhiteSpace(user.Email))
                 {
-                    result.StatusCode = ErrorCodes.NotFound;
-                    result.StatusMessage = ErrorMessages.AccountNotFound;
+                    // Deliberately indistinguishable from the real-account success path below —
+                    // no token was persisted and no email was sent, but the caller can't tell that
+                    // from this response, so this endpoint can't be used to enumerate which email
+                    // addresses have an account.
+                    result.StatusCode = ErrorCodes.Success;
+                    result.StatusMessage = ErrorMessages.ResetInstructionsSent;
+                    return result;
+                }
+
+                if (user.IsBlocked)
+                {
+                    // A real account matched, but it's deactivated or locked — no token was
+                    // persisted (the stored proc never issues one for this branch). Notify the
+                    // real account owner by email instead of a reset link; the caller still sees
+                    // the exact same generic success response as every other outcome above, so
+                    // account status can't be probed from the HTTP response either.
+                    await SendAccountBlockedEmailAsync(user);
+                    result.StatusCode = ErrorCodes.Success;
+                    result.StatusMessage = ErrorMessages.ResetInstructionsSent;
                     return result;
                 }
 
@@ -320,6 +337,36 @@ namespace CFR.AcutisService.Service.AcutisAuthentication
             string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
             string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
             return await mailService.SendMailAsync(mergedSubject, mergedBody, user.Email ?? string.Empty);
+        }
+
+        /// <summary>
+        /// Emails the real account owner that their password reset request could not be
+        /// completed because the account is deactivated or locked — sent instead of the normal
+        /// reset-link email. Only the account owner (whoever controls that inbox) ever sees this;
+        /// the API caller's response is identical to every other ForgotPasswordAsync outcome.
+        /// </summary>
+        /// <param name="user">The matched account, with IsActive/IsLocked reflecting why it's blocked.</param>
+        private async Task SendAccountBlockedEmailAsync(ForgotPasswordUserResult user)
+        {
+            string reason = !user.IsActive
+                ? "your account has been deactivated"
+                : "your account has been locked";
+
+            string subject = "Catholic Solutions password reset request";
+            string body = $"<div style=\"font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#0f172a;\">"
+                + $"<p style=\"margin:0 0 4px;font-size:13px;color:#64748b;\">Hi {System.Net.WebUtility.HtmlEncode(user.FirstName ?? string.Empty)},</p>"
+                + "<p style=\"margin:0 0 16px;font-size:14px;line-height:1.7;color:#1e293b;\">"
+                + $"We received a request to reset the password for this account, but {reason} and cannot be reset right now.</p>"
+                + "<p style=\"margin:0;font-size:14px;line-height:1.7;color:#1e293b;\">"
+                + "If you believe this is a mistake, please contact your administrator for assistance.</p></div>";
+
+            bool sent = await mailService.SendMailAsync(subject, body, user.Email ?? string.Empty);
+            if (!sent)
+            {
+                // Never surfaced to the caller — the outward response stays the same generic
+                // success either way. Logged so a real, undelivered notice doesn't vanish silently.
+                logger.LogWarning("Failed to send the account-restricted password reset notice for user {UserId}.", user.UserId);
+            }
         }
 
         #endregion Private Helper Methods

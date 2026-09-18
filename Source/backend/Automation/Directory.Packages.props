@@ -1,5 +1,4 @@
 <Project>
-
   <!--
     Central Package Management: every version is declared once here, so the
     projects can no longer drift apart the way they had before the migration.
@@ -7,20 +6,20 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
-
   <ItemGroup Label="BDD - Reqnroll (successor to the discontinued SpecFlow)">
+    <PackageVersion Include="Microsoft.AspNetCore.Server.IIS" Version="2.2.6" />
+    <PackageVersion Include="MongoDB.Driver" Version="2.19.0" />
     <PackageVersion Include="Reqnroll" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.NUnit" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.ExternalData" Version="3.3.4" />
     <PackageVersion Include="Reqnroll.Assist.Dynamic" Version="3.3.4" />
+    <PackageVersion Include="SharpCompress" Version="0.48.0" />
   </ItemGroup>
-
   <ItemGroup Label="Test platform">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="NUnit" Version="4.4.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="5.2.0" />
   </ItemGroup>
-
   <ItemGroup Label="Browser automation">
     <!-- No ChromeDriver package: Selenium Manager (built in since 4.6) resolves
          a driver matching the installed browser at run time. -->
@@ -31,15 +30,12 @@
          transitively; this fork is kept in lockstep with Selenium itself. -->
     <PackageVersion Include="DotNetSeleniumExtras.PageObjects.Core" Version="4.48.0" />
   </ItemGroup>
-
   <ItemGroup Label="Reporting and serialization">
     <PackageVersion Include="ExtentReports" Version="4.1.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
-
   <ItemGroup Label="Database access - test-only seeding/cleanup for ForgotPassword/ResetPassword">
     <!-- Same version CFR.DBEngine already references, kept in lockstep. -->
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.1" />
   </ItemGroup>
-
 </Project>

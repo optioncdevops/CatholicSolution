@@ -515,11 +515,6 @@ namespace CFR.AcutisInfrastructure
             public const string ExternalPageUrl = nameof(ExternalPageUrl);
 
             /// <summary>
-            /// Default access duration in days.
-            /// </summary>
-            public const string DefaultAccessDays = nameof(DefaultAccessDays);
-
-            /// <summary>
             /// File name or relative path to the product logo image.
             /// </summary>
             public const string LogoName = nameof(LogoName);

@@ -81,7 +81,7 @@ const OrganizationAddPage = () => {
         state: values.state.trim(),
         zip: values.zip.trim(),
       });
-      showToast(`${values.orgName.trim()} created.`, 'success');
+      showToast('Organization created successfully.', 'success');
       navigateToList();
     } catch (error) {
       console.error('Error creating organization:', error);

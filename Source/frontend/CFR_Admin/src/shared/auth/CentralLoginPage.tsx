@@ -7,6 +7,7 @@ import { AdminAuthShell } from './AdminAuthShell';
 import { AdminLoginCard } from './AdminLoginCard';
 import { useAuth } from './AuthProvider';
 import { toAbsoluteReturnUrl } from './centralAuth';
+import { EMAIL_PATTERN } from './validators';
 
 function isAbsolute(value: string) {
   return /^https?:\/\//i.test(value);
@@ -48,7 +49,7 @@ export function CentralLoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { register, handleSubmit, setFocus, formState: { errors, isValid } } = useForm<LoginFormValues>({
+  const { register, handleSubmit, setFocus, formState: { errors } } = useForm<LoginFormValues>({
     defaultValues: {
       email: import.meta.env.DEV ? DEMO_EMAIL : '',
       password: import.meta.env.DEV ? DEMO_PASSWORD : '',
@@ -72,7 +73,7 @@ export function CentralLoginPage() {
 
   const completeSignIn = async (values: LoginFormValues) => {
     const result = await signIn({
-      email: values.email,
+      email: values.email.trim().toLowerCase(),
       password: values.password,
       remember: true,
       provider: 'password',
@@ -105,13 +106,23 @@ export function CentralLoginPage() {
   return (
     <AdminAuthShell>
       <AdminLoginCard
-        emailRegister={register('email', { required: 'Enter your email address.' })}
+        emailRegister={register('email', {
+          required: 'Enter your email address.',
+          pattern: { value: EMAIL_PATTERN, message: 'Enter a valid email address.' },
+        })}
         passwordRegister={register('password', { required: 'Enter your password.' })}
         showPassword={showPassword}
         onToggleShowPassword={() => setShowPassword((value) => !value)}
         onSubmit={submit}
         submitting={submitting}
-        canSubmit={isValid && !submitting}
+        // Not gated on RHF's `isValid` here: browser/password-manager autofill fills the visible
+        // inputs without always dispatching the events React (and RHF's `mode: 'onChange'`)
+        // listens for, so `isValid` can stay stuck false even though both fields are genuinely
+        // filled — the user sees a filled form and a permanently dead button. `handleSubmit`
+        // itself still runs full validation and blocks an actually-invalid submit (surfacing
+        // emailError/passwordError below), so nothing unsafe slips through by leaving this gate on
+        // `submitting` alone.
+        canSubmit={!submitting}
         formError={formError}
         emailError={errors.email?.message}
         passwordError={errors.password?.message}

@@ -44,8 +44,6 @@ namespace CFR.SyncService.Models.Security
 
         public int ProductId { get; set; }
 
-        public List<string> AllowedScopes { get; set; } = [];
-
         public int RateLimitPerMinute { get; set; }
     }
 }

@@ -22,7 +22,7 @@ type OrganizationProductsPanelProps = {
 // endpoints as-is — the backend already treats "remove" as a soft-delete (AssignStatus set to
 // 'inactive', row kept for history) and "assign" as an insert-or-reactivate, so no new mapping
 // system or stored procedure action is needed for this activate/deactivate toggle.
-const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOnly = false }: OrganizationProductsPanelProps) => {
+const OrganizationProductsPanel = ({ orgId, products, onChanged, readOnly = false }: OrganizationProductsPanelProps) => {
   //#region Hooks
   const { showToast } = useToast();
   //#endregion
@@ -36,7 +36,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOn
     if (readOnly) return;
     const confirmed = await confirmAction({
       title: 'Deactivate this app?',
-      description: `${orgName} and its members will lose access to ${product.productName}.`,
+      description: 'This organization and its members will lose access to this application.',
       confirmLabel: 'Deactivate',
       tone: 'danger',
     });
@@ -45,7 +45,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOn
     setProcessingProductId(product.productId);
     try {
       await removeOrganizationProduct(orgId, product.productId);
-      showToast(`${product.productName} deactivated for ${orgName}.`, 'success');
+      showToast('Application deactivated successfully.', 'success');
       await onChanged();
     } catch (error) {
       console.error('Error deactivating product:', error);
@@ -60,7 +60,7 @@ const OrganizationProductsPanel = ({ orgId, orgName, products, onChanged, readOn
     setProcessingProductId(product.productId);
     try {
       await assignOrganizationProduct({ orgId, productId: product.productId });
-      showToast(`${product.productName} activated for ${orgName}.`, 'success');
+      showToast('Application activated successfully.', 'success');
       await onChanged();
     } catch (error) {
       console.error('Error activating product:', error);
