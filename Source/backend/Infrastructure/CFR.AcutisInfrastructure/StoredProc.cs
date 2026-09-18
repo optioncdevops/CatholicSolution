@@ -121,7 +121,7 @@ namespace CFR.AcutisInfrastructure
             public const string ProductsCrud = "[dbo].[Acutis_Products]";
 
             /// <summary>
-            /// Api Integration tab lookup: [core].[ProductEnvironment] Site / Site Url + [core].[Product].[ProdDescription].
+            /// Api Integration tab lookup: [core].[ProductEnvironment] Site / Site Url / Description.
             /// </summary>
             public const string ApiIntegrationLookup = "[dbo].[Acutis_ProductApiIntegration]";
         }

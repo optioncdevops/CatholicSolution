@@ -22,7 +22,7 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string? SiteUrl { get; set; }
 
         /// <summary>
-        /// Gets or sets the site description, from [core].[Product].[ProdDescription].
+        /// Gets or sets the site description, from [core].[ProductEnvironment].[Description].
         /// </summary>
         [JsonPropertyName("siteDescription")]
         public string? SiteDescription { get; set; }
