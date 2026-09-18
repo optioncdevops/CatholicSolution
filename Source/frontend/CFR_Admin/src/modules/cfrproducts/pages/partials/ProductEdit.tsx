@@ -249,11 +249,10 @@ function ProductForm({
             />
             <InputField
               label="Production URL"
-              autoFocus
+              readOnly
+              placeholder="Enter production URL"
               value={form.productionUrl}
               onChange={(event) => onUpdate("productionUrl", event.target.value)}
-              placeholder="Enter production URL"
-              error={touched ? errors.productionUrl : undefined}
             />
             <RadioGroup
               label="Navigation Target"
