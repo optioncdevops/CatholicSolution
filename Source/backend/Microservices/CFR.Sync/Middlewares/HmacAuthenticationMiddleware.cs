@@ -76,7 +76,6 @@ namespace CFR.Sync.Middlewares
             currentApiClient.ApiClientId = authResult.ApiClientId;
             currentApiClient.ClientId = authResult.ClientId;
             currentApiClient.ProductId = authResult.ProductId;
-            currentApiClient.AllowedScopes = authResult.AllowedScopes;
             currentApiClient.ClientIPAddress = request.ClientIp;
 
             // Reused by IUserSyncService as the idempotency request-hash — the signed body hash

@@ -118,7 +118,6 @@ namespace CFR.Common
         public const string OrgInactive = "The organization is not active for this product.";
         public const string SyncUserAlreadyExists = "A user with this externalUserId already exists for this organization.";
         public const string SyncUserNotFound = "No user was found for the given externalUserId and productOrgId.";
-        public const string RoleNotFound = "The specified roleId was not found.";
         public const string ConcurrencyConflict = "The record was modified by another request. Refresh and try again.";
         public const string IdempotencyKeyReuse = "The Idempotency-Key was already used with a different request body.";
         public const string DuplicateInFile = "Duplicate externalUserId/productOrgId within the same file.";

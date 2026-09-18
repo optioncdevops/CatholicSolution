@@ -94,10 +94,9 @@ namespace CFR.SyncInfrastructure.Interfaces.Security
         /// <param name="clientSecretEncrypted">AES-256-GCM encrypted secret (Nonce || Tag || Ciphertext).</param>
         /// <param name="productId">ProductId this ApiClient is scoped to.</param>
         /// <param name="displayName">Human-readable label for the ApiClient row.</param>
-        /// <param name="allowedScopes">Comma-separated scopes, e.g. users:write,users:bulk,orgs:read.</param>
         /// <param name="rateLimitPerMinute">Per-client requests-per-minute limit.</param>
         /// <param name="insertedBy">Who/what created the row.</param>
         /// <returns>The new ApiClientId.</returns>
-        Task<int> CreateApiClientAsync(string clientId, byte[] clientSecretEncrypted, int productId, string? displayName, string allowedScopes, int rateLimitPerMinute, string? insertedBy);
+        Task<int> CreateApiClientAsync(string clientId, byte[] clientSecretEncrypted, int productId, string? displayName, int rateLimitPerMinute, string? insertedBy);
     }
 }

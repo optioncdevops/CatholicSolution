@@ -36,7 +36,7 @@ SELECT
     up.CFRUserDetailId,
     up.IsDeleted AS UserProductIsDeleted,
     up.IsLoginDisabled,
-    up.IsLockedOut,
+    up.IsActive,
     CASE
         WHEN arp.LineStatus = 2 AND (op.OrganizationProductId IS NULL OR op.AssignStatus <> 'active' OR op.IsDeleted = 1)
             THEN 'INCONSISTENT: approved but no active OrganizationProduct'
@@ -80,7 +80,7 @@ DECLARE @CheckCFRUserId INT = 0; -- <-- replace 0 with the CFRUserId to check
 SELECT up.*, p.ProductName
 FROM [auth].[UserProduct] up
 INNER JOIN [core].[Product] p ON p.ProductId = up.ProductId
-WHERE up.CFRUserId = @CheckCFRUserId AND up.IsDeleted = 0 AND up.IsLoginDisabled = 0 AND up.IsLockedOut = 0;
+WHERE up.CFRUserId = @CheckCFRUserId AND up.IsDeleted = 0 AND up.IsLoginDisabled = 0 AND up.IsActive = 1;
 GO
 
 -- =============================================================================================
@@ -95,7 +95,7 @@ INNER JOIN [core].[Product] p ON p.ProductId = up.ProductId AND p.IsActive = 1 A
 INNER JOIN [lic].[OrganizationProduct] op
     ON op.OrgId = up.OrgId AND op.ProductId = up.ProductId AND op.AssignStatus = 'active' AND op.IsDeleted = 0
 INNER JOIN [core].[Organization] o ON o.OrgId = up.OrgId AND o.OrgStatus = 'active'
-WHERE up.CFRUserId = @CheckCFRUserId AND up.IsDeleted = 0 AND up.IsLoginDisabled = 0 AND up.IsLockedOut = 0;
+WHERE up.CFRUserId = @CheckCFRUserId AND up.IsDeleted = 0 AND up.IsLoginDisabled = 0 AND up.IsActive = 1;
 GO
 
 -- =============================================================================================

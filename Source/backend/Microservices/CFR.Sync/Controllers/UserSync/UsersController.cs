@@ -125,30 +125,22 @@ namespace CFR.Sync.Controllers.UserSync
         /// <remarks>
         /// Purpose: Let a product push a partial local user update into CFR.
         /// Request Flow: Client API PATCH -> UsersController.PatchUser() -> IUserSyncService.UpdateUserPartialAsync() -> Database.
-        /// Validation Details: Reads the raw JSON body to determine which fields were actually
-        /// supplied (a bound DTO alone cannot distinguish "omitted" from "sent as null/default").
+        /// Validation Details: Handled inside the service layer, including the productId-in-body hard rule.
         /// Business Logic: None at the controller level; delegates to the service layer.
         /// Service Interaction: Calls IUserSyncService.UpdateUserPartialAsync().
         /// Response Details: Standard API result enclosing UserSyncOutput, or an error.
         /// </remarks>
         /// <param name="externalUserId">The product's own user identifier.</param>
-        /// <param name="body">Raw JSON body — only the fields present are applied.</param>
+        /// <param name="input">Input DTO containing the replacement fields.</param>
         /// <param name="ifMatch">If-Match header — RowVersion for optimistic concurrency, optional.</param>
         /// <returns>A consistent API response containing the updated user.</returns>
         /// <response code="200">Successfully updated the user.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpPatch]
         [ActionName(API_UserSync.PatchUser)]
-        public async Task<IActionResult> PatchUser(string externalUserId, [FromBody] JsonElement body, [FromHeader(Name = "If-Match")] string? ifMatch)
+        public async Task<IActionResult> PatchUser(string externalUserId, [FromBody] UserSyncInput input, [FromHeader(Name = "If-Match")] string? ifMatch)
         {
-            var input = JsonSerializer.Deserialize<UserSyncInput>(body.GetRawText()) ?? new UserSyncInput();
-            bool firstNameSupplied = body.TryGetProperty("firstName", out _);
-            bool lastNameSupplied = body.TryGetProperty("lastName", out _);
-            bool roleIdSupplied = body.TryGetProperty("roleId", out _);
-            bool isLoginDisabledSupplied = body.TryGetProperty("isLoginDisabled", out _);
-            bool isActiveSupplied = body.TryGetProperty("isActive", out _);
-
-            return ApiResultArgs(await service.UpdateUserPartialAsync(externalUserId, input, firstNameSupplied, lastNameSupplied, roleIdSupplied, isLoginDisabledSupplied, isActiveSupplied, ifMatch, HttpContext.TraceIdentifier, HttpContext.Connection.RemoteIpAddress?.ToString()), APIHttpType.HttpPut);
+            return ApiResultArgs(await service.UpdateUserPartialAsync(externalUserId, input, ifMatch, HttpContext.TraceIdentifier, HttpContext.Connection.RemoteIpAddress?.ToString()), APIHttpType.HttpPut);
         }
 
         #endregion PATCH Methods

@@ -138,11 +138,10 @@ namespace CFR.SyncInfrastructure.Repositorys.Security
         /// <param name="clientSecretEncrypted">AES-256-GCM encrypted secret (Nonce || Tag || Ciphertext).</param>
         /// <param name="productId">ProductId this ApiClient is scoped to.</param>
         /// <param name="displayName">Human-readable label for the ApiClient row.</param>
-        /// <param name="allowedScopes">Comma-separated scopes, e.g. users:write,users:bulk,orgs:read.</param>
         /// <param name="rateLimitPerMinute">Per-client requests-per-minute limit.</param>
         /// <param name="insertedBy">Who/what created the row.</param>
         /// <returns>The new ApiClientId.</returns>
-        public async Task<int> CreateApiClientAsync(string clientId, byte[] clientSecretEncrypted, int productId, string? displayName, string allowedScopes, int rateLimitPerMinute, string? insertedBy)
+        public async Task<int> CreateApiClientAsync(string clientId, byte[] clientSecretEncrypted, int productId, string? displayName, int rateLimitPerMinute, string? insertedBy)
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.SecurityParams.ActionId, 5, DbType.Int32);
@@ -150,7 +149,6 @@ namespace CFR.SyncInfrastructure.Repositorys.Security
             parameters.Add(DBParameterName.SecurityParams.ClientSecretEncrypted, clientSecretEncrypted, DbType.Binary);
             parameters.Add(DBParameterName.SecurityParams.ProductId, productId, DbType.Int32);
             parameters.Add(DBParameterName.SecurityParams.DisplayName, displayName, DbType.String);
-            parameters.Add(DBParameterName.SecurityParams.AllowedScopes, allowedScopes, DbType.String);
             parameters.Add(DBParameterName.SecurityParams.RateLimitPerMinute, rateLimitPerMinute, DbType.Int32);
             parameters.Add(DBParameterName.SecurityParams.InsertedBy, insertedBy, DbType.String);
             parameters.Add(DBParameterName.SecurityParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);

@@ -6,6 +6,7 @@ global using Dapper;
 
 global using Microsoft.Data.SqlClient;
 
+global using CFR.SyncInfrastructure.Interfaces.OrganizationSync;
 global using CFR.SyncInfrastructure.Interfaces.Security;
 global using CFR.SyncInfrastructure.Interfaces.UserSync;
 global using CFR.SyncInfrastructure.Models.Input;

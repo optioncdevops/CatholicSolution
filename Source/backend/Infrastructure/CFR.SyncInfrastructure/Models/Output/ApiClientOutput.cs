@@ -17,8 +17,6 @@ namespace CFR.SyncInfrastructure.Models.Output
 
         public int ProductId { get; set; }
 
-        public string AllowedScopes { get; set; } = string.Empty;
-
         public int RateLimitPerMinute { get; set; }
 
         public bool IsActive { get; set; }

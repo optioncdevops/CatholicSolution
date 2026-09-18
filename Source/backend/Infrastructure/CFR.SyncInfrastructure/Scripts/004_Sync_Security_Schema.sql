@@ -33,7 +33,6 @@ BEGIN
         [ClientSecretEncrypted]       VARBINARY(200) NOT NULL,
         [ProductId]                   INT NOT NULL,
         [DisplayName]                 NVARCHAR(255) NULL,
-        [AllowedScopes]               NVARCHAR(500) NOT NULL, -- comma-separated: users:write,users:bulk,orgs:read
         [RateLimitPerMinute]          INT NOT NULL CONSTRAINT [DF_ApiClient_RateLimitPerMinute] DEFAULT (60),
         [IsActive]                    BIT NOT NULL CONSTRAINT [DF_ApiClient_IsActive] DEFAULT (1),
         [SecretRotatedDate]           DATETIME NULL,

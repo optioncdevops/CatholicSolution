@@ -97,7 +97,7 @@ namespace CFR.SyncService.Service.UserSync
         #region PATCH Methods
 
         /// <inheritdoc />
-        public async Task<MSResultArgs> UpdateUserPartialAsync(string externalUserId, UserSyncInput input, bool firstNameSupplied, bool lastNameSupplied, bool roleIdSupplied, bool isLoginDisabledSupplied, bool isActiveSupplied, string? ifMatchRowVersionBase64, string traceId, string? sourceIp)
+        public async Task<MSResultArgs> UpdateUserPartialAsync(string externalUserId, UserSyncInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp)
         {
             var result = new MSResultArgs { TraceId = traceId };
             try
@@ -107,18 +107,13 @@ namespace CFR.SyncService.Service.UserSync
                     return result;
                 }
 
-                if (input.ProductOrgId <= 0)
+                if (!ValidateRequiredFields(input, result))
                 {
-                    SetValidationFailed(result, "productOrgId", SyncErrorCodes.ValidationFailed);
                     return result;
                 }
 
                 byte[]? expectedRowVersion = ParseRowVersion(ifMatchRowVersionBase64);
-                var upsertResult = await repository.UpdateUserPartialAsync(
-                    currentApiClient.ProductId, externalUserId, input,
-                    firstNameSupplied, lastNameSupplied, roleIdSupplied, isLoginDisabledSupplied, isActiveSupplied,
-                    currentApiClient.ApiClientId, traceId, expectedRowVersion, sourceIp);
-
+                var upsertResult = await repository.UpdateUserPartialAsync(currentApiClient.ProductId, externalUserId, input, currentApiClient.ApiClientId, traceId, expectedRowVersion, sourceIp);
                 MapResultToEnvelope(upsertResult, ErrorCodes.Success, result);
             }
             catch (Exception ex)
@@ -209,7 +204,7 @@ namespace CFR.SyncService.Service.UserSync
             {
                 if (string.Equals(key, "productId", StringComparison.OrdinalIgnoreCase))
                 {
-                    result.StatusCode = 403; // Microsoft.AspNetCore.Http.StatusCodes.Status403Forbidden — not referenceable from this non-Web project
+                    result.StatusCode = ErrorCodes.Forbidden;
                     result.StatusMessage = ErrorMessages.ProductScopeViolation;
                     result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.ProductScopeViolation));
                     return true;
