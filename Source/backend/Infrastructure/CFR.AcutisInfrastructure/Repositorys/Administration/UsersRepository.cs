@@ -154,6 +154,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.AdministrationParams.LastName, input.LastName, DbType.String);
             parameters.Add(DBParameterName.AdministrationParams.Email, input.EMail, DbType.String);
             parameters.Add(DBParameterName.AdministrationParams.Password, password, DbType.String);
+            parameters.Add(DBParameterName.AdministrationParams.OrganizationId, input.OrganizationId, DbType.Int32);
             parameters.Add(DBParameterName.AdministrationParams.RoleId, input.RoleId, DbType.Int32);
             parameters.Add(DBParameterName.AdministrationParams.IsActive, input.IsActive, DbType.Int32);
             parameters.Add(DBParameterName.AdministrationParams.IsLocked, input.IsLocked, DbType.Int32);

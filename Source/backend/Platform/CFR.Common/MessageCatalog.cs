@@ -68,6 +68,7 @@ namespace CFR.Common
         public const string ResetTokenExpired = "This reset link has expired. Please request a new one.";
         public const string PasswordMismatch = "The new passwords do not match or do not meet the minimum length.";
         public const string PasswordTooWeak = "Use at least 8 characters with upper/lowercase letters, a number, and preferably a symbol.";
+        public const string PasswordTooLong = "Password cannot exceed 50 characters.";
         public const string ExistEmailTemplateCode = "A template with this code already exists.";
         public const string InvalidTemplateBodyContent = "The template body contains a script, event-handler attribute, or javascript/data link, which is not allowed.";
         public const string LinkExpiryMinutesOutOfRange = "Link expiry must be between 5 and 1440 minutes (24 hours).";

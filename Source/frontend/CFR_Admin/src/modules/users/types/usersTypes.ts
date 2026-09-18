@@ -6,6 +6,8 @@ export interface UsersApiItem {
   lastName: string;
   fullName: string;
   eMail: string;
+  organizationId: number | null;
+  organizationName: string | null;
   roleId: number;
   roleName: string;
   isActive: number;
@@ -21,11 +23,17 @@ export interface RoleLookupItem {
   roleName: string;
 }
 
+export interface OrganizationLookupItem {
+  organizationId: number;
+  name: string;
+}
+
 export interface UsersFormValues {
   firstName: string;
   lastName: string;
   eMail: string;
   password: string;
+  organizationId: string;
   roleId: string;
   isActive: string;
   isLocked: string;
@@ -39,6 +47,7 @@ export interface SaveUserPayload {
   lastName: string;
   eMail: string;
   password: string;
+  organizationId: number | null;
   roleId: number;
   isActive: number;
   isLocked: number;
