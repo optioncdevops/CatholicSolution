@@ -109,13 +109,15 @@ namespace Automation.Acutis.Features
         }
         
         [global::NUnit.Framework.TestAttribute()]
-        [global::NUnit.Framework.DescriptionAttribute("001_Verify Forgot Password field validation and the account-not-found message")]
-        public async global::System.Threading.Tasks.Task _001_VerifyForgotPasswordFieldValidationAndTheAccount_Not_FoundMessage()
+        [global::NUnit.Framework.DescriptionAttribute("001_Verify Forgot Password field validation and that a non-existent email does no" +
+            "t reveal account existence")]
+        public async global::System.Threading.Tasks.Task _001_VerifyForgotPasswordFieldValidationAndThatANon_ExistentEmailDoesNotRevealAccountExistence()
         {
             string[] tagsOfScenario = ((string[])(null));
             global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
             string pickleIndex = "0";
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("001_Verify Forgot Password field validation and the account-not-found message", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("001_Verify Forgot Password field validation and that a non-existent email does no" +
+                    "t reveal account existence", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
 #line 5
@@ -141,7 +143,7 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
 #line 9
     await testRunner.AndAsync("Submit the Forgot Password form with an email that does not exist and verify the " +
-                        "account not found message", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+                        "same Check Your Email panel is shown as for a real account", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

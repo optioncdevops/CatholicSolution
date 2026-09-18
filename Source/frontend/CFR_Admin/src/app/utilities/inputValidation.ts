@@ -10,6 +10,7 @@ export type InputValidationRule =
   | "alphanumericOnly"
   | "decimalOnly"
   | "mobileNumber"
+  | "usPhoneNumber"
   | "pincodeNumber"
   | "email"
   | "password"
@@ -193,6 +194,62 @@ export const sanitizeMobileNumberInput = (
   return formatIndianMobileMask(digits, maxLength);
 };
 
+const US_PHONE_DIGIT_LENGTH = 10;
+/** Display length: `(XXX) XXX-XXXX`. */
+export const US_PHONE_MASKED_MAX_LENGTH = 14;
+/** Pattern-style placeholder for US phone fields. */
+export const US_PHONE_MASK_PLACEHOLDER = "(XXX) XXX-XXXX";
+
+/** Removes everything but digits from a US phone display value (e.g. mask `(555) 123-4567`). */
+export function stripUsPhoneNonDigits(value: string): string {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+/** Strips non-digits and a leading US country-code "1" (when present alongside a full 10-digit number). */
+export const normalizeUsPhoneDigits = (
+  value: string,
+  maxLength = US_PHONE_DIGIT_LENGTH,
+): string => {
+  let digits = value.replace(INPUT_REGEX.numbersOnly, "");
+  if (digits.length > maxLength && digits.startsWith("1")) {
+    digits = digits.slice(1);
+  }
+  return digits.slice(0, maxLength);
+};
+
+/** Formats up to 10 digits as a US phone display mask, progressively while typing: `(555) 123-4567`. */
+export function formatUsPhoneMask(
+  digits: string,
+  digitLength = US_PHONE_DIGIT_LENGTH,
+): string {
+  const normalized = normalizeUsPhoneDigits(digits, digitLength);
+  const len = normalized.length;
+  if (len === 0) {return "";}
+  if (len < 4) {return `(${normalized}`;}
+  if (len < 7) {return `(${normalized.slice(0, 3)}) ${normalized.slice(3)}`;}
+  return `(${normalized.slice(0, 3)}) ${normalized.slice(3, 6)}-${normalized.slice(6)}`;
+}
+
+/** Sanitize + apply US phone display mask while typing/pasting. */
+export const sanitizeUsPhoneInput = (
+  value: string,
+  maxLength = US_PHONE_DIGIT_LENGTH,
+): string => {
+  const digits = normalizeUsPhoneDigits(value, maxLength);
+  return formatUsPhoneMask(digits, maxLength);
+};
+
+/** True only for a real 10-digit US number — a string of only symbols/parentheses does not pass. */
+export const isValidUsPhoneNumber = (
+  value: string,
+  length = US_PHONE_DIGIT_LENGTH,
+): boolean => {
+  const raw = String(value ?? "");
+  if (!raw.trim()) {return false;}
+  const digits = stripUsPhoneNonDigits(raw);
+  return digits.length === length;
+};
+
 /** Removes all whitespace from a pincode display value (e.g. mask `400 001`). */
 export function stripPincodeSpaces(value: string): string {
   return String(value ?? "").replace(/\s/g, "");
@@ -285,6 +342,9 @@ export function sanitizeInputValue(
       // Digit cap is always 10; `maxLength` on the input is display width (incl. space).
       result = sanitizeMobileNumberInput(value, DEFAULT_MOBILE_LENGTH);
       break;
+    case "usPhoneNumber":
+      result = sanitizeUsPhoneInput(value, US_PHONE_DIGIT_LENGTH);
+      break;
     case "pincodeNumber":
       result = sanitizePincodeInput(value);
       break;
@@ -337,7 +397,7 @@ export function sanitizeInputValue(
       result = value;
   }
 
-  if (rule !== "mobileNumber" && rule !== "pincodeNumber" && rule !== "email" && rule !== "password") {
+  if (rule !== "mobileNumber" && rule !== "usPhoneNumber" && rule !== "pincodeNumber" && rule !== "email" && rule !== "password") {
     result = applyMaxLength(result, options.maxLength);
   }
 
@@ -348,6 +408,7 @@ const VALIDATION_PATTERNS: Partial<Record<InputValidationRule, RegExp>> = {
   lettersOnly: /^[a-zA-Z\s]*$/,
   numbersOnly: /^[0-9]*$/,
   mobileNumber: /^[0-9 ]*$/,
+  usPhoneNumber: /^[0-9()\- ]*$/,
   decimalOnly: /^\d*\.?\d*$/,
   numericWithDecimal: /^\d*\.?\d*$/,
   alphanumericOnly: /^[a-zA-Z0-9\s]*$/,
@@ -377,6 +438,11 @@ export function isValidInputValue(
       (value === formatIndianMobileMask(digits, DEFAULT_MOBILE_LENGTH) ||
         value === digits)
     );
+  }
+
+  if (rule === "usPhoneNumber") {
+    const digits = stripUsPhoneNonDigits(value);
+    return digits.length <= US_PHONE_DIGIT_LENGTH && value === formatUsPhoneMask(digits, US_PHONE_DIGIT_LENGTH);
   }
 
   if (rule === "pincodeNumber") {

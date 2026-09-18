@@ -5,6 +5,7 @@ import { CommonButton } from '@app/components/buttons';
 import { Badge } from '@app/components/Badge';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { CharacterCount, InputField, TextareaField } from '@app/components/formControls';
+import { FormFieldLabel } from '@app/components/formControls/FormFieldLabel';
 import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { saveUserRole } from '../../services/userRolesService';
 import type { UserRolesApiItem, UserRolesFormValues } from '../../types/userRolesTypes';
@@ -166,11 +167,15 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
           // Read-only — status is changed via the list page's Activate/Deactivate action (which
           // also enforces the role-in-use guard), not edited inline here. The Save button below
           // never touches status: toSaveUserRolePayload always resends `role.status` unchanged.
-          <div className="flex items-center gap-2">
-            <span className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-muted)]">Status</span>
-            <Badge id="badgeUserRoleStatus" tone={role.status === 'active' ? 'success' : 'neutral'}>
-              {role.status === 'active' ? 'Active' : 'Inactive'}
-            </Badge>
+          // Laid out like a real field (label above, value below) to match Role Name/Description,
+          // instead of the small muted inline "STATUS" tag it used to be.
+          <div className="flex flex-col gap-1.5">
+            <FormFieldLabel label="Status" />
+            <div>
+              <Badge id="badgeUserRoleStatus" tone={role.status === 'active' ? 'success' : 'neutral'}>
+                {role.status === 'active' ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
           </div>
         ) : null}
         <div className="flex flex-col gap-1">

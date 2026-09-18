@@ -32,6 +32,11 @@ export interface EmailSettingsFormValues {
   isSslEnabled: boolean;
   ccMailId: string;
   contactUsMailId: string;
+  // Branding (accentColor/fontFamily/baseFontSize) is no longer editable from this page's UI —
+  // the "Branding" section was removed — but these three are still round-tripped from load
+  // straight back into every save unchanged, so an existing template's real accent color/font/
+  // size (still used in actual outgoing emails, which reference these via [AccentColor] etc.
+  // merge tags) is never silently blanked out by a save made from this page.
   accentColor: string;
   fontFamily: string;
   baseFontSize: string;

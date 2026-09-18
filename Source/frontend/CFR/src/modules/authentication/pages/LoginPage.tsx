@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthProvider';
 import { getAuth0SocialConnection, loginAuth0Password } from '../services/auth0AuthService';
 import type { SignInProvider } from '../types/authenticationTypes';
 import { AUTH0_LOGIN_PATH, AUTH0_POST_LOGIN_PATH } from '../utils/auth0Session';
-import { getRequestedClientId, getSafeReturnUrl, isAbsoluteUrl, toAbsoluteReturnUrl } from '../utils/authenticationHelpers';
+import { getRequestedClientId, getSafeReturnUrl, isAbsoluteUrl, storeCentralAuthHandoff, toAbsoluteReturnUrl } from '../utils/authenticationHelpers';
 import { validateLoginCredentials } from '../validator/AuthenticationValidator';
 
 const LoginPage = () => {
@@ -38,6 +38,13 @@ const LoginPage = () => {
   const [email, setEmail] = useState(!isAuth0Login && environment.authMode === 'mock' ? 'carl.lapp@optionc.com' : '');
   const [password, setPassword] = useState(!isAuth0Login && environment.authMode === 'mock' ? 'demo1234' : '');
   //#endregion
+
+  // Re-stash whatever this page resolved (whether it arrived via query string or an earlier
+  // handoff) so the "Forgot password?"/"Request access" links below — and a page refresh here —
+  // don't need client_id/returnUrl back in their own URLs either.
+  useEffect(() => {
+    storeCentralAuthHandoff({ clientId, returnUrl: destination });
+  }, [clientId, destination]);
 
   //#region Functions
   const completeCentralReturn = useCallback(() => {
@@ -127,7 +134,7 @@ const LoginPage = () => {
             <div>
               <div className="auth-label-row">
                 <label className="auth-label" htmlFor="password">Password</label>
-                <PlatformLink to={`/forgot-password${location.search}`} className="auth-text-link">Forgot password?</PlatformLink>
+                <PlatformLink to="/forgot-password" className="auth-text-link">Forgot password?</PlatformLink>
               </div>
               <div className="auth-input-wrap mt-1.5">
                 <span className="auth-input-icon"><LockIcon size={16} /></span>

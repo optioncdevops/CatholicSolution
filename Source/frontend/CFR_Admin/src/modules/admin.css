@@ -619,7 +619,9 @@
 }
 .admin-email-preview-card__meta-label {
   flex-shrink: 0;
-  width: 2.75rem;
+  /* Wide enough for "SUBJECT" (the longest label in this column) plus its letter-spacing —
+     the old 2.75rem fit "TO" but ran straight into the value text next to a longer label. */
+  width: 4.25rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.03em;

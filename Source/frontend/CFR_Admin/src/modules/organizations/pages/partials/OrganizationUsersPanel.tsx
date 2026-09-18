@@ -133,7 +133,6 @@ type OrganizationUsersPanelProps = {
 // anywhere in the schema.
 const OrganizationUsersPanel = ({
   orgId,
-  organization,
   users,
   onChanged,
   readOnly = false,
@@ -166,10 +165,9 @@ const OrganizationUsersPanel = ({
     if (readOnly) return;
     const targetOrgId = user.orgId ?? orgId;
     if (targetOrgId == null) return;
-    const targetOrgName = user.orgName ?? organization?.orgName ?? 'this organization';
     const confirmed = await confirmAction({
       title: 'Unlink this user?',
-      description: `${user.fullName || user.email} will lose membership in ${targetOrgName} and its assigned apps.`,
+      description: 'This user will lose membership in this organization and its assigned apps.',
       confirmLabel: 'Unlink',
       tone: 'danger',
     });
@@ -178,7 +176,7 @@ const OrganizationUsersPanel = ({
     setUnlinkingUserId(user.authUserId);
     try {
       await unlinkOrganizationUser(targetOrgId, user.authUserId);
-      showToast(`${user.fullName || user.email} removed from ${targetOrgName}.`, 'success');
+      showToast('User removed from the organization successfully.', 'success');
       await onChanged();
     } catch (error) {
       console.error('Error unlinking user:', error);

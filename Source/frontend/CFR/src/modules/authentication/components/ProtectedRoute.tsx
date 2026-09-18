@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthProvider';
+import { storeCentralAuthHandoff } from '../utils/authenticationHelpers';
 
 export function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
@@ -7,6 +8,10 @@ export function ProtectedRoute() {
 
   if (isAuthenticated) return <Outlet />;
 
+  // Handed off via sessionStorage instead of the URL — this redirect to /login is same-origin
+  // (a plain react-router Navigate), so CentralLoginPage can read it back without it sitting in
+  // the address bar or an access log.
   const localReturnUrl = `${location.pathname}${location.search}${location.hash}`;
-  return <Navigate to={`/login?returnUrl=${encodeURIComponent(localReturnUrl)}`} replace />;
+  storeCentralAuthHandoff({ returnUrl: localReturnUrl });
+  return <Navigate to="/login" replace />;
 }

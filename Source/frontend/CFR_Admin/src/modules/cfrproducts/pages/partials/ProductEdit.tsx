@@ -526,7 +526,7 @@ const ProductEdit = () => {
       };
 
       await updateProduct(payload);
-      showToast(`${form.name} updated successfully.`);
+      showToast('Product updated successfully.');
       goToDetails(product.productId);
     } catch (err) {
       console.error("Error saving product:", err);

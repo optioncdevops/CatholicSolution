@@ -25,18 +25,19 @@ public static class ServiceExtension
 {
     public static IServiceCollection DisableAuthenticationPolicy(this IServiceCollection services, IWebHostEnvironment env)
     {
-        // // To Configure setting only for the development mode
+        // Development-only convenience: swaps in an IPolicyEvaluator whose AuthenticateAsync/
+        // AuthorizeAsync always succeed, so every [Authorize] endpoint behaves like [AllowAnonymous]
+        // locally without a token. CRITICAL: the `else` branch here used to register the exact same
+        // evaluator for every other environment too - a copy-paste bug that silently disabled
+        // authentication AND authorization on every [Authorize] endpoint in Pilot/Staging/Live as
+        // well as Development. Non-development environments must keep ASP.NET Core's real, default
+        // IPolicyEvaluator (never registered/removed here) so JWT auth is actually enforced.
         if (env.IsDevelopment())
         {
-            //Disable authentication and authorization this only fro development mode
             _ = services.RemoveAll<IPolicyEvaluator>();
             _ = services.AddSingleton<IPolicyEvaluator, DisableAuthenticationPolicyEvaluator>();
         }
-        else
-        {
-            _ = services.RemoveAll<IPolicyEvaluator>();
-            _ = services.AddSingleton<IPolicyEvaluator, DisableAuthenticationPolicyEvaluator>();
-        }
+
         return services;
     }
 

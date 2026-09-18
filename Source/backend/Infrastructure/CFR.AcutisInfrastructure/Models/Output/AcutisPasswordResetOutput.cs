@@ -42,5 +42,28 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("rateLimited")]
         public bool RateLimited { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether this account is active. False means the account exists but is
+        /// deactivated — a reset token must not be issued, and the real account owner should be
+        /// emailed a distinct "your account is restricted" notice instead of a reset link. Never
+        /// exposed in the API response (that must stay identical to the "no account" case).
+        /// </summary>
+        [JsonPropertyName("isActive")]
+        public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets whether this account is locked. True means the account exists but is
+        /// locked — same handling as <see cref="IsActive"/> being false.
+        /// </summary>
+        [JsonPropertyName("isLocked")]
+        public bool IsLocked { get; set; }
+
+        /// <summary>
+        /// True when the account exists but is deactivated or locked — convenience for the
+        /// service layer instead of checking <see cref="IsActive"/>/<see cref="IsLocked"/> separately.
+        /// </summary>
+        [JsonIgnore]
+        public bool IsBlocked => !IsActive || IsLocked;
     }
 }

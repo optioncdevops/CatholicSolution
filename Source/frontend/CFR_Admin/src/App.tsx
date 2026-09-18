@@ -55,8 +55,12 @@ export default function App() {
       <Route
         path="/"
         element={
+          // client_id/returnUrl dropped here: CentralLoginPage in this app always renders the
+          // fixed Admin sign-in experience and hardcodes its own post-login destination — it
+          // never reads either param (see CentralLoginPage.tsx), so they were dead weight in the
+          // URL. `entry` is the only param this route actually consumes.
           <Navigate
-            to="/login?client_id=cfr-admin&entry=platform&returnUrl=/admin"
+            to="/login?entry=platform"
             replace
           />
         }
