@@ -180,9 +180,9 @@ const UserRoleFormModal = ({ open, role, onClose, onSaved, readOnly = false }: U
         ) : null}
         <div className="flex flex-col gap-1">
           <InputField id="txtUserRoleName" control={control} name="roleName" label="Role name" required autoFocus rules={userRolesRules.roleName} maxLength={ROLE_NAME_MAX_LENGTH} disabled={saving || readOnly} />
-          <div className="flex justify-end">
+          {/* <div className="flex justify-end">
             <CharacterCount id="txtUserRoleName-counter" length={roleNameValue?.length ?? 0} maxLength={ROLE_NAME_MAX_LENGTH} />
-          </div>
+          </div> */}
         </div>
         <TextareaField control={control} name="description" label="Description" rows={3} rules={userRolesRules.description} maxLength={250} showCharCount={true} disabled={saving || readOnly} />
       </form>
