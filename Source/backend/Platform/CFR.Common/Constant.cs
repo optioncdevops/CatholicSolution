@@ -64,6 +64,13 @@ namespace CFR.Common
             public const string PortalAuthentication = "Portal.Authentication";
             public const string PortalCFRLaunch = "Portal.CFRLaunch";
             public const string PortalDocs = "Portal.Authentication,Portal.CFRLaunch";
+
+            /// <summary>
+            /// CFR.Sync — central User/Organization sync API for downstream products.
+            /// </summary>
+            public const string CFRSync = "CFRSync";
+            public const string SyncUserSync = "Sync.UserSync";
+            public const string SyncDocs = "Sync.UserSync";
         }
 
         public static class SwaggerDocs

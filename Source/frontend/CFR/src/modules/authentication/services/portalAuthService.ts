@@ -1,14 +1,7 @@
 import { postPortalApi, setPortalSession, type PortalSessionUser } from '@app/config/appPortalClient';
+import type { PortalLoginUser } from '../types/authenticationTypes';
 
 const controller = 'PortalLogin';
-
-interface PortalLoginUser {
-  userId?: number;
-  eMail?: string;
-  firstName?: string;
-  lastName?: string;
-  token?: string;
-}
 
 export const loginPortal = async (userName: string, password: string): Promise<PortalSessionUser> => {
   const response = await postPortalApi(`${controller}/LoginAuthentication`, { userName, password });

@@ -1,4 +1,5 @@
-import { getAppAuthConfig, type ConfiguredAuthMode, type RuntimeEnvironment } from '@shared/auth/appAuthConfig';
+import { getAppAuthConfig } from '@/modules/authentication/utils/appAuthConfig';
+import type { ConfiguredAuthMode, RuntimeEnvironment } from '@/modules/authentication/types/authenticationTypes';
 
 export type AppEnvironment = RuntimeEnvironment;
 export type AuthMode = ConfiguredAuthMode;

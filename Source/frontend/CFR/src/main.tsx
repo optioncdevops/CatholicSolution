@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { ToastProvider } from '@shared/app/components/ToastProvider';
 import { UserProvider } from '@shared/app/context/UserContext';
-import { AuthProvider } from '@shared/auth/AuthProvider';
+import { Auth0AppProvider, AuthProvider } from '@/modules/authentication';
 import '@shared/designSystem/styles.css';
 
 const baseUrl = import.meta.env.BASE_URL;
@@ -13,11 +13,13 @@ const routerBasename = baseUrl === '/' ? undefined : baseUrl.replace(/\/$/, '');
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter basename={routerBasename}>
-      <AuthProvider>
-        <UserProvider>
-          <ToastProvider><App /></ToastProvider>
-        </UserProvider>
-      </AuthProvider>
+      <Auth0AppProvider>
+        <AuthProvider>
+          <UserProvider>
+            <ToastProvider><App /></ToastProvider>
+          </UserProvider>
+        </AuthProvider>
+      </Auth0AppProvider>
     </BrowserRouter>
   </StrictMode>,
 );

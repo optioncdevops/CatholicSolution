@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { createPortal } from 'react-dom';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import { resolvePlatformUrl } from '@shared/platform/navigation/solutionNavigation';
-import { storeCentralAuthHandoff } from '@shared/auth/centralAuth';
+import { storeCentralAuthHandoff } from '@/modules/authentication/utils/authenticationHelpers';
 import { useToast } from './ToastProvider';
 
 export type AccountModal = 'profile' | 'password' | null;
