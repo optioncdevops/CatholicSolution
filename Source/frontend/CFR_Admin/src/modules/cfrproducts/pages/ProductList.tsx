@@ -75,9 +75,13 @@ const ProductList = () => {
   }, [showToast]);
 
   const goToDetails = (item: ProductApiItem) => {
-    navigate(PRODUCTS_PATHS.details, {
-      state: { productId: item.productId },
-    });
+    if (item.navigationTarget === 'new-tab') {
+      window.open(`${PRODUCTS_PATHS.details}?productId=${item.productId}`, '_blank');
+    } else {
+      navigate(PRODUCTS_PATHS.details, {
+        state: { productId: item.productId },
+      });
+    }
   };
 
   const goToEdit = (item: ProductApiItem) => {

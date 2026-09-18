@@ -92,6 +92,7 @@ namespace CFR.CommonService
             public const string GetOrganizationLicenses = nameof(GetOrganizationLicenses);
             public const string GetAllLicenses = nameof(GetAllLicenses);
             public const string UnlinkOrganizationUser = nameof(UnlinkOrganizationUser);
+            public const string GetDioceses = nameof(GetDioceses);
         }
 
         public static class API_Portal
@@ -122,6 +123,7 @@ namespace CFR.CommonService
             public const string UpdateProduct = nameof(UpdateProduct);
             public const string GetProductLogo = nameof(GetProductLogo);
             public const string GetProductCustomers = nameof(GetProductCustomers);
+            public const string GetProductApiIntegrations = nameof(GetProductApiIntegrations);
         }
 
         public static class API_Dashboard

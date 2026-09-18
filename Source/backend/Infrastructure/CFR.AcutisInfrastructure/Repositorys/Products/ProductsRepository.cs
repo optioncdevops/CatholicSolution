@@ -179,6 +179,29 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             return result.ToList();
         }
 
+        /// <summary>
+        /// Fetches [core].[ProductEnvironment] + [core].[Product] rows for a product, scoped to one environment, using StoredProc.Products.ApiIntegrationLookup.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Retrieve the Site / Site Url / Site Description rows for the Api Integration tab.
+        /// Request Flow: IProductsService -> ProductsRepository.GetProductApiIntegrationsAsync() -> Database.
+        /// Validation Details: ProductId and environmentName parameter mapping.
+        /// Business Logic: Executes the standalone StoredProc.Products.ApiIntegrationLookup procedure, filtered to environmentName.
+        /// Repository Interaction: Executes StoredProc.Products.ApiIntegrationLookup.
+        /// Response Details: Returns a list of ProductApiIntegrationOutput records.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <param name="environmentName">Environment name matching appsettings Environment (Development, Pilot, Staging, Live).</param>
+        /// <returns>A list of product API integration records.</returns>
+        public async Task<List<ProductApiIntegrationOutput>> GetProductApiIntegrationsAsync(int productId, string environmentName)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
+            parameters.Add(DBParameterName.ProductParams.EnvironmentName, environmentName, DbType.String);
+            var result = await dapperHandler.QueryAsync<ProductApiIntegrationOutput>(StoredProc.Products.ApiIntegrationLookup, parameters, CommandType.StoredProcedure);
+            return result.ToList();
+        }
+
         #endregion GET Methods
 
         #region POST Methods

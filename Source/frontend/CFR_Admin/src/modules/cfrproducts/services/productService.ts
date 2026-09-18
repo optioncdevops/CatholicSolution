@@ -60,6 +60,23 @@ export const getProductCustomers = async (productId: number, signal?: AbortSigna
   }
 };
 
+export const getProductApiIntegrations = async (productId: number, signal?: AbortSignal): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductApiIntegrations`, {
+      params: { productId },
+      signal,
+    });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+      throw error;
+    }
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to fetch API integrations';
+  }
+};
+
 export const getProductAssignmentSummary = async (): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductAssignmentSummary`);

@@ -43,11 +43,6 @@ namespace CFR.Portal
             services.AddScoped<IAccessRequestService, AccessRequestService>();
             services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
 
-            services.AddHttpClient("ExternalOrganizationApi", client =>
-            {
-                client.Timeout = TimeSpan.FromSeconds(30);
-            });
-
             return services;
         }
     }

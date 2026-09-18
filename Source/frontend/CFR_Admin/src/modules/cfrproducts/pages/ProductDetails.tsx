@@ -23,6 +23,7 @@ import type {
 import { CustomerDetails } from "./CustomerDetails";
 import { LicenseDetails } from "./LicenseDetails";
 import { LicenseHistory } from "./LicenseHistory";
+import { ApiIntegrationDetails } from "./ApiIntegrationDetails";
 import {
   DEFAULT_PRODUCT_ICON,
   PRODUCTS_PATHS,
@@ -192,7 +193,9 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
 const ProductDetails = () => {
   //#region Hooks
   const location = useLocation();
-  const stateProductId = parseProductIdFromState(location.state);
+  const searchParams = new URLSearchParams(location.search);
+  const searchProductId = searchParams.get('productId');
+  const stateProductId = parseProductIdFromState(location.state) || (searchProductId ? Number(searchProductId) : null);
   const navigate = useNavigate();
   const { showToast } = useToast();
   const accessLevel = useFeatureAccessLevel(PRODUCTS_PATHS.list);
@@ -384,6 +387,7 @@ const ProductDetails = () => {
           { id: "customers", label: "Organizations" },
           { id: "license-details", label: "License Details" },
           { id: "license-history", label: "License History" },
+          { id: "api-integration", label: "Api Integration" },
         ]}
       />
 
@@ -401,6 +405,10 @@ const ProductDetails = () => {
 
       <TabPanel id="license-history" activeId={activeTab}>
         <LicenseHistory app={app} />
+      </TabPanel>
+
+      <TabPanel id="api-integration" activeId={activeTab}>
+        <ApiIntegrationDetails app={app} />
       </TabPanel>
 
       <ProductStatusModal

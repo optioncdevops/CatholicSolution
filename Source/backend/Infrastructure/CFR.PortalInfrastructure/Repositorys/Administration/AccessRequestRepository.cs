@@ -174,7 +174,27 @@ namespace CFR.PortalInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.AccessRequestParams.InsertedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.AccessRequestParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Requests.AccessRequestCrud, parameters, CommandType.StoredProcedure);
-            return parameters.Get<int>(DBParameterName.AccessRequestParams.ReturnValue);
+            int savedId = parameters.Get<int>(DBParameterName.AccessRequestParams.ReturnValue);
+
+            // The stored procedure has no @DioceseId parameter (touching it requires a full
+            // DROP+CREATE of a large, critical procedure). DioceseId is set via this separate,
+            // low-risk follow-up UPDATE instead, so it survives to approval time for the SMS
+            // org-setup call (SMS requires DioId to be non-blank).
+            if (isPublicRequest && savedId > 0 && input.DioceseId is > 0)
+            {
+                const string updateDioceseIdSql = @"
+                    UPDATE [request].[AccessRequest]
+                    SET [DioceseId] = @DioceseId
+                    WHERE [AccessRequestId] = @AccessRequestId
+                      AND [IsDeleted] = 0;";
+
+                var updateParameters = new DynamicParameters();
+                updateParameters.Add("DioceseId", input.DioceseId, DbType.Int32);
+                updateParameters.Add("AccessRequestId", savedId, DbType.Int32);
+                _ = await dapperHandler.ExecuteAsync(updateDioceseIdSql, updateParameters, CommandType.Text);
+            }
+
+            return savedId;
         }
 
         #endregion POST Methods

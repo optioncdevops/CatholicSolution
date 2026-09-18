@@ -1,5 +1,8 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+
 namespace CFR.AcutisService.Service.Administration
 {
     /// <summary>
@@ -8,11 +11,18 @@ namespace CFR.AcutisService.Service.Administration
     /// - Invokes IAccessRequestRepository for stored procedure execution.
     /// - Invokes IEmailTemplatesRepository and ISMTPMailService to send admin/requester emails from configurable templates.
     /// </summary>
-    public class AccessRequestService(IAccessRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, ISMTPMailService mailService, IConfiguration configuration, ILogger<AccessRequestService> logger): IAccessRequestService
+    public class AccessRequestService(IAccessRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, ISMTPMailService mailService, IConfiguration configuration, IHttpClientFactory httpClientFactory, ICurrentUserService currentUserService, ILogger<AccessRequestService> logger): IAccessRequestService
     {
         private const string AccessRequestedTemplateCode = "AccessRequested";
         private const string AccessApprovedTemplateCode = "AccessApproved";
         private const string AccessInfoTemplateCode = "AccessInfo";
+        private const string ExternalOrganizationApiHttpClientName = "ExternalOrganizationApi";
+
+        /// <summary>
+        /// core.Product.ProductName that routes SetupNewOrganizationAsync to SMS's Parish-specific
+        /// endpoint (SetupNewParishOrganizationByCFR) instead of the generic SetupNewOrganizationByCFR.
+        /// </summary>
+        private const string ParishProductName = "Parish Hub";
 
         private static readonly HashSet<string> AllowedResolveStatuses = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -144,8 +154,26 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                result.ResultData = updatedId;
                 await NotifyRequesterOfStatusAsync(updatedId, input.Status, input.Note);
+
+                OrgSetupResult? setupResult = string.Equals(input.Status.Trim(), "approved", StringComparison.OrdinalIgnoreCase)
+                    ? await SetupNewOrganizationAsync(updatedId)
+                    : null;
+
+                // Only the SMS-returned OrgId is used - UserId is intentionally ignored (it's SMS's
+                // own admin-account id, not anything CFR persists anywhere).
+                if (setupResult is { OrgId: > 0, ErrMessage: null or "" })
+                {
+                    await PersistOrgSetupResultSafeAsync(updatedId, setupResult.OrgId.Value);
+                }
+
+                result.ResultData = new
+                {
+                    accessRequestId = updatedId,
+                    orgId = setupResult?.OrgId,
+                    userId = setupResult?.UserId,
+                    errMessage = setupResult?.ErrMessage,
+                };
             }
             catch (Exception ex)
             {
@@ -161,7 +189,163 @@ namespace CFR.AcutisService.Service.Administration
 
         #region Private Helper Methods
 
+        /// <summary>
+        /// Performs the two-step SMS "org setup" handshake when a request is approved: exchange an
+        /// encrypted handshake string for a short-lived bearer token, then call
+        /// SetupNewOrganizationByCFR (or, when the request's first product is Parish Hub,
+        /// SetupNewParishOrganizationByCFR) with that token to actually provision the
+        /// organization/user in OptionC. Never throws - a failure here must not fail the approval
+        /// itself (matches NotifyRequesterOfStatusAsync's mail-failure handling). No-ops (returns
+        /// null) when OrgSetupSettings:BaseUrl isn't configured.
+        /// </summary>
+        /// <returns>The { orgId, userId, errMessage } result from SetupNewOrganizationByCFR, or null if not attempted / not reachable.</returns>
+        private async Task<OrgSetupResult?> SetupNewOrganizationAsync(int accessRequestId)
+        {
+            try
+            {
+                string? baseUrl = configuration["OrgSetupSettings:BaseUrl"];
+                string? exchangeKey = configuration["OrgSetupSettings:ExchangeKey"];
+                string? exchangeIV = configuration["OrgSetupSettings:ExchangeIV"];
+                if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(exchangeKey) || string.IsNullOrWhiteSpace(exchangeIV))
+                {
+                    return null;
+                }
 
+                var context = await repository.GetOrgSetupContextAsync(accessRequestId);
+                if (context == null)
+                {
+                    return null;
+                }
+
+                string trimmedBaseUrl = baseUrl.TrimEnd('/');
+                var client = httpClientFactory.CreateClient(ExternalOrganizationApiHttpClientName);
+
+                // Step 1: GetSetupAccessToken (no auth) - exchange an encrypted handshake string for a bearer token.
+                string encryptedValue = OrgSetupEncryptionHelper.EncryptValue("CFR", exchangeKey, exchangeIV);
+                using var tokenResponse = await client.PostAsJsonAsync(
+                    $"{trimmedBaseUrl}/api/v1/CFR/GetSetupAccessToken",
+                    new { encryptedValue });
+
+                if (!tokenResponse.IsSuccessStatusCode)
+                {
+                    AppLogger.LogError(logger, null, SerilogErrorMessages.PortalLogMessages.ExternalOrganizationRequestFailed, accessRequestId);
+                    return null;
+                }
+
+                // SMS wraps every response in OptionC.Common.ResultArgs (via ApiResultArgs) - the
+                // actual Token/ExpiresInMinutes are nested under "resultData", not top-level.
+                var tokenEnvelope = await tokenResponse.Content.ReadFromJsonAsync<SmsApiEnvelope<OrgSetupAccessTokenResponse>>();
+                var tokenResult = tokenEnvelope?.ResultData;
+                if (string.IsNullOrWhiteSpace(tokenResult?.Token))
+                {
+                    AppLogger.LogError(logger, null, SerilogErrorMessages.PortalLogMessages.ExternalOrganizationRequestFailed, accessRequestId);
+                    return null;
+                }
+
+                // Step 2: SetupNewOrganizationByCFR (Bearer token) - actually provision the org/user.
+                // This call happens BEFORE any [core].[Organization] row exists on CFR's side - that
+                // row (and [lic].[OrganizationProduct]) is only created afterward, in
+                // AccessRequestRepository.PersistOrgSetupResultAsync, and only once SMS confirms
+                // success (see UpdateAccessRequestStatusAsync). OrganizationName/Address/City/State/
+                // Zip come straight from request.AccessRequest (staged there at submission time -
+                // see ActionId 7 in 008_AccessRequest.sql). DioId comes from
+                // request.AccessRequest.DioceseId, set at submission time via a follow-up UPDATE in
+                // AccessRequestRepository.SaveAccessRequestAsync (CFR.Portal) - SMS requires DioId
+                // to be non-blank (OptionC.SMSService.Service.CFR.CFRService.SetupNewOrganizationByCFRAsync).
+                var payload = new ExternalOrganizationRequestPayload
+                {
+                    UserName = $"{context.FirstName} {context.LastName}".Trim(),
+                    FirstName = context.FirstName ?? string.Empty,
+                    LastName = context.LastName ?? string.Empty,
+                    DioId = context.DioceseId?.ToString() ?? string.Empty,
+                    OrganizationName = context.OrganizationName ?? string.Empty,
+                    ContactNo = context.Phone ?? string.Empty,
+                    EmailAddress = context.Email ?? string.Empty,
+                    Address = context.Address ?? string.Empty,
+                    City = context.City ?? string.Empty,
+                    State = context.State ?? string.Empty,
+                    PostalCode = context.Zip ?? string.Empty,
+                    // Neither CfrOrgID nor CfrUserID has a real CFR-side identity to send yet at this
+                    // point (no core.Organization row exists, and auth.User is a separate migration
+                    // process) - SMS's SetupNewOrganizationByCFR requires both to be > 0 but doesn't
+                    // otherwise consume them (they aren't referenced in dbo.SetupNewOrganizationByCFR's
+                    // body), so these are placeholders that only satisfy that validation gate: the
+                    // AccessRequestId (always > 0, traceable) for CfrOrgID, and the approving staff
+                    // member's own id for CfrUserID. Revisit this if SMS ever starts using either
+                    // value for something real, since neither claims to be the true CFR org/requester.
+                    CfrOrgID = accessRequestId,
+                    CfrUserID = context.CFRUserId is > 0 ? context.CFRUserId.Value : (int)currentUserService.UserId,
+                };
+
+                // Mirrors SMS's own required-field check (OptionC.SMSService.Service.CFR.CFRService.
+                // SetupNewOrganizationByCFRAsync) so a missing field is reported clearly here instead
+                // of as an opaque 400 from SMS - CfrOrgID/CfrUserID are always > 0 (placeholders, see
+                // above), so in practice only DioId/OrganizationName/FirstName/LastName trip this,
+                // most often DioId when request.AccessRequest.DioceseId was never set on this request.
+                var missingFields = new List<string>();
+                if (string.IsNullOrWhiteSpace(payload.UserName)) missingFields.Add(nameof(payload.UserName));
+                if (string.IsNullOrWhiteSpace(payload.FirstName)) missingFields.Add(nameof(payload.FirstName));
+                if (string.IsNullOrWhiteSpace(payload.LastName)) missingFields.Add(nameof(payload.LastName));
+                if (string.IsNullOrWhiteSpace(payload.DioId)) missingFields.Add(nameof(payload.DioId));
+                if (string.IsNullOrWhiteSpace(payload.OrganizationName)) missingFields.Add(nameof(payload.OrganizationName));
+                if (payload.CfrOrgID <= 0) missingFields.Add(nameof(payload.CfrOrgID));
+                if (payload.CfrUserID <= 0) missingFields.Add(nameof(payload.CfrUserID));
+
+                if (missingFields.Count > 0)
+                {
+                    string joinedMissingFields = string.Join(", ", missingFields);
+                    AppLogger.LogWarning(logger, null, SerilogErrorMessages.PortalLogMessages.ExternalOrganizationRequestMissingFields, accessRequestId, joinedMissingFields);
+                    return new OrgSetupResult { ErrMessage = $"Missing required fields for SMS setup: {joinedMissingFields}" };
+                }
+
+                // Parish Hub requests provision through SMS's dedicated Parish endpoint instead of
+                // the generic one - same request/response shape, different route.
+                bool isParishProduct = string.Equals(context.ProductName?.Trim(), ParishProductName, StringComparison.OrdinalIgnoreCase);
+                string setupAction = isParishProduct ? "SetupNewParishOrganizationByCFR" : "SetupNewOrganizationByCFR";
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{trimmedBaseUrl}/api/v1/CFR/{setupAction}")
+                {
+                    Content = JsonContent.Create(payload)
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResult.Token);
+
+                using var setupResponse = await client.SendAsync(request);
+                if (!setupResponse.IsSuccessStatusCode)
+                {
+                    string responseBody = await setupResponse.Content.ReadAsStringAsync();
+                    AppLogger.LogError(logger, null, SerilogErrorMessages.PortalLogMessages.ExternalOrganizationRequestRejected, accessRequestId, responseBody);
+                    return new OrgSetupResult { ErrMessage = $"SMS rejected the setup request ({(int)setupResponse.StatusCode})." };
+                }
+
+                // Same envelope shape as GetSetupAccessToken - OrgId/UserId/ErrMessage are under "resultData".
+                var setupEnvelope = await setupResponse.Content.ReadFromJsonAsync<SmsApiEnvelope<OrgSetupResult>>();
+                return setupEnvelope?.ResultData;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.ExternalOrganizationRequestFailed, accessRequestId);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Writes SMS's returned OrgId back into CFR's own license rows (creating
+        /// [core].[Organization] and [lic].[OrganizationProduct] for the first time if needed).
+        /// Never throws - matches SetupNewOrganizationAsync/NotifyRequesterOfStatusAsync's failure
+        /// handling, so a persist error here must not fail the approval itself (it already
+        /// succeeded in [request].[AccessRequest] and in SMS by this point).
+        /// </summary>
+        private async Task PersistOrgSetupResultSafeAsync(int accessRequestId, int orgId)
+        {
+            try
+            {
+                await repository.PersistOrgSetupResultAsync(accessRequestId, orgId);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.OrgSetupResultPersistFailed, orgId, accessRequestId);
+            }
+        }
 
         /// <summary>
         /// Emails the requester when an admin approves the request or asks for more information.

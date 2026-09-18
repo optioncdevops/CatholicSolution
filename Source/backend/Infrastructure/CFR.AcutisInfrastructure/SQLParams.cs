@@ -338,6 +338,11 @@ namespace CFR.AcutisInfrastructure
             public const string Zip = nameof(Zip);
 
             /// <summary>
+            /// Diocese identifier (core.Diocese.DioceseId), the organization's parent diocese.
+            /// </summary>
+            public const string DioceseId = nameof(DioceseId);
+
+            /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);
@@ -603,6 +608,11 @@ namespace CFR.AcutisInfrastructure
             /// Output return value from the stored procedure.
             /// </summary>
             public const string ReturnValue = nameof(ReturnValue);
+
+            /// <summary>
+            /// [core].[ProductEnvironment].EnvironmentName matching appsettings Environment (Development, Pilot, Staging, Live).
+            /// </summary>
+            public const string EnvironmentName = nameof(EnvironmentName);
         }
 
         /// <summary>

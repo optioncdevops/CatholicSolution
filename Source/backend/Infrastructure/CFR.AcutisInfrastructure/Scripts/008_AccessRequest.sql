@@ -60,6 +60,54 @@ BEGIN
 END
 GO
 
+-- A public Request Access submission no longer creates a [core].[Organization] row up front -
+-- the org's own data is staged here instead, and the real Organization row is only created at
+-- approval time (see ActionId 2), once the request is actually accepted.
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'OrganizationName'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [OrganizationName] NVARCHAR(200) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'Address'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [Address] NVARCHAR(300) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'City'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [City] NVARCHAR(100) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'State'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [State] NVARCHAR(50) NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'request' AND TABLE_NAME = 'AccessRequest' AND COLUMN_NAME = 'Zip'
+)
+BEGIN
+    ALTER TABLE [request].[AccessRequest] ADD [Zip] NVARCHAR(20) NULL;
+END
+GO
+
 IF OBJECT_ID(N'[request].[AccessRequestManage]', N'P') IS NOT NULL
     DROP PROCEDURE [request].[AccessRequestManage];
 GO
@@ -249,15 +297,13 @@ BEGIN
         END TRY
         BEGIN CATCH
             IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-            SET @ReturnValue = 0;
-            RETURN @ReturnValue;
+            THROW;
         END CATCH
     END
 
     IF @ActionId = 7
     BEGIN
         DECLARE @PublicRequestedBy BIGINT;
-        DECLARE @PublicOrgId INT;
         DECLARE @PublicRequestId BIGINT;
         DECLARE @PublicActorId BIGINT;
         DECLARE @ContactPerson NVARCHAR(200);
@@ -329,36 +375,27 @@ BEGIN
             RETURN @ReturnValue;
         END
 
+        -- No longer auto-creates an [auth].[User] row for a not-yet-known requester email -
+        -- @PublicRequestedBy simply stays NULL in that case. request.AccessRequest doesn't need
+        -- it (RequesterFirstName/RequesterLastName/ContactEmail already carry the requester's
+        -- identity independently - see ActionId 3/4's RequesterName/RequesterEmail COALESCE).
+        -- NOTE: without a CFRUserId, the SMS org-setup call at approval (SetupNewOrganizationAsync)
+        -- will be missing CfrUserID for these requests and report it as a missing required field -
+        -- a real [auth].[User]/CFRUserId has to exist through some other path (e.g. the member
+        -- eventually logging in / registering for real) before that call can succeed.
         SELECT @PublicRequestedBy = u.[CFRUserId]
         FROM [auth].[User] u
         WHERE LOWER(LTRIM(RTRIM(u.[Email]))) = LOWER(@RequesterEmail);
 
-        IF @PublicRequestedBy IS NULL
-        BEGIN
-            BEGIN TRY
-                INSERT INTO [auth].[User] ([Email], [Password], [CreatedDate], [InsertedBy])
-                VALUES (@RequesterEmail, CONVERT(VARBINARY(64), NEWID()), SYSUTCDATETIME(), -1);
-
-                SELECT @PublicRequestedBy = u.[CFRUserId]
-                FROM [auth].[User] u
-                WHERE LOWER(LTRIM(RTRIM(u.[Email]))) = LOWER(@RequesterEmail);
-            END TRY
-            BEGIN CATCH
-                SELECT @PublicRequestedBy = u.[CFRUserId]
-                FROM [auth].[User] u
-                WHERE LOWER(LTRIM(RTRIM(u.[Email]))) = LOWER(@RequesterEmail);
-            END CATCH
-        END
-
-        SELECT TOP (1) @PublicOrgId = o.[ID]
-        FROM [core].[Organization] o
-        WHERE o.[IsDeleted] = 0
-          AND LOWER(LTRIM(RTRIM(o.[OrgName]))) = LOWER(@OrganizationName)
-          AND LOWER(LTRIM(RTRIM(ISNULL(o.[ContactEmail], N'')))) = LOWER(@RequesterEmail)
-        ORDER BY o.[ID];
-
+        -- No [core].[Organization] lookup/creation here anymore - [OrgId] is inserted as 0 below
+        -- until approval, when a real Organization row is created from the org fields staged on
+        -- [request].[AccessRequest] itself (see ActionId 2).
         SET @ContactPerson = LTRIM(RTRIM(ISNULL(@FirstName, N'') + N' ' + ISNULL(@LastName, N'')));
-        SET @PublicActorId = ISNULL(@InsertedBy, @PublicRequestedBy);
+        -- @PublicRequestedBy is NULL for a not-yet-known requester (no [auth].[User] row is
+        -- created here anymore - that's a separate user-migration process). [RequestedBy]/
+        -- [InsertedBy]/[ChangedByMember] below don't allow NULL, so 0 is used as the "no CFR
+        -- identity yet" sentinel, same convention already used for [AuthorId] below.
+        SET @PublicActorId = ISNULL(ISNULL(@InsertedBy, @PublicRequestedBy), 0);
 
         DELETE FROM rp
         FROM @ResolvedProducts rp
@@ -387,51 +424,22 @@ BEGIN
         BEGIN TRY
             BEGIN TRANSACTION;
 
-            IF @PublicOrgId IS NULL
-            BEGIN
-                -- ID is now IDENTITY (016_Acutis_Organization_Rebuild.sql) — no more MAX+1.
-                -- OrgStatus/Address/City/Zip no longer exist on Organization (status moved to
-                -- per-product OrganizationProduct rows, created later at approval; Address/City/
-                -- Zip have no home on Organization in the new schema — @Address/@City/@Zip are
-                -- NOT persisted here. @State is mapped onto the new OrgState column as the closest
-                -- equivalent; there is no @Country input on this form, so OrgCountry is left NULL.
-                INSERT INTO [core].[Organization]
-                (
-                    [OrgName], [OrgState], [ContactEmail], [ContactPerson], [ContactPhone],
-                    [InsertedDate], [InsertedBy], [IsDeleted]
-                )
-                VALUES
-                (
-                    @OrganizationName, @State, @RequesterEmail, @ContactPerson, @Phone,
-                    SYSUTCDATETIME(), @PublicActorId, 0
-                );
-
-                SET @PublicOrgId = CAST(SCOPE_IDENTITY() AS INT);
-            END
-            ELSE
-            BEGIN
-                UPDATE [core].[Organization]
-                SET
-                    [ContactEmail] = ISNULL(@RequesterEmail, [ContactEmail]),
-                    [ContactPerson] = ISNULL(NULLIF(@ContactPerson, N''), [ContactPerson]),
-                    [ContactPhone] = ISNULL(@Phone, [ContactPhone]),
-                    [OrgState] = ISNULL(@State, [OrgState]),
-                    [UpdatedDate] = SYSUTCDATETIME(),
-                    [UpdatedBy] = @PublicActorId
-                WHERE [ID] = @PublicOrgId
-                  AND [IsDeleted] = 0;
-            END
-
+            -- The org itself (OrganizationName/Address/City/State/Zip) is staged directly on this
+            -- row instead of creating a [core].[Organization] row here - that only happens at
+            -- approval (ActionId 2), once the request is actually accepted. [OrgId] is 0 (no real
+            -- org yet) until then.
             INSERT INTO [request].[AccessRequest]
             (
                 [OrgId], [RequestedBy], [Source], [Justification], [RequestStatus],
                 [RequesterFirstName], [RequesterLastName], [ContactEmail], [ContactPhone], [OrganizationType],
+                [OrganizationName], [Address], [City], [State], [Zip],
                 [RequestedDate], [InsertedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
-                @PublicOrgId, @PublicRequestedBy, N'external_page', @Comment, 1,
+                0, ISNULL(@PublicRequestedBy, 0), N'external_page', @Comment, 1,
                 @FirstName, @LastName, @RequesterEmail, @Phone, @OrganizationType,
+                @OrganizationName, @Address, @City, @State, @Zip,
                 SYSUTCDATETIME(), SYSUTCDATETIME(), @PublicActorId, 0
             );
 
@@ -455,7 +463,7 @@ BEGIN
             VALUES
             (
                 @PublicRequestId, NULL, 1, N'Request submitted',
-                @PublicRequestedBy, NULL, SYSUTCDATETIME(), @PublicActorId
+                ISNULL(@PublicRequestedBy, 0), NULL, SYSUTCDATETIME(), @PublicActorId
             );
 
             IF @Comment IS NOT NULL
@@ -478,8 +486,7 @@ BEGIN
         END TRY
         BEGIN CATCH
             IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-            SET @ReturnValue = 0;
-            RETURN @ReturnValue;
+            THROW;
         END CATCH
     END
 
@@ -504,9 +511,6 @@ BEGIN
         DECLARE @MemberLastName NVARCHAR(100);
         DECLARE @MemberRoleId INT;
         DECLARE @MemberIsLoginDisabled BIT;
-        DECLARE @MemberIsLockedOut BIT;
-        DECLARE @ExistingOrgProductId BIGINT;
-        DECLARE @ExistingOrgProductIsDeleted BIT;
 
         IF @AccessRequestId <= 0 OR @Status NOT IN (N'approved', N'rejected', N'info-requested', N'in-review')
         BEGIN
@@ -573,10 +577,8 @@ BEGIN
             SET @HistoryLineId = @LineId;
         END
 
-        SELECT @AccessDays = ISNULL(p.[DefaultAccessDays], 365)
-        FROM [core].[Product] p
-        WHERE p.[ProductId] = @LineProductId;
-
+        -- [core].[Product] has no [DefaultAccessDays] column in this database - @AccessDays stays
+        -- NULL here and the ISNULL(@AccessDays, 365) below still applies the same 365-day default.
         BEGIN TRY
             BEGIN TRANSACTION;
 
@@ -616,71 +618,44 @@ BEGIN
             WHERE [AccessRequestId] = @AccessRequestId
               AND [IsDeleted] = 0;
 
-            -- Approving a request must actually GRANT access, not just flip a status flag —
-            -- both gates that [request].[AccessRequestManage] ActionId 6 (App Hub) and
-            -- Portal_CFRLaunch check have to be satisfied: an active [lic].[OrganizationProduct]
-            -- row for the org+product, and an [auth].[UserProduct] row for the member+org+product.
-            -- CFRUserId/OrgId are never taken from the client — both come from [request].[AccessRequest]
-            -- via @AccessRequestId, resolved above into @HeaderRequestedBy/@HeaderOrgId.
+            -- Approving a request must actually GRANT access, not just flip a status flag — both
+            -- gates that [request].[AccessRequestManage] ActionId 6 (App Hub) and Portal_CFRLaunch
+            -- check have to be satisfied: an active [lic].[OrganizationProduct] row for the
+            -- org+product, and an [auth].[UserProduct] row for the member+org+product.
+            -- Neither [core].[Organization] nor [lic].[OrganizationProduct] is created here anymore.
+            -- The approve click's real provisioning now happens in C#
+            -- (AccessRequestService.SetupNewOrganizationAsync calls SMS FIRST, before any CFR-side
+            -- Organization row exists; AccessRequestRepository.PersistOrgSetupResultAsync then
+            -- creates [core].[Organization] and [lic].[OrganizationProduct] from SMS's returned
+            -- OrgId, but only once SMS confirms success). [auth].[User] is likewise never created
+            -- here - that's a separate, external migration process. The [auth].[UserProduct]
+            -- reactivation in step 2/3 below only covers a member who already has other product
+            -- access in this org (so @HeaderOrgId is already real from a prior approval) - it has
+            -- nothing to do with SMS and is unaffected by any of the above.
             IF @Status = N'approved'
             BEGIN
-                -- 1) Organization-level license/assignment (mirrors AccessRequestManage's own
-                --    sibling pattern in Acutis_Organization ActionId 8 — same columns, same
-                --    active/reactivate/insert shape).
-                SELECT @ExistingOrgProductId = [OrganizationProductId], @ExistingOrgProductIsDeleted = [IsDeleted]
-                FROM [lic].[OrganizationProduct]
-                WHERE [CFROrgId] = @HeaderOrgId AND [ProductId] = @LineProductId;
-
-                IF @ExistingOrgProductId IS NOT NULL AND @ExistingOrgProductIsDeleted = 1
-                BEGIN
-                    UPDATE [lic].[OrganizationProduct]
-                    SET [AssignStatus] = 1, -- Active
-                        [CreatedDate] = SYSUTCDATETIME(),
-                        [ActiveStartDate] = SYSUTCDATETIME(),
-                        [ActiveEndDate] = '9999-12-31',
-                        [IsDeleted] = 0
-                    WHERE [OrganizationProductId] = @ExistingOrgProductId;
-                END
-                ELSE IF @ExistingOrgProductId IS NULL
-                BEGIN
-                    -- ProductOrgId has no external-product-system value available here yet —
-                    -- defaulted to @HeaderOrgId until the individual product integrations supply
-                    -- their own org id. OrgName/OrgState/OrgCountry/ContactEmail/ContactPerson/
-                    -- ContactPhone are snapshotted from [core].[Organization] at approval time,
-                    -- and OrgStatus is set to 1/Active alongside AssignStatus — Address/City/
-                    -- State/Zip have no source here (Organization no longer carries them) and are
-                    -- left NULL.
-                    INSERT INTO [lic].[OrganizationProduct]
-                    (
-                        [CFROrgId], [ProductOrgId], [ProductId],
-                        [OrgName], [OrgState], [OrgCountry], [ContactEmail], [ContactPerson], [ContactPhone],
-                        [OrgStatus], [AssignStatus], [ActiveStartDate], [ActiveEndDate], [CreatedDate], [IsDeleted]
-                    )
-                    SELECT
-                        @HeaderOrgId, @HeaderOrgId, @LineProductId,
-                        O.[OrgName], O.[OrgState], O.[OrgCountry], O.[ContactEmail], O.[ContactPerson], O.[ContactPhone],
-                        1, 1, SYSUTCDATETIME(), '9999-12-31', SYSUTCDATETIME(), 0
-                    FROM [core].[Organization] O
-                    WHERE O.[ID] = @HeaderOrgId;
-                END
-                -- else: already active — nothing to do.
-
-                -- 2) Resolve the member's identity fields from their existing membership row for
-                --    this org — the requester is guaranteed to have at least one [auth].[UserProduct]
-                --    row here (ActionId 1 resolves @OrgId from exactly that), so a new product row
-                --    for them clones CFRUserId/UserId/OrgName/FirstName/LastName/RoleId from that
-                --    row instead of accepting any of it from the client.
+                -- Resolve the member's identity fields from their existing membership row for
+                --    this org, if any. [UserId]/[RoleId] on [auth].[UserProduct] are product-side
+                --    values supplied by the individual product system (see the CFR.Sync upsert in
+                --    006_Sync_StoredProcedures.sql) — CFR has no value of its own to invent for a
+                --    member who has never been assigned a product here before, so @MemberUserId
+                --    stays NULL for a brand-new member+org (e.g. a public Request Access submission
+                --    for a brand-new organization) and is checked for below.
                 SELECT TOP (1)
                     @MemberUserId = [UserId], @MemberOrgName = [OrgName],
                     @MemberFirstName = [FirstName], @MemberLastName = [LastName], @MemberRoleId = [RoleId],
-                    @MemberIsLoginDisabled = ISNULL([IsLoginDisabled], 0), @MemberIsLockedOut = ISNULL([IsLockedOut], 0)
+                    @MemberIsLoginDisabled = ISNULL([IsLoginDisabled], 0)
                 FROM [auth].[UserProduct]
                 WHERE [CFRUserId] = @HeaderRequestedBy AND [OrgId] = @HeaderOrgId AND ISNULL([IsDeleted], 0) = 0
                 ORDER BY [CFRUserDetailId];
 
-                -- 3) Prevent a duplicate mapping: reactivate the member's soft-deleted row for
-                --    this exact org+product if one exists, otherwise insert a new one. An
-                --    already-active row for this member+org+product is left untouched.
+                -- Prevent a duplicate mapping: reactivate the member's soft-deleted row for
+                --    this exact org+product if one exists, otherwise insert a new one — but only
+                --    when the previous step actually found an existing membership row to clone identity from.
+                --    Without @MemberUserId (product-side UserId is NOT NULL on this table), there is
+                --    nothing valid to insert here yet; the row is created later by the normal
+                --    CFR.Sync upsert once the product system (e.g. OptionC via the SMS org-setup
+                --    call) provisions the member and reports their product-side identity back.
                 SELECT TOP (1) @ExistingUserProductId = [CFRUserDetailId], @ExistingUserProductIsDeleted = ISNULL([IsDeleted], 0)
                 FROM [auth].[UserProduct]
                 WHERE [CFRUserId] = @HeaderRequestedBy AND [OrgId] = @HeaderOrgId AND [ProductId] = @LineProductId
@@ -692,20 +667,20 @@ BEGIN
                     SET [IsDeleted] = 0
                     WHERE [CFRUserDetailId] = @ExistingUserProductId;
                 END
-                ELSE IF @ExistingUserProductId IS NULL
+                ELSE IF @ExistingUserProductId IS NULL AND @MemberUserId IS NOT NULL
                 BEGIN
                     INSERT INTO [auth].[UserProduct]
                     (
                         [CFRUserId], [UserId], [ProductId], [OrgId], [OrgName], [RoleId], [FirstName], [LastName],
-                        [IsDeleted], [IsLoginDisabled], [IsLockedOut]
+                        [IsDeleted], [IsLoginDisabled]
                     )
                     VALUES
                     (
                         @HeaderRequestedBy, @MemberUserId, @LineProductId, @HeaderOrgId, @MemberOrgName, @MemberRoleId, @MemberFirstName, @MemberLastName,
-                        0, @MemberIsLoginDisabled, @MemberIsLockedOut
+                        0, @MemberIsLoginDisabled
                     );
                 END
-                -- else: already assigned — nothing to do.
+                -- else: already assigned, or no existing membership to clone from yet — nothing to do.
             END
 
             INSERT INTO [request].[AccessRequestStatusHistory]
@@ -739,8 +714,7 @@ BEGIN
         END TRY
         BEGIN CATCH
             IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-            SET @ReturnValue = 0;
-            RETURN @ReturnValue;
+            THROW;
         END CATCH
     END
 
@@ -749,16 +723,16 @@ BEGIN
         SELECT
             CAST(ar.[AccessRequestId] AS INT) AS [AccessRequestId],
             CAST(ar.[OrgId] AS INT) AS [OrganizationId],
-            ISNULL(o.[OrgName], N'') AS [OrganizationName],
+            COALESCE(NULLIF(LTRIM(RTRIM(ar.[OrganizationName])), N''), o.[OrgName], N'') AS [OrganizationName],
             ar.[OrganizationType] AS [OrganizationType],
-            -- Organization no longer carries Address/City/Zip (016_Acutis_Organization_Rebuild.sql
-            -- removed them; nothing currently repersists the request's original mailing address
-            -- anywhere) — surfaced as NULL rather than silently reading a nonexistent column.
-            -- [State] now comes from Organization's own OrgState, the closest surviving field.
-            CAST(NULL AS NVARCHAR(300)) AS [Address],
-            CAST(NULL AS NVARCHAR(100)) AS [City],
-            o.[OrgState] AS [State],
-            CAST(NULL AS NVARCHAR(20)) AS [Zip],
+            -- Address/City/State/Zip are staged directly on this row at submission (ActionId 7) -
+            -- core.Organization only gets created at approval (ActionId 2), so ar.* is read first,
+            -- falling back to the Organization row (State only - it never carried Address/City/Zip)
+            -- for already-approved requests.
+            ar.[Address] AS [Address],
+            ar.[City] AS [City],
+            COALESCE(NULLIF(LTRIM(RTRIM(ar.[State])), N''), o.[OrgState]) AS [State],
+            ar.[Zip] AS [Zip],
             ar.[ContactPhone] AS [Phone],
             COALESCE(
                 NULLIF(LTRIM(RTRIM(ISNULL(ar.[RequesterFirstName], N'') + N' ' + ISNULL(ar.[RequesterLastName], N''))), N''),
@@ -873,16 +847,16 @@ BEGIN
         SELECT
             CAST(ar.[AccessRequestId] AS INT) AS [AccessRequestId],
             CAST(ar.[OrgId] AS INT) AS [OrganizationId],
-            ISNULL(o.[OrgName], N'') AS [OrganizationName],
+            COALESCE(NULLIF(LTRIM(RTRIM(ar.[OrganizationName])), N''), o.[OrgName], N'') AS [OrganizationName],
             ar.[OrganizationType] AS [OrganizationType],
-            -- Organization no longer carries Address/City/Zip (016_Acutis_Organization_Rebuild.sql
-            -- removed them; nothing currently repersists the request's original mailing address
-            -- anywhere) — surfaced as NULL rather than silently reading a nonexistent column.
-            -- [State] now comes from Organization's own OrgState, the closest surviving field.
-            CAST(NULL AS NVARCHAR(300)) AS [Address],
-            CAST(NULL AS NVARCHAR(100)) AS [City],
-            o.[OrgState] AS [State],
-            CAST(NULL AS NVARCHAR(20)) AS [Zip],
+            -- Address/City/State/Zip are staged directly on this row at submission (ActionId 7) -
+            -- core.Organization only gets created at approval (ActionId 2), so ar.* is read first,
+            -- falling back to the Organization row (State only - it never carried Address/City/Zip)
+            -- for already-approved requests.
+            ar.[Address] AS [Address],
+            ar.[City] AS [City],
+            COALESCE(NULLIF(LTRIM(RTRIM(ar.[State])), N''), o.[OrgState]) AS [State],
+            ar.[Zip] AS [Zip],
             ar.[ContactPhone] AS [Phone],
             COALESCE(
                 NULLIF(LTRIM(RTRIM(ISNULL(ar.[RequesterFirstName], N'') + N' ' + ISNULL(ar.[RequesterLastName], N''))), N''),

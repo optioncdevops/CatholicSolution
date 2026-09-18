@@ -1,4 +1,4 @@
-import type { ProductApiItem, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab, LiveProductLicense } from '../types/productTypes';
+import type { ProductApiItem, ProductApiIntegrationApiItem, ProductApiIntegrationRow, ProductContactUser, ProductCustomerApiItem, ProductCustomerRow, ProductLicenseApiItem, ProductLicenseHistoryRow, ProductLocationState, ProductDetailsTab, LiveProductLicense } from '../types/productTypes';
 import type { AdminApplication, LicenseStatus, OrganizationStatus, ProductStatus } from '@/modules/types';
 import { accessStatusOf, daysUntil, effectiveLicenseStatus, formatDateTime } from '@/modules/utils/formatDate';
 import { getAcutisPublicUrl, getAcutisApiBaseUrl } from '@app/config/gateway';
@@ -78,7 +78,7 @@ export function normalizeProductContactUsers(resultData: unknown): ProductContac
     .filter((row): row is ProductContactUser => row != null);
 }
 
-export const PRODUCT_DETAILS_TABS = ['details', 'customers', 'license-details', 'license-history'] as const;
+export const PRODUCT_DETAILS_TABS = ['details', 'customers', 'license-details', 'license-history', 'api-integration'] as const;
 
 export function parseProductTabFromState(state: unknown): ProductDetailsTab | null {
   if (!state || typeof state !== 'object') {
@@ -167,6 +167,22 @@ export const normalizeProductCustomerList = (resultData: unknown): ProductCustom
     (item): item is ProductCustomerApiItem => Boolean(item && typeof item === 'object' && Number(item.orgId) > 0),
   );
 };
+
+export const normalizeProductApiIntegrationList = (resultData: unknown): ProductApiIntegrationApiItem[] => {
+  if (!Array.isArray(resultData)) return [];
+  return (resultData as ProductApiIntegrationApiItem[]).filter(
+    (item): item is ProductApiIntegrationApiItem => Boolean(item && typeof item === 'object' && String(item.site ?? '').trim()),
+  );
+};
+
+export function toProductApiIntegrationRow(item: ProductApiIntegrationApiItem): ProductApiIntegrationRow {
+  return {
+    id: item.site,
+    site: item.site,
+    siteUrl: item.siteUrl?.trim() || '—',
+    siteDescription: item.siteDescription?.trim() || '—',
+  };
+}
 
 function toOrganizationStatus(value: string | null | undefined): OrganizationStatus {
   const normalized = String(value ?? '').trim().toLowerCase();

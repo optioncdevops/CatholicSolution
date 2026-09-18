@@ -57,6 +57,12 @@ namespace CFR.Acutis
             services.AddScoped<IEmailSettingsService, EmailSettingsService>();
             services.AddScoped<IAccessRequestService, AccessRequestService>();
             services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
+
+            services.AddHttpClient("ExternalOrganizationApi", client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
+
             services.AddScoped<IProductsService, ProductsService>();
             services.AddScoped<IProductsRepository, ProductsRepository>();
 

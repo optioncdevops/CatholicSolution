@@ -125,8 +125,19 @@ const RequestAccessPage = () => {
     setSubmitting(true);
     try {
       const response = await saveAccessRequest(payload);
-      const savedId = Number(response?.resultData ?? response?.ResultData ?? 0);
+      const data = (response?.resultData ?? response?.ResultData ?? {}) as {
+        accessRequestId?: number;
+        orgId?: number | null;
+        userId?: number | null;
+        errMessage?: string | null;
+      };
+      const savedId = Number(data?.accessRequestId ?? 0);
       setReference(savedId > 0 ? `CS-${new Date().getFullYear()}-${savedId}` : `CS-${new Date().getFullYear()}-REQ`);
+      if (data?.errMessage) {
+        // The request itself saved successfully - org setup in OptionC failed/was skipped.
+        // Surface it without blocking the confirmation the requester already earned.
+        console.error('Org setup error:', data.errMessage);
+      }
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {

@@ -119,6 +119,11 @@ namespace CFR.AcutisInfrastructure
             /// Products and License unified CRUD operations.
             /// </summary>
             public const string ProductsCrud = "[dbo].[Acutis_Products]";
+
+            /// <summary>
+            /// Api Integration tab lookup: [core].[ProductEnvironment] Site / Site Url + [core].[Product].[ProdDescription].
+            /// </summary>
+            public const string ApiIntegrationLookup = "[dbo].[Acutis_ProductApiIntegration]";
         }
 
         /// <summary>
