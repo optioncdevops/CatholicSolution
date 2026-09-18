@@ -256,7 +256,6 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
                 ? (!input.IsActive ? DBNull.Value : (object)1)
                 : (object)input.ProductStatus.Value;
             parameters.Add(DBParameterName.ProductParams.ProductStatus, productStatusParam, DbType.Int32);
-            parameters.Add(DBParameterName.ProductParams.LicenseType, string.IsNullOrWhiteSpace(input.LicenseType) ? DBNull.Value : input.LicenseType.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.NavigationTarget, string.IsNullOrWhiteSpace(input.NavigationTarget) ? DBNull.Value : input.NavigationTarget.Trim(), DbType.String);
             parameters.Add(DBParameterName.ProductParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.ProductParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);

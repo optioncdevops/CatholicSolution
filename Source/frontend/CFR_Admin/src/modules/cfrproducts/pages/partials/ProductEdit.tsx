@@ -511,7 +511,6 @@ const ProductEdit = () => {
         subCategoryName: form.category?.trim() || null,
         prodDescription: form.description?.trim() || null,
         externalPageUrl: form.productionUrl?.trim() || null,
-        licenseType: form.licenseType,
         navigationTarget: form.navigationTarget,
         logoName: finalLogoName,
         features: form.features,
