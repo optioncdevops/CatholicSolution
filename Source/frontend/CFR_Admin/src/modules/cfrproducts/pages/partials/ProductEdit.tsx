@@ -584,12 +584,11 @@ const ProductEdit = () => {
   }
 
   const errors = validateProductForm(form);
-  const hasErrors = Object.keys(errors).length > 0;
   const isDirty =
     Boolean(logoFile) ||
     logoRemoved ||
     JSON.stringify(form) !== JSON.stringify(originalForm);
-  const canSave = isDirty && !hasErrors && !saving && !isReadOnly;
+  const canSave = isDirty && !saving && !isReadOnly;
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -614,7 +613,6 @@ const ProductEdit = () => {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (!canSave) return;
           void handleSave();
         }}
         noValidate
