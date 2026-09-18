@@ -9,6 +9,11 @@ namespace CFR.AcutisService.Service.Administration
     /// </summary>
     public class UsersService(IUsersRepository repository, ICurrentUserService currentUserService, ILogger<UsersService> logger): IUsersService
     {
+        /// <summary>
+        /// Maximum accepted length for FirstName/LastName, matching the frontend's maxLength.
+        /// </summary>
+        private const int MaxNameLength = 50;
+
         #region GET Methods
 
         /// <summary>
@@ -192,6 +197,22 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
+                // Re-checked here since this action can be called directly - the frontend's own
+                // maxLength checks can be bypassed by a hand-crafted request.
+                if (input.FirstName.Trim().Length > MaxNameLength || input.LastName.Trim().Length > MaxNameLength)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.NameTooLong;
+                    return result;
+                }
+
+                if (!string.IsNullOrWhiteSpace(input.ContactNumber) && !UsContactNumberPolicy.IsValid(input.ContactNumber))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.InvalidContactNumber;
+                    return result;
+                }
+
                 if (input.DateOfBirth.HasValue && input.DateOfBirth.Value.Date > DateTime.UtcNow.Date)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
@@ -210,6 +231,13 @@ namespace CFR.AcutisService.Service.Administration
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                if (!string.IsNullOrWhiteSpace(input.Password) && PasswordPolicy.ExceedsMaximumLength(input.Password))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.PasswordTooLong;
                     return result;
                 }
 

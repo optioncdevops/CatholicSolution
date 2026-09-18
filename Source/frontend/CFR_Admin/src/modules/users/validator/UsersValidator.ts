@@ -7,6 +7,7 @@ export const usersDefaultValues: UsersFormValues = {
   lastName: '',
   eMail: '',
   password: '',
+  organizationId: '',
   roleId: '',
   isActive: '1',
   isLocked: '0',
@@ -38,8 +39,14 @@ export const usersRules = {
   },
   password: {
     required: 'This field is required',
+    maxLength: {
+      value: 50,
+      message: 'Password cannot exceed 50 characters.',
+    },
     validate: (value: string) => passwordScore(value) >= 3 || PASSWORD_STRENGTH_HINT,
   },
+  // Not required: not every Acutis user (e.g. a Platform Admin) belongs to a single organization.
+  organizationId: {},
   roleId: { required: 'This field is required' },
   // Not required: legacy users saved before this field existed have no date of birth on file, and
   // re-saving their record (e.g. a status change) must not force one to be entered retroactively.
