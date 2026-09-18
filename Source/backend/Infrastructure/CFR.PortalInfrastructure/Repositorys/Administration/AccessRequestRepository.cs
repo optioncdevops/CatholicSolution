@@ -88,31 +88,20 @@ namespace CFR.PortalInfrastructure.Repositorys.Administration
         }
 
         /// <summary>
-        /// Fetches the diocese lookup list via inline SQL text (no stored procedure).
+        /// Fetches the diocese lookup list using SQLQueryText.Requests.GetDiocesesList (no stored procedure).
         /// </summary>
         /// <remarks>
         /// Purpose: Populate the Diocese dropdown on the public Request Access page.
         /// Request Flow: IAccessRequestService -> AccessRequestRepository.GetDiocesesListAsync() -> Database.
         /// Validation Details: None.
         /// Business Logic: None; returns core.Diocese rows as-is.
-        /// Repository Interaction: Runs a plain SELECT against core.Diocese (CommandType.Text) - deliberately not a stored procedure.
+        /// Repository Interaction: Runs SQLQueryText.Requests.GetDiocesesList (plain SELECT against core.Diocese, CommandType.Text) - deliberately not a stored procedure.
         /// Response Details: Returns a list of DioceseOutput records, ordered by name.
         /// </remarks>
         /// <returns>A list of diocese output records.</returns>
         public async Task<List<DioceseOutput>> GetDiocesesListAsync()
         {
-            const string sql = @"
-                SELECT
-                    [DioceseId],
-                    [DioceseName],
-                    [Address],
-                    [City],
-                    [State]
-                FROM [core].[Diocese]
-                WHERE [IsDeleted] = 0
-                ORDER BY [DioceseName];";
-
-            var result = await dapperHandler.QueryAsync<DioceseOutput>(sql, null, CommandType.Text);
+            var result = await dapperHandler.QueryAsync<DioceseOutput>(SQLQueryText.Requests.GetDiocesesList, null, CommandType.Text);
             return result.ToList();
         }
 
@@ -182,16 +171,10 @@ namespace CFR.PortalInfrastructure.Repositorys.Administration
             // org-setup call (SMS requires DioId to be non-blank).
             if (isPublicRequest && savedId > 0 && input.DioceseId is > 0)
             {
-                const string updateDioceseIdSql = @"
-                    UPDATE [request].[AccessRequest]
-                    SET [DioceseId] = @DioceseId
-                    WHERE [AccessRequestId] = @AccessRequestId
-                      AND [IsDeleted] = 0;";
-
                 var updateParameters = new DynamicParameters();
-                updateParameters.Add("DioceseId", input.DioceseId, DbType.Int32);
-                updateParameters.Add("AccessRequestId", savedId, DbType.Int32);
-                _ = await dapperHandler.ExecuteAsync(updateDioceseIdSql, updateParameters, CommandType.Text);
+                updateParameters.Add(DBParameterName.AccessRequestParams.DioceseId, input.DioceseId, DbType.Int32);
+                updateParameters.Add(DBParameterName.AccessRequestParams.AccessRequestId, savedId, DbType.Int32);
+                _ = await dapperHandler.ExecuteAsync(SQLQueryText.Requests.UpdateAccessRequestDioceseId, updateParameters, CommandType.Text);
             }
 
             return savedId;
