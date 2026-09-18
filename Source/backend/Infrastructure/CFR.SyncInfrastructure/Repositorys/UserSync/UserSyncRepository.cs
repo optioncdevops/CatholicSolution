@@ -18,7 +18,8 @@ namespace CFR.SyncInfrastructure.Repositorys.UserSync
             var parameters = BuildBaseParameters(1, productId, input.ProductOrgId, apiClientId, traceId, sourceIp);
             parameters.Add(DBParameterName.UserSyncParams.ExternalUserId, input.ExternalUserId, DbType.String);
             parameters.Add(DBParameterName.UserSyncParams.Email, input.Email, DbType.String);
-            AddFieldParameters(parameters, input, isFieldSupplied: true);
+            AddFieldParameters(parameters, input);
+            parameters.Add(DBParameterName.UserSyncParams.PasswordEncrypted, input.PasswordEncrypted, DbType.Binary);
             return ExecuteUpsertAsync(parameters);
         }
 
@@ -32,7 +33,7 @@ namespace CFR.SyncInfrastructure.Repositorys.UserSync
             var parameters = BuildBaseParameters(2, productId, input.ProductOrgId, apiClientId, traceId, sourceIp);
             parameters.Add(DBParameterName.UserSyncParams.ExternalUserId, externalUserId, DbType.String);
             parameters.Add(DBParameterName.UserSyncParams.Email, input.Email, DbType.String);
-            AddFieldParameters(parameters, input, isFieldSupplied: true);
+            AddFieldParameters(parameters, input);
             parameters.Add(DBParameterName.UserSyncParams.ExpectedRowVersion, expectedRowVersion, DbType.Binary);
             return ExecuteUpsertAsync(parameters);
         }
@@ -42,21 +43,12 @@ namespace CFR.SyncInfrastructure.Repositorys.UserSync
         #region PATCH Methods
 
         /// <inheritdoc />
-        public Task<UserProductUpsertResult> UpdateUserPartialAsync(int productId, string externalUserId, UserSyncInput input, bool firstNameSupplied, bool lastNameSupplied, bool roleIdSupplied, bool isLoginDisabledSupplied, bool isActiveSupplied, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp)
+        public Task<UserProductUpsertResult> UpdateUserPartialAsync(int productId, string externalUserId, UserSyncInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp)
         {
             var parameters = BuildBaseParameters(3, productId, input.ProductOrgId, apiClientId, traceId, sourceIp);
             parameters.Add(DBParameterName.UserSyncParams.ExternalUserId, externalUserId, DbType.String);
             parameters.Add(DBParameterName.UserSyncParams.Email, input.Email, DbType.String);
-            parameters.Add(DBParameterName.UserSyncParams.FirstName, input.FirstName, DbType.String);
-            parameters.Add(DBParameterName.UserSyncParams.LastName, input.LastName, DbType.String);
-            parameters.Add(DBParameterName.UserSyncParams.RoleId, input.RoleId, DbType.Int32);
-            parameters.Add(DBParameterName.UserSyncParams.IsLoginDisabled, input.IsLoginDisabled, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsActive, input.IsActive, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedFirstName, firstNameSupplied, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedLastName, lastNameSupplied, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedRoleId, roleIdSupplied, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedIsLoginDisabled, isLoginDisabledSupplied, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedIsActive, isActiveSupplied, DbType.Boolean);
+            AddFieldParameters(parameters, input);
             parameters.Add(DBParameterName.UserSyncParams.ExpectedRowVersion, expectedRowVersion, DbType.Binary);
             return ExecuteUpsertAsync(parameters);
         }
@@ -109,18 +101,13 @@ namespace CFR.SyncInfrastructure.Repositorys.UserSync
             return parameters;
         }
 
-        private static void AddFieldParameters(DynamicParameters parameters, UserSyncInput input, bool isFieldSupplied)
+        private static void AddFieldParameters(DynamicParameters parameters, UserSyncInput input)
         {
             parameters.Add(DBParameterName.UserSyncParams.FirstName, input.FirstName, DbType.String);
             parameters.Add(DBParameterName.UserSyncParams.LastName, input.LastName, DbType.String);
             parameters.Add(DBParameterName.UserSyncParams.RoleId, input.RoleId, DbType.Int32);
             parameters.Add(DBParameterName.UserSyncParams.IsLoginDisabled, input.IsLoginDisabled, DbType.Boolean);
             parameters.Add(DBParameterName.UserSyncParams.IsActive, input.IsActive, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedFirstName, isFieldSupplied, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedLastName, isFieldSupplied, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedRoleId, isFieldSupplied, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedIsLoginDisabled, isFieldSupplied, DbType.Boolean);
-            parameters.Add(DBParameterName.UserSyncParams.IsFieldSuppliedIsActive, isFieldSupplied, DbType.Boolean);
         }
 
         private async Task<UserProductUpsertResult> ExecuteUpsertAsync(DynamicParameters parameters)

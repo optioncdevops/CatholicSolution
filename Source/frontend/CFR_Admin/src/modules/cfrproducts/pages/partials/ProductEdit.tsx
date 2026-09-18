@@ -249,11 +249,10 @@ function ProductForm({
             />
             <InputField
               label="Production URL"
-              autoFocus
+              readOnly
+              placeholder="Enter production URL"
               value={form.productionUrl}
               onChange={(event) => onUpdate("productionUrl", event.target.value)}
-              placeholder="Enter production URL"
-              error={touched ? errors.productionUrl : undefined}
             />
             <RadioGroup
               label="Navigation Target"
@@ -511,7 +510,6 @@ const ProductEdit = () => {
         subCategoryName: form.category?.trim() || null,
         prodDescription: form.description?.trim() || null,
         externalPageUrl: form.productionUrl?.trim() || null,
-        licenseType: form.licenseType,
         navigationTarget: form.navigationTarget,
         logoName: finalLogoName,
         features: form.features,
@@ -585,12 +583,11 @@ const ProductEdit = () => {
   }
 
   const errors = validateProductForm(form);
-  const hasErrors = Object.keys(errors).length > 0;
   const isDirty =
     Boolean(logoFile) ||
     logoRemoved ||
     JSON.stringify(form) !== JSON.stringify(originalForm);
-  const canSave = isDirty && !hasErrors && !saving && !isReadOnly;
+  const canSave = isDirty && !saving && !isReadOnly;
 
   return (
     <div className="admin-reveal flex flex-col gap-4">
@@ -615,7 +612,6 @@ const ProductEdit = () => {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (!canSave) return;
           void handleSave();
         }}
         noValidate

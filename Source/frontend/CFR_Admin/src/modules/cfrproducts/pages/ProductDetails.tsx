@@ -263,7 +263,6 @@ const ProductDetails = () => {
         subCategoryName: product.subCategoryName,
         prodDescription: product.prodDescription,
         externalPageUrl: product.externalPageUrl,
-        licenseType: product.licenseType,
         navigationTarget: product.navigationTarget,
         isActive,
         productStatus,

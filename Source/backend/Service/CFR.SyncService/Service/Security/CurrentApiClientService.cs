@@ -15,8 +15,6 @@ namespace CFR.SyncService.Service.Security
 
         public int ProductId { get; set; }
 
-        public List<string> AllowedScopes { get; set; } = [];
-
         public string ClientIPAddress { get; set; } = "Unknown";
     }
 }

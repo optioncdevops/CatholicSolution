@@ -85,7 +85,7 @@ export const FORM_CONTROL_CLASSES = {
     "cursor-not-allowed !border-[var(--line)] !bg-[var(--surface-muted)] !text-[var(--text-faint)] opacity-100 hover:!border-[var(--line)] focus:!border-[var(--line)] focus:ring-0 focus-visible:!border-[var(--line)] focus-visible:ring-0",
   /** Read-only — muted vs editable, still more readable than disabled. */
   readonly:
-    "cursor-default !border-[var(--line)] !bg-[var(--surface-muted)] !text-[var(--text-secondary)] hover:!border-[var(--line)] focus-visible:!border-[var(--line)] focus-visible:ring-0",
+    "cursor-not-allowed !border-[var(--line)] !bg-[var(--surface-muted)] !text-[var(--text-secondary)] hover:!border-[var(--line)] focus-visible:!border-[var(--line)] focus-visible:ring-0",
   /** Validation error — overrides normal focus ring. */
   error:
     "border-[var(--error)] bg-[var(--error-bg)] text-[var(--text-primary)] focus-visible:border-[var(--error)] focus-within:border-[var(--error)]",

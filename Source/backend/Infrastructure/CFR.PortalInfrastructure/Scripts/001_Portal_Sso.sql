@@ -137,7 +137,7 @@ BEGIN
             WHERE up.[CFRUserId] = @CFRUserId
               AND ISNULL(up.[IsDeleted], 0) = 0
               AND ISNULL(up.[IsLoginDisabled], 0) = 0
-              AND ISNULL(up.[IsLockedOut], 0) = 0
+              AND ISNULL(up.[IsActive], 1) = 1
         ) AS assigned
             ON assigned.[ProductId] = p.[ProductId]
         LEFT JOIN [core].[ProductEnvironment] AS pe
@@ -213,7 +213,7 @@ BEGIN
               AND [ProductId] = @ProductId
               AND ISNULL([IsDeleted], 0) = 0
               AND ISNULL([IsLoginDisabled], 0) = 0
-              AND ISNULL([IsLockedOut], 0) = 0
+              AND ISNULL([IsActive], 1) = 1
         )
         BEGIN
             SET @ReturnValue = -5;
@@ -313,7 +313,7 @@ BEGIN
               AND [ProductId] = @FoundProductId
               AND ISNULL([IsDeleted], 0) = 0
               AND ISNULL([IsLoginDisabled], 0) = 0
-              AND ISNULL([IsLockedOut], 0) = 0
+              AND ISNULL([IsActive], 1) = 1
         )
         BEGIN
             SET @ReturnValue = -5;
