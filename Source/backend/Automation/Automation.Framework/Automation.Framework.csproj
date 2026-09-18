@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);EnableGenerateDocumentationFile</NoWarn>
+  </PropertyGroup>
   <!-- Shared library: page objects, hooks helpers and test data readers.
        Not a test project, so it takes the Reqnroll runtime only - not the
        Reqnroll.NUnit generator. -->
@@ -15,6 +20,9 @@
     <!-- Test-only DB seeding/cleanup for the ForgotPassword/ResetPassword scenarios - see
          DbSupport\PasswordResetTokenTestSupport.cs. -->
     <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="MongoDB.Driver" />
+    <PackageReference Include="SharpCompress" />
+    <PackageReference Include="Microsoft.AspNetCore.Server.IIS" />
   </ItemGroup>
 
 </Project>
