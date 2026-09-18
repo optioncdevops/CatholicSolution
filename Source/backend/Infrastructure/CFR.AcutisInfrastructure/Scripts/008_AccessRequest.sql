@@ -504,7 +504,7 @@ BEGIN
         DECLARE @MemberLastName NVARCHAR(100);
         DECLARE @MemberRoleId INT;
         DECLARE @MemberIsLoginDisabled BIT;
-        DECLARE @MemberIsLockedOut BIT;
+        DECLARE @MemberIsActive BIT;
         DECLARE @ExistingOrgProductId BIGINT;
         DECLARE @ExistingOrgProductIsDeleted BIT;
 
@@ -573,9 +573,10 @@ BEGIN
             SET @HistoryLineId = @LineId;
         END
 
-        SELECT @AccessDays = ISNULL(p.[DefaultAccessDays], 365)
-        FROM [core].[Product] p
-        WHERE p.[ProductId] = @LineProductId;
+        -- core.Product has no per-product access-window column — every product gets the same
+        -- 365-day default (DefaultAccessDays never existed on the live schema; this reference
+        -- was a pre-existing latent bug that made this procedure uncreatable until now).
+        SET @AccessDays = 365;
 
         BEGIN TRY
             BEGIN TRANSACTION;
@@ -673,7 +674,7 @@ BEGIN
                 SELECT TOP (1)
                     @MemberUserId = [UserId], @MemberOrgName = [OrgName],
                     @MemberFirstName = [FirstName], @MemberLastName = [LastName], @MemberRoleId = [RoleId],
-                    @MemberIsLoginDisabled = ISNULL([IsLoginDisabled], 0), @MemberIsLockedOut = ISNULL([IsLockedOut], 0)
+                    @MemberIsLoginDisabled = ISNULL([IsLoginDisabled], 0), @MemberIsActive = ISNULL([IsActive], 1)
                 FROM [auth].[UserProduct]
                 WHERE [CFRUserId] = @HeaderRequestedBy AND [OrgId] = @HeaderOrgId AND ISNULL([IsDeleted], 0) = 0
                 ORDER BY [CFRUserDetailId];
@@ -697,12 +698,12 @@ BEGIN
                     INSERT INTO [auth].[UserProduct]
                     (
                         [CFRUserId], [UserId], [ProductId], [OrgId], [OrgName], [RoleId], [FirstName], [LastName],
-                        [IsDeleted], [IsLoginDisabled], [IsLockedOut]
+                        [IsDeleted], [IsLoginDisabled], [IsActive]
                     )
                     VALUES
                     (
                         @HeaderRequestedBy, @MemberUserId, @LineProductId, @HeaderOrgId, @MemberOrgName, @MemberRoleId, @MemberFirstName, @MemberLastName,
-                        0, @MemberIsLoginDisabled, @MemberIsLockedOut
+                        0, @MemberIsLoginDisabled, @MemberIsActive
                     );
                 END
                 -- else: already assigned — nothing to do.

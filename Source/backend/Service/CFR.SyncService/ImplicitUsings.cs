@@ -1,9 +1,11 @@
 // Copyright (c) OptionC. All rights reserved.
 
+global using CFR.SyncInfrastructure.Interfaces.OrganizationSync;
 global using CFR.SyncInfrastructure.Interfaces.Security;
 global using CFR.SyncInfrastructure.Interfaces.UserSync;
 global using CFR.SyncInfrastructure.Models.Input;
 global using CFR.SyncInfrastructure.Models.Output;
+global using CFR.SyncService.Interfaces.OrganizationSync;
 global using CFR.SyncService.Interfaces.Security;
 global using CFR.SyncService.Interfaces.UserSync;
 global using CFR.Common;

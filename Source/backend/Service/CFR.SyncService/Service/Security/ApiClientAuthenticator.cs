@@ -106,7 +106,6 @@ namespace CFR.SyncService.Service.Security
                     ApiClientId = apiClient.ApiClientId,
                     ClientId = apiClient.ClientId,
                     ProductId = apiClient.ProductId,
-                    AllowedScopes = [.. apiClient.AllowedScopes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)],
                     RateLimitPerMinute = apiClient.RateLimitPerMinute,
                 };
             }

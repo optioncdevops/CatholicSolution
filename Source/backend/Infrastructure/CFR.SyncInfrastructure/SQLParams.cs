@@ -48,9 +48,6 @@ namespace CFR.SyncInfrastructure
             /// <summary>Human-readable label for the ApiClient row.</summary>
             public const string DisplayName = nameof(DisplayName);
 
-            /// <summary>Comma-separated scopes, e.g. users:write,users:bulk,orgs:read.</summary>
-            public const string AllowedScopes = nameof(AllowedScopes);
-
             /// <summary>Per-client requests-per-minute limit.</summary>
             public const string RateLimitPerMinute = nameof(RateLimitPerMinute);
 
@@ -102,26 +99,53 @@ namespace CFR.SyncInfrastructure
             /// <summary>Active/usable flag (auth.UserProduct.IsActive — inverted from the old IsLockedOut).</summary>
             public const string IsActive = nameof(IsActive);
 
-            /// <summary>Whether FirstName was supplied on a PATCH (false = leave unchanged).</summary>
-            public const string IsFieldSuppliedFirstName = nameof(IsFieldSuppliedFirstName);
-
-            /// <summary>Whether LastName was supplied on a PATCH (false = leave unchanged).</summary>
-            public const string IsFieldSuppliedLastName = nameof(IsFieldSuppliedLastName);
-
-            /// <summary>Whether RoleId was supplied on a PATCH (false = leave unchanged).</summary>
-            public const string IsFieldSuppliedRoleId = nameof(IsFieldSuppliedRoleId);
-
-            /// <summary>Whether IsLoginDisabled was supplied on a PATCH (false = leave unchanged).</summary>
-            public const string IsFieldSuppliedIsLoginDisabled = nameof(IsFieldSuppliedIsLoginDisabled);
-
-            /// <summary>Whether IsActive was supplied on a PATCH (false = leave unchanged).</summary>
-            public const string IsFieldSuppliedIsActive = nameof(IsFieldSuppliedIsActive);
-
             /// <summary>Client-supplied If-Match RowVersion for optimistic concurrency.</summary>
             public const string ExpectedRowVersion = nameof(ExpectedRowVersion);
 
             /// <summary>Caller IP, carried into the audit row.</summary>
             public const string SourceIp = nameof(SourceIp);
+
+            /// <summary>Organization name.</summary>
+            public const string OrgName = nameof(OrgName);
+
+            /// <summary>Organization state/province.</summary>
+            public const string OrgState = nameof(OrgState);
+
+            /// <summary>Organization country.</summary>
+            public const string OrgCountry = nameof(OrgCountry);
+
+            /// <summary>Organization contact email.</summary>
+            public const string ContactEmail = nameof(ContactEmail);
+
+            /// <summary>Organization website.</summary>
+            public const string Website = nameof(Website);
+
+            /// <summary>Organization contact person.</summary>
+            public const string ContactPerson = nameof(ContactPerson);
+
+            /// <summary>Organization contact phone.</summary>
+            public const string ContactPhone = nameof(ContactPhone);
+
+            /// <summary>Organization street address.</summary>
+            public const string Address = nameof(Address);
+
+            /// <summary>Organization city.</summary>
+            public const string City = nameof(City);
+
+            /// <summary>Organization state/province (address line).</summary>
+            public const string State = nameof(State);
+
+            /// <summary>Organization postal/zip code.</summary>
+            public const string Zip = nameof(Zip);
+
+            /// <summary>The product's own diocese identifier.</summary>
+            public const string DioceseId = nameof(DioceseId);
+
+            /// <summary>
+            /// Legacy password blob, re-encrypted with CFRPortal's own Encrypt/DecryptUserPassword
+            /// pair by the source query — stored as-is on auth.User at identity creation only.
+            /// </summary>
+            public const string PasswordEncrypted = nameof(PasswordEncrypted);
         }
     }
 }

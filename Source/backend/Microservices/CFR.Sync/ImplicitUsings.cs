@@ -1,12 +1,11 @@
-global using CFR.Sync;
-global using CFR.SyncInfrastructure.Models.Input;
-global using CFR.SyncInfrastructure.Models.Output;
-global using CFR.SyncService.Interfaces.Security;
-global using CFR.SyncService.Interfaces.UserSync;
 global using CFR.Base;
 global using CFR.Common;
-global using CFR.CommonService;
 global using CFR.DBEngine;
+global using CFR.Sync;
+global using CFR.SyncInfrastructure.Models.Input;
+global using CFR.SyncService.Interfaces.OrganizationSync;
+global using CFR.SyncService.Interfaces.Security;
+global using CFR.SyncService.Interfaces.UserSync;
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.Extensions.Options;
 global using Swashbuckle.AspNetCore.SwaggerGen;

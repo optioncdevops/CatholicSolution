@@ -28,6 +28,11 @@ namespace CFR.SyncInfrastructure
             /// for a synced user/organization/product membership.
             /// </summary>
             public const string UserProductUpsert = "[dbo].[Sync_UserProductUpsert]";
+
+            /// <summary>
+            /// Create/update/get operations for organization onboarding.
+            /// </summary>
+            public const string OrganizationUpsert = "[dbo].[Sync_OrganizationUpsert]";
         }
     }
 }

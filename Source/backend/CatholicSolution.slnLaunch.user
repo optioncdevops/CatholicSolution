@@ -11,10 +11,6 @@
         "Action": "Start"
       },
       {
-        "Path": "Microservices\\CFR.Acutis\\CFR.Acutis.csproj",
-        "Action": "Start"
-      },
-      {
         "Path": "Automation\\Automation.Acutis\\Automation.Acutis.csproj",
         "Action": "Start"
       }

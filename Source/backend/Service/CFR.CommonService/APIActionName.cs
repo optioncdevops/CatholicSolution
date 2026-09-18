@@ -138,5 +138,11 @@ namespace CFR.CommonService
             public const string ReactivateUser = nameof(ReactivateUser);
             public const string GetUser = nameof(GetUser);
         }
+
+        public static class API_OrganizationSync
+        {
+            public const string UpsertOrganization = nameof(UpsertOrganization);
+            public const string GetOrganization = nameof(GetOrganization);
+        }
     }
 }

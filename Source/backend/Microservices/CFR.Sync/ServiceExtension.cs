@@ -1,9 +1,13 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using CFR.SyncInfrastructure.Interfaces.OrganizationSync;
 using CFR.SyncInfrastructure.Interfaces.Security;
 using CFR.SyncInfrastructure.Interfaces.UserSync;
+using CFR.SyncInfrastructure.Repositorys.OrganizationSync;
 using CFR.SyncInfrastructure.Repositorys.Security;
 using CFR.SyncInfrastructure.Repositorys.UserSync;
+using CFR.SyncService.Interfaces.OrganizationSync;
+using CFR.SyncService.Service.OrganizationSync;
 using CFR.SyncService.Service.Security;
 using CFR.SyncService.Service.UserSync;
 
@@ -34,6 +38,10 @@ namespace CFR.Sync
             // UserSync services and repository
             services.AddScoped<IUserSyncService, UserSyncService>();
             services.AddScoped<IUserSyncRepository, UserSyncRepository>();
+
+            // OrganizationSync services and repository
+            services.AddScoped<IOrganizationSyncService, OrganizationSyncService>();
+            services.AddScoped<IOrganizationSyncRepository, OrganizationSyncRepository>();
 
             return services;
         }
