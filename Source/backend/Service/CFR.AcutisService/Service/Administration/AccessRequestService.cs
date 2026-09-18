@@ -217,13 +217,17 @@ namespace CFR.AcutisService.Service.Administration
                     return null;
                 }
 
+                // OrgSetupSettings:BaseUrl points at OptionC.Gateway, which fronts SMS under a
+                // "/sms" route prefix (see OptionCGateway's sms-route/sms-cluster) - so "/sms" is
+                // added here, at the call site, rather than baked into BaseUrl.
                 string trimmedBaseUrl = baseUrl.TrimEnd('/');
+                string apiRoot = $"{trimmedBaseUrl}/sms";
                 var client = httpClientFactory.CreateClient(ExternalOrganizationApiHttpClientName);
 
                 // Step 1: GetSetupAccessToken (no auth) - exchange an encrypted handshake string for a bearer token.
                 string encryptedValue = OrgSetupEncryptionHelper.EncryptValue("CFR", exchangeKey, exchangeIV);
                 using var tokenResponse = await client.PostAsJsonAsync(
-                    $"{trimmedBaseUrl}/api/v1/CFR/GetSetupAccessToken",
+                    $"{apiRoot}/api/v1/CFR/GetSetupAccessToken",
                     new { encryptedValue });
 
                 if (!tokenResponse.IsSuccessStatusCode)
@@ -303,7 +307,7 @@ namespace CFR.AcutisService.Service.Administration
                 bool isParishProduct = string.Equals(context.ProductName?.Trim(), ParishProductName, StringComparison.OrdinalIgnoreCase);
                 string setupAction = isParishProduct ? "SetupNewParishOrganizationByCFR" : "SetupNewOrganizationByCFR";
 
-                using var request = new HttpRequestMessage(HttpMethod.Post, $"{trimmedBaseUrl}/api/v1/CFR/{setupAction}")
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{apiRoot}/api/v1/CFR/{setupAction}")
                 {
                     Content = JsonContent.Create(payload)
                 };
