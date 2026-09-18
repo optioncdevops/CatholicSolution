@@ -50,7 +50,6 @@ CREATE PROCEDURE [dbo].[Acutis_Products]
     @SubCategoryName NVARCHAR(200) = NULL,
     @ProdDescription NVARCHAR(MAX) = NULL,
     @ExternalPageUrl NVARCHAR(500) = NULL,
-    @DefaultAccessDays INT = 365,
     @LogoName NVARCHAR(500) = NULL,
     @ContactUserId BIGINT = NULL,
     @Features NVARCHAR(MAX) = NULL,
@@ -115,11 +114,9 @@ BEGIN
             p.[SubCategoryName],
             p.[ProdDescription],
             p.[ExternalPageUrl],
-            ISNULL(p.[DefaultAccessDays], 365) AS [DefaultAccessDays],
             p.[LogoName],
             p.[IsActive],
             p.[ProductStatus],
-            p.[LicenseType],
             p.[NavigationTarget],
             p.[ContactUserId],
             NULLIF(LTRIM(RTRIM(ISNULL(cu.[FirstName], N'') + N' ' + ISNULL(cu.[LastName], N''))), N'') AS [ContactPerson],
@@ -162,11 +159,9 @@ BEGIN
             p.[SubCategoryName],
             p.[ProdDescription],
             p.[ExternalPageUrl],
-            ISNULL(p.[DefaultAccessDays], 365) AS [DefaultAccessDays],
             p.[LogoName],
             p.[IsActive],
             p.[ProductStatus],
-            p.[LicenseType],
             p.[NavigationTarget],
             p.[ContactUserId],
             NULLIF(LTRIM(RTRIM(ISNULL(cu.[FirstName], N'') + N' ' + ISNULL(cu.[LastName], N''))), N'') AS [ContactPerson],
@@ -246,7 +241,6 @@ BEGIN
             [SubCategoryName] = ISNULL(@SubCategoryName, [SubCategoryName]),
             [ProdDescription] = ISNULL(@ProdDescription, [ProdDescription]),
             [ExternalPageUrl] = ISNULL(@ExternalPageUrl, [ExternalPageUrl]),
-            [DefaultAccessDays] = ISNULL(@DefaultAccessDays, [DefaultAccessDays]),
             [LogoName] = ISNULL(@LogoName, [LogoName]),
             [ContactUserId] = CASE
                 WHEN @ContactUserId IS NULL THEN [ContactUserId]
@@ -271,7 +265,6 @@ BEGIN
                 WHEN @ProductStatus = 1 THEN 1
                 ELSE [ProductStatus]
             END,
-            [LicenseType] = ISNULL(@LicenseType, [LicenseType]),
             [NavigationTarget] = ISNULL(@NavigationTarget, [NavigationTarget]),
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = ISNULL(@UpdatedBy, [UpdatedBy])

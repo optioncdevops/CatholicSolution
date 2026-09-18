@@ -44,11 +44,6 @@ namespace CFR.AcutisInfrastructure.Models.Input
         [JsonPropertyName("externalPageUrl")]
         public string? ExternalPageUrl { get; set; }
 
-        /// <summary>
-        /// Gets or sets the default access days for licenses.
-        /// </summary>
-        [JsonPropertyName("defaultAccessDays")]
-        public int DefaultAccessDays { get; set; } = 365;
 
         /// <summary>
         /// Gets or sets the product logo file name.
@@ -74,11 +69,6 @@ namespace CFR.AcutisInfrastructure.Models.Input
         [JsonPropertyName("productStatus")]
         public int? ProductStatus { get; set; }
 
-        /// <summary>
-        /// Gets or sets the product license type: 'free' or 'licensed'.
-        /// </summary>
-        [JsonPropertyName("licenseType")]
-        public string? LicenseType { get; set; }
 
         /// <summary>
         /// Gets or sets the navigation target: 'same-tab' or 'new-tab'.

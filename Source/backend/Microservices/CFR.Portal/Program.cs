@@ -5,6 +5,8 @@ builder.Configuration.AddConfiguration(ConfigurationLoader.LoadConfiguration());
 
 builder.Services.AddCommonServicesSetup();
 
+builder.Services.AddAuthEndpointRateLimiting();
+
 builder.Services.AddDIServicesSetup();
 
 builder.Services.AddAuthenticationSetup(builder.Configuration);
