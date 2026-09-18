@@ -87,6 +87,24 @@ namespace CFR.PortalInfrastructure.Repositorys.Administration
             return result.ToList();
         }
 
+        /// <summary>
+        /// Fetches the diocese lookup list using SQLQueryText.Requests.GetDiocesesList (no stored procedure).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown on the public Request Access page.
+        /// Request Flow: IAccessRequestService -> AccessRequestRepository.GetDiocesesListAsync() -> Database.
+        /// Validation Details: None.
+        /// Business Logic: None; returns core.Diocese rows as-is.
+        /// Repository Interaction: Runs SQLQueryText.Requests.GetDiocesesList (plain SELECT against core.Diocese, CommandType.Text) - deliberately not a stored procedure.
+        /// Response Details: Returns a list of DioceseOutput records, ordered by name.
+        /// </remarks>
+        /// <returns>A list of diocese output records.</returns>
+        public async Task<List<DioceseOutput>> GetDiocesesListAsync()
+        {
+            var result = await dapperHandler.QueryAsync<DioceseOutput>(SQLQueryText.Requests.GetDiocesesList, null, CommandType.Text);
+            return result.ToList();
+        }
+
         #endregion GET Methods
 
         #region POST Methods
@@ -145,7 +163,21 @@ namespace CFR.PortalInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.AccessRequestParams.InsertedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.AccessRequestParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Requests.AccessRequestCrud, parameters, CommandType.StoredProcedure);
-            return parameters.Get<int>(DBParameterName.AccessRequestParams.ReturnValue);
+            int savedId = parameters.Get<int>(DBParameterName.AccessRequestParams.ReturnValue);
+
+            // The stored procedure has no @DioceseId parameter (touching it requires a full
+            // DROP+CREATE of a large, critical procedure). DioceseId is set via this separate,
+            // low-risk follow-up UPDATE instead, so it survives to approval time for the SMS
+            // org-setup call (SMS requires DioId to be non-blank).
+            if (isPublicRequest && savedId > 0 && input.DioceseId is > 0)
+            {
+                var updateParameters = new DynamicParameters();
+                updateParameters.Add(DBParameterName.AccessRequestParams.DioceseId, input.DioceseId, DbType.Int32);
+                updateParameters.Add(DBParameterName.AccessRequestParams.AccessRequestId, savedId, DbType.Int32);
+                _ = await dapperHandler.ExecuteAsync(SQLQueryText.Requests.UpdateAccessRequestDioceseId, updateParameters, CommandType.Text);
+            }
+
+            return savedId;
         }
 
         #endregion POST Methods

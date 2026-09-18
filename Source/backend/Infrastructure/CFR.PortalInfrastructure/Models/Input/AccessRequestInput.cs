@@ -91,6 +91,13 @@ namespace CFR.PortalInfrastructure.Models.Input
         public string? Zip { get; set; }
 
         /// <summary>
+        /// Gets or sets the selected core.Diocese.DioceseId, or null when not selected / not applicable.
+        /// Staged on the request header, then copied onto lic.OrganizationProduct when approved.
+        /// </summary>
+        [JsonPropertyName("dioceseId")]
+        public int? DioceseId { get; set; }
+
+        /// <summary>
         /// Gets or sets the requester phone number.
         /// </summary>
         [JsonPropertyName("phone")]

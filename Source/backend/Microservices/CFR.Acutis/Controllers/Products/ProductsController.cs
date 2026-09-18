@@ -192,6 +192,29 @@ namespace CFR.Acutis.Controllers.Products
             return ApiResultArgs(await service.GetProductAssignmentSummaryAsync(), APIHttpType.HttpGet);
         }
 
+        /// <summary>
+        /// Retrieves [core].[ProductEnvironment] rows for a product, scoped to the currently configured environment.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Fetch the Site / Site Url / Site Description rows for the Api Integration tab.
+        /// Request Flow: Client API GET -> ProductsController.GetProductApiIntegrations() -> IProductsService.GetProductApiIntegrationsAsync() -> Database.
+        /// Validation Details: Query parameter binding maps productId.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IProductsService.GetProductApiIntegrationsAsync().
+        /// Response Details: Standard API result enclosing List of ProductApiIntegrationOutput with status 200, 400, or 500.
+        /// </remarks>
+        /// <param name="productId">Product identifier.</param>
+        /// <returns>A consistent API response containing the product API integration records.</returns>
+        /// <response code="200">Successfully fetched product API integrations.</response>
+        /// <response code="400">Invalid product identifier.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [ActionName(API_Product.GetProductApiIntegrations)]
+        public async Task<IActionResult> GetProductApiIntegrations(int productId)
+        {
+            return ApiResultArgs(await service.GetProductApiIntegrationsAsync(productId), APIHttpType.HttpGet);
+        }
+
         #endregion GET Methods
 
         #region POST Methods

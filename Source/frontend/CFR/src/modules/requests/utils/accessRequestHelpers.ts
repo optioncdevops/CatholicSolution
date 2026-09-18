@@ -37,6 +37,7 @@ export const toPublicAccessRequestPayload = (
     city: values.city.trim(),
     state: values.state.trim(),
     zip: values.zip.trim(),
+    dioceseId: values.dioceseId.trim() ? Number(values.dioceseId) : undefined,
     phone: values.phone.trim() || undefined,
     products,
   };

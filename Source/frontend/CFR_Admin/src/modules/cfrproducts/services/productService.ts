@@ -60,6 +60,23 @@ export const getProductCustomers = async (productId: number, signal?: AbortSigna
   }
 };
 
+export const getProductApiIntegrations = async (productId: number, signal?: AbortSignal): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductApiIntegrations`, {
+      params: { productId },
+      signal,
+    });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+      throw error;
+    }
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to fetch API integrations';
+  }
+};
+
 export const getProductAssignmentSummary = async (): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductAssignmentSummary`);
@@ -141,23 +158,13 @@ export const updateProduct = async (payload: ProductInputPayload): Promise<ApiRe
 export const uploadProductLogo = async (file: File, productId: number): Promise<string> => {
   try {
     const formData = new FormData();
-    formData.append('File', file);
-    formData.append('ProductId', String(productId));
+    formData.append('file', file);
+    formData.append('productId', String(productId));
     const response = await axiosInstance.put<ApiResponse<string>>(
       `${controller}/UpdateProductLogo`,
       formData,
       {
-        transformRequest: [
-          (data, headers) => {
-            if (headers && typeof headers.set === 'function') {
-              headers.set('Content-Type', false);
-            } else if (headers) {
-              delete headers['Content-Type'];
-              delete headers['content-type'];
-            }
-            return data;
-          },
-        ],
+        headers: { 'Content-Type': 'multipart/form-data' },
       },
     );
     const uploadedPath = readUploadedLogoPath(response.data.resultData);

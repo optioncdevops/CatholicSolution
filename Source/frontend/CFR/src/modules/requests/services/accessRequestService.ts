@@ -30,3 +30,17 @@ export const saveAccessRequest = async (value: SaveAccessRequestPayload): Promis
     throw 'Failed to submit access request';
   }
 };
+
+export const getDioceses = async (): Promise<any> => {
+  try {
+    const response = await getPortalApi(`${controller}/GetDioceses`);
+    const statusCode = Number(response?.statusCode ?? 200);
+    if (statusCode >= 400) {
+      throw String(response?.statusMessage || 'Failed to load dioceses');
+    }
+    return response;
+  } catch (error: unknown) {
+    if (typeof error === 'string') throw error;
+    throw 'Failed to load dioceses';
+  }
+};

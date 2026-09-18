@@ -43,6 +43,36 @@ namespace CFR.PortalService.Service.Administration
             return result;
         }
 
+        /// <summary>
+        /// Retrieves every non-deleted diocese for the Request Access page's Diocese dropdown.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown on the public Request Access page.
+        /// Request Flow: AccessRequestController -> AccessRequestService.GetDiocesesListAsync() -> IAccessRequestRepository.GetDiocesesListAsync().
+        /// Validation Details: None.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IAccessRequestRepository.GetDiocesesListAsync().
+        /// Response Details: MSResultArgs containing List of DioceseOutput.
+        /// </remarks>
+        /// <returns>MSResultArgs containing the diocese list.</returns>
+        public async Task<MSResultArgs> GetDiocesesListAsync()
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                var data = await repository.GetDiocesesListAsync();
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.FetchDiocesesFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
         #region POST Methods
 
         /// <summary>
@@ -148,7 +178,6 @@ namespace CFR.PortalService.Service.Administration
                     return result;
                 }
 
-                result.ResultData = savedId;
                 if (input.Products != null && input.Products.Count > 0)
                 {
                     foreach (var product in input.Products)
@@ -160,6 +189,10 @@ namespace CFR.PortalService.Service.Administration
                 {
                     await NotifyAdminsOfNewRequestAsync(savedId, input.SendToEmail);
                 }
+
+                // The SMS org-setup call happens when the request is approved, not here at submission -
+                // see AccessRequestService.UpdateAccessRequestStatusAsync in CFR.Acutis.
+                result.ResultData = savedId;
             }
             catch (Exception ex)
             {

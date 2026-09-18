@@ -218,7 +218,7 @@ function ProductForm({
   };
 
   const previewUrl =
-    resolveProductLogoUrl(form.icon) ||
+    resolveProductLogoUrl(form.icon, undefined, Number(form.id)) ||
     (isImageIcon(form.icon) ? form.icon : undefined);
 
   return (

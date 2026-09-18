@@ -18,11 +18,12 @@ import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { getProducts } from '@/modules/products/services/productsService';
 import { productsFromApiResponse } from '@/modules/products/utils/productsHelpers';
-import { saveAccessRequest } from '@/modules/requests/services/accessRequestService';
+import { getDioceses, saveAccessRequest } from '@/modules/requests/services/accessRequestService';
 import { toPublicAccessRequestPayload } from '@/modules/requests/utils/accessRequestHelpers';
 import { validatePublicAccessRequest } from '@/modules/requests/validator/AccessRequestValidator';
 import type { CatalogApp } from '@shared/app/types/app';
 import { AccessSection, Field, RequestSuccess, SelectField } from './partials/RequestAccessFields';
+import type { DioceseOption } from '@/modules/requests/types/accessRequestTypes';
 
 const organizationTypes = ['Catholic School', 'Parish', 'Diocese / Archdiocese', 'Ministry / Nonprofit', 'Other'] as const;
 
@@ -37,6 +38,8 @@ const RequestAccessPage = () => {
   //#region States
   const requestedProduct = searchParams.get('product');
   const [apps, setApps] = useState<CatalogApp[]>([]);
+  const [dioceses, setDioceses] = useState<DioceseOption[]>([]);
+  // Coming-soon products aren't requestable yet - only offer the ones already live.
   const requestableApps = useMemo(() => apps.filter((app) => app.hubSection !== 'future'), [apps]);
   const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : '';
   const [submitted, setSubmitted] = useState(false);
@@ -55,6 +58,23 @@ const RequestAccessPage = () => {
       } catch (error) {
         console.error('Error loading products:', error);
         if (!cancelled) setApps(productsFromApiResponse([]));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await getDioceses();
+        const list = (response?.resultData ?? response?.ResultData ?? []) as DioceseOption[];
+        if (!cancelled) setDioceses(Array.isArray(list) ? list : []);
+      } catch (error) {
+        console.error('Error loading dioceses:', error);
+        if (!cancelled) setDioceses([]);
       }
     })();
     return () => {
@@ -90,6 +110,7 @@ const RequestAccessPage = () => {
       city: readFormValue(form, 'city'),
       state: readFormValue(form, 'state'),
       zip: readFormValue(form, 'zip'),
+      dioceseId: readFormValue(form, 'dioceseId'),
       email: readFormValue(form, 'workEmail'),
       phone: readFormValue(form, 'phone'),
       notes: readFormValue(form, 'notes'),
@@ -104,8 +125,19 @@ const RequestAccessPage = () => {
     setSubmitting(true);
     try {
       const response = await saveAccessRequest(payload);
-      const savedId = Number(response?.resultData ?? response?.ResultData ?? 0);
+      const data = (response?.resultData ?? response?.ResultData ?? {}) as {
+        accessRequestId?: number;
+        orgId?: number | null;
+        userId?: number | null;
+        errMessage?: string | null;
+      };
+      const savedId = Number(data?.accessRequestId ?? 0);
       setReference(savedId > 0 ? `CS-${new Date().getFullYear()}-${savedId}` : `CS-${new Date().getFullYear()}-REQ`);
+      if (data?.errMessage) {
+        // The request itself saved successfully - org setup in OptionC failed/was skipped.
+        // Surface it without blocking the confirmation the requester already earned.
+        console.error('Org setup error:', data.errMessage);
+      }
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
@@ -147,6 +179,12 @@ const RequestAccessPage = () => {
                   <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required />
                   <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required />
                   <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required />
+                  <SelectField
+                    label="Diocese"
+                    name="dioceseId"
+                    options={dioceses.map((d) => ({ value: String(d.dioceseId), label: d.dioceseName }))}
+                    placeholder="Select diocese (optional)"
+                  />
                   <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required />
                   <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" />
                 </div>
