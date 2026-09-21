@@ -111,7 +111,7 @@ namespace CFR.Common
         public const string DashboardInvalidDateRange = "Start date must be on or before the end date.";
         public const string DashboardDateRangeTooLarge = "The selected date range is too large. Choose a range of 366 days or fewer.";
 
-        // CFR.Sync — HMAC auth + user sync
+        // CFR.DataSync — HMAC auth + user sync
         public const string Unauthenticated = "Authentication failed.";
         public const string ScopeDenied = "The API client is not authorized for this operation.";
         public const string ProductScopeViolation = "productId is not accepted in the request body.";
@@ -131,7 +131,7 @@ namespace CFR.Common
     }
 
     /// <summary>
-    /// Stable, machine-readable error codes for the CFR.Sync product-facing API. Carried as an
+    /// Stable, machine-readable error codes for the CFR.DataSync product-facing API. Carried as an
     /// <c>ErrorDetail</c> with <c>Field == "code"</c> inside <c>MSResultArgs.Errors</c> so downstream
     /// products can branch on a fixed string rather than the numeric StatusCode alone.
     /// </summary>
@@ -225,7 +225,7 @@ namespace CFR.Common
 
         public static class SyncLogMessages
         {
-            public const string AuthenticationFailed = "HMAC authentication failed for ClientId {ClientId}";
+            public const string AuthenticationFailed = "Login failed for ClientId {ClientId}";
             public const string CreateUserFailed = "Error while creating synced user for productOrgId {ProductOrgId}";
             public const string UpdateUserFailed = "Error while updating synced user {ExternalUserId}";
             public const string PatchUserFailed = "Error while patching synced user {ExternalUserId}";
