@@ -1169,58 +1169,38 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .brand-lockup {
   display:inline-flex;
   align-items:center;
-  gap:.65rem;
   border-radius:.8rem;
   text-decoration:none;
 }
-.brand-lockup__symbol {
-  display:grid;
-  width:2.15rem;
-  height:2.15rem;
-  flex-shrink:0;
-  place-items:center;
-  border:1px solid rgba(217,168,63,.34);
-  border-radius:.72rem;
-  background:#fff9eb;
-  color:#b47d18;
-  font-family:var(--font-serif);
-  font-size:1.05rem;
-  font-weight:700;
+/* The logo PNG has a solid white background (no alpha) baked in, so it's framed in a white pill
+   here rather than placed directly on a surface — keeps it legible on both light and `inverse`
+   (dark) backgrounds without needing a separate cropped/transparent asset. The source image is a
+   wide lockup (mark + "Catholic Solutions" wordmark, ~4:1), so it's sized by height with the pill
+   sized generously enough for the wordmark to stay legible — a tall-but-narrow frame (as if it
+   were still the old icon-only mark) crushes the wordmark down to nothing. */
+.brand-lockup__image-frame {
+  display:inline-flex;
+  align-items:center;
+  height:2.9rem;
+  padding:0 .8rem;
+  border-radius:.62rem;
+  border:1px solid rgba(15,23,42,.08);
+  background:#fff;
   box-shadow:0 5px 14px rgba(15,23,42,.06);
 }
-.brand-lockup__wordmark { display:block; min-width:0; line-height:1; }
-.brand-lockup__name {
+.brand-lockup__image {
   display:block;
-  color:#12264c;
-  font-family:var(--font-serif);
-  font-size:1.08rem;
-  font-weight:700;
-  letter-spacing:-.015em;
+  height:2rem;
+  width:auto;
 }
-.brand-lockup__subname {
-  display:block;
-  margin-top:.28rem;
-  color:#b47d18;
-  font-size:.5rem;
-  font-weight:800;
-  letter-spacing:.27em;
+.brand-lockup--inverse .brand-lockup__image-frame {
+  border-color:rgba(255,255,255,.16);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 5px 14px rgba(0,0,0,.18);
 }
-.brand-lockup--inverse .brand-lockup__symbol {
-  border-color:rgba(232,181,74,.42);
-  background:rgba(255,255,255,.09);
-  color:#f2c45f;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
-}
-.brand-lockup--inverse .brand-lockup__name { color:#fff; }
-.brand-lockup--inverse .brand-lockup__subname { color:#e8b54a; }
-.brand-lockup--compact { gap:.5rem; }
-.brand-lockup--compact .brand-lockup__symbol { width:1.85rem; height:1.85rem; border-radius:.62rem; font-size:.9rem; }
-.brand-lockup--compact .brand-lockup__name { font-size:.94rem; }
-.brand-lockup--compact .brand-lockup__subname { margin-top:.2rem; font-size:.43rem; }
-.brand-lockup--prominent { gap:.85rem; }
-.brand-lockup--prominent .brand-lockup__symbol { width:2.8rem; height:2.8rem; border-radius:.88rem; font-size:1.35rem; }
-.brand-lockup--prominent .brand-lockup__name { font-size:1.45rem; }
-.brand-lockup--prominent .brand-lockup__subname { margin-top:.32rem; font-size:.57rem; letter-spacing:.3em; }
+.brand-lockup--compact .brand-lockup__image-frame { height:3rem; padding:0 .75rem; border-radius:.6rem; }
+.brand-lockup--compact .brand-lockup__image { height:2.15rem; }
+.brand-lockup--prominent .brand-lockup__image-frame { height:3.6rem; padding:0 .95rem; border-radius:.85rem; }
+.brand-lockup--prominent .brand-lockup__image { height:2.4rem; }
 
 .auth-brand-panel__content { padding:clamp(1.45rem,3vh,2.25rem) clamp(1.75rem,3.3vw,3.65rem) 1rem; }
 .auth-brand-panel__hero { margin-top:clamp(1.25rem,3vh,2.2rem); max-width:36rem; }
@@ -1257,8 +1237,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .app-footer--auth .app-footer__mission,
 .app-footer--auth .app-footer__divider { display:none; }
 .app-footer--auth .app-footer__legal { padding:.35rem clamp(1rem,2.5vw,2rem); }
-.app-footer--auth .brand-lockup--compact .brand-lockup__symbol { width:1.6rem; height:1.6rem; }
-.app-footer--auth .brand-lockup--compact .brand-lockup__name { font-size:.8rem; }
+.app-footer--auth .brand-lockup--compact .brand-lockup__image-frame { height:1.95rem; padding:0 .5rem; }
+.app-footer--auth .brand-lockup--compact .brand-lockup__image { height:1.25rem; }
 
 .request-access-topbar--minimal { min-height:3.25rem; padding:.35rem clamp(1rem,2.2vw,2rem); }
 .request-access-main--full { max-width:none; padding:.6rem clamp(1rem,2.5vw,2.5rem) .75rem; }
@@ -1338,7 +1318,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   .request-access-form--compact .request-access-products--full { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:560px) {
-  .brand-lockup--prominent .brand-lockup__name { font-size:1.2rem; }
+  .brand-lockup--prominent .brand-lockup__image-frame { height:3.1rem; padding:0 .8rem; }
+  .brand-lockup--prominent .brand-lockup__image { height:2rem; }
   .request-access-form--compact .request-access-products--full { grid-template-columns:1fr; }
 }
 
@@ -3365,8 +3346,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
     min-height: 0;
     overflow: hidden;
   }
-  .brand-lockup--prominent .brand-lockup__name { font-size: 1.15rem; }
-  .brand-lockup--prominent .brand-lockup__symbol { width: 2.35rem; height: 2.35rem; }
+  .brand-lockup--prominent .brand-lockup__image-frame { height: 2.9rem; padding: 0 .75rem; }
+  .brand-lockup--prominent .brand-lockup__image { height: 1.9rem; }
 }
 
 .kpi-card { border-radius: var(--radius-panel); }
