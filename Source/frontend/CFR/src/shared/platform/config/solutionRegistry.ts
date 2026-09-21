@@ -1,4 +1,5 @@
 import { environment } from './environment';
+import faviconUrl from '@/assets/images/favicon.png';
 
 export type SolutionId = 'platform' | 'cfr-admin';
 
@@ -21,7 +22,7 @@ export const SOLUTION_REGISTRY: Record<SolutionId, SolutionConfig> = {
     category: 'CFR End-user Portal',
     route: '/apps',
     origin: environment.origins.platform,
-    favicon: '/favicon.png',
+    favicon: faviconUrl,
     themeColor: '#12264c',
     title: 'Catholic Solutions',
   },
@@ -31,7 +32,7 @@ export const SOLUTION_REGISTRY: Record<SolutionId, SolutionConfig> = {
     category: 'SaaS Administration',
     route: '/admin',
     origin: environment.origins.platformAdmin,
-    favicon: '/favicon.png',
+    favicon: faviconUrl,
     themeColor: '#12264c',
     title: 'CFRAdmin',
   },
