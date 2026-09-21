@@ -8,6 +8,7 @@ global using CFR.SyncInfrastructure.Models.Output;
 global using CFR.SyncService.Interfaces.OrganizationSync;
 global using CFR.SyncService.Interfaces.Security;
 global using CFR.SyncService.Interfaces.UserSync;
+global using CFR.SyncService.Models.Security;
 global using CFR.Common;
 global using CFR.CommonService;
 global using CFR.CommonService.Interfaces;

@@ -1,8 +1,10 @@
 -- Copyright (c) OptionC. All rights reserved.
--- CFR.Sync Phase 1 — stored procedures for HMAC client lookups / replay / idempotency
+-- CFR.Sync — stored procedures for ApiClient lookups (JWT login) / idempotency
 -- ([sec].[Security_Manage]) and the single-user create/update/get/deactivate/reactivate
 -- flow ([dbo].[Sync_UserProductUpsert]). Both follow the repo's one-SP-per-module-surface,
 -- @ActionId-discriminated convention (see [dbo].[Acutis_Users] for the reference shape).
+-- ClientSecret is stored in plaintext (no encryption) — compared directly against the
+-- ClientSecret the caller posts to the login endpoint.
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -29,7 +31,7 @@ CREATE PROCEDURE [sec].[Security_Manage]
     @ResponseStatusCode INT = NULL,
     @ResponseBody NVARCHAR(MAX) = NULL,
     @ExpiresDate DATETIME = NULL,
-    @ClientSecretEncrypted VARBINARY(200) = NULL,
+    @ClientSecret NVARCHAR(200) = NULL,
     @ProductId INT = NULL,
     @DisplayName NVARCHAR(255) = NULL,
     @RateLimitPerMinute INT = NULL,
@@ -42,9 +44,8 @@ BEGIN
     IF @ActionId = 1
     BEGIN
         SELECT
-            [ApiClientId], [ClientId], [ClientSecretEncrypted], [ProductId],
-            [RateLimitPerMinute], [IsActive],
-            [PreviousSecretEncrypted], [PreviousSecretExpiresDate]
+            [ApiClientId], [ClientId], [ClientSecret], [ProductId],
+            [RateLimitPerMinute], [IsActive]
         FROM [sec].[ApiClient]
         WHERE [ClientId] = @ClientId;
         RETURN 0;
@@ -77,9 +78,9 @@ BEGIN
     IF @ActionId = 5
     BEGIN
         INSERT INTO [sec].[ApiClient]
-            ([ClientId], [ClientSecretEncrypted], [ProductId], [DisplayName], [RateLimitPerMinute], [InsertedBy])
+            ([ClientId], [ClientSecret], [ProductId], [DisplayName], [RateLimitPerMinute], [InsertedBy])
         VALUES
-            (@ClientId, @ClientSecretEncrypted, @ProductId, @DisplayName, ISNULL(@RateLimitPerMinute, 60), @InsertedBy);
+            (@ClientId, @ClientSecret, @ProductId, @DisplayName, ISNULL(@RateLimitPerMinute, 60), @InsertedBy);
 
         SET @ReturnValue = SCOPE_IDENTITY();
         RETURN 0;

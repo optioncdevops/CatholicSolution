@@ -28,12 +28,12 @@ namespace CFR.Sync
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<IDapperHandler, DapperHandler>();
 
-            // HMAC authentication pipeline — current-request client, decoupled from ICurrentUserService
-            // (which is JWT/human-login shaped) since CFR.Sync's caller is a product's backend.
+            // JWT login pipeline — current-request client, decoupled from ICurrentUserService
+            // (which is human-login shaped) since CFR.Sync's caller is a product's backend.
             services.AddScoped<ICurrentApiClient, CurrentApiClientService>();
             services.AddScoped<IApiClientRepository, ApiClientRepository>();
-            services.AddScoped<IHmacSigningService, HmacSigningService>();
-            services.AddScoped<IApiClientAuthenticator, ApiClientAuthenticator>();
+            services.AddScoped<IJwtTokenGenerator, SyncJwtTokenGenerator>();
+            services.AddScoped<IAuthService, AuthService>();
 
             // UserSync services and repository
             services.AddScoped<IUserSyncService, UserSyncService>();

@@ -3,28 +3,24 @@
 namespace CFR.SyncInfrastructure.Repositorys.Security
 {
     /// <summary>
-    /// Dapper implementation of IApiClientRepository against sec.ApiClient / sec.RequestNonce /
-    /// sec.IdempotencyRecord.
+    /// Dapper implementation of IApiClientRepository against sec.ApiClient / sec.IdempotencyRecord.
     /// Infrastructure Responsibility:
     /// - Uses IDapperHandler to execute StoredProc.Security.SecurityManage.
     /// </summary>
     public class ApiClientRepository(IDapperHandler dapperHandler): IApiClientRepository
     {
-        private const int SqlUniqueViolation = 2627;
-        private const int SqlDuplicateKeyViolation = 2601;
-
         /// <summary>
         /// Fetches an ApiClient row by ClientId using StoredProc.Security.SecurityManage.
         /// </summary>
         /// <remarks>
-        /// Purpose: Load the signing secret/scopes/product for HMAC verification.
-        /// Request Flow: IApiClientAuthenticator -> ApiClientRepository.GetByClientIdAsync() -> Database.
+        /// Purpose: Load the client secret/product for login (JWT issuance) and idempotency lookups.
+        /// Request Flow: IAuthService -> ApiClientRepository.GetByClientIdAsync() -> Database.
         /// Validation Details: ClientId parameter mapping.
         /// Business Logic: Maps the stored procedure row to ApiClientOutput.
         /// Repository Interaction: Executes StoredProc.Security.SecurityManage with ActionId 1.
         /// Response Details: Returns an ApiClientOutput record or null.
         /// </remarks>
-        /// <param name="clientId">The product's HMAC client identifier.</param>
+        /// <param name="clientId">The product's API client identifier.</param>
         /// <returns>The matching ApiClient row, or null when not found.</returns>
         public async Task<ApiClientOutput?> GetByClientIdAsync(string clientId)
         {
@@ -33,39 +29,6 @@ namespace CFR.SyncInfrastructure.Repositorys.Security
             parameters.Add(DBParameterName.SecurityParams.ClientId, clientId, DbType.String);
             var result = await dapperHandler.QueryAsync<ApiClientOutput>(StoredProc.Security.SecurityManage, parameters, CommandType.StoredProcedure);
             return result.FirstOrDefault();
-        }
-
-        /// <summary>
-        /// Attempts to insert a (ClientId, Nonce) row using StoredProc.Security.SecurityManage.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Enforce per-client, per-request replay protection.
-        /// Request Flow: IApiClientAuthenticator -> ApiClientRepository.TryInsertNonceAsync() -> Database.
-        /// Validation Details: ClientId and Nonce parameter mapping.
-        /// Business Logic: Catches the primary-key violation on (ClientId, Nonce) and reports it as
-        /// false instead of letting the exception propagate — replay is an expected outcome.
-        /// Repository Interaction: Executes StoredProc.Security.SecurityManage with ActionId 2.
-        /// Response Details: Returns true if newly recorded, false if it is a replay.
-        /// </remarks>
-        /// <param name="clientId">The product's HMAC client identifier.</param>
-        /// <param name="nonce">The per-request nonce.</param>
-        /// <returns>True when newly recorded; false when the nonce was already seen.</returns>
-        public async Task<bool> TryInsertNonceAsync(string clientId, string nonce)
-        {
-            var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.SecurityParams.ActionId, 2, DbType.Int32);
-            parameters.Add(DBParameterName.SecurityParams.ClientId, clientId, DbType.String);
-            parameters.Add(DBParameterName.SecurityParams.Nonce, nonce, DbType.String);
-
-            try
-            {
-                _ = await dapperHandler.ExecuteAsync(StoredProc.Security.SecurityManage, parameters, CommandType.StoredProcedure);
-                return true;
-            }
-            catch (SqlException ex) when (ex.Number is SqlUniqueViolation or SqlDuplicateKeyViolation)
-            {
-                return false;
-            }
         }
 
         /// <summary>
@@ -127,26 +90,26 @@ namespace CFR.SyncInfrastructure.Repositorys.Security
         /// Creates a new ApiClient row using StoredProc.Security.SecurityManage.
         /// </summary>
         /// <remarks>
-        /// Purpose: Register a downstream product's HMAC signing credential.
+        /// Purpose: Register a downstream product's login credential.
         /// Request Flow: (admin/seed tooling) -> ApiClientRepository.CreateApiClientAsync() -> Database.
         /// Validation Details: Parameter names match stored procedure arguments.
         /// Business Logic: Executes the create action and reads back the output ApiClientId.
         /// Repository Interaction: Executes StoredProc.Security.SecurityManage with ActionId 5.
         /// Response Details: Returns the new ApiClientId.
         /// </remarks>
-        /// <param name="clientId">The product's HMAC client identifier.</param>
-        /// <param name="clientSecretEncrypted">AES-256-GCM encrypted secret (Nonce || Tag || Ciphertext).</param>
+        /// <param name="clientId">The product's API client identifier.</param>
+        /// <param name="clientSecret">Plaintext client secret.</param>
         /// <param name="productId">ProductId this ApiClient is scoped to.</param>
         /// <param name="displayName">Human-readable label for the ApiClient row.</param>
         /// <param name="rateLimitPerMinute">Per-client requests-per-minute limit.</param>
         /// <param name="insertedBy">Who/what created the row.</param>
         /// <returns>The new ApiClientId.</returns>
-        public async Task<int> CreateApiClientAsync(string clientId, byte[] clientSecretEncrypted, int productId, string? displayName, int rateLimitPerMinute, string? insertedBy)
+        public async Task<int> CreateApiClientAsync(string clientId, string clientSecret, int productId, string? displayName, int rateLimitPerMinute, string? insertedBy)
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.SecurityParams.ActionId, 5, DbType.Int32);
             parameters.Add(DBParameterName.SecurityParams.ClientId, clientId, DbType.String);
-            parameters.Add(DBParameterName.SecurityParams.ClientSecretEncrypted, clientSecretEncrypted, DbType.Binary);
+            parameters.Add(DBParameterName.SecurityParams.ClientSecret, clientSecret, DbType.String);
             parameters.Add(DBParameterName.SecurityParams.ProductId, productId, DbType.Int32);
             parameters.Add(DBParameterName.SecurityParams.DisplayName, displayName, DbType.String);
             parameters.Add(DBParameterName.SecurityParams.RateLimitPerMinute, rateLimitPerMinute, DbType.Int32);
