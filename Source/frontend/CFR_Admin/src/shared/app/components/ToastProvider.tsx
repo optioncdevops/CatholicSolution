@@ -33,7 +33,7 @@ function ToastBanner({ variant, messages, duration, onDismiss }: { variant: Toas
   return (
     <div role={variant === 'error' || variant === 'conflict' || variant === 'warning' ? 'alert' : 'status'} aria-live={variant === 'error' || variant === 'conflict' || variant === 'warning' ? 'assertive' : 'polite'} style={{ ...BANNER_STYLE, background: tone.background }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
-        <span style={{ fontSize: '0.8125rem', fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase' }}>{tone.label}</span>
+        <span style={{ fontSize: '0.6875rem', fontWeight: 800, letterSpacing: '0.02em', textTransform: 'uppercase' }}>{tone.label}</span>
         <button
           type="button"
           onClick={onDismiss}
