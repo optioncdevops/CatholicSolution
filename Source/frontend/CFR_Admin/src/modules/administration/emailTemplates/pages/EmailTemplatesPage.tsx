@@ -8,7 +8,7 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Badge, formatStatusLabel } from '@app/components/Badge';
 import { BaseModal } from '@app/components/modal/BaseModal';
-import { CharacterCount, InputField, RichTextEditor } from '@app/components/formControls';
+import { InputField, RichTextEditor } from '@app/components/formControls';
 import { Tooltip } from '@app/components/tooltips/Tooltip';
 // The ported formControls InputField doesn't forward a ref to the underlying element, which the
 // merge-tag "insert at cursor" feature below needs for the Subject field — keep the local
@@ -447,9 +447,9 @@ function EmailTemplatesPage() {
                     error={subjectError ?? undefined}
                     disabled={isReadOnly}
                   />
-                  <div className="mt-1 flex justify-end">
+                  {/* <div className="mt-1 flex justify-end">
                     <CharacterCount id="txtEmailTemplateSubject-counter" length={draft.subject.length} maxLength={SUBJECT_MAX_LENGTH} />
-                  </div>
+                  </div> */}
                   {template.templateCode === LINK_EXPIRY_TEMPLATE_CODE ? (
                     <div className="mt-3">
                       <SubjectField

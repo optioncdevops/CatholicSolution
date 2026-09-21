@@ -22,6 +22,7 @@ export interface ProductApiItem {
   logoName?: string | null;
   isActive: boolean;
   productStatus?: number | null;
+  licenseType?: string | null;
   navigationTarget?: string | null;
   customerCount: number;
   contactUserId: number | null;

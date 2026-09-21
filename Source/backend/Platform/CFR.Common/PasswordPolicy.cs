@@ -23,6 +23,14 @@ namespace CFR.Common
         public const int MinimumScore = 3;
 
         /// <summary>
+        /// Maximum character length a password may have. Matches the VARCHAR(50) parameter used
+        /// by both the save and login stored procedures — anything longer would otherwise be
+        /// silently truncated by SQL rather than rejected, so this must be checked and rejected
+        /// explicitly before it ever reaches the database.
+        /// </summary>
+        public const int MaximumLength = 50;
+
+        /// <summary>
         /// Scores a password against 4 criteria: length >= 8, mixed case, a digit, and a symbol.
         /// </summary>
         /// <param name="password">The password to score.</param>
@@ -49,5 +57,14 @@ namespace CFR.Common
         /// <returns>Whether the password is strong enough to accept.</returns>
         public static bool IsStrongEnough(string password) =>
             !string.IsNullOrEmpty(password) && password.Length >= MinimumLength && Score(password) >= MinimumScore;
+
+        /// <summary>
+        /// True when the password is longer than <see cref="MaximumLength"/> and would therefore
+        /// be silently truncated by the database instead of stored/checked in full.
+        /// </summary>
+        /// <param name="password">The password to validate.</param>
+        /// <returns>Whether the password exceeds the maximum accepted length.</returns>
+        public static bool ExceedsMaximumLength(string password) =>
+            !string.IsNullOrEmpty(password) && password.Length > MaximumLength;
     }
 }
