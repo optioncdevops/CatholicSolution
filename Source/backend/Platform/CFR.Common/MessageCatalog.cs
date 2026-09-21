@@ -225,7 +225,7 @@ namespace CFR.Common
 
         public static class SyncLogMessages
         {
-            public const string AuthenticationFailed = "HMAC authentication failed for ClientId {ClientId}";
+            public const string AuthenticationFailed = "Login failed for ClientId {ClientId}";
             public const string CreateUserFailed = "Error while creating synced user for productOrgId {ProductOrgId}";
             public const string UpdateUserFailed = "Error while updating synced user {ExternalUserId}";
             public const string PatchUserFailed = "Error while patching synced user {ExternalUserId}";

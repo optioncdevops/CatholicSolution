@@ -4,7 +4,7 @@ namespace CFR.DataSyncService.Interfaces.Security
 {
     /// <summary>
     /// Defines the interface for the current authenticated ApiClient, populated by
-    /// HmacAuthenticationMiddleware once signature verification succeeds. Mirrors
+    /// CurrentApiClientClaimsMiddleware once JWT bearer authentication succeeds. Mirrors
     /// ICurrentUserService's role for JWT-based microservices, but scoped to a machine
     /// client (a product's backend) instead of a logged-in human.
     /// </summary>

@@ -10,6 +10,7 @@ namespace CFR.DataSync.Controllers.OrganizationSync
     /// - IOrganizationSyncService validates, applies business rules, and returns MSResultArgs.
     /// </summary>
     [ApiExplorerSettings(GroupName = SwaggerModuleDoc.SyncUserSync)]
+    [Authorize]
     public class OrganizationsController(IOrganizationSyncService service): BaseController
     {
         #region POST Methods

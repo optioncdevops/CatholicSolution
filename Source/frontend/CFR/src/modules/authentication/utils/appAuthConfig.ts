@@ -6,8 +6,8 @@ const developmentOrigins: PlatformOrigins = {
 };
 
 const hostedOrigins: PlatformOrigins = {
-  platform: 'https://cfr.optioncapp.com',
-  platformAdmin: 'https://admin.optioncapp.com',
+  platform: 'https://cfr.newoptionc.com',
+  platformAdmin: 'https://cfr-acutis.newoptionc.com',
 };
 
 const hostedConfig: AppAuthConfig = {
