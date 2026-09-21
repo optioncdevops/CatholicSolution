@@ -1,6 +1,14 @@
 import type { CatalogApp } from '@shared/app/types/app';
 import type { PublicAccessRequestFormValues, SaveAccessRequestPayload } from '../types/accessRequestTypes';
 
+export const formatUsPhoneNumber = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '').slice(0, 10);
+  if (digits.length === 0) return '';
+  if (digits.length < 4) return `(${digits}`;
+  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+};
+
 export const toSaveAccessRequestPayload = (
   app: CatalogApp,
   formValues: { name: string; email: string; sendToEmail: string; reason: string }
