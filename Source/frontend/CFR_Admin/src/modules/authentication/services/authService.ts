@@ -1,7 +1,7 @@
 import axiosInstance from '@app/config/AxiosInstance';
 import type { ApiError, ApiResponse } from '@app/pages/types/CommonTypes';
-import { ACUTIS_AUTH_CHANGED_EVENT, ACUTIS_AUTH_STORAGE_KEY } from '../constants/storageKeys';
-import type { AcutisLoginApiResponse, AcutisLoginUser, ChangePasswordPayload, ForgotPasswordPayload, LoginAuthenticationPayload, ResetPasswordPayload, UpdateProfilePayload } from '../types/authTypes';
+import { ACUTIS_AUTH_CHANGED_EVENT, ACUTIS_AUTH_STORAGE_KEY } from '../utils/storageKeys';
+import type { AcutisLoginApiResponse, AcutisLoginUser, ChangePasswordPayload, ForgotPasswordPayload, LoginAuthenticationPayload, ResetPasswordPayload, UpdateProfilePayload } from '../types/authenticationTypes';
 
 const controller = 'AcutisLogin';
 const passwordController = 'AcutisPassword';

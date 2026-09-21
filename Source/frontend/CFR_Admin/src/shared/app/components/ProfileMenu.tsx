@@ -1,11 +1,10 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentUser } from '@shared/app/context/UserContext';
-import { resolveProfileImageUrl } from '@shared/auth/profileImage';
+import { resolveProfileImageUrl } from '@/modules/authentication/utils/profileImage';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import { ChevronDownIcon, LockIcon, LogOutIcon, UserIcon } from './UiIcons';
-import { useAuth } from '@shared/auth/AuthProvider';
-import { buildCentralLogoutUrl } from '@shared/auth/centralAuth';
+import { useAuth } from '@/modules/authentication/context/AuthProvider';
 import { environment } from '@shared/platform/config/environment';
 
 interface ProfileMenuProps {
@@ -47,8 +46,6 @@ export function ProfileMenu({ gradient }: ProfileMenuProps) {
       return;
     }
     signOut();
-    const target = buildCentralLogoutUrl(window.location.href);
-    if (target) window.location.replace(target);
   };
 
   return (

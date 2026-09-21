@@ -3,9 +3,9 @@ import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, MailIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { AdminAuthShell } from './AdminAuthShell';
-import { forgotPassword } from './services/authService';
-import { EMAIL_PATTERN } from './validators';
+import { AdminAuthShell } from '../components/AdminAuthShell';
+import { forgotPassword } from '../services/authService';
+import { EMAIL_PATTERN } from '../validator/AuthenticationValidator';
 
 interface ForgotPasswordFormValues {
   email: string;

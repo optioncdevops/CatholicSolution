@@ -5,8 +5,8 @@ import { Save, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
-import { PASSWORD_STRENGTH_HINT } from '@shared/auth/validators';
+import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeatureAccessLevel';
+import { PASSWORD_STRENGTH_HINT } from '@/modules/authentication/validator/AuthenticationValidator';
 import { CommonButton } from '@app/components/buttons';
 import { DatePicker, Dropdown, InputField, MandatoryIndicator, RadioGroup } from '@app/components/formControls';
 import { confirmDiscardChanges } from '@/modules/lib/confirm';
@@ -14,7 +14,7 @@ import { getUserById, getUserLookups, saveUser } from '../../services/usersServi
 import type { OrganizationLookupItem, RoleLookupItem, UsersFormValues } from '../../types/usersTypes';
 import { maxAllowedDateOfBirth, minAllowedDateOfBirth, toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
 import { usersDefaultValues, usersRules } from '../../validator/UsersValidator';
-import { getStoredAcutisAuth } from '@shared/auth/services/authService';
+import { getStoredAcutisAuth } from '@/modules/authentication/services/authService';
 
 const AddUsers = () => {
   //#region Hooks

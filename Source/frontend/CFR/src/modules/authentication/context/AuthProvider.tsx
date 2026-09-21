@@ -2,9 +2,9 @@ import { createContext, useContext, useEffect, useMemo, useState, type PropsWith
 import { environment } from '@shared/platform/config/environment';
 import { clearPortalSession } from '@app/config/appPortalClient';
 import { loginPortal } from '../services/portalAuthService';
-import type { AuthContextValue, SignInRequest } from '../types/authenticationTypes';
+import type { AuthContextValue } from '../types/authenticationTypes';
 import { clearAuth0SessionFlag } from '../utils/auth0Session';
-import { canRedirectToExternalIdentityProvider, clearPreviewSession, createPreviewSession, hasPreviewSession } from '../utils/authenticationHelpers';
+import { clearPreviewSession, createPreviewSession, hasPreviewSession } from '../utils/authenticationHelpers';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const sessionChannelName = `catholic-solutions.auth.${environment.appId}.sync`;
@@ -17,23 +17,13 @@ function sessionSync() {
   return sessionChannel;
 }
 
-function redirectToIdentityProvider(request: SignInRequest) {
-  if (!canRedirectToExternalIdentityProvider() || typeof window === 'undefined') return false;
-  const authUrl = new URL('/login', environment.authOrigin);
-  authUrl.searchParams.set('client_id', request.clientId || environment.appId);
-  authUrl.searchParams.set('returnUrl', request.returnUrl || window.location.href);
-  if (request.provider && request.provider !== 'password') authUrl.searchParams.set('provider', request.provider);
-  window.location.assign(authUrl.toString());
-  return true;
-}
-
 export function AuthProvider({ children }: PropsWithChildren) {
   const [isAuthenticated, setAuthenticated] = useState(hasPreviewSession);
 
   useEffect(() => {
     const channel = sessionSync();
     const refreshSession = () => {
-      if (environment.authMode !== 'sso') setAuthenticated(hasPreviewSession());
+      setAuthenticated(hasPreviewSession());
     };
     const onSignal = (event: MessageEvent<SessionSignal>) => {
       if (event.data === 'signed-out') setAuthenticated(false);
@@ -54,9 +44,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(() => ({
     isAuthenticated,
     async signIn(request) {
-      if (environment.authMode === 'sso') {
-        return redirectToIdentityProvider(request) ? 'redirected' : 'unavailable';
-      }
       if (request.provider === 'password') {
         await loginPortal(request.email, request.password ?? '');
       }

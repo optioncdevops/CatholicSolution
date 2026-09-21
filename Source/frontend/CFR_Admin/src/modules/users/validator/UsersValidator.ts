@@ -1,4 +1,4 @@
-import { passwordScore, PASSWORD_STRENGTH_HINT } from '@shared/auth/validators';
+import { passwordScore, PASSWORD_STRENGTH_HINT } from '@/modules/authentication/validator/AuthenticationValidator';
 import type { UsersFormValues } from '../types/usersTypes';
 import { MAX_USER_AGE_YEARS, MIN_USER_AGE_YEARS } from '../utils/usersHelpers';
 

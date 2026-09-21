@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthProvider';
-import { getRequestedClientId } from './centralAuth';
+import { useAuth } from '../context/AuthProvider';
+import { getRequestedClientId } from '../utils/centralAuth';
 
 export function CentralLogoutPage() {
   const { signOut } = useAuth();

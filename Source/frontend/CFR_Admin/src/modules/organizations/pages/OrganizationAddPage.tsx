@@ -5,7 +5,7 @@ import { Save, X } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
+import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField, MandatoryIndicator } from '@app/components/formControls';
 import { confirmDiscardChanges } from '@/modules/lib/confirm';

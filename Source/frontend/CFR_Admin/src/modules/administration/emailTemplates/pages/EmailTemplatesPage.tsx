@@ -15,8 +15,8 @@ import { Tooltip } from '@app/components/tooltips/Tooltip';
 // ref-forwarding one. The Body field is now the shared RichTextEditor (WYSIWYG, standard
 // bold/italic/lists/links/color/image/table toolbar) instead of a raw-HTML textarea.
 import { InputField as SubjectField } from '@app/components/form/TextField';
-import { getStoredAcutisAuth } from '@shared/auth/services/authService';
-import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
+import { getStoredAcutisAuth } from '@/modules/authentication/services/authService';
+import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeatureAccessLevel';
 import { confirmAction } from '../../../lib/confirm';
 import { getEmailSettings } from '../../emailSettings/services/emailSettingsService';
 import type { EmailSettingsApiItem } from '../../emailSettings/types/emailSettingsTypes';
