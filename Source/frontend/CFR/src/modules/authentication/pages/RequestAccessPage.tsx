@@ -171,22 +171,22 @@ const RequestAccessPage = () => {
             <form onSubmit={(event) => void submit(event)} className="request-access-form request-access-form--full request-access-form--compact">
               <AccessSection number="01" title="Contact & organization">
                 <div className="request-access-fields-grid">
-                  <Field icon={<UserIcon size={16} />} label="First Name" name="firstName" placeholder="Carl" autoComplete="given-name" required />
-                  <Field icon={<UserIcon size={16} />} label="Last Name" name="lastName" placeholder="Lapp" autoComplete="family-name" required />
+                  <Field icon={<UserIcon size={16} />} label="First Name" name="firstName" placeholder="Carl" autoComplete="given-name" required maxLength={50} />
+                  <Field icon={<UserIcon size={16} />} label="Last Name" name="lastName" placeholder="Lapp" autoComplete="family-name" required maxLength={50} />
                   <SelectField label="Organization Type" name="organizationType" options={organizationTypes} placeholder="Select organization type" required />
-                  <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required />
-                  <Field icon={<MapPinIcon size={16} />} label="Address" name="address" placeholder="Street address" autoComplete="street-address" required />
-                  <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required />
-                  <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required />
-                  <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required />
+                  <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required maxLength={100} />
+                  <Field icon={<MapPinIcon size={16} />} label="Address" name="address" placeholder="Street address" autoComplete="street-address" required maxLength={300} />
+                  <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required maxLength={100} />
+                  <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required maxLength={50} />
+                  <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required maxLength={10} />
                   <SelectField
                     label="Diocese"
                     name="dioceseId"
                     options={dioceses.map((d) => ({ value: String(d.dioceseId), label: d.dioceseName }))}
                     placeholder="Select diocese (optional)"
                   />
-                  <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required />
-                  <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" />
+                  <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required maxLength={256} />
+                  <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" maxLength={30} />
                 </div>
               </AccessSection>
 
