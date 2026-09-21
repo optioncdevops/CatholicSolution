@@ -11,7 +11,7 @@ import { CommonButton } from '@app/components/buttons';
 import { DatePicker, Dropdown, InputField, MandatoryIndicator, RadioGroup } from '@app/components/formControls';
 import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { getUserById, getUserLookups, saveUser } from '../../services/usersService';
-import type { RoleLookupItem, UsersFormValues } from '../../types/usersTypes';
+import type { OrganizationLookupItem, RoleLookupItem, UsersFormValues } from '../../types/usersTypes';
 import { maxAllowedDateOfBirth, minAllowedDateOfBirth, toDateOnly, toSaveUserPayload } from '../../utils/usersHelpers';
 import { usersDefaultValues, usersRules } from '../../validator/UsersValidator';
 import { getStoredAcutisAuth } from '@shared/auth/services/authService';
@@ -33,6 +33,7 @@ const AddUsers = () => {
   //#region States
   const [saving, setSaving] = useState(false);
   const [roles, setRoles] = useState<RoleLookupItem[]>([]);
+  const [organizations, setOrganizations] = useState<OrganizationLookupItem[]>([]);
   //#endregion
 
   //#region Form

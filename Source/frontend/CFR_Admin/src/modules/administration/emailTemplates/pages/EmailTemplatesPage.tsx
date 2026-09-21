@@ -447,9 +447,9 @@ function EmailTemplatesPage() {
                     error={subjectError ?? undefined}
                     disabled={isReadOnly}
                   />
-                  <div className="mt-1 flex justify-end">
+                  {/* <div className="mt-1 flex justify-end">
                     <CharacterCount id="txtEmailTemplateSubject-counter" length={draft.subject.length} maxLength={SUBJECT_MAX_LENGTH} />
-                  </div>
+                  </div> */}
                   {template.templateCode === LINK_EXPIRY_TEMPLATE_CODE ? (
                     <div className="mt-3">
                       <SubjectField

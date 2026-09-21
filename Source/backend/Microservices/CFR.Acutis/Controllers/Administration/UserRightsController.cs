@@ -7,6 +7,7 @@ namespace CFR.Acutis.Controllers.Administration
     /// API controller for specifically managing individual User Rights and environment-based menu visibility.
     /// Handles granular access control for users.
     /// </summary>
+    [Authorize]
     [ApiExplorerSettings(GroupName = SwaggerModuleDoc.CFRAcutisAdministration)]
     public class UserRightsController(IUserRightsService service) : BaseController
     {

@@ -49,6 +49,7 @@ export const toSaveUserPayload = (values: UsersFormValues, userId = 0) => ({
   lastName: values.lastName.trim(),
   eMail: values.eMail.trim(),
   password: values.password,
+  organizationId: values.organizationId ? Number(values.organizationId) : null,
   roleId: Number(values.roleId),
   isActive: Number(values.isActive) === 0 ? 0 : 1,
   isLocked: Number(values.isLocked) === 1 ? 1 : 0,
