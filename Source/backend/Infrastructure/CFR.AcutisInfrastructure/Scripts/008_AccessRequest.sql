@@ -639,7 +639,7 @@ BEGIN
             BEGIN
                 -- Resolve the member's identity fields from their existing membership row for
                 --    this org, if any. [UserId]/[RoleId] on [auth].[UserProduct] are product-side
-                --    values supplied by the individual product system (see the CFR.Sync upsert in
+                --    values supplied by the individual product system (see the CFR.DataSync upsert in
                 --    006_Sync_StoredProcedures.sql) — CFR has no value of its own to invent for a
                 --    member who has never been assigned a product here before, so @MemberUserId
                 --    stays NULL for a brand-new member+org (e.g. a public Request Access submission
@@ -657,7 +657,7 @@ BEGIN
                 --    when the previous step actually found an existing membership row to clone identity from.
                 --    Without @MemberUserId (product-side UserId is NOT NULL on this table), there is
                 --    nothing valid to insert here yet; the row is created later by the normal
-                --    CFR.Sync upsert once the product system (e.g. OptionC via the SMS org-setup
+                --    CFR.DataSync upsert once the product system (e.g. OptionC via the SMS org-setup
                 --    call) provisions the member and reports their product-side identity back.
                 SELECT TOP (1) @ExistingUserProductId = [CFRUserDetailId], @ExistingUserProductIsDeleted = ISNULL([IsDeleted], 0)
                 FROM [auth].[UserProduct]
