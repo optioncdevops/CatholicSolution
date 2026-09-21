@@ -176,7 +176,7 @@ const RequestAccessPage = () => {
                   <SelectField label="Organization Type" name="organizationType" options={organizationTypes} placeholder="Select organization type" required />
                   <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required maxLength={100} />
                   <Field icon={<MapPinIcon size={16} />} label="Address" name="address" placeholder="Street address" autoComplete="street-address" required maxLength={300} />
-                  <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required maxLength={100} />
+                  <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required maxLength={50} />
                   <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required maxLength={50} />
                   <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required maxLength={10} />
                   <SelectField
