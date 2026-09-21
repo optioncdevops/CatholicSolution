@@ -31,7 +31,9 @@ namespace CFR.Portal
             services.AddControllers();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddTransient<IPortalJwtTokenGenerator, PortalJwtTokenGenerator>();
+            services.AddScoped<IAuth0UserInfoClient, Auth0UserInfoClient>();
             services.AddScoped<IDapperHandler, DapperHandler>();
+            services.AddHttpClient();
 
             services.AddScoped<IPortalAuthenticationService, PortalAuthenticationService>();
             services.AddScoped<IPortalAuthenticationRepository, PortalAuthenticationRepository>();

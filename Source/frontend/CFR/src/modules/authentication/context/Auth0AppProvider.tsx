@@ -16,6 +16,12 @@ export function Auth0AppProvider({ children }: PropsWithChildren) {
     <Auth0Provider
       domain={domain}
       clientId={clientId}
+      // localstorage (not the default 'memory') so a freshly-loaded page - e.g.
+      // the app-switcher widget's hidden session-check iframe - can read the
+      // cached session via the SDK's own cache-only API. Tradeoff: the token is
+      // then readable by any script on this page (more XSS-exposed than
+      // memory-only caching) - accepted deliberately for the app switcher.
+      cacheLocation="localstorage"
       authorizationParams={{
         redirect_uri: `${origin}${AUTH0_CALLBACK_PATH}`,
       }}

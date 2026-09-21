@@ -100,6 +100,7 @@ namespace CFR.CommonService
             public static class Authentication
             {
                 public const string LoginAuthentication = nameof(LoginAuthentication);
+                public const string ExchangeAuth0Token = nameof(ExchangeAuth0Token);
             }
 
             public static class CFRLaunch

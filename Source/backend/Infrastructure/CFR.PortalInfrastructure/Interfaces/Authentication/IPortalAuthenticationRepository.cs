@@ -27,5 +27,25 @@ namespace CFR.PortalInfrastructure.Interfaces.Authentication
         Task<PortalLoginUserResult?> AuthenticateAsync(PortalAuthenticationInput input);
 
         #endregion POST Methods
+
+        #region GET Methods
+
+        /// <summary>
+        /// Looks up a CFR member by email with no password check - used only after the
+        /// caller (Auth0) has already verified the user's identity out of band.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Resolve a CFR member for federated (Auth0) sign-in.
+        /// Request Flow: IPortalAuthenticationService -> PortalAuthenticationRepository.GetByEmailAsync() -> SQL Database.
+        /// Validation Details: Email is matched case-insensitively.
+        /// Business Logic: No credential check - the caller is responsible for having already authenticated the user.
+        /// Repository Interaction: Executes StoredProc.PortalAuth.GetUserByEmail.
+        /// Response Details: Returns a PortalLoginUserResult or null.
+        /// </remarks>
+        /// <param name="email">Email address to look up.</param>
+        /// <returns>The matching member, or null when no account exists for that email.</returns>
+        Task<PortalLoginUserResult?> GetByEmailAsync(string email);
+
+        #endregion GET Methods
     }
 }

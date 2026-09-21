@@ -28,6 +28,24 @@ namespace CFR.PortalService.Interfaces.Authentication
         /// <returns>MSResultArgs containing the login result.</returns>
         Task<MSResultArgs> LoginAuthenticationAsync(PortalAuthenticationInput request);
 
+        /// <summary>
+        /// Exchanges a verified Auth0 access token for a CFR Portal session JWT.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let a CFR frontend already authenticated via Auth0 obtain a Portal
+        /// JWT that CFR.Portal's own [Authorize] endpoints will actually accept - the
+        /// raw Auth0 token is signed with Auth0's key, not CFR's, and is never accepted
+        /// directly.
+        /// Request Flow: PortalLoginController -> IPortalAuthenticationService.ExchangeAuth0TokenAsync() -> IAuth0UserInfoClient -> IPortalAuthenticationRepository.GetByEmailAsync().
+        /// Validation Details: AccessToken is required; the resolved email must match an existing CFR member.
+        /// Business Logic: Verifies the token via Auth0's /userinfo, then issues a CFR-signed session JWT for the matching member.
+        /// Repository Interaction: Calls IPortalAuthenticationRepository.GetByEmailAsync().
+        /// Response Details: MSResultArgs containing PortalLoginQueryResult, or UnAuthorized when the token is invalid or no matching member exists.
+        /// </remarks>
+        /// <param name="request">Exchange request containing the Auth0 access token.</param>
+        /// <returns>MSResultArgs containing the login result.</returns>
+        Task<MSResultArgs> ExchangeAuth0TokenAsync(Auth0ExchangeInput request);
+
         #endregion POST Methods
     }
 }
