@@ -4,7 +4,7 @@ import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { CommonButton } from '@app/components/buttons';
 import { Badge } from '@app/components/Badge';
 import { BaseModal } from '@app/components/modal/BaseModal';
-import { CharacterCount, InputField, TextareaField } from '@app/components/formControls';
+import { InputField, TextareaField } from '@app/components/formControls';
 import { FormFieldLabel } from '@app/components/formControls/FormFieldLabel';
 import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { saveUserRole } from '../../services/userRolesService';

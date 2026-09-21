@@ -10,6 +10,12 @@ BEGIN
 END
 GO
 
+IF COL_LENGTH(N'auth.AcutisUser', N'OrganizationId') IS NULL
+BEGIN
+    ALTER TABLE [auth].[AcutisUser] ADD [OrganizationId] INT NULL;
+END
+GO
+
 -- Uses dynamic SQL throughout: [UserId] no longer exists on auth.ModuleRights once this has run
 -- once, and SQL Server binds column names in a static DELETE/ALTER at parse time regardless of the
 -- surrounding IF COL_LENGTH guard — so a second run of this script (e.g. against an environment
@@ -111,6 +117,7 @@ CREATE PROCEDURE [dbo].[Acutis_Users]
     @LastName NVARCHAR(100) = NULL,
     @Email NVARCHAR(256) = NULL,
     @Password VARCHAR(50) = NULL,
+    @OrganizationId INT = NULL,
     @RoleId INT = NULL,
     @IsActive INT = NULL,
     @IsLocked INT = NULL,
@@ -125,6 +132,7 @@ BEGIN
     SET @ReturnValue = 0;
     SET @InsertedBy = NULLIF(@InsertedBy, 0);
     SET @UpdatedBy = NULLIF(@UpdatedBy, 0);
+    SET @OrganizationId = NULLIF(@OrganizationId, 0);
 
     IF @ActionId = 1
     BEGIN
@@ -144,7 +152,7 @@ BEGIN
             INSERT INTO [auth].[AcutisUser]
             (
                 [RoleId], [Email], [Password], [FirstName], [LastName],
-                [DateOfBirth], [ContactNumber], [IsActive], [IsLocked], [CreatedDate], [InsertedBy], [IsDeleted]
+                [DateOfBirth], [ContactNumber], [OrganizationId], [IsActive], [IsLocked], [CreatedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
@@ -155,6 +163,7 @@ BEGIN
                 @LastName,
                 @DateOfBirth,
                 @ContactNumber,
+                @OrganizationId,
                 CASE WHEN @IsActive = 0 THEN 0 ELSE 1 END,
                 CASE WHEN @IsLocked = 1 THEN 1 ELSE 0 END,
                 SYSUTCDATETIME(),
@@ -218,6 +227,7 @@ BEGIN
             [RoleId] = @RoleId,
             [DateOfBirth] = @DateOfBirth,
             [ContactNumber] = @ContactNumber,
+            [OrganizationId] = @OrganizationId,
             [IsActive] = CASE WHEN @IsActive = 0 THEN 0 ELSE 1 END,
             [IsLocked] = CASE WHEN @IsLocked = 1 THEN 1 ELSE 0 END,
             [UpdatedDate] = SYSUTCDATETIME(),
@@ -278,8 +288,8 @@ BEGIN
             ISNULL(u.[LastName], N'') AS [LastName],
             LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) AS [FullName],
             u.[Email] AS [EMail],
-            CAST(0 AS INT) AS [OrganizationId],
-            CAST(N'' AS NVARCHAR(200)) AS [OrganizationName],
+            ISNULL(u.[OrganizationId], 0) AS [OrganizationId],
+            ISNULL(o.[OrgName], N'') AS [OrganizationName],
             u.[RoleId],
             r.[RoleName],
             CAST(u.[IsActive] AS INT) AS [IsActive],
@@ -290,6 +300,7 @@ BEGIN
             u.[LastLogin] AS [LastActiveAt]
         FROM [auth].[AcutisUser] AS u
         INNER JOIN [auth].[AcutisRole] AS r ON r.[RoleId] = u.[RoleId]
+        LEFT JOIN [core].[Organization] AS o ON o.[ID] = u.[OrganizationId] AND o.[IsDeleted] = 0
         WHERE u.[UserId] = @UserId
           AND u.[IsDeleted] = 0;
         RETURN 0;
@@ -303,8 +314,8 @@ BEGIN
             ISNULL(u.[LastName], N'') AS [LastName],
             LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) AS [FullName],
             u.[Email] AS [EMail],
-            CAST(0 AS INT) AS [OrganizationId],
-            CAST(N'' AS NVARCHAR(200)) AS [OrganizationName],
+            ISNULL(u.[OrganizationId], 0) AS [OrganizationId],
+            ISNULL(o.[OrgName], N'') AS [OrganizationName],
             u.[RoleId],
             r.[RoleName],
             CAST(u.[IsActive] AS INT) AS [IsActive],
@@ -315,6 +326,7 @@ BEGIN
             u.[LastLogin] AS [LastActiveAt]
         FROM [auth].[AcutisUser] AS u
         INNER JOIN [auth].[AcutisRole] AS r ON r.[RoleId] = u.[RoleId]
+        LEFT JOIN [core].[Organization] AS o ON o.[ID] = u.[OrganizationId] AND o.[IsDeleted] = 0
         WHERE u.[IsDeleted] = 0
         ORDER BY u.[LastName], u.[FirstName], u.[UserId];
         RETURN 0;

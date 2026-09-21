@@ -74,9 +74,10 @@ const AddUsers = () => {
       try {
         const { resultData } = await getUserLookups();
         if (cancelled) return;
-        const lookups = (resultData ?? {}) as { roles?: RoleLookupItem[] };
+        const lookups = (resultData ?? {}) as { roles?: RoleLookupItem[]; organizations?: OrganizationLookupItem[] };
         const roleRows = lookups.roles ?? [];
         setRoles(roleRows);
+        setOrganizations(lookups.organizations ?? []);
 
         if (isEdit && userId) {
           const detail = await getUserById(userId);
@@ -85,6 +86,7 @@ const AddUsers = () => {
             firstName?: string;
             lastName?: string;
             eMail?: string;
+            organizationId?: number | null;
             roleId?: number;
             isActive?: number;
             isLocked?: number;
@@ -101,6 +103,7 @@ const AddUsers = () => {
             lastName: row.lastName ?? '',
             eMail: row.eMail ?? '',
             password: '',
+            organizationId: row.organizationId ? String(row.organizationId) : '',
             roleId: row.roleId ? String(row.roleId) : (roleRows[0] ? String(roleRows[0].roleId) : ''),
             isActive: Number(row.isActive) === 0 ? '0' : '1',
             isLocked: Number(row.isLocked) === 1 ? '1' : '0',
@@ -274,6 +277,17 @@ const AddUsers = () => {
             clearable={false}
             rules={usersRules.roleId}
             options={roles.map((role) => ({ id: String(role.roleId), value: role.roleName }))}
+            disabled={saving || isReadOnly}
+          />
+          <Dropdown
+            control={control}
+            name="organizationId"
+            label="Organization"
+            placeholder="Select organization"
+            searchable
+            clearable
+            rules={usersRules.organizationId}
+            options={organizations.map((org) => ({ id: String(org.organizationId), value: org.name }))}
             disabled={saving || isReadOnly}
           />
           <RadioGroup
