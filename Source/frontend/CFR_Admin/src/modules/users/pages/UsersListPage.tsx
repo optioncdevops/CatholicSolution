@@ -5,7 +5,7 @@ import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
+import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeatureAccessLevel';
 import { CommonButton, CommonIconButton } from '@app/components/buttons';
 import { StatusBadge, Badge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
@@ -15,7 +15,7 @@ import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { deleteUser, getUsers, updateUserStatus } from '../services/usersService';
 import type { UsersApiItem } from '../types/usersTypes';
 import { normalizeUsersList } from '../utils/usersHelpers';
-import { getStoredAcutisAuth } from '@shared/auth/services/authService';
+import { getStoredAcutisAuth } from '@/modules/authentication/services/authService';
 
 const ROLE_FILTER_PARAM = 'roleId';
 

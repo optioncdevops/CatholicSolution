@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import {
   Building2, ClipboardList, Mail, Package, Receipt, Settings, ShieldCheck, Sparkles, UserCog, Users,
 } from 'lucide-react';
-import type { AcutisMenuItem, AcutisSubMenuItem } from '../types/authTypes';
+import type { AcutisMenuItem, AcutisSubMenuItem } from '../types/authenticationTypes';
 
 const ICON_MAP: Record<string, ComponentType<{ size?: number }>> = {
   Sparkles,
@@ -65,14 +65,8 @@ export function toDropdownItems(links: AcutisSubMenuItem[] | undefined): Array<{
 
 /** Routes that are always reachable regardless of per-role rights — they aren't menu/rights
  * features in `auth.ModuleFeatures` at all (Dashboard is FeatureID 1 and always granted; Profile
- * has no feature row whatsoever). The dev-only component-library sample pages (production-
- * readiness H2) are only ever registered in a `development`-mode build (see App.tsx) — this
- * exception is scoped to `import.meta.env.DEV` too, so a hosted build never carries an ungated
- * route prefix that doesn't even exist in its own route table. */
-const UNGATED_ROUTE_PREFIXES = [
-  '/admin/profile',
-  ...(import.meta.env.DEV ? ['/admin/administration/component-library'] : []),
-];
+ * has no feature row whatsoever). */
+const UNGATED_ROUTE_PREFIXES = ['/admin/profile'];
 const UNGATED_ROUTES = new Set(['/admin']);
 
 function collectSubMenuPaths(items: AcutisSubMenuItem[] | undefined): string[] {

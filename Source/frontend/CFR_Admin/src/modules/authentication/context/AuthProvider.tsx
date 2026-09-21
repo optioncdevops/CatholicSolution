@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 import { environment } from '@shared/platform/config/environment';
-import { canRedirectToExternalIdentityProvider, clearPreviewSession, createPreviewSession } from './centralAuth';
-import { clearAcutisAuth, hasAcutisToken, loginAuthentication } from './services/authService';
+import { clearPreviewSession, createPreviewSession } from '../utils/centralAuth';
+import { clearAcutisAuth, hasAcutisToken, loginAuthentication } from '../services/authService';
 
 export interface SignInRequest {
   email: string;
@@ -29,23 +29,13 @@ function sessionSync() {
   return sessionChannel;
 }
 
-function redirectToIdentityProvider(request: SignInRequest) {
-  if (!canRedirectToExternalIdentityProvider() || typeof window === 'undefined') return false;
-  const authUrl = new URL('/login', environment.authOrigin);
-  authUrl.searchParams.set('client_id', request.clientId || environment.appId);
-  authUrl.searchParams.set('returnUrl', request.returnUrl || window.location.href);
-  if (request.provider && request.provider !== 'password') authUrl.searchParams.set('provider', request.provider);
-  window.location.assign(authUrl.toString());
-  return true;
-}
-
 export function AuthProvider({ children }: PropsWithChildren) {
   const [isAuthenticated, setAuthenticated] = useState(hasAcutisToken);
 
   useEffect(() => {
     const channel = sessionSync();
     const refreshSession = () => {
-      if (environment.authMode !== 'sso') setAuthenticated(hasAcutisToken());
+      setAuthenticated(hasAcutisToken());
     };
     const onSignal = (event: MessageEvent<SessionSignal>) => {
       if (event.data === 'signed-out') setAuthenticated(false);
@@ -66,9 +56,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(() => ({
     isAuthenticated,
     async signIn(request) {
-      if (environment.authMode === 'sso') {
-        return redirectToIdentityProvider(request) ? 'redirected' : 'unavailable';
-      }
       await loginAuthentication({
         userName: request.email,
         password: request.password ?? '',

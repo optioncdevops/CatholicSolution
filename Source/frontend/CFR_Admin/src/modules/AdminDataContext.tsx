@@ -1,7 +1,4 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import {
-  MOCK_ACTIVITY, MOCK_APPLICATIONS, MOCK_LICENSES, MOCK_ORGANIZATIONS, MOCK_REQUESTS, MOCK_ROLES, MOCK_USERS,
-} from './mockData';
 import type {
   AccessRequest, ActivityItem, AdminApplication, AdminRole, AdminUser, License, Organization,
   ProductStatus, RequestStatus, UserStatus,
@@ -51,13 +48,13 @@ interface AdminDataContextValue {
 const AdminDataContext = createContext<AdminDataContextValue | null>(null);
 
 export function AdminDataProvider({ children }: { children: ReactNode }) {
-  const [applications, setApplications] = useState<AdminApplication[]>(MOCK_APPLICATIONS);
-  const [organizations, setOrganizations] = useState<Organization[]>(MOCK_ORGANIZATIONS);
-  const [users, setUsers] = useState<AdminUser[]>(MOCK_USERS);
-  const [requests, setRequests] = useState<AccessRequest[]>(MOCK_REQUESTS);
-  const [activity, setActivity] = useState<ActivityItem[]>(MOCK_ACTIVITY);
-  const [roles, setRoles] = useState<AdminRole[]>(MOCK_ROLES);
-  const [licenses, setLicenses] = useState<License[]>(MOCK_LICENSES);
+  const [applications, setApplications] = useState<AdminApplication[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [requests, setRequests] = useState<AccessRequest[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
+  const [licenses, setLicenses] = useState<License[]>([]);
 
   const logActivity = (message: string, kind: ActivityItem['kind']) => {
     setActivity((current) => [

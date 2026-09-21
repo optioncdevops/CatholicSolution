@@ -3,18 +3,15 @@ import { useForm} from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { environment } from '@shared/platform/config/environment';
-import { AdminAuthShell } from './AdminAuthShell';
-import { AdminLoginCard } from './AdminLoginCard';
-import { useAuth } from './AuthProvider';
-import { toAbsoluteReturnUrl } from './centralAuth';
-import { EMAIL_PATTERN } from './validators';
+import { AdminAuthShell } from '../components/AdminAuthShell';
+import { AdminLoginCard } from '../components/AdminLoginCard';
+import { useAuth } from '../context/AuthProvider';
+import { toAbsoluteReturnUrl } from '../utils/centralAuth';
+import { EMAIL_PATTERN } from '../validator/AuthenticationValidator';
 
 function isAbsolute(value: string) {
   return /^https?:\/\//i.test(value);
 }
-
-const DEMO_EMAIL = 'priya.nair@cfracutis.org';
-const DEMO_PASSWORD = 'password';
 
 // Signing in always lands on the dashboard — never wherever the user happened to be
 // (or was deep-linked to) before their session expired or they hit /login directly.
@@ -51,8 +48,8 @@ export function CentralLoginPage() {
 
   const { register, handleSubmit, setFocus, formState: { errors } } = useForm<LoginFormValues>({
     defaultValues: {
-      email: import.meta.env.DEV ? DEMO_EMAIL : '',
-      password: import.meta.env.DEV ? DEMO_PASSWORD : '',
+      email: '',
+      password: '',
     },
     mode: 'onChange',
   });

@@ -27,8 +27,9 @@ export function SolutionHead({ solutionId = 'platform', pageTitle }: SolutionHea
 
     document.title = pageTitle ? `${pageTitle} | ${solution.title}` : solution.title;
     favicon.type = 'image/png';
-    const base = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '');
-    favicon.href = `${base}${solution.favicon}`;
+    // solution.favicon is a bundler-imported asset URL (see solutionRegistry.ts), already
+    // correctly resolved against the app's base path — no manual BASE_URL prefixing needed.
+    favicon.href = solution.favicon;
     if (themeMeta) themeMeta.content = solution.themeColor;
 
     return () => {

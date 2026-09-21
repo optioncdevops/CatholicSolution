@@ -4,9 +4,9 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { AlertTriangleIcon, ArrowLeftIcon, ArrowRightIcon, CheckIcon, LockIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { PasswordField } from '@shared/app/components/PasswordField';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { AdminAuthShell } from './AdminAuthShell';
-import { resetPassword, validateResetToken } from './services/authService';
-import { passwordScore, PASSWORD_STRENGTH_HINT } from './validators';
+import { AdminAuthShell } from '../components/AdminAuthShell';
+import { resetPassword, validateResetToken } from '../services/authService';
+import { passwordScore, PASSWORD_STRENGTH_HINT } from '../validator/AuthenticationValidator';
 
 interface ResetPasswordFormValues {
   password: string;

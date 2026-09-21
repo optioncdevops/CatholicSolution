@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
-import { ACUTIS_AUTH_CHANGED_EVENT } from '@shared/auth/constants/storageKeys';
-import { getRoleName, getStoredAcutisAuth } from '@shared/auth/services/authService';
+import { ACUTIS_AUTH_CHANGED_EVENT } from '@/modules/authentication/utils/storageKeys';
+import { getRoleName, getStoredAcutisAuth } from '@/modules/authentication/services/authService';
 
 export interface CurrentUser {
   userId: number;
@@ -21,19 +21,6 @@ interface UserContextValue {
   firstName: string;
 }
 
-const DEFAULT_USER: CurrentUser = {
-  userId: 0,
-  firstName: 'Carl',
-  lastName: 'Lapp',
-  name: 'Carl Lapp',
-  email: 'carl.lapp@optionc.com',
-  roleId: 0,
-  roleName: '',
-  profileImageUrl: null,
-  status: '',
-  lastActiveAt: null,
-};
-
 function buildUser(fields: {
   userId: number;
   firstName: string;
@@ -45,13 +32,12 @@ function buildUser(fields: {
   lastActiveAt: string | null;
   roleName?: string;
 }): CurrentUser {
-  const name = `${fields.firstName} ${fields.lastName}`.trim();
   return {
     userId: fields.userId,
     firstName: fields.firstName,
     lastName: fields.lastName,
-    name: name || DEFAULT_USER.name,
-    email: fields.email || DEFAULT_USER.email,
+    name: `${fields.firstName} ${fields.lastName}`.trim(),
+    email: fields.email,
     roleId: fields.roleId,
     roleName: fields.roleName ?? '',
     profileImageUrl: fields.profileImageUrl,
@@ -60,13 +46,26 @@ function buildUser(fields: {
   };
 }
 
+const EMPTY_USER: CurrentUser = {
+  userId: 0,
+  firstName: '',
+  lastName: '',
+  name: '',
+  email: '',
+  roleId: 0,
+  roleName: '',
+  profileImageUrl: null,
+  status: '',
+  lastActiveAt: null,
+};
+
 // Reads from the stored Acutis JWT payload, kept fresh by authService.updateStoredAcutisUser
 // whenever the Profile page saves a real change — there is no separate client-side "draft"
 // of the user; the stored auth blob is the single source of truth. roleName is resolved
 // separately (see the effect below) since the JWT only carries roleId.
 function userFromAuth(): CurrentUser {
   const stored = getStoredAcutisAuth()?.resultData?.user;
-  if (!stored) return DEFAULT_USER;
+  if (!stored) return EMPTY_USER;
   return buildUser({
     userId: stored.userId ?? 0,
     firstName: stored.firstName ?? '',
@@ -82,7 +81,7 @@ function userFromAuth(): CurrentUser {
 const UserContext = createContext<UserContextValue | null>(null);
 
 function getInitials(name: string) {
-  return name.trim().split(/\s+/).filter(Boolean).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'CL';
+  return name.trim().split(/\s+/).filter(Boolean).map((word) => word[0]).slice(0, 2).join('').toUpperCase();
 }
 
 export function UserProvider({ children }: PropsWithChildren) {

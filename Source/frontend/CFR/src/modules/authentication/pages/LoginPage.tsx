@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { ArrowRightIcon, EyeIcon, EyeOffIcon, LockIcon, MailIcon } from '@shared/app/components/UiIcons';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
-import { environment } from '@shared/platform/config/environment';
 import { SOLUTION_REGISTRY } from '@shared/platform/config/solutionRegistry';
 import { AuthShell } from '../components/AuthShell';
 import { useAuth } from '../context/AuthProvider';
@@ -35,8 +34,8 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [interactiveSignInCompleted, setInteractiveSignInCompleted] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [email, setEmail] = useState(!isAuth0Login && environment.authMode === 'mock' ? 'carl.lapp@optionc.com' : '');
-  const [password, setPassword] = useState(!isAuth0Login && environment.authMode === 'mock' ? 'demo1234' : '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   //#endregion
 

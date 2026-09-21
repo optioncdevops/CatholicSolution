@@ -1,8 +1,6 @@
-import { getAppAuthConfig } from '@/modules/authentication/utils/appAuthConfig';
-import type { ConfiguredAuthMode, RuntimeEnvironment } from '@/modules/authentication/types/authenticationTypes';
+import type { RuntimeEnvironment } from '@/modules/authentication/types/authenticationTypes';
 
 export type AppEnvironment = RuntimeEnvironment;
-export type AuthMode = ConfiguredAuthMode;
 
 const APP_ENVIRONMENTS: readonly AppEnvironment[] = ['development', 'pilot', 'staging', 'live'];
 
@@ -15,28 +13,11 @@ function resolveAppEnvironment(): AppEnvironment {
 }
 
 const mode: AppEnvironment = resolveAppEnvironment();
-const authConfig = getAppAuthConfig(mode);
-
-/**
- * Authentication strategy is centralized with the domain matrix in appAuthConfig.
- * Product env files never carry auth/domain routing switches, so every hosted build
- * follows the same contract and a future IdP cutover remains a one-file change.
- */
-const authMode: AuthMode = authConfig.authMode;
 
 export const environment = {
   mode,
   deploymentTarget: mode,
   appId: 'platform',
   basePath: '/',
-  domainRouting: true,
-  authMode,
-  loginOrigin: authConfig.loginOrigin,
-  authOrigin: authConfig.authOrigin,
-  sessionCookieDomain: authConfig.sessionCookieDomain,
-  origins: authConfig.origins,
+  sessionCookieDomain: undefined as string | undefined,
 } as const;
-
-export function isConfiguredOrigin(value: string) {
-  return Boolean(value?.trim());
-}

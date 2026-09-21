@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ACUTIS_AUTH_CHANGED_EVENT } from '../constants/storageKeys';
+import { ACUTIS_AUTH_CHANGED_EVENT } from '../utils/storageKeys';
 import { getStoredAcutisAuth } from '../services/authService';
 import { normalizeMenuPath } from '../utils/menuHelpers';
-import type { AcutisModuleRight } from '../types/authTypes';
+import type { AcutisModuleRight } from '../types/authenticationTypes';
 
 export type FeatureAccessLevel = 'access' | 'readOnly' | 'denied';
 

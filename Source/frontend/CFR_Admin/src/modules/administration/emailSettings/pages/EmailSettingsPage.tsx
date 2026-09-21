@@ -3,7 +3,7 @@ import { PlugZap, RotateCcw, Save } from 'lucide-react';
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
+import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeatureAccessLevel';
 import { CommonButton } from '@app/components/buttons';
 import { CommonSwitch, InputField, MandatoryIndicator, ProfileImageUpload } from '@app/components/formControls';
 import { confirmAction } from '../../../lib/confirm';

@@ -5,7 +5,7 @@ import { BaseModal } from '@app/components/modal/BaseModal';
 import { TextareaField } from '@app/components/formControls';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
+import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeatureAccessLevel';
 import { getAccessRequestById, updateAccessRequestStatus } from '../../services/requestsService';
 import type { AccessRequestApiItem, AccessRequestReviewFormValues, RequestStatus } from '../../types/requestsTypes';
 import { normalizeAccessRequest } from '../../utils/requestsHelpers';
