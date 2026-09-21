@@ -12,11 +12,17 @@ export const resetPasswordDefaultValues: ResetPasswordFormValues = {
   confirmPassword: '',
 };
 
+export type LoginFieldErrors = { email?: string; password?: string };
+
+export function validateLoginFields(email: string, password: string): LoginFieldErrors {
+  const errors: LoginFieldErrors = {};
+  if (!email.trim()) errors.email = 'Email address is required.';
+  if (!password) errors.password = 'Password is required.';
+  return errors;
+}
+
 export function validateLoginCredentials(email: string, password: string): string[] {
-  const messages: string[] = [];
-  if (!email.trim()) messages.push('Email address is required.');
-  if (!password) messages.push('Password is required.');
-  return messages;
+  return Object.values(validateLoginFields(email, password));
 }
 
 export function passwordScore(value: string) {

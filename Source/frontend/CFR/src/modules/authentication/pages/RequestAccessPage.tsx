@@ -19,8 +19,8 @@ import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { getProducts } from '@/modules/products/services/productsService';
 import { productsFromApiResponse } from '@/modules/products/utils/productsHelpers';
 import { getDioceses, saveAccessRequest } from '@/modules/requests/services/accessRequestService';
-import { toPublicAccessRequestPayload } from '@/modules/requests/utils/accessRequestHelpers';
-import { validatePublicAccessRequest } from '@/modules/requests/validator/AccessRequestValidator';
+import { formatUsPhoneNumber, toPublicAccessRequestPayload } from '@/modules/requests/utils/accessRequestHelpers';
+import { validatePublicAccessRequestFields, type PublicAccessRequestFieldErrors } from '@/modules/requests/validator/AccessRequestValidator';
 import type { CatalogApp } from '@shared/app/types/app';
 import { AccessSection, Field, RequestSuccess, SelectField } from './partials/RequestAccessFields';
 import type { DioceseOption } from '@/modules/requests/types/accessRequestTypes';
@@ -46,6 +46,7 @@ const RequestAccessPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedInterests, setSelectedInterests] = useState<string[]>(initialInterest ? [initialInterest] : []);
   const [reference, setReference] = useState(`CS-${new Date().getFullYear()}-REQ`);
+  const [fieldErrors, setFieldErrors] = useState<PublicAccessRequestFieldErrors>({});
   //#endregion
 
   //#region Effects
@@ -92,9 +93,16 @@ const RequestAccessPage = () => {
   //#endregion
 
   //#region Handlers
-  const toggleInterest = (id: string) => setSelectedInterests((current) => (
-    current.includes(id) ? current.filter((value) => value !== id) : [...current, id]
-  ));
+  const toggleInterest = (id: string) => {
+    setSelectedInterests((current) => (
+      current.includes(id) ? current.filter((value) => value !== id) : [...current, id]
+    ));
+    if (fieldErrors.interests) setFieldErrors((current) => ({ ...current, interests: undefined }));
+  };
+
+  const clearFieldError = (name: keyof PublicAccessRequestFieldErrors) => {
+    setFieldErrors((current) => (current[name] ? { ...current, [name]: undefined } : current));
+  };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -115,9 +123,12 @@ const RequestAccessPage = () => {
       phone: readFormValue(form, 'phone'),
       notes: readFormValue(form, 'notes'),
     };
-    const messages = validatePublicAccessRequest(values, selectedInterests.length);
+    const consentGiven = new FormData(form).get('consent') === 'on';
+    const errors = validatePublicAccessRequestFields(values, selectedInterests.length, consentGiven);
+    setFieldErrors(errors);
+    const messages = Object.values(errors).filter((message): message is string => Boolean(message));
     if (messages.length) {
-      showToast(messages[0]);
+      showToast(messages, 'error');
       return;
     }
 
@@ -142,7 +153,7 @@ const RequestAccessPage = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       console.error('Error submitting access request:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to submit access request.');
+      showToast(typeof error === 'string' ? error : 'Failed to submit access request.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -168,25 +179,25 @@ const RequestAccessPage = () => {
               <span className="request-access-trust-badge"><ShieldCheckIcon size={16} /> Secure request</span>
             </div>
 
-            <form onSubmit={(event) => void submit(event)} className="request-access-form request-access-form--full request-access-form--compact">
+            <form onSubmit={(event) => void submit(event)} noValidate className="request-access-form request-access-form--full request-access-form--compact">
               <AccessSection number="01" title="Contact & organization">
                 <div className="request-access-fields-grid">
-                  <Field icon={<UserIcon size={16} />} label="First Name" name="firstName" placeholder="Carl" autoComplete="given-name" required maxLength={50} />
-                  <Field icon={<UserIcon size={16} />} label="Last Name" name="lastName" placeholder="Lapp" autoComplete="family-name" required maxLength={50} />
-                  <SelectField label="Organization Type" name="organizationType" options={organizationTypes} placeholder="Select organization type" required />
-                  <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required maxLength={100} />
-                  <Field icon={<MapPinIcon size={16} />} label="Address" name="address" placeholder="Street address" autoComplete="street-address" required maxLength={300} />
-                  <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required maxLength={50} />
-                  <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required maxLength={50} />
-                  <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required maxLength={10} />
+                  <Field icon={<UserIcon size={16} />} label="First Name" name="firstName" placeholder="Carl" autoComplete="given-name" required maxLength={50} error={fieldErrors.firstName} onErrorClear={() => clearFieldError('firstName')} />
+                  <Field icon={<UserIcon size={16} />} label="Last Name" name="lastName" placeholder="Lapp" autoComplete="family-name" required maxLength={50} error={fieldErrors.lastName} onErrorClear={() => clearFieldError('lastName')} />
+                  <SelectField label="Organization Type" name="organizationType" options={organizationTypes} placeholder="Select organization type" required error={fieldErrors.organizationType} onErrorClear={() => clearFieldError('organizationType')} />
+                  <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required maxLength={100} error={fieldErrors.organizationName} onErrorClear={() => clearFieldError('organizationName')} />
+                  <Field icon={<MapPinIcon size={16} />} label="Address" name="address" placeholder="Street address" autoComplete="street-address" required maxLength={300} error={fieldErrors.address} onErrorClear={() => clearFieldError('address')} />
+                  <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required maxLength={50} error={fieldErrors.city} onErrorClear={() => clearFieldError('city')} />
+                  <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required maxLength={50} error={fieldErrors.state} onErrorClear={() => clearFieldError('state')} />
+                  <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required maxLength={10} error={fieldErrors.zip} onErrorClear={() => clearFieldError('zip')} />
                   <SelectField
                     label="Diocese"
                     name="dioceseId"
                     options={dioceses.map((d) => ({ value: String(d.dioceseId), label: d.dioceseName }))}
                     placeholder="Select diocese (optional)"
                   />
-                  <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required maxLength={256} />
-                  <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" maxLength={30} />
+                  <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required maxLength={256} error={fieldErrors.email} onErrorClear={() => clearFieldError('email')} />
+                  <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" required maxLength={14} inputMode="numeric" format={formatUsPhoneNumber} error={fieldErrors.phone} onErrorClear={() => clearFieldError('phone')} />
                 </div>
               </AccessSection>
 
@@ -194,19 +205,22 @@ const RequestAccessPage = () => {
                 {requestableApps.length === 0 ? (
                   <EmptyState icon="📦" title="No applications available to request" description="Every application is either already assigned or not yet open for requests. Check back soon." />
                 ) : (
-                  <div className="access-product-grid request-access-products request-access-products--full">
-                    {requestableApps.map((app) => {
-                      const selected = selectedInterests.includes(app.id);
-                      return (
-                        <label key={app.id} className={`access-product ${selected ? 'access-product--selected' : ''}`}>
-                          <input type="checkbox" className="sr-only" checked={selected} onChange={() => toggleInterest(app.id)} />
-                          <span className="access-product__icon" style={{ background: app.gradient }}>{app.icon}</span>
-                          <span className="access-product__copy"><strong>{app.name}</strong><small>{app.category}</small></span>
-                          <span className="access-product__check">{selected ? <CheckIcon size={14} /> : null}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
+                  <>
+                    <div className="access-product-grid request-access-products request-access-products--full">
+                      {requestableApps.map((app) => {
+                        const selected = selectedInterests.includes(app.id);
+                        return (
+                          <label key={app.id} className={`access-product ${selected ? 'access-product--selected' : ''}`}>
+                            <input type="checkbox" className="sr-only" checked={selected} onChange={() => toggleInterest(app.id)} />
+                            <span className="access-product__icon" style={{ background: app.gradient }}>{app.icon}</span>
+                            <span className="access-product__copy"><strong>{app.name}</strong><small>{app.category}</small></span>
+                            <span className="access-product__check">{selected ? <CheckIcon size={14} /> : null}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {fieldErrors.interests ? <p className="auth-field-error">{fieldErrors.interests}</p> : null}
+                  </>
                 )}
               </AccessSection>
 
@@ -231,9 +245,17 @@ const RequestAccessPage = () => {
                   </aside>
                 </div>
                 <label className="auth-consent request-access-consent">
-                  <input type="checkbox" required />
+                  <input
+                    type="checkbox"
+                    name="consent"
+                    required
+                    aria-invalid={Boolean(fieldErrors.consent)}
+                    aria-describedby={fieldErrors.consent ? 'consent-error' : undefined}
+                    onChange={() => clearFieldError('consent')}
+                  />
                   <span>I confirm the information above is accurate and may be used to respond to this access request. <b>*</b></span>
                 </label>
+                {fieldErrors.consent ? <p id="consent-error" className="auth-field-error">{fieldErrors.consent}</p> : null}
               </AccessSection>
 
               <div className="request-access-form__footer request-access-form__footer--full">
