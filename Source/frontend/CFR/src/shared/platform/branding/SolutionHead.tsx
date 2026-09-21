@@ -26,7 +26,7 @@ export function SolutionHead({ solutionId = 'platform', pageTitle }: SolutionHea
     const previousIcon = favicon.href;
 
     document.title = pageTitle ? `${pageTitle} | ${solution.title}` : solution.title;
-    favicon.type = 'image/svg+xml';
+    favicon.type = 'image/png';
     const base = import.meta.env.BASE_URL === '/' ? '' : import.meta.env.BASE_URL.replace(/\/$/, '');
     favicon.href = `${base}${solution.favicon}`;
     if (themeMeta) themeMeta.content = solution.themeColor;
