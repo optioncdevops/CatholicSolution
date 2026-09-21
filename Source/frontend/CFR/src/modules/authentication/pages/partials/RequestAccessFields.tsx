@@ -38,15 +38,16 @@ interface FieldProps {
   autoComplete?: string;
   required?: boolean;
   icon?: ReactNode;
+  maxLength?: number;
 }
 
-export function Field({ label, name, type = 'text', placeholder, autoComplete, required, icon }: FieldProps) {
+export function Field({ label, name, type = 'text', placeholder, autoComplete, required, icon, maxLength }: FieldProps) {
   return (
     <div>
       <label className="auth-label" htmlFor={name}>{label}{required && <span className="ml-1 text-rose-600">*</span>}</label>
       <div className="auth-input-wrap mt-2">
         {icon ? <span className="auth-input-icon">{icon}</span> : null}
-        <input id={name} name={name} type={type} placeholder={placeholder} autoComplete={autoComplete} required={required} className={`auth-input ${icon ? '' : 'auth-input--plain'}`} />
+        <input id={name} name={name} type={type} placeholder={placeholder} autoComplete={autoComplete} required={required} maxLength={maxLength} className={`auth-input ${icon ? '' : 'auth-input--plain'}`} />
       </div>
     </div>
   );
