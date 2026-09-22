@@ -13,10 +13,6 @@
       {
         "Path": "Microservices\\CFR.Portal\\CFR.Portal.csproj",
         "Action": "Start"
-      },
-      {
-        "Path": "Microservices\\CFR.Sync\\CFR.Sync.csproj",
-        "Action": "Start"
       }
     ]
   }
