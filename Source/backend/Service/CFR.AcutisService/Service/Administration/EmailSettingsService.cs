@@ -38,6 +38,7 @@ namespace CFR.AcutisService.Service.Administration
             ApiBaseUrl = smtp?.ApiBaseUrl,
             LastUpdatedByName = smtp?.LastUpdatedByName,
             LastUpdatedDate = smtp?.LastUpdatedDate,
+            ProductRequestNotifyUserId = smtp?.ProductRequestNotifyUserId,
         };
 
         #region GET Methods
@@ -230,6 +231,45 @@ namespace CFR.AcutisService.Service.Administration
                 string actingUserName = $"{currentUserService.FirstName} {currentUserService.LastName}".Trim();
                 smtp.LastUpdatedByName = string.IsNullOrWhiteSpace(actingUserName) ? currentUserService.UserName : actingUserName;
                 smtp.LastUpdatedDate = DateTime.UtcNow;
+
+                settings.SMTPMailConfig = smtp;
+                confSettingsService.SaveData(settings);
+
+                result.StatusMessage = ErrorMessages.Success;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.SaveEmailSettingsFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return Task.FromResult(result);
+        }
+
+        /// <summary>
+        /// Sets which Acutis user receives "new product suggestion" notification emails.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let an admin pick the recipient from the CFR Settings page's Acutis User dropdown, without touching any SMTP/branding field.
+        /// Request Flow: EmailSettingsController -> EmailSettingsService.SaveProductRequestNotifyUserAsync() -> IConfSettingsService.SaveData().
+        /// Validation Details: None — a null value clears the setting.
+        /// Business Logic: Loads the currently saved settings, updates only SMTPMailConfig.ProductRequestNotifyUserId, then writes the file.
+        /// Repository Interaction: None — writes _configurationSettings.json via IConfSettingsService.
+        /// Response Details: MSResultArgs indicating success.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the Acutis user identifier to notify.</param>
+        /// <returns>MSResultArgs containing the save status.</returns>
+        public Task<MSResultArgs> SaveProductRequestNotifyUserAsync(ProductRequestNotifyUserInput input)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                var settings = confSettingsService.LoadData();
+                settings ??= new ConfSettings();
+                var smtp = settings.SMTPMailConfig ?? new SMTPMailConfig();
+
+                smtp.ProductRequestNotifyUserId = input?.ProductRequestNotifyUserId;
 
                 settings.SMTPMailConfig = smtp;
                 confSettingsService.SaveData(settings);

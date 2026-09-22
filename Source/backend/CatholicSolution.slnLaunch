@@ -15,7 +15,7 @@
         "Action": "Start"
       },
       {
-        "Path": "Microservices\\CFR.Sync\\CFR.Sync.csproj",
+        "Path": "Microservices\\CFR.DataSync\\CFR.DataSync.csproj",
         "Action": "Start"
       }
     ]

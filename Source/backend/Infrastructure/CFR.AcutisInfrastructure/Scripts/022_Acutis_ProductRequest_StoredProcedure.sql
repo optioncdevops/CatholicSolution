@@ -1,17 +1,6 @@
 -- Copyright (c) OptionC. All rights reserved.
--- "Suggest a product" public request/approval workflow. A visitor on the CFR site submits a
--- proposed product (no login required); it lands here as a pending row, NOT in [core].[Product].
--- An admin reviews pending rows and Approves or Rejects. Approving copies the request into the
--- real catalog: a new [core].[Product] row + its [core].[ProductFeature] rows, exactly mirroring
--- how 010_Acutis_Products.sql's ActionId 3 (Product PUT) writes features - soft-delete/reinsert of
--- normalized child rows, not a delimited string column.
---
--- Tables (schema [request], alongside [request].[AccessRequest*] from 008_AccessRequest.sql):
---   [request].[ProductRequest]             - header: one row per submitted suggestion
---   [request].[ProductRequestFeature]      - child: normalized feature list for a request
---   [request].[ProductRequestStatusHistory] - audit trail of status changes (submitted/approved/rejected)
---
--- RequestStatus / StatusValue enum: 1 = pending, 2 = approved, 3 = rejected.
+-- "Suggest a product" public request/approval workflow - STORED PROCEDURE ONLY.
+-- Requires 021_Acutis_ProductRequest_Tables.sql to have already been run.
 --
 -- Stored procedure [dbo].[Acutis_ProductRequest] ActionId map:
 --   ActionId 1: Insert a new product request (public submit, no @InsertedBy - anonymous)
@@ -20,106 +9,15 @@
 --   ActionId 4: Approve - transaction: insert into [core].[Product] + [core].[ProductFeature],
 --               mark the request approved, link it to the new ProductId
 --   ActionId 5: Reject - mark the request rejected with a reason, no catalog changes
---   ActionId 6: GET notification recipients - who to email when a request comes in. Placeholder
---               fallback to the 'Platform Admin' role (same fallback 008_AccessRequest.sql's
---               ActionId 5 uses for products with no contact set) until the real recipient(s) are
---               decided - swap the WHERE clause once that's confirmed.
+--   ActionId 6: GET notification recipients - who to email when a request comes in. Prefers the
+--               specific @NotifyUserId configured on the CFR Settings page (Email Settings'
+--               ProductRequestNotifyUserId, resolved by the caller) when it resolves to an active
+--               user; otherwise falls back to every active 'Platform Admin' role user (same
+--               fallback 008_AccessRequest.sql's ActionId 5 uses for products with no contact set).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
----------------------------------------------------------------------------
--- Tables (idempotent - create only if missing)
----------------------------------------------------------------------------
-IF OBJECT_ID(N'[request].[ProductRequest]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [request].[ProductRequest]
-    (
-        [ProductRequestId]  INT IDENTITY(1,1) NOT NULL,
-
-        -- Proposed product fields (same shape as [core].[Product])
-        [ProductName]       NVARCHAR(200) NOT NULL,
-        [ShortName]         NVARCHAR(100) NULL,
-        [SubCategoryName]   NVARCHAR(200) NULL,
-        [ProdDescription]   NVARCHAR(MAX) NOT NULL,
-        [ExternalPageUrl]   NVARCHAR(500) NULL,
-        [NavigationTarget]  NVARCHAR(50) NULL,
-
-        -- Who submitted it (public form - no login, so no CFRUserId to stamp)
-        [RequesterName]     NVARCHAR(200) NOT NULL,
-        [RequesterEmail]    NVARCHAR(256) NOT NULL,
-        [OrganizationName]  NVARCHAR(200) NULL,
-
-        -- Review / approval
-        [RequestStatus]     INT NOT NULL DEFAULT (1), -- 1=pending, 2=approved, 3=rejected
-        [ReviewedBy]        BIGINT NULL,
-        [ReviewedDate]      DATETIME2 NULL,
-        [DecisionRemarks]   NVARCHAR(1000) NULL,
-        [ApprovedProductId] INT NULL, -- set to the new core.Product.ProductId once approved
-
-        -- Audit
-        [InsertedDate]      DATETIME2 NOT NULL DEFAULT (SYSUTCDATETIME()),
-        [InsertedBy]        BIGINT NULL,
-        [UpdatedDate]       DATETIME2 NULL,
-        [UpdatedBy]         BIGINT NULL,
-        [IsDeleted]         BIT NOT NULL DEFAULT (0),
-
-        CONSTRAINT [PK_ProductRequest]
-            PRIMARY KEY ([ProductRequestId]),
-
-        CONSTRAINT [FK_ProductRequest_Product]
-            FOREIGN KEY ([ApprovedProductId])
-            REFERENCES [core].[Product]([ProductId])
-    );
-END
-GO
-
-IF OBJECT_ID(N'[request].[ProductRequestFeature]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [request].[ProductRequestFeature]
-    (
-        [ProductRequestFeatureId] INT IDENTITY(1,1) NOT NULL,
-        [ProductRequestId]        INT NOT NULL,
-        [FeatureName]             NVARCHAR(200) NOT NULL,
-
-        [InsertedDate]            DATETIME2 NOT NULL DEFAULT (SYSUTCDATETIME()),
-        [IsDeleted]               BIT NOT NULL DEFAULT (0),
-
-        CONSTRAINT [PK_ProductRequestFeature]
-            PRIMARY KEY ([ProductRequestFeatureId]),
-
-        CONSTRAINT [FK_ProductRequestFeature_ProductRequest]
-            FOREIGN KEY ([ProductRequestId])
-            REFERENCES [request].[ProductRequest]([ProductRequestId])
-    );
-END
-GO
-
-IF OBJECT_ID(N'[request].[ProductRequestStatusHistory]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [request].[ProductRequestStatusHistory]
-    (
-        [StatusHistoryId]   INT IDENTITY(1,1) NOT NULL,
-        [ProductRequestId]  INT NOT NULL,
-        [StatusValue]       INT NOT NULL, -- 1=submitted, 2=approved, 3=rejected
-        [Remarks]           NVARCHAR(500) NULL,
-        [ChangedBy]         BIGINT NULL, -- NULL for the initial public submission
-
-        [InsertedDate]      DATETIME2 NOT NULL DEFAULT (SYSUTCDATETIME()),
-
-        CONSTRAINT [PK_ProductRequestStatusHistory]
-            PRIMARY KEY ([StatusHistoryId]),
-
-        CONSTRAINT [FK_ProductRequestStatusHistory_ProductRequest]
-            FOREIGN KEY ([ProductRequestId])
-            REFERENCES [request].[ProductRequest]([ProductRequestId])
-    );
-END
-GO
-
----------------------------------------------------------------------------
--- Stored procedure
----------------------------------------------------------------------------
 IF OBJECT_ID(N'[dbo].[Acutis_ProductRequest]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[Acutis_ProductRequest];
 GO
@@ -135,11 +33,13 @@ CREATE PROCEDURE [dbo].[Acutis_ProductRequest]
     @ExternalPageUrl NVARCHAR(500) = NULL,
     @NavigationTarget NVARCHAR(50) = NULL,
     @Features NVARCHAR(MAX) = NULL, -- pipe-delimited, same wire format as Acutis_Products
+    @LogoName NVARCHAR(500) = NULL, -- file name, already saved into Acutis/Attachment/Products
     @RequesterName NVARCHAR(200) = NULL,
     @RequesterEmail NVARCHAR(256) = NULL,
     @OrganizationName NVARCHAR(200) = NULL,
     @RequestStatus INT = NULL,
     @DecisionRemarks NVARCHAR(1000) = NULL,
+    @NotifyUserId BIGINT = NULL, -- ActionId 6 only: Email Settings' configured notification recipient
     -- Audit & output parameters
     @InsertedBy BIGINT = NULL,
     @UpdatedBy BIGINT = NULL,
@@ -155,6 +55,7 @@ BEGIN
     SET @SubCategoryName = NULLIF(LTRIM(RTRIM(@SubCategoryName)), N'');
     SET @ProdDescription = NULLIF(LTRIM(RTRIM(@ProdDescription)), N'');
     SET @ExternalPageUrl = NULLIF(LTRIM(RTRIM(@ExternalPageUrl)), N'');
+    SET @LogoName = NULLIF(LTRIM(RTRIM(@LogoName)), N'');
     SET @NavigationTarget = NULLIF(LTRIM(RTRIM(@NavigationTarget)), N'');
     SET @RequesterName = NULLIF(LTRIM(RTRIM(@RequesterName)), N'');
     SET @RequesterEmail = NULLIF(LTRIM(RTRIM(@RequesterEmail)), N'');
@@ -180,13 +81,13 @@ BEGIN
             INSERT INTO [request].[ProductRequest]
             (
                 [ProductName], [ShortName], [SubCategoryName], [ProdDescription], [ExternalPageUrl],
-                [NavigationTarget], [RequesterName], [RequesterEmail], [OrganizationName],
+                [NavigationTarget], [LogoName], [RequesterName], [RequesterEmail], [OrganizationName],
                 [RequestStatus], [InsertedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
                 @ProductName, @ShortName, @SubCategoryName, @ProdDescription, @ExternalPageUrl,
-                @NavigationTarget, @RequesterName, @RequesterEmail, @OrganizationName,
+                @NavigationTarget, @LogoName, @RequesterName, @RequesterEmail, @OrganizationName,
                 1, SYSUTCDATETIME(), @InsertedBy, 0
             );
 
@@ -239,6 +140,7 @@ BEGIN
             r.[ProdDescription],
             r.[ExternalPageUrl],
             r.[NavigationTarget],
+            r.[LogoName],
             r.[RequesterName],
             r.[RequesterEmail],
             r.[OrganizationName],
@@ -269,6 +171,7 @@ BEGIN
             r.[ProdDescription],
             r.[ExternalPageUrl],
             r.[NavigationTarget],
+            r.[LogoName],
             r.[RequesterName],
             r.[RequesterEmail],
             r.[OrganizationName],
@@ -304,6 +207,7 @@ BEGIN
         DECLARE @ApproveProdDescription NVARCHAR(MAX);
         DECLARE @ApproveExternalPageUrl NVARCHAR(500);
         DECLARE @ApproveNavigationTarget NVARCHAR(50);
+        DECLARE @ApproveLogoName NVARCHAR(500);
         DECLARE @NewProductId INT;
 
         SELECT
@@ -313,7 +217,8 @@ BEGIN
             @ApproveSubCategoryName = r.[SubCategoryName],
             @ApproveProdDescription = r.[ProdDescription],
             @ApproveExternalPageUrl = r.[ExternalPageUrl],
-            @ApproveNavigationTarget = r.[NavigationTarget]
+            @ApproveNavigationTarget = r.[NavigationTarget],
+            @ApproveLogoName = r.[LogoName]
         FROM [request].[ProductRequest] AS r
         WHERE r.[ProductRequestId] = @ProductRequestId
           AND r.[IsDeleted] = 0;
@@ -337,18 +242,23 @@ BEGIN
         BEGIN TRY
             BEGIN TRANSACTION;
 
+            -- [core].[Product].[ProductId] is NOT an identity column on the live database (this
+            -- table predates this repo and has never had an insert path before now - UpdateProduct
+            -- is the only prior write). UPDLOCK/HOLDLOCK serializes concurrent approvals so two
+            -- requests approved at the same instant can't compute the same next id.
+            SELECT @NewProductId = ISNULL(MAX([ProductId]), 0) + 1
+            FROM [core].[Product] WITH (UPDLOCK, HOLDLOCK);
+
             INSERT INTO [core].[Product]
             (
-                [ProductName], [ShortName], [SubCategoryName], [ProdDescription], [ExternalPageUrl],
-                [IsActive], [ProductStatus], [NavigationTarget], [CreatedDate], [InsertedBy], [IsDeleted]
+                [ProductId], [ProductName], [ShortName], [SubCategoryName], [ProdDescription], [ExternalPageUrl],
+                [LogoName], [IsActive], [ProductStatus], [NavigationTarget], [CreatedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
-                @ApproveProductName, @ApproveShortName, @ApproveSubCategoryName, @ApproveProdDescription,
-                @ApproveExternalPageUrl, 1, 1, @ApproveNavigationTarget, SYSUTCDATETIME(), @UpdatedBy, 0
+                @NewProductId, @ApproveProductName, @ApproveShortName, @ApproveSubCategoryName, @ApproveProdDescription,
+                @ApproveExternalPageUrl, @ApproveLogoName, 1, 1, @ApproveNavigationTarget, SYSUTCDATETIME(), @UpdatedBy, 0
             );
-
-            SET @NewProductId = SCOPE_IDENTITY();
 
             INSERT INTO [core].[ProductFeature]
             (
@@ -436,13 +346,32 @@ BEGIN
 
     ---------------------------------------------------------------------------
     -- ActionId 6: GET notification recipients for a new product request.
-    -- PLACEHOLDER: falls back to the 'Platform Admin' role, same as
-    -- 008_AccessRequest.sql's ActionId 5 fallback (there's no product/contact to check yet
-    -- since the product doesn't exist until approval) - swap this once the real recipient(s)
-    -- are decided.
+    -- Prefers @NotifyUserId (the CFR Settings page's configured recipient, resolved by the
+    -- caller from Email Settings' ProductRequestNotifyUserId) when it's an active user with an
+    -- email; otherwise falls back to every active 'Platform Admin' role user, same as
+    -- 008_AccessRequest.sql's ActionId 5 fallback.
     ---------------------------------------------------------------------------
     IF @ActionId = 6
     BEGIN
+        IF @NotifyUserId IS NOT NULL AND EXISTS (
+            SELECT 1 FROM [auth].[AcutisUser]
+            WHERE [UserId] = @NotifyUserId
+              AND [IsDeleted] = 0
+              AND [IsActive] = 1
+              AND [IsLocked] = 0
+              AND NULLIF(LTRIM(RTRIM([Email])), N'') IS NOT NULL
+        )
+        BEGIN
+            SELECT DISTINCT LTRIM(RTRIM(u.[Email])) AS [EMail]
+            FROM [auth].[AcutisUser] u
+            WHERE u.[UserId] = @NotifyUserId
+              AND u.[IsDeleted] = 0
+              AND u.[IsActive] = 1
+              AND u.[IsLocked] = 0;
+
+            RETURN 0;
+        END
+
         SELECT DISTINCT LTRIM(RTRIM(u.[Email])) AS [EMail]
         FROM [auth].[AcutisUser] u
         INNER JOIN [auth].[AcutisRole] r

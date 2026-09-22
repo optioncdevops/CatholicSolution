@@ -110,5 +110,28 @@ namespace CFR.PortalInfrastructure
             public const string UpdatedBy = nameof(UpdatedBy);
             public const string ReturnValue = nameof(ReturnValue);
         }
+
+        /// <summary>
+        /// Parameters for the public "Suggest a product" save stored procedure call.
+        /// </summary>
+        public static class ProductRequestParams
+        {
+            public const string ActionId = nameof(ActionId);
+            public const string ProductRequestId = nameof(ProductRequestId);
+            public const string ProductName = nameof(ProductName);
+            public const string ShortName = nameof(ShortName);
+            public const string SubCategoryName = nameof(SubCategoryName);
+            public const string ProdDescription = nameof(ProdDescription);
+            public const string ExternalPageUrl = nameof(ExternalPageUrl);
+            public const string NavigationTarget = nameof(NavigationTarget);
+            public const string Features = nameof(Features);
+            public const string LogoName = nameof(LogoName);
+            public const string RequesterName = nameof(RequesterName);
+            public const string RequesterEmail = nameof(RequesterEmail);
+            public const string OrganizationName = nameof(OrganizationName);
+            public const string InsertedBy = nameof(InsertedBy);
+            public const string NotifyUserId = nameof(NotifyUserId);
+            public const string ReturnValue = nameof(ReturnValue);
+        }
     }
 }

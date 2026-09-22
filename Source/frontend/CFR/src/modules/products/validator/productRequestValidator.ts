@@ -1,18 +1,17 @@
 export interface ProductRequestFormValues {
   productName: string;
   shortName: string;
-  category: string;
   description: string;
   productionUrl: string;
-  features: string;
+  features: string[];
   navigationTarget: 'same-tab' | 'new-tab';
+  logoName: string;
   contactName: string;
   contactEmail: string;
-  organizationName: string;
 }
 
 export type ProductRequestFieldErrors = Partial<Record<
-  'productName' | 'category' | 'description' | 'productionUrl' | 'contactName' | 'contactEmail',
+  'productName' | 'description' | 'productionUrl' | 'contactName' | 'contactEmail',
   string
 >>;
 
@@ -24,8 +23,6 @@ export const validateProductRequestFields = (values: ProductRequestFormValues): 
   const errors: ProductRequestFieldErrors = {};
 
   if (!values.productName.trim()) errors.productName = 'Product name is required.';
-
-  if (!values.category.trim()) errors.category = 'Category is required.';
 
   if (!values.description.trim()) errors.description = 'Description is required.';
   else if (values.description.trim().length > DESCRIPTION_MAX_LENGTH) errors.description = `Description must be ${DESCRIPTION_MAX_LENGTH} characters or fewer.`;
