@@ -3,7 +3,7 @@ import { useForm, useWatch, type SubmitHandler} from 'react-hook-form';
 import { CommonButton } from '@app/components/buttons';
 import { BaseModal } from '@app/components/modal/BaseModal';
 import { InputField } from '@app/components/formControls';
-import { changePassword } from '@shared/auth/services/authService';
+import { changePassword } from '@/modules/authentication/services/authService';
 import { confirmDiscardChanges } from '@/modules/lib/confirm';
 import { useToast } from './ToastProvider';
 

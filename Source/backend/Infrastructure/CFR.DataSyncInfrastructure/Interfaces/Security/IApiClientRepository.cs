@@ -15,33 +15,16 @@ namespace CFR.DataSyncInfrastructure.Interfaces.Security
         /// Fetches an ApiClient row by ClientId.
         /// </summary>
         /// <remarks>
-        /// Purpose: Load the signing secret/scopes/product for HMAC verification.
-        /// Request Flow: IApiClientAuthenticator -> ApiClientRepository.GetByClientIdAsync() -> SQL Database.
+        /// Purpose: Load the client secret/product for login (JWT issuance) and idempotency lookups.
+        /// Request Flow: IAuthService -> ApiClientRepository.GetByClientIdAsync() -> SQL Database.
         /// Validation Details: ClientId parameter mapping.
         /// Business Logic: Directly retrieves the matching row.
         /// Repository Interaction: Executes StoredProc.Security.SecurityManage with ActionId 1.
         /// Response Details: Returns an ApiClientOutput record or null.
         /// </remarks>
-        /// <param name="clientId">The product's HMAC client identifier.</param>
+        /// <param name="clientId">The product's API client identifier.</param>
         /// <returns>The matching ApiClient row, or null when not found.</returns>
         Task<ApiClientOutput?> GetByClientIdAsync(string clientId);
-
-        /// <summary>
-        /// Attempts to insert a (ClientId, Nonce) row.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Enforce per-client, per-request replay protection.
-        /// Request Flow: IApiClientAuthenticator -> ApiClientRepository.TryInsertNonceAsync() -> SQL Database.
-        /// Validation Details: ClientId and Nonce parameter mapping.
-        /// Business Logic: A caught primary-key violation on (ClientId, Nonce) means "already seen" and
-        /// is reported as false instead of throwing — replay is an expected, not exceptional, outcome.
-        /// Repository Interaction: Executes StoredProc.Security.SecurityManage with ActionId 2.
-        /// Response Details: Returns true if the nonce was newly recorded, false if it is a replay.
-        /// </remarks>
-        /// <param name="clientId">The product's HMAC client identifier.</param>
-        /// <param name="nonce">The per-request nonce.</param>
-        /// <returns>True when newly recorded; false when the nonce was already seen.</returns>
-        Task<bool> TryInsertNonceAsync(string clientId, string nonce);
 
         /// <summary>
         /// Fetches a stored idempotency record.
@@ -83,20 +66,20 @@ namespace CFR.DataSyncInfrastructure.Interfaces.Security
         /// Creates a new ApiClient row.
         /// </summary>
         /// <remarks>
-        /// Purpose: Register a downstream product's HMAC signing credential.
+        /// Purpose: Register a downstream product's login credential.
         /// Request Flow: (admin/seed tooling) -> ApiClientRepository.CreateApiClientAsync() -> SQL Database.
         /// Validation Details: Caller is responsible for uniqueness of clientId (sec.ApiClient.ClientId is unique).
         /// Business Logic: Executes the create action of the security stored procedure.
         /// Repository Interaction: Executes StoredProc.Security.SecurityManage with ActionId 5.
         /// Response Details: Returns the new ApiClientId.
         /// </remarks>
-        /// <param name="clientId">The product's HMAC client identifier.</param>
-        /// <param name="clientSecretEncrypted">AES-256-GCM encrypted secret (Nonce || Tag || Ciphertext).</param>
+        /// <param name="clientId">The product's API client identifier.</param>
+        /// <param name="clientSecret">Plaintext client secret.</param>
         /// <param name="productId">ProductId this ApiClient is scoped to.</param>
         /// <param name="displayName">Human-readable label for the ApiClient row.</param>
         /// <param name="rateLimitPerMinute">Per-client requests-per-minute limit.</param>
         /// <param name="insertedBy">Who/what created the row.</param>
         /// <returns>The new ApiClientId.</returns>
-        Task<int> CreateApiClientAsync(string clientId, byte[] clientSecretEncrypted, int productId, string? displayName, int rateLimitPerMinute, string? insertedBy);
+        Task<int> CreateApiClientAsync(string clientId, string clientSecret, int productId, string? displayName, int rateLimitPerMinute, string? insertedBy);
     }
 }

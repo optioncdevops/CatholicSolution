@@ -147,5 +147,10 @@ namespace CFR.CommonService
             public const string UpsertOrganization = nameof(UpsertOrganization);
             public const string GetOrganization = nameof(GetOrganization);
         }
+
+        public static class API_SyncAuth
+        {
+            public const string Login = nameof(Login);
+        }
     }
 }

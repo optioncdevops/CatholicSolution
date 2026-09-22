@@ -1,9 +1,6 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using CFR.DataSync.Authentication;
 using CFR.DataSync.Middlewares;
-
-using Microsoft.AspNetCore.Authentication;
 
 [assembly: NeutralResourcesLanguage("en-US", UltimateResourceFallbackLocation.Satellite)]
 var builder = WebApplication.CreateBuilder(args);
@@ -16,13 +13,10 @@ builder.Services.AddAuthEndpointRateLimiting();
 
 builder.Services.AddDIServicesSetup();
 
-// No JWT/cookie auth here — every request is verified by HmacAuthenticationMiddleware instead.
-// This scheme exists only so BaseController's Forbid()-based 403 responses (PRODUCT_SCOPE_VIOLATION)
-// have a registered scheme to resolve against instead of throwing; see NoOpAuthenticationHandler's
-// remarks.
-builder.Services
-    .AddAuthentication(NoOpAuthenticationHandler.SchemeName)
-    .AddScheme<AuthenticationSchemeOptions, NoOpAuthenticationHandler>(NoOpAuthenticationHandler.SchemeName, null);
+// JWT bearer auth — a product logs in once via AuthController.Login (ClientId/ClientSecret),
+// then every other endpoint ([Authorize] on UsersController/OrganizationsController) requires
+// that token only. Replaces the old per-request HMAC signature verification.
+builder.Services.AddAuthenticationSetup(builder.Configuration);
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -41,7 +35,7 @@ app.UseCommonAppSetup(SwaggerModuleDoc.CFRSync, app.Services.GetRequiredService<
 
 app.UseCustomMiddlewareSetup();
 
-app.UseHmacAuthentication();
+app.UseCurrentApiClientClaims();
 
 app.MapControllers();
 app.MapScalarForSwashbuckle(SwaggerModuleDoc.SyncDocs, SwaggerModuleDoc.CFRSync);

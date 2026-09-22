@@ -1,20 +1,6 @@
 export type RuntimeEnvironment = 'development' | 'pilot' | 'staging' | 'live';
-export type ConfiguredAuthMode = 'mock' | 'preview' | 'sso';
 export type SignInProvider = 'password' | 'google' | 'microsoft';
 export type SignInResult = 'authenticated' | 'redirected' | 'unavailable';
-
-export interface PlatformOrigins {
-  platform: string;
-  platformAdmin: string;
-}
-
-export interface AppAuthConfig {
-  authMode: ConfiguredAuthMode;
-  loginOrigin: string;
-  authOrigin: string;
-  sessionCookieDomain?: string;
-  origins: PlatformOrigins;
-}
 
 export interface SignInRequest {
   email: string;

@@ -5,18 +5,6 @@ const PREVIEW_SESSION_COOKIE = 'cs_platform_preview_session';
 const RELATIVE_RESOLUTION_BASE = 'https://return-url.invalid';
 const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
 
-function normalizedOrigin(value: string) {
-  try { return new URL(value).origin; } catch { return ''; }
-}
-
-function configuredLoginOrigin() {
-  return environment.loginOrigin || environment.origins.platform;
-}
-
-function configuredOrigins() {
-  return Object.values(environment.origins).map(normalizedOrigin).filter(Boolean);
-}
-
 export function isKnownSolutionId(value: string | null): value is SolutionId {
   return Boolean(value && value in SOLUTION_REGISTRY);
 }
@@ -64,35 +52,22 @@ export function getRequestedClientId(search: string): SolutionId {
 
 export function getSafeReturnUrl(search: string, fallback = '/apps') {
   const value = new URLSearchParams(search).get('returnUrl') ?? readCentralAuthHandoff().returnUrl;
-  if (!value) return fallback;
+  if (!value || HAS_SCHEME.test(value)) return fallback;
 
   let url: URL;
   try { url = new URL(value, RELATIVE_RESOLUTION_BASE); } catch { return fallback; }
 
-  if (!HAS_SCHEME.test(value)) {
-    return url.origin === RELATIVE_RESOLUTION_BASE ? `${url.pathname}${url.search}${url.hash}` : fallback;
-  }
-
-  return configuredOrigins().includes(url.origin) ? url.toString() : fallback;
+  return url.origin === RELATIVE_RESOLUTION_BASE ? `${url.pathname}${url.search}${url.hash}` : fallback;
 }
 
 export function toAbsoluteReturnUrl(returnUrl: string) {
   if (/^https?:\/\//i.test(returnUrl)) return returnUrl;
-  const base = environment.origins.platform || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+  const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
   return new URL(returnUrl, base).toString();
 }
 
 export function isAbsoluteUrl(value: string) {
   return /^https?:\/\//i.test(value);
-}
-
-export function buildCentralLogoutUrl(returnUrl?: string) {
-  const origin = configuredLoginOrigin();
-  if (!origin || typeof window === 'undefined') return '';
-  const url = new URL('/logout', origin);
-  url.searchParams.set('client_id', environment.appId);
-  url.searchParams.set('returnUrl', returnUrl || window.location.href);
-  return url.toString();
 }
 
 function cookieAttributes(expire = false, remember = false) {
@@ -105,12 +80,12 @@ function cookieAttributes(expire = false, remember = false) {
 }
 
 export function hasPreviewSession() {
-  if (typeof document === 'undefined' || environment.authMode === 'sso') return false;
+  if (typeof document === 'undefined') return false;
   return document.cookie.split(';').some((part) => part.trim().startsWith(`${PREVIEW_SESSION_COOKIE}=`));
 }
 
 export function createPreviewSession(remember = true) {
-  if (typeof document === 'undefined' || environment.authMode === 'sso') return;
+  if (typeof document === 'undefined') return;
   document.cookie = `${PREVIEW_SESSION_COOKIE}=1; ${cookieAttributes(false, remember)}`;
 }
 
@@ -118,9 +93,4 @@ export function clearPreviewSession() {
   if (typeof document === 'undefined') return;
   document.cookie = `${PREVIEW_SESSION_COOKIE}=; ${cookieAttributes(true)}`;
   document.cookie = `${PREVIEW_SESSION_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0`;
-}
-
-export function canRedirectToExternalIdentityProvider() {
-  if (!environment.authOrigin) return false;
-  return normalizedOrigin(environment.authOrigin) !== normalizedOrigin(environment.loginOrigin);
 }

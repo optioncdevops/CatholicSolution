@@ -3,7 +3,7 @@
 namespace CFR.DataSyncInfrastructure.Models.Output
 {
     /// <summary>
-    /// Raw <c>sec.ApiClient</c> row used only by the HMAC authentication pipeline. Never returned
+    /// Raw <c>sec.ApiClient</c> row used only by the JWT login pipeline. Never returned
     /// directly to a controller.
     /// </summary>
     public class ApiClientOutput
@@ -12,18 +12,14 @@ namespace CFR.DataSyncInfrastructure.Models.Output
 
         public string ClientId { get; set; } = string.Empty;
 
-        /// <summary>AES-256-GCM ciphertext: Nonce(12) || Tag(16) || Ciphertext, decrypted by IHmacSigningService.</summary>
-        public byte[] ClientSecretEncrypted { get; set; } = [];
+        /// <summary>Plaintext — compared directly against the ClientSecret posted to the login endpoint.</summary>
+        public string ClientSecret { get; set; } = string.Empty;
 
         public int ProductId { get; set; }
 
         public int RateLimitPerMinute { get; set; }
 
         public bool IsActive { get; set; }
-
-        public byte[]? PreviousSecretEncrypted { get; set; }
-
-        public DateTime? PreviousSecretExpiresDate { get; set; }
     }
 
     /// <summary>

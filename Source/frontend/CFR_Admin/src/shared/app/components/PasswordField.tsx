@@ -3,7 +3,7 @@ import { EyeIcon, EyeOffIcon, LockIcon } from './UiIcons';
 
 /**
  * Shared password input + show/hide toggle, used by the auth-flow password screens
- * (shared/auth/ResetPasswordPage). Accepts native input props (spread react-hook-form's
+ * (modules/authentication/pages/ResetPasswordPage). Accepts native input props (spread react-hook-form's
  * `register(...)` result directly) rather than controlled value/onChange, so the eye-icon
  * show/hide behavior stays identical wherever a password field is validated with RHF.
  */

@@ -14,23 +14,17 @@ interface UserContextValue {
   updateUser: (updates: Pick<CurrentUser, 'name' | 'email' | 'phone'>) => void;
 }
 
-const DEFAULT_USER: CurrentUser = {
-  name: 'Sherlina',
-  email: 'sherlina@dbcyelagiri.edu.in',
-  phone: '(555) 214-7788',
-};
-
 const UserContext = createContext<UserContextValue | null>(null);
 
 function getInitials(name: string) {
-  return name.trim().split(/\s+/).filter(Boolean).map((word) => word[0]).slice(0, 2).join('').toUpperCase() || 'CL';
+  return name.trim().split(/\s+/).filter(Boolean).map((word) => word[0]).slice(0, 2).join('').toUpperCase();
 }
 
 function readSessionUser(): CurrentUser {
   const session = getPortalSessionUser();
-  if (!session?.eMail) return DEFAULT_USER;
+  if (!session?.eMail) return { name: '', email: '', phone: '' };
   const name = `${session.firstName} ${session.lastName}`.trim() || session.eMail;
-  return { name, email: session.eMail, phone: DEFAULT_USER.phone };
+  return { name, email: session.eMail, phone: '' };
 }
 
 export function UserProvider({ children }: PropsWithChildren) {

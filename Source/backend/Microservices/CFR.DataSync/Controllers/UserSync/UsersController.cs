@@ -11,6 +11,7 @@ namespace CFR.DataSync.Controllers.UserSync
     /// segment, matching how Acutis's UsersController.GetUserById(int userId) binds scalar ids.
     /// </summary>
     [ApiExplorerSettings(GroupName = SwaggerModuleDoc.SyncUserSync)]
+    [Authorize]
     public class UsersController(IUserSyncService service): BaseController
     {
         #region POST Methods

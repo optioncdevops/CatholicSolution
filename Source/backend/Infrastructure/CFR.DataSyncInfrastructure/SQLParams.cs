@@ -15,7 +15,7 @@ namespace CFR.DataSyncInfrastructure
             /// <summary>CRUD action identifier.</summary>
             public const string ActionId = nameof(ActionId);
 
-            /// <summary>The product's HMAC client identifier.</summary>
+            /// <summary>The product's API client identifier (used to log in and get a JWT).</summary>
             public const string ClientId = nameof(ClientId);
 
             /// <summary>Per-request nonce (replay-protection insert).</summary>
@@ -39,8 +39,8 @@ namespace CFR.DataSyncInfrastructure
             /// <summary>UTC expiry of the idempotency record (24h TTL from creation).</summary>
             public const string ExpiresDate = nameof(ExpiresDate);
 
-            /// <summary>AES-256-GCM encrypted client secret (Nonce || Tag || Ciphertext).</summary>
-            public const string ClientSecretEncrypted = nameof(ClientSecretEncrypted);
+            /// <summary>Plaintext client secret — compared directly at login, no encryption at rest.</summary>
+            public const string ClientSecret = nameof(ClientSecret);
 
             /// <summary>ProductId this ApiClient is scoped to.</summary>
             public const string ProductId = nameof(ProductId);
