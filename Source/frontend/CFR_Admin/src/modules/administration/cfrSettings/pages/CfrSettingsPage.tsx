@@ -9,9 +9,6 @@ import type { UsersApiItem } from '@/modules/users';
 import { getEmailSettings, saveApiBaseUrl, saveProductRequestNotifyUser } from '@/modules/administration/emailSettings';
 import type { EmailSettingsApiItem } from '@/modules/administration/emailSettings';
 
-const SECTION_LABEL_CLASS = 'mb-1.5 text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]';
-const SECTION_HINT_CLASS = 'mb-3 text-xs text-[var(--text-muted)]';
-
 const LOOPBACK_OR_PRIVATE_HOST = /^https?:\/\/(localhost|127\.\d+\.\d+\.\d+|\[::1\]|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)([:/]|$)/i;
 
 /** True when the value is a syntactically well-formed absolute http(s) URL. */
@@ -40,12 +37,12 @@ function CfrSettingsPage() {
   //#region States
   const [users, setUsers] = useState<UsersApiItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>(undefined);
+  const [originalUserId, setOriginalUserId] = useState<string | undefined>(undefined);
   const [apiBaseUrl, setApiBaseUrl] = useState('');
   const [originalApiBaseUrl, setOriginalApiBaseUrl] = useState('');
   const [apiBaseUrlError, setApiBaseUrlError] = useState<string | undefined>(undefined);
-  const [savingApiBaseUrl, setSavingApiBaseUrl] = useState(false);
+  const [saving, setSaving] = useState(false);
   //#endregion
 
   //#region Effects
@@ -60,7 +57,9 @@ function CfrSettingsPage() {
         setUsers(usersList);
 
         const settings = settingsResponse.resultData as EmailSettingsApiItem | null;
-        setSelectedUserId(settings?.productRequestNotifyUserId ? String(settings.productRequestNotifyUserId) : undefined);
+        const currentUserId = settings?.productRequestNotifyUserId ? String(settings.productRequestNotifyUserId) : undefined;
+        setSelectedUserId(currentUserId);
+        setOriginalUserId(currentUserId);
         const currentApiBaseUrl = settings?.apiBaseUrl ?? '';
         setApiBaseUrl(currentApiBaseUrl);
         setOriginalApiBaseUrl(currentApiBaseUrl);
@@ -80,45 +79,49 @@ function CfrSettingsPage() {
   //#endregion
 
   //#region Handlers
-  const handleSelectUser = async (value: string | undefined) => {
-    setSelectedUserId(value);
-    setSaving(true);
-    try {
-      await saveProductRequestNotifyUser(value ? Number(value) : null);
-      showToast(value ? 'Product request notifications will be sent to this user.' : 'Product request notification recipient cleared.');
-    } catch (error) {
-      console.error('Error saving notification recipient:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to save notification recipient.', 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleApiBaseUrlChange = (value: string) => {
     setApiBaseUrl(value);
     if (apiBaseUrlError) setApiBaseUrlError(undefined);
   };
 
-  const handleSaveApiBaseUrl = async () => {
-    const trimmed = apiBaseUrl.trim();
-    const error = validateApiBaseUrl(trimmed);
-    if (error) {
-      setApiBaseUrlError(error);
-      showToast(error, 'error');
-      return;
+  const isDirty = selectedUserId !== originalUserId || apiBaseUrl.trim() !== originalApiBaseUrl;
+
+  const handleSave = async () => {
+    const trimmedApiBaseUrl = apiBaseUrl.trim();
+    const apiBaseUrlChanged = trimmedApiBaseUrl !== originalApiBaseUrl;
+
+    // Only validate the API base URL when it's actually being saved this time — otherwise an
+    // already-saved value that predates this validation rule (e.g. a localhost dev URL) would
+    // block every future save, even one that only touches the Acutis User field.
+    if (apiBaseUrlChanged) {
+      const error = validateApiBaseUrl(trimmedApiBaseUrl);
+      if (error) {
+        setApiBaseUrlError(error);
+        showToast(error, 'error');
+        return;
+      }
     }
 
-    setSavingApiBaseUrl(true);
+    setSaving(true);
     try {
-      await saveApiBaseUrl(trimmed);
-      setApiBaseUrl(trimmed);
-      setOriginalApiBaseUrl(trimmed);
-      showToast('API base URL saved.', 'success');
+      const tasks: Promise<unknown>[] = [];
+      if (selectedUserId !== originalUserId) {
+        tasks.push(saveProductRequestNotifyUser(selectedUserId ? Number(selectedUserId) : null));
+      }
+      if (apiBaseUrlChanged) {
+        tasks.push(saveApiBaseUrl(trimmedApiBaseUrl));
+      }
+      await Promise.all(tasks);
+
+      setOriginalUserId(selectedUserId);
+      setApiBaseUrl(trimmedApiBaseUrl);
+      setOriginalApiBaseUrl(trimmedApiBaseUrl);
+      showToast('CFR settings saved.', 'success');
     } catch (error) {
-      console.error('Error saving API base URL:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to save API base URL.', 'error');
+      console.error('Error saving CFR settings:', error);
+      showToast(typeof error === 'string' ? error : 'Failed to save CFR settings.', 'error');
     } finally {
-      setSavingApiBaseUrl(false);
+      setSaving(false);
     }
   };
   //#endregion
@@ -128,28 +131,22 @@ function CfrSettingsPage() {
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader title="CFR Settings" />
 
-      <div>
-        <p className={SECTION_LABEL_CLASS}>Product Request Notifications</p>
-        <p className={SECTION_HINT_CLASS}>Which Acutis user receives an email when a new product is suggested.</p>
-        <div className="w-72">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
+        <div className="flex-1">
           <Dropdown
             id="ddlCfrSettingsAcutisUser"
-            label="Acutis User"
+            label="Product Authorized Person"
             searchable
             clearable
             value={selectedUserId}
-            onValueChange={(value) => void handleSelectUser(value)}
+            onValueChange={setSelectedUserId}
             options={users.map((user) => ({ id: String(user.userId), value: user.fullName || user.eMail }))}
             placeholder={loading ? 'Loading users…' : 'Select a user'}
             disabled={loading || saving}
           />
         </div>
-      </div>
 
-      <div className="border-t border-[var(--line-soft)] pt-4">
-        <p className={SECTION_LABEL_CLASS}>API Base URL</p>
-        <p className={SECTION_HINT_CLASS}>This API&apos;s own public address (not the admin site&apos;s URL) — used to build the email logo&apos;s image link. If this API is only reachable through a reverse proxy/gateway (e.g. https://cfrapi.example.com/acutis), include that path here too, or the logo link will 404. Must be reachable by recipients&apos; email clients, so never a localhost or private-network address, even while testing locally.</p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="flex-1 border-t border-[var(--line-soft)] pt-6 sm:border-t-0 sm:pt-0">
           <InputField
             id="txtCfrSettingsApiBaseUrl"
             label="API base URL"
@@ -157,20 +154,23 @@ function CfrSettingsPage() {
             value={apiBaseUrl}
             onChange={(event) => handleApiBaseUrlChange(event.target.value)}
             placeholder="https://api.example.org/acutis"
-            disabled={loading || savingApiBaseUrl}
+            helperText="This API's own public address (not the admin site's URL) — used to build the email logo's image link. Must be reachable by recipients' email clients, so never a localhost or private-network address."
+            disabled={loading || saving}
             error={apiBaseUrlError}
-            wrapperClassName="w-full sm:max-w-md"
           />
-          <CommonButton
-            type="button" variant="primary" size="sm"
-            iconLeft={<Save size={14} />}
-            loading={savingApiBaseUrl}
-            disabled={loading || savingApiBaseUrl || apiBaseUrl.trim() === originalApiBaseUrl}
-            onClick={() => void handleSaveApiBaseUrl()}
-          >
-            Save
-          </CommonButton>
         </div>
+      </div>
+
+      <div className="flex justify-center border-t border-[var(--line-soft)] pt-4">
+        <CommonButton
+          type="button" variant="primary" size="sm"
+          iconLeft={<Save size={14} />}
+          loading={saving}
+          disabled={loading || saving || !isDirty}
+          onClick={() => void handleSave()}
+        >
+          Save
+        </CommonButton>
       </div>
     </div>
   );
