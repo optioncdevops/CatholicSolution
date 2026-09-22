@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import type { CatalogApp } from '@shared/app/types/app';
-import { environment, isConfiguredOrigin } from '@shared/platform/config/environment';
 
 export interface AppDestination {
   href: string;
@@ -8,10 +7,6 @@ export interface AppDestination {
   openInNewTab: boolean;
   target?: '_blank';
   rel?: 'noopener noreferrer';
-}
-
-function normalizedOrigin(origin: string) {
-  return origin.replace(/\/$/, '');
 }
 
 function resolveSafeHttpUrl(value?: string) {
@@ -46,10 +41,7 @@ export function resolveAppDestination(app: CatalogApp): AppDestination | null {
 }
 
 export function resolvePlatformUrl(path = '/apps') {
-  const route = path.startsWith('/') ? path : `/${path}`;
-  if (!environment.domainRouting) return route;
-  if (!isConfiguredOrigin(environment.origins.platform)) return route;
-  return `${normalizedOrigin(environment.origins.platform)}${route}`;
+  return path.startsWith('/') ? path : `/${path}`;
 }
 
 export function useSolutionNavigation() {

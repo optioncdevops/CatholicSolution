@@ -39,27 +39,57 @@ interface FieldProps {
   required?: boolean;
   icon?: ReactNode;
   maxLength?: number;
+  error?: string;
+  onErrorClear?: () => void;
+  format?: (value: string) => string;
+  inputMode?: 'text' | 'numeric' | 'tel' | 'email' | 'search' | 'url' | 'decimal' | 'none';
 }
 
-export function Field({ label, name, type = 'text', placeholder, autoComplete, required, icon, maxLength }: FieldProps) {
+export function Field({ label, name, type = 'text', placeholder, autoComplete, required, icon, maxLength, error, onErrorClear, format, inputMode }: FieldProps) {
   return (
     <div>
       <label className="auth-label" htmlFor={name}>{label}{required && <span className="ml-1 text-rose-600">*</span>}</label>
       <div className="auth-input-wrap mt-2">
         {icon ? <span className="auth-input-icon">{icon}</span> : null}
-        <input id={name} name={name} type={type} placeholder={placeholder} autoComplete={autoComplete} required={required} maxLength={maxLength} className={`auth-input ${icon ? '' : 'auth-input--plain'}`} />
+        <input
+          id={name}
+          name={name}
+          type={type}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          required={required}
+          maxLength={maxLength}
+          inputMode={inputMode}
+          className={`auth-input ${icon ? '' : 'auth-input--plain'}`}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${name}-error` : undefined}
+          onChange={(event) => {
+            if (format) event.target.value = format(event.target.value);
+            onErrorClear?.();
+          }}
+        />
       </div>
+      {error ? <p id={`${name}-error`} className="auth-field-error">{error}</p> : null}
     </div>
   );
 }
 
 type SelectOption = string | { value: string; label: string };
 
-export function SelectField({ label, name, options, required, placeholder }: { label: string; name: string; options: readonly SelectOption[]; required?: boolean; placeholder?: string }) {
+export function SelectField({ label, name, options, required, placeholder, error, onErrorClear }: { label: string; name: string; options: readonly SelectOption[]; required?: boolean; placeholder?: string; error?: string; onErrorClear?: () => void }) {
   return (
     <div>
       <label className="auth-label" htmlFor={name}>{label}{required && <span className="ml-1 text-rose-600">*</span>}</label>
-      <select id={name} name={name} required={required} defaultValue="" className="auth-input auth-input--plain mt-2">
+      <select
+        id={name}
+        name={name}
+        required={required}
+        defaultValue=""
+        className="auth-input auth-input--plain mt-2"
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${name}-error` : undefined}
+        onChange={onErrorClear}
+      >
         <option value="" disabled>{placeholder ?? 'Select'}</option>
         {options.map((option) => {
           const value = typeof option === 'string' ? option : option.value;
@@ -67,6 +97,7 @@ export function SelectField({ label, name, options, required, placeholder }: { l
           return <option key={value} value={value}>{optionLabel}</option>;
         })}
       </select>
+      {error ? <p id={`${name}-error`} className="auth-field-error">{error}</p> : null}
     </div>
   );
 }

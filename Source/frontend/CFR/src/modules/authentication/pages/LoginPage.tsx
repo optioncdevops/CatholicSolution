@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { ArrowRightIcon, EyeIcon, EyeOffIcon, LockIcon, MailIcon } from '@shared/app/components/UiIcons';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
-import { environment } from '@shared/platform/config/environment';
 import { SOLUTION_REGISTRY } from '@shared/platform/config/solutionRegistry';
 import { AuthShell } from '../components/AuthShell';
 import { useAuth } from '../context/AuthProvider';
@@ -12,7 +11,7 @@ import { getAuth0SocialConnection, loginAuth0Password } from '../services/auth0A
 import type { SignInProvider } from '../types/authenticationTypes';
 import { AUTH0_LOGIN_PATH, AUTH0_POST_LOGIN_PATH } from '../utils/auth0Session';
 import { getRequestedClientId, getSafeReturnUrl, isAbsoluteUrl, storeCentralAuthHandoff, toAbsoluteReturnUrl } from '../utils/authenticationHelpers';
-import { validateLoginCredentials } from '../validator/AuthenticationValidator';
+import { validateLoginFields, type LoginFieldErrors } from '../validator/AuthenticationValidator';
 
 const LoginPage = () => {
   //#region Hooks
@@ -35,8 +34,9 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [interactiveSignInCompleted, setInteractiveSignInCompleted] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [email, setEmail] = useState(!isAuth0Login && environment.authMode === 'mock' ? 'carl.lapp@optionc.com' : '');
-  const [password, setPassword] = useState(!isAuth0Login && environment.authMode === 'mock' ? 'demo1234' : '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   //#endregion
 
   // Re-stash whatever this page resolved (whether it arrived via query string or an earlier
@@ -66,9 +66,11 @@ const LoginPage = () => {
 
   //#region Handlers
   const completeSignIn = async (provider: SignInProvider) => {
-    const messages = provider === 'password' ? validateLoginCredentials(email, password) : [];
+    const errors = provider === 'password' ? validateLoginFields(email, password) : {};
+    setFieldErrors(errors);
+    const messages = Object.values(errors);
     if (messages.length) {
-      showToast(messages[0]);
+      showToast(messages, 'error');
       return;
     }
     try {
@@ -98,10 +100,10 @@ const LoginPage = () => {
         setInteractiveSignInCompleted(true);
         showToast(clientId === 'platform' ? 'Signed in to Catholic Solutions' : clientId === 'cfr-admin' ? 'Signed in to CFRAdmin' : `Signed in. Returning to ${client.name}`);
       } else if (result === 'unavailable') {
-        showToast('The configured identity service is unavailable. Please contact your administrator.');
+        showToast('The configured identity service is unavailable. Please contact your administrator.', 'error');
       }
     } catch (error) {
-      showToast(typeof error === 'string' ? error : 'Invalid email or password.');
+      showToast(typeof error === 'string' ? error : 'Invalid email or password.', 'error');
     }
   };
 
@@ -122,13 +124,27 @@ const LoginPage = () => {
             <p>{clientId === 'platform' ? 'Sign in to continue to your Catholic Solutions workspace.' : `Sign in once to continue securely to ${client.name}.`}</p>
           </div>
 
-          <form onSubmit={submit} className="auth-form">
+          <form onSubmit={submit} noValidate className="auth-form">
             <div>
               <label className="auth-label" htmlFor="email">Email address</label>
               <div className="auth-input-wrap mt-1.5">
                 <span className="auth-input-icon"><MailIcon size={16} /></span>
-                <input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="auth-input" autoComplete="email" required />
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    if (fieldErrors.email) setFieldErrors((current) => ({ ...current, email: undefined }));
+                  }}
+                  className="auth-input"
+                  autoComplete="email"
+                  required
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={fieldErrors.email ? 'email-error' : undefined}
+                />
               </div>
+              {fieldErrors.email ? <p id="email-error" className="auth-field-error">{fieldErrors.email}</p> : null}
             </div>
 
             <div>
@@ -138,9 +154,23 @@ const LoginPage = () => {
               </div>
               <div className="auth-input-wrap mt-1.5">
                 <span className="auth-input-icon"><LockIcon size={16} /></span>
-                <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} className="auth-input auth-input--with-action" autoComplete="current-password" required />
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    if (fieldErrors.password) setFieldErrors((current) => ({ ...current, password: undefined }));
+                  }}
+                  className="auth-input auth-input--with-action"
+                  autoComplete="current-password"
+                  required
+                  aria-invalid={Boolean(fieldErrors.password)}
+                  aria-describedby={fieldErrors.password ? 'password-error' : undefined}
+                />
                 <button type="button" onClick={() => setShowPassword((value) => !value)} className="auth-input-action" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOffIcon size={17} /> : <EyeIcon size={17} />}</button>
               </div>
+              {fieldErrors.password ? <p id="password-error" className="auth-field-error">{fieldErrors.password}</p> : null}
             </div>
 
             <label className="auth-checkbox auth-checkbox--login"><input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} /> <span>Keep me signed in on this device</span></label>

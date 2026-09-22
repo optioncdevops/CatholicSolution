@@ -355,9 +355,12 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .auth-label { display:block; color:#334155; font-size:.6875rem; font-weight:800; }
 .auth-label-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
 .auth-field-hint { margin:.4rem 0 0; color:#94a3b8; font-size:.5625rem; line-height:1.5; }
+.auth-field-error { margin:.4rem 0 0; color:#e11d48; font-size:.6875rem; font-weight:700; line-height:1.5; }
 .auth-input-wrap { position:relative; }
 .auth-input-icon { position:absolute; left:.9rem; top:50%; display:grid; width:1.2rem; transform:translateY(-50%); place-items:center; color:#8290a4; pointer-events:none; }
 .auth-input { width:100%; min-height:3.15rem; border:1px solid #cfd8e3; border-radius:.85rem; background:#f8fafc; padding:.8rem 3rem .8rem 2.7rem; color:#0f172a; font-size:.8125rem; outline:none; transition:border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
+.auth-input[aria-invalid="true"] { border-color:#e11d48; background:#fff1f2; }
+.auth-input[aria-invalid="true"]:focus { box-shadow:0 0 0 4px rgba(225,29,72,.1); }
 .auth-input--plain { padding-left:.9rem; }
 .auth-input--with-action { padding-right:3.2rem; }
 .auth-input:hover { border-color:#aeb9c7; }

@@ -8,9 +8,9 @@ import { ChangePasswordModal } from '@shared/app/components/ChangePasswordModal'
 import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useCurrentUser } from '@shared/app/context/UserContext';
-import { getProfile, updateProfile, updateStoredAcutisUser } from '@shared/auth/services/authService';
-import { resolveProfileImageUrl } from '@shared/auth/profileImage';
-import type { ProfileApiItem } from '@shared/auth/types/authTypes';
+import { getProfile, updateProfile, updateStoredAcutisUser } from '@/modules/authentication/services/authService';
+import { resolveProfileImageUrl } from '@/modules/authentication/utils/profileImage';
+import type { ProfileApiItem } from '@/modules/authentication/types/authenticationTypes';
 import { isValidUsPhoneNumber, US_PHONE_MASKED_MAX_LENGTH, US_PHONE_MASK_PLACEHOLDER } from '@app/utilities/inputValidation';
 import { confirmAction } from './lib/confirm';
 import { formatDateTime } from './utils/formatDate';

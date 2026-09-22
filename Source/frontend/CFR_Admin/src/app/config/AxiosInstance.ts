@@ -1,6 +1,6 @@
 import axios, { isAxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
-import { ACUTIS_AUTH_CHANGED_EVENT, ACUTIS_AUTH_STORAGE_KEY } from '@shared/auth/constants/storageKeys';
-import type { AcutisLoginApiResponse } from '@shared/auth/types/authTypes';
+import { ACUTIS_AUTH_CHANGED_EVENT, ACUTIS_AUTH_STORAGE_KEY } from '@/modules/authentication/utils/storageKeys';
+import type { AcutisLoginApiResponse } from '@/modules/authentication/types/authenticationTypes';
 import { getAcutisApiBaseUrl } from './gateway';
 
 const axiosInstance = axios.create({

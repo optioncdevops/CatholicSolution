@@ -46,9 +46,11 @@ Each project keeps its **own** copy of the app catalog (`src/registry/appCatalog
 
 ### Authentication
 
-Auth code (`src/shared/auth/{appAuthConfig.ts, centralAuth.ts, AuthProvider.tsx, ProtectedRoute.tsx}`) is duplicated per project, not shared. `centralAuth.ts` manages a `cs_platform_preview_session` cookie — a mock/dev session adapter, not real SSO. `ProtectedRoute.tsx` is a **client-side-only** gate; it does not validate a session server-side.
+Auth code lives in `src/modules/authentication/` in **both** projects (`components/`, `context/`, `pages/`, `routes/`, `services/`, `types/`, `utils/`, `validator/`, plus `cfr-admin`'s extra `hooks/`, each with an `index.ts` barrel) — duplicated per project, not shared, same as the rest of `src/shared/*`. `utils/centralAuth.ts` manages a `cs_platform_preview_session` cookie — a mock/dev session adapter, not real SSO. `components/ProtectedRoute.tsx` is a **client-side-only** gate; it does not validate a session server-side.
 
-**Hosted builds (`pilot` / `staging` / `live`) warn unless `authMode` is `'sso'`.** Until a real identity-provider integration exists, those builds stay on mock/preview auth by design — not a bug to "fix" by reverting the guard. Wiring a real SSO/federation contract is a distinct, larger effort — when that happens, set `authMode: 'sso'` for the project(s) that have it and update `origins`/`loginOrigin`/`authOrigin` accordingly.
+There is no auth-mode switch (`VITE_AUTH_MODE`/`authMode`) or SSO-redirect code path anymore — every build (including hosted `pilot`/`staging`/`live`) authenticates the same way, via the local cookie/token session. Wiring a real SSO/federation contract is a distinct, larger effort that would need to reintroduce that kind of switch.
+
+**There is also no cross-app origin config anymore** (`VITE_PLATFORM_ORIGIN`/`VITE_PLATFORM_ADMIN_ORIGIN`, `environment.origins`, `appAuthConfig.ts`). `PlatformLink`/`resolvePlatformUrl`/`SOLUTION_REGISTRY[...].origin` and the central login/logout URL builders no longer know the other app's domain, so cross-app navigation (the logo click-through, App Hub launcher links to the other app, and the central sign-out redirect) degrades to same-origin-only or a no-op in hosted builds where `cfr`/`cfr-admin` live on different domains — this was a deliberate removal, not a bug.
 
 ### Styling
 

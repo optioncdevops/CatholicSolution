@@ -66,7 +66,7 @@ namespace CFR.Common
             public const string PortalDocs = "Portal.Authentication,Portal.CFRLaunch";
 
             /// <summary>
-            /// CFR.Sync — central User/Organization sync API for downstream products.
+            /// CFR.DataSync — central User/Organization sync API for downstream products.
             /// </summary>
             public const string CFRSync = "CFRSync";
             public const string SyncUserSync = "Sync.UserSync";

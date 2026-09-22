@@ -4,7 +4,7 @@ import { PanelHeader } from '@shared/app/components/PanelHeader';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { EmptyState } from '@shared/app/components/EmptyState';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { useFeatureAccessLevel } from '@shared/auth/hooks/useFeatureAccessLevel';
+import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeatureAccessLevel';
 import { Dropdown, MultiSelect } from '@app/components/formControls';
 import { Tabs, TabPanel } from '@app/components/Tabs';
 import { getOrganizations } from '@/modules/organizations/services/organizationsService';

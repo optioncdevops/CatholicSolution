@@ -14,14 +14,14 @@ import { Brand } from "@shared/app/components/Brand";
 import { EmptyState } from "@shared/app/components/EmptyState";
 import { Footer } from "@shared/app/components/Footer";
 import { ProfileMenu } from "@shared/app/components/ProfileMenu";
-import { ACUTIS_AUTH_CHANGED_EVENT } from "@shared/auth/constants/storageKeys";
-import { getStoredAcutisAuth } from "@shared/auth/services/authService";
+import { ACUTIS_AUTH_CHANGED_EVENT } from "@/modules/authentication/utils/storageKeys";
+import { getStoredAcutisAuth } from "@/modules/authentication/services/authService";
 import {
   isAdminRouteAllowed,
   resolveMenuIcon,
   splitAdminMenus,
   toDropdownItems,
-} from "@shared/auth/utils/menuHelpers";
+} from "@/modules/authentication/utils/menuHelpers";
 import "../theme.css";
 import "../admin.css";
 

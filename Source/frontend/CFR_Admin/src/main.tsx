@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { ToastProvider } from '@shared/app/components/ToastProvider';
 import { UserProvider } from '@shared/app/context/UserContext';
-import { AuthProvider } from '@shared/auth/AuthProvider';
+import { AuthProvider } from '@/modules/authentication';
 import '@shared/designSystem/styles.css';
 
 const baseUrl = import.meta.env.BASE_URL;

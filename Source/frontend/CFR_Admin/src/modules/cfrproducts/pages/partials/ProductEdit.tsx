@@ -10,7 +10,7 @@ import { ProductCard, isImageIcon } from "../../components";
 import { PanelHeader } from "@shared/app/components/PanelHeader";
 import { ReadOnlyBanner } from "@shared/app/components/ReadOnlyBanner";
 import { useToast } from "@shared/app/components/ToastProvider";
-import { useFeatureAccessLevel } from "@shared/auth/hooks/useFeatureAccessLevel";
+import { useFeatureAccessLevel } from "@/modules/authentication/hooks/useFeatureAccessLevel";
 import { CommonButton } from "@app/components/buttons";
 import {
   InputField,
