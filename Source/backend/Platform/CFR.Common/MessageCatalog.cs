@@ -43,8 +43,6 @@ namespace CFR.Common
         public const string DeleteFailed = "Delete failed.";
         public const string InternalServerError = "An internal server error occurred.";
         public const string InvalidLogin = "Invalid email or password.";
-        public const string InvalidAuth0Token = "Unable to verify the Auth0 session.";
-        public const string Auth0UserNotFound = "No CFR account matches this Auth0 identity.";
         public const string ExistUser = "A user with this email already exists.";
         public const string CannotModifySelfStatus = "You cannot deactivate or lock your own account. Ask another administrator to do this.";
         public const string CannotDeleteSelf = "You cannot delete your own account. Ask another administrator to do this.";
@@ -239,7 +237,6 @@ namespace CFR.Common
         public static class PortalLogMessages
         {
             public const string LoginAuthenticationFailed = "Error while authenticating Portal login for {UserName}";
-            public const string ExchangeAuth0TokenFailed = "Error while exchanging Auth0 access token for a Portal session";
             public const string FetchAssignedProductsFailed = "Error while fetching assigned products for user {UserId}";
             public const string LaunchProductFailed = "Error while launching product {ProductId} for user {UserId}";
             public const string ExchangeTokenFailed = "Error while exchanging SSO authorization code for product {ProductId}";

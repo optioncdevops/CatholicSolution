@@ -1,11 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  AUTH0_POST_LOGIN_PATH,
-  exchangeAuth0TokenForPortalSession,
-  persistAuth0Session,
-} from '../utils/auth0Session';
+import { AUTH0_POST_LOGIN_PATH, persistAuth0Session, toPortalUserFromAuth0 } from '../utils/auth0Session';
 
 const Auth0CallbackPage = () => {
   //#region Hooks
@@ -26,14 +22,12 @@ const Auth0CallbackPage = () => {
     handled.current = true;
     void (async () => {
       try {
-        const auth0AccessToken = await getAccessTokenSilently();
-        if (!auth0AccessToken) {
+        const token = await getAccessTokenSilently();
+        const email = String(user?.email ?? user?.name ?? '').trim();
+        if (!token || !email) {
           throw new Error('Auth0 session is incomplete.');
         }
-        // Exchange for a CFR-signed Portal JWT - the raw Auth0 token is never
-        // sent to CFR.Portal's own [Authorize] endpoints directly.
-        const { token, user: portalUser } = await exchangeAuth0TokenForPortalSession(auth0AccessToken);
-        persistAuth0Session(token, portalUser);
+        persistAuth0Session(token, toPortalUserFromAuth0(email, user?.given_name, user?.family_name, user?.name, user?.sub));
         window.location.replace(AUTH0_POST_LOGIN_PATH);
       } catch {
         handled.current = false;

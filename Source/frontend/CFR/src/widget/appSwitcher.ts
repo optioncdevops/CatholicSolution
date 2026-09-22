@@ -12,24 +12,14 @@
  * its icon inside that slot, sized/colored to inherit the surrounding icons'
  * styling (currentColor). Otherwise it falls back to a floating corner button.
  *
- * The switcher only ever appears for a browser that is also logged into CFR
- * itself — it never shows for a user who signed into the host app directly.
- * To determine that with zero code required in the host app, this widget
- * opens a hidden iframe at CFR's own origin (session-check.html), which reads
- * a dedicated localStorage key (cfr_app_switcher_session) holding the
- * CFR-signed Portal JWT that CFR's own login flow writes after exchanging an
- * Auth0 login for it (see auth0Session.ts, persistAuth0Session, and
- * PortalLoginController.ExchangeAuth0Token on the backend) - not the raw
- * Auth0 SDK session - and reports the result back via postMessage. See
- * docs/APP_SWITCHER.md for the full design and its tradeoffs.
- *
  * The CFR.Gateway origin this bundle calls is baked in at CFR's own build
  * time (see vite.widget.config.ts, __CFR_GATEWAY_ORIGIN__) from that build
  * mode's VITE_APP_REST_API_BASE_URL - the same var CFR's own app reads - so
  * dev vs. pilot vs. staging vs. live is just "which CFR host serves the
- * script tag." Once a CFR session is confirmed, it calls
- * {gatewayOrigin}/portal/api/v1/CFRLaunch/GetAssignedProducts with that
- * session's token to list only the apps assigned to that member/org.
+ * script tag." It calls {gatewayOrigin}/acutis/api/v1/Products/GetProducts,
+ * an anonymous, CORS-open endpoint (see ProductsController.GetProducts). No
+ * CFR session/auth is required or used; the switcher lists first-party apps
+ * only.
  */
 
 declare const __CFR_GATEWAY_ORIGIN__: string;
@@ -37,17 +27,19 @@ declare const __CFR_GATEWAY_ORIGIN__: string;
 // Captured synchronously at script-execution time, before any async gap -
 // document.currentScript is only valid during that initial (sync) run, even
 // with `defer`. This gives us "where was this widget itself loaded from,"
-// i.e. the CFR app's own origin, distinct from the API gateway origin above.
+// i.e. the CFR app's own origin, used for the App Hub footer link.
 const SELF_SCRIPT_SRC = (document.currentScript as HTMLScriptElement | null)?.src ?? '';
 
-type AssignedProductRow = {
+type ProductRow = {
   productId: number;
   productName: string;
+  shortName?: string | null;
   subCategoryName?: string | null;
-  baseUrl?: string | null;
-  logoUrl?: string | null;
+  externalPageUrl?: string | null;
+  logoName?: string | null;
   isActive: boolean;
-  hubSection: string;
+  productStatus?: number | null;
+  navigationTarget?: string | null;
   isDeleted?: boolean;
 };
 
@@ -58,6 +50,7 @@ type SwitcherApp = {
   subCategory?: string;
   externalUrl: string;
   logoUrl?: string;
+  navigationTarget?: string | null;
 };
 
 type ApiEnvelope<T> = {
@@ -66,14 +59,10 @@ type ApiEnvelope<T> = {
   resultData?: T;
 };
 
-type SessionCheckMessage =
-  | { source: 'cfr-app-switcher'; loggedIn: false }
-  | { source: 'cfr-app-switcher'; loggedIn: true; token: string };
-
 const CLASS_PREFIX = 'cfrsw';
 const SLOT_ID = 'cfr-app-switcher-slot';
-const ASSIGNED_PRODUCTS_ENDPOINT_PATH = '/portal/api/v1/CFRLaunch/GetAssignedProducts';
-const SESSION_CHECK_TIMEOUT_MS = 4000;
+const PRODUCTS_ENDPOINT_PATH = '/acutis/api/v1/Products/GetProducts';
+const LOGO_PUBLIC_PATH = '/acutis/Acutis/Attachment/Products/';
 const SLOT_WAIT_TIMEOUT_MS = 4000;
 
 const TILE_COLORS = [
@@ -107,71 +96,30 @@ function appHubUrl(): string | null {
   return origin ? `${origin}/apps` : null;
 }
 
-function resolveLogoUrl(apiBase: string, logoUrl: string): string {
-  const trimmed = logoUrl.trim();
-  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('data:')) return trimmed;
-  return `${apiBase}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
+function buildLogoUrl(apiBase: string, logoName: string): string {
+  const fileName = logoName.replace(/\\/g, '/').split('/').filter(Boolean).pop() ?? '';
+  return `${apiBase}${LOGO_PUBLIC_PATH}${fileName}`;
 }
 
-function isLaunchable(row: AssignedProductRow): boolean {
+function isLaunchable(row: ProductRow): boolean {
   return (
     Boolean(row) &&
     row.isDeleted !== true &&
     row.isActive === true &&
-    row.hubSection === 'your' &&
-    Boolean(row.baseUrl && row.baseUrl.trim())
+    row.productStatus === 1 &&
+    Boolean(row.externalPageUrl && row.externalPageUrl.trim())
   );
 }
 
-function toSwitcherApp(apiBase: string, row: AssignedProductRow): SwitcherApp {
+function toSwitcherApp(apiBase: string, row: ProductRow): SwitcherApp {
   return {
     productId: row.productId,
-    name: row.productName,
+    name: row.shortName || row.productName,
     subCategory: (row.subCategoryName ?? '').trim() || undefined,
-    externalUrl: (row.baseUrl ?? '').trim(),
-    logoUrl: row.logoUrl && row.logoUrl.trim() ? resolveLogoUrl(apiBase, row.logoUrl.trim()) : undefined,
+    externalUrl: (row.externalPageUrl ?? '').trim(),
+    logoUrl: row.logoName && row.logoName.trim() ? buildLogoUrl(apiBase, row.logoName.trim()) : undefined,
+    navigationTarget: row.navigationTarget,
   };
-}
-
-/**
- * Opens session-check.html (CFR's own origin) in a hidden iframe and waits
- * for its postMessage report of whether this browser has a cached CFR login.
- * Always resolves - null on timeout, on an explicit "not logged in", or on
- * any failure - never rejects, since the caller's response is always
- * "show nothing" in every non-success case.
- */
-function getCfrSessionToken(): Promise<string | null> {
-  const origin = selfOrigin();
-  if (!origin) return Promise.resolve(null);
-
-  return new Promise((resolve) => {
-    const iframe = document.createElement('iframe');
-    iframe.src = `${origin}/integrations/app-switcher/session-check.html`;
-    iframe.style.display = 'none';
-    iframe.setAttribute('aria-hidden', 'true');
-
-    let settled = false;
-    const finish = (token: string | null) => {
-      if (settled) return;
-      settled = true;
-      window.removeEventListener('message', onMessage);
-      clearTimeout(timer);
-      iframe.remove();
-      resolve(token);
-    };
-
-    const onMessage = (event: MessageEvent<SessionCheckMessage>) => {
-      if (event.source !== iframe.contentWindow) return;
-      const data = event.data;
-      if (!data || data.source !== 'cfr-app-switcher') return;
-      finish(data.loggedIn ? data.token : null);
-    };
-
-    const timer = setTimeout(() => finish(null), SESSION_CHECK_TIMEOUT_MS);
-
-    window.addEventListener('message', onMessage);
-    document.body.appendChild(iframe);
-  });
 }
 
 function injectStyles(): void {
@@ -287,18 +235,22 @@ function fallbackTileIcon(label: string, color: string): HTMLElement {
 
 function openApp(app: SwitcherApp): void {
   if (!app.externalUrl) return;
-  window.open(app.externalUrl, '_blank', 'noopener,noreferrer');
+  if (app.navigationTarget === 'new-tab') {
+    window.open(app.externalUrl, '_blank', 'noopener,noreferrer');
+  } else {
+    window.location.assign(app.externalUrl);
+  }
 }
 
-async function fetchAssignedApps(apiBase: string, token: string): Promise<SwitcherApp[]> {
-  const response = await fetch(`${apiBase}${ASSIGNED_PRODUCTS_ENDPOINT_PATH}`, {
+async function fetchLaunchableApps(apiBase: string): Promise<SwitcherApp[]> {
+  const response = await fetch(`${apiBase}${PRODUCTS_ENDPOINT_PATH}`, {
     method: 'GET',
-    headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+    headers: { Accept: 'application/json' },
   });
   if (!response.ok) {
-    throw new Error(`GetAssignedProducts failed with status ${response.status}`);
+    throw new Error(`GetProducts failed with status ${response.status}`);
   }
-  const envelope = (await response.json()) as ApiEnvelope<AssignedProductRow[]>;
+  const envelope = (await response.json()) as ApiEnvelope<ProductRow[]>;
   const rows = Array.isArray(envelope.resultData) ? envelope.resultData : [];
   return rows.filter(isLaunchable).map((row) => toSwitcherApp(apiBase, row));
 }
@@ -357,7 +309,7 @@ function buildFooter(): HTMLElement | null {
   return footer;
 }
 
-function buildPanel(apiBase: string, token: string): HTMLElement {
+function buildPanel(apiBase: string): HTMLElement {
   const panel = document.createElement('div');
   panel.className = `${CLASS_PREFIX}-panel`;
 
@@ -371,7 +323,7 @@ function buildPanel(apiBase: string, token: string): HTMLElement {
   const footer = buildFooter();
   if (footer) panel.appendChild(footer);
 
-  fetchAssignedApps(apiBase, token)
+  fetchLaunchableApps(apiBase)
     .then((apps) => {
       grid.innerHTML = '';
       setCount(apps.length);
@@ -387,7 +339,6 @@ function buildPanel(apiBase: string, token: string): HTMLElement {
         tile.className = `${CLASS_PREFIX}-tile`;
         tile.href = app.externalUrl;
         tile.rel = 'noopener noreferrer';
-        tile.target = '_blank';
         tile.addEventListener('click', (event) => {
           event.preventDefault();
           openApp(app);
@@ -421,7 +372,7 @@ function buildPanel(apiBase: string, token: string): HTMLElement {
   return panel;
 }
 
-function mountSwitcher(apiBase: string, token: string, host: HTMLElement, inline: boolean): void {
+function mountSwitcher(apiBase: string, host: HTMLElement, inline: boolean): void {
   injectStyles();
 
   const wrap = document.createElement('div');
@@ -437,7 +388,7 @@ function mountSwitcher(apiBase: string, token: string, host: HTMLElement, inline
     button.appendChild(dot);
   }
 
-  const panel = buildPanel(apiBase, token);
+  const panel = buildPanel(apiBase);
 
   button.addEventListener('click', (event) => {
     event.stopPropagation();
@@ -498,18 +449,13 @@ async function init(): Promise<void> {
     return;
   }
 
-  // Zero footprint for anyone not also logged into CFR: no floating button,
-  // no inline icon, nothing mounted at all.
-  const token = await getCfrSessionToken();
-  if (!token) return;
-
   const slot = await waitForSlot();
   if (slot) {
-    mountSwitcher(__CFR_GATEWAY_ORIGIN__, token, slot, true);
+    mountSwitcher(__CFR_GATEWAY_ORIGIN__, slot, true);
     return;
   }
 
-  mountSwitcher(__CFR_GATEWAY_ORIGIN__, token, document.body, false);
+  mountSwitcher(__CFR_GATEWAY_ORIGIN__, document.body, false);
 }
 
 if (document.readyState === 'loading') {

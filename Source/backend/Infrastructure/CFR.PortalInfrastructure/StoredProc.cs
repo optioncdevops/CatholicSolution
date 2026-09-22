@@ -16,11 +16,6 @@ namespace CFR.PortalInfrastructure
             /// Authenticates a CFR member against [auth].[User].
             /// </summary>
             public const string DoLogin = "[dbo].[Portal_DoLogin]";
-
-            /// <summary>
-            /// Looks up a CFR member by email, with no password check, for federated (Auth0) sign-in.
-            /// </summary>
-            public const string GetUserByEmail = "[dbo].[Portal_GetUserByEmail]";
         }
 
         /// <summary>

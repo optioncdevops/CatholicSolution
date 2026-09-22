@@ -9,8 +9,6 @@ builder.Services.AddAuthEndpointRateLimiting();
 
 builder.Services.AddDIServicesSetup();
 
-builder.Services.Configure<Auth0Setting>(builder.Configuration.GetSection("Auth0"));
-
 builder.Services.AddAuthenticationSetup(builder.Configuration);
 
 builder.Services.AddSwaggerGen(options =>

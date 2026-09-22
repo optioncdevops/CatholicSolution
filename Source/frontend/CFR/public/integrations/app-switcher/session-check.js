@@ -1,1 +1,0 @@
-(function(){function e(e){window.parent.postMessage(e,`*`)}function t(){let t=null;try{t=localStorage.getItem(`cfr_app_switcher_session`)}catch{t=null}if(!t){e({source:`cfr-app-switcher`,loggedIn:!1});return}e({source:`cfr-app-switcher`,loggedIn:!0,token:t})}t()})();

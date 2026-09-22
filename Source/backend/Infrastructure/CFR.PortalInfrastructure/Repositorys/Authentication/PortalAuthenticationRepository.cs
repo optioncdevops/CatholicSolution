@@ -35,30 +35,5 @@ namespace CFR.PortalInfrastructure.Repositorys.Authentication
         }
 
         #endregion POST Methods
-
-        #region GET Methods
-
-        /// <summary>
-        /// Looks up a CFR member by email using StoredProc.PortalAuth.GetUserByEmail.
-        /// </summary>
-        /// <remarks>
-        /// Purpose: Resolve a CFR member for federated (Auth0) sign-in.
-        /// Request Flow: IPortalAuthenticationService -> PortalAuthenticationRepository.GetByEmailAsync() -> Database.
-        /// Validation Details: Maps Email parameter only - no password.
-        /// Business Logic: Executes StoredProc.PortalAuth.GetUserByEmail.
-        /// Repository Interaction: Executes StoredProc.PortalAuth.GetUserByEmail.
-        /// Response Details: Returns the member row or null.
-        /// </remarks>
-        /// <param name="email">Email address to look up.</param>
-        /// <returns>The matching member, or null when no account exists for that email.</returns>
-        public async Task<PortalLoginUserResult?> GetByEmailAsync(string email)
-        {
-            var parameters = new DynamicParameters();
-            parameters.Add(DBParameterName.PortalAuthParams.Email, email?.Trim(), DbType.String);
-            var result = await dapperHandler.QueryAsync<PortalLoginUserResult>(StoredProc.PortalAuth.GetUserByEmail, parameters, CommandType.StoredProcedure);
-            return result.FirstOrDefault();
-        }
-
-        #endregion GET Methods
     }
 }
