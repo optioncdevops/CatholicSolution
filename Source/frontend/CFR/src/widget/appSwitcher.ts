@@ -16,8 +16,11 @@
  * itself — it never shows for a user who signed into the host app directly.
  * To determine that with zero code required in the host app, this widget
  * opens a hidden iframe at CFR's own origin (session-check.html), which reads
- * CFR's own cached Auth0 session (cacheLocation: 'localstorage', see
- * Auth0AppProvider.tsx) and reports back via postMessage. See
+ * a dedicated localStorage key (cfr_app_switcher_session) holding the
+ * CFR-signed Portal JWT that CFR's own login flow writes after exchanging an
+ * Auth0 login for it (see auth0Session.ts, persistAuth0Session, and
+ * PortalLoginController.ExchangeAuth0Token on the backend) - not the raw
+ * Auth0 SDK session - and reports the result back via postMessage. See
  * docs/APP_SWITCHER.md for the full design and its tradeoffs.
  *
  * The CFR.Gateway origin this bundle calls is baked in at CFR's own build
