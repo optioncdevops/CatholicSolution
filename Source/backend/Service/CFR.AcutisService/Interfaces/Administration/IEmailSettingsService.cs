@@ -62,6 +62,21 @@ namespace CFR.AcutisService.Interfaces.Administration
         Task<MSResultArgs> SaveEmailSettingsAsync(EmailSettingsInput input);
 
         /// <summary>
+        /// Sets which Acutis user receives "new product suggestion" notification emails.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let an admin pick the recipient from the CFR Settings page's Acutis User dropdown, without touching any SMTP/branding field.
+        /// Request Flow: EmailSettingsController -> IEmailSettingsService.SaveProductRequestNotifyUserAsync() -> IConfSettingsService.SaveData().
+        /// Validation Details: None — a null value clears the setting.
+        /// Business Logic: Loads the currently saved settings, updates only SMTPMailConfig.ProductRequestNotifyUserId, then writes the file.
+        /// Repository Interaction: None — writes _configurationSettings.json via IConfSettingsService.
+        /// Response Details: MSResultArgs indicating success.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the Acutis user identifier to notify.</param>
+        /// <returns>MSResultArgs containing the save status.</returns>
+        Task<MSResultArgs> SaveProductRequestNotifyUserAsync(ProductRequestNotifyUserInput input);
+
+        /// <summary>
         /// Validates, saves, and applies an uploaded platform email logo image (JPG or PNG, max 2MB).
         /// </summary>
         /// <remarks>

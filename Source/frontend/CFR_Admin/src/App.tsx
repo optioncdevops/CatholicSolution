@@ -9,8 +9,10 @@ import { userRolesRoutes } from "@/modules/administration/userRoles";
 import { userRightsRoutes } from "@/modules/administration/userRights";
 import { emailTemplatesRoutes } from "@/modules/administration/emailTemplates";
 import { emailSettingsRoutes } from "@/modules/administration/emailSettings";
+import { cfrSettingsRoutes } from "@/modules/administration/cfrSettings";
 import { organizationsRoutes } from "@/modules/organizations";
 import { requestsRoutes } from "@/modules/requests";
+import { productRequestsRoutes } from "@/modules/productRequests";
 import { productsRoutes } from "@/modules/cfrproducts";
 
 const DashboardPage = lazy(() =>
@@ -54,8 +56,10 @@ export default function App() {
           {userRolesRoutes}
           {userRightsRoutes}
           {requestsRoutes}
+          {productRequestsRoutes}
           {emailTemplatesRoutes}
           {emailSettingsRoutes}
+          {cfrSettingsRoutes}
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/admin" replace />} />

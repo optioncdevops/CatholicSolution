@@ -37,6 +37,15 @@ namespace CFR.PortalInfrastructure
         public class Requests
         {
             public const string AccessRequestCrud = "[request].[AccessRequestManage]";
+
+            /// <summary>
+            /// Public "Suggest a product" save + notification-recipient lookup, physically defined
+            /// in CFR.AcutisInfrastructure's Scripts folder (022_Acutis_ProductRequest_StoredProcedure.sql,
+            /// tables in 021_Acutis_ProductRequest_Tables.sql) - same cross-service reuse convention
+            /// AccessRequestCrud already uses.
+            /// ActionId 1=save (public submit), 6=notification recipients.
+            /// </summary>
+            public const string ProductRequestCrud = "[dbo].[Acutis_ProductRequest]";
         }
     }
 }

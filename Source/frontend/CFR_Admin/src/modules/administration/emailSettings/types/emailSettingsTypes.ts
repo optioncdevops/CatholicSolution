@@ -16,6 +16,7 @@ export interface EmailSettingsApiItem {
   apiBaseUrl: string | null;
   lastUpdatedByName: string | null;
   lastUpdatedDate: string | null;
+  productRequestNotifyUserId: number | null;
 }
 
 export interface TestSmtpConnectionResult {
