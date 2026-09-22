@@ -105,3 +105,29 @@ BEGIN
     );
 END
 GO
+
+-- Single-row settings table for the CFR Settings page's "notify this user of new product
+-- suggestions" pick. CFR.Acutis and CFR.Portal are separate host processes with their own
+-- _configurationSettings.json files (that JSON file is NOT shared between them), so this value
+-- has to live in the one thing both services do share: this database. See ActionId 6/7/8 in
+-- 022_Acutis_ProductRequest_StoredProcedure.sql.
+IF OBJECT_ID(N'[request].[ProductRequestSettings]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [request].[ProductRequestSettings]
+    (
+        [Id]            INT NOT NULL,
+        [NotifyUserId]  BIGINT NULL,
+        [UpdatedDate]   DATETIME2 NULL,
+        [UpdatedBy]     BIGINT NULL,
+
+        CONSTRAINT [PK_ProductRequestSettings]
+            PRIMARY KEY ([Id]),
+
+        CONSTRAINT [CK_ProductRequestSettings_SingleRow]
+            CHECK ([Id] = 1)
+    );
+
+    INSERT INTO [request].[ProductRequestSettings] ([Id], [NotifyUserId])
+    VALUES (1, NULL);
+END
+GO

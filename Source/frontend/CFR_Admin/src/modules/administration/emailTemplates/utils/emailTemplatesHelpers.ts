@@ -34,6 +34,30 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
     { token: '[AppName]', label: 'Application name' },
     { token: '[ReviewLink]', label: 'Admin review link' },
   ],
+  ProductRequested: [
+    { token: '[ProductName]', label: 'Product name' },
+    { token: '[ShortName]', label: 'Short name' },
+    { token: '[ProductionUrl]', label: 'Production URL' },
+    { token: '[Description]', label: 'Description' },
+    { token: '[Features]', label: 'Features' },
+    { token: '[RequesterName]', label: 'Requester name' },
+    { token: '[RequesterEmail]', label: 'Requester email' },
+    { token: '[ReviewLink]', label: 'Admin review link' },
+  ],
+  ProductRequestApproved: [
+    { token: '[FirstName]', label: 'Requester first name' },
+    { token: '[RequesterName]', label: 'Requester name' },
+    { token: '[ProductName]', label: 'Product name' },
+    { token: '[ProductId]', label: 'Product ID' },
+    { token: '[SecurityKey]', label: 'Security key' },
+    { token: '[Remarks]', label: 'Reviewer notes' },
+  ],
+  ProductRequestRejected: [
+    { token: '[FirstName]', label: 'Requester first name' },
+    { token: '[RequesterName]', label: 'Requester name' },
+    { token: '[ProductName]', label: 'Product name' },
+    { token: '[Remarks]', label: 'Reviewer notes' },
+  ],
 };
 
 // Flags any [Token] in the subject/body that isn't one of this template's known merge tags —
@@ -62,6 +86,9 @@ export const templateDisplayLabel = (templateCode: string): string => {
     case 'AccessApproved': return 'Access Approved';
     case 'AccessInfo': return 'More Information Needed';
     case 'AccessRequested': return 'New Access Request';
+    case 'ProductRequested': return 'New Product Suggestion';
+    case 'ProductRequestApproved': return 'Product Suggestion Approved';
+    case 'ProductRequestRejected': return 'Product Suggestion Rejected';
     default: return templateCode;
   }
 };
@@ -73,6 +100,9 @@ export const templateDescription = (templateCode: string): string => {
     case 'AccessApproved': return 'Sent when an access request is approved.';
     case 'AccessInfo': return 'Sent when a reviewer requests more detail on a request.';
     case 'AccessRequested': return 'Sent to admins when a member submits an access request.';
+    case 'ProductRequested': return 'Sent to admins when a visitor suggests a new product.';
+    case 'ProductRequestApproved': return 'Sent to the requester when their product suggestion is approved.';
+    case 'ProductRequestRejected': return 'Sent to the requester when their product suggestion is rejected.';
     default: return '';
   }
 };

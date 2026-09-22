@@ -61,6 +61,25 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             return request;
         }
 
+        /// <summary>
+        /// Fetches the configured notification recipient using StoredProc.Requests.ProductRequestCrud (ActionId 8).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let the CFR Settings / Email Settings page display the saved Acutis user.
+        /// Request Flow: IEmailSettingsService -> ProductRequestRepository.GetProductRequestNotifyUserIdAsync() -> Database.
+        /// Validation Details: None.
+        /// Business Logic: Executes StoredProc.Requests.ProductRequestCrud with ActionId 8.
+        /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud.
+        /// Response Details: Returns the configured [auth].[AcutisUser].[UserId], or null when unset.
+        /// </remarks>
+        /// <returns>The configured notification recipient's user identifier, or null.</returns>
+        public async Task<long?> GetProductRequestNotifyUserIdAsync()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductRequestParams.ActionId, 8, DbType.Int32);
+            return await dapperHandler.QueryFirstOrDefaultAsync<long?>(StoredProc.Requests.ProductRequestCrud, parameters, CommandType.StoredProcedure);
+        }
+
         #endregion GET Methods
 
         #region PUT Methods
@@ -78,13 +97,15 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         /// </remarks>
         /// <param name="productRequestId">Product request identifier.</param>
         /// <param name="decisionRemarks">Optional reviewer remarks.</param>
+        /// <param name="securityKey">Generated security key to save onto the new [core].[Product] row.</param>
         /// <returns>New ProductId or negative error code.</returns>
-        public async Task<int> ApproveProductRequestAsync(int productRequestId, string? decisionRemarks)
+        public async Task<int> ApproveProductRequestAsync(int productRequestId, string? decisionRemarks, string securityKey)
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.ProductRequestParams.ActionId, 4, DbType.Int32);
             parameters.Add(DBParameterName.ProductRequestParams.ProductRequestId, productRequestId, DbType.Int32);
             parameters.Add(DBParameterName.ProductRequestParams.DecisionRemarks, decisionRemarks?.Trim(), DbType.String);
+            parameters.Add(DBParameterName.ProductRequestParams.SecurityKey, securityKey, DbType.String);
             parameters.Add(DBParameterName.ProductRequestParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.ProductRequestParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Requests.ProductRequestCrud, parameters, CommandType.StoredProcedure);
@@ -115,6 +136,28 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.ProductRequestParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Requests.ProductRequestCrud, parameters, CommandType.StoredProcedure);
             return parameters.Get<int>(DBParameterName.ProductRequestParams.ReturnValue);
+        }
+
+        /// <summary>
+        /// Saves the configured notification recipient using StoredProc.Requests.ProductRequestCrud (ActionId 7).
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Persist the CFR Settings page's Acutis User dropdown selection to the database, so both CFR.Acutis and CFR.Portal can read it back.
+        /// Request Flow: IEmailSettingsService -> ProductRequestRepository.SaveProductRequestNotifyUserIdAsync() -> Database.
+        /// Validation Details: None - a null value clears the setting.
+        /// Business Logic: Executes StoredProc.Requests.ProductRequestCrud with ActionId 7.
+        /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud.
+        /// Response Details: None.
+        /// </remarks>
+        /// <param name="notifyUserId">The [auth].[AcutisUser].[UserId] to notify, or null to clear the setting.</param>
+        /// <returns>A task that completes when the setting has been saved.</returns>
+        public async Task SaveProductRequestNotifyUserIdAsync(long? notifyUserId)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductRequestParams.ActionId, 7, DbType.Int32);
+            parameters.Add(DBParameterName.ProductRequestParams.NotifyUserId, notifyUserId, DbType.Int64);
+            parameters.Add(DBParameterName.ProductRequestParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
+            _ = await dapperHandler.ExecuteAsync(StoredProc.Requests.ProductRequestCrud, parameters, CommandType.StoredProcedure);
         }
 
         #endregion PUT Methods

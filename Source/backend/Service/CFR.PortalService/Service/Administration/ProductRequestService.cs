@@ -9,9 +9,8 @@ namespace CFR.PortalService.Service.Administration
     /// Repository Responsibility:
     /// - Invokes IProductRequestRepository for stored procedure execution.
     /// - Invokes IEmailTemplatesRepository and ISMTPMailService to email admins from a configurable template.
-    /// - Invokes IConfSettingsService to read the CFR Settings page's configured notification recipient.
     /// </summary>
-    public class ProductRequestService(IProductRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, ISMTPMailService mailService, IConfSettingsService confSettingsService, IConfiguration configuration, ILogger<ProductRequestService> logger): IProductRequestService
+    public class ProductRequestService(IProductRequestRepository repository, IEmailTemplatesRepository emailTemplatesRepository, ISMTPMailService mailService, IConfiguration configuration, ILogger<ProductRequestService> logger): IProductRequestService
     {
         private const string ProductRequestedTemplateCode = "ProductRequested";
 
@@ -82,8 +81,7 @@ namespace CFR.PortalService.Service.Administration
         {
             try
             {
-                long? notifyUserId = confSettingsService.LoadData()?.SMTPMailConfig?.ProductRequestNotifyUserId;
-                var recipients = await repository.GetProductRequestNotificationRecipientsAsync(notifyUserId);
+                var recipients = await repository.GetProductRequestNotificationRecipientsAsync();
                 var addresses = (recipients ?? [])
                     .Where(recipient => !string.IsNullOrWhiteSpace(recipient.EMail))
                     .Select(recipient => recipient.EMail.Trim())
@@ -98,18 +96,25 @@ namespace CFR.PortalService.Service.Administration
 
                 string baseUrl = (configuration["FrontendSetting:CfrAdminBaseUrl"] ?? string.Empty).TrimEnd('/');
                 string reviewLink = string.IsNullOrWhiteSpace(baseUrl) ? string.Empty : $"{baseUrl}/admin/product-requests";
+                string features = input.Features is { Count: > 0 }
+                    ? string.Join(", ", input.Features.Where(feature => !string.IsNullOrWhiteSpace(feature)).Select(feature => feature.Trim()))
+                    : string.Empty;
                 var placeholders = new Dictionary<string, string>
                 {
                     ["RequesterName"] = input.RequesterName,
                     ["RequesterEmail"] = input.RequesterEmail,
                     ["OrganizationName"] = input.OrganizationName ?? string.Empty,
                     ["ProductName"] = input.ProductName,
+                    ["ShortName"] = input.ShortName ?? string.Empty,
+                    ["ProductionUrl"] = input.ExternalPageUrl ?? string.Empty,
+                    ["Description"] = input.ProdDescription ?? string.Empty,
+                    ["Features"] = features,
                     ["ReviewLink"] = reviewLink,
                 };
 
                 var template = await emailTemplatesRepository.GetEmailTemplateByCodeAsync(ProductRequestedTemplateCode);
                 string subject = template?.Subject ?? $"New product suggestion: {input.ProductName}";
-                string body = template?.Body ?? "<p>A visitor has suggested a new product for the platform.</p><p><strong>Product:</strong> [ProductName]</p><p><strong>Submitted by:</strong> [RequesterName] ([RequesterEmail])</p><p><strong>Organization:</strong> [OrganizationName]</p><p><a href=\"[ReviewLink]\">Review this suggestion</a></p>";
+                string body = template?.Body ?? "<p>A visitor has suggested a new product for the platform.</p><p><strong>Product:</strong> [ProductName] ([ShortName])</p><p><strong>Description:</strong> [Description]</p><p><strong>Production URL:</strong> [ProductionUrl]</p><p><strong>Features:</strong> [Features]</p><p><strong>Submitted by:</strong> [RequesterName] ([RequesterEmail])</p><p><a href=\"[ReviewLink]\">Review this suggestion</a></p>";
                 string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
                 string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
                 await mailService.SendMailAsync(mergedSubject, mergedBody, string.Join(';', addresses));
