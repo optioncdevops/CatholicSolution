@@ -41,6 +41,20 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         /// <returns>The matching request, or null when not found.</returns>
         Task<ProductRequestOutput?> GetProductRequestByIdAsync(int productRequestId);
 
+        /// <summary>
+        /// Retrieves the currently configured "new product suggestion" notification recipient.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let the CFR Settings / Email Settings page display the saved Acutis user.
+        /// Request Flow: IEmailSettingsService -> IProductRequestRepository.GetProductRequestNotifyUserIdAsync() -> SQL Database.
+        /// Validation Details: None.
+        /// Business Logic: Executes StoredProc.Requests.ProductRequestCrud with ActionId 8.
+        /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud.
+        /// Response Details: Returns the configured [auth].[AcutisUser].[UserId], or null when unset.
+        /// </remarks>
+        /// <returns>The configured notification recipient's user identifier, or null.</returns>
+        Task<long?> GetProductRequestNotifyUserIdAsync();
+
         #endregion GET Methods
 
         #region PUT Methods
@@ -58,8 +72,9 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         /// </remarks>
         /// <param name="productRequestId">Product request identifier.</param>
         /// <param name="decisionRemarks">Optional reviewer remarks.</param>
+        /// <param name="securityKey">Generated security key to save onto the new [core].[Product] row.</param>
         /// <returns>New ProductId or negative error code.</returns>
-        Task<int> ApproveProductRequestAsync(int productRequestId, string? decisionRemarks);
+        Task<int> ApproveProductRequestAsync(int productRequestId, string? decisionRemarks, string securityKey);
 
         /// <summary>
         /// Rejects a pending product request. No catalog changes are made.
@@ -76,6 +91,23 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         /// <param name="decisionRemarks">Optional reviewer remarks.</param>
         /// <returns>ProductRequestId or negative error code.</returns>
         Task<int> RejectProductRequestAsync(int productRequestId, string? decisionRemarks);
+
+        /// <summary>
+        /// Sets which Acutis user receives "new product suggestion" notification emails.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Persist the CFR Settings page's Acutis User dropdown selection where both
+        /// CFR.Acutis and CFR.Portal can read it back (the database, not either service's own
+        /// _configurationSettings.json file - see 022_Acutis_ProductRequest_StoredProcedure.sql).
+        /// Request Flow: IEmailSettingsService -> IProductRequestRepository.SaveProductRequestNotifyUserIdAsync() -> SQL Database.
+        /// Validation Details: None - a null value clears the setting.
+        /// Business Logic: Executes StoredProc.Requests.ProductRequestCrud with ActionId 7 and stamps UpdatedBy from ICurrentUserService.
+        /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud.
+        /// Response Details: None.
+        /// </remarks>
+        /// <param name="notifyUserId">The [auth].[AcutisUser].[UserId] to notify, or null to clear the setting.</param>
+        /// <returns>A task that completes when the setting has been saved.</returns>
+        Task SaveProductRequestNotifyUserIdAsync(long? notifyUserId);
 
         #endregion PUT Methods
     }

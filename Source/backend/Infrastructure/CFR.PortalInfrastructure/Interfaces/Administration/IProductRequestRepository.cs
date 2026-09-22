@@ -20,13 +20,12 @@ namespace CFR.PortalInfrastructure.Interfaces.Administration
         /// Purpose: Resolve who should receive the "new product suggestion" email.
         /// Request Flow: IProductRequestService -> IProductRequestRepository.GetProductRequestNotificationRecipientsAsync() -> SQL Database.
         /// Validation Details: None.
-        /// Business Logic: Prefers notifyUserId (Email Settings' ProductRequestNotifyUserId) when it resolves to an active user; otherwise falls back to the 'Platform Admin' role - see ActionId 6 in 022_Acutis_ProductRequest_StoredProcedure.sql.
+        /// Business Logic: The stored procedure resolves the configured recipient from [request].[ProductRequestSettings] (a shared database table, not either service's own _configurationSettings.json) when it's an active user; otherwise falls back to the 'Platform Admin' role - see ActionId 6 in 022_Acutis_ProductRequest_StoredProcedure.sql.
         /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud with ActionId 6.
         /// Response Details: Returns a list of recipient email records.
         /// </remarks>
-        /// <param name="notifyUserId">The configured [auth].[AcutisUser].[UserId] to notify, or null to use the Platform Admin fallback.</param>
         /// <returns>A list of recipient email records.</returns>
-        Task<List<AccessRequestRecipientOutput>> GetProductRequestNotificationRecipientsAsync(long? notifyUserId);
+        Task<List<AccessRequestRecipientOutput>> GetProductRequestNotificationRecipientsAsync();
 
         #endregion GET Methods
 

@@ -96,15 +96,6 @@ namespace CFR.CommonService.MailService
 
         /// <summary>UTC timestamp of the last SaveEmailSettings call.</summary>
         public DateTime? LastUpdatedDate { get; set; }
-
-        /// <summary>
-        /// [auth].[AcutisUser].[UserId] of the person who should receive the "new product
-        /// suggestion" notification email (see ProductRequestService.SaveProductRequestAsync,
-        /// CFR.PortalService). Set from the CFR Settings page's Acutis User dropdown. When null,
-        /// notification falls back to every active 'Platform Admin' role user (see ActionId 6 in
-        /// 022_Acutis_ProductRequest_StoredProcedure.sql).
-        /// </summary>
-        public long? ProductRequestNotifyUserId { get; set; }
     }
 
     public interface IConfSettingsService

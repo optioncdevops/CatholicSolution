@@ -13,13 +13,14 @@ namespace CFR.AcutisService.Service.Administration
     public class EmailSettingsService(
         IConfSettingsService confSettingsService,
         IFileHandlerService fileHandler,
+        IProductRequestRepository productRequestRepository,
         ICurrentUserService currentUserService,
         ISMTPMailService smtpMailService,
         ILogger<EmailSettingsService> logger): IEmailSettingsService
     {
         private static string GetEmailLogoRelativePath() => Path.Combine("Acutis", "Attachment", "EmailSettings");
 
-        private static EmailSettingsOutput BuildOutput(SMTPMailConfig? smtp) => new()
+        private static EmailSettingsOutput BuildOutput(SMTPMailConfig? smtp, long? productRequestNotifyUserId) => new()
         {
             SendMailEnabled = smtp?.SendMailFlag == "1",
             SmtpServer = smtp?.SMTPServer ?? string.Empty,
@@ -38,7 +39,7 @@ namespace CFR.AcutisService.Service.Administration
             ApiBaseUrl = smtp?.ApiBaseUrl,
             LastUpdatedByName = smtp?.LastUpdatedByName,
             LastUpdatedDate = smtp?.LastUpdatedDate,
-            ProductRequestNotifyUserId = smtp?.ProductRequestNotifyUserId,
+            ProductRequestNotifyUserId = productRequestNotifyUserId,
         };
 
         #region GET Methods
@@ -55,13 +56,14 @@ namespace CFR.AcutisService.Service.Administration
         /// Response Details: MSResultArgs containing EmailSettingsOutput.
         /// </remarks>
         /// <returns>MSResultArgs containing the email settings.</returns>
-        public Task<MSResultArgs> GetEmailSettingsAsync()
+        public async Task<MSResultArgs> GetEmailSettingsAsync()
         {
             var result = new MSResultArgs();
             try
             {
                 var settings = confSettingsService.LoadData();
-                result.ResultData = BuildOutput(settings?.SMTPMailConfig);
+                long? productRequestNotifyUserId = await productRequestRepository.GetProductRequestNotifyUserIdAsync();
+                result.ResultData = BuildOutput(settings?.SMTPMailConfig, productRequestNotifyUserId);
             }
             catch (Exception ex)
             {
@@ -70,7 +72,7 @@ namespace CFR.AcutisService.Service.Administration
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
 
-            return Task.FromResult(result);
+            return result;
         }
 
         /// <summary>
@@ -173,37 +175,11 @@ namespace CFR.AcutisService.Service.Administration
                     return Task.FromResult(result);
                 }
 
-                if (!string.IsNullOrWhiteSpace(input.ApiBaseUrl))
+                if (!ValidateApiBaseUrl(input.ApiBaseUrl, out string? apiBaseUrlError))
                 {
-                    string trimmedApiBaseUrl = input.ApiBaseUrl.Trim();
-                    if (!Uri.TryCreate(trimmedApiBaseUrl, UriKind.Absolute, out var apiBaseUri)
-                        || (apiBaseUri.Scheme != Uri.UriSchemeHttp && apiBaseUri.Scheme != Uri.UriSchemeHttps))
-                    {
-                        result.StatusCode = ErrorCodes.BadRequest;
-                        result.StatusMessage = "API base URL must be a valid absolute URL, e.g. https://api.example.com.";
-                        return Task.FromResult(result);
-                    }
-
-                    // https:// required unless this environment's own configuration explicitly
-                    // allows plain http - no such override exists today, so this defaults to the
-                    // safer, stricter rule rather than silently permitting http.
-                    if (apiBaseUri.Scheme != Uri.UriSchemeHttps)
-                    {
-                        result.StatusCode = ErrorCodes.BadRequest;
-                        result.StatusMessage = "API base URL must start with https://.";
-                        return Task.FromResult(result);
-                    }
-
-                    // ApiBaseUrl is embedded as an <img src> in every real outgoing email (see
-                    // SMTPMailService.BuildLogoImageUrl) — a loopback/private-network address only
-                    // this machine can reach produces a permanently broken logo for every
-                    // recipient.
-                    if (apiBaseUri.IsLoopback || apiBaseUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
-                    {
-                        result.StatusCode = ErrorCodes.BadRequest;
-                        result.StatusMessage = "API base URL cannot be a localhost address — recipients' email clients cannot reach it.";
-                        return Task.FromResult(result);
-                    }
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = apiBaseUrlError;
+                    return Task.FromResult(result);
                 }
 
                 var settings = confSettingsService.LoadData();
@@ -252,24 +228,63 @@ namespace CFR.AcutisService.Service.Administration
         /// </summary>
         /// <remarks>
         /// Purpose: Let an admin pick the recipient from the CFR Settings page's Acutis User dropdown, without touching any SMTP/branding field.
-        /// Request Flow: EmailSettingsController -> EmailSettingsService.SaveProductRequestNotifyUserAsync() -> IConfSettingsService.SaveData().
+        /// Request Flow: EmailSettingsController -> EmailSettingsService.SaveProductRequestNotifyUserAsync() -> IProductRequestRepository.SaveProductRequestNotifyUserIdAsync().
         /// Validation Details: None — a null value clears the setting.
-        /// Business Logic: Loads the currently saved settings, updates only SMTPMailConfig.ProductRequestNotifyUserId, then writes the file.
-        /// Repository Interaction: None — writes _configurationSettings.json via IConfSettingsService.
+        /// Business Logic: Persists the selection to the database (not _configurationSettings.json) - CFR.Acutis and CFR.Portal are separate host processes with their own copies of that file, so a value saved to one would never be visible to the other.
+        /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud with ActionId 7 via IProductRequestRepository.
         /// Response Details: MSResultArgs indicating success.
         /// </remarks>
         /// <param name="input">Input DTO containing the Acutis user identifier to notify.</param>
         /// <returns>MSResultArgs containing the save status.</returns>
-        public Task<MSResultArgs> SaveProductRequestNotifyUserAsync(ProductRequestNotifyUserInput input)
+        public async Task<MSResultArgs> SaveProductRequestNotifyUserAsync(ProductRequestNotifyUserInput input)
         {
             var result = new MSResultArgs();
             try
             {
+                await productRequestRepository.SaveProductRequestNotifyUserIdAsync(input?.ProductRequestNotifyUserId);
+
+                result.StatusMessage = ErrorMessages.Success;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.SaveEmailSettingsFailed);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Sets this API's own public base URL, used to build the email logo's image link.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let an admin edit this API base URL from the CFR Settings page, without resubmitting the rest of the SMTP/branding form.
+        /// Request Flow: EmailSettingsController -> EmailSettingsService.SaveApiBaseUrlAsync() -> IConfSettingsService.SaveData().
+        /// Validation Details: When non-blank, must be an absolute https URL and not a localhost/loopback address (same rule SaveEmailSettingsAsync applies).
+        /// Business Logic: Loads the currently saved settings, updates only SMTPMailConfig.ApiBaseUrl, then writes the file.
+        /// Repository Interaction: None — writes _configurationSettings.json via IConfSettingsService.
+        /// Response Details: MSResultArgs indicating success, or BadRequest.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the API base URL.</param>
+        /// <returns>MSResultArgs containing the save status.</returns>
+        public Task<MSResultArgs> SaveApiBaseUrlAsync(ApiBaseUrlInput input)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (!ValidateApiBaseUrl(input?.ApiBaseUrl, out string? apiBaseUrlError))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = apiBaseUrlError;
+                    return Task.FromResult(result);
+                }
+
                 var settings = confSettingsService.LoadData();
                 settings ??= new ConfSettings();
                 var smtp = settings.SMTPMailConfig ?? new SMTPMailConfig();
 
-                smtp.ProductRequestNotifyUserId = input?.ProductRequestNotifyUserId;
+                smtp.ApiBaseUrl = input?.ApiBaseUrl?.Trim() ?? string.Empty;
 
                 settings.SMTPMailConfig = smtp;
                 confSettingsService.SaveData(settings);
@@ -287,6 +302,50 @@ namespace CFR.AcutisService.Service.Administration
         }
 
         /// <summary>
+        /// Validates an API base URL: when non-blank, must be an absolute https URL and not a
+        /// loopback/localhost address (it's embedded as an &lt;img src&gt; in every outgoing email —
+        /// see SMTPMailService.BuildLogoImageUrl — so recipients' email clients must be able to
+        /// reach it). Shared by SaveEmailSettingsAsync and SaveApiBaseUrlAsync so the two save paths
+        /// can never drift out of sync on this rule.
+        /// </summary>
+        /// <param name="apiBaseUrl">The candidate API base URL, or null/blank to clear it.</param>
+        /// <param name="errorMessage">The validation failure message, or null when valid.</param>
+        /// <returns>True when valid (including blank/null); false otherwise.</returns>
+        private static bool ValidateApiBaseUrl(string? apiBaseUrl, out string? errorMessage)
+        {
+            errorMessage = null;
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+            {
+                return true;
+            }
+
+            string trimmedApiBaseUrl = apiBaseUrl.Trim();
+            if (!Uri.TryCreate(trimmedApiBaseUrl, UriKind.Absolute, out var apiBaseUri)
+                || (apiBaseUri.Scheme != Uri.UriSchemeHttp && apiBaseUri.Scheme != Uri.UriSchemeHttps))
+            {
+                errorMessage = "API base URL must be a valid absolute URL, e.g. https://api.example.com.";
+                return false;
+            }
+
+            // https:// required unless this environment's own configuration explicitly allows
+            // plain http - no such override exists today, so this defaults to the safer, stricter
+            // rule rather than silently permitting http.
+            if (apiBaseUri.Scheme != Uri.UriSchemeHttps)
+            {
+                errorMessage = "API base URL must start with https://.";
+                return false;
+            }
+
+            if (apiBaseUri.IsLoopback || apiBaseUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                errorMessage = "API base URL cannot be a localhost address — recipients' email clients cannot reach it.";
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Validates, saves, and applies an uploaded platform email logo image (JPG or PNG, max 2MB).
         /// </summary>
         /// <remarks>
@@ -299,7 +358,7 @@ namespace CFR.AcutisService.Service.Administration
         /// </remarks>
         /// <param name="file">Uploaded image file from multipart form data.</param>
         /// <returns>MSResultArgs containing the updated email settings.</returns>
-        public Task<MSResultArgs> UploadEmailLogoAsync(IFormFile? file)
+        public async Task<MSResultArgs> UploadEmailLogoAsync(IFormFile? file)
         {
             var result = new MSResultArgs();
             try
@@ -308,7 +367,7 @@ namespace CFR.AcutisService.Service.Administration
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.EmailLogoFileRequired;
-                    return Task.FromResult(result);
+                    return result;
                 }
 
                 const long maxFileSize = 2 * 1024 * 1024;
@@ -316,7 +375,7 @@ namespace CFR.AcutisService.Service.Administration
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.EmailLogoFileTooLarge;
-                    return Task.FromResult(result);
+                    return result;
                 }
 
                 string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -324,7 +383,7 @@ namespace CFR.AcutisService.Service.Administration
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.EmailLogoInvalidType;
-                    return Task.FromResult(result);
+                    return result;
                 }
 
                 var settings = confSettingsService.LoadData();
@@ -343,7 +402,8 @@ namespace CFR.AcutisService.Service.Administration
                 settings.SMTPMailConfig = smtp;
                 confSettingsService.SaveData(settings);
 
-                result.ResultData = BuildOutput(smtp);
+                long? productRequestNotifyUserId = await productRequestRepository.GetProductRequestNotifyUserIdAsync();
+                result.ResultData = BuildOutput(smtp, productRequestNotifyUserId);
             }
             catch (Exception ex)
             {
@@ -352,7 +412,7 @@ namespace CFR.AcutisService.Service.Administration
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
 
-            return Task.FromResult(result);
+            return result;
         }
 
         /// <summary>
@@ -367,7 +427,7 @@ namespace CFR.AcutisService.Service.Administration
         /// Response Details: MSResultArgs containing the updated EmailSettingsOutput.
         /// </remarks>
         /// <returns>MSResultArgs containing the updated email settings.</returns>
-        public Task<MSResultArgs> RemoveEmailLogoAsync()
+        public async Task<MSResultArgs> RemoveEmailLogoAsync()
         {
             var result = new MSResultArgs();
             try
@@ -385,7 +445,8 @@ namespace CFR.AcutisService.Service.Administration
                 settings.SMTPMailConfig = smtp;
                 confSettingsService.SaveData(settings);
 
-                result.ResultData = BuildOutput(smtp);
+                long? productRequestNotifyUserId = await productRequestRepository.GetProductRequestNotifyUserIdAsync();
+                result.ResultData = BuildOutput(smtp, productRequestNotifyUserId);
             }
             catch (Exception ex)
             {
@@ -394,7 +455,7 @@ namespace CFR.AcutisService.Service.Administration
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
 
-            return Task.FromResult(result);
+            return result;
         }
 
         /// <summary>

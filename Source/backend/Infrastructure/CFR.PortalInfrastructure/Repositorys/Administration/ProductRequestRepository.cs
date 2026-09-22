@@ -19,17 +19,15 @@ namespace CFR.PortalInfrastructure.Repositorys.Administration
         /// Purpose: Resolve who should receive the "new product suggestion" email.
         /// Request Flow: IProductRequestService -> ProductRequestRepository.GetProductRequestNotificationRecipientsAsync() -> Database.
         /// Validation Details: None.
-        /// Business Logic: Executes StoredProc.Requests.ProductRequestCrud with ActionId 6, passing notifyUserId through.
+        /// Business Logic: Executes StoredProc.Requests.ProductRequestCrud with ActionId 6; the recipient itself is resolved server-side from the shared [request].[ProductRequestSettings] table.
         /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud.
         /// Response Details: Returns a list of recipient email records.
         /// </remarks>
-        /// <param name="notifyUserId">The configured [auth].[AcutisUser].[UserId] to notify, or null to use the Platform Admin fallback.</param>
         /// <returns>A list of recipient email records.</returns>
-        public async Task<List<AccessRequestRecipientOutput>> GetProductRequestNotificationRecipientsAsync(long? notifyUserId)
+        public async Task<List<AccessRequestRecipientOutput>> GetProductRequestNotificationRecipientsAsync()
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.ProductRequestParams.ActionId, 6, DbType.Int32);
-            parameters.Add(DBParameterName.ProductRequestParams.NotifyUserId, notifyUserId, DbType.Int64);
             var result = await dapperHandler.QueryAsync<AccessRequestRecipientOutput>(StoredProc.Requests.ProductRequestCrud, parameters, CommandType.StoredProcedure);
             return result.ToList();
         }

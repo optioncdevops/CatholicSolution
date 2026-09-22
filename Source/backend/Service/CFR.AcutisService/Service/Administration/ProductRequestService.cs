@@ -1,5 +1,7 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using System.Security.Cryptography;
+
 namespace CFR.AcutisService.Service.Administration
 {
     /// <summary>
@@ -99,10 +101,10 @@ namespace CFR.AcutisService.Service.Administration
         /// Approves a product request, promoting it into the live product catalog.
         /// </summary>
         /// <remarks>
-        /// Purpose: Copy the proposed product into [core].[Product] / [core].[ProductFeature], then email the requester.
+        /// Purpose: Copy the proposed product into [core].[Product] / [core].[ProductFeature], generate its SecurityKey, then email the requester.
         /// Request Flow: ProductRequestController -> ProductRequestService.ApproveProductRequestAsync() -> IProductRequestRepository.ApproveProductRequestAsync().
         /// Validation Details: ProductRequestId must be greater than zero.
-        /// Business Logic: Delegates the approval to the repository, maps duplicate-name/already-decided results to Conflict, then emails the requester. Mail failure does not fail the approval.
+        /// Business Logic: Generates a random SecurityKey (see GenerateSecurityKey), delegates the approval to the repository, maps duplicate-name/already-decided results to Conflict, then emails the requester. Mail failure does not fail the approval.
         /// Repository Interaction: Calls IProductRequestRepository.ApproveProductRequestAsync() and IProductRequestRepository.GetProductRequestByIdAsync().
         /// Response Details: MSResultArgs containing the new ProductId.
         /// </remarks>
@@ -120,7 +122,8 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                int newProductId = await repository.ApproveProductRequestAsync(input.ProductRequestId, input.DecisionRemarks);
+                string securityKey = GenerateSecurityKey();
+                int newProductId = await repository.ApproveProductRequestAsync(input.ProductRequestId, input.DecisionRemarks, securityKey);
                 if (newProductId == -95)
                 {
                     result.StatusCode = ErrorCodes.Conflict;
@@ -142,7 +145,7 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                await NotifyRequesterOfDecisionAsync(input.ProductRequestId, approved: true, input.DecisionRemarks);
+                await NotifyRequesterOfDecisionAsync(input.ProductRequestId, approved: true, input.DecisionRemarks, newProductId, securityKey);
                 result.ResultData = new { productRequestId = input.ProductRequestId, approvedProductId = newProductId };
             }
             catch (Exception ex)
@@ -275,7 +278,12 @@ namespace CFR.AcutisService.Service.Administration
         /// <summary>
         /// Emails the requester once their product suggestion has been approved or rejected.
         /// </summary>
-        private async Task NotifyRequesterOfDecisionAsync(int productRequestId, bool approved, string? decisionRemarks)
+        /// <param name="productRequestId">Product request identifier.</param>
+        /// <param name="approved">True for an approval email, false for a rejection email.</param>
+        /// <param name="decisionRemarks">Optional reviewer remarks.</param>
+        /// <param name="approvedProductId">The new [core].[Product].[ProductId] - only set when approved.</param>
+        /// <param name="securityKey">The generated SecurityKey saved onto that product row - only set when approved.</param>
+        private async Task NotifyRequesterOfDecisionAsync(int productRequestId, bool approved, string? decisionRemarks, int? approvedProductId = null, string? securityKey = null)
         {
             string templateCode = approved ? ProductRequestApprovedTemplateCode : ProductRequestRejectedTemplateCode;
             try
@@ -292,12 +300,14 @@ namespace CFR.AcutisService.Service.Administration
                     ["RequesterName"] = request.RequesterName,
                     ["ProductName"] = request.ProductName,
                     ["Remarks"] = string.IsNullOrWhiteSpace(decisionRemarks) ? "None provided" : decisionRemarks.Trim(),
+                    ["ProductId"] = approvedProductId?.ToString() ?? string.Empty,
+                    ["SecurityKey"] = securityKey ?? string.Empty,
                 };
 
                 var template = await emailTemplatesRepository.GetEmailTemplateByCodeAsync(templateCode);
                 string fallbackSubject = approved ? $"Your product suggestion was approved: {request.ProductName}" : $"Your product suggestion was not approved: {request.ProductName}";
                 string fallbackBody = approved
-                    ? "<p>Hi [FirstName],</p><p>Good news - your suggested product, [ProductName], has been approved and added to the platform.</p>"
+                    ? "<p>Hi [FirstName],</p><p>Good news - your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Product ID:</strong> [ProductId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential - it identifies your product for API access.</p>"
                     : "<p>Hi [FirstName],</p><p>Thanks for suggesting [ProductName]. After review, we won't be adding it at this time.</p><p><strong>Notes:</strong> [Remarks]</p>";
                 string subject = template?.Subject ?? fallbackSubject;
                 string body = template?.Body ?? fallbackBody;
@@ -310,6 +320,13 @@ namespace CFR.AcutisService.Service.Administration
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.AcutisLogMessages.SendProductRequestEmailFailed, templateCode, productRequestId);
             }
         }
+
+        /// <summary>
+        /// Generates the SecurityKey saved onto a newly-approved [core].[Product] row: 32
+        /// cryptographically random bytes, hex-encoded (64 characters, fits [SecurityKey]
+        /// NVARCHAR(100) with room to spare).
+        /// </summary>
+        private static string GenerateSecurityKey() => Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
         /// <summary>
         /// Returns the first token of a full name, or a generic greeting when the name is empty.
