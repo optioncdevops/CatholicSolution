@@ -11,23 +11,36 @@ export interface ProductRequestFormValues {
 }
 
 export type ProductRequestFieldErrors = Partial<Record<
-  'productName' | 'description' | 'productionUrl' | 'contactName' | 'contactEmail',
+  'productName' | 'shortName' | 'description' | 'productionUrl' | 'navigationTarget' | 'features' | 'logoName' | 'contactName' | 'contactEmail',
   string
 >>;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const URL_PATTERN = /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+([/?#].*)?$/i;
 const DESCRIPTION_MAX_LENGTH = 500;
+const PRODUCT_NAME_MAX_LENGTH = 10;
+const SHORT_NAME_MAX_LENGTH = 10;
 
 export const validateProductRequestFields = (values: ProductRequestFormValues): ProductRequestFieldErrors => {
   const errors: ProductRequestFieldErrors = {};
 
   if (!values.productName.trim()) errors.productName = 'Product name is required.';
+  else if (values.productName.trim().length > PRODUCT_NAME_MAX_LENGTH) errors.productName = `Product name must be ${PRODUCT_NAME_MAX_LENGTH} characters or fewer.`;
+
+  if (!values.shortName.trim()) errors.shortName = 'Short name is required.';
+  else if (values.shortName.trim().length > SHORT_NAME_MAX_LENGTH) errors.shortName = `Short name must be ${SHORT_NAME_MAX_LENGTH} characters or fewer.`;
 
   if (!values.description.trim()) errors.description = 'Description is required.';
   else if (values.description.trim().length > DESCRIPTION_MAX_LENGTH) errors.description = `Description must be ${DESCRIPTION_MAX_LENGTH} characters or fewer.`;
 
-  if (values.productionUrl.trim() && !URL_PATTERN.test(values.productionUrl.trim())) errors.productionUrl = 'Enter a valid website URL.';
+  if (!values.productionUrl.trim()) errors.productionUrl = 'Production URL is required.';
+  else if (!URL_PATTERN.test(values.productionUrl.trim())) errors.productionUrl = 'Enter a valid website URL.';
+
+  if (!values.navigationTarget) errors.navigationTarget = 'Preferred navigation is required.';
+
+  if (values.features.length === 0) errors.features = 'Add at least one feature.';
+
+  if (!values.logoName.trim()) errors.logoName = 'A logo is required.';
 
   if (!values.contactName.trim()) errors.contactName = 'Your name is required.';
 
