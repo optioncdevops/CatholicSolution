@@ -6,6 +6,7 @@ global using Dapper;
 
 global using CFR.PortalInfrastructure.Interfaces.Authentication;
 global using CFR.PortalInfrastructure.Interfaces.CFRLaunch;
+global using CFR.PortalInfrastructure.Interfaces.PlatformLaunch;
 global using CFR.PortalInfrastructure.Interfaces.Administration;
 global using CFR.PortalInfrastructure.Models.Input;
 global using CFR.PortalInfrastructure.Models.Output;

@@ -34,5 +34,37 @@ namespace CFR.DataSyncInfrastructure
             /// </summary>
             public const string OrganizationUpsert = "[dbo].[Sync_OrganizationUpsert]";
         }
+
+        /// <summary>
+        /// Stored procedure names for the CFR-user product-lookup surface.
+        /// </summary>
+        public class ProductSync
+        {
+            /// <summary>
+            /// Read-only lookup of the active products a CFR user (identified by email) has access to.
+            /// </summary>
+            public const string ProductsForUser = "[dbo].[Sync_ProductsForUser]";
+        }
+
+        /// <summary>
+        /// Portal's own App Hub platform-launch code create/exchange procedure. Lives in the same
+        /// physical database as CFR.Portal's own tables (both microservices share ConnString), the
+        /// same way [dbo].[Sync_ProductsForUser] already reads Portal-owned tables directly.
+        /// </summary>
+        public class PlatformLaunch
+        {
+            /// <summary>Platform launch-code create (ActionId 1 only, from this microservice).</summary>
+            public const string PlatformLaunchCrud = "[dbo].[Portal_PlatformLaunch]";
+        }
+
+        /// <summary>
+        /// Portal's own product SSO launch procedure, same physical database access pattern as
+        /// <see cref="PlatformLaunch"/>.
+        /// </summary>
+        public class CFRLaunch
+        {
+            /// <summary>Product launch-code create (ActionId 4 only, from this microservice).</summary>
+            public const string CFRLaunchCrud = "[dbo].[Portal_CFRLaunch]";
+        }
     }
 }

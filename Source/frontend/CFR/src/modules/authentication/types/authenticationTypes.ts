@@ -15,6 +15,11 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   signIn: (request: SignInRequest) => Promise<SignInResult>;
   signOut: () => void;
+  /**
+   * Marks this tab as signed in after some other flow (e.g. a platform-launch code exchange)
+   * already called setPortalSession itself. Same tail as signIn() without redoing the API call.
+   */
+  establishSession: () => void;
 }
 
 export interface LoginFormValues {
