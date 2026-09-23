@@ -203,6 +203,11 @@ export function DashboardPage() {
   const [assignmentSummary, setAssignmentSummary] = useState<ProductAssignmentSummaryApiItem[]>([]);
 
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
+  const [selectedRequestProductId, setSelectedRequestProductId] = useState<number | null>(null);
+  const selectRequest = (request: AccessRequestApiItem) => {
+    setSelectedRequestId(request.accessRequestId);
+    setSelectedRequestProductId(request.accessRequestProductId || null);
+  };
   const [actingRequestId, setActingRequestId] = useState<number | null>(null);
 
   // Section-local filters — each section's range only ever affects that section's own data.
@@ -382,7 +387,7 @@ export function DashboardPage() {
       .filter((request) => request.submittedAt)
       .map((request) => ({
         id: `request-${request.accessRequestId}`, kind: 'request', message: `${request.requesterName} requested ${request.productName} for ${request.organizationName}`, at: request.submittedAt,
-        onSelect: () => setSelectedRequestId(request.accessRequestId),
+        onSelect: () => selectRequest(request),
       }));
     const licenseEvents: ActivityEntry[] = trendEvents
       .filter((event) => event.eventType === 'LicenseCreated')
@@ -499,7 +504,7 @@ export function DashboardPage() {
 
     setActingRequestId(request.accessRequestId);
     try {
-      await updateAccessRequestStatus({ accessRequestId: request.accessRequestId, status: nextStatus });
+      await updateAccessRequestStatus({ accessRequestId: request.accessRequestId, accessRequestProductId: request.accessRequestProductId, status: nextStatus });
       showToast(`Request ${nextStatus} successfully.`, 'success');
       await loadDashboard(true);
     } catch (error) {
@@ -736,7 +741,7 @@ export function DashboardPage() {
                         <button
                           id={`btnViewAccessRequest${request.accessRequestId}`}
                           type="button"
-                          onClick={() => setSelectedRequestId(request.accessRequestId)}
+                          onClick={() => selectRequest(request)}
                           className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                         >
                           <EntityAvatar name={request.requesterName} size={28} />
@@ -762,7 +767,7 @@ export function DashboardPage() {
                             aria-label={`View ${request.requesterName}'s request`}
                             variant="secondary"
                             icon={<Eye size={15} />}
-                            onClick={() => setSelectedRequestId(request.accessRequestId)}
+                            onClick={() => selectRequest(request)}
                             disabled={actingRequestId === request.accessRequestId}
                           />
                         </div>
@@ -1085,7 +1090,11 @@ export function DashboardPage() {
 
       <RequestReviewModal
         accessRequestId={selectedRequestId}
-        onClose={() => setSelectedRequestId(null)}
+        accessRequestProductId={selectedRequestProductId}
+        onClose={() => {
+          setSelectedRequestId(null);
+          setSelectedRequestProductId(null);
+        }}
         onResolved={() => loadDashboard(true)}
       />
     </div>

@@ -62,7 +62,7 @@ namespace CFR.Acutis
 
             services.AddHttpClient("ExternalOrganizationApi", client =>
             {
-                client.Timeout = TimeSpan.FromSeconds(30);
+                client.Timeout = Timeout.InfiniteTimeSpan;
             });
 
             services.AddScoped<IProductsService, ProductsService>();

@@ -15,10 +15,10 @@ export const getAccessRequests = async (): Promise<ApiResponse> => {
   }
 };
 
-export const getAccessRequestById = async (accessRequestId: number): Promise<ApiResponse> => {
+export const getAccessRequestById = async (accessRequestId: number, accessRequestProductId?: number | null): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetAccessRequestById`, {
-      params: { accessRequestId },
+      params: { accessRequestId, accessRequestProductId: accessRequestProductId || undefined },
     });
     const { statusCode, statusMessage, resultData } = response.data;
     return { statusCode, statusMessage, resultData };

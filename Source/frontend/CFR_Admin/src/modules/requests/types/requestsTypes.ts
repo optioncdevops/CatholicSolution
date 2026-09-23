@@ -16,6 +16,7 @@ export interface AccessRequestCommentApiItem {
 
 export interface AccessRequestApiItem {
   accessRequestId: number;
+  accessRequestProductId: number;
   organizationId: number;
   organizationName: string;
   organizationType?: string;
@@ -44,6 +45,7 @@ export interface SaveAccessRequestPayload {
 
 export interface UpdateAccessRequestStatusPayload {
   accessRequestId: number;
+  accessRequestProductId?: number | null;
   status: RequestStatus;
   note?: string;
 }
