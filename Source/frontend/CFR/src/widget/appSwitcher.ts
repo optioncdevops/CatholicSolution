@@ -1,25 +1,55 @@
 /**
  * CFR App Switcher — standalone embeddable widget.
  *
- * Any external Catholic Solutions product (e.g. optionc-sms) renders the CFR
+ * Default mode - any external Catholic Solutions product renders the CFR
  * app-switcher with just:
  *
  *   <script src="https://<cfr-origin-for-that-env>/integrations/app-switcher/app-switcher.js" defer></script>
  *
- * No data attributes, globals, or build-time dependency on this repo required.
- * If the host page has an element with id="cfr-app-switcher-slot" (e.g. an
- * empty <div> placed inline in its own header icon row), the widget renders
- * its icon inside that slot, sized/colored to inherit the surrounding icons'
- * styling (currentColor). Otherwise it falls back to a floating corner button.
+ * No data attributes, globals, or build-time dependency on this repo
+ * required. It calls {gatewayOrigin}/acutis/api/v1/Products/GetProducts, an
+ * anonymous, CORS-open endpoint (see ProductsController.GetProducts). No CFR
+ * session/auth is required or used; the switcher lists first-party apps only.
  *
- * The CFR.Gateway origin this bundle calls is baked in at CFR's own build
- * time (see vite.widget.config.ts, __CFR_GATEWAY_ORIGIN__) from that build
- * mode's VITE_APP_REST_API_BASE_URL - the same var CFR's own app reads - so
- * dev vs. pilot vs. staging vs. live is just "which CFR host serves the
- * script tag." It calls {gatewayOrigin}/acutis/api/v1/Products/GetProducts,
- * an anonymous, CORS-open endpoint (see ProductsController.GetProducts). No
- * CFR session/auth is required or used; the switcher lists first-party apps
- * only.
+ * Direct CFR.DataSync mode - a host that wants this user's real
+ * CFR-accessible products (not just the first-party catalog) opts in with
+ * data-cfr-datasync-base-url / -client-id / -client-secret on the script tag:
+ *
+ *   <script src="..." data-cfr-datasync-base-url="https://..."
+ *           data-cfr-datasync-client-id="sms-client"
+ *           data-cfr-datasync-client-secret="..." defer></script>
+ *
+ * The widget itself logs into CFR.DataSync (Auth/Login) with those
+ * credentials, then calls ProductSync/GetUserProducts for the CFR member
+ * whose email is in sessionStorage.cfrEmail (written by the host app at CFR
+ * launch time) - entirely client-side, no host backend involved. Unlike
+ * default mode, it renders nothing at all (no button, no fallback) when
+ * there's no linked CFR identity or the calls fail, instead of an
+ * empty/error panel.
+ *
+ * That same GetUserProducts call also mints a one-time App Hub platform-launch
+ * code (see 005_Portal_PlatformLaunch.sql / PlatformLaunchController), so this
+ * mode's "All apps in App Hub" footer link lands the visitor on CFR's own hub
+ * already signed in, instead of CFR's login page. Clicking a product tile
+ * mints its own one-time launch code on demand (Products/LaunchProduct, via
+ * [dbo].[Portal_CFRLaunch] ActionId 4) - the same real, authenticated launch
+ * CFR's own App Hub "Launch" button uses, not a bare link.
+ *
+ * An optional data-cfr-current-product-id on the script tag (the host's own
+ * CFR [core].[Product].ProductId) marks that one tile as the current app -
+ * shown but not clickable, so a visitor can't "launch" the app they're
+ * already in.
+ *
+ * Either way, if the host page has an element with id="cfr-app-switcher-slot"
+ * (e.g. an empty <div> placed inline in its own header icon row), the widget
+ * renders its icon inside that slot, sized/colored to inherit the
+ * surrounding icons' styling (currentColor). Otherwise it falls back to a
+ * floating corner button.
+ *
+ * The CFR.Gateway origin used for logos/App-Hub-link and for default mode's
+ * product list is baked in at CFR's own build time (see
+ * vite.widget.config.ts, __CFR_GATEWAY_ORIGIN__) from that build mode's
+ * VITE_APP_REST_API_BASE_URL - the same var CFR's own app reads.
  */
 
 declare const __CFR_GATEWAY_ORIGIN__: string;
@@ -27,8 +57,17 @@ declare const __CFR_GATEWAY_ORIGIN__: string;
 // Captured synchronously at script-execution time, before any async gap -
 // document.currentScript is only valid during that initial (sync) run, even
 // with `defer`. This gives us "where was this widget itself loaded from,"
-// i.e. the CFR app's own origin, used for the App Hub footer link.
-const SELF_SCRIPT_SRC = (document.currentScript as HTMLScriptElement | null)?.src ?? '';
+// i.e. the CFR app's own origin, used for the App Hub footer link, and the
+// script tag's own data-* attributes for direct CFR.DataSync mode.
+const SELF_SCRIPT_EL = document.currentScript as HTMLScriptElement | null;
+const SELF_SCRIPT_SRC = SELF_SCRIPT_EL?.src ?? '';
+const DATASYNC_BASE_URL = (SELF_SCRIPT_EL?.dataset.cfrDatasyncBaseUrl ?? '').replace(/\/+$/, '');
+const DATASYNC_CLIENT_ID = SELF_SCRIPT_EL?.dataset.cfrDatasyncClientId ?? '';
+const DATASYNC_CLIENT_SECRET = SELF_SCRIPT_EL?.dataset.cfrDatasyncClientSecret ?? '';
+// The host's own CFR [core].[Product].ProductId (e.g. SMS's CfrAuthenticationSettings:ProductId),
+// so the tile for the app the visitor is already inside can be shown as current/disabled instead
+// of relaunching itself.
+const CURRENT_PRODUCT_ID = SELF_SCRIPT_EL?.dataset.cfrCurrentProductId ?? '';
 
 type ProductRow = {
   productId: number;
@@ -37,7 +76,7 @@ type ProductRow = {
   subCategoryName?: string | null;
   externalPageUrl?: string | null;
   logoName?: string | null;
-  isActive: boolean;
+  isActive?: boolean;
   productStatus?: number | null;
   navigationTarget?: string | null;
   isDeleted?: boolean;
@@ -59,10 +98,22 @@ type ApiEnvelope<T> = {
   resultData?: T;
 };
 
+/** Direct CFR.DataSync mode's GetUserProducts payload shape (see UserProductsResult). */
+type UserProductsPayload = {
+  products?: ProductRow[];
+  platformLaunchCode?: string | null;
+};
+
 const CLASS_PREFIX = 'cfrsw';
 const SLOT_ID = 'cfr-app-switcher-slot';
 const PRODUCTS_ENDPOINT_PATH = '/acutis/api/v1/Products/GetProducts';
 const LOGO_PUBLIC_PATH = '/acutis/Acutis/Attachment/Products/';
+const DATASYNC_LOGIN_PATH = '/api/v1/Auth/Login';
+// Controller class is ProductsController (Controllers/ProductSync/ is just the folder name) -
+// BaseController routes off the class name, so the real path is /Products/, not /ProductSync/.
+const DATASYNC_PRODUCTS_PATH = '/api/v1/Products/GetUserProducts';
+const DATASYNC_LAUNCH_PATH = '/api/v1/Products/LaunchProduct';
+const HOST_SESSION_EMAIL_KEY = 'cfrEmail';
 const SLOT_WAIT_TIMEOUT_MS = 4000;
 
 const TILE_COLORS = [
@@ -91,17 +142,16 @@ function selfOrigin(): string | null {
   }
 }
 
-function appHubUrl(): string | null {
-  const origin = selfOrigin();
-  return origin ? `${origin}/apps` : null;
-}
-
 function buildLogoUrl(apiBase: string, logoName: string): string {
   const fileName = logoName.replace(/\\/g, '/').split('/').filter(Boolean).pop() ?? '';
   return `${apiBase}${LOGO_PUBLIC_PATH}${fileName}`;
 }
 
-function isLaunchable(row: ProductRow): boolean {
+// Applied only to rows from CFR's own default (Acutis GetProducts) endpoint, which returns
+// every product unfiltered - IsDeleted/IsActive/ProductStatus must be checked client-side.
+// Direct CFR.DataSync mode's ProductSync/GetUserProducts already returns only that user's
+// active, assigned products, so only the launch-URL presence is checked there.
+function isLaunchableDefault(row: ProductRow): boolean {
   return (
     Boolean(row) &&
     row.isDeleted !== true &&
@@ -111,13 +161,20 @@ function isLaunchable(row: ProductRow): boolean {
   );
 }
 
-function toSwitcherApp(apiBase: string, row: ProductRow): SwitcherApp {
+function isLaunchableDirectDataSync(row: ProductRow): boolean {
+  return Boolean(row) && Boolean(row.externalPageUrl && row.externalPageUrl.trim());
+}
+
+// Logo files are always served from CFR/Acutis's own attachment storage, regardless of which
+// endpoint (default GetProducts or CFR.DataSync's GetUserProducts) the product row came from -
+// so this always resolves against the CFR gateway origin, never the CFR.DataSync base URL.
+function toSwitcherApp(row: ProductRow): SwitcherApp {
   return {
     productId: row.productId,
     name: row.shortName || row.productName,
     subCategory: (row.subCategoryName ?? '').trim() || undefined,
     externalUrl: (row.externalPageUrl ?? '').trim(),
-    logoUrl: row.logoName && row.logoName.trim() ? buildLogoUrl(apiBase, row.logoName.trim()) : undefined,
+    logoUrl: row.logoName && row.logoName.trim() ? buildLogoUrl(__CFR_GATEWAY_ORIGIN__, row.logoName.trim()) : undefined,
     navigationTarget: row.navigationTarget,
   };
 }
@@ -179,6 +236,8 @@ function injectStyles(): void {
       transition: background-color 120ms ease;
     }
     .${CLASS_PREFIX}-tile:hover, .${CLASS_PREFIX}-tile:focus-visible { background: #f3f4f6; outline: none; }
+    .${CLASS_PREFIX}-tile-current { cursor: default; opacity: 0.55; }
+    .${CLASS_PREFIX}-tile-current:hover, .${CLASS_PREFIX}-tile-current:focus-visible { background: transparent; }
     .${CLASS_PREFIX}-tile-icon {
       width: 40px; height: 40px; border-radius: 11px; object-fit: cover; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700;
@@ -233,12 +292,47 @@ function fallbackTileIcon(label: string, color: string): HTMLElement {
   return span;
 }
 
-function openApp(app: SwitcherApp): void {
+/**
+ * Direct CFR.DataSync mode only: mints a real one-time launch code for this product (the same
+ * [dbo].[Portal_CFRLaunch] mechanism CFR's own App Hub "Launch" button uses), so the tile click
+ * lands the visitor already signed in on the target product, instead of at its own login page.
+ * Null means the launch couldn't be created (expired session, not assigned, etc.) - the caller
+ * falls back to the plain BaseUrl rather than doing nothing.
+ */
+async function launchViaDataSync(productId: number): Promise<string | null> {
+  const cfrEmail = readHostSessionValue(HOST_SESSION_EMAIL_KEY);
+  if (!cfrEmail) return null;
+
+  try {
+    const accessToken = await loginToDataSync(DATASYNC_BASE_URL, DATASYNC_CLIENT_ID, DATASYNC_CLIENT_SECRET);
+    if (!accessToken) return null;
+
+    const response = await fetch(`${DATASYNC_BASE_URL}${DATASYNC_LAUNCH_PATH}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ email: cfrEmail, productId }),
+    });
+    if (!response.ok) return null;
+
+    const envelope = (await response.json()) as ApiEnvelope<{ launchUrl?: string }>;
+    return envelope.resultData?.launchUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function openApp(app: SwitcherApp): Promise<void> {
   if (!app.externalUrl) return;
+
+  let destination = app.externalUrl;
+  if (DATASYNC_BASE_URL && DATASYNC_CLIENT_ID && DATASYNC_CLIENT_SECRET) {
+    destination = (await launchViaDataSync(app.productId)) ?? app.externalUrl;
+  }
+
   if (app.navigationTarget === 'new-tab') {
-    window.open(app.externalUrl, '_blank', 'noopener,noreferrer');
+    window.open(destination, '_blank', 'noopener,noreferrer');
   } else {
-    window.location.assign(app.externalUrl);
+    window.location.assign(destination);
   }
 }
 
@@ -252,7 +346,64 @@ async function fetchLaunchableApps(apiBase: string): Promise<SwitcherApp[]> {
   }
   const envelope = (await response.json()) as ApiEnvelope<ProductRow[]>;
   const rows = Array.isArray(envelope.resultData) ? envelope.resultData : [];
-  return rows.filter(isLaunchable).map((row) => toSwitcherApp(apiBase, row));
+  return rows.filter(isLaunchableDefault).map(toSwitcherApp);
+}
+
+function readHostSessionValue(key: string): string {
+  try {
+    return sessionStorage.getItem(key) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+type DataSyncLoginResult = { accessToken?: string };
+
+async function loginToDataSync(baseUrl: string, clientId: string, clientSecret: string): Promise<string> {
+  const response = await fetch(`${baseUrl}${DATASYNC_LOGIN_PATH}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ clientId, clientSecret }),
+  });
+  if (!response.ok) return '';
+  const envelope = (await response.json()) as ApiEnvelope<DataSyncLoginResult>;
+  return envelope.resultData?.accessToken ?? '';
+}
+
+type DirectDataSyncResult = {
+  apps: SwitcherApp[];
+  /** One-time code for CFR.Portal's PlatformLaunch/ExchangeToken, minted in the same call. */
+  platformLaunchCode: string | null;
+};
+
+/**
+ * Direct CFR.DataSync mode's full fetch: log in with the script tag's own client credentials,
+ * then ask for this CFR member's products. Resolves to null (render nothing at all) whenever
+ * this visitor shouldn't see the widget - no linked CFR identity, or any step fails.
+ */
+async function fetchDirectDataSyncApps(): Promise<DirectDataSyncResult | null> {
+  const cfrEmail = readHostSessionValue(HOST_SESSION_EMAIL_KEY);
+  if (!cfrEmail) return null;
+
+  try {
+    const accessToken = await loginToDataSync(DATASYNC_BASE_URL, DATASYNC_CLIENT_ID, DATASYNC_CLIENT_SECRET);
+    if (!accessToken) return null;
+
+    const response = await fetch(`${DATASYNC_BASE_URL}${DATASYNC_PRODUCTS_PATH}?email=${encodeURIComponent(cfrEmail)}`, {
+      method: 'GET',
+      headers: { Accept: 'application/json', Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) return null;
+
+    const envelope = (await response.json()) as ApiEnvelope<UserProductsPayload>;
+    const rows = Array.isArray(envelope.resultData?.products) ? envelope.resultData.products : [];
+    return {
+      apps: rows.filter(isLaunchableDirectDataSync).map(toSwitcherApp),
+      platformLaunchCode: envelope.resultData?.platformLaunchCode ?? null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function buildHeader(): { header: HTMLElement; setCount: (count: number) => void } {
@@ -287,9 +438,14 @@ function buildHeader(): { header: HTMLElement; setCount: (count: number) => void
   return { header, setCount: (count) => { badge.textContent = String(count); } };
 }
 
-function buildFooter(): HTMLElement | null {
-  const href = appHubUrl();
-  if (!href) return null;
+// A platformLaunchCode (direct CFR.DataSync mode only) makes this land already signed in via
+// PlatformLaunchController.ExchangeToken instead of CFR's own login page - see appSwitcher.ts's
+// header comment and 005_Portal_PlatformLaunch.sql. No code (default mode, or the mint failed)
+// just links to the plain hub, unchanged from before.
+function buildFooter(platformLaunchCode?: string | null): HTMLElement | null {
+  const origin = selfOrigin();
+  if (!origin) return null;
+  const href = platformLaunchCode ? `${origin}/apps?code=${encodeURIComponent(platformLaunchCode)}` : `${origin}/apps`;
 
   const footer = document.createElement('a');
   footer.className = `${CLASS_PREFIX}-footer ${CLASS_PREFIX}-divider`;
@@ -309,7 +465,7 @@ function buildFooter(): HTMLElement | null {
   return footer;
 }
 
-function buildPanel(apiBase: string): HTMLElement {
+function buildPanel(appsPromise: Promise<SwitcherApp[]>, platformLaunchCode?: string | null): HTMLElement {
   const panel = document.createElement('div');
   panel.className = `${CLASS_PREFIX}-panel`;
 
@@ -320,10 +476,10 @@ function buildPanel(apiBase: string): HTMLElement {
   grid.className = `${CLASS_PREFIX}-grid ${CLASS_PREFIX}-divider`;
   panel.appendChild(grid);
 
-  const footer = buildFooter();
+  const footer = buildFooter(platformLaunchCode);
   if (footer) panel.appendChild(footer);
 
-  fetchLaunchableApps(apiBase)
+  appsPromise
     .then((apps) => {
       grid.innerHTML = '';
       setCount(apps.length);
@@ -335,14 +491,20 @@ function buildPanel(apiBase: string): HTMLElement {
         return;
       }
       apps.forEach((app) => {
+        const isCurrent = CURRENT_PRODUCT_ID !== '' && String(app.productId) === CURRENT_PRODUCT_ID;
+
         const tile = document.createElement('a');
-        tile.className = `${CLASS_PREFIX}-tile`;
-        tile.href = app.externalUrl;
+        tile.className = `${CLASS_PREFIX}-tile${isCurrent ? ` ${CLASS_PREFIX}-tile-current` : ''}`;
         tile.rel = 'noopener noreferrer';
-        tile.addEventListener('click', (event) => {
-          event.preventDefault();
-          openApp(app);
-        });
+        if (isCurrent) {
+          tile.setAttribute('aria-disabled', 'true');
+        } else {
+          tile.href = app.externalUrl;
+          tile.addEventListener('click', (event) => {
+            event.preventDefault();
+            void openApp(app);
+          });
+        }
         tile.appendChild(renderTileIcon(app));
 
         const name = document.createElement('span');
@@ -350,7 +512,12 @@ function buildPanel(apiBase: string): HTMLElement {
         name.textContent = app.name;
         tile.appendChild(name);
 
-        if (app.subCategory) {
+        if (isCurrent) {
+          const currentBadge = document.createElement('span');
+          currentBadge.className = `${CLASS_PREFIX}-tile-sub`;
+          currentBadge.textContent = 'Current app';
+          tile.appendChild(currentBadge);
+        } else if (app.subCategory) {
           const subEl = document.createElement('span');
           subEl.className = `${CLASS_PREFIX}-tile-sub`;
           subEl.textContent = app.subCategory;
@@ -372,7 +539,7 @@ function buildPanel(apiBase: string): HTMLElement {
   return panel;
 }
 
-function mountSwitcher(apiBase: string, host: HTMLElement, inline: boolean): void {
+function mountSwitcher(appsPromise: Promise<SwitcherApp[]>, host: HTMLElement, inline: boolean, platformLaunchCode?: string | null): void {
   injectStyles();
 
   const wrap = document.createElement('div');
@@ -388,7 +555,7 @@ function mountSwitcher(apiBase: string, host: HTMLElement, inline: boolean): voi
     button.appendChild(dot);
   }
 
-  const panel = buildPanel(apiBase);
+  const panel = buildPanel(appsPromise, platformLaunchCode);
 
   button.addEventListener('click', (event) => {
     event.stopPropagation();
@@ -449,13 +616,25 @@ async function init(): Promise<void> {
     return;
   }
 
-  const slot = await waitForSlot();
-  if (slot) {
-    mountSwitcher(__CFR_GATEWAY_ORIGIN__, slot, true);
+  if (DATASYNC_BASE_URL && DATASYNC_CLIENT_ID && DATASYNC_CLIENT_SECRET) {
+    // Direct CFR.DataSync mode: resolve this user's products (and App Hub launch code) up
+    // front. A null result means this visitor should see no trace of the widget at all - no
+    // button, no fallback.
+    const result = await fetchDirectDataSyncApps();
+    if (result === null) return;
+    const slotForHost = await waitForSlot();
+    mountSwitcher(Promise.resolve(result.apps), slotForHost ?? document.body, Boolean(slotForHost), result.platformLaunchCode);
     return;
   }
 
-  mountSwitcher(__CFR_GATEWAY_ORIGIN__, document.body, false);
+  // Default (CFR-hosted) mode - always render, fetch lazily.
+  const slot = await waitForSlot();
+  if (slot) {
+    mountSwitcher(fetchLaunchableApps(__CFR_GATEWAY_ORIGIN__), slot, true);
+    return;
+  }
+
+  mountSwitcher(fetchLaunchableApps(__CFR_GATEWAY_ORIGIN__), document.body, false);
 }
 
 if (document.readyState === 'loading') {

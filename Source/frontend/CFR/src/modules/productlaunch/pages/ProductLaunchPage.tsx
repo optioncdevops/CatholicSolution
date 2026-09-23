@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AppDetailsModal } from '@shared/app/components/AppDetailsModal';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
@@ -8,6 +9,7 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { BellIcon, SearchIcon } from '@shared/app/components/UiIcons';
 import { useCurrentUser } from '@shared/app/context/UserContext';
 import type { CatalogApp } from '@shared/app/types/app';
+import { exchangePlatformToken, useAuth } from '@/modules/authentication';
 import { getAssignedProducts, launchProduct } from '../services/productLaunchService';
 import { hubProductsFromResponse } from '../utils/productLaunchHelpers';
 import { validateLaunchProduct } from '../validator/ProductLaunchValidator';
@@ -26,6 +28,9 @@ export default function ProductLaunchPage() {
   //#region Hooks
   const { showToast } = useToast();
   const { firstName } = useCurrentUser();
+  const { establishSession } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   //#endregion
 
   //#region States
@@ -35,6 +40,7 @@ export default function ProductLaunchPage() {
   const [requestedAppIds, setRequestedAppIds] = useState<string[]>([]);
   const [apps, setApps] = useState<CatalogApp[]>([]);
   const [loading, setLoading] = useState(true);
+  const codeExchangeStarted = useRef(false);
   //#endregion
 
   //#region Functions
@@ -55,8 +61,38 @@ export default function ProductLaunchPage() {
 
   //#region Effects
   useEffect(() => {
-    void loadProducts();
-  }, [loadProducts]);
+    // A platform-launch code (see ProtectedRoute) means this tab arrived with no session of its
+    // own yet - exchange it for a real one before loading anything that needs auth.
+    const code = new URLSearchParams(location.search).get('code');
+    if (!code) {
+      void loadProducts();
+      return;
+    }
+
+    // StrictMode double-invokes this setup function on mount - the second call lands here with
+    // the exchange already in flight from the first. Do nothing (not even loadProducts()): the
+    // in-flight exchange's own async branch below calls it once a session actually exists.
+    if (codeExchangeStarted.current) return;
+    codeExchangeStarted.current = true;
+    void (async () => {
+      try {
+        await exchangePlatformToken(code);
+        establishSession();
+        navigate('/apps', { replace: true });
+        void loadProducts();
+      } catch (error) {
+        // Do not fall through to loadProducts() here - with no session established, that call
+        // would just 401 and show a confusing "Unauthorized" toast on top of this one. Send the
+        // visitor to a real sign-in instead, same as ProtectedRoute would for any other failure.
+        console.error('Error exchanging platform-launch code:', error);
+        showToast(typeof error === 'string' ? error : 'Unable to complete sign-in.');
+        navigate('/login', { replace: true });
+      }
+    })();
+    // Deliberately mount-only: re-running this on every location change would re-exchange the
+    // code (or loop) once navigate() strips it from the URL below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   //#endregion
 
   //#region Functions
