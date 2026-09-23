@@ -33,6 +33,7 @@ function RequestsListPage() {
   const [appFilter, setAppFilter] = useState('all');
   const [orgFilter, setOrgFilter] = useState('all');
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   //#endregion
 
   // The active status filter lives in the URL (?status=approved), not local state — bookmarkable
@@ -120,7 +121,10 @@ function RequestsListPage() {
             variant="outline"
             size="sm"
             disabled={isApproved}
-            onClick={() => setSelectedId(request.accessRequestId)}
+            onClick={() => {
+              setSelectedId(request.accessRequestId);
+              setSelectedProductId(request.accessRequestProductId || null);
+            }}
           >
             {isApproved ? 'Reviewed' : 'Review'}
           </CommonButton>
@@ -188,7 +192,11 @@ function RequestsListPage() {
 
       <RequestReviewModal
         accessRequestId={selectedId}
-        onClose={() => setSelectedId(null)}
+        accessRequestProductId={selectedProductId}
+        onClose={() => {
+          setSelectedId(null);
+          setSelectedProductId(null);
+        }}
         onResolved={load}
       />
     </div>

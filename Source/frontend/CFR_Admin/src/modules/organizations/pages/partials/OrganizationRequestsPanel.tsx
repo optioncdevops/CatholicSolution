@@ -23,6 +23,7 @@ const OrganizationRequestsPanel = ({ orgId }: OrganizationRequestsPanelProps) =>
   const [rows, setRows] = useState<AccessRequestApiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   //#endregion
 
   //#region Functions
@@ -94,7 +95,18 @@ const OrganizationRequestsPanel = ({ orgId }: OrganizationRequestsPanelProps) =>
     },
     {
       id: 'review', header: 'Review', sortable: false, excludeFromExport: true,
-      cell: (request) => <CommonButton variant="outline" size="sm" onClick={() => setSelectedId(request.accessRequestId)}>Review</CommonButton>,
+      cell: (request) => (
+        <CommonButton
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setSelectedId(request.accessRequestId);
+            setSelectedProductId(request.accessRequestProductId || null);
+          }}
+        >
+          Review
+        </CommonButton>
+      ),
     },
   ];
   //#endregion
@@ -124,7 +136,11 @@ const OrganizationRequestsPanel = ({ orgId }: OrganizationRequestsPanelProps) =>
 
       <RequestReviewModal
         accessRequestId={selectedId}
-        onClose={() => setSelectedId(null)}
+        accessRequestProductId={selectedProductId}
+        onClose={() => {
+          setSelectedId(null);
+          setSelectedProductId(null);
+        }}
         onResolved={load}
       />
     </div>

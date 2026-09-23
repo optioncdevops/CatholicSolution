@@ -39,8 +39,9 @@ namespace CFR.AcutisService.Interfaces.Administration
         /// Response Details: MSResultArgs containing AccessRequestOutput, or NoRecordFound.
         /// </remarks>
         /// <param name="accessRequestId">Access request identifier.</param>
+        /// <param name="accessRequestProductId">Optional product line to scope the result to, when the request has more than one.</param>
         /// <returns>MSResultArgs containing the access request.</returns>
-        Task<MSResultArgs> GetAccessRequestByIdAsync(int accessRequestId);
+        Task<MSResultArgs> GetAccessRequestByIdAsync(int accessRequestId, int? accessRequestProductId = null);
 
         #endregion GET Methods
 
