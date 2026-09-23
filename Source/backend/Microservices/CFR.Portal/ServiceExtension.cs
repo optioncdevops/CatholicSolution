@@ -4,10 +4,14 @@ using CFR.CommonService.Interfaces;
 using CFR.CommonService.Service;
 using CFR.PortalInfrastructure.Interfaces.Authentication;
 using CFR.PortalInfrastructure.Interfaces.CFRLaunch;
+using CFR.PortalInfrastructure.Interfaces.PlatformLaunch;
 using CFR.PortalInfrastructure.Repositorys.Authentication;
 using CFR.PortalInfrastructure.Repositorys.CFRLaunch;
+using CFR.PortalInfrastructure.Repositorys.PlatformLaunch;
+using CFR.PortalService.Interfaces.PlatformLaunch;
 using CFR.PortalService.Service.Authentication;
 using CFR.PortalService.Service.CFRLaunch;
+using CFR.PortalService.Service.PlatformLaunch;
 using CFR.PortalInfrastructure.Interfaces.Administration;
 using CFR.PortalInfrastructure.Repositorys.Administration;
 using CFR.PortalService.Interfaces.Administration;
@@ -37,6 +41,8 @@ namespace CFR.Portal
             services.AddScoped<IPortalAuthenticationRepository, PortalAuthenticationRepository>();
             services.AddScoped<ICFRLaunchService, CFRLaunchService>();
             services.AddScoped<ICFRLaunchRepository, CFRLaunchRepository>();
+            services.AddScoped<IPlatformLaunchService, PlatformLaunchService>();
+            services.AddScoped<IPlatformLaunchRepository, PlatformLaunchRepository>();
 
             services.AddScoped<IEmailTemplatesRepository, EmailTemplatesRepository>();
             services.AddScoped<ISMTPMailService, SMTPMailService>();

@@ -13,7 +13,10 @@ namespace CFR.AcutisInfrastructure
         public static class Requests
         {
             /// <summary>
-            /// Supplies the contact/org/product fields needed to call SMS's SetupNewOrganizationByCFR.
+            /// Supplies the contact/org/product fields needed to call SMS's SetupNewOrganizationByCFR
+            /// for one specific product line (@AccessRequestProductId) - not just "whichever line on
+            /// this request happens to be first" (a request can have several product lines, see
+            /// ActionId 7's multi-product public submit in 008_AccessRequest.sql).
             /// </summary>
             public const string GetOrgSetupContext = @"
                 SELECT
@@ -32,20 +35,18 @@ namespace CFR.AcutisInfrastructure
                     p.[ProductName] AS [ProductName]
                 FROM [request].[AccessRequest] ar
                 LEFT JOIN [auth].[User] u ON u.[CFRUserId] = ar.[RequestedBy]
-                LEFT JOIN (
-                    SELECT TOP (1) arp.[AccessRequestId], arp.[ProductId]
-                    FROM [request].[AccessRequestProduct] arp
-                    WHERE arp.[AccessRequestId] = @AccessRequestId
-                      AND arp.[IsDeleted] = 0
-                    ORDER BY arp.[AccessRequestProductId]
-                ) firstProduct ON firstProduct.[AccessRequestId] = ar.[AccessRequestId]
-                LEFT JOIN [core].[Product] p ON p.[ProductId] = firstProduct.[ProductId]
+                INNER JOIN [request].[AccessRequestProduct] arp
+                    ON arp.[AccessRequestId] = ar.[AccessRequestId]
+                   AND arp.[AccessRequestProductId] = @AccessRequestProductId
+                   AND arp.[IsDeleted] = 0
+                LEFT JOIN [core].[Product] p ON p.[ProductId] = arp.[ProductId]
                 WHERE ar.[AccessRequestId] = @AccessRequestId
                   AND ar.[IsDeleted] = 0;";
 
             /// <summary>
-            /// Resolves CFROrgId/ProductId/org snapshot fields from the request's header + first product
-            /// line, for PersistOrgSetupResultAsync.
+            /// Resolves CFROrgId/ProductId/org snapshot fields from the request's header + the
+            /// specific product line (@AccessRequestProductId) that was just approved, for
+            /// PersistOrgSetupResultAsync.
             /// </summary>
             public const string GetOrgSetupPersistContext = @"
                 SELECT TOP (1)
@@ -60,10 +61,10 @@ namespace CFR.AcutisInfrastructure
                 FROM [request].[AccessRequest] ar
                 INNER JOIN [request].[AccessRequestProduct] arp
                     ON arp.[AccessRequestId] = ar.[AccessRequestId]
+                   AND arp.[AccessRequestProductId] = @AccessRequestProductId
                    AND arp.[IsDeleted] = 0
                 WHERE ar.[AccessRequestId] = @AccessRequestId
-                  AND ar.[IsDeleted] = 0
-                ORDER BY arp.[AccessRequestProductId];";
+                  AND ar.[IsDeleted] = 0;";
 
             /// <summary>
             /// Inserts a new [core].[Organization] row from org fields staged on [request].[AccessRequest]

@@ -67,6 +67,34 @@ namespace CFR.PortalInfrastructure
             /// [core].[ProductEnvironment].EnvironmentName matching appsettings Environment (Development, Pilot, Staging, Live).
             /// </summary>
             public const string EnvironmentName = nameof(EnvironmentName);
+
+            /// <summary>
+            /// Email used to resolve CFRUserId for ActionId 4 (machine-client launch-code create).
+            /// CFR.Portal's own ICFRLaunchRepository never sets this - only a trusted machine
+            /// client (CFR.DataSync, calling the same physical database directly) uses ActionId 4.
+            /// </summary>
+            public const string Email = nameof(Email);
+        }
+
+        /// <summary>
+        /// Parameters for Portal platform-launch stored procedures.
+        /// </summary>
+        public static class PlatformLaunchParams
+        {
+            /// <summary>CRUD action identifier.</summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>Email address used to resolve the target CFR member (ActionId 1 only).</summary>
+            public const string Email = nameof(Email);
+
+            /// <summary>SHA-256 hex hash of the one-time platform-launch code.</summary>
+            public const string CodeHash = nameof(CodeHash);
+
+            /// <summary>Audit identifier for who/what created the launch row (e.g. an API client id).</summary>
+            public const string InsertedBy = nameof(InsertedBy);
+
+            /// <summary>Stored procedure output / return value.</summary>
+            public const string ReturnValue = nameof(ReturnValue);
         }
 
         public static class AccessRequestParams

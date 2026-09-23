@@ -13,6 +13,7 @@ import { ALLOWED_RESOLVE_STATUSES, accessRequestReviewDefaultValues, resolveRequ
 
 type RequestReviewModalProps = {
   accessRequestId: number | null;
+  accessRequestProductId: number | null;
   onClose: () => void;
   onResolved: () => Promise<void> | void;
 };
@@ -32,7 +33,7 @@ const formatDate = (dateString: string) => {
   return `${day}/${month}/${year} ${hours}.${minutes} ${ampm}`;
 };
 
-const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestReviewModalProps) => {
+const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, onResolved }: RequestReviewModalProps) => {
   //#region Hooks
   const { showToast } = useToast();
   const accessLevel = useFeatureAccessLevel('/admin/requests');
@@ -53,10 +54,10 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
   //#endregion
 
   //#region Functions
-  const loadDetail = useCallback(async (id: number) => {
+  const loadDetail = useCallback(async (id: number, productId: number | null) => {
     setLoading(true);
     try {
-      const { resultData } = await getAccessRequestById(id);
+      const { resultData } = await getAccessRequestById(id, productId);
       const row = normalizeAccessRequest(resultData);
       setDetail(row);
       reset(accessRequestReviewDefaultValues);
@@ -84,7 +85,7 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
 
       setLoading(true);
       try {
-        const { resultData } = await getAccessRequestById(accessRequestId);
+        const { resultData } = await getAccessRequestById(accessRequestId, accessRequestProductId);
         if (cancelled) return;
         setDetail(normalizeAccessRequest(resultData));
         reset(accessRequestReviewDefaultValues);
@@ -100,7 +101,7 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
     return () => {
       cancelled = true;
     };
-  }, [accessRequestId, reset, showToast]);
+  }, [accessRequestId, accessRequestProductId, reset, showToast]);
   //#endregion
 
   //#region Handlers
@@ -132,6 +133,7 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
     try {
       await updateAccessRequestStatus({
         accessRequestId: detail.accessRequestId,
+        accessRequestProductId: detail.accessRequestProductId || accessRequestProductId,
         status,
         note: note || (status === 'info-requested' ? 'More information requested.' : undefined),
       });
@@ -139,7 +141,7 @@ const RequestReviewModal = ({ accessRequestId, onClose, onResolved }: RequestRev
       showToast(`Successfully ${verb} this access request.`);
       await onResolved();
       if (status === 'info-requested') {
-        await loadDetail(detail.accessRequestId);
+        await loadDetail(detail.accessRequestId, detail.accessRequestProductId || accessRequestProductId);
       } else {
         handleClose();
       }

@@ -38,9 +38,9 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public int? DioceseId { get; set; }
 
         /// <summary>
-        /// Name of the first (lowest AccessRequestProductId) product on this request, used to pick
-        /// which SMS setup endpoint to call - e.g. "Parish Hub" routes to SetupNewParishOrganizationByCFR
-        /// instead of the generic SetupNewOrganizationByCFR.
+        /// Name of the specific product line just approved, used to pick which SMS setup endpoint
+        /// to call - e.g. "Parish Hub" routes to SetupNewParishOrganizationByCFR instead of the
+        /// generic SetupNewOrganizationByCFR.
         /// </summary>
         public string? ProductName { get; set; }
     }

@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,31 +12,26 @@ const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
  *
  *   <script src="https://<cfr-origin-for-that-env>/integrations/app-switcher/app-switcher.js" defer></script>
  *
- * The CFR.Gateway origin the widget calls is baked in at build time from this
- * mode's VITE_APP_REST_API_BASE_URL (the same var CFR's own app reads) - no
- * runtime data attributes or globals required on the embedding page.
+ * This build is environment-independent by design - it never bakes in a
+ * per-environment origin (that used to come from VITE_APP_REST_API_BASE_URL
+ * via `define` here, which meant the committed output froze whichever
+ * environment last happened to build it). A host that needs the CFR.Gateway
+ * origin (product catalog + logo images) supplies it itself at runtime via
+ * data-cfr-gateway-origin on the script tag, from its own env config - the
+ * same pattern data-cfr-datasync-* already uses. See
+ * src/widget/appSwitcher.ts's header comment and constants.ts.
  */
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, currentDirectory, 'VITE_');
-  const gatewayOrigin = String(env.VITE_APP_REST_API_BASE_URL ?? '')
-    .replace(/\/+$/, '')
-    .replace(/\/(acutis|portal)$/i, '');
-
-  return {
-    publicDir: false,
-    define: {
-      __CFR_GATEWAY_ORIGIN__: JSON.stringify(gatewayOrigin),
+export default defineConfig({
+  publicDir: false,
+  build: {
+    outDir: path.resolve(currentDirectory, './public/integrations/app-switcher'),
+    emptyOutDir: false,
+    lib: {
+      entry: path.resolve(currentDirectory, './src/widget/appSwitcher.ts'),
+      name: 'CfrAppSwitcher',
+      formats: ['iife'],
+      fileName: () => 'app-switcher.js',
     },
-    build: {
-      outDir: path.resolve(currentDirectory, './public/integrations/app-switcher'),
-      emptyOutDir: false,
-      lib: {
-        entry: path.resolve(currentDirectory, './src/widget/appSwitcher.ts'),
-        name: 'CfrAppSwitcher',
-        formats: ['iife'],
-        fileName: () => 'app-switcher.js',
-      },
-      minify: true,
-    },
-  };
+    minify: true,
+  },
 });

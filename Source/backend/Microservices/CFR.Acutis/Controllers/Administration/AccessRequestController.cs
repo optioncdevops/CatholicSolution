@@ -46,14 +46,15 @@ namespace CFR.Acutis.Controllers.Administration
         /// Response Details: Standard API result enclosing AccessRequestOutput with status 200 or 500.
         /// </remarks>
         /// <param name="accessRequestId">Access request identifier.</param>
+        /// <param name="accessRequestProductId">Optional product line to scope the result to, when the request has more than one.</param>
         /// <returns>A consistent API response containing the access request.</returns>
         /// <response code="200">Successfully fetched the access request.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet]
         [ActionName(API_Administration.GetAccessRequestById)]
-        public async Task<IActionResult> GetAccessRequestById(int accessRequestId)
+        public async Task<IActionResult> GetAccessRequestById(int accessRequestId, int? accessRequestProductId = null)
         {
-            return ApiResultArgs(await service.GetAccessRequestByIdAsync(accessRequestId), APIHttpType.HttpGet);
+            return ApiResultArgs(await service.GetAccessRequestByIdAsync(accessRequestId, accessRequestProductId), APIHttpType.HttpGet);
         }
 
 

@@ -45,11 +45,12 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         /// </remarks>
         /// <param name="accessRequestId">Access request identifier.</param>
         /// <returns>The matching request, or null when not found.</returns>
-        public async Task<AccessRequestOutput?> GetAccessRequestByIdAsync(int accessRequestId)
+        public async Task<AccessRequestOutput?> GetAccessRequestByIdAsync(int accessRequestId, int? accessRequestProductId = null)
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.AccessRequestParams.ActionId, 3, DbType.Int32);
             parameters.Add(DBParameterName.AccessRequestParams.AccessRequestId, accessRequestId, DbType.Int32);
+            parameters.Add(DBParameterName.AccessRequestParams.AccessRequestProductId, accessRequestProductId, DbType.Int64);
             using var grid = await dapperHandler.QueryMultipleAsync(StoredProc.Requests.AccessRequestCrud, parameters, CommandType.StoredProcedure);
             var request = (await grid.ReadAsync<AccessRequestOutput>()).FirstOrDefault();
             if (request == null) return null;
@@ -76,19 +77,26 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         /// Response Details: Returns the updated access request identifier.
         /// </remarks>
         /// <param name="input">Status change payload.</param>
-        /// <returns>The updated access request identifier.</returns>
-        public async Task<int> UpdateAccessRequestStatusAsync(AccessRequestStatusInput input)
+        /// <returns>The updated access request identifier and the product line that was acted on.</returns>
+        public async Task<AccessRequestStatusUpdateResult> UpdateAccessRequestStatusAsync(AccessRequestStatusInput input)
         {
             ArgumentNullException.ThrowIfNull(input);
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.AccessRequestParams.ActionId, 2, DbType.Int32);
             parameters.Add(DBParameterName.AccessRequestParams.AccessRequestId, input.AccessRequestId, DbType.Int32);
+            parameters.Add(DBParameterName.AccessRequestParams.AccessRequestProductId, input.AccessRequestProductId, DbType.Int64);
             parameters.Add(DBParameterName.AccessRequestParams.Status, input.Status, DbType.String);
             parameters.Add(DBParameterName.AccessRequestParams.Note, input.Note, DbType.String);
             parameters.Add(DBParameterName.AccessRequestParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.AccessRequestParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add(DBParameterName.AccessRequestParams.ResolvedAccessRequestProductId, dbType: DbType.Int64, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Requests.AccessRequestCrud, parameters, CommandType.StoredProcedure);
-            return parameters.Get<int>(DBParameterName.AccessRequestParams.ReturnValue);
+            long? resolvedProductId = parameters.Get<long?>(DBParameterName.AccessRequestParams.ResolvedAccessRequestProductId);
+            return new AccessRequestStatusUpdateResult
+            {
+                AccessRequestId = parameters.Get<int>(DBParameterName.AccessRequestParams.ReturnValue),
+                AccessRequestProductId = resolvedProductId.HasValue ? (int)resolvedProductId.Value : null,
+            };
         }
 
         #endregion PUT Methods
@@ -113,11 +121,13 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         /// Response Details: Returns OrgSetupContextOutput, or null when not found.
         /// </remarks>
         /// <param name="accessRequestId">Access request identifier.</param>
-        /// <returns>The org-setup context, or null when the request doesn't exist.</returns>
-        public async Task<OrgSetupContextOutput?> GetOrgSetupContextAsync(int accessRequestId)
+        /// <param name="accessRequestProductId">The specific product line just approved.</param>
+        /// <returns>The org-setup context, or null when the request/line doesn't exist.</returns>
+        public async Task<OrgSetupContextOutput?> GetOrgSetupContextAsync(int accessRequestId, int accessRequestProductId)
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.AccessRequestParams.AccessRequestId, accessRequestId, DbType.Int32);
+            parameters.Add(DBParameterName.AccessRequestParams.AccessRequestProductId, accessRequestProductId, DbType.Int64);
             return await dapperHandler.QueryFirstOrDefaultAsync<OrgSetupContextOutput?>(SQLQueryText.Requests.GetOrgSetupContext, parameters, CommandType.Text);
         }
 
@@ -148,11 +158,13 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         /// Response Details: None.
         /// </remarks>
         /// <param name="accessRequestId">Access request identifier.</param>
+        /// <param name="accessRequestProductId">The specific product line just approved.</param>
         /// <param name="orgId">The OrgId returned by SMS.</param>
-        public async Task PersistOrgSetupResultAsync(int accessRequestId, int orgId)
+        public async Task PersistOrgSetupResultAsync(int accessRequestId, int accessRequestProductId, int orgId)
         {
             var contextParameters = new DynamicParameters();
             contextParameters.Add(DBParameterName.AccessRequestParams.AccessRequestId, accessRequestId, DbType.Int32);
+            contextParameters.Add(DBParameterName.AccessRequestParams.AccessRequestProductId, accessRequestProductId, DbType.Int64);
             var context = await dapperHandler.QueryFirstOrDefaultAsync<OrgSetupPersistContext?>(SQLQueryText.Requests.GetOrgSetupPersistContext, contextParameters, CommandType.Text);
             if (context is null || context.ProductId is null or <= 0)
             {

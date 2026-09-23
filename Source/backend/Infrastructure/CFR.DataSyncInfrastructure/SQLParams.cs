@@ -147,5 +147,71 @@ namespace CFR.DataSyncInfrastructure
             /// </summary>
             public const string PasswordEncrypted = nameof(PasswordEncrypted);
         }
+
+        /// <summary>
+        /// Parameters for <see cref="StoredProc.ProductSync"/>.
+        /// </summary>
+        public static class ProductSyncParams
+        {
+            /// <summary>Email address of the CFR user whose accessible products are being looked up.</summary>
+            public const string Email = nameof(Email);
+
+            /// <summary>Environment name used to resolve each product's [core].[ProductEnvironment].BaseUrl.</summary>
+            public const string EnvironmentName = nameof(EnvironmentName);
+
+            /// <summary>Stored procedure output — 1 when the email matched a CFR identity, -1 otherwise.</summary>
+            public const string ReturnValue = nameof(ReturnValue);
+        }
+
+        /// <summary>
+        /// Parameters for <see cref="StoredProc.PlatformLaunch"/> (Portal's own [dbo].[Portal_PlatformLaunch] -
+        /// CFR.DataSync only creates codes with it, using ActionId 1; it never exchanges them).
+        /// </summary>
+        public static class PlatformLaunchParams
+        {
+            /// <summary>CRUD action identifier.</summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>Email address used to resolve the target CFR member.</summary>
+            public const string Email = nameof(Email);
+
+            /// <summary>SHA-256 hex hash of the one-time platform-launch code.</summary>
+            public const string CodeHash = nameof(CodeHash);
+
+            /// <summary>Audit identifier for the calling API client.</summary>
+            public const string InsertedBy = nameof(InsertedBy);
+
+            /// <summary>Stored procedure output / return value.</summary>
+            public const string ReturnValue = nameof(ReturnValue);
+        }
+
+        /// <summary>
+        /// Parameters for <see cref="StoredProc.CFRLaunch"/> (Portal's own [dbo].[Portal_CFRLaunch] -
+        /// CFR.DataSync only creates launch codes with it, using ActionId 4 (email-resolved
+        /// member, for a trusted machine client); it never exchanges them or lists hub products.
+        /// </summary>
+        public static class CFRLaunchParams
+        {
+            /// <summary>CRUD action identifier.</summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>Email address used to resolve the target CFR member (ActionId 4 only).</summary>
+            public const string Email = nameof(Email);
+
+            /// <summary>Product identifier from [core].[Product].</summary>
+            public const string ProductId = nameof(ProductId);
+
+            /// <summary>SHA-256 hex hash of the one-time authorization code.</summary>
+            public const string CodeHash = nameof(CodeHash);
+
+            /// <summary>Audit identifier for the calling API client.</summary>
+            public const string InsertedBy = nameof(InsertedBy);
+
+            /// <summary>[core].[ProductEnvironment].EnvironmentName for the login environment.</summary>
+            public const string EnvironmentName = nameof(EnvironmentName);
+
+            /// <summary>Stored procedure output / return value.</summary>
+            public const string ReturnValue = nameof(ReturnValue);
+        }
     }
 }

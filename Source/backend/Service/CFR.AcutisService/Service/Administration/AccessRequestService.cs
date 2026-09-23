@@ -75,8 +75,9 @@ namespace CFR.AcutisService.Service.Administration
         /// Response Details: MSResultArgs containing AccessRequestOutput, or NoRecordFound.
         /// </remarks>
         /// <param name="accessRequestId">Access request identifier.</param>
+        /// <param name="accessRequestProductId">Optional product line to scope the result to, when the request has more than one.</param>
         /// <returns>MSResultArgs containing the access request.</returns>
-        public async Task<MSResultArgs> GetAccessRequestByIdAsync(int accessRequestId)
+        public async Task<MSResultArgs> GetAccessRequestByIdAsync(int accessRequestId, int? accessRequestProductId = null)
         {
             var result = new MSResultArgs();
             try
@@ -88,7 +89,7 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                var data = await repository.GetAccessRequestByIdAsync(accessRequestId);
+                var data = await repository.GetAccessRequestByIdAsync(accessRequestId, accessRequestProductId);
                 if (data == null)
                 {
                     result.StatusCode = ErrorCodes.NoRecordFound;
@@ -139,7 +140,8 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                int updatedId = await repository.UpdateAccessRequestStatusAsync(input);
+                var updateResult = await repository.UpdateAccessRequestStatusAsync(input);
+                int updatedId = updateResult.AccessRequestId;
                 if (updatedId == -94)
                 {
                     result.StatusCode = ErrorCodes.Conflict;
@@ -154,17 +156,18 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                await NotifyRequesterOfStatusAsync(updatedId, input.Status, input.Note);
+                int? resolvedProductId = updateResult.AccessRequestProductId;
+                await NotifyRequesterOfStatusAsync(updatedId, resolvedProductId, input.Status, input.Note);
 
-                OrgSetupResult? setupResult = string.Equals(input.Status.Trim(), "approved", StringComparison.OrdinalIgnoreCase)
-                    ? await SetupNewOrganizationAsync(updatedId)
+                OrgSetupResult? setupResult = string.Equals(input.Status.Trim(), "approved", StringComparison.OrdinalIgnoreCase) && resolvedProductId is > 0
+                    ? await SetupNewOrganizationAsync(updatedId, resolvedProductId.Value)
                     : null;
 
                 // Only the SMS-returned OrgId is used - UserId is intentionally ignored (it's SMS's
                 // own admin-account id, not anything CFR persists anywhere).
                 if (setupResult is { OrgId: > 0, ErrMessage: null or "" })
                 {
-                    await PersistOrgSetupResultSafeAsync(updatedId, setupResult.OrgId.Value);
+                    await PersistOrgSetupResultSafeAsync(updatedId, resolvedProductId!.Value, setupResult.OrgId.Value);
                 }
 
                 result.ResultData = new
@@ -192,34 +195,48 @@ namespace CFR.AcutisService.Service.Administration
         /// <summary>
         /// Performs the two-step SMS "org setup" handshake when a request is approved: exchange an
         /// encrypted handshake string for a short-lived bearer token, then call
-        /// SetupNewOrganizationByCFR (or, when the request's first product is Parish Hub,
-        /// SetupNewParishOrganizationByCFR) with that token to actually provision the
-        /// organization/user in OptionC. Never throws - a failure here must not fail the approval
-        /// itself (matches NotifyRequesterOfStatusAsync's mail-failure handling). No-ops (returns
-        /// null) when OrgSetupSettings:BaseUrl isn't configured.
+        /// SetupNewOrganizationByCFR against OrgSetupSettings:BaseUrl (the generic OptionC SMS
+        /// gateway), or, when the request's product is Parish Hub, SetupNewParishOrganizationByCFR
+        /// against OrgSetupSettings:ParishBaseUrl (the OptionCParish gateway) - with that token to
+        /// actually provision the organization/user. Never throws - a failure here must not fail
+        /// the approval itself (matches NotifyRequesterOfStatusAsync's mail-failure handling).
+        /// No-ops (returns null) when the applicable BaseUrl isn't configured.
         /// </summary>
         /// <returns>The { orgId, userId, errMessage } result from SetupNewOrganizationByCFR, or null if not attempted / not reachable.</returns>
-        private async Task<OrgSetupResult?> SetupNewOrganizationAsync(int accessRequestId)
+        private async Task<OrgSetupResult?> SetupNewOrganizationAsync(int accessRequestId, int accessRequestProductId)
         {
             try
             {
-                string? baseUrl = configuration["OrgSetupSettings:BaseUrl"];
                 string? exchangeKey = configuration["OrgSetupSettings:ExchangeKey"];
                 string? exchangeIV = configuration["OrgSetupSettings:ExchangeIV"];
-                if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(exchangeKey) || string.IsNullOrWhiteSpace(exchangeIV))
+                if (string.IsNullOrWhiteSpace(exchangeKey) || string.IsNullOrWhiteSpace(exchangeIV))
                 {
                     return null;
                 }
 
-                var context = await repository.GetOrgSetupContextAsync(accessRequestId);
+                var context = await repository.GetOrgSetupContextAsync(accessRequestId, accessRequestProductId);
                 if (context == null)
                 {
                     return null;
                 }
 
-                // OrgSetupSettings:BaseUrl points at OptionC.Gateway, which fronts SMS under a
-                // "/sms" route prefix (see OptionCGateway's sms-route/sms-cluster) - so "/sms" is
-                // added here, at the call site, rather than baked into BaseUrl.
+                // Parish Hub requests provision through OptionCParish's own gateway/SMS service;
+                // every other product goes through the generic OptionC SMS gateway. Determined here
+                // (rather than only at the SetupNewParishOrganizationByCFR call site below) because
+                // it also decides which gateway BaseUrl to dial.
+                bool isParishProduct = string.Equals(context.ProductName?.Trim(), ParishProductName, StringComparison.OrdinalIgnoreCase);
+                string? baseUrl = isParishProduct
+                    ? configuration["OrgSetupSettings:ParishBaseUrl"]
+                    : configuration["OrgSetupSettings:BaseUrl"];
+                if (string.IsNullOrWhiteSpace(baseUrl))
+                {
+                    return null;
+                }
+
+                // OrgSetupSettings:BaseUrl / ParishBaseUrl point at OptionC.Gateway / OptionCParish.Gateway
+                // respectively, both of which front their SMS service under a "/sms" route prefix
+                // (see each gateway's sms-route/sms-cluster) - so "/sms" is added here, at the call
+                // site, rather than baked into either BaseUrl.
                 string trimmedBaseUrl = baseUrl.TrimEnd('/');
                 string apiRoot = $"{trimmedBaseUrl}/sms";
                 var client = httpClientFactory.CreateClient(ExternalOrganizationApiHttpClientName);
@@ -303,8 +320,8 @@ namespace CFR.AcutisService.Service.Administration
                 }
 
                 // Parish Hub requests provision through SMS's dedicated Parish endpoint instead of
-                // the generic one - same request/response shape, different route.
-                bool isParishProduct = string.Equals(context.ProductName?.Trim(), ParishProductName, StringComparison.OrdinalIgnoreCase);
+                // the generic one - same request/response shape, different route (isParishProduct
+                // computed above, since it also picks which gateway BaseUrl to dial).
                 string setupAction = isParishProduct ? "SetupNewParishOrganizationByCFR" : "SetupNewOrganizationByCFR";
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, $"{apiRoot}/api/v1/CFR/{setupAction}")
@@ -339,11 +356,11 @@ namespace CFR.AcutisService.Service.Administration
         /// handling, so a persist error here must not fail the approval itself (it already
         /// succeeded in [request].[AccessRequest] and in SMS by this point).
         /// </summary>
-        private async Task PersistOrgSetupResultSafeAsync(int accessRequestId, int orgId)
+        private async Task PersistOrgSetupResultSafeAsync(int accessRequestId, int accessRequestProductId, int orgId)
         {
             try
             {
-                await repository.PersistOrgSetupResultAsync(accessRequestId, orgId);
+                await repository.PersistOrgSetupResultAsync(accessRequestId, accessRequestProductId, orgId);
             }
             catch (Exception ex)
             {
@@ -354,7 +371,7 @@ namespace CFR.AcutisService.Service.Administration
         /// <summary>
         /// Emails the requester when an admin approves the request or asks for more information.
         /// </summary>
-        private async Task NotifyRequesterOfStatusAsync(int accessRequestId, string status, string? note)
+        private async Task NotifyRequesterOfStatusAsync(int accessRequestId, int? accessRequestProductId, string status, string? note)
         {
             try
             {
@@ -364,7 +381,7 @@ namespace CFR.AcutisService.Service.Administration
                     return;
                 }
 
-                var request = await repository.GetAccessRequestByIdAsync(accessRequestId);
+                var request = await repository.GetAccessRequestByIdAsync(accessRequestId, accessRequestProductId);
                 if (request == null || string.IsNullOrWhiteSpace(request.RequesterEmail))
                 {
                     return;

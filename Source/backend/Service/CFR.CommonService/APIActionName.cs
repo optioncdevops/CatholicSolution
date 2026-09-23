@@ -116,6 +116,11 @@ namespace CFR.CommonService
                 public const string LaunchProduct = nameof(LaunchProduct);
                 public const string ExchangeToken = nameof(ExchangeToken);
             }
+
+            public static class PlatformLaunch
+            {
+                public const string ExchangeToken = nameof(ExchangeToken);
+            }
         }
 
         public static class API_Product
@@ -159,6 +164,12 @@ namespace CFR.CommonService
         public static class API_SyncAuth
         {
             public const string Login = nameof(Login);
+        }
+
+        public static class API_ProductSync
+        {
+            public const string GetUserProducts = nameof(GetUserProducts);
+            public const string LaunchProduct = nameof(LaunchProduct);
         }
     }
 }
