@@ -17,6 +17,14 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public int AccessRequestId { get; set; }
 
         /// <summary>
+        /// Gets or sets the product line identifier ([request].[AccessRequestProduct].[AccessRequestProductId])
+        /// this row represents - a request can have more than one product line, so this is what the
+        /// Admin UI sends back on the next approve/reject call to target this exact line.
+        /// </summary>
+        [JsonPropertyName("accessRequestProductId")]
+        public int AccessRequestProductId { get; set; }
+
+        /// <summary>
         /// Gets or sets the organization identifier.
         /// </summary>
         [JsonPropertyName("organizationId")]
