@@ -102,7 +102,6 @@ function ProductRequestsListPage() {
       value: (request) => request.requesterEmail,
       cell: (request) => <span className="text-[var(--text-secondary)]">{request.requesterEmail}</span>,
     },
-    { id: 'org', header: 'Organization', value: (request) => request.organizationName || '—', cell: (request) => <span className="text-[var(--text-secondary)]">{request.organizationName || '—'}</span> },
     { id: 'status', header: 'Status', value: (request) => request.status, cell: (request) => <StatusBadge status={request.status} kind="request" /> },
     { id: 'insertedDate', header: 'Submitted', value: (request) => request.insertedDate, cell: (request) => <span className="text-[var(--text-muted)]">{formatDate(request.insertedDate)}</span> },
     {

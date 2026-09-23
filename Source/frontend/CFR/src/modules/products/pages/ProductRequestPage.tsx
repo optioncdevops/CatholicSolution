@@ -53,6 +53,7 @@ const ProductRequestPage = () => {
     }
     setFeatures((current) => [...current, value]);
     setFeatureDraft('');
+    clearFieldError('features');
   };
 
   const removeFeature = (feature: string) => {
@@ -85,6 +86,7 @@ const ProductRequestPage = () => {
       const savedName = await uploadProductRequestLogo(file);
       setLogoName(savedName);
       setLogoPreviewUrl(URL.createObjectURL(file));
+      clearFieldError('logoName');
     } catch (error) {
       console.error('Error uploading logo:', error);
       showToast(typeof error === 'string' ? error : 'Failed to upload logo.', 'error');
@@ -110,7 +112,7 @@ const ProductRequestPage = () => {
       description: readFormValue(form, 'description'),
       productionUrl: readFormValue(form, 'productionUrl'),
       features,
-      navigationTarget: (readFormValue(form, 'navigationTarget') || 'same-tab') as ProductRequestFormValues['navigationTarget'],
+      navigationTarget: readFormValue(form, 'navigationTarget') as ProductRequestFormValues['navigationTarget'],
       logoName,
       contactName: readFormValue(form, 'contactName'),
       contactEmail: readFormValue(form, 'contactEmail'),
@@ -162,30 +164,28 @@ const ProductRequestPage = () => {
           <>
             <div className="request-access-hero request-access-hero--compact">
               <div className="request-access-hero__copy">
-                <span className="request-access-kicker request-access-kicker--inline">product suggestion</span>
-                <h1>Suggest a Product</h1>
+                <h1>Product Request</h1>
               </div>
-              <span className="request-access-trust-badge"><ShieldCheckIcon size={16} /> Reviewed by our team</span>
             </div>
 
             <form onSubmit={(event) => void submit(event)} noValidate className="request-access-form request-access-form--full request-access-form--compact">
-              <AccessSection number="01" title="Product details">
-                <div className="request-access-fields-grid">
-                  <Field label="Product Name" name="productName" placeholder="e.g. Parish Hub" required maxLength={100} error={fieldErrors.productName} onErrorClear={() => clearFieldError('productName')} />
-                  <Field label="Short Name" name="shortName" placeholder="Optional shorter name" maxLength={50} />
-                  <Field label="Production URL" name="productionUrl" type="url" placeholder="https://example.org" maxLength={300} error={fieldErrors.productionUrl} onErrorClear={() => clearFieldError('productionUrl')} />
-                  <SelectField label="Preferred Navigation" name="navigationTarget" options={navigationOptions} placeholder="Select how it should open" />
+              <AccessSection>
+                <div className="request-access-fields-grid request-access-fields-grid--quad">
+                  <Field label="Product Name" name="productName" placeholder="Enter Product Name" required maxLength={10} error={fieldErrors.productName} onErrorClear={() => clearFieldError('productName')} />
+                  <Field label="Short Name" name="shortName" placeholder="Enter Short Name" required maxLength={10} error={fieldErrors.shortName} onErrorClear={() => clearFieldError('shortName')} />
+                  <Field label="Production URL" name="productionUrl" type="url" placeholder="Enter Production URL" required maxLength={300} error={fieldErrors.productionUrl} onErrorClear={() => clearFieldError('productionUrl')} />
+                  <SelectField label="Preferred Navigation" name="navigationTarget" options={navigationOptions} placeholder="Select Preferred Navigation" required error={fieldErrors.navigationTarget} onErrorClear={() => clearFieldError('navigationTarget')} />
                 </div>
 
                 <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_auto]">
                   <div>
-                    <label htmlFor="feature-draft" className="auth-label">Features</label>
+                    <label htmlFor="feature-draft" className="auth-label">Features<span className="ml-1 text-rose-600">*</span></label>
                     <div className="auth-input-wrap mt-2 flex items-center gap-1.5 pr-1.5">
                       <input
                         id="feature-draft"
                         type="text"
                         className="auth-input auth-input--plain"
-                        placeholder="Type a feature and press Enter"
+                        placeholder="Enter Feature"
                         value={featureDraft}
                         onChange={(event) => setFeatureDraft(event.target.value)}
                         onKeyDown={onFeatureKeyDown}
@@ -217,13 +217,15 @@ const ProductRequestPage = () => {
                           </span>
                         ))}
                       </div>
+                    ) : fieldErrors.features ? (
+                      <p className="auth-field-error mt-2">{fieldErrors.features}</p>
                     ) : (
-                      <p className="mt-2 text-[11px] text-slate-400">Optional — add what makes this product useful.</p>
+                      <p className="mt-2 text-[11px] text-slate-400">Add what makes this product useful.</p>
                     )}
                   </div>
 
                   <div>
-                    <span className="auth-label">Logo</span>
+                    <span className="auth-label">Logo<span className="ml-1 text-rose-600">*</span></span>
                     <div className="mt-2">
                       {logoPreviewUrl || uploadingLogo ? (
                         <div className="relative">
@@ -268,7 +270,11 @@ const ProductRequestPage = () => {
                         disabled={uploadingLogo}
                         className="hidden"
                       />
-                      <p className="mt-1.5 text-center text-[11px] text-slate-400">JPG or PNG, up to 2 MB</p>
+                      {fieldErrors.logoName ? (
+                        <p className="auth-field-error mt-1.5 text-center">{fieldErrors.logoName}</p>
+                      ) : (
+                        <p className="mt-1.5 text-center text-[11px] text-slate-400">JPG or PNG, up to 2 MB</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -281,7 +287,7 @@ const ProductRequestPage = () => {
                     rows={4}
                     maxLength={DESCRIPTION_MAX_LENGTH}
                     className="auth-textarea mt-2"
-                    placeholder="What does this product do, and who is it for?"
+                    placeholder="Enter Description"
                     value={description}
                     onChange={(event) => { setDescription(event.target.value); clearFieldError('description'); }}
                     aria-invalid={Boolean(fieldErrors.description)}
@@ -294,10 +300,10 @@ const ProductRequestPage = () => {
                 </div>
               </AccessSection>
 
-              <AccessSection number="02" title="Your contact info" subtitle="So our team can follow up about this suggestion.">
+              <AccessSection>
                 <div className="request-access-fields-grid">
-                  <Field label="Your Name" name="contactName" placeholder="Carl Lapp" autoComplete="name" required maxLength={100} error={fieldErrors.contactName} onErrorClear={() => clearFieldError('contactName')} />
-                  <Field label="Your Email" name="contactEmail" type="email" placeholder="name@organization.org" autoComplete="email" required maxLength={256} error={fieldErrors.contactEmail} onErrorClear={() => clearFieldError('contactEmail')} />
+                  <Field label="Name" name="contactName" placeholder="Enter Name" autoComplete="name" required maxLength={100} error={fieldErrors.contactName} onErrorClear={() => clearFieldError('contactName')} />
+                  <Field label="Email" name="contactEmail" type="email" placeholder="Enter Email" autoComplete="email" required maxLength={256} error={fieldErrors.contactEmail} onErrorClear={() => clearFieldError('contactEmail')} />
                 </div>
               </AccessSection>
 

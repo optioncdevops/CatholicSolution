@@ -15,16 +15,18 @@ export function RequestSuccess({ reference }: { reference: string }) {
   );
 }
 
-export function AccessSection({ number, title, subtitle, children }: { number: string; title: string; subtitle?: string; children: ReactNode }) {
+export function AccessSection({ number, title, subtitle, children }: { number?: string; title?: string; subtitle?: string; children: ReactNode }) {
   return (
-    <section className="request-access-section request-access-section--full">
-      <div className="request-access-section__heading">
-        <span>{number}</span>
-        <div>
-          <h3>{title}</h3>
-          {subtitle ? <p>{subtitle}</p> : null}
+    <section className={`request-access-section request-access-section--full${title ? '' : ' request-access-section--no-heading'}`}>
+      {title ? (
+        <div className="request-access-section__heading">
+          <span>{number}</span>
+          <div>
+            <h3>{title}</h3>
+            {subtitle ? <p>{subtitle}</p> : null}
+          </div>
         </div>
-      </div>
+      ) : null}
       <div className="request-access-section__body">{children}</div>
     </section>
   );
