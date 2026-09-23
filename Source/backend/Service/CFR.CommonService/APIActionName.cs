@@ -56,6 +56,8 @@ namespace CFR.CommonService
             public const string SendTestEmail = nameof(SendTestEmail);
             public const string GetEmailSettings = nameof(GetEmailSettings);
             public const string SaveEmailSettings = nameof(SaveEmailSettings);
+            public const string SaveProductRequestNotifyUser = nameof(SaveProductRequestNotifyUser);
+            public const string SaveApiBaseUrl = nameof(SaveApiBaseUrl);
             public const string UploadEmailLogo = nameof(UploadEmailLogo);
             public const string RemoveEmailLogo = nameof(RemoveEmailLogo);
             public const string TestConnection = nameof(TestConnection);
@@ -68,6 +70,12 @@ namespace CFR.CommonService
             public const string GetProducts = nameof(GetProducts);
             public const string GetUserRights = nameof(GetUserRights);
             public const string SaveUserRights = nameof(SaveUserRights);
+            public const string SaveProductRequest = nameof(SaveProductRequest);
+            public const string UploadProductRequestLogo = nameof(UploadProductRequestLogo);
+            public const string GetProductRequests = nameof(GetProductRequests);
+            public const string GetProductRequestById = nameof(GetProductRequestById);
+            public const string ApproveProductRequest = nameof(ApproveProductRequest);
+            public const string RejectProductRequest = nameof(RejectProductRequest);
         }
 
         public static class API_Profile

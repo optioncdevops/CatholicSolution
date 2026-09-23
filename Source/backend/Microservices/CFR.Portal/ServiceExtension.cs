@@ -48,6 +48,8 @@ namespace CFR.Portal
             services.AddScoped<ISMTPMailService, SMTPMailService>();
             services.AddScoped<IAccessRequestService, AccessRequestService>();
             services.AddScoped<IAccessRequestRepository, AccessRequestRepository>();
+            services.AddScoped<IProductRequestService, ProductRequestService>();
+            services.AddScoped<IProductRequestRepository, ProductRequestRepository>();
 
             return services;
         }

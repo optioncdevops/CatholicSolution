@@ -264,6 +264,79 @@ BEGIN
         0
     );
 END
+
+-- Sent to admins when a visitor submits the public "Suggest a product" form (CFR.Portal's
+-- ProductRequestService.NotifyAdminsOfNewRequestAsync). Had no seed row here, same gap
+-- AccessRequested had above, so it always silently sent that service's hardcoded fallback body
+-- instead of appearing in the admin editor. Text matches that exact fallback.
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'ProductRequested')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'ProductRequested',
+        N'New product suggestion: [ProductName]',
+        N'<p>A visitor has suggested a new product for the platform.</p><p><strong>Product:</strong> [ProductName] ([ShortName])</p><p><strong>Description:</strong> [Description]</p><p><strong>Production URL:</strong> [ProductionUrl]</p><p><strong>Features:</strong> [Features]</p><p><strong>Submitted by:</strong> [RequesterName] ([RequesterEmail])</p><p><a href="[ReviewLink]">Review this suggestion</a></p>',
+        1,
+        SYSUTCDATETIME(),
+        0
+    );
+END
+
+-- Sent back to the requester when an admin approves their suggestion (CFR.Acutis's
+-- ProductRequestService.NotifyRequesterOfDecisionAsync, approved: true). Had no seed row here,
+-- same gap ProductRequested had above, so it always silently sent that service's hardcoded
+-- fallback body instead of appearing in the admin editor. Text matches that exact fallback.
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'ProductRequestApproved')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'ProductRequestApproved',
+        N'Your product suggestion was approved: [ProductName]',
+        N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Product ID:</strong> [ProductId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential — it identifies your product for API access.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>',
+        1,
+        SYSUTCDATETIME(),
+        0
+    );
+END
+
+-- Upgrade guard: adds the [ProductId]/[SecurityKey] merge tags to a ProductRequestApproved row
+-- seeded by an earlier run of this script (back when this template's body didn't have them yet).
+-- Guarded on the body still matching that earlier exact seed, so a row an admin has since
+-- customized (and therefore no longer contains that exact text) is left untouched.
+UPDATE [adm].[EmailTemplate]
+SET
+    [Body] = N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Product ID:</strong> [ProductId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential — it identifies your product for API access.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>',
+    [UpdatedDate] = SYSUTCDATETIME()
+WHERE [TemplateCode] = N'ProductRequestApproved'
+  AND [IsDeleted] = 0
+  AND [Body] = N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>';
+
+-- Sent back to the requester when an admin rejects their suggestion (CFR.Acutis's
+-- ProductRequestService.NotifyRequesterOfDecisionAsync, approved: false). Same gap as above.
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'ProductRequestRejected')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'ProductRequestRejected',
+        N'Your product suggestion was not approved: [ProductName]',
+        N'<p>Hi [FirstName],</p><p>Thanks for suggesting [ProductName]. After review, we won''t be adding it at this time.</p><p><strong>Notes:</strong> [Remarks]</p>',
+        1,
+        SYSUTCDATETIME(),
+        0
+    );
+END
 GO
 
 -- Upgrade guard: brings a pre-existing PasswordReset row seeded before the premium-HTML redesign

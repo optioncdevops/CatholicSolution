@@ -96,6 +96,51 @@ namespace CFR.Acutis.Controllers.Administration
         }
 
         /// <summary>
+        /// Sets which Acutis user receives "new product suggestion" notification emails.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Persist the CFR Settings page's Acutis User dropdown selection, without touching any SMTP/branding field.
+        /// Request Flow: Client API POST -> EmailSettingsController.SaveProductRequestNotifyUser() -> IEmailSettingsService.SaveProductRequestNotifyUserAsync() -> _configurationSettings.json.
+        /// Validation Details: Model binding maps ProductRequestNotifyUserInput from the request body.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IEmailSettingsService.SaveProductRequestNotifyUserAsync().
+        /// Response Details: Standard API result indicating execution status.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the Acutis user identifier to notify.</param>
+        /// <returns>Result of the save operation.</returns>
+        /// <response code="200">Successfully saved the notification recipient.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpPost]
+        [ActionName(API_Administration.SaveProductRequestNotifyUser)]
+        public async Task<IActionResult> SaveProductRequestNotifyUser([FromBody] ProductRequestNotifyUserInput input)
+        {
+            return ApiResultArgs(await service.SaveProductRequestNotifyUserAsync(input), APIHttpType.HttpPost);
+        }
+
+        /// <summary>
+        /// Sets this API's own public base URL, used to build the email logo's image link.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Persist the CFR Settings page's API Base URL field, without resubmitting the rest of the SMTP/branding form.
+        /// Request Flow: Client API POST -> EmailSettingsController.SaveApiBaseUrl() -> IEmailSettingsService.SaveApiBaseUrlAsync() -> _configurationSettings.json.
+        /// Validation Details: Model binding maps ApiBaseUrlInput from the request body; when non-blank, must be an absolute https URL, not localhost.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IEmailSettingsService.SaveApiBaseUrlAsync().
+        /// Response Details: Standard API result indicating execution status.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the API base URL.</param>
+        /// <returns>Result of the save operation.</returns>
+        /// <response code="200">Successfully saved the API base URL.</response>
+        /// <response code="400">The URL is not a valid absolute https URL, or is a localhost address.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpPost]
+        [ActionName(API_Administration.SaveApiBaseUrl)]
+        public async Task<IActionResult> SaveApiBaseUrl([FromBody] ApiBaseUrlInput input)
+        {
+            return ApiResultArgs(await service.SaveApiBaseUrlAsync(input), APIHttpType.HttpPost);
+        }
+
+        /// <summary>
         /// Uploads the platform email logo image, replacing any previously uploaded one.
         /// </summary>
         /// <remarks>

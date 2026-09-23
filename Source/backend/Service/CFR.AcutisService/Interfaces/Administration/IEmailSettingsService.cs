@@ -62,6 +62,36 @@ namespace CFR.AcutisService.Interfaces.Administration
         Task<MSResultArgs> SaveEmailSettingsAsync(EmailSettingsInput input);
 
         /// <summary>
+        /// Sets which Acutis user receives "new product suggestion" notification emails.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let an admin pick the recipient from the CFR Settings page's Acutis User dropdown, without touching any SMTP/branding field.
+        /// Request Flow: EmailSettingsController -> IEmailSettingsService.SaveProductRequestNotifyUserAsync() -> IProductRequestRepository.SaveProductRequestNotifyUserIdAsync().
+        /// Validation Details: None — a null value clears the setting.
+        /// Business Logic: Persists the selection to the database, shared by both CFR.Acutis and CFR.Portal (not _configurationSettings.json, which is a separate, unshared file per microservice).
+        /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud with ActionId 7 via IProductRequestRepository.
+        /// Response Details: MSResultArgs indicating success.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the Acutis user identifier to notify.</param>
+        /// <returns>MSResultArgs containing the save status.</returns>
+        Task<MSResultArgs> SaveProductRequestNotifyUserAsync(ProductRequestNotifyUserInput input);
+
+        /// <summary>
+        /// Sets this API's own public base URL, used to build the email logo's image link.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let an admin edit this API base URL from the CFR Settings page, without resubmitting the rest of the SMTP/branding form.
+        /// Request Flow: EmailSettingsController -> IEmailSettingsService.SaveApiBaseUrlAsync() -> IConfSettingsService.SaveData().
+        /// Validation Details: When non-blank, must be an absolute https URL and not a localhost/loopback address.
+        /// Business Logic: Loads the currently saved settings, updates only SMTPMailConfig.ApiBaseUrl, then writes the file.
+        /// Repository Interaction: None — writes _configurationSettings.json via IConfSettingsService.
+        /// Response Details: MSResultArgs indicating success, or BadRequest.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the API base URL.</param>
+        /// <returns>MSResultArgs containing the save status.</returns>
+        Task<MSResultArgs> SaveApiBaseUrlAsync(ApiBaseUrlInput input);
+
+        /// <summary>
         /// Validates, saves, and applies an uploaded platform email logo image (JPG or PNG, max 2MB).
         /// </summary>
         /// <remarks>

@@ -120,5 +120,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("lastUpdatedDate")]
         public DateTime? LastUpdatedDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the [auth].[AcutisUser].[UserId] who receives "new product suggestion"
+        /// notification emails, or null when unset (falls back to the Platform Admin role).
+        /// </summary>
+        [JsonPropertyName("productRequestNotifyUserId")]
+        public long? ProductRequestNotifyUserId { get; set; }
     }
 }

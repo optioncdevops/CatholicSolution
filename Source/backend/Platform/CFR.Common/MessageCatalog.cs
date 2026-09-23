@@ -90,6 +90,8 @@ namespace CFR.Common
         public const string AccessRequestMemberNotFound = "No member account was found for this email.";
         public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
         public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
+        public const string ProductRequestNotFound = "This product suggestion no longer exists.";
+        public const string ProductRequestAlreadyDecided = "This product suggestion has already been approved or rejected.";
         public const string ExistProduct = "A product with this name already exists.";
         public const string ExistLicense = "A license has already been created for this duration.";
         public const string ProductNotFound = "Product not found.";
@@ -222,6 +224,11 @@ namespace CFR.Common
             public const string FetchUserRightsFailed = "Error while fetching user rights";
             public const string SaveUserRightsFailed = "Error while saving user rights";
             public const string FetchDashboardSummaryFailed = "Error while fetching dashboard summary";
+            public const string FetchProductRequestsFailed = "Error while fetching product requests";
+            public const string FetchProductRequestByIdFailed = "Error while fetching product request {ProductRequestId}";
+            public const string ApproveProductRequestFailed = "Error while approving product request {ProductRequestId}";
+            public const string RejectProductRequestFailed = "Error while rejecting product request {ProductRequestId}";
+            public const string SendProductRequestEmailFailed = "Error while sending {TemplateCode} email for product request {ProductRequestId}";
         }
 
         public static class SyncLogMessages
@@ -254,6 +261,8 @@ namespace CFR.Common
             public const string ExternalOrganizationRequestMissingFields = "Org setup request for access request {AccessRequestId} is missing required fields: {MissingFields}";
             public const string UpdateAccessRequestStatusFailed = "Error while updating access request status for request {AccessRequestId}";
             public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
+            public const string SaveProductRequestFailed = "Error while saving product request";
+            public const string SendProductRequestEmailFailed = "Error while sending {TemplateCode} email for product request {ProductRequestId}";
             public const string PlatformLaunchExchangeFailed = "Error while exchanging platform-launch code";
         }
     }

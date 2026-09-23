@@ -97,6 +97,13 @@ namespace CFR.AcutisInfrastructure
             /// Line LineStatus: 1=pending, 2=approved, 3=rejected.
             /// </summary>
             public const string AccessRequestCrud = "[request].[AccessRequestManage]";
+
+            /// <summary>
+            /// Public "Suggest a product" request/approval operations against [request].[ProductRequest] / [request].[ProductRequestFeature] / [request].[ProductRequestStatusHistory].
+            /// ActionId 1=save (public submit), 2=list, 3=get by id, 4=approve (copies into [core].[Product] / [core].[ProductFeature]), 5=reject, 6=notification recipients.
+            /// RequestStatus: 1=pending, 2=approved, 3=rejected.
+            /// </summary>
+            public const string ProductRequestCrud = "[dbo].[Acutis_ProductRequest]";
         }
 
         /// <summary>

@@ -59,6 +59,26 @@ export const saveEmailSettings = async (payload: SaveEmailSettingsPayload): Prom
   }
 };
 
+export const saveProductRequestNotifyUser = async (productRequestNotifyUserId: number | null): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.post<ApiResponse>(`${controller}/SaveProductRequestNotifyUser`, { productRequestNotifyUserId });
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to save notification recipient';
+  }
+};
+
+export const saveApiBaseUrl = async (apiBaseUrl: string): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.post<ApiResponse>(`${controller}/SaveApiBaseUrl`, { apiBaseUrl });
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to save API base URL';
+  }
+};
+
 // Reuses the exact same payload shape as saveEmailSettings — the backend tests the in-progress
 // (possibly unsaved) SMTP fields, not necessarily what's already persisted.
 export const testSmtpConnection = async (payload: SaveEmailSettingsPayload): Promise<ApiResponse> => {

@@ -737,6 +737,10 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   padding:1.4rem 1.5rem;
 }
 .request-access-section--full>.request-access-section__body { margin-top:0; }
+/* No heading column rendered (AccessSection called without a title) - without this, the body
+   would auto-place into the grid's first (narrow, heading-width) column instead of spanning the
+   full row, since grid-template-columns above still defines two tracks either way. */
+.request-access-section--no-heading>.request-access-section__body { grid-column:1 / -1; }
 .request-access-section__heading {
   display:flex;
   align-items:flex-start;
@@ -1321,6 +1325,17 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   .brand-lockup--prominent .brand-lockup__image-frame { height:3.1rem; padding:0 .8rem; }
   .brand-lockup--prominent .brand-lockup__image { height:2rem; }
   .request-access-form--compact .request-access-products--full { grid-template-columns:1fr; }
+}
+
+/* Product Request page: Product Name/Short Name/Production URL/Preferred Navigation in one row
+   of four on wide screens. Scoped to this modifier class (not the shared .request-access-fields-
+   grid default of 3 columns) so RequestAccessPage's own field rows are unaffected. The existing
+   max-width:1023px/767px overrides above already collapse this grid to 2/1 columns on narrower
+   viewports - this only needs to apply above that, where no such override exists to reduce it. */
+@media (min-width:1024px) {
+  .request-access-form--compact .request-access-fields-grid.request-access-fields-grid--quad {
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
 }
 
 /* ===== v2.13 App Hub premium grid + section consistency ===== */

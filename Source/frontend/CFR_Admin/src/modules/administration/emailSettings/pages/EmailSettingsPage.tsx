@@ -22,7 +22,7 @@ const SMTP_TEST_FAILURE_MESSAGE = 'SMTP connection failed. Please verify server,
 // Order to check when scrolling to the first invalid field on Save — top-to-bottom as the fields
 // appear in the form below.
 const FIELD_FOCUS_ORDER: Array<keyof EmailSettingsFormValues> = [
-  'smtpServer', 'smtpPort', 'username', 'ccMailId', 'contactUsMailId', 'apiBaseUrl',
+  'smtpServer', 'smtpPort', 'username', 'ccMailId', 'contactUsMailId',
 ];
 
 // Fields that affect what an actual SMTP handshake would use — editing any of these invalidates an
@@ -331,16 +331,6 @@ function EmailSettingsPage() {
                 placeholder="support@example.com"
                 disabled={saving || isReadOnly}
                 error={fieldErrors.contactUsMailId}
-              />
-              <InputField
-                id={fieldElementId('apiBaseUrl')} label="API base URL" type="url"
-                value={form.apiBaseUrl}
-                onChange={(event) => updateField('apiBaseUrl', event.target.value)}
-                placeholder="https://api.example.org/acutis"
-                helperText="This API's own public address (not the admin site's URL) — used to build the email logo's image link. If this API is only reachable through a reverse proxy/gateway (e.g. https://cfrapi.example.com/acutis), include that path here too, or the logo link will 404. Must be reachable by recipients' email clients, so never a localhost or private-network address, even while testing locally."
-                disabled={saving || isReadOnly}
-                error={fieldErrors.apiBaseUrl}
-                wrapperClassName="sm:col-span-2"
               />
             </div>
 
