@@ -130,6 +130,7 @@ namespace CFR.Common
         public const string RateLimitExceeded = "Too many requests. Try again later.";
         public const string PayloadTooLarge = "The request body exceeds the maximum allowed size.";
         public const string EmailRebindConflict = "This email now belongs to a different CFR identity that already has an active membership for this organization.";
+        public const string SyncUserNotFoundByEmail = "No CFR identity was found for the given email address.";
     }
 
     /// <summary>
@@ -239,6 +240,8 @@ namespace CFR.Common
             public const string DeactivateUserFailed = "Error while deactivating synced user {ExternalUserId}";
             public const string ReactivateUserFailed = "Error while reactivating synced user {ExternalUserId}";
             public const string GetUserFailed = "Error while fetching synced user {ExternalUserId}";
+            public const string GetUserProductsFailed = "Error while fetching products for CFR email {Email}";
+            public const string LaunchProductFailed = "Error while launching product {ProductId} for CFR email {Email}";
         }
 
         public static class PortalLogMessages
@@ -260,6 +263,7 @@ namespace CFR.Common
             public const string SendAccessRequestEmailFailed = "Error while sending {TemplateCode} email for access request {AccessRequestId}";
             public const string SaveProductRequestFailed = "Error while saving product request";
             public const string SendProductRequestEmailFailed = "Error while sending {TemplateCode} email for product request {ProductRequestId}";
+            public const string PlatformLaunchExchangeFailed = "Error while exchanging platform-launch code";
         }
     }
 }

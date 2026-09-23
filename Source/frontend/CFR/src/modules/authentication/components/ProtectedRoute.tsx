@@ -6,7 +6,12 @@ export function ProtectedRoute() {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 
-  if (isAuthenticated) return <Outlet />;
+  // A platform-launch code (e.g. from the App Switcher's "All apps in App Hub" link) is this
+  // tab's only proof of identity so far - the destination page exchanges it for a real session
+  // itself. Let it through here; an invalid/expired code just means that exchange fails and the
+  // page's own error handling takes over, same as any other failed sign-in.
+  const hasPlatformLaunchCode = Boolean(new URLSearchParams(location.search).get('code'));
+  if (isAuthenticated || hasPlatformLaunchCode) return <Outlet />;
 
   // Handed off via sessionStorage instead of the URL — this redirect to /login is same-origin
   // (a plain react-router Navigate), so CentralLoginPage can read it back without it sitting in

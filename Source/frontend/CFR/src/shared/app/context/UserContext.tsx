@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState, type PropsWithChildren } from 'react';
 import { getPortalSessionUser } from '@app/config/appPortalClient';
+import { useAuth } from '@/modules/authentication';
 
 export interface CurrentUser {
   name: string;
@@ -28,7 +29,22 @@ function readSessionUser(): CurrentUser {
 }
 
 export function UserProvider({ children }: PropsWithChildren) {
+  const { isAuthenticated } = useAuth();
   const [user, setUser] = useState(readSessionUser);
+  const [syncedFor, setSyncedFor] = useState(isAuthenticated);
+
+  // UserProvider mounts once near the app root, well before a session established later on -
+  // e.g. a platform-launch code exchange deep inside ProductLaunchPage, or the cross-tab
+  // BroadcastChannel picking up another tab's sign-in - ever writes sessionStorage. Without this,
+  // that initial (empty) read never gets revisited and the header/profile stay blank until a
+  // full page reload remounts this provider fresh. Adjusted during render (React's documented
+  // pattern for this - https://react.dev/learn/you-might-not-need-an-effect), not in an effect,
+  // so it takes effect before the first paint instead of after.
+  if (isAuthenticated !== syncedFor) {
+    setSyncedFor(isAuthenticated);
+    if (isAuthenticated) setUser(readSessionUser());
+  }
+
   const value = useMemo<UserContextValue>(() => ({
     user,
     initials: getInitials(user.name),
