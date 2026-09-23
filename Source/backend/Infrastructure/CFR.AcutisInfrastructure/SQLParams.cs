@@ -318,6 +318,11 @@ namespace CFR.AcutisInfrastructure
             public const string ContactPhone = nameof(ContactPhone);
 
             /// <summary>
+            /// Diocese identifier.
+            /// </summary>
+            public const string DioceseId = nameof(DioceseId);
+
+            /// <summary>
             /// Street address.
             /// </summary>
             public const string Address = nameof(Address);
@@ -336,11 +341,6 @@ namespace CFR.AcutisInfrastructure
             /// ZIP or postal code.
             /// </summary>
             public const string Zip = nameof(Zip);
-
-            /// <summary>
-            /// Diocese identifier (core.Diocese.DioceseId), the organization's parent diocese.
-            /// </summary>
-            public const string DioceseId = nameof(DioceseId);
 
             /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).

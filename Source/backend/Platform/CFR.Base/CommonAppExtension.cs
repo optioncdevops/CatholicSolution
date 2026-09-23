@@ -30,7 +30,7 @@ namespace CFR.Base
                     return Task.CompletedTask;
                 });
                 await next();
-            });
+                    });
 
             return app;
         }

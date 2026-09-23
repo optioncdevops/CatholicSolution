@@ -1,6 +1,6 @@
 import axiosInstance from '@app/config/AxiosInstance';
 import type { ApiError, ApiResponse } from '@app/pages/types/CommonTypes';
-import type { AssignOrganizationProductPayload, CreateOrganizationPayload, UpdateOrganizationPayload } from '../types/organizationTypes';
+import type { AssignOrganizationProductPayload, CreateOrganizationPayload, DioceseApiItem, UpdateOrganizationPayload } from '../types/organizationTypes';
 
 const controller = 'Organization';
 
@@ -155,5 +155,16 @@ export const getAllLicenses = async (): Promise<ApiResponse> => {
   } catch (error: unknown) {
     const err = error as ApiError;
     throw err.response?.data?.statusMessage || err.message || 'Failed to load licenses';
+  }
+};
+
+export const getDioceses = async (): Promise<ApiResponse<DioceseApiItem[]>> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse<DioceseApiItem[]>>(`${controller}/GetDioceses`);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to load dioceses';
   }
 };
