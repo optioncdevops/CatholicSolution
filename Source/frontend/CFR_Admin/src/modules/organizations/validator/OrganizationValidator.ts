@@ -12,6 +12,7 @@ export const organizationDefaultValues: OrganizationFormValues = {
   city: '',
   state: '',
   zip: '',
+  dioceseId: null,
 };
 
 export const organizationRules = {

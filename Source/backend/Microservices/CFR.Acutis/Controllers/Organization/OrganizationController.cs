@@ -29,10 +29,33 @@ namespace CFR.Acutis.Controllers.Organization
         /// <response code="200">Successfully fetched organizations list.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet]
+        [AllowAnonymous]
         [ActionName(API_Organization.GetOrganizations)]
         public async Task<IActionResult> GetOrganizations()
         {
             return ApiResultArgs(await service.GetOrganizationsListAsync(), APIHttpType.HttpGet);
+        }
+
+        /// <summary>
+        /// Retrieves every non-deleted diocese.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown.
+        /// Request Flow: Client API GET -> OrganizationController.GetDioceses() -> IOrganizationService.GetDiocesesListAsync() -> Database.
+        /// Validation Details: Handled inside the service layer.
+        /// Business Logic: None at the controller level; delegates to the service layer.
+        /// Service Interaction: Calls IOrganizationService.GetDiocesesListAsync().
+        /// Response Details: Standard API result enclosing List of DioceseOutput with status 200 or 500.
+        /// </remarks>
+        /// <returns>A consistent API response containing the diocese dataset.</returns>
+        /// <response code="200">Successfully fetched diocese list.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet]
+        [AllowAnonymous]
+        [ActionName(API_Organization.GetDioceses)]
+        public async Task<IActionResult> GetDioceses()
+        {
+            return ApiResultArgs(await service.GetDiocesesListAsync(), APIHttpType.HttpGet);
         }
 
         /// <summary>

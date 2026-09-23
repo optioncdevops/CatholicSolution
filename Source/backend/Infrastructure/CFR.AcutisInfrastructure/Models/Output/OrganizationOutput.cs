@@ -83,6 +83,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string? Zip { get; set; }
 
         /// <summary>
+        /// Gets or sets the diocese identifier.
+        /// </summary>
+        [JsonPropertyName("dioceseId")]
+        public int? DioceseId { get; set; }
+
+        /// <summary>
         /// Gets or sets when the organization was created.
         /// </summary>
         [JsonPropertyName("insertedDate")]
