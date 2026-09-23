@@ -2,10 +2,12 @@
 
 global using CFR.PortalInfrastructure.Interfaces.Authentication;
 global using CFR.PortalInfrastructure.Interfaces.CFRLaunch;
+global using CFR.PortalInfrastructure.Interfaces.PlatformLaunch;
 global using CFR.PortalInfrastructure.Models.Input;
 global using CFR.PortalInfrastructure.Models.Output;
 global using CFR.PortalService.Interfaces.Authentication;
 global using CFR.PortalService.Interfaces.CFRLaunch;
+global using CFR.PortalService.Interfaces.PlatformLaunch;
 global using CFR.PortalInfrastructure.Interfaces.Administration;
 global using CFR.PortalService.Interfaces.Administration;
 global using CFR.Common;

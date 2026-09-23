@@ -29,6 +29,15 @@ namespace CFR.PortalInfrastructure
             public const string CFRLaunchCrud = "[dbo].[Portal_CFRLaunch]";
         }
 
+        /// <summary>
+        /// Stored procedure names for platform (App Hub) launch code create/exchange.
+        /// </summary>
+        public class PlatformLaunch
+        {
+            /// <summary>Platform launch-code create and exchange.</summary>
+            public const string PlatformLaunchCrud = "[dbo].[Portal_PlatformLaunch]";
+        }
+
         public class Administration
         {
             public const string EmailTemplatesCrud = "[dbo].[Acutis_EmailTemplates]";
