@@ -56,6 +56,7 @@ GO
 -- ActionId 14: Get one member's organization-membership detail (from [auth].[UserProduct]) plus
 -- their effective app access within this organization, for the Organization Users tab's
 -- user-detail view.
+-- ActionId 15: Get every non-deleted diocese for the Organization Diocese dropdown.
 CREATE PROCEDURE [dbo].[Acutis_Organization]
     @ActionId INT,
     @OrgId INT = 0,
@@ -66,6 +67,7 @@ CREATE PROCEDURE [dbo].[Acutis_Organization]
     @Website NVARCHAR(500) = NULL,
     @ContactPerson NVARCHAR(255) = NULL,
     @ContactPhone NVARCHAR(50) = NULL,
+    @DioceseId INT = NULL,
     @UpdatedBy INT = NULL,
     @ProductId INT = NULL,
     @AuthUserId BIGINT = NULL,
@@ -87,6 +89,7 @@ BEGIN
             o.[Website],
             o.[ContactPerson],
             o.[ContactPhone],
+            o.[DioceseId],
             o.[InsertedDate],
             o.[UpdatedDate],
             (SELECT COUNT(DISTINCT up.[CFRUserId]) FROM [auth].[UserProduct] AS up WHERE up.[OrgId] = o.[ID] AND ISNULL(up.[IsDeleted], 0) = 0) AS [UserCount],
@@ -108,6 +111,7 @@ BEGIN
             o.[Website],
             o.[ContactPerson],
             o.[ContactPhone],
+            o.[DioceseId],
             o.[InsertedDate],
             o.[UpdatedDate],
             (SELECT COUNT(DISTINCT up.[CFRUserId]) FROM [auth].[UserProduct] AS up WHERE up.[OrgId] = o.[ID] AND ISNULL(up.[IsDeleted], 0) = 0) AS [UserCount],
@@ -138,6 +142,7 @@ BEGIN
             [Website] = @Website,
             [ContactPerson] = @ContactPerson,
             [ContactPhone] = @ContactPhone,
+            [DioceseId] = @DioceseId,
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UpdatedBy
         WHERE [ID] = @OrgId
@@ -151,12 +156,12 @@ BEGIN
     BEGIN
         INSERT INTO [core].[Organization]
         (
-            [OrgName], [OrgState], [OrgCountry], [ContactEmail], [Website], [ContactPerson], [ContactPhone],
+            [OrgName], [OrgState], [OrgCountry], [ContactEmail], [Website], [ContactPerson], [ContactPhone], [DioceseId],
             [InsertedDate], [InsertedBy], [IsDeleted]
         )
         VALUES
         (
-            @OrgName, @OrgState, @OrgCountry, @ContactEmail, @Website, @ContactPerson, @ContactPhone,
+            @OrgName, @OrgState, @OrgCountry, @ContactEmail, @Website, @ContactPerson, @ContactPhone, @DioceseId,
             SYSUTCDATETIME(), @UpdatedBy, 0
         );
 
@@ -443,6 +448,20 @@ BEGIN
           AND op.[AssignStatus] = 1 -- Active
         ORDER BY p.[ProductName];
 
+        RETURN 0;
+    END
+
+    IF @ActionId = 15
+    BEGIN
+        SELECT
+            [DioceseId],
+            [DioceseName],
+            [Address],
+            [City],
+            [State]
+        FROM [core].[Diocese]
+        WHERE [IsDeleted] = 0
+        ORDER BY [DioceseName];
         RETURN 0;
     END
 END

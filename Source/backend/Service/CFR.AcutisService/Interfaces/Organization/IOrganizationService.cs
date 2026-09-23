@@ -28,6 +28,20 @@ namespace CFR.AcutisService.Interfaces.Organization
         Task<MSResultArgs> GetOrganizationsListAsync();
 
         /// <summary>
+        /// Retrieves every non-deleted diocese.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown on the Organizations page.
+        /// Request Flow: OrganizationController -> IOrganizationService.GetDiocesesListAsync() -> IOrganizationRepository.GetDiocesesListAsync().
+        /// Validation Details: Service checks for an empty or null result set.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IOrganizationRepository.GetDiocesesListAsync().
+        /// Response Details: MSResultArgs containing List of DioceseOutput, or NoRecordFound.
+        /// </remarks>
+        /// <returns>MSResultArgs containing the diocese list.</returns>
+        Task<MSResultArgs> GetDiocesesListAsync();
+
+        /// <summary>
         /// Retrieves one organization by identifier.
         /// </summary>
         /// <remarks>

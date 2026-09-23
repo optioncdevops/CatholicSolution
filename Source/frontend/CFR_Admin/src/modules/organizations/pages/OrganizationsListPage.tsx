@@ -11,7 +11,7 @@ import { Badge, StatusBadge } from '@app/components/Badge';
 import { DataTable, type DataTableColumn } from '@app/components/dataTable/DataTable';
 import { getIntegrityIssueDetail, normalizeIntegrityIssueDetail, type IntegrityIssueDetailRow } from '@/modules/dashboard';
 import { formatDate } from '../../utils/formatDate';
-import { getOrganizations, updateOrganization } from '../services/organizationsService';
+import { getDioceses, getOrganizations, updateOrganization } from '../services/organizationsService';
 import type { OrganizationApiItem } from '../types/organizationTypes';
 import { formatOrgCode, normalizeOrganizationsList, ORG_STATUS_OPTIONS, orgTypeLabel, orgTypeTone } from '../utils/organizationHelpers';
 import { OrganizationStatusDialog } from './partials/OrganizationStatusDialog';
@@ -46,6 +46,7 @@ export function OrganizationsListPage() {
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [integrityIssueDetailRows, setIntegrityIssueDetailRows] = useState<IntegrityIssueDetailRow[] | null>(null);
   const [integrityIssueLoading, setIntegrityIssueLoading] = useState(false);
+  const [diocesesMap, setDiocesesMap] = useState<Record<number, string>>({});
   //#endregion
 
   // The active status filter lives in the URL (?status=active), not local state — this makes the
@@ -93,9 +94,18 @@ export function OrganizationsListPage() {
     let cancelled = false;
     void (async () => {
       try {
-        const { resultData, statusCode } = await getOrganizations();
+        const [orgRes, dioRes] = await Promise.all([
+          getOrganizations(),
+          getDioceses().catch(() => ({ resultData: [] }))
+        ]);
         if (cancelled) return;
-        setRows(statusCode === 204 ? [] : normalizeOrganizationsList(resultData));
+        setRows(orgRes.statusCode === 204 ? [] : normalizeOrganizationsList(orgRes.resultData));
+        
+        const map: Record<number, string> = {};
+        (dioRes.resultData || []).forEach((d) => {
+          map[d.dioceseId] = d.dioceseName;
+        });
+        setDiocesesMap(map);
       } catch (error) {
         if (cancelled) return;
         console.error('Error loading organizations:', error);
@@ -166,6 +176,7 @@ export function OrganizationsListPage() {
         city: changingStatusOrg.city ?? '',
         state: changingStatusOrg.state ?? '',
         zip: changingStatusOrg.zip ?? '',
+        dioceseId: changingStatusOrg.dioceseId ?? null,
       });
       await loadOrganizations();
       const statusLabel = ORG_STATUS_OPTIONS.find((option) => option.id === status)?.value ?? status;
@@ -270,6 +281,11 @@ export function OrganizationsListPage() {
       value: (org) => org.orgName,
       cell: (org) => <span className="font-bold text-[var(--text-primary)]">{org.orgName}</span>,
     },
+    {
+      id: 'diocese', header: 'Diocese', width: '12rem',
+      value: (org) => org.dioceseId ? (diocesesMap[org.dioceseId] || `ID: ${org.dioceseId}`) : '',
+      cell: (org) => <span className="text-[var(--text-secondary)]">{org.dioceseId ? (diocesesMap[org.dioceseId] || `ID: ${org.dioceseId}`) : '—'}</span>,
+    },
     // Only present while an integrity-issue filter is active — shows exactly which product(s)/
     // member(s) triggered the flag for this org, instead of leaving the admin to guess from the
     // generic Users/Products counts (an org can have 3 active app assignments where only 1 of
@@ -360,7 +376,7 @@ export function OrganizationsListPage() {
       value: (org) => org.insertedDate,
       cell: (org) => <span className="text-[var(--text-muted)]">{formatDate(org.insertedDate)}</span>,
     },
-  ], [handleView, handleEdit, isReadOnly, integrityIssueKey, integrityIssueDetailByOrg]);
+  ], [handleView, handleEdit, isReadOnly, integrityIssueKey, integrityIssueDetailByOrg, diocesesMap]);
   //#endregion
 
   //#region Render
