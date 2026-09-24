@@ -217,6 +217,7 @@ WHERE [TemplateCode] = N'PasswordReset'
 UPDATE [adm].[EmailTemplate] SET [IconName] = N'KeyRound' WHERE [TemplateCode] = N'PasswordReset' AND [IconName] IS NULL;
 UPDATE [adm].[EmailTemplate] SET [IconName] = N'Sparkles' WHERE [TemplateCode] = N'Welcome' AND [IconName] IS NULL;
 UPDATE [adm].[EmailTemplate] SET [IconName] = N'MailCheck' WHERE [TemplateCode] = N'AccessApproved' AND [IconName] IS NULL;
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'Send' WHERE [TemplateCode] = N'AccessSentToVendor' AND [IconName] IS NULL;
 UPDATE [adm].[EmailTemplate] SET [IconName] = N'MailQuestion' WHERE [TemplateCode] = N'AccessInfo' AND [IconName] IS NULL;
 UPDATE [adm].[EmailTemplate] SET [IconName] = N'Send' WHERE [TemplateCode] = N'AccessRequested' AND [IconName] IS NULL;
 UPDATE [adm].[EmailTemplate] SET [IconName] = N'Wand2' WHERE [TemplateCode] = N'ProductRequested' AND [IconName] IS NULL;
@@ -272,6 +273,29 @@ BEGIN
         N'<p>Hi [FirstName],</p><p>We need a bit more information to process your request for [AppName]:</p><p>[Note]</p>',
         1,
         N'MailQuestion',
+        SYSUTCDATETIME(),
+        0
+    );
+END
+
+-- Sent to the product's contact/support user when an admin clicks "Send to Vendor" on an access
+-- request (AccessRequestService.SendToVendorEmailAsync). Same gap as AccessRequested/
+-- ProductRequested below: the frontend's merge-tag list and template-code switch already fully
+-- support this code, but it had no seed row here, so it never appeared in the admin editor and
+-- always silently sent that service's hardcoded fallback body instead. Text matches that exact fallback.
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'AccessSentToVendor')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [IconName], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'AccessSentToVendor',
+        N'New customer request for [AppName]: [OrganizationName]',
+        N'<p>Hello,</p><p>A Catholic Solutions access request for <strong>[AppName]</strong> has been sent to you. Please contact the requester and add them to [AppName].</p><p><strong>Request details</strong><br/>Organization: [OrganizationName]<br/>Organization type: [OrganizationType]<br/>Address: [OrganizationAddress]<br/>Contact name: [RequesterName]<br/>Contact email: [RequesterEmail]<br/>Contact phone: [Phone]<br/>Application: [AppName]<br/>Submitted: [SubmittedDate]<br/>Notes: [Note]</p>',
+        1,
+        N'Send',
         SYSUTCDATETIME(),
         0
     );

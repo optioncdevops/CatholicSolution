@@ -201,13 +201,6 @@ function EmailSettingsPage() {
     }
   };
 
-  const handleSendMailToggle = (value: boolean) => {
-    updateField('sendMailEnabled', value);
-    if (value && !smtpTested) {
-      showToast('SMTP configuration has not been tested. Please run Test Connection before enabling email delivery.', 'info');
-    }
-  };
-
   const handleRemoveLogoConfirm = async (): Promise<boolean> => confirmAction({
     title: 'Remove Email Logo?',
     description: 'Are you sure you want to remove the Email Logo?',
@@ -275,10 +268,16 @@ function EmailSettingsPage() {
       >
         <div>
           <p className={SECTION_LABEL_CLASS}>SMTP Server</p>
-          <p className={SECTION_HINT_CLASS}>Shared by every outgoing email — password reset, welcome, access request, and access decision messages all send through this configuration.</p>
+          <p className={SECTION_HINT_CLASS}>Applies platform-wide — CFR, CFR Admin, and every other Catholic Solutions app send their emails (password reset, welcome, access and product requests, and decisions) through this one configuration.</p>
 
           <div className="flex flex-col gap-3">
-            <CommonSwitch label="Send mail enabled" checked={form.sendMailEnabled} onCheckedChange={handleSendMailToggle} disabled={saving || isReadOnly} />
+            <CommonSwitch
+              label="Send mail enabled"
+              checked={form.sendMailEnabled}
+              onCheckedChange={(value) => updateField('sendMailEnabled', value)}
+              helperText={form.sendMailEnabled && !smtpTested && !isReadOnly ? 'Tip: run Test Connection to confirm these SMTP settings work before relying on email delivery.' : undefined}
+              disabled={saving || isReadOnly}
+            />
 
             <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-3">
               <InputField
