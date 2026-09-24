@@ -7,7 +7,7 @@ namespace CFR.Portal.Controllers.Administration
     /// Service Responsibility:
     /// - IProductRequestService validates and persists the request, then notifies admins.
     /// </summary>
-    [ApiExplorerSettings(GroupName = SwaggerModuleDoc.CFRAcutisAdministration)]
+    [ApiExplorerSettings(GroupName = SwaggerModuleDoc.PortalAdministration)]
     public class ProductRequestController(IProductRequestService service): BaseController
     {
         #region POST Methods
