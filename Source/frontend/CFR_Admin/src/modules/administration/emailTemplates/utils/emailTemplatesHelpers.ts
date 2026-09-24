@@ -23,9 +23,9 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
     { token: '[AppName]', label: 'Application name' },
   ],
   AccessSentToVendor: [
+    { token: '[ContactName]', label: 'Product contact name' },
     { token: '[AppName]', label: 'Application name' },
     { token: '[OrganizationName]', label: 'Organization name' },
-    { token: '[OrganizationType]', label: 'Organization type' },
     { token: '[OrganizationAddress]', label: 'Organization address' },
     { token: '[RequesterName]', label: 'Requester name' },
     { token: '[RequesterEmail]', label: 'Requester email' },
@@ -39,10 +39,16 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
     { token: '[Note]', label: 'Reviewer note' },
   ],
   AccessRequested: [
+    { token: '[SupportUserName]', label: 'Product support user name' },
+    { token: '[AppName]', label: 'Application name' },
+    { token: '[OrganizationName]', label: 'Organization name' },
+    { token: '[OrganizationType]', label: 'Organization type' },
+    { token: '[OrganizationAddress]', label: 'Organization address' },
     { token: '[RequesterName]', label: 'Requester name' },
     { token: '[RequesterEmail]', label: 'Requester email' },
-    { token: '[OrganizationName]', label: 'Organization name' },
-    { token: '[AppName]', label: 'Application name' },
+    { token: '[Phone]', label: 'Phone' },
+    { token: '[SubmittedDate]', label: 'Submitted date' },
+    { token: '[AdditionalInfo]', label: 'Goals & context' },
     { token: '[ReviewLink]', label: 'Admin review link' },
   ],
   ProductRequested: [
@@ -112,7 +118,7 @@ export const templateDescription = (templateCode: string): string => {
     case 'AccessApproved': return 'Sent to the requester when an access request is approved.';
     case 'AccessSentToVendor': return "Sent to the product's contact user when an admin sends a request to the vendor.";
     case 'AccessInfo': return 'Sent when a reviewer requests more detail on a request.';
-    case 'AccessRequested': return 'Sent to admins when a member submits an access request.';
+    case 'AccessRequested': return "Sent to the product's support user (requester on CC) when an access request is submitted.";
     case 'ProductRequested': return 'Sent to admins when a visitor suggests a new product.';
     case 'ProductRequestApproved': return 'Sent to the requester when their product suggestion is approved.';
     case 'ProductRequestRejected': return 'Sent to the requester when their product suggestion is rejected.';

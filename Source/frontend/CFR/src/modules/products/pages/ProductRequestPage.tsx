@@ -2,8 +2,10 @@ import { AccessSection, Field, SelectField } from '@/modules/authentication/page
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { ArrowRightIcon, CheckIcon, PlusIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
+import { ArrowRightIcon, PlusIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
+import { AccessSection, Field, RequestSuccess, SelectField } from '@/modules/authentication/pages/partials/RequestAccessFields';
+import { formatRequestReference, readSavedRequestId } from '@/modules/requests/utils/accessRequestHelpers';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import { saveProductRequest, uploadProductRequestLogo } from '../services/productRequestService';
@@ -29,6 +31,8 @@ const ProductRequestPage = () => {
   //#region States
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [reference, setReference] = useState(formatRequestReference(0));
+  const [submittedEmail, setSubmittedEmail] = useState('');
   const [description, setDescription] = useState('');
   const [features, setFeatures] = useState<string[]>([]);
   const [featureDraft, setFeatureDraft] = useState('');
@@ -135,7 +139,10 @@ const ProductRequestPage = () => {
 
     setSubmitting(true);
     try {
-      await saveProductRequest(toProductRequestPayload(values));
+      const response = await saveProductRequest(toProductRequestPayload(values));
+      // Portal returns the new ProductRequestId as a plain number in resultData.
+      setReference(formatRequestReference(readSavedRequestId(response)));
+      setSubmittedEmail(values.contactEmail);
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
@@ -157,12 +164,13 @@ const ProductRequestPage = () => {
 
       <section className="request-access-main request-access-main--full">
         {submitted ? (
-          <section className="request-access-success" aria-live="polite">
-            <span className="request-access-success__icon"><CheckIcon size={28} /></span>
-            <h1>Your product is ready for review.</h1>
-            <p>The Catholic Solutions team will review your product and follow up using the email you provided.</p>
-            <PlatformLink to="/login" className="auth-primary-button auth-primary-button--large">Return to sign in <ArrowRightIcon size={16} /></PlatformLink>
-          </section>
+          <RequestSuccess
+            reference={reference}
+            emailAddress={submittedEmail}
+            title="Your Product Request Has Been Submitted"
+            description="We’ve received your product details. Our team will review the information and contact you at "
+            pendingNote="Your product request is pending review."
+          />
         ) : (
           <>
             <div className="request-access-hero request-access-hero--compact">
@@ -320,7 +328,6 @@ const ProductRequestPage = () => {
 
 
               <div className="request-access-form__footer request-access-form__footer--full !flex-col !justify-center">
-                <p className="mb-3"><ShieldCheckIcon size={14} /> Your suggestion is reviewed by the Catholic Solutions team.</p>
                 <div className="!flex !justify-center !w-full">
                   <button type="submit" className="auth-primary-button auth-primary-button--submit" disabled={submitting || uploadingLogo}>
                     {submitting ? 'Submitting…' : 'Submit Request'} <ArrowRightIcon size={16} />

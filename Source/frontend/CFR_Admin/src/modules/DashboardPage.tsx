@@ -677,7 +677,7 @@ export function DashboardPage() {
                   onCustomFromChange={setRequestCustomFrom} onCustomToChange={setRequestCustomTo}
                   error={requestRangeError}
                 />
-                <Link id="lnkViewAllAccessRequests" to="/admin/requests" className="text-xs font-bold text-[var(--primary)] hover:underline">View all</Link>
+                <Link id="lnkViewAllAccessRequests" to="/admin/requests?status=all"className="text-xs font-bold text-[var(--primary)] hover:underline">View all</Link>
               </>
             )}
           />

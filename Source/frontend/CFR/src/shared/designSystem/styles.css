@@ -1302,10 +1302,10 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   .auth-workspace-preview { max-width:46rem; }
   .auth-workspace-preview__apps { grid-template-columns:repeat(3,minmax(0,1fr)); }
 }
-@media (min-width:1200px) and (min-height:800px) {
-  .request-access-page { height:100dvh; min-height:0; overflow:hidden; }
-  .request-access-main--full { min-height:0; overflow:hidden; }
-}
+/* Request Access is NOT locked to the viewport height (it used to be at >=1200x800, with
+   overflow:hidden). The form now lists every catalog product plus a separate Organization section,
+   so it no longer fits in one screen - the lock clipped the Goals/consent/Submit area with no way
+   to scroll to it. The page keeps its base min-height:100dvh and scrolls naturally at every size. */
 @media (max-width:1279px) {
   .request-access-form--compact .request-access-products--full { grid-template-columns:repeat(4,minmax(0,1fr)); }
 }

@@ -9,6 +9,28 @@ export const formatUsPhoneNumber = (raw: string): string => {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
 };
 
+/**
+ * Reads the new request id from a Portal save response. Both SaveAccessRequest and
+ * SaveProductRequest return it as a plain number in resultData (older callers expected an
+ * { accessRequestId } object, so that shape is still accepted).
+ */
+export const readSavedRequestId = (response: unknown): number => {
+  const body = (response ?? {}) as Record<string, unknown>;
+  const data = body.resultData ?? body.ResultData;
+  if (typeof data === 'number' || typeof data === 'string') return Number(data) || 0;
+  if (data && typeof data === 'object') {
+    const row = data as Record<string, unknown>;
+    return Number(row.accessRequestId ?? row.AccessRequestId ?? row.productRequestId ?? row.ProductRequestId ?? 0) || 0;
+  }
+  return 0;
+};
+
+/** Request reference shown after submitting: CS-{year}-REQ-{request id}, e.g. CS-2026-REQ-42. */
+export const formatRequestReference = (requestId: number): string => {
+  const prefix = `CS-${new Date().getFullYear()}-REQ`;
+  return requestId > 0 ? `${prefix}-${requestId}` : prefix;
+};
+
 export const toSaveAccessRequestPayload = (
   app: CatalogApp,
   formValues: { name: string; email: string; sendToEmail: string; reason: string }
