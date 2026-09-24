@@ -201,6 +201,12 @@ namespace CFR.AcutisInfrastructure
             public const string LinkExpiryMinutes = nameof(LinkExpiryMinutes);
 
             /// <summary>
+            /// lucide-react icon name (e.g. "KeyRound") the frontend resolves to represent this
+            /// template, chosen by an admin instead of being guessed from the template code.
+            /// </summary>
+            public const string IconName = nameof(IconName);
+
+            /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
             /// </summary>
             public const string UpdatedBy = nameof(UpdatedBy);
