@@ -493,19 +493,22 @@ export function DashboardPage() {
     });
   };
 
-  const handleQuickAction = async (request: AccessRequestApiItem, nextStatus: 'approved' | 'rejected') => {
+  const handleQuickAction = async (request: AccessRequestApiItem, nextStatus: 'sent-to-vendor' | 'rejected') => {
+    const isSendToVendor = nextStatus === 'sent-to-vendor';
     const confirmed = await confirmAction({
-      title: nextStatus === 'approved' ? 'Approve this request?' : 'Reject this request?',
-      description: `This request will be marked ${nextStatus}. This cannot be undone from here.`,
-      confirmLabel: nextStatus === 'approved' ? 'Approve' : 'Reject',
-      tone: nextStatus === 'approved' ? 'primary' : 'danger',
+      title: isSendToVendor ? 'Send this request to the vendor?' : 'Reject this request?',
+      description: isSendToVendor
+        ? `The request details will be emailed to the ${request.productName} contact user and the request marked Sent to vendor.`
+        : 'This request will be marked rejected. This cannot be undone from here.',
+      confirmLabel: isSendToVendor ? 'Send to Vendor' : 'Reject',
+      tone: isSendToVendor ? 'primary' : 'danger',
     });
     if (!confirmed) return;
 
     setActingRequestId(request.accessRequestId);
     try {
       await updateAccessRequestStatus({ accessRequestId: request.accessRequestId, accessRequestProductId: request.accessRequestProductId, status: nextStatus });
-      showToast(`Request ${nextStatus} successfully.`, 'success');
+      showToast(isSendToVendor ? 'Request sent to the vendor successfully.' : 'Request rejected successfully.', 'success');
       await loadDashboard(true);
     } catch (error) {
       console.error('Error updating access request:', error);
@@ -757,9 +760,9 @@ export function DashboardPage() {
                         <div className="flex shrink-0 items-center gap-0.5">
                           <CommonIconButton
                             id={`ibtnApproveAccessRequest${request.accessRequestId}`}
-                            aria-label={`Approve ${request.requesterName}'s request`}
+                            aria-label={`Send ${request.requesterName}'s request to the vendor`}
                             icon={<Check size={15} />}
-                            onClick={() => void handleQuickAction(request, 'approved')}
+                            onClick={() => void handleQuickAction(request, 'sent-to-vendor')}
                             disabled={actingRequestId === request.accessRequestId}
                           />
                           <CommonIconButton

@@ -115,7 +115,8 @@ function RequestsListPage() {
     {
       id: 'review', header: 'Review', sortable: false, excludeFromExport: true,
       cell: (request) => {
-        const isApproved = request.status !== 'pending';
+        // Requested and Sent to vendor lines still need an admin action; Approved / Rejected are final.
+        const isApproved = request.status === 'approved' || request.status === 'rejected';
         return (
           <CommonButton
             variant="outline"

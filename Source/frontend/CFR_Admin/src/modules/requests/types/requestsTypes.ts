@@ -1,9 +1,9 @@
 // The four request statuses: pending (shown as "Requested"), sent-to-vendor, approved, rejected.
 export type RequestStatus = 'pending' | 'sent-to-vendor' | 'approved' | 'rejected';
 
-// Actions an admin can take on a Requested line. info-requested only emails the requester - the
-// request stays Requested.
-export type RequestResolveAction = 'approved' | 'rejected' | 'info-requested';
+// Actions an admin can take: sent-to-vendor / rejected on a Requested line, approved / rejected on
+// a Sent to vendor line.
+export type RequestResolveAction = 'sent-to-vendor' | 'approved' | 'rejected';
 
 export interface AccessRequestTimelineApiItem {
   status: RequestStatus | 'submitted' | 'info-requested';
@@ -36,6 +36,9 @@ export interface AccessRequestApiItem {
   productName: string;
   status: RequestStatus;
   submittedAt: string;
+  /** Product contact / support user from the product table - the Send to Vendor email recipient (get-by-id only). */
+  productContactName?: string;
+  productContactEmail?: string;
   timeline: AccessRequestTimelineApiItem[];
   comments: AccessRequestCommentApiItem[];
 }

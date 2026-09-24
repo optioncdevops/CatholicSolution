@@ -85,12 +85,13 @@ namespace CFR.Common
         public const string ProductRemoved = "Product removed successfully.";
         public const string UserNotLinked = "This user is not linked to the organization.";
         public const string UserUnlinked = "User removed successfully.";
-        public const string ExistAccessRequest = "A pending access request for this product already exists.";
+        public const string ExistAccessRequest = "A pending access request for this product already exists for this organization.";
         public const string AccessRequestProductNotFound = "The requested product is not available.";
         public const string AccessRequestMemberNotFound = "No member account was found for this email.";
         public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
         public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
-        public const string AccessRequestApprovalEmailFailed = "The approval email could not be sent, so the request was not sent to the vendor. Please try again.";
+        public const string AccessRequestProductContactMissing = "This product has no contact user set up, so the request could not be sent to the vendor. Set a contact person on the product and try again.";
+        public const string AccessRequestVendorEmailFailed = "The email to the product contact could not be sent, so the request was not sent to the vendor. Please try again.";
         public const string ProductRequestNotFound = "This product suggestion no longer exists.";
         public const string ProductRequestAlreadyDecided = "This product suggestion has already been approved or rejected.";
         public const string ExistProduct = "A product with this name already exists.";

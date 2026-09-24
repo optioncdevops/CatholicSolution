@@ -18,4 +18,4 @@ export const resolveRequestStatusRules = {
   },
 };
 
-export const ALLOWED_RESOLVE_STATUSES: RequestResolveAction[] =['approved', 'rejected', 'info-requested'];
+export const ALLOWED_RESOLVE_STATUSES: RequestResolveAction[] = ['sent-to-vendor', 'approved', 'rejected'];

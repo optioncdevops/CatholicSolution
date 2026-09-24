@@ -48,6 +48,8 @@ export const normalizeAccessRequest = (resultData: unknown): AccessRequestApiIte
     productName: String(row.productName ?? row.ProductName ?? ''),
     status: normalizeRequestStatus(row.status ?? row.Status),
     submittedAt: String(row.submittedAt ?? row.SubmittedAt ?? ''),
+    productContactName: String(row.productContactName ?? row.ProductContactName ?? ''),
+    productContactEmail: String(row.productContactEmail ?? row.ProductContactEmail ?? ''),
     timeline: normalizeTimeline(row.timeline ?? row.Timeline),
     comments: Array.isArray(row.comments ?? row.Comments) ? (row.comments ?? row.Comments) as AccessRequestApiItem['comments'] : [],
   };
