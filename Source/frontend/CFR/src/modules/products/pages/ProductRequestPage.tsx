@@ -40,6 +40,14 @@ const ProductRequestPage = () => {
   //#endregion
 
   //#region Handlers
+  const getFieldError = (error?: string) => {
+    if (!error) return undefined;
+    if (error.includes('is required') || error === 'Add at least one feature.') {
+      return 'This field is required.';
+    }
+    return error;
+  };
+
   const clearFieldError = (name: keyof ProductRequestFieldErrors) => {
     setFieldErrors((current) => (current[name] ? { ...current, [name]: undefined } : current));
   };
@@ -170,15 +178,28 @@ const ProductRequestPage = () => {
 
             <form onSubmit={(event) => void submit(event)} noValidate className="request-access-form request-access-form--full request-access-form--compact">
               <AccessSection>
-                <div className="request-access-fields-grid request-access-fields-grid--quad">
-                  <Field label="Product Name" name="productName" placeholder="Enter Product Name" required maxLength={10} error={fieldErrors.productName} onErrorClear={() => clearFieldError('productName')} />
-                  <Field label="Short Name" name="shortName" placeholder="Enter Short Name" required maxLength={10} error={fieldErrors.shortName} onErrorClear={() => clearFieldError('shortName')} />
-                  <Field label="Production URL" name="productionUrl" type="url" placeholder="Enter Production URL" required maxLength={300} error={fieldErrors.productionUrl} onErrorClear={() => clearFieldError('productionUrl')} />
-                  <SelectField label="Preferred Navigation" name="navigationTarget" options={navigationOptions} placeholder="Select Preferred Navigation" required error={fieldErrors.navigationTarget} onErrorClear={() => clearFieldError('navigationTarget')} />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                  <div className="md:col-span-1">
+                    <Field label="Contact User" name="contactName" placeholder="Enter Contact User" autoComplete="name" required maxLength={100} error={getFieldError(fieldErrors.contactName)} onErrorClear={() => clearFieldError('contactName')} />
+                  </div>
+                  <div className="md:col-span-1">
+                    <Field label="Contact Email" name="contactEmail" type="email" placeholder="Enter Contact Email" autoComplete="email" required maxLength={256} error={getFieldError(fieldErrors.contactEmail)} onErrorClear={() => clearFieldError('contactEmail')} />
+                  </div>
 
-                <div className="mt-5 grid gap-5 sm:grid-cols-[1fr_auto]">
-                  <div>
+                  <div className="md:col-span-1">
+                    <Field label="Product Name" name="productName" placeholder="Enter Product Name" required maxLength={10} error={getFieldError(fieldErrors.productName)} onErrorClear={() => clearFieldError('productName')} />
+                  </div>
+                  <div className="md:col-span-1">
+                    <Field label="Short Name" name="shortName" placeholder="Enter Short Name" required maxLength={10} error={getFieldError(fieldErrors.shortName)} onErrorClear={() => clearFieldError('shortName')} />
+                  </div>
+                  <div className="md:col-span-1">
+                    <Field label="Production URL" name="productionUrl" type="url" placeholder="Enter Production URL" required maxLength={300} error={getFieldError(fieldErrors.productionUrl)} onErrorClear={() => clearFieldError('productionUrl')} />
+                  </div>
+                  <div className="md:col-span-1">
+                    <SelectField label="Preferred Navigation" name="navigationTarget" options={navigationOptions} placeholder="Select Preferred Navigation" required error={getFieldError(fieldErrors.navigationTarget)} onErrorClear={() => clearFieldError('navigationTarget')} />
+                  </div>
+
+                  <div className="md:col-span-2">
                     <label htmlFor="feature-draft" className="auth-label">Features<span className="ml-1 text-rose-600">*</span></label>
                     <div className="auth-input-wrap mt-2 flex items-center gap-1.5 pr-1.5">
                       <input
@@ -186,6 +207,7 @@ const ProductRequestPage = () => {
                         type="text"
                         className="auth-input auth-input--plain"
                         placeholder="Enter Feature"
+                        aria-invalid={Boolean(fieldErrors.features)}
                         value={featureDraft}
                         onChange={(event) => setFeatureDraft(event.target.value)}
                         onKeyDown={onFeatureKeyDown}
@@ -218,13 +240,33 @@ const ProductRequestPage = () => {
                         ))}
                       </div>
                     ) : fieldErrors.features ? (
-                      <p className="auth-field-error mt-2">{fieldErrors.features}</p>
+                      <p className="auth-field-error !text-red-600 mt-2">{getFieldError(fieldErrors.features)}</p>
                     ) : (
                       <p className="mt-2 text-[11px] text-slate-400">Add what makes this product useful.</p>
                     )}
                   </div>
 
-                  <div>
+                  <div className="md:col-span-3 mt-2">
+                    <label htmlFor="description" className="auth-label">Description{<span className="ml-1 text-rose-600">*</span>}</label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      rows={4}
+                      maxLength={DESCRIPTION_MAX_LENGTH}
+                      className={`auth-textarea mt-2 ${fieldErrors.description ? '!border-[#e11d48] !bg-[#fff1f2]' : ''}`}
+                      placeholder="Enter Description"
+                      value={description}
+                      onChange={(event) => { setDescription(event.target.value); clearFieldError('description'); }}
+                      aria-invalid={Boolean(fieldErrors.description)}
+                      aria-describedby={fieldErrors.description ? 'description-error' : undefined}
+                    />
+                    <div className="mt-1 flex items-center justify-between">
+                      {fieldErrors.description ? <p id="description-error" className="auth-field-error !text-red-600">{getFieldError(fieldErrors.description)}</p> : <span />}
+                      <span className="text-xs text-[var(--text-muted)]">{description.length}/{DESCRIPTION_MAX_LENGTH}</span>
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-1 mt-2">
                     <span className="auth-label">Logo<span className="ml-1 text-rose-600">*</span></span>
                     <div className="mt-2">
                       {logoPreviewUrl || uploadingLogo ? (
@@ -255,7 +297,7 @@ const ProductRequestPage = () => {
                       ) : (
                         <label
                           htmlFor="logo-upload"
-                          className="flex h-16 w-40 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-400 transition-colors hover:border-[#12264c] hover:bg-[#f6f8fb] hover:text-[#12264c]"
+                          className={`flex h-16 w-40 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed transition-colors hover:border-[#12264c] hover:bg-[#f6f8fb] hover:text-[#12264c] ${fieldErrors.logoName ? 'border-rose-600 bg-rose-50 text-rose-600' : 'border-slate-300 bg-slate-50 text-slate-400'}`}
                         >
                           <PlusIcon size={16} />
                           <span className="text-xs font-bold">Upload logo</span>
@@ -271,50 +313,22 @@ const ProductRequestPage = () => {
                         className="hidden"
                       />
                       {fieldErrors.logoName ? (
-                        <p className="auth-field-error mt-1.5 text-center">{fieldErrors.logoName}</p>
+                        <p className="auth-field-error !text-red-600 mt-1.5">{getFieldError(fieldErrors.logoName)}</p>
                       ) : (
-                        <p className="mt-1.5 text-center text-[11px] text-slate-400">JPG or PNG, up to 2 MB</p>
+                        <p className="mt-1.5 text-[11px] text-slate-400">JPG or PNG, up to 2 MB</p>
                       )}
                     </div>
                   </div>
                 </div>
-
-                <div className="mt-4">
-                  <label htmlFor="description" className="auth-label">Description{<span className="ml-1 text-rose-600">*</span>}</label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    rows={4}
-                    maxLength={DESCRIPTION_MAX_LENGTH}
-                    className="auth-textarea mt-2"
-                    placeholder="Enter Description"
-                    value={description}
-                    onChange={(event) => { setDescription(event.target.value); clearFieldError('description'); }}
-                    aria-invalid={Boolean(fieldErrors.description)}
-                    aria-describedby={fieldErrors.description ? 'description-error' : undefined}
-                  />
-                  <div className="mt-1 flex items-center justify-between">
-                    {fieldErrors.description ? <p id="description-error" className="auth-field-error">{fieldErrors.description}</p> : <span />}
-                    <span className="text-xs text-[var(--text-muted)]">{description.length}/{DESCRIPTION_MAX_LENGTH}</span>
-                  </div>
-                </div>
               </AccessSection>
 
-              <AccessSection>
-                <div className="request-access-fields-grid">
-                  <Field label="Name" name="contactName" placeholder="Enter Name" autoComplete="name" required maxLength={100} error={fieldErrors.contactName} onErrorClear={() => clearFieldError('contactName')} />
-                  <Field label="Email" name="contactEmail" type="email" placeholder="Enter Email" autoComplete="email" required maxLength={256} error={fieldErrors.contactEmail} onErrorClear={() => clearFieldError('contactEmail')} />
-                </div>
-              </AccessSection>
 
-              <div className="request-access-form__footer request-access-form__footer--full">
-                <p><ShieldCheckIcon size={14} /> Your suggestion is reviewed by the Catholic Solutions team.</p>
-                <div>
-                  <PlatformLink to="/login" className="auth-secondary-button request-access-footer-back">
-                    <ArrowLeftIcon size={15} /> Back to sign in
-                  </PlatformLink>
+
+              <div className="request-access-form__footer request-access-form__footer--full !flex-col !justify-center">
+                <p className="mb-3"><ShieldCheckIcon size={14} /> Your suggestion is reviewed by the Catholic Solutions team.</p>
+                <div className="!flex !justify-center !w-full">
                   <button type="submit" className="auth-primary-button auth-primary-button--submit" disabled={submitting || uploadingLogo}>
-                    {submitting ? 'Submitting…' : 'Submit suggestion'} <ArrowRightIcon size={16} />
+                    {submitting ? 'Submitting…' : 'Submit Request'} <ArrowRightIcon size={16} />
                   </button>
                 </div>
               </div>

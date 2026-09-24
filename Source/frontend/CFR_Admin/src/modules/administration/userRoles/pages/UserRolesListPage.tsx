@@ -171,7 +171,7 @@ export function UserRolesListPage() {
               <CommonIconButton
                 aria-label={isActive ? `Deactivate ${role.roleName}` : `Activate ${role.roleName}`}
                 tooltip={inUse ? 'Cannot deactivate: users are assigned to this role. Reassign users first.' : (isActive ? 'Deactivate' : 'Activate')}
-                variant={isActive ? 'danger' : 'ghost'}
+                variant={isActive ? 'success' : 'danger'}
                 icon={isActive ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
                 onClick={() => void handleToggleActive(role)}
                 disabled={inUse}

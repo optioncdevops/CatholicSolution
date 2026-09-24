@@ -7,7 +7,7 @@ import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField } from '@app/components/formControls';
 import { StatusBadge } from '@app/components/Badge';
 import { confirmDiscardChanges } from '@/modules/lib/confirm';
-import { getOrganizationUsers, updateOrganization } from '../../services/organizationsService';
+import { getDioceses, getOrganizationUsers, updateOrganization } from '../../services/organizationsService';
 import type { OrganizationApiItem, OrganizationFormValues, OrganizationUserApiItem } from '../../types/organizationTypes';
 import { composeOrganizationAddress, formatOrgCode, ORG_TYPE_OPTIONS, orgTypeLabel, stateLabel, US_STATE_OPTIONS } from '../../utils/organizationHelpers';
 import { organizationRules } from '../../validator/OrganizationValidator';
@@ -39,6 +39,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
   const [saving, setSaving] = useState(false);
   const [members, setMembers] = useState<OrganizationUserApiItem[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [dioceses, setDioceses] = useState<{ id: number; value: string }[]>([]);
   //#endregion
 
   //#region Form
@@ -55,6 +56,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
       city: organization.city ?? '',
       state: organization.state ?? '',
       zip: organization.zip ?? '',
+      dioceseId: organization.dioceseId ?? null,
     },
     mode: 'onChange',
   });
@@ -77,6 +79,26 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
     })();
     return () => { cancelled = true; };
   }, [editing, organization.orgId]);
+
+  useEffect(() => {
+    let active = true;
+    const fetchDioceses = async () => {
+      try {
+        const res = await getDioceses();
+        if (active) {
+          const formatted = (res.resultData || []).map((d) => ({
+            id: d.dioceseId,
+            value: d.dioceseName,
+          }));
+          setDioceses(formatted);
+        }
+      } catch (err) {
+        console.error('Failed to fetch dioceses', err);
+      }
+    };
+    void fetchDioceses();
+    return () => { active = false; };
+  }, []);
   //#endregion
 
   // Contact Person is a free-text field on the backend (not a foreign key to a member), so the
@@ -87,6 +109,12 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
     if (organization.contactPerson) names.add(organization.contactPerson);
     return [...names].sort((a, b) => a.localeCompare(b)).map((name) => ({ id: name, value: name }));
   })();
+
+  const getDioceseName = (id: number | null) => {
+    if (!id) return '';
+    const found = dioceses.find((d) => d.id === id);
+    return found ? found.value : String(id);
+  };
 
   //#region Handlers
   const handleEdit = () => {
@@ -103,6 +131,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
       city: organization.city ?? '',
       state: organization.state ?? '',
       zip: organization.zip ?? '',
+      dioceseId: organization.dioceseId ?? null,
     });
     setEditing(true);
   };
@@ -148,6 +177,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
         city: values.city.trim(),
         state: values.state.trim(),
         zip: values.zip.trim(),
+        dioceseId: values.dioceseId,
       });
       showToast('Organization updated successfully.', 'success');
       setEditing(false);
@@ -184,6 +214,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
           <Fact label="City" value={organization.city ?? ''} />
           <Fact label="State" value={stateLabel(organization.state)} />
           <Fact label="ZIP" value={organization.zip ?? ''} />
+          <Fact label="Diocese" value={getDioceseName(organization.dioceseId)} />
           <div className="min-w-0">
             <p className="text-[0.6875rem] font-bold uppercase tracking-wide text-[var(--text-faint)]">Status</p>
             <p className="mt-0.5"><StatusBadge status={organization.orgStatus} kind="organization" /></p>
@@ -212,7 +243,8 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
             placeholder={loadingMembers ? 'Loading members…' : 'Select contact person'}
             options={contactPersonOptions} disabled={saving || loadingMembers} wrapperClassName="md:col-span-4"
           />
-          <InputField control={control} name="address" label="Address" rules={organizationRules.address} maxLength={500} disabled={saving} wrapperClassName="md:col-span-12" />
+          <InputField control={control} name="address" label="Address" rules={organizationRules.address} maxLength={500} disabled={saving} wrapperClassName="md:col-span-8" />
+          <Dropdown control={control} name="dioceseId" label="Diocese" placeholder="Select diocese" searchable clearable options={dioceses} disabled={saving} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="city" label="City" disabled={saving} wrapperClassName="md:col-span-4" />
           <Dropdown control={control} name="state" label="State" placeholder="Select state" searchable options={US_STATE_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="zip" label="ZIP code" rules={organizationRules.zip} maxLength={6} disabled={saving} wrapperClassName="md:col-span-4" />

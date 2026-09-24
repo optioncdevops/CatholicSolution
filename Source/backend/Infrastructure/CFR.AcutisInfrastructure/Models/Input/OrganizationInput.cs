@@ -85,6 +85,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("zip")]
         public string? Zip { get; set; }
+
+        /// <summary>
+        /// Gets or sets the diocese identifier.
+        /// </summary>
+        [JsonPropertyName("dioceseId")]
+        public int? DioceseId { get; set; }
     }
 
     /// <summary>
@@ -160,6 +166,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("zip")]
         public string? Zip { get; set; }
+
+        /// <summary>
+        /// Gets or sets the diocese identifier.
+        /// </summary>
+        [JsonPropertyName("dioceseId")]
+        public int? DioceseId { get; set; }
     }
 
     /// <summary>

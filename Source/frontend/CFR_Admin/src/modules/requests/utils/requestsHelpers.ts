@@ -30,6 +30,7 @@ export const normalizeAccessRequest = (resultData: unknown): AccessRequestApiIte
   if (!Number.isFinite(accessRequestId) || accessRequestId <= 0) return null;
   return {
     accessRequestId,
+    accessRequestProductId: Number(row.accessRequestProductId ?? row.AccessRequestProductId) || 0,
     organizationId: Number(row.organizationId ?? row.OrganizationId) || 0,
     organizationName: String(row.organizationName ?? row.OrganizationName ?? ''),
     organizationType: String(row.organizationType ?? row.OrganizationType ?? ''),

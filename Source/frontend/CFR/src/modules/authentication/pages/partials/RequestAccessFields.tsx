@@ -71,7 +71,7 @@ export function Field({ label, name, type = 'text', placeholder, autoComplete, r
           }}
         />
       </div>
-      {error ? <p id={`${name}-error`} className="auth-field-error">{error}</p> : null}
+      {error ? <p id={`${name}-error`} className="auth-field-error !text-red-600">{error}</p> : null}
     </div>
   );
 }
@@ -99,7 +99,7 @@ export function SelectField({ label, name, options, required, placeholder, error
           return <option key={value} value={value}>{optionLabel}</option>;
         })}
       </select>
-      {error ? <p id={`${name}-error`} className="auth-field-error">{error}</p> : null}
+      {error ? <p id={`${name}-error`} className="auth-field-error !text-red-600">{error}</p> : null}
     </div>
   );
 }

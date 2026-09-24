@@ -318,6 +318,11 @@ namespace CFR.AcutisInfrastructure
             public const string ContactPhone = nameof(ContactPhone);
 
             /// <summary>
+            /// Diocese identifier.
+            /// </summary>
+            public const string DioceseId = nameof(DioceseId);
+
+            /// <summary>
             /// Street address.
             /// </summary>
             public const string Address = nameof(Address);
@@ -336,11 +341,6 @@ namespace CFR.AcutisInfrastructure
             /// ZIP or postal code.
             /// </summary>
             public const string Zip = nameof(Zip);
-
-            /// <summary>
-            /// Diocese identifier (core.Diocese.DioceseId), the organization's parent diocese.
-            /// </summary>
-            public const string DioceseId = nameof(DioceseId);
 
             /// <summary>
             /// Logged-in user who last updated the row (ICurrentUserService.UserId).
@@ -377,6 +377,20 @@ namespace CFR.AcutisInfrastructure
             /// Access request identifier.
             /// </summary>
             public const string AccessRequestId = nameof(AccessRequestId);
+
+            /// <summary>
+            /// Identifies one product line on a (possibly multi-product) access request -
+            /// [request].[AccessRequestProduct].[AccessRequestProductId]. Optional on ActionId 2/3:
+            /// when omitted, ActionId 2 falls back to the request's first still-pending line and
+            /// ActionId 3 returns every line.
+            /// </summary>
+            public const string AccessRequestProductId = nameof(AccessRequestProductId);
+
+            /// <summary>
+            /// Stored procedure output: the AccessRequestProductId ActionId 2 actually acted on
+            /// (echoes the input when given, or reports which line the fallback resolved to).
+            /// </summary>
+            public const string ResolvedAccessRequestProductId = nameof(ResolvedAccessRequestProductId);
 
             /// <summary>
             /// core.Product.ProductId when the client sends a numeric identifier.
