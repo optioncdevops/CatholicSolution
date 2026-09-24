@@ -376,7 +376,10 @@ namespace CFR.CommonService.MailService
             return string.IsNullOrWhiteSpace(environment) ? null : environment;
         }
 
-        private static string? ReadEmailSetting(string contentRoot, string fileName, string key)
+        private static string? ReadEmailSetting(string contentRoot, string fileName, string key) =>
+            ReadSetting(contentRoot, fileName, "EmailSettings", key);
+
+        private static string? ReadSetting(string contentRoot, string fileName, string section, string key)
         {
             string path = Path.Combine(contentRoot, fileName);
             if (!File.Exists(path))
@@ -384,7 +387,82 @@ namespace CFR.CommonService.MailService
                 return null;
             }
 
-            return JObject.Parse(File.ReadAllText(path))["EmailSettings"]?[key]?.ToString();
+            string? value = JObject.Parse(File.ReadAllText(path))[section]?[key]?.ToString();
+            return string.IsNullOrWhiteSpace(value) ? null : value;
+        }
+
+        /// <summary>
+        /// Folder (relative to the file-storage root) that EmailSettingsService.UploadEmailLogoAsync
+        /// saves the uploaded email logo into.
+        /// </summary>
+        private static readonly string EmailLogoRelativeDirectory = Path.Combine("Acutis", "Attachment", "EmailSettings");
+
+        /// <summary>
+        /// Full path of the uploaded email logo file on disk, so SMTPMailService can embed it in the
+        /// email itself (inline "cid:" image) instead of linking to it. A linked logo only shows when
+        /// ApiBaseUrl is publicly reachable - a localhost/dev URL can never be fetched by the
+        /// recipient's mail client (Gmail/Outlook download images from their own servers), so those
+        /// emails went out with no logo at all. Looked up, first match wins:
+        ///   1. EmailSettings:LogoDirectory (appsettings.{Environment}.json, then appsettings.json) -
+        ///      lets a microservice that doesn't own the upload folder (e.g. CFR.Portal) point at it.
+        ///   2. ApplicationFilePath:Doc_BasePath + Acutis\Attachment\EmailSettings - where CFR.Acutis
+        ///      (FileHandlerService) actually saves the upload.
+        ///   3. {content root}\wwwroot\Acutis\Attachment\EmailSettings, and the sibling CFR.Acutis
+        ///      project's copy of it (local dev without either setting).
+        /// Returns null when the file isn't found anywhere - the caller then falls back to the URL.
+        /// </summary>
+        public static string? ResolveEmailLogoFilePath(string? logoFileName)
+        {
+            try
+            {
+                string? safeName = string.IsNullOrWhiteSpace(logoFileName) ? null : Path.GetFileName(logoFileName.Trim());
+                if (string.IsNullOrWhiteSpace(safeName) || string.Equals(safeName, "none", StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+
+                string? contentRoot = ResolveContentRoot();
+                if (string.IsNullOrWhiteSpace(contentRoot))
+                {
+                    return null;
+                }
+
+                string? environment = ResolveEnvironmentName(contentRoot);
+                string? FromSettings(string section, string key) =>
+                    (environment != null ? ReadSetting(contentRoot, $"appsettings.{environment}.json", section, key) : null)
+                    ?? ReadSetting(contentRoot, "appsettings.json", section, key);
+
+                var candidateDirectories = new List<string>();
+                string? logoDirectory = FromSettings("EmailSettings", "LogoDirectory");
+                if (logoDirectory != null)
+                {
+                    candidateDirectories.Add(Environment.ExpandEnvironmentVariables(logoDirectory));
+                }
+
+                string? docBasePath = FromSettings("ApplicationFilePath", "Doc_BasePath") ?? FromSettings("AppStrings", "GatewayRoot");
+                if (docBasePath != null)
+                {
+                    candidateDirectories.Add(Path.Combine(Environment.ExpandEnvironmentVariables(docBasePath), EmailLogoRelativeDirectory));
+                }
+
+                candidateDirectories.Add(Path.Combine(contentRoot, "wwwroot", EmailLogoRelativeDirectory));
+                candidateDirectories.Add(Path.Combine(contentRoot, "..", "CFR.Acutis", "wwwroot", EmailLogoRelativeDirectory));
+
+                foreach (string directory in candidateDirectories)
+                {
+                    string candidate = Path.GetFullPath(Path.IsPathRooted(directory) ? Path.Combine(directory, safeName) : Path.Combine(contentRoot, directory, safeName));
+                    if (File.Exists(candidate))
+                    {
+                        return candidate;
+                    }
+                }
+
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }

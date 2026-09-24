@@ -188,6 +188,7 @@ export const toCatalogApp = (row: HubProductApiItem): CatalogApp | null => {
     isOrgApproved: asBool(pickValue(source, 'isOrgApproved', 'IsOrgApproved')) === true,
     contactUserId: (pickValue(source, 'contactUserId', 'ContactUserId') as string | number | undefined) ?? undefined,
     contactEmail: pickString(source, 'contactEmail', 'ContactEmail') || undefined,
+    isRequestable: asBool(pickValue(source, 'isRequestable', 'IsRequestable')) === true,
   };
 };
 

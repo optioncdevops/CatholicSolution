@@ -19,9 +19,9 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         /// Purpose: Retrieve all product records from the Core.Product database table.
         /// Request Flow: IProductsService -> ProductsRepository.GetProductsListAsync() -> Database.
         /// Validation Details: None.
-        /// Business Logic: Executes StoredProc.Products.ProductsCrud with EnumVariables.ProductAction.GetList, then sets CustomerCount from EnumVariables.ProductAction.GetLicenses grouped by OrgId (same as GetProductCustomersAsync).
-        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
-        /// Response Details: Returns a list of ProductOutput records with customer counts matching the Customers tab.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with EnumVariables.ProductAction.GetList, then sets CustomerCount from EnumVariables.ProductAction.GetLicenses grouped by OrgId (same as GetProductCustomersAsync), and IsRequestable from SQLQueryText.Products.GetRequestableProductIds (support user + contact user both set).
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud and SQLQueryText.Products.GetRequestableProductIds.
+        /// Response Details: Returns a list of ProductOutput records with customer counts matching the Customers tab and the Request Access flag.
         /// </remarks>
         /// <returns>A list of product output records.</returns>
         public async Task<List<ProductOutput>> GetProductsListAsync()
@@ -34,9 +34,11 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             var customerCounts = licenses
                 .GroupBy(item => item.ProductId)
                 .ToDictionary(group => group.Key, group => group.GroupBy(item => item.OrgId).Count());
+            var requestableProductIds = (await dapperHandler.QueryAsync<int>(SQLQueryText.Products.GetRequestableProductIds, null, CommandType.Text)).ToHashSet();
             foreach (var product in products)
             {
                 product.CustomerCount = customerCounts.GetValueOrDefault(product.ProductId);
+                product.IsRequestable = requestableProductIds.Contains(product.ProductId);
             }
             return products;
         }

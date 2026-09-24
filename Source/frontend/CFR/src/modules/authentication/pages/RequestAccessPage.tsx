@@ -39,8 +39,10 @@ const RequestAccessPage = () => {
   const requestedProduct = searchParams.get('product');
   const [apps, setApps] = useState<CatalogApp[]>([]);
   const [dioceses, setDioceses] = useState<DioceseOption[]>([]);
-  // Coming-soon products aren't requestable yet - only offer the ones already live.
-  const requestableApps = useMemo(() => apps.filter((app) => app.hubSection !== 'future'), [apps]);
+  // Only offer products that are live (not coming soon) AND have both a product support user and a
+  // contact user set up - those are the people the request / Send to Vendor emails go to, so a
+  // product without them can't actually be processed.
+  const requestableApps = useMemo(() => apps.filter((app) => app.hubSection !== 'future' && app.isRequestable === true), [apps]);
   const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : '';
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
