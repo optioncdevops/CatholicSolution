@@ -109,6 +109,19 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string? SubmittedAt { get; set; }
 
         /// <summary>
+        /// Gets or sets the product's contact / support user name(s) ([core].[Product].[ContactUserId]) -
+        /// the vendor contact who receives the Send to Vendor email. Filled on get-by-id only.
+        /// </summary>
+        [JsonPropertyName("productContactName")]
+        public string? ProductContactName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product's contact / support user email(s), semicolon separated. Filled on get-by-id only.
+        /// </summary>
+        [JsonPropertyName("productContactEmail")]
+        public string? ProductContactEmail { get; set; }
+
+        /// <summary>
         /// Gets or sets the status timeline loaded on get-by-id.
         /// </summary>
         [JsonPropertyName("timeline")]
@@ -191,6 +204,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("eMail")]
         public string EMail { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the recipient's full name (only populated by the product-contact lookup).
+        /// </summary>
+        [JsonPropertyName("fullName")]
+        public string? FullName { get; set; }
     }
 }
 

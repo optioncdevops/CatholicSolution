@@ -1,5 +1,6 @@
 // Copyright (c) OptionC. All rights reserved.
 
+using CFR.Common;
 using CFR.CommonService.MailService;
 using System.Net;
 using System.Net.Mail;
@@ -30,12 +31,8 @@ namespace CFR.CommonService.Services
         Task<(bool Success, string Message)> TestConnectionAsync(SMTPMailConfig config);
     }
 
-    public class SMTPMailService : ISMTPMailService
+    public class SMTPMailService(ILogger<SMTPMailService> logger) : ISMTPMailService
     {
-        public SMTPMailService()
-        {
-        }
-
         private static ConfSettings LoadData()
         {
             var obj = new ConfSettingsService();
@@ -344,8 +341,9 @@ namespace CFR.CommonService.Services
                         await client.SendMailAsync(mail);
                         isSuccess = true;
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        AppLogger.LogError(logger, ex, SerilogErrorMessages.MailLogMessages.SendMailAttemptFailed, retryCount + 1, toAddress, smtpServer);
                         retryCount++;
                         if (retryCount >= 2)
                         {
@@ -355,6 +353,10 @@ namespace CFR.CommonService.Services
                         await Task.Delay(1000);
                     }
                 } while (!isSuccess && retryCount < 2);
+            }
+            else
+            {
+                AppLogger.LogWarning(logger, null, SerilogErrorMessages.MailLogMessages.SendMailDisabled, toAddress);
             }
 
             return isSuccess;

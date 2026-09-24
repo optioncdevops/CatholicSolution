@@ -358,12 +358,12 @@ export function DashboardPage() {
   // Platform Summary cards, Organization Health, Application Access, or License Health sections.
   const {
     pendingRequests, approvedRequests, rejectedRequests,
-    infoRequestedRequests, rangedPendingRequests, oldestPending,
+    sentToVendorRequests, rangedPendingRequests, oldestPending,
   } = useMemo(() => {
     const pendingRequests = requests.filter((request) => request.status === 'pending');
     const approvedRequests = requests.filter((request) => request.status === 'approved');
     const rejectedRequests = requests.filter((request) => request.status === 'rejected');
-    const infoRequestedRequests = requests.filter((request) => request.status === 'info-requested');
+    const sentToVendorRequests = requests.filter((request) => request.status === 'sent-to-vendor');
     const rangedPendingRequests = pendingRequests.filter((request) => inBounds(request.submittedAt, requestBounds));
     const oldestPending = pendingRequests.reduce<string | null>((oldest, request) => (
       !oldest || request.submittedAt < oldest ? request.submittedAt : oldest
@@ -371,7 +371,7 @@ export function DashboardPage() {
 
     return {
       pendingRequests, approvedRequests, rejectedRequests,
-      infoRequestedRequests, rangedPendingRequests, oldestPending,
+      sentToVendorRequests, rangedPendingRequests, oldestPending,
     };
   }, [requests, requestBounds]);
 
@@ -441,13 +441,13 @@ export function DashboardPage() {
     const pending = bucketCounts(byStatus('pending'), requestBuckets);
     const approved = bucketCounts(byStatus('approved'), requestBuckets);
     const rejected = bucketCounts(byStatus('rejected'), requestBuckets);
-    const infoRequested = bucketCounts(byStatus('info-requested'), requestBuckets);
+    const sentToVendor = bucketCounts(byStatus('sent-to-vendor'), requestBuckets);
     return requestBuckets.map((bucket, index) => ({
-      name: bucket.label, Pending: pending[index], Approved: approved[index], Rejected: rejected[index], 'Info Requested': infoRequested[index],
+      name: bucket.label, Requested: pending[index], 'Sent to Vendor': sentToVendor[index], Approved: approved[index], Rejected: rejected[index],
     }));
   }, [requests, requestBuckets]);
   const requestsInRangeTotal = rangedPendingRequests.length + approvedRequests.filter((r) => inBounds(r.submittedAt, requestBounds)).length
-    + rejectedRequests.filter((r) => inBounds(r.submittedAt, requestBounds)).length + infoRequestedRequests.filter((r) => inBounds(r.submittedAt, requestBounds)).length;
+    + rejectedRequests.filter((r) => inBounds(r.submittedAt, requestBounds)).length + sentToVendorRequests.filter((r) => inBounds(r.submittedAt, requestBounds)).length;
   const hasRequestSeriesData = requestsInRangeTotal > 0;
 
   // Organization Status donut — a current snapshot from the summary (no filter), never the loaded
@@ -493,19 +493,22 @@ export function DashboardPage() {
     });
   };
 
-  const handleQuickAction = async (request: AccessRequestApiItem, nextStatus: 'approved' | 'rejected') => {
+  const handleQuickAction = async (request: AccessRequestApiItem, nextStatus: 'sent-to-vendor' | 'rejected') => {
+    const isSendToVendor = nextStatus === 'sent-to-vendor';
     const confirmed = await confirmAction({
-      title: nextStatus === 'approved' ? 'Approve this request?' : 'Reject this request?',
-      description: `This request will be marked ${nextStatus}. This cannot be undone from here.`,
-      confirmLabel: nextStatus === 'approved' ? 'Approve' : 'Reject',
-      tone: nextStatus === 'approved' ? 'primary' : 'danger',
+      title: isSendToVendor ? 'Send this request to the vendor?' : 'Reject this request?',
+      description: isSendToVendor
+        ? `The request details will be emailed to the ${request.productName} contact user and the request marked Sent to vendor.`
+        : 'This request will be marked rejected. This cannot be undone from here.',
+      confirmLabel: isSendToVendor ? 'Send to Vendor' : 'Reject',
+      tone: isSendToVendor ? 'primary' : 'danger',
     });
     if (!confirmed) return;
 
     setActingRequestId(request.accessRequestId);
     try {
       await updateAccessRequestStatus({ accessRequestId: request.accessRequestId, accessRequestProductId: request.accessRequestProductId, status: nextStatus });
-      showToast(`Request ${nextStatus} successfully.`, 'success');
+      showToast(isSendToVendor ? 'Request sent to the vendor successfully.' : 'Request rejected successfully.', 'success');
       await loadDashboard(true);
     } catch (error) {
       console.error('Error updating access request:', error);
@@ -691,10 +694,10 @@ export function DashboardPage() {
               ) : (
                 <div className="flex flex-col gap-2 p-4">
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    <StatChip label="Pending" value={pendingRequests.length} tone="warning" />
+                    <StatChip label="Requested" value={pendingRequests.length} tone="warning" />
+                    <StatChip label="Sent to Vendor" value={sentToVendorRequests.length} tone="info" />
                     <StatChip label="Approved" value={approvedRequests.length} tone="success" />
                     <StatChip label="Rejected" value={rejectedRequests.length} tone="danger" />
-                    <StatChip label="Info Requested" value={infoRequestedRequests.length} tone="info" />
                   </div>
                   {!hasRequestSeriesData ? (
                     <EmptyState icon="🗓️" title="No requests in this range" description="Try widening the date range to chart request activity." />
@@ -710,10 +713,10 @@ export function DashboardPage() {
                           formatter={(value) => <span className={hiddenRequestSeries.has(value) ? 'text-[var(--text-faint)] line-through' : 'text-[var(--text-secondary)]'}>{value}</span>}
                           wrapperStyle={{ fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
                         />
-                        <Bar dataKey="Pending" stackId="requests" fill={CHART_STATUS_COLORS.warning} hide={hiddenRequestSeries.has('Pending')} radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="Requested" stackId="requests" fill={CHART_STATUS_COLORS.warning} hide={hiddenRequestSeries.has('Requested')} radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="Sent to Vendor" stackId="requests" fill={CHART_STATUS_COLORS.info} hide={hiddenRequestSeries.has('Sent to Vendor')} />
                         <Bar dataKey="Approved" stackId="requests" fill={CHART_STATUS_COLORS.success} hide={hiddenRequestSeries.has('Approved')} />
-                        <Bar dataKey="Rejected" stackId="requests" fill={CHART_STATUS_COLORS.danger} hide={hiddenRequestSeries.has('Rejected')} />
-                        <Bar dataKey="Info Requested" stackId="requests" fill={CHART_STATUS_COLORS.info} hide={hiddenRequestSeries.has('Info Requested')} radius={[3, 3, 0, 0]} />
+                        <Bar dataKey="Rejected" stackId="requests" fill={CHART_STATUS_COLORS.danger} hide={hiddenRequestSeries.has('Rejected')} radius={[3, 3, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -757,9 +760,9 @@ export function DashboardPage() {
                         <div className="flex shrink-0 items-center gap-0.5">
                           <CommonIconButton
                             id={`ibtnApproveAccessRequest${request.accessRequestId}`}
-                            aria-label={`Approve ${request.requesterName}'s request`}
+                            aria-label={`Send ${request.requesterName}'s request to the vendor`}
                             icon={<Check size={15} />}
-                            onClick={() => void handleQuickAction(request, 'approved')}
+                            onClick={() => void handleQuickAction(request, 'sent-to-vendor')}
                             disabled={actingRequestId === request.accessRequestId}
                           />
                           <CommonIconButton

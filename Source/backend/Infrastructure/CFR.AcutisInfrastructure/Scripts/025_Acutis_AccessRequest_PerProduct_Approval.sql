@@ -22,6 +22,11 @@
 --
 -- Everything else (ActionId 1, 5, 6, 7 bodies; table/column DDL) is unchanged from
 -- 008_AccessRequest.sql - only ActionId 2/3/4 and the parameter list/normalization block differ.
+--
+-- Status flow (LineStatus): 1 = requested -> 4 = sent-to-vendor -> 2 = approved, or 3 = rejected.
+-- ActionId 2 @Status 'sent-to-vendor' moves a requested line to 4 (CFR.Acutis emails the product's
+-- contact user first); 'approved' is only allowed from 4; 'rejected' from 1 or 4. ActionId 3/4 project
+-- LineStatus 4 as 'sent-to-vendor', and ActionId 1/7 treat a sent-to-vendor line as still open.
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
@@ -38,7 +43,8 @@ GO
 -- not just a status flag.
 -- ActionId 3: Get by AccessRequestId (header + one row per product line, timeline, comments).
 -- ActionId 4: Get list (one row per product line).
--- ActionId 5: Recipients for the AccessRequested email, matched by product name/id.
+-- ActionId 5: Recipients for the AccessRequested email, matched by product name/id: the product's
+-- [ProductSupportUser] first, else its contact person, else Platform Admins.
 -- ActionId 6: App Hub products. [auth].[User] by email -> [auth].[UserProduct] -> [core].[Product].
 -- ActionId 7: Public Request Access save (create/reuse org with address, request header, product lines).
 CREATE PROCEDURE [request].[AccessRequestManage]
@@ -153,7 +159,7 @@ BEGIN
               AND ar.[OrgId] = @OrgId
               AND arp.[ProductId] = @ProductId
               AND ar.[RequestStatus] IN (1, 2)
-              AND arp.[LineStatus] = 1
+              AND arp.[LineStatus] IN (1, 4) -- requested or sent to vendor
         )
         BEGIN
             SET @ReturnValue = -99;
@@ -329,7 +335,11 @@ BEGIN
             WHERE ar.[IsDeleted] = 0
               AND arp.[ProductId] = rp.[ProductId]
               AND ar.[RequestStatus] IN (1, 2)
-              AND arp.[LineStatus] = 1
+              AND arp.[LineStatus] IN (1, 4) -- requested or sent to vendor
+              -- Only a duplicate for the SAME organization: the same person may request the same
+              -- product for a different organization. Public requests carry no real OrgId yet
+              -- ([OrgId] = 0 until approval), so the organization is matched by its staged name.
+              AND LOWER(LTRIM(RTRIM(ISNULL(ar.[OrganizationName], N'')))) = LOWER(@OrganizationName)
               AND (
                     (@PublicRequestedBy IS NOT NULL AND ar.[RequestedBy] = @PublicRequestedBy)
                  OR LOWER(LTRIM(RTRIM(ISNULL(ar.[ContactEmail], N'')))) = LOWER(@RequesterEmail)
@@ -436,7 +446,7 @@ BEGIN
         DECLARE @ExistingOrgProductId BIGINT;
         DECLARE @ExistingOrgProductIsDeleted BIT;
 
-        IF @AccessRequestId <= 0 OR @Status NOT IN (N'approved', N'rejected', N'info-requested', N'in-review')
+        IF @AccessRequestId <= 0 OR @Status NOT IN (N'sent-to-vendor', N'approved', N'rejected', N'info-requested', N'in-review')
         BEGIN
             SET @ReturnValue = -93;
             RETURN @ReturnValue;
@@ -493,7 +503,14 @@ BEGIN
 
         SET @ResolvedAccessRequestProductId = @LineId;
 
-        IF @LineStatus <> 1
+        -- Allowed transitions (LineStatus 1 = requested, 4 = sent-to-vendor, 2 = approved, 3 = rejected):
+        --   requested      -> sent-to-vendor / rejected / info-requested (line stays requested)
+        --   sent-to-vendor -> approved / rejected
+        IF NOT (
+               (@Status IN (N'sent-to-vendor', N'info-requested', N'in-review') AND @LineStatus = 1)
+            OR (@Status = N'approved' AND @LineStatus = 4)
+            OR (@Status = N'rejected' AND @LineStatus IN (1, 4))
+        )
         BEGIN
             SET @ReturnValue = -94;
             RETURN @ReturnValue;
@@ -509,6 +526,12 @@ BEGIN
             SET @NextHeaderStatus = 2;
             SET @HistoryStatus = 2;
             SET @HistoryLineId = NULL;
+        END
+        ELSE IF @Status = N'sent-to-vendor'
+        BEGIN
+            SET @NextLineStatus = 4;
+            SET @HistoryStatus = 4;
+            SET @HistoryLineId = @LineId;
         END
         ELSE IF @Status = N'approved'
         BEGIN
@@ -552,7 +575,7 @@ BEGIN
                 FROM [request].[AccessRequestProduct]
                 WHERE [AccessRequestId] = @AccessRequestId
                   AND [IsDeleted] = 0
-                  AND [LineStatus] = 1
+                  AND [LineStatus] IN (1, 4) -- requested or still with the vendor
             )
                 SET @NextHeaderStatus = 3;
 
@@ -697,6 +720,7 @@ BEGIN
                 WHEN ar.[RequestStatus] = 2 AND arp.[LineStatus] = 1 THEN N'info-requested'
                 WHEN arp.[LineStatus] = 2 THEN N'approved'
                 WHEN arp.[LineStatus] = 3 THEN N'rejected'
+                WHEN arp.[LineStatus] = 4 THEN N'sent-to-vendor'
                 ELSE N'pending'
             END AS [Status],
             CONVERT(VARCHAR(33), ar.[RequestedDate], 127) AS [SubmittedAt]
@@ -730,6 +754,7 @@ BEGIN
                 WHEN h.[AccessRequestProductId] IS NULL AND h.[StatusValue] = 4 THEN N'rejected'
                 WHEN h.[AccessRequestProductId] IS NOT NULL AND h.[StatusValue] = 2 THEN N'approved'
                 WHEN h.[AccessRequestProductId] IS NOT NULL AND h.[StatusValue] = 3 THEN N'rejected'
+                WHEN h.[AccessRequestProductId] IS NOT NULL AND h.[StatusValue] = 4 THEN N'sent-to-vendor'
                 ELSE N'pending'
             END AS [Status],
             CONVERT(VARCHAR(33), h.[InsertedDate], 127) AS [At],
@@ -823,6 +848,7 @@ BEGIN
                 WHEN ar.[RequestStatus] = 2 AND arp.[LineStatus] = 1 THEN N'info-requested'
                 WHEN arp.[LineStatus] = 2 THEN N'approved'
                 WHEN arp.[LineStatus] = 3 THEN N'rejected'
+                WHEN arp.[LineStatus] = 4 THEN N'sent-to-vendor'
                 ELSE N'pending'
             END AS [Status],
             CONVERT(VARCHAR(33), ar.[RequestedDate], 127) AS [SubmittedAt]
@@ -854,6 +880,7 @@ BEGIN
         DECLARE @Recipients TABLE ([EMail] NVARCHAR(256) NOT NULL);
         DECLARE @ProductContactPerson NVARCHAR(200);
         DECLARE @ProductContactUserId BIGINT;
+        DECLARE @ProductSupportUser VARCHAR(100);
 
         IF @ProductId IS NULL AND @ProductName IS NOT NULL
         BEGIN
@@ -865,11 +892,29 @@ BEGIN
 
         SELECT
             @ProductContactPerson = p.[ContactPerson],
-            @ProductContactUserId = p.[ContactUserId]
+            @ProductContactUserId = p.[ContactUserId],
+            @ProductSupportUser = NULLIF(LTRIM(RTRIM(p.[ProductSupportUser])), '')
         FROM [core].[Product] p
         WHERE p.[ProductId] = @ProductId;
 
-        IF @ProductContactUserId IS NOT NULL OR (@ProductContactPerson IS NOT NULL AND LTRIM(RTRIM(@ProductContactPerson)) <> N'')
+        -- 1st choice: the product's support user(s) - [core].[Product].[ProductSupportUser] holds
+        -- [auth].[AcutisUser].[UserId] value(s) (one id, or several comma/semicolon separated).
+        IF @ProductSupportUser IS NOT NULL
+        BEGIN
+            INSERT INTO @Recipients ([EMail])
+            SELECT DISTINCT LTRIM(RTRIM(u.[Email]))
+            FROM STRING_SPLIT(REPLACE(@ProductSupportUser, ';', ','), ',') s
+            INNER JOIN [auth].[AcutisUser] u
+                ON u.[UserId] = TRY_CAST(LTRIM(RTRIM(s.[value])) AS BIGINT)
+            WHERE u.[IsDeleted] = 0
+              AND u.[IsActive] = 1
+              AND u.[IsLocked] = 0
+              AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL;
+        END
+
+        -- 2nd choice (no usable support user): the product's contact person, then Platform Admins below.
+        IF NOT EXISTS (SELECT 1 FROM @Recipients)
+           AND (@ProductContactUserId IS NOT NULL OR (@ProductContactPerson IS NOT NULL AND LTRIM(RTRIM(@ProductContactPerson)) <> N''))
         BEGIN
             INSERT INTO @Recipients ([EMail])
             SELECT DISTINCT LTRIM(RTRIM(u.[Email]))
