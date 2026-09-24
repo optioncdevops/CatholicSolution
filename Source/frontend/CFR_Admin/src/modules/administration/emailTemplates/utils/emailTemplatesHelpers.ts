@@ -22,6 +22,17 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
     { token: '[FirstName]', label: 'First name' },
     { token: '[AppName]', label: 'Application name' },
   ],
+  AccessSentToVendor: [
+    { token: '[AppName]', label: 'Application name' },
+    { token: '[OrganizationName]', label: 'Organization name' },
+    { token: '[OrganizationType]', label: 'Organization type' },
+    { token: '[OrganizationAddress]', label: 'Organization address' },
+    { token: '[RequesterName]', label: 'Requester name' },
+    { token: '[RequesterEmail]', label: 'Requester email' },
+    { token: '[Phone]', label: 'Phone' },
+    { token: '[SubmittedDate]', label: 'Submitted date' },
+    { token: '[Note]', label: 'Admin note' },
+  ],
   AccessInfo: [
     { token: '[FirstName]', label: 'First name' },
     { token: '[AppName]', label: 'Application name' },
@@ -48,7 +59,7 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
     { token: '[FirstName]', label: 'Requester first name' },
     { token: '[RequesterName]', label: 'Requester name' },
     { token: '[ProductName]', label: 'Product name' },
-    { token: '[ProductId]', label: 'Product ID' },
+    { token: '[ClientId]', label: 'API client ID' },
     { token: '[SecurityKey]', label: 'Security key' },
     { token: '[Remarks]', label: 'Reviewer notes' },
   ],
@@ -84,6 +95,7 @@ export const templateDisplayLabel = (templateCode: string): string => {
     case 'PasswordReset': return 'Password Reset';
     case 'Welcome': return 'Welcome Email';
     case 'AccessApproved': return 'Access Approved';
+    case 'AccessSentToVendor': return 'Request Sent to Vendor';
     case 'AccessInfo': return 'More Information Needed';
     case 'AccessRequested': return 'New Access Request';
     case 'ProductRequested': return 'New Product Suggestion';
@@ -97,7 +109,8 @@ export const templateDescription = (templateCode: string): string => {
   switch (templateCode) {
     case 'PasswordReset': return 'Sent when a user requests a password reset link.';
     case 'Welcome': return 'Sent when a new account is provisioned.';
-    case 'AccessApproved': return 'Sent when an access request is approved.';
+    case 'AccessApproved': return 'Sent to the requester when an access request is approved.';
+    case 'AccessSentToVendor': return "Sent to the product's contact user when an admin sends a request to the vendor.";
     case 'AccessInfo': return 'Sent when a reviewer requests more detail on a request.';
     case 'AccessRequested': return 'Sent to admins when a member submits an access request.';
     case 'ProductRequested': return 'Sent to admins when a visitor suggests a new product.';

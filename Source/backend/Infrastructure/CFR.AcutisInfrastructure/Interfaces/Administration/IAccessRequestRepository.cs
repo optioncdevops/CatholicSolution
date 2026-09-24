@@ -44,6 +44,21 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         /// <returns>The matching request, or null when not found.</returns>
         Task<AccessRequestOutput?> GetAccessRequestByIdAsync(int accessRequestId, int? accessRequestProductId = null);
 
+        /// <summary>
+        /// Retrieves the email address(es) of a product's contact / support user.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Resolve who receives the Send to Vendor email for a product.
+        /// Request Flow: IAccessRequestService -> IAccessRequestRepository.GetProductContactEmailsAsync() -> SQL Database.
+        /// Validation Details: ProductId parameter mapping.
+        /// Business Logic: Matches [core].[Product].[ContactUserId] / [ContactPerson] to an active [auth].[AcutisUser]; no Platform Admin fallback.
+        /// Repository Interaction: Runs SQLQueryText.Requests.GetProductContactEmails (CommandType.Text).
+        /// Response Details: Returns a list of recipient email records (empty when the product has no contact user).
+        /// </remarks>
+        /// <param name="productId">Catalog product identifier.</param>
+        /// <returns>A list of recipient email records.</returns>
+        Task<List<AccessRequestRecipientOutput>> GetProductContactEmailsAsync(int productId);
+
         #endregion GET Methods
 
         #region PUT Methods

@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm} from 'react-hook-form';
 import { CommonButton } from '@app/components/buttons';
 import { BaseModal } from '@app/components/modal/BaseModal';
-import { TextareaField } from '@app/components/formControls';
+import { InputField, TextareaField } from '@app/components/formControls';
 import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeatureAccessLevel';
 import { getAccessRequestById, updateAccessRequestStatus } from '../../services/requestsService';
-import type { AccessRequestApiItem, AccessRequestReviewFormValues, RequestStatus } from '../../types/requestsTypes';
+import type { AccessRequestApiItem, AccessRequestReviewFormValues, RequestResolveAction } from '../../types/requestsTypes';
 import { normalizeAccessRequest } from '../../utils/requestsHelpers';
 import { ALLOWED_RESOLVE_STATUSES, accessRequestReviewDefaultValues, resolveRequestStatusRules } from '../../validator/RequestsValidator';
 
@@ -47,28 +47,10 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
   //#endregion
 
   //#region Form
-  const { control, handleSubmit, reset, getValues } = useForm<AccessRequestReviewFormValues>({
+  const { control, reset, getValues } = useForm<AccessRequestReviewFormValues>({
     defaultValues: accessRequestReviewDefaultValues,
     mode: 'onChange',
   });
-  //#endregion
-
-  //#region Functions
-  const loadDetail = useCallback(async (id: number, productId: number | null) => {
-    setLoading(true);
-    try {
-      const { resultData } = await getAccessRequestById(id, productId);
-      const row = normalizeAccessRequest(resultData);
-      setDetail(row);
-      reset(accessRequestReviewDefaultValues);
-    } catch (error) {
-      console.error('Error loading access request:', error);
-      showToast(typeof error === 'string' ? error : 'Failed to load access request.', 'error');
-      setDetail(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [reset, showToast]);
   //#endregion
 
   //#region Effects
@@ -110,41 +92,28 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
     onClose();
   };
 
-  const onInvalid = (formErrors: any) => {
-    const messages = Object.entries(formErrors).map(([key, error]: [string, any]) => {
-      if (error?.message === 'This field is required') {
-        let fieldName = key.replace(/([A-Z])/g, ' $1').toLowerCase().trim();
-        if (key === 'eMail' || key === 'email') fieldName = 'email address';
-        if (key === 'roleId') fieldName = 'role';
-        if (key === 'isActive') fieldName = 'status';
-        if (key === 'isLocked') fieldName = 'locked';
-        fieldName = fieldName.charAt(0).toUpperCase() + fieldName.slice(1);
-        return `${fieldName} is required.`;
-      }
-      return error?.message;
-    }).filter(Boolean);
-    showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
-  };
-
-  const resolve = async (status: RequestStatus) => {
+  const resolve = async (status: RequestResolveAction) => {
     if (!detail || !ALLOWED_RESOLVE_STATUSES.includes(status) || isReadOnly) return;
     const note = getValues('note').trim();
     setSaving(true);
     try {
+      // Send to Vendor emails the request details to the product's contact user first; the backend
+      // only moves the request to Sent to vendor once that email has gone out (a missing contact user
+      // or a mail failure comes back as an error and the request stays Requested).
       await updateAccessRequestStatus({
         accessRequestId: detail.accessRequestId,
         accessRequestProductId: detail.accessRequestProductId || accessRequestProductId,
         status,
-        note: note || (status === 'info-requested' ? 'More information requested.' : undefined),
+        note: note || undefined,
       });
-      const verb = status === 'approved' ? 'approved' : status === 'rejected' ? 'rejected' : 'sent an information request for';
-      showToast(`Successfully ${verb} this access request.`);
+      const successMessage: Record<RequestResolveAction, string> = {
+        'sent-to-vendor': 'Request details emailed to the product contact. The request is now Sent to vendor.',
+        approved: 'Successfully approved this access request.',
+        rejected: 'Successfully rejected this access request.',
+      };
+      showToast(successMessage[status]);
       await onResolved();
-      if (status === 'info-requested') {
-        await loadDetail(detail.accessRequestId, detail.accessRequestProductId || accessRequestProductId);
-      } else {
-        handleClose();
-      }
+      handleClose();
     } catch (error) {
       console.error('Error updating access request:', error);
       showToast(typeof error === 'string' ? error : 'Failed to update access request.', 'error');
@@ -156,7 +125,11 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
 
   //#region Render
   const isOpen = Boolean(accessRequestId);
-  const canResolve = (detail?.status === 'pending' || detail?.status === 'info-requested') && !isReadOnly;
+  // Requested -> Send to Vendor / Request Info / Reject; Sent to vendor -> Approve / Reject.
+  const isRequested = detail?.status === 'pending' && !isReadOnly;
+  const isWithVendor = detail?.status === 'sent-to-vendor' && !isReadOnly;
+  // Send to Vendor needs a contact user on the product - that's who the email goes to.
+  const hasProductContact = Boolean(detail?.productContactEmail);
 
   return (
     <BaseModal
@@ -164,12 +137,17 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
       isOpen={isOpen}
       title={detail ? `${detail.requesterName}'s request` : 'Access request'}
       onClose={handleClose}
-      size="sm"
-      footer={canResolve ? (
+      size="lg"
+      footer={isRequested || isWithVendor ? (
         <>
           <CommonButton id="btnRejectAccessRequest" variant="danger" size="sm" disabled={saving || loading} onClick={() => void resolve('rejected')}>Reject</CommonButton>
-          <CommonButton id="btnRequestInfoAccessRequest" variant="outline" size="sm" disabled={saving || loading} onClick={handleSubmit(() => void resolve('info-requested'), onInvalid)}>Request Info</CommonButton>
-          <CommonButton id="btnApproveAccessRequest" variant="primary" size="sm" intent="save" loading={saving} disabled={saving || loading} onClick={() => void resolve('approved')}>Approve</CommonButton>
+          {isRequested ? (
+            <>
+              <CommonButton id="btnSendToVendorAccessRequest" variant="primary" size="sm" intent="save" loading={saving} disabled={saving || loading || !hasProductContact} onClick={() => void resolve('sent-to-vendor')}>Send to Vendor</CommonButton>
+            </>
+          ) : (
+            <CommonButton id="btnApproveAccessRequest" variant="primary" size="sm" intent="save" loading={saving} disabled={saving || loading} onClick={() => void resolve('approved')}>Approve</CommonButton>
+          )}
         </>
       ) : undefined}
     >
@@ -179,18 +157,54 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
           {isReadOnly ? <ReadOnlyBanner featureName="Requests" /> : null}
           {detail.productName ? <p className="-mt-2 text-xs text-[var(--text-muted)]">{detail.productName}</p> : null}
           <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] p-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Requester</p>
-            <p className="mt-1 text-sm font-bold text-[var(--text-primary)]">{detail.requesterName}</p>
-            <p className="text-xs text-[var(--text-muted)]">{detail.requesterEmail}</p>
-            <p className="mt-2 text-xs text-[var(--text-muted)]">{detail.organizationName || '—'}</p>
-            {detail.organizationType ? <p className="text-xs text-[var(--text-muted)]">{detail.organizationType}</p> : null}
-            {detail.address || detail.city || detail.state || detail.zip ? (
-              <p className="mt-1 text-xs text-[var(--text-muted)]">
-                {[detail.address, [detail.city, detail.state].filter(Boolean).join(', '), detail.zip].filter(Boolean).join(' · ')}
-              </p>
-            ) : null}
-            {detail.phone ? <p className="text-xs text-[var(--text-muted)]">{detail.phone}</p> : null}
+            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Requester</p>
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+              {[
+                { label: 'Name', value: detail.requesterName },
+                { label: 'Email', value: detail.requesterEmail },
+                { label: 'Organization', value: detail.organizationName },
+                { label: 'Organization type', value: detail.organizationType },
+                {
+                  label: 'Address',
+                  value: [detail.address, [detail.city, detail.state].filter(Boolean).join(', '), detail.zip].filter(Boolean).join(' · '),
+                },
+                { label: 'Phone', value: detail.phone },
+              ].map((item) => (
+                <div key={item.label} className="min-w-0">
+                  <dt className="text-xs text-[var(--text-faint)]">{item.label}</dt>
+                  <dd className="mt-0.5 break-words text-sm text-[var(--text-primary)]">{item.value || '—'}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
+
+          {detail.status === 'pending' || detail.status === 'sent-to-vendor' ? (
+            <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] p-3">
+              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Product User</p>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                <InputField
+                  id="txtAccessRequestProductContactName"
+                  label="Name"
+                  value={detail.productContactName || ''}
+                  onChange={() => undefined}
+                  placeholder="No contact user set on this product"
+                  disabled
+                />
+                <InputField
+                  id="txtAccessRequestProductContactEmail"
+                  label="Email"
+                  type="email"
+                  value={detail.productContactEmail || ''}
+                  onChange={() => undefined}
+                  placeholder="No contact user set on this product"
+                  disabled
+                />
+              </div>
+              {!hasProductContact && detail.status === 'pending' ? (
+                <p className="mt-2 text-xs text-[var(--error)]">Set a Contact Person on this product before sending the request to the vendor.</p>
+              ) : null}
+            </div>
+          ) : null}
 
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Status Timeline</p>
@@ -201,7 +215,7 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
                 {detail.timeline.map((entry, index) => (
                   <li key={`${entry.at}-${index}`} className="relative">
                     <span className="absolute -left-[19px] top-1 size-2.5 rounded-full bg-[var(--secondary)]" aria-hidden="true" />
-                    <p className="text-xs font-bold capitalize text-[var(--text-primary)]">{String(entry.status).replace('-', ' ')}</p>
+                    <p className="text-xs font-bold capitalize text-[var(--text-primary)]">{entry.status === 'pending' ? 'requested' : String(entry.status).replace(/-/g, ' ')}</p>
                     <p className="text-xs text-[var(--text-muted)]">{entry.actor} &middot; {formatDate(entry.at)}</p>
                     {entry.note ? <p className="mt-0.5 text-xs italic text-[var(--text-secondary)]">{entry.note}</p> : null}
                   </li>
@@ -210,7 +224,7 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
             )}
           </div>
 
-          {canResolve ? (
+          {isRequested || isWithVendor ? (
             <TextareaField
               control={control}
               name="note"

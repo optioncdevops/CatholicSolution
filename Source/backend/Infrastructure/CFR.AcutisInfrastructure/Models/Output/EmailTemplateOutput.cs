@@ -48,6 +48,14 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public int? LinkExpiryMinutes { get; set; }
 
         /// <summary>
+        /// Gets or sets the lucide-react icon name (e.g. "KeyRound") the frontend resolves
+        /// against its own icon registry to represent this template. Null falls back to a
+        /// generic icon client-side.
+        /// </summary>
+        [JsonPropertyName("iconName")]
+        public string? IconName { get; set; }
+
+        /// <summary>
         /// Gets or sets when the template was created.
         /// </summary>
         [JsonPropertyName("createdDate")]

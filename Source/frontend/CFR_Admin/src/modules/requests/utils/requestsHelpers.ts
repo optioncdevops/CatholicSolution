@@ -1,10 +1,12 @@
 import type { AccessRequestApiItem, AccessRequestTimelineApiItem, RequestStatus } from '../types/requestsTypes';
 
-const REQUEST_STATUSES: RequestStatus[] = ['pending', 'approved', 'rejected', 'info-requested'];
+const REQUEST_STATUSES: RequestStatus[] = ['pending', 'sent-to-vendor', 'approved', 'rejected'];
 
+// Only four statuses exist: requested (pending), sent-to-vendor, approved, rejected. Anything else
+// (e.g. a legacy info-requested / in-review line) is still waiting on a decision, so it reads as Requested.
 export const normalizeRequestStatus = (value: unknown): RequestStatus => {
   const raw = String(value ?? '').trim().toLowerCase().replace(/[_\s]+/g, '-');
-  if (raw === 'in-review') return 'info-requested';
+  if (raw === 'requested') return 'pending';
   if (REQUEST_STATUSES.includes(raw as RequestStatus)) return raw as RequestStatus;
   return 'pending';
 };
@@ -15,7 +17,8 @@ const normalizeTimeline = (value: unknown): AccessRequestTimelineApiItem[] => {
     const row = entry as Record<string, unknown>;
     const statusRaw = String(row.status ?? row.Status ?? '').trim().toLowerCase().replace(/[_\s]+/g, '-');
     return {
-      status: statusRaw === 'submitted' ? 'submitted' : normalizeRequestStatus(row.status ?? row.Status),
+      // Timeline rows are events, so an info request is still shown as its own entry.
+      status: statusRaw === 'submitted' || statusRaw === 'info-requested' ? statusRaw : normalizeRequestStatus(row.status ?? row.Status),
       at: String(row.at ?? row.At ?? ''),
       note: row.note != null ? String(row.note) : (row.Note != null ? String(row.Note) : undefined),
       actor: String(row.actor ?? row.Actor ?? ''),
@@ -45,6 +48,8 @@ export const normalizeAccessRequest = (resultData: unknown): AccessRequestApiIte
     productName: String(row.productName ?? row.ProductName ?? ''),
     status: normalizeRequestStatus(row.status ?? row.Status),
     submittedAt: String(row.submittedAt ?? row.SubmittedAt ?? ''),
+    productContactName: String(row.productContactName ?? row.ProductContactName ?? ''),
+    productContactEmail: String(row.productContactEmail ?? row.ProductContactEmail ?? ''),
     timeline: normalizeTimeline(row.timeline ?? row.Timeline),
     comments: Array.isArray(row.comments ?? row.Comments) ? (row.comments ?? row.Comments) as AccessRequestApiItem['comments'] : [],
   };

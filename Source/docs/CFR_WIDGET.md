@@ -1,8 +1,12 @@
-# CFR App Switcher — Developer Guide
+# CFR Widget — Developer Guide
 
-A standalone, embeddable widget that renders the Catholic Solutions "9-dot"
-app launcher inside any external product (e.g. `optionc-sms`), without that
-product taking a build-time dependency on this repo.
+A standalone, embeddable widget that renders the Catholic Solutions "Switch
+app" launcher inside any external product (e.g. `optionc-sms`), without that
+product taking a build-time dependency on this repo. Externally, this is
+referred to as the "CFR Widget"; internally in the code, identifiers still
+use the term "app switcher" (class prefix `cfrsw-`, file `appSwitcher.ts`,
+element id `cfr-app-switcher-slot`, etc.) — both names refer to the same
+component.
 
 ## How it works, end to end
 
@@ -24,7 +28,7 @@ Widget filters to isActive && productStatus === 1 && externalPageUrl set
 Renders a "Switch app" grid of launchable apps
 ```
 
-No CFR session, JWT, or auth is used or required. The switcher lists all
+No CFR session, JWT, or auth is used or required. The CFR Widget lists all
 active, launcher-eligible first-party apps globally — the same `Product`
 records managed via CFR_Admin's Products module — with no per-user or
 per-organization personalization. A per-user/CFR-login-gated version of this
@@ -40,6 +44,7 @@ to keep this feature scoped to just the widget itself.
 | Build wiring | `frontend/CFR/package.json` (`build:widget`, chained into every `build:*` script) |
 | Backend endpoint (already existed) | `backend/Microservices/CFR.Acutis/Controllers/Products/ProductsController.cs` → `GetProducts` |
 | Header integration example | `optionc-sms/src/designSystem/theme/layouts/header/PortalHeaderAppSwitcherSlot.tsx`, wired in `PortalHeaderMenuStrip.tsx` |
+| External partner-facing reference | "CFR Widget Integration" section, maintained separately in the external integration guide (not in this repo) |
 
 ## Embedding in a new external app
 
@@ -55,12 +60,12 @@ would go. Do not wrap it in a React component or inject it manually; a plain
 tag is the standard, and it keeps the same lifecycle whether the host is a
 CSR, SSR, or non-React app.
 
-**The URL is the only per-environment knob.** The widget bundle served at
-that URL already has its own CFR.Gateway origin baked in at CFR's build time
-(from that build mode's `VITE_APP_REST_API_BASE_URL` — the same var CFR's
-own app reads). So "dev vs. pilot vs. staging vs. live" for the embedding app
-is purely "which CFR host does the script tag point at," typically driven by
-one env var in the host app, e.g. optionc-sms's:
+**The URL is the only per-environment knob.** The CFR Widget bundle served
+at that URL already has its own CFR.Gateway origin baked in at CFR's build
+time (from that build mode's `VITE_APP_REST_API_BASE_URL` — the same var
+CFR's own app reads). So "dev vs. pilot vs. staging vs. live" for the
+embedding app is purely "which CFR host does the script tag point at,"
+typically driven by one env var in the host app, e.g. optionc-sms's:
 
 ```
 VITE_CFR_APP_SWITCHER_SCRIPT_URL="https://{cfr-host}/integrations/app-switcher/app-switcher.js"
@@ -75,7 +80,7 @@ referenced in `index.html` via Vite's native HTML env replacement:
 ### Two rendering modes — pick one per host
 
 **1. Floating corner button (default, zero setup)**
-If the host page does nothing else, the widget appends a floating button
+If the host page does nothing else, the CFR Widget appends a floating button
 (`position: fixed; top: 16px; right: 16px`) to `document.body`.
 
 **2. Inline in an existing header (recommended for a polished integration)**
@@ -86,16 +91,16 @@ icon row:
 <div id="cfr-app-switcher-slot"></div>
 ```
 
-On load, the widget waits briefly (via `MutationObserver`, since a host's own
-JS — e.g. a React app rendering its header — can still be mounting after this
-script's `defer` load finishes) for this id to appear. If found, it mounts its
-icon inside that element instead of floating in the corner, and styles its
-dots with `color: currentColor` so they automatically match the surrounding
-icons' color (works with any header theme, light or dark, without
-configuration). See `PortalHeaderAppSwitcherSlot.tsx` for a real example — a
-plain `<li>` + `<div id="cfr-app-switcher-slot">` styled with that header's
-existing icon-button classes, placed after the messages icon in
-`PortalHeaderMenuStrip.tsx`.
+On load, the CFR Widget waits briefly (via `MutationObserver`, since a
+host's own JS — e.g. a React app rendering its header — can still be
+mounting after this script's `defer` load finishes) for this id to appear.
+If found, it mounts its icon inside that element instead of floating in the
+corner, and styles its dots with `color: currentColor` so they automatically
+match the surrounding icons' color (works with any header theme, light or
+dark, without configuration). See `PortalHeaderAppSwitcherSlot.tsx` for a
+real example — a plain `<li>` + `<div id="cfr-app-switcher-slot">` styled
+with that header's existing icon-button classes, placed after the messages
+icon in `PortalHeaderMenuStrip.tsx`.
 
 The slot element itself needs no logic — just exist with the right id and
 whatever sizing/positioning matches its siblings. The widget owns everything
@@ -119,7 +124,7 @@ rendered inside it.
    pointing at `http://localhost:4001/integrations/app-switcher/app-switcher.js`
    in dev, and both dev servers running side by side.
 
-To rebuild the widget alone (no full CFR app rebuild):
+To rebuild the CFR Widget alone (no full CFR app rebuild):
 ```bash
 cd frontend/CFR
 npm run build:widget
@@ -132,7 +137,7 @@ cd frontend/CFR
 npm run build:pilot     # or build:staging / build:live
 ```
 
-Each script builds the widget first with the matching `--mode`, so the
+Each script builds the CFR Widget first with the matching `--mode`, so the
 correct gateway origin for that environment gets baked in automatically.
 Deploy the resulting `dist/` (which includes
 `integrations/app-switcher/app-switcher.js`) exactly as CFR is normally
@@ -188,10 +193,10 @@ Work through these in order — each rules out one layer:
   widget only needed an anonymous, read-only, CORS-open endpoint, which
   already existed. That blanket policy is not scoped to just this widget;
   worth revisiting if CORS should be tightened for other endpoints later.
-- **No CFR auth/session is used.** The switcher can't show per-organization
-  "your apps" — it lists all active, launcher-eligible first-party products
-  globally, the same for every visitor regardless of who (if anyone) is
-  logged into what.
+- **No CFR auth/session is used.** The CFR Widget can't show
+  per-organization "your apps" — it lists all active, launcher-eligible
+  first-party products globally, the same for every visitor regardless of
+  who (if anyone) is logged into what.
 
 ## Rolled-back work (for context, not currently in the codebase)
 
