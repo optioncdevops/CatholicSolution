@@ -326,7 +326,6 @@ const ProductRequestPage = () => {
 
 
               <div className="request-access-form__footer request-access-form__footer--full !flex-col !justify-center">
-                <p className="mb-3"><ShieldCheckIcon size={14} /> Your suggestion is reviewed by the Catholic Solutions team.</p>
                 <div className="!flex !justify-center !w-full">
                   <button type="submit" className="auth-primary-button auth-primary-button--submit" disabled={submitting || uploadingLogo}>
                     {submitting ? 'Submitting…' : 'Submit Request'} <ArrowRightIcon size={16} />
