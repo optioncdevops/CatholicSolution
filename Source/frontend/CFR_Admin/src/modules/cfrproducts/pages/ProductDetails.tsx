@@ -116,12 +116,18 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
           <Fact label="Short Name" value={app.shortName} />
           <Fact label="Product Subtitle" value={app.category} />
           <ProductionUrlFact url={app.productionUrl} />
+          {app.clientId ? (
+            <>
+              <Fact label="Client ID" value={app.clientId} />
+              <Fact label="Client Secret" value={app.clientSecret || ""} />
+            </>
+          ) : null}
+          <Fact label="Product Support User" value={app.productSupportUserName || ""} />
           <Fact
             label="Navigation Target"
             value={app.navigationTarget === "new-tab" ? "New Tab" : "Same Tab"}
           />
           <Fact label="Contact Person" value={app.contactPersonName || ""} />
-          <Fact label="Product Support User" value={app.productSupportUserName || ""} />
           <Fact label="Status" value={app.status.replace("-", " ")} />
           <Fact label="Last Updated" value={formatDateTime(app.updatedAt)} />
           <Fact label="Last Updated By" value={app.updatedByName || ""} />

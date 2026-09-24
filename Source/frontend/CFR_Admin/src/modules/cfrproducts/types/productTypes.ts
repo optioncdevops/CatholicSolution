@@ -36,6 +36,8 @@ export interface ProductApiItem {
   updatedBy: number | null;
   updatedByName?: string | null;
   isDeleted: boolean;
+  clientId?: string | null;
+  clientSecret?: string | null;
 }
 
 

@@ -160,6 +160,8 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
     updatedBy: item.updatedBy != null ? Number(item.updatedBy) : item.UpdatedBy != null ? Number(item.UpdatedBy) : null,
     updatedByName: (item.updatedByName ?? item.UpdatedByName ?? null) as string | null,
     isDeleted: Boolean(item.isDeleted ?? item.IsDeleted ?? false),
+    clientId: (item.clientId ?? item.ClientId ?? null) as string | null,
+    clientSecret: (item.clientSecret ?? item.ClientSecret ?? null) as string | null,
   };
 }
 
@@ -520,6 +522,8 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     contactPersonName: item.contactPerson || '',
     productSupportUser: item.productSupportUser != null ? String(item.productSupportUser) : '',
     productSupportUserName: item.productSupportUserName || '',
+    clientId: item.clientId || null,
+    clientSecret: item.clientSecret || null,
   };
 }
 

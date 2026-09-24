@@ -283,6 +283,49 @@ function ProductForm({
               value={form.productionUrl}
               onChange={(event) => onUpdate("productionUrl", event.target.value)}
             />
+            {form.clientId ? (
+              <>
+                <InputField
+                  label="Client ID"
+                  readOnly
+                  disabled
+                  value={form.clientId}
+                  onChange={() => {}}
+                />
+                <InputField
+                  label="Client Secret"
+                  readOnly
+                  disabled
+                  value={form.clientSecret || ""}
+                  onChange={() => {}}
+                />
+              </>
+            ) : null}
+            <Dropdown
+              label="Product Support User"
+              placeholder="Select support user"
+              searchable
+              clearable
+              value={form.productSupportUser || form.productSupportUserName || ""}
+              onValueChange={(value) => {
+                const selectedValue = value ?? "";
+                const selected = contactUsers.find(
+                  (user) =>
+                    String(user.userId) === selectedValue ||
+                    user.fullName.trim().toLowerCase() ===
+                    selectedValue.trim().toLowerCase(),
+                );
+                onUpdate(
+                  "productSupportUser",
+                  selected ? String(selected.userId) : selectedValue,
+                );
+                onUpdate(
+                  "productSupportUserName",
+                  selected?.fullName ?? selectedValue,
+                );
+              }}
+              options={supportOptions}
+            />
             <RadioGroup
               label="Navigation Target"
               options={PRODUCT_NAVIGATION_OPTIONS}
@@ -315,31 +358,6 @@ function ProductForm({
                 );
               }}
               options={contactOptions}
-            />
-            <Dropdown
-              label="Product Support User"
-              placeholder="Select support user"
-              searchable
-              clearable
-              value={form.productSupportUser || form.productSupportUserName || ""}
-              onValueChange={(value) => {
-                const selectedValue = value ?? "";
-                const selected = contactUsers.find(
-                  (user) =>
-                    String(user.userId) === selectedValue ||
-                    user.fullName.trim().toLowerCase() ===
-                    selectedValue.trim().toLowerCase(),
-                );
-                onUpdate(
-                  "productSupportUser",
-                  selected ? String(selected.userId) : selectedValue,
-                );
-                onUpdate(
-                  "productSupportUserName",
-                  selected?.fullName ?? selectedValue,
-                );
-              }}
-              options={supportOptions}
             />
             <div className="col-span-full">
               <TagList

@@ -140,6 +140,18 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("features")]
         public List<string> Features { get; set; } = [];
+
+        /// <summary>
+        /// Gets or sets the client ID for API integration.
+        /// </summary>
+        [JsonPropertyName("clientId")]
+        public string? ClientId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the client secret for API integration.
+        /// </summary>
+        [JsonPropertyName("clientSecret")]
+        public string? ClientSecret { get; set; }
     }
 
     /// <summary>

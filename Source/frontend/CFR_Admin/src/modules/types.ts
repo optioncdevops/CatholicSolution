@@ -40,6 +40,8 @@ export interface AdminApplication {
   contactPersonName?: string;
   productSupportUser?: string;
   productSupportUserName?: string;
+  clientId?: string | null;
+  clientSecret?: string | null;
 }
 
 export type OrganizationStatus = 'active' | 'trial' | 'suspended';

@@ -128,7 +128,9 @@ BEGIN
             p.[UpdatedDate],
             p.[UpdatedBy],
             NULLIF(LTRIM(RTRIM(ISNULL(ub.[FirstName], N'') + N' ' + ISNULL(ub.[LastName], N''))), N'') AS [UpdatedByName],
-            p.[IsDeleted]
+            p.[IsDeleted],
+            ac.[ClientId],
+            ac.[ClientSecret]
         FROM [core].[Product] AS p
         LEFT JOIN [auth].[AcutisUser] AS cu
             ON cu.[UserId] = p.[ContactUserId]
@@ -138,6 +140,12 @@ BEGIN
            AND psu.[IsDeleted] = 0
         LEFT JOIN [auth].[AcutisUser] AS ub
             ON ub.[UserId] = p.[UpdatedBy]
+        OUTER APPLY (
+            SELECT TOP (1) x.[ClientId], x.[ClientSecret]
+            FROM [sec].[ApiClient] AS x
+            WHERE x.[ProductId] = p.[ProductId] AND x.[IsActive] = 1
+            ORDER BY x.[ApiClientId] DESC
+        ) AS ac
         WHERE p.[IsDeleted] = 0
         ORDER BY p.[ProductName];
 
@@ -176,9 +184,10 @@ BEGIN
             p.[CreatedDate],
             p.[InsertedBy],
             p.[UpdatedDate],
-            p.[UpdatedBy],
             NULLIF(LTRIM(RTRIM(ISNULL(ub.[FirstName], N'') + N' ' + ISNULL(ub.[LastName], N''))), N'') AS [UpdatedByName],
-            p.[IsDeleted]
+            p.[IsDeleted],
+            ac.[ClientId],
+            ac.[ClientSecret]
         FROM [core].[Product] AS p
         LEFT JOIN [auth].[AcutisUser] AS cu
             ON cu.[UserId] = p.[ContactUserId]
@@ -188,6 +197,12 @@ BEGIN
            AND psu.[IsDeleted] = 0
         LEFT JOIN [auth].[AcutisUser] AS ub
             ON ub.[UserId] = p.[UpdatedBy]
+        OUTER APPLY (
+            SELECT TOP (1) x.[ClientId], x.[ClientSecret]
+            FROM [sec].[ApiClient] AS x
+            WHERE x.[ProductId] = p.[ProductId] AND x.[IsActive] = 1
+            ORDER BY x.[ApiClientId] DESC
+        ) AS ac
         WHERE p.[ProductId] = @ProductId
           AND p.[IsDeleted] = 0;
 
