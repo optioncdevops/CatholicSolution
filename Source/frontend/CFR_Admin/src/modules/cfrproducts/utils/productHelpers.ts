@@ -110,7 +110,7 @@ export function parseProductIdFromState(state: unknown): number | null {
 }
 
 export function deriveProductStatus(item: ProductApiItem): ProductStatus {
-  if (!item.isActive || item.productStatus == null) return 'inactive';
+  if (!item.isActive) return 'inactive';
   if (item.productStatus === 2) return 'coming-soon';
   return 'active';
 }
