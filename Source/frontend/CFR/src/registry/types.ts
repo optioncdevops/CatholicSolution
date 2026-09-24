@@ -42,6 +42,11 @@ export interface CatalogApp {
   details?: AppExtendedDetails;
   contactEmail?: string;
   contactUserId?: number | string;
+  /**
+   * True when the product has both a product support user and a contact user set up (CFR.Acutis
+   * GetProducts) - only these are offered on the public Request Access page.
+   */
+  isRequestable?: boolean;
   /** App Hub ownership/discovery state. This is the only section-classification field. */
   hubSection: AppHubSection;
   /** Business applications are deployed outside this repository on independently managed domains. */

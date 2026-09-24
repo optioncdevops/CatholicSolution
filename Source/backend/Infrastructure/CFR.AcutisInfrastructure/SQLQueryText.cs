@@ -8,6 +8,49 @@ namespace CFR.AcutisInfrastructure
     public static class SQLQueryText
     {
         /// <summary>
+        /// Inline SQL query texts for product lookups (ProductsRepository).
+        /// </summary>
+        public static class Products
+        {
+            /// <summary>
+            /// Products that can be offered on the public Request Access page: both people the
+            /// request's emails go to are set up - the [ProductSupportUser] (new-request email; one or
+            /// more [auth].[AcutisUser].[UserId] values) AND the contact user ([ContactUserId], or
+            /// [ContactPerson] matched by user id / full name - Send to Vendor email). Each must be an
+            /// active, unlocked Acutis user with an email address, the same rules the email lookups use
+            /// ([request].[AccessRequestManage] ActionId 5 / Requests.GetProductContactEmails).
+            /// </summary>
+            public const string GetRequestableProductIds = @"
+                SELECT p.[ProductId]
+                FROM [core].[Product] p
+                WHERE p.[IsDeleted] = 0
+                  AND EXISTS (
+                      SELECT 1
+                      FROM STRING_SPLIT(REPLACE(ISNULL(p.[ProductSupportUser], ''), ';', ','), ',') s
+                      INNER JOIN [auth].[AcutisUser] su
+                          ON su.[UserId] = TRY_CAST(LTRIM(RTRIM(s.[value])) AS BIGINT)
+                      WHERE su.[IsDeleted] = 0
+                        AND su.[IsActive] = 1
+                        AND su.[IsLocked] = 0
+                        AND NULLIF(LTRIM(RTRIM(su.[Email])), N'') IS NOT NULL
+                  )
+                  AND EXISTS (
+                      SELECT 1
+                      FROM [auth].[AcutisUser] cu
+                      WHERE cu.[IsDeleted] = 0
+                        AND cu.[IsActive] = 1
+                        AND NULLIF(LTRIM(RTRIM(cu.[Email])), N'') IS NOT NULL
+                        AND (
+                              (p.[ContactUserId] IS NOT NULL AND cu.[UserId] = p.[ContactUserId])
+                           OR (p.[ContactUserId] IS NULL AND (
+                                  cu.[UserId] = TRY_CAST(p.[ContactPerson] AS INT)
+                               OR LTRIM(RTRIM(ISNULL(cu.[FirstName], N'') + N' ' + ISNULL(cu.[LastName], N''))) = LTRIM(RTRIM(p.[ContactPerson]))
+                              ))
+                        )
+                  );";
+        }
+
+        /// <summary>
         /// Inline SQL query texts for Access Request / SMS org-setup operations (AccessRequestRepository).
         /// </summary>
         public static class Requests
@@ -21,7 +64,9 @@ namespace CFR.AcutisInfrastructure
             public const string GetOrgSetupContext = @"
                 SELECT
                     CAST(ar.[OrgId] AS INT) AS [OrgId],
-                    ar.[RequestedBy] AS [CFRUserId],
+                    -- [request].[AccessRequest] has no requester-id column any more and
+                    -- [auth].[User].[CFRUserId] is a GUID, so there is no numeric CFRUserId to return.
+                    CAST(NULL AS INT) AS [CFRUserId],
                     ar.[RequesterFirstName] AS [FirstName],
                     ar.[RequesterLastName] AS [LastName],
                     ar.[ContactPhone] AS [Phone],
@@ -34,7 +79,8 @@ namespace CFR.AcutisInfrastructure
                     ar.[DioceseId] AS [DioceseId],
                     p.[ProductName] AS [ProductName]
                 FROM [request].[AccessRequest] ar
-                LEFT JOIN [auth].[User] u ON u.[CFRUserId] = ar.[RequestedBy]
+                LEFT JOIN [auth].[User] u
+                    ON LOWER(LTRIM(RTRIM(u.[Email]))) = LOWER(LTRIM(RTRIM(ar.[ContactEmail])))
                 INNER JOIN [request].[AccessRequestProduct] arp
                     ON arp.[AccessRequestId] = ar.[AccessRequestId]
                    AND arp.[AccessRequestProductId] = @AccessRequestProductId

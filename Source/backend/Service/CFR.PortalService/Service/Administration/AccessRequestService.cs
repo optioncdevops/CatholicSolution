@@ -13,6 +13,30 @@ namespace CFR.PortalService.Service.Administration
         private const string AccessRequestedTemplateCode = "AccessRequested";
 
         /// <summary>
+        /// Built-in AccessRequested subject - deliberately different from the Send to Vendor email's
+        /// "New customer request for ..." so the two are easy to tell apart in an inbox.
+        /// </summary>
+        private const string AccessRequestedFallbackSubject = "Review needed: [AppName] access request from [OrganizationName]";
+
+        /// <summary>
+        /// Built-in AccessRequested body (used when no saved template exists) - sent to the product
+        /// support user with the requester on CC. Same text as the seed in 006_Acutis_EmailTemplates.sql.
+        /// </summary>
+        private const string AccessRequestedFallbackBody =
+            "<p>Hello [SupportUserName],</p>"
+            + "<p>A new access request for <strong>[AppName]</strong> has come through Catholic Solutions, and you have been requested for this product. "
+            + "Please review the request; the requester's details are below.</p>"
+            + "<p><strong>Request details</strong><br/>"
+            + "Organization: [OrganizationName]<br/>"
+            + "Address: [OrganizationAddress]<br/>"
+            + "Contact name: [RequesterName]<br/>"
+            + "Contact email: [RequesterEmail]<br/>"
+            + "Contact phone: [Phone]<br/>"
+            + "Submitted: [SubmittedDate]<br/>"
+            + "Goals &amp; context: [AdditionalInfo]</p>"
+            + "<p><a href=\"[ReviewLink]\">Review this request</a></p>";
+
+        /// <summary>
         /// Retrieves App Hub products for a member email.
         /// </summary>
         /// <remarks>
@@ -81,7 +105,7 @@ namespace CFR.PortalService.Service.Administration
         /// <remarks>
         /// Purpose: Insert request, product, status history, and optional comment rows, then email admins.
         /// Request Flow: AccessRequestController -> AccessRequestService.SaveAccessRequestAsync() -> IAccessRequestRepository.SaveAccessRequestAsync().
-        /// Validation Details: Input DTO is required. Member saves need a product and requester email. Public portal saves also need name, organization, and address fields.
+        /// Validation Details: Input DTO is required. Member saves need a product and requester email. Public portal saves also need name, organization, diocese, and address fields.
         /// Business Logic: Delegates insert to the repository, maps duplicate results to Conflict, then sends the AccessRequested template to users matched to the product. Mail failure does not fail the save.
         /// Repository Interaction: Calls IAccessRequestRepository.SaveAccessRequestAsync(), IAccessRequestRepository.GetProductNotificationRecipientsAsync(), and IEmailTemplatesRepository.GetEmailTemplateByCodeAsync().
         /// Response Details: MSResultArgs containing the access request identifier, or Conflict.
@@ -117,6 +141,7 @@ namespace CFR.PortalService.Service.Administration
                         || string.IsNullOrWhiteSpace(input.LastName)
                         || string.IsNullOrWhiteSpace(input.RequesterEmail)
                         || string.IsNullOrWhiteSpace(input.OrganizationType)
+                        || input.DioceseId is null or <= 0
                         || string.IsNullOrWhiteSpace(input.Address)
                         || string.IsNullOrWhiteSpace(input.City)
                         || string.IsNullOrWhiteSpace(input.State)
@@ -161,6 +186,22 @@ namespace CFR.PortalService.Service.Administration
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.AccessRequestOrgNotFound;
+                    return result;
+                }
+
+                // Public Request Access only: the email already belongs to a Catholic Solutions (CFR)
+                // user - for this same organization (-91) or a different one (-92).
+                if (savedId == -91)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.AccessRequestEmailOrganizationExists;
+                    return result;
+                }
+
+                if (savedId == -92)
+                {
+                    result.StatusCode = ErrorCodes.Conflict;
+                    result.StatusMessage = ErrorMessages.AccessRequestEmailAlreadyCfrUser;
                     return result;
                 }
 
@@ -226,7 +267,8 @@ namespace CFR.PortalService.Service.Administration
                 string productId = !string.IsNullOrWhiteSpace(overrideProductId) ? overrideProductId : request.ProductId;
                 string productName = !string.IsNullOrWhiteSpace(overrideProductName) ? overrideProductName : request.ProductName;
 
-                var recipients = await GetProductRecipientAddressesAsync(productId, productName);
+                var supportUsers = await GetProductRecipientsAsync(productId, productName);
+                var recipients = supportUsers.Select(recipient => recipient.EMail).ToList();
                 if (!string.IsNullOrWhiteSpace(sendToEmail))
                 {
                     var parsedEmails = sendToEmail.Split(new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -247,16 +289,31 @@ namespace CFR.PortalService.Service.Administration
 
                 var placeholders = BuildRequestPlaceholders(request);
                 placeholders["AppName"] = productName;
-                placeholders["AdditionalInfo"] = request.Comments.FirstOrDefault()?.Comment ?? "None provided";
+                placeholders["AdditionalInfo"] = ValueOrDash(request.Comments.FirstOrDefault()?.Comment);
                 placeholders["SendToEmail"] = sendToEmail ?? "Default Admins";
+                // "Hello Sal Palomares," - the product support user(s) this email is addressed to;
+                // "Hello there," when none of them has a name recorded.
+                string supportUserNames = string.Join(", ", supportUsers
+                    .Select(recipient => recipient.FullName?.Trim())
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .Distinct(StringComparer.OrdinalIgnoreCase));
+                placeholders["SupportUserName"] = string.IsNullOrWhiteSpace(supportUserNames) ? "there" : supportUserNames;
+
+                // The requester is CC'd so they get a copy of what was sent to the product support user
+                // (skipped when they're already one of the recipients).
+                string ccAddress = !string.IsNullOrWhiteSpace(request.RequesterEmail)
+                    && !recipients.Contains(request.RequesterEmail.Trim(), StringComparer.OrdinalIgnoreCase)
+                        ? request.RequesterEmail.Trim()
+                        : string.Empty;
 
                 await SendTemplatedEmailAsync(
                     AccessRequestedTemplateCode,
                     accessRequestId,
                     string.Join(';', recipients.Distinct(StringComparer.OrdinalIgnoreCase)),
                     placeholders,
-                    $"New access request for {productName}",
-                    "<p>A member has requested access and needs an admin review.</p><p><strong>Requester:</strong> [RequesterName] ([RequesterEmail])</p><p><strong>Organization:</strong> [OrganizationName]</p><p><strong>Application:</strong> [AppName]</p><p><strong>Reason:</strong> [AdditionalInfo]</p><p><strong>Send To:</strong> [SendToEmail]</p><p><a href=\"[ReviewLink]\">Review this request</a></p>");
+                    AccessRequestedFallbackSubject,
+                    AccessRequestedFallbackBody,
+                    ccAddress);
             }
             catch (Exception ex)
             {
@@ -267,7 +324,7 @@ namespace CFR.PortalService.Service.Administration
         /// <summary>
         /// Loads the named template (or a built-in fallback), merges placeholders, and sends the message using ISMTPMailService.
         /// </summary>
-        private async Task SendTemplatedEmailAsync(string templateCode, int accessRequestId, string toAddress, Dictionary<string, string> placeholders, string fallbackSubject, string fallbackBody)
+        private async Task SendTemplatedEmailAsync(string templateCode, int accessRequestId, string toAddress, Dictionary<string, string> placeholders, string fallbackSubject, string fallbackBody, string ccAddress = "")
         {
             try
             {
@@ -277,7 +334,7 @@ namespace CFR.PortalService.Service.Administration
                 string body = template?.Body ?? fallbackBody;
                 string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
                 string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
-                await mailService.SendMailAsync(mergedSubject, mergedBody, toAddress);
+                await mailService.SendMailAsync(mergedSubject, mergedBody, toAddress, ccAddress);
             }
             catch (Exception ex)
             {
@@ -292,29 +349,42 @@ namespace CFR.PortalService.Service.Administration
         {
             string baseUrl = (configuration["FrontendSetting:CfrAdminBaseUrl"] ?? string.Empty).TrimEnd('/');
             string reviewLink = string.IsNullOrWhiteSpace(baseUrl) ? string.Empty : $"{baseUrl}/admin/requests";
+            string stateZip = string.Join(" ", new[] { request.State, request.Zip }.Where(part => !string.IsNullOrWhiteSpace(part)).Select(part => part!.Trim()));
+            string organizationAddress = string.Join(", ", new[] { request.Address, request.City, stateZip }.Where(part => !string.IsNullOrWhiteSpace(part)).Select(part => part!.Trim()));
+            string submittedDate = DateTime.TryParse(request.SubmittedAt, out var submittedAt) ? submittedAt.ToString("MMM d, yyyy") : string.Empty;
             return new Dictionary<string, string>
             {
                 ["FirstName"] = FirstNameOf(request.RequesterName),
                 ["RequesterName"] = request.RequesterName ?? string.Empty,
                 ["RequesterEmail"] = request.RequesterEmail ?? string.Empty,
                 ["OrganizationName"] = request.OrganizationName ?? string.Empty,
+                ["OrganizationType"] = ValueOrDash(request.OrganizationType),
+                ["OrganizationAddress"] = ValueOrDash(organizationAddress),
+                ["Phone"] = ValueOrDash(request.Phone),
+                ["SubmittedDate"] = ValueOrDash(submittedDate),
                 ["AppName"] = request.ProductName ?? string.Empty,
                 ["ReviewLink"] = reviewLink,
             };
         }
 
         /// <summary>
-        /// Returns email addresses for users matched to the requested product name/id.
+        /// Returns the users matched to the requested product name/id (the product support user first -
+        /// see [request].[AccessRequestManage] ActionId 5), with their names for the greeting.
         /// </summary>
-        private async Task<List<string>> GetProductRecipientAddressesAsync(string productId, string productName)
+        private async Task<List<AccessRequestRecipientOutput>> GetProductRecipientsAsync(string productId, string productName)
         {
             var recipients = await repository.GetProductNotificationRecipientsAsync(productId, productName);
             return (recipients ?? [])
                 .Where(recipient => !string.IsNullOrWhiteSpace(recipient.EMail))
-                .Select(recipient => recipient.EMail.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(recipient => new AccessRequestRecipientOutput { EMail = recipient.EMail.Trim(), FullName = recipient.FullName })
+                .DistinctBy(recipient => recipient.EMail, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
+
+        /// <summary>
+        /// Returns the trimmed value, or an em dash when it is empty, so email detail rows never render blank.
+        /// </summary>
+        private static string ValueOrDash(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
 
         /// <summary>
         /// Returns the first token of a full name, or a generic greeting when the name is empty.

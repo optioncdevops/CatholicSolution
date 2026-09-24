@@ -183,6 +183,12 @@ namespace CFR.PortalInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("eMail")]
         public string EMail { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the recipient's full name (the product support user), used to greet them.
+        /// </summary>
+        [JsonPropertyName("fullName")]
+        public string? FullName { get; set; }
     }
 }
 

@@ -9,11 +9,14 @@ import type {
 export type ProductStatusFilter = 'all' | 'active' | 'inactive' | 'coming-soon';
 
 export const PRODUCT_STATUS_FILTERS: Array<{ id: ProductStatusFilter; label: string }> = [
-  { id: 'all', label: 'All Statuses' },
   { id: 'active', label: 'Active' },
   { id: 'inactive', label: 'InActive' },
   { id: 'coming-soon', label: 'Coming Soon' },
+  { id: 'all', label: 'All Statuses' },
 ];
+
+/** Filter pill the Products list page opens on. */
+export const DEFAULT_PRODUCT_STATUS_FILTER: ProductStatusFilter = 'active';
 
 /**
  * Sort dropdown options on the Products list page.

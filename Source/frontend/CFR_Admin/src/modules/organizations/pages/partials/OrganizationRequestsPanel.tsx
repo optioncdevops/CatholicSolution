@@ -115,7 +115,7 @@ const OrganizationRequestsPanel = ({ orgId }: OrganizationRequestsPanelProps) =>
   return (
     <div className="flex flex-col gap-3">
       <div className="flex justify-end">
-        <Link to="/admin/requests">
+        <Link to="/admin/requests?status=all">
           <CommonButton variant="outline" size="sm" iconLeft={<ExternalLink size={13} />}>View All Requests</CommonButton>
         </Link>
       </div>

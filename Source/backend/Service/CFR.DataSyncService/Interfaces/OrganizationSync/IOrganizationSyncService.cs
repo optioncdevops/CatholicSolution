@@ -6,8 +6,8 @@ namespace CFR.DataSyncService.Interfaces.OrganizationSync
     /// Service contract for organization onboarding.
     /// Acts as the business-logic layer between OrganizationsController and IOrganizationSyncRepository.
     /// Responsibility:
-    /// - Validates input, enforces the productId-in-body hard rule, and translates
-    ///   stored-procedure results into MSResultArgs.
+    /// - Validates input and translates stored-procedure results into MSResultArgs. ProductId is
+    ///   never bound from the request body; it is always resolved from the authenticated ApiClient.
     /// </summary>
     public interface IOrganizationSyncService
     {
@@ -19,7 +19,7 @@ namespace CFR.DataSyncService.Interfaces.OrganizationSync
         /// <remarks>
         /// Purpose: The one deliberate, explicit way a product may create a CFR organization.
         /// Request Flow: OrganizationsController -> IOrganizationSyncService.UpsertOrganizationAsync() -> IOrganizationSyncRepository.UpsertOrganizationAsync().
-        /// Validation Details: Required fields and the productId-in-body hard rule.
+        /// Validation Details: Required fields (ProductOrgId, OrgName).
         /// Business Logic: Delegates to the repository and maps the result to MSResultArgs.
         /// Repository Interaction: Calls IOrganizationSyncRepository.UpsertOrganizationAsync().
         /// Response Details: MSResultArgs containing OrganizationSyncOutput, or a validation error.

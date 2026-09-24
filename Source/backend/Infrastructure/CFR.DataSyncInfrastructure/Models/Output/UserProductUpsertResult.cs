@@ -14,16 +14,22 @@ namespace CFR.DataSyncInfrastructure.Models.Output
         /// </summary>
         public string ResultCode { get; set; } = string.Empty;
 
+        /// <summary>CFR's internal identity identifier.</summary>
         public Guid? CFRUserId { get; set; }
 
+        /// <summary>CFR's internal membership-row identifier.</summary>
         public long? CFRUserDetailId { get; set; }
 
+        /// <summary>CFR's internal organization identifier.</summary>
         public int? CFROrgId { get; set; }
 
+        /// <summary>The user's email address as stored on the CFR identity.</summary>
         public string? Email { get; set; }
 
+        /// <summary>Created | Updated | Reactivated | Deactivated | NoChange.</summary>
         public string? Outcome { get; set; }
 
+        /// <summary>Raw RowVersion bytes — base64-encoded by the service into UserSyncOutput.RowVersion.</summary>
         public byte[]? RowVersionBytes { get; set; }
     }
 }

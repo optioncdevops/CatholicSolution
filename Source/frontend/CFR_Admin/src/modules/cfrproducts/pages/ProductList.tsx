@@ -24,6 +24,7 @@ import {
   toAdminApplication,
 } from "../utils/productHelpers";
 import {
+  DEFAULT_PRODUCT_STATUS_FILTER,
   PRODUCT_STATUS_FILTERS,
   PRODUCT_SORT_OPTIONS,
   type ProductStatusFilter,
@@ -47,7 +48,7 @@ const ProductList = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>(DEFAULT_PRODUCT_STATUS_FILTER);
   const [sortBy, setSortBy] = useState<ProductSortOption>("default");
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductApiItem | null>(

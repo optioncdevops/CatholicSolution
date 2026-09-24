@@ -1,8 +1,5 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace CFR.DataSyncInfrastructure.Models.Input
 {
     /// <summary>
@@ -11,8 +8,7 @@ namespace CFR.DataSyncInfrastructure.Models.Input
     /// password is set once at identity creation; CFR owns it exclusively from then on, so a
     /// later sync of the same identity never overwrites a password the user may have already
     /// changed inside CFR). ProductId is deliberately NOT a property here — it is resolved only
-    /// from the authenticated ApiClient. <see cref="ExtraFields"/> exists solely so the service
-    /// layer can detect and reject a client-supplied "productId" field.
+    /// from the authenticated ApiClient.
     /// </summary>
     public class UserSyncUpdateInput: IUserSyncFields
     {
@@ -47,9 +43,5 @@ namespace CFR.DataSyncInfrastructure.Models.Input
         /// <summary>Active/usable flag; defaults to true when omitted.</summary>
         [JsonPropertyName("isActive")]
         public bool? IsActive { get; set; }
-
-        /// <summary>Catch-all for unrecognized body fields — used only to detect a rejected "productId".</summary>
-        [JsonExtensionData]
-        public Dictionary<string, JsonElement>? ExtraFields { get; set; }
     }
 }

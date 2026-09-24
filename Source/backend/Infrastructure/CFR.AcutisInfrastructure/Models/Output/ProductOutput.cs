@@ -94,6 +94,15 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public string? ContactPerson { get; set; }
 
         /// <summary>
+        /// Gets or sets whether this product can be offered on the public Request Access page: it has
+        /// a [ProductSupportUser] (receives the new-request email) AND a contact user
+        /// ([ContactUserId]/[ContactPerson] - receives the Send to Vendor email), each resolving to an
+        /// active [auth].[AcutisUser] with an email address.
+        /// </summary>
+        [JsonPropertyName("isRequestable")]
+        public bool IsRequestable { get; set; }
+
+        /// <summary>
         /// Gets or sets the number of organizations assigned to this product.
         /// </summary>
         [JsonPropertyName("customerCount")]

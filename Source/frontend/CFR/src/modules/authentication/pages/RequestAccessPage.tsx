@@ -19,7 +19,7 @@ import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { getProducts } from '@/modules/products/services/productsService';
 import { productsFromApiResponse } from '@/modules/products/utils/productsHelpers';
 import { getDioceses, saveAccessRequest } from '@/modules/requests/services/accessRequestService';
-import { formatUsPhoneNumber, toPublicAccessRequestPayload } from '@/modules/requests/utils/accessRequestHelpers';
+import { formatRequestReference, formatUsPhoneNumber, readSavedRequestId, toPublicAccessRequestPayload } from '@/modules/requests/utils/accessRequestHelpers';
 import { validatePublicAccessRequestFields, type PublicAccessRequestFieldErrors } from '@/modules/requests/validator/AccessRequestValidator';
 import type { CatalogApp } from '@shared/app/types/app';
 import { AccessSection, Field, RequestSuccess, SelectField } from './partials/RequestAccessFields';
@@ -39,13 +39,17 @@ const RequestAccessPage = () => {
   const requestedProduct = searchParams.get('product');
   const [apps, setApps] = useState<CatalogApp[]>([]);
   const [dioceses, setDioceses] = useState<DioceseOption[]>([]);
-  // Coming-soon products aren't requestable yet - only offer the ones already live.
-  const requestableApps = useMemo(() => apps.filter((app) => app.hubSection !== 'future'), [apps]);
+  // Only offer products that are live (not coming soon) AND have both a product support user and a
+  // contact user set up - those are the people the request / Send to Vendor emails go to, so a
+  // product without them can't actually be processed.
+  const requestableApps = useMemo(() => apps.filter((app) => app.hubSection !== 'future' && app.isRequestable === true), [apps]);
   const initialInterest = requestableApps.some((app) => app.id === requestedProduct) ? requestedProduct! : '';
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedInterests, setSelectedInterests] = useState<string[]>(initialInterest ? [initialInterest] : []);
-  const [reference, setReference] = useState(`CS-${new Date().getFullYear()}-REQ`);
+  const [reference, setReference] = useState(formatRequestReference(0));
+  const [submittedEmail, setSubmittedEmail] = useState('');
+  const [consentChecked, setConsentChecked] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<PublicAccessRequestFieldErrors>({});
   //#endregion
 
@@ -136,19 +140,9 @@ const RequestAccessPage = () => {
     setSubmitting(true);
     try {
       const response = await saveAccessRequest(payload);
-      const data = (response?.resultData ?? response?.ResultData ?? {}) as {
-        accessRequestId?: number;
-        orgId?: number | null;
-        userId?: number | null;
-        errMessage?: string | null;
-      };
-      const savedId = Number(data?.accessRequestId ?? 0);
-      setReference(savedId > 0 ? `CS-${new Date().getFullYear()}-${savedId}` : `CS-${new Date().getFullYear()}-REQ`);
-      if (data?.errMessage) {
-        // The request itself saved successfully - org setup in OptionC failed/was skipped.
-        // Surface it without blocking the confirmation the requester already earned.
-        console.error('Org setup error:', data.errMessage);
-      }
+      // Portal returns the new AccessRequestId as a plain number in resultData.
+      setReference(formatRequestReference(readSavedRequestId(response)));
+      setSubmittedEmail(values.email);
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
@@ -169,7 +163,7 @@ const RequestAccessPage = () => {
       </header>
 
       <section className="request-access-main request-access-main--full">
-        {submitted ? <RequestSuccess reference={reference} /> : (
+        {submitted ? <RequestSuccess reference={reference} emailAddress={submittedEmail} /> : (
           <>
             <div className="request-access-hero request-access-hero--compact">
               <div className="request-access-hero__copy">
@@ -180,28 +174,36 @@ const RequestAccessPage = () => {
             </div>
 
             <form onSubmit={(event) => void submit(event)} noValidate className="request-access-form request-access-form--full request-access-form--compact">
-              <AccessSection number="01" title="Contact & organization">
+              <AccessSection number="01" title="Contact">
                 <div className="request-access-fields-grid">
                   <Field icon={<UserIcon size={16} />} label="First Name" name="firstName" placeholder="Carl" autoComplete="given-name" required maxLength={50} error={fieldErrors.firstName} onErrorClear={() => clearFieldError('firstName')} />
                   <Field icon={<UserIcon size={16} />} label="Last Name" name="lastName" placeholder="Lapp" autoComplete="family-name" required maxLength={50} error={fieldErrors.lastName} onErrorClear={() => clearFieldError('lastName')} />
-                  <SelectField label="Organization Type" name="organizationType" options={organizationTypes} placeholder="Select organization type" required error={fieldErrors.organizationType} onErrorClear={() => clearFieldError('organizationType')} />
-                  <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required maxLength={100} error={fieldErrors.organizationName} onErrorClear={() => clearFieldError('organizationName')} />
+                  <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" required maxLength={14} inputMode="numeric" format={formatUsPhoneNumber} error={fieldErrors.phone} onErrorClear={() => clearFieldError('phone')} />
+                  <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required maxLength={256} error={fieldErrors.email} onErrorClear={() => clearFieldError('email')} />
                   <Field icon={<MapPinIcon size={16} />} label="Address" name="address" placeholder="Street address" autoComplete="street-address" required maxLength={300} error={fieldErrors.address} onErrorClear={() => clearFieldError('address')} />
                   <Field label="City" name="city" placeholder="City" autoComplete="address-level2" required maxLength={50} error={fieldErrors.city} onErrorClear={() => clearFieldError('city')} />
                   <Field label="State" name="state" placeholder="State" autoComplete="address-level1" required maxLength={50} error={fieldErrors.state} onErrorClear={() => clearFieldError('state')} />
                   <Field label="ZIP" name="zip" placeholder="12345" autoComplete="postal-code" required maxLength={10} error={fieldErrors.zip} onErrorClear={() => clearFieldError('zip')} />
+                </div>
+              </AccessSection>
+
+              <AccessSection number="02" title="Organization">
+                <div className="request-access-fields-grid">
+                  <SelectField label="Organization Type" name="organizationType" options={organizationTypes} placeholder="Select organization type" required error={fieldErrors.organizationType} onErrorClear={() => clearFieldError('organizationType')} />
+                  <Field icon={<BuildingIcon size={16} />} label="Organization Name" name="organization" placeholder="Your Catholic organization" autoComplete="organization" required maxLength={100} error={fieldErrors.organizationName} onErrorClear={() => clearFieldError('organizationName')} />
                   <SelectField
                     label="Diocese"
                     name="dioceseId"
                     options={dioceses.map((d) => ({ value: String(d.dioceseId), label: d.dioceseName }))}
-                    placeholder="Select diocese (optional)"
+                    placeholder="Select diocese"
+                    required
+                    error={fieldErrors.dioceseId}
+                    onErrorClear={() => clearFieldError('dioceseId')}
                   />
-                  <Field icon={<MailIcon size={16} />} label="Email" name="workEmail" type="email" placeholder="name@organization.org" autoComplete="email" required maxLength={256} error={fieldErrors.email} onErrorClear={() => clearFieldError('email')} />
-                  <Field label="Phone Number" name="phone" type="tel" placeholder="(555) 123-4567" autoComplete="tel" required maxLength={14} inputMode="numeric" format={formatUsPhoneNumber} error={fieldErrors.phone} onErrorClear={() => clearFieldError('phone')} />
                 </div>
               </AccessSection>
 
-              <AccessSection number="02" title="Applications" subtitle="Select every application your organization needs access to.">
+              <AccessSection number="03" title="Applications" subtitle="Select every application your organization needs access to.">
                 {requestableApps.length === 0 ? (
                   <EmptyState icon="📦" title="No applications available to request" description="Every application is either already assigned or not yet open for requests. Check back soon." />
                 ) : (
@@ -224,7 +226,7 @@ const RequestAccessPage = () => {
                 )}
               </AccessSection>
 
-              <AccessSection number="03" title="Goals & context">
+              <AccessSection number="04" title="Goals & context">
                 <div className="request-access-context-grid">
                   <div>
                     <label htmlFor="notes" className="auth-label">What would you like to accomplish?</label>
@@ -236,13 +238,6 @@ const RequestAccessPage = () => {
                       placeholder="Share your goals, rollout timeline, or anything that helps us understand what your organization needs."
                     />
                   </div>
-                  <aside className="request-access-next">
-                    <span><ShieldCheckIcon size={18} /></span>
-                    <div>
-                      <strong>What happens next?</strong>
-                      <p>The appropriate onboarding team reviews your request before access is provisioned.</p>
-                    </div>
-                  </aside>
                 </div>
                 <label className="auth-consent request-access-consent">
                   <input
@@ -251,7 +246,11 @@ const RequestAccessPage = () => {
                     required
                     aria-invalid={Boolean(fieldErrors.consent)}
                     aria-describedby={fieldErrors.consent ? 'consent-error' : undefined}
-                    onChange={() => clearFieldError('consent')}
+                    checked={consentChecked}
+                    onChange={(event) => {
+                      setConsentChecked(event.target.checked);
+                      clearFieldError('consent');
+                    }}
                   />
                   <span>I confirm the information above is accurate and may be used to respond to this access request. <b>*</b></span>
                 </label>
@@ -259,12 +258,17 @@ const RequestAccessPage = () => {
               </AccessSection>
 
               <div className="request-access-form__footer request-access-form__footer--full">
-                <p><ShieldCheckIcon size={14} /> Your request is reviewed by the Catholic Solutions onboarding team.</p>
                 <div>
                   <PlatformLink to="/login" className="auth-secondary-button request-access-footer-back">
                     <ArrowLeftIcon size={15} /> Back to sign in
                   </PlatformLink>
-                  <button type="submit" className="auth-primary-button auth-primary-button--submit" disabled={submitting}>
+                  {/* Disabled until the requester ticks the consent checkbox above. */}
+                  <button
+                    type="submit"
+                    className="auth-primary-button auth-primary-button--submit"
+                    disabled={submitting || !consentChecked}
+                    title={consentChecked ? undefined : 'Confirm the information above is accurate to submit your request.'}
+                  >
                     {submitting ? 'Submitting…' : 'Submit request'} <ArrowRightIcon size={16} />
                   </button>
                 </div>

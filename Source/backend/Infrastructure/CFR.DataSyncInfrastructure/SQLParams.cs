@@ -51,6 +51,9 @@ namespace CFR.DataSyncInfrastructure
             /// <summary>Per-client requests-per-minute limit.</summary>
             public const string RateLimitPerMinute = nameof(RateLimitPerMinute);
 
+            /// <summary>Per-client override for the bulk-user-sync row cap (NULL = use the platform default).</summary>
+            public const string MaxBulkUserCount = nameof(MaxBulkUserCount);
+
             /// <summary>Who/what created the ApiClient row.</summary>
             public const string InsertedBy = nameof(InsertedBy);
 

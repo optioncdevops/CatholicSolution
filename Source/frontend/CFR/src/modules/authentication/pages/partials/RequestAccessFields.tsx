@@ -2,15 +2,41 @@ import type { ReactNode } from 'react';
 import { ArrowRightIcon, CheckIcon } from '@shared/app/components/UiIcons';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 
-export function RequestSuccess({ reference }: { reference: string }) {
+interface RequestSuccessProps {
+  /** CS-{year}-REQ-{id} - see formatRequestReference. */
+  reference: string;
+  /** The email the requester entered; the team follows up there. */
+  emailAddress: string;
+  title?: string;
+  /** Sentence text that comes right before the requester's email ("...contact you at {email} with the next steps."). */
+  description?: string;
+  pendingNote?: string;
+}
+
+/** Confirmation shown after submitting the Request Access or Product Request form. */
+export function RequestSuccess({
+  reference,
+  emailAddress,
+  title = 'Your Organization And Product Request Have Been Submitted',
+  description,
+  pendingNote = 'Product access is pending review.',
+}: RequestSuccessProps) {
+  const email = emailAddress || 'the email address you provided';
   return (
     <section className="request-access-success" aria-live="polite">
       <span className="request-access-success__icon"><CheckIcon size={28} /></span>
-      <span className="request-access-kicker">Request captured</span>
-      <h1>Your organization access request is ready for review.</h1>
-      <p>The onboarding team will review your request and follow up using the email you provided.</p>
-      <div className="auth-success-reference"><span>Request reference</span><strong>{reference}</strong><small>Keep this reference if you need to follow up on your request.</small></div>
-      <PlatformLink to="/login" className="auth-primary-button auth-primary-button--large">Return to sign in <ArrowRightIcon size={16} /></PlatformLink>
+      <span className="request-access-kicker">Request submitted</span>
+      <h1>{title}</h1>
+      <p>
+        {description ?? 'We’ve received your organization details and request for product access. Our team will review the information and contact you at '}
+        <strong>{email}</strong> with the next steps.
+      </p>
+      <div className="auth-success-reference">
+        <span>Request Reference</span>
+        <strong>{reference}</strong>
+        <small>Keep this reference if you need to follow up. {pendingNote}</small>
+      </div>
+      <PlatformLink to="/login" className="auth-primary-button auth-primary-button--large">Return To Sign In <ArrowRightIcon size={16} /></PlatformLink>
     </section>
   );
 }

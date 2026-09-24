@@ -137,7 +137,7 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
       isOpen={isOpen}
       title={detail ? `${detail.requesterName}'s request` : 'Access request'}
       onClose={handleClose}
-      size="lg"
+      size="xl"
       footer={isRequested || isWithVendor ? (
         <>
           <CommonButton id="btnRejectAccessRequest" variant="danger" size="sm" disabled={saving || loading} onClick={() => void resolve('rejected')}>Reject</CommonButton>
@@ -151,14 +151,14 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
         </>
       ) : undefined}
     >
-      {loading && !detail ? <p className="text-sm text-[var(--text-muted)]">Loading request…</p> : null}
+      {loading && !detail ? <p className="text-sm text-black">Loading request…</p> : null}
       {detail ? (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           {isReadOnly ? <ReadOnlyBanner featureName="Requests" /> : null}
-          {detail.productName ? <p className="-mt-2 text-xs text-[var(--text-muted)]">{detail.productName}</p> : null}
-          <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] p-3">
-            <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Requester</p>
-            <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+          {detail.productName ? <p className="-mt-2 text-base font-bold text-black">{detail.productName}</p> : null}
+          <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] p-2">
+            <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-black">Requester</p>
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-3">
               {[
                 { label: 'Name', value: detail.requesterName },
                 { label: 'Email', value: detail.requesterEmail },
@@ -171,17 +171,17 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
                 { label: 'Phone', value: detail.phone },
               ].map((item) => (
                 <div key={item.label} className="min-w-0">
-                  <dt className="text-xs text-[var(--text-faint)]">{item.label}</dt>
-                  <dd className="mt-0.5 break-words text-sm text-[var(--text-primary)]">{item.value || '—'}</dd>
+                  <dt className="text-xs font-bold text-black">{item.label}</dt>
+                  <dd className="mt-0.5 break-words text-sm text-black">{item.value || '—'}</dd>
                 </div>
               ))}
             </dl>
           </div>
 
           {detail.status === 'pending' || detail.status === 'sent-to-vendor' ? (
-            <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] p-3">
-              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Product User</p>
-              <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            <div className="rounded-[var(--radius-panel)] border border-[var(--line-soft)] p-2">
+              <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-black">Product User</p>
+              <div className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-3">
                 <InputField
                   id="txtAccessRequestProductContactName"
                   label="Name"
@@ -207,17 +207,17 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
           ) : null}
 
           <div>
-            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Status Timeline</p>
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-black">Status Timeline</p>
             {detail.timeline.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)]">No timeline entries yet.</p>
+              <p className="text-xs text-black">No timeline entries yet.</p>
             ) : (
-              <ol className="flex flex-col gap-3 border-l-2 border-[var(--line)] pl-3.5">
+              <ol className="flex flex-col gap-1 border-l-2 border-[var(--line)] pl-3.5">
                 {detail.timeline.map((entry, index) => (
                   <li key={`${entry.at}-${index}`} className="relative">
                     <span className="absolute -left-[19px] top-1 size-2.5 rounded-full bg-[var(--secondary)]" aria-hidden="true" />
-                    <p className="text-xs font-bold capitalize text-[var(--text-primary)]">{entry.status === 'pending' ? 'requested' : String(entry.status).replace(/-/g, ' ')}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{entry.actor} &middot; {formatDate(entry.at)}</p>
-                    {entry.note ? <p className="mt-0.5 text-xs italic text-[var(--text-secondary)]">{entry.note}</p> : null}
+                    <p className="text-xs font-bold capitalize text-black">{entry.status === 'pending' ? 'requested' : String(entry.status).replace(/-/g, ' ')}</p>
+                    <p className="text-xs text-black">{entry.actor} &middot; {formatDate(entry.at)}</p>
+                    {entry.note ? <p className="mt-0.5 text-xs italic text-black">{entry.note}</p> : null}
                   </li>
                 ))}
               </ol>
@@ -232,10 +232,11 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
               placeholder="Enter note"
               autoFocus
               optional
-              rows={3}
+              rows={2}
               maxLength={500}
               rules={resolveRequestStatusRules.note}
               disabled={saving}
+              wrapperClassName="[&_label]:font-bold [&_label]:text-black"
             />
           ) : null}
         </div>
