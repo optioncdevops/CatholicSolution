@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
+import { AccessSection, Field, SelectField } from '@/modules/authentication/pages/partials/RequestAccessFields';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { useToast } from '@shared/app/components/ToastProvider';
@@ -6,6 +6,8 @@ import { ArrowRightIcon, PlusIcon, ShieldCheckIcon } from '@shared/app/component
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { AccessSection, Field, RequestSuccess, SelectField } from '@/modules/authentication/pages/partials/RequestAccessFields';
 import { formatRequestReference, readSavedRequestId } from '@/modules/requests/utils/accessRequestHelpers';
+import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
+import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import { saveProductRequest, uploadProductRequestLogo } from '../services/productRequestService';
 import { toProductRequestPayload } from '../utils/productRequestHelpers';
 import { DESCRIPTION_MAX_LENGTH, validateProductRequestFields, type ProductRequestFieldErrors, type ProductRequestFormValues } from '../validator/productRequestValidator';

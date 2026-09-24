@@ -1,7 +1,5 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using System.Text.Json.Serialization;
-
 namespace CFR.DataSyncInfrastructure.Models.Output
 {
     /// <summary>
@@ -17,6 +15,7 @@ namespace CFR.DataSyncInfrastructure.Models.Output
         [JsonPropertyName("productOrgId")]
         public int ProductOrgId { get; set; }
 
+        /// <summary>Organization name.</summary>
         [JsonPropertyName("orgName")]
         public string OrgName { get; set; } = string.Empty;
 
@@ -24,6 +23,7 @@ namespace CFR.DataSyncInfrastructure.Models.Output
         [JsonPropertyName("outcome")]
         public string Outcome { get; set; } = string.Empty;
 
+        /// <summary>W3C trace id for this request.</summary>
         [JsonPropertyName("traceId")]
         public string TraceId { get; set; } = string.Empty;
     }
@@ -34,14 +34,19 @@ namespace CFR.DataSyncInfrastructure.Models.Output
     /// </summary>
     public class OrganizationUpsertResult
     {
+        /// <summary>CFR's internal organization identifier.</summary>
         public int? CFROrgId { get; set; }
 
+        /// <summary>The product's own organization identifier, echoed back.</summary>
         public int? ProductOrgId { get; set; }
 
+        /// <summary>Organization name.</summary>
         public string? OrgName { get; set; }
 
+        /// <summary>Created | Updated | NoChange.</summary>
         public string? Outcome { get; set; }
 
+        /// <summary>The product's own diocese identifier, returned only by the get (ActionId 2) action.</summary>
         public string? DioceseId { get; set; }
     }
 }

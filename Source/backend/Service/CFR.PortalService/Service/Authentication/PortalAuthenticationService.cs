@@ -37,7 +37,7 @@ namespace CFR.PortalService.Service.Authentication
                 }
 
                 var user = await repository.AuthenticateAsync(request);
-                if (user is null || user.UserId <= 0)
+                if (user is null || user.UserId == Guid.Empty)
                 {
                     result.StatusCode = ErrorCodes.UnAuthorized;
                     result.StatusMessage = ErrorMessages.InvalidLogin;

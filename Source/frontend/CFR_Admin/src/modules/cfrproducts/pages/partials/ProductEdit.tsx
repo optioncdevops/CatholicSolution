@@ -185,6 +185,35 @@ function ProductForm({
     return list;
   }, [contactUsers, form.contactUserId, form.contactPersonName]);
 
+  const supportOptions = useMemo(() => {
+    const list = contactUsers
+      .filter(
+        (user) =>
+          user.isActive === 1 || String(user.userId) === form.productSupportUser,
+      )
+      .map((user) => ({
+        id: String(user.userId),
+        value: user.fullName,
+      }));
+
+    const activeId = form.productSupportUser || form.productSupportUserName || "";
+    if (
+      activeId &&
+      !list.some(
+        (opt) =>
+          opt.id === activeId ||
+          opt.value.toLowerCase() === activeId.toLowerCase(),
+      )
+    ) {
+      list.unshift({
+        id: activeId,
+        value: form.productSupportUserName || activeId,
+      });
+    }
+
+    return list;
+  }, [contactUsers, form.productSupportUser, form.productSupportUserName]);
+
   const addFeature = () => {
     const value = featureDraft.trim();
     if (!value) return;
@@ -253,6 +282,49 @@ function ProductForm({
               placeholder="Enter production URL"
               value={form.productionUrl}
               onChange={(event) => onUpdate("productionUrl", event.target.value)}
+            />
+            {form.clientId ? (
+              <>
+                <InputField
+                  label="Client ID"
+                  readOnly
+                  disabled
+                  value={form.clientId}
+                  onChange={() => {}}
+                />
+                <InputField
+                  label="Client Secret"
+                  readOnly
+                  disabled
+                  value={form.clientSecret || ""}
+                  onChange={() => {}}
+                />
+              </>
+            ) : null}
+            <Dropdown
+              label="Product Support User"
+              placeholder="Select support user"
+              searchable
+              clearable
+              value={form.productSupportUser || form.productSupportUserName || ""}
+              onValueChange={(value) => {
+                const selectedValue = value ?? "";
+                const selected = contactUsers.find(
+                  (user) =>
+                    String(user.userId) === selectedValue ||
+                    user.fullName.trim().toLowerCase() ===
+                    selectedValue.trim().toLowerCase(),
+                );
+                onUpdate(
+                  "productSupportUser",
+                  selected ? String(selected.userId) : selectedValue,
+                );
+                onUpdate(
+                  "productSupportUserName",
+                  selected?.fullName ?? selectedValue,
+                );
+              }}
+              options={supportOptions}
             />
             <RadioGroup
               label="Navigation Target"
@@ -521,6 +593,7 @@ const ProductEdit = () => {
               ? 2
               : null,
         contactUserId: toProductContactUserId(form.contactUserId) ?? 0,
+        productSupportUser: toProductContactUserId(form.productSupportUser) ?? 0,
       };
 
       await updateProduct(payload);

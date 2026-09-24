@@ -26,7 +26,7 @@ namespace CFR.PortalInfrastructure.Models.Output
         /// Gets or sets the CFR member identifier.
         /// </summary>
         [JsonPropertyName("userId")]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
 
         /// <summary>
         /// Gets or sets the email address.

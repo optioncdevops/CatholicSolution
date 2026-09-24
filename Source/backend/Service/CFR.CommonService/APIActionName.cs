@@ -148,11 +148,20 @@ namespace CFR.CommonService
         public static class API_UserSync
         {
             public const string CreateUser = nameof(CreateUser);
+            public const string BulkCreateUsers = nameof(BulkCreateUsers);
             public const string UpdateUser = nameof(UpdateUser);
             public const string PatchUser = nameof(PatchUser);
             public const string DeactivateUser = nameof(DeactivateUser);
             public const string ReactivateUser = nameof(ReactivateUser);
+            public const string SetLoginDisabled = nameof(SetLoginDisabled);
+            public const string SetActive = nameof(SetActive);
             public const string GetUser = nameof(GetUser);
+        }
+
+        public static class API_ProductRole
+        {
+            public const string UpsertProductRole = nameof(UpsertProductRole);
+            public const string GetProductRoles = nameof(GetProductRoles);
         }
 
         public static class API_OrganizationSync

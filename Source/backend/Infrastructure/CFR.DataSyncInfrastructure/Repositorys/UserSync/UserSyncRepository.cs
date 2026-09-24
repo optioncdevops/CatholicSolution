@@ -28,7 +28,7 @@ namespace CFR.DataSyncInfrastructure.Repositorys.UserSync
         #region PUT Methods
 
         /// <inheritdoc />
-        public Task<UserProductUpsertResult> UpdateUserFullAsync(int productId, string externalUserId, UserSyncInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp)
+        public Task<UserProductUpsertResult> UpdateUserFullAsync(int productId, string externalUserId, UserSyncUpdateInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp)
         {
             var parameters = BuildBaseParameters(2, productId, input.ProductOrgId, apiClientId, traceId, sourceIp);
             parameters.Add(DBParameterName.UserSyncParams.ExternalUserId, externalUserId, DbType.String);
@@ -43,7 +43,7 @@ namespace CFR.DataSyncInfrastructure.Repositorys.UserSync
         #region PATCH Methods
 
         /// <inheritdoc />
-        public Task<UserProductUpsertResult> UpdateUserPartialAsync(int productId, string externalUserId, UserSyncInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp)
+        public Task<UserProductUpsertResult> UpdateUserPartialAsync(int productId, string externalUserId, UserSyncUpdateInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp)
         {
             var parameters = BuildBaseParameters(3, productId, input.ProductOrgId, apiClientId, traceId, sourceIp);
             parameters.Add(DBParameterName.UserSyncParams.ExternalUserId, externalUserId, DbType.String);
@@ -87,6 +87,26 @@ namespace CFR.DataSyncInfrastructure.Repositorys.UserSync
             return ExecuteUpsertAsync(parameters);
         }
 
+        /// <inheritdoc />
+        public Task<UserProductUpsertResult> SetLoginDisabledAsync(int productId, string externalUserId, int productOrgId, bool isLoginDisabled, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp)
+        {
+            var parameters = BuildBaseParameters(7, productId, productOrgId, apiClientId, traceId, sourceIp);
+            parameters.Add(DBParameterName.UserSyncParams.ExternalUserId, externalUserId, DbType.String);
+            parameters.Add(DBParameterName.UserSyncParams.IsLoginDisabled, isLoginDisabled, DbType.Boolean);
+            parameters.Add(DBParameterName.UserSyncParams.ExpectedRowVersion, expectedRowVersion, DbType.Binary);
+            return ExecuteUpsertAsync(parameters);
+        }
+
+        /// <inheritdoc />
+        public Task<UserProductUpsertResult> SetActiveAsync(int productId, string externalUserId, int productOrgId, bool isActive, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp)
+        {
+            var parameters = BuildBaseParameters(8, productId, productOrgId, apiClientId, traceId, sourceIp);
+            parameters.Add(DBParameterName.UserSyncParams.ExternalUserId, externalUserId, DbType.String);
+            parameters.Add(DBParameterName.UserSyncParams.IsActive, isActive, DbType.Boolean);
+            parameters.Add(DBParameterName.UserSyncParams.ExpectedRowVersion, expectedRowVersion, DbType.Binary);
+            return ExecuteUpsertAsync(parameters);
+        }
+
         #endregion STATUS Methods
 
         private static DynamicParameters BuildBaseParameters(int actionId, int productId, int productOrgId, int apiClientId, string traceId, string? sourceIp)
@@ -101,7 +121,7 @@ namespace CFR.DataSyncInfrastructure.Repositorys.UserSync
             return parameters;
         }
 
-        private static void AddFieldParameters(DynamicParameters parameters, UserSyncInput input)
+        private static void AddFieldParameters(DynamicParameters parameters, IUserSyncFields input)
         {
             parameters.Add(DBParameterName.UserSyncParams.FirstName, input.FirstName, DbType.String);
             parameters.Add(DBParameterName.UserSyncParams.LastName, input.LastName, DbType.String);

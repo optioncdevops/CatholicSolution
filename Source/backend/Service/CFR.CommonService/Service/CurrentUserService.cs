@@ -10,6 +10,7 @@ namespace CFR.CommonService.Service
     public class CurrentUserService: ICurrentUserService
     {
         public long UserId { get; set; }
+        public Guid? CFRUserId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public int RoleId { get; set; }
         public string ClientIPAddress { get; set; } = "Unknown";

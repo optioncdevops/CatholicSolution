@@ -76,6 +76,18 @@ namespace CFR.AcutisInfrastructure.Models.Output
         public long? ContactUserId { get; set; }
 
         /// <summary>
+        /// Gets or sets the product support user identifier.
+        /// </summary>
+        [JsonPropertyName("productSupportUser")]
+        public long? ProductSupportUser { get; set; }
+
+        /// <summary>
+        /// Gets or sets the product support user name resolved from [auth].[AcutisUser].
+        /// </summary>
+        [JsonPropertyName("productSupportUserName")]
+        public string? ProductSupportUserName { get; set; }
+
+        /// <summary>
         /// Gets or sets the contact display name resolved from [auth].[AcutisUser].
         /// </summary>
         [JsonPropertyName("contactPerson")]
@@ -137,6 +149,18 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("features")]
         public List<string> Features { get; set; } = [];
+
+        /// <summary>
+        /// Gets or sets the client ID for API integration.
+        /// </summary>
+        [JsonPropertyName("clientId")]
+        public string? ClientId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the client secret for API integration.
+        /// </summary>
+        [JsonPropertyName("clientSecret")]
+        public string? ClientSecret { get; set; }
     }
 
     /// <summary>

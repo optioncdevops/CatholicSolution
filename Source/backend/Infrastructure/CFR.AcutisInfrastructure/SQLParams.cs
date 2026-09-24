@@ -359,7 +359,7 @@ namespace CFR.AcutisInfrastructure
             public const string ProductId = nameof(ProductId);
 
             /// <summary>
-            /// User identifier (auth.User.CFRUserId), used when linking/unlinking a user for an organization.
+            /// User identifier (auth.User.CFRUserId, UNIQUEIDENTIFIER), used when linking/unlinking a user for an organization.
             /// </summary>
             public const string AuthUserId = nameof(AuthUserId);
 
@@ -588,6 +588,11 @@ namespace CFR.AcutisInfrastructure
             /// Contact [auth].[AcutisUser] identifier. Null leaves the stored value unchanged; 0 clears it.
             /// </summary>
             public const string ContactUserId = nameof(ContactUserId);
+
+            /// <summary>
+            /// Product Support [auth].[AcutisUser] identifier. Null leaves the stored value unchanged; 0 clears it.
+            /// </summary>
+            public const string ProductSupportUser = nameof(ProductSupportUser);
 
             /// <summary>
             /// Pipe-delimited list of product features.
