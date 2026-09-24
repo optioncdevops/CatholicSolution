@@ -89,8 +89,8 @@ const AddLicense = () => {
   const goToLicenseDetails = () => {
     const productId = product?.productId || stateProductId;
     if (productId) {
-      navigate(PRODUCTS_PATHS.details, {
-        state: { productId, tab: "license-details" },
+      navigate(PRODUCTS_PATHS.featureLicenseDetails, {
+        state: { productId },
       });
       return;
     }

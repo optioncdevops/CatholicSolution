@@ -16,7 +16,7 @@ import type { UserRolesApiItem } from '../../userRoles/types/userRolesTypes';
 import { getUserRights, saveUserRights } from '../services/userRightsService';
 import {
   buildUserRightsTree, collectAllFeatureIds, collectFeatureIdsForLevel, computeRowRollup, flattenUserRightsTree,
-  levelsForKind, mergePendingChange, toPendingChangeList, type RowRollup,
+  levelsForNode, mergePendingChange, toPendingChangeList, type RowRollup,
 } from '../utils/userRightsHelpers';
 import type { AccessLevel, UserRightsFeatureNode } from '../types/userRightsTypes';
 
@@ -247,7 +247,7 @@ export function UserRightsPage() {
 
   // Bulk "apply to all" — scoped to the currently visible (module-filtered) set, matching what's
   // on screen rather than silently touching hidden rows. Read Only only ever lands on
-  // Feature-kind rows (see levelsForKind) — Module/Activity rows in scope are left untouched
+  // Feature-kind rows (see levelsForNode) — Module/Activity rows in scope are left untouched
   // rather than clamped to some other value the user didn't ask for. Confirmed first since it can
   // affect a large number of features in one action.
   const handleApplyToAll = async (level: AccessLevel) => {
@@ -349,7 +349,7 @@ export function UserRightsPage() {
           idPrefix={`Feature${row.node.featureId}`}
           label={row.node.label}
           rollup={computeRowRollup(row.node, effectiveLevel)}
-          levels={levelsForKind(row.node.kind)}
+          levels={levelsForNode(row.node)}
           onChange={(next) => handleToggleRow(row.node, next)}
           disabled={saving || isReadOnly}
         />

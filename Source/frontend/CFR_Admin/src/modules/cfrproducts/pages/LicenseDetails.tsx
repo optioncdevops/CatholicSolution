@@ -13,6 +13,7 @@ import { formatDate } from "@/modules/utils/formatDate";
 import { DetailField } from "@app/components/DetailField";
 import { BaseModal } from "@app/components/modal/BaseModal";
 import { useAdminData } from "@/modules/AdminDataContext";
+import { useFeatureAccessLevel } from "@/modules/authentication/hooks/useFeatureAccessLevel";
 import { getLicenseDetails } from "../services/productService";
 import type { ProductLicenseApiItem } from "../types/productTypes";
 import {
@@ -24,10 +25,7 @@ import {
 import { LICENSE_DETAILS_STATUS_FILTERS } from "../utils/productFilters";
 import { InvoiceStatusBadge } from "../components/InvoiceStatusBadge";
 import { EditLicenseModal } from "./partials/EditLicenseModal";
-import type {
-  AdminApplication,
-  License,
-} from "@/modules/types";
+import type { AdminApplication, License } from "@/modules/types";
 
 export function InvoiceDetailModal({
   invoice,
@@ -40,7 +38,9 @@ export function InvoiceDetailModal({
   if (!invoice) return null;
 
   const org = getOrganization(invoice.orgId);
-  const organizationCode = formatCustomerCodeAsInteger(invoice.orgId || org?.code);
+  const organizationCode = formatCustomerCodeAsInteger(
+    invoice.orgId || org?.code,
+  );
 
   return (
     <BaseModal
@@ -86,10 +86,17 @@ export function InvoiceDetailModal({
   );
 }
 
-export function LicenseDetails({ app, readOnly = false }: { app: AdminApplication; readOnly?: boolean }) {
+export function LicenseDetails({
+  app,
+  readOnly = false,
+}: {
+  app: AdminApplication;
+  readOnly?: boolean;
+}) {
   //#region Hooks
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const createAccess = useFeatureAccessLevel(PRODUCTS_PATHS.featureCreateLicense);
   //#endregion
 
   //#region States
@@ -98,7 +105,8 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState("all");
   const [viewingInvoice, setViewingInvoice] = useState<License | null>(null);
-  const [editingLicense, setEditingLicense] = useState<ProductLicenseApiItem | null>(null);
+  const [editingLicense, setEditingLicense] =
+    useState<ProductLicenseApiItem | null>(null);
   //#endregion
 
   //#region Functions
@@ -211,7 +219,10 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
               tooltip="Edit"
               icon={<Pencil size={14} />}
               onClick={() => {
-                const raw = dbLicenses.find((item) => String(item.licenseId) === lic.id) ?? null;
+                const raw =
+                  dbLicenses.find(
+                    (item) => String(item.licenseId) === lic.id,
+                  ) ?? null;
                 setEditingLicense(raw);
               }}
             />
@@ -280,9 +291,16 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
       width: "6rem",
       value: (lic) => lic.days ?? "",
       cell: (lic) => {
-        if (lic.days === null) return <span className="text-[var(--text-muted)]">—</span>;
+        if (lic.days === null)
+          return <span className="text-[var(--text-muted)]">—</span>;
         return (
-          <span className={lic.days < 0 ? "font-bold text-rose-600 dark:text-rose-400" : "text-[var(--text-secondary)]"}>
+          <span
+            className={
+              lic.days < 0
+                ? "font-bold text-rose-600 dark:text-rose-400"
+                : "text-[var(--text-secondary)]"
+            }
+          >
             {lic.days}
           </span>
         );
@@ -294,7 +312,13 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
       width: "13rem",
       value: (lic) => lic.paidOn ?? "Not paid yet",
       cell: (lic) => (
-        <span className={lic.paidOn ? "text-xs text-[var(--text-secondary)]" : "text-xs text-[var(--text-muted)]"}>
+        <span
+          className={
+            lic.paidOn
+              ? "text-xs text-[var(--text-secondary)]"
+              : "text-xs text-[var(--text-muted)]"
+          }
+        >
           {lic.paidOn ?? "Not paid yet"}
         </span>
       ),
@@ -325,7 +349,8 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
             const count =
               filter.id === "all"
                 ? mappedLicenses.length
-                : mappedLicenses.filter((lic) => lic.status === filter.id).length;
+                : mappedLicenses.filter((lic) => lic.status === filter.id)
+                    .length;
             return (
               <button
                 key={filter.id}
@@ -358,18 +383,20 @@ export function LicenseDetails({ app, readOnly = false }: { app: AdminApplicatio
               className="min-h-8"
             />
           </div>
-          <CommonButton
-            variant="primary"
-            iconLeft={<Plus size={14} />}
-            onClick={() =>
-              navigate(PRODUCTS_PATHS.addLicense, {
-                state: { productId: Number(app.id), tab: "license-details" },
-              })
-            }
-            disabled={readOnly}
-          >
-            Create Invoice
-          </CommonButton>
+          {createAccess !== "denied" && (
+            <CommonButton
+              variant="primary"
+              iconLeft={<Plus size={14} />}
+              onClick={() =>
+                navigate(PRODUCTS_PATHS.addLicense, {
+                  state: { productId: Number(app.id), tab: "license-details" },
+                })
+              }
+              disabled={readOnly || createAccess === "readOnly"}
+            >
+              Create Invoice
+            </CommonButton>
+          )}
         </div>
       </div>
 

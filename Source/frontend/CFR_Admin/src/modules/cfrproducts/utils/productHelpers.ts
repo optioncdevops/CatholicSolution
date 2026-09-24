@@ -10,6 +10,14 @@ export const PRODUCTS_PATHS = {
   details: '/admin/product-details',
   edit: '/admin/edit-products',
   addLicense: '/admin/add-product-license',
+  // Sub-features for rights
+  featureDetails: '/admin/product-details',
+  featureEdit: '/admin/edit-products',
+  featureOrganizations: '/admin/product-organizations',
+  featureLicenseDetails: '/admin/product-license-details',
+  featureCreateLicense: '/admin/add-product-license',
+  featureLicenseHistory: '/admin/product-license-history',
+  featureApiIntegration: '/admin/product-api-integration',
 } as const;
 
 export const DEFAULT_PRODUCT_ICON = '📦';
