@@ -9,6 +9,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
     public class ProductApiIntegrationOutput
     {
         /// <summary>
+        /// Gets or sets the internal unique identifier for the product environment.
+        /// </summary>
+        [JsonPropertyName("productEnvironmentId")]
+        public int ProductEnvironmentId { get; set; }
+
+        /// <summary>
         /// Gets or sets the environment/site name (e.g. Development, Pilot, Staging, Live), from [core].[ProductEnvironment].[EnvironmentName].
         /// A NULL EnvironmentName is the product's public website (not tied to an environment) and is reported here as "Website".
         /// </summary>
