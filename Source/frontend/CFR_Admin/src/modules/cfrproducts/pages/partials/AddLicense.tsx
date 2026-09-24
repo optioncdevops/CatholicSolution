@@ -89,8 +89,8 @@ const AddLicense = () => {
   const goToLicenseDetails = () => {
     const productId = product?.productId || stateProductId;
     if (productId) {
-      navigate(PRODUCTS_PATHS.details, {
-        state: { productId, tab: "license-details" },
+      navigate(PRODUCTS_PATHS.featureLicenseDetails, {
+        state: { productId },
       });
       return;
     }
@@ -165,7 +165,7 @@ const AddLicense = () => {
           Product Not Found
         </h2>
         <p className="text-sm text-[var(--text-muted)]">
-          Open Create Invoice from a product so the product id is passed in
+          Open Create License from a product so the product id is passed in
           location state.
         </p>
         <CommonButton
@@ -273,7 +273,7 @@ const AddLicense = () => {
   return (
     <div className="admin-reveal flex flex-col gap-4">
       <PanelHeader
-        title="Create Invoice"
+        title="Create License"
         action={
           <div className="flex items-center gap-2">
             <CommonButton

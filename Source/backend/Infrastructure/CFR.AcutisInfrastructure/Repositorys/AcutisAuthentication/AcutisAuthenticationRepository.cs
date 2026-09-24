@@ -36,7 +36,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.AcutisAuthentication
             return new AcutisLoginQueryResult
             {
                 User = user,
-                ModuleRights = [.. rights.Where(x => x.UserRight > 0)],
+                ModuleRights = rights,
                 MenuItems = MapModuleRightsToMenu(rights)
             };
         }

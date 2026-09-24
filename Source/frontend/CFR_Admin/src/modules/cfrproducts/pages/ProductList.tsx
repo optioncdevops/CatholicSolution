@@ -39,6 +39,7 @@ const ProductList = () => {
   const { showToast } = useToast();
   const accessLevel = useFeatureAccessLevel(PRODUCTS_PATHS.list);
   const isReadOnly = accessLevel === "readOnly";
+  const editAccess = useFeatureAccessLevel(PRODUCTS_PATHS.edit);
   //#endregion
 
   //#region States
@@ -345,12 +346,14 @@ const ProductList = () => {
                         icon={<Eye size={14} />}
                         onClick={() => goToDetails(item)}
                       />
-                      <CommonIconButton
-                        aria-label={`Edit ${item.productName}`}
-                        tooltip="Edit"
-                        icon={<Pencil size={14} />}
-                        onClick={() => goToEdit(item)}
-                      />
+                      {editAccess !== "denied" && (
+                        <CommonIconButton
+                          aria-label={`Edit ${item.productName}`}
+                          tooltip="Edit"
+                          icon={<Pencil size={14} />}
+                          onClick={() => goToEdit(item)}
+                        />
+                      )}
                       {!isReadOnly && (
                         <CommonIconButton
                           aria-label={`Change status for ${item.productName}`}

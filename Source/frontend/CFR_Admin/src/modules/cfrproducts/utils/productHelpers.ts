@@ -10,6 +10,14 @@ export const PRODUCTS_PATHS = {
   details: '/admin/product-details',
   edit: '/admin/edit-products',
   addLicense: '/admin/add-product-license',
+  // Sub-features for rights
+  featureDetails: '/admin/product-details',
+  featureEdit: '/admin/edit-products',
+  featureOrganizations: '/admin/product-organizations',
+  featureLicenseDetails: '/admin/product-license-details',
+  featureCreateLicense: '/admin/add-product-license',
+  featureLicenseHistory: '/admin/product-license-history',
+  featureApiIntegration: '/admin/product-api-integration',
 } as const;
 
 export const DEFAULT_PRODUCT_ICON = '📦';
@@ -110,7 +118,7 @@ export function parseProductIdFromState(state: unknown): number | null {
 }
 
 export function deriveProductStatus(item: ProductApiItem): ProductStatus {
-  if (!item.isActive || item.productStatus == null) return 'inactive';
+  if (!item.isActive) return 'inactive';
   if (item.productStatus === 2) return 'coming-soon';
   return 'active';
 }
@@ -151,6 +159,8 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
     customerCount: toProductCustomerCount((item.customerCount ?? item.CustomerCount) as number),
     contactUserId: toProductContactUserId(item.contactUserId ?? item.ContactUserId),
     contactPerson: toProductContactPersonName((item.contactPerson ?? item.ContactPerson) as string) || null,
+    productSupportUser: toProductContactUserId(item.productSupportUser ?? item.ProductSupportUser),
+    productSupportUserName: toProductContactPersonName((item.productSupportUserName ?? item.ProductSupportUserName) as string) || null,
     features,
     createdDate: String(item.createdDate ?? item.CreatedDate ?? ''),
     insertedBy: item.insertedBy != null ? Number(item.insertedBy) : item.InsertedBy != null ? Number(item.InsertedBy) : null,
@@ -158,6 +168,8 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
     updatedBy: item.updatedBy != null ? Number(item.updatedBy) : item.UpdatedBy != null ? Number(item.UpdatedBy) : null,
     updatedByName: (item.updatedByName ?? item.UpdatedByName ?? null) as string | null,
     isDeleted: Boolean(item.isDeleted ?? item.IsDeleted ?? false),
+    clientId: (item.clientId ?? item.ClientId ?? null) as string | null,
+    clientSecret: (item.clientSecret ?? item.ClientSecret ?? null) as string | null,
   };
 }
 
@@ -516,6 +528,10 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     updatedByName: item.updatedByName || '',
     contactUserId: item.contactUserId != null ? String(item.contactUserId) : '',
     contactPersonName: item.contactPerson || '',
+    productSupportUser: item.productSupportUser != null ? String(item.productSupportUser) : '',
+    productSupportUserName: item.productSupportUserName || '',
+    clientId: item.clientId || null,
+    clientSecret: item.clientSecret || null,
   };
 }
 
@@ -525,27 +541,35 @@ export function resolveContactUser(
 ): AdminApplication {
   const contactUserId = toProductContactUserId(app.contactUserId);
   const rawName = (app.contactPersonName || '').trim();
-  if (!contactUserId && !rawName) return app;
+  const productSupportUserId = toProductContactUserId(app.productSupportUser);
+  const rawSupportName = (app.productSupportUserName || '').trim();
 
-  const lower = rawName.toLowerCase();
-  const match = users.find(
-    (u) =>
-      (contactUserId != null && u.userId === contactUserId) ||
-      (lower && u.fullName.trim().toLowerCase() === lower)
-  );
+  let match;
+  if (contactUserId || rawName) {
+    const lower = rawName.toLowerCase();
+    match = users.find(
+      (u) =>
+        (contactUserId != null && u.userId === contactUserId) ||
+        (lower && u.fullName.trim().toLowerCase() === lower)
+    );
+  }
 
-  if (match) {
-    return {
-      ...app,
-      contactUserId: String(match.userId),
-      contactPersonName: match.fullName,
-    };
+  let supportMatch;
+  if (productSupportUserId || rawSupportName) {
+    const lower = rawSupportName.toLowerCase();
+    supportMatch = users.find(
+      (u) =>
+        (productSupportUserId != null && u.userId === productSupportUserId) ||
+        (lower && u.fullName.trim().toLowerCase() === lower)
+    );
   }
 
   return {
     ...app,
-    contactUserId: app.contactUserId || (contactUserId != null ? String(contactUserId) : ''),
-    contactPersonName: app.contactPersonName || rawName,
+    contactUserId: match ? String(match.userId) : (app.contactUserId || (contactUserId != null ? String(contactUserId) : '')),
+    contactPersonName: match ? match.fullName : (app.contactPersonName || rawName),
+    productSupportUser: supportMatch ? String(supportMatch.userId) : (app.productSupportUser || (productSupportUserId != null ? String(productSupportUserId) : '')),
+    productSupportUserName: supportMatch ? supportMatch.fullName : (app.productSupportUserName || rawSupportName),
   };
 }
 
