@@ -101,10 +101,10 @@ namespace CFR.AcutisService.Service.Administration
         /// Approves a product request, promoting it into the live product catalog.
         /// </summary>
         /// <remarks>
-        /// Purpose: Copy the proposed product into [core].[Product] / [core].[ProductFeature], generate its SecurityKey, then email the requester.
+        /// Purpose: Copy the proposed product into [core].[Product] / [core].[ProductFeature], register its [sec].[ApiClient] credential, then email the requester.
         /// Request Flow: ProductRequestController -> ProductRequestService.ApproveProductRequestAsync() -> IProductRequestRepository.ApproveProductRequestAsync().
         /// Validation Details: ProductRequestId must be greater than zero.
-        /// Business Logic: Generates a random SecurityKey (see GenerateSecurityKey), delegates the approval to the repository, maps duplicate-name/already-decided results to Conflict, then emails the requester. Mail failure does not fail the approval.
+        /// Business Logic: Generates a random secret key (see GenerateSecretKey) saved as [sec].[ApiClient].[ClientSecret], delegates the approval to the repository, maps duplicate-name/already-decided results to Conflict, then emails the requester the ClientId and secret. Mail failure does not fail the approval.
         /// Repository Interaction: Calls IProductRequestRepository.ApproveProductRequestAsync() and IProductRequestRepository.GetProductRequestByIdAsync().
         /// Response Details: MSResultArgs containing the new ProductId.
         /// </remarks>
@@ -122,8 +122,8 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                string securityKey = GenerateSecurityKey();
-                int newProductId = await repository.ApproveProductRequestAsync(input.ProductRequestId, input.DecisionRemarks, securityKey);
+                string secretKey = GenerateSecretKey();
+                (int newProductId, string? clientId) = await repository.ApproveProductRequestAsync(input.ProductRequestId, input.DecisionRemarks, secretKey);
                 if (newProductId == -95)
                 {
                     result.StatusCode = ErrorCodes.Conflict;
@@ -145,7 +145,7 @@ namespace CFR.AcutisService.Service.Administration
                     return result;
                 }
 
-                await NotifyRequesterOfDecisionAsync(input.ProductRequestId, approved: true, input.DecisionRemarks, newProductId, securityKey);
+                await NotifyRequesterOfDecisionAsync(input.ProductRequestId, approved: true, input.DecisionRemarks, newProductId, clientId, secretKey);
                 result.ResultData = new { productRequestId = input.ProductRequestId, approvedProductId = newProductId };
             }
             catch (Exception ex)
@@ -282,8 +282,9 @@ namespace CFR.AcutisService.Service.Administration
         /// <param name="approved">True for an approval email, false for a rejection email.</param>
         /// <param name="decisionRemarks">Optional reviewer remarks.</param>
         /// <param name="approvedProductId">The new [core].[Product].[ProductId] - only set when approved.</param>
-        /// <param name="securityKey">The generated SecurityKey saved onto that product row - only set when approved.</param>
-        private async Task NotifyRequesterOfDecisionAsync(int productRequestId, bool approved, string? decisionRemarks, int? approvedProductId = null, string? securityKey = null)
+        /// <param name="clientId">The [sec].[ApiClient].[ClientId] created for that product - only set when approved.</param>
+        /// <param name="secretKey">The generated secret saved as that ApiClient's ClientSecret - only set when approved.</param>
+        private async Task NotifyRequesterOfDecisionAsync(int productRequestId, bool approved, string? decisionRemarks, int? approvedProductId = null, string? clientId = null, string? secretKey = null)
         {
             string templateCode = approved ? ProductRequestApprovedTemplateCode : ProductRequestRejectedTemplateCode;
             try
@@ -301,19 +302,24 @@ namespace CFR.AcutisService.Service.Administration
                     ["ProductName"] = request.ProductName,
                     ["Remarks"] = string.IsNullOrWhiteSpace(decisionRemarks) ? "None provided" : decisionRemarks.Trim(),
                     ["ProductId"] = approvedProductId?.ToString() ?? string.Empty,
-                    ["SecurityKey"] = securityKey ?? string.Empty,
+                    ["ClientId"] = clientId ?? string.Empty,
+                    ["SecurityKey"] = secretKey ?? string.Empty,
                 };
 
                 var template = await emailTemplatesRepository.GetEmailTemplateByCodeAsync(templateCode);
                 string fallbackSubject = approved ? $"Your product suggestion was approved: {request.ProductName}" : $"Your product suggestion was not approved: {request.ProductName}";
                 string fallbackBody = approved
-                    ? "<p>Hi [FirstName],</p><p>Good news - your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Product ID:</strong> [ProductId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential - it identifies your product for API access.</p>"
+                    ? "<p>Hi [FirstName],</p><p>Good news - your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Client ID:</strong> [ClientId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential - use it with your Client ID for API access.</p>"
                     : "<p>Hi [FirstName],</p><p>Thanks for suggesting [ProductName]. After review, we won't be adding it at this time.</p><p><strong>Notes:</strong> [Remarks]</p>";
                 string subject = template?.Subject ?? fallbackSubject;
                 string body = template?.Body ?? fallbackBody;
                 string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
                 string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
-                await mailService.SendMailAsync(mergedSubject, mergedBody, request.RequesterEmail);
+                bool sent = await mailService.SendMailAsync(mergedSubject, mergedBody, request.RequesterEmail);
+                if (!sent)
+                {
+                    AppLogger.LogWarning(logger, null, SerilogErrorMessages.AcutisLogMessages.ProductRequestEmailNotSent, templateCode, productRequestId);
+                }
             }
             catch (Exception ex)
             {
@@ -322,11 +328,15 @@ namespace CFR.AcutisService.Service.Administration
         }
 
         /// <summary>
-        /// Generates the SecurityKey saved onto a newly-approved [core].[Product] row: 32
-        /// cryptographically random bytes, hex-encoded (64 characters, fits [SecurityKey]
-        /// NVARCHAR(100) with room to spare).
+        /// Generates the ClientSecret saved into [sec].[ApiClient] for a newly-approved product: 32
+        /// cryptographically random bytes, Base64-encoded (44 characters, fits [ClientSecret]
+        /// NVARCHAR(200) with room to spare).
         /// </summary>
-        private static string GenerateSecurityKey() => Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        private static string GenerateSecretKey()
+        {
+            byte[] keyBytes = RandomNumberGenerator.GetBytes(32);
+            return Convert.ToBase64String(keyBytes);
+        }
 
         /// <summary>
         /// Returns the first token of a full name, or a generic greeting when the name is empty.

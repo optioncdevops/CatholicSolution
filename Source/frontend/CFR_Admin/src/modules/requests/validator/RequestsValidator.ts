@@ -1,11 +1,11 @@
-import type { AccessRequestReviewFormValues, RequestStatus } from '../types/requestsTypes';
+import type { AccessRequestReviewFormValues, RequestResolveAction, RequestStatus } from '../types/requestsTypes';
 
 export const REQUEST_STATUS_FILTERS: Array<{ id: RequestStatus | 'all'; label: string }> = [
   { id: 'all', label: 'All statuses' },
-  { id: 'pending', label: 'Pending' },
+  { id: 'pending', label: 'Requested' },
+  { id: 'sent-to-vendor', label: 'Sent to vendor' },
   { id: 'approved', label: 'Approved' },
   { id: 'rejected', label: 'Rejected' },
-  { id: 'info-requested', label: 'Info requested' },
 ];
 
 export const accessRequestReviewDefaultValues: AccessRequestReviewFormValues = {
@@ -18,4 +18,4 @@ export const resolveRequestStatusRules = {
   },
 };
 
-export const ALLOWED_RESOLVE_STATUSES: RequestStatus[] = ['approved', 'rejected', 'info-requested'];
+export const ALLOWED_RESOLVE_STATUSES: RequestResolveAction[] =['approved', 'rejected', 'info-requested'];

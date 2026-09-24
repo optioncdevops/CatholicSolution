@@ -1,7 +1,12 @@
-export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'info-requested';
+// The four request statuses: pending (shown as "Requested"), sent-to-vendor, approved, rejected.
+export type RequestStatus = 'pending' | 'sent-to-vendor' | 'approved' | 'rejected';
+
+// Actions an admin can take on a Requested line. info-requested only emails the requester - the
+// request stays Requested.
+export type RequestResolveAction = 'approved' | 'rejected' | 'info-requested';
 
 export interface AccessRequestTimelineApiItem {
-  status: RequestStatus | 'submitted';
+  status: RequestStatus | 'submitted' | 'info-requested';
   at: string;
   note?: string;
   actor: string;
@@ -46,7 +51,7 @@ export interface SaveAccessRequestPayload {
 export interface UpdateAccessRequestStatusPayload {
   accessRequestId: number;
   accessRequestProductId?: number | null;
-  status: RequestStatus;
+  status: RequestResolveAction;
   note?: string;
 }
 

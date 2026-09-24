@@ -21,6 +21,13 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
   AccessApproved: [
     { token: '[FirstName]', label: 'First name' },
     { token: '[AppName]', label: 'Application name' },
+    { token: '[OrganizationName]', label: 'Organization name' },
+    { token: '[OrganizationType]', label: 'Organization type' },
+    { token: '[OrganizationAddress]', label: 'Organization address' },
+    { token: '[RequesterName]', label: 'Requester name' },
+    { token: '[RequesterEmail]', label: 'Requester email' },
+    { token: '[Phone]', label: 'Phone' },
+    { token: '[SubmittedDate]', label: 'Submitted date' },
   ],
   AccessInfo: [
     { token: '[FirstName]', label: 'First name' },
@@ -49,6 +56,7 @@ export const EMAIL_TEMPLATE_VARIABLES: Record<string, EmailTemplateVariable[]> =
     { token: '[RequesterName]', label: 'Requester name' },
     { token: '[ProductName]', label: 'Product name' },
     { token: '[ProductId]', label: 'Product ID' },
+    { token: '[ClientId]', label: 'API client ID' },
     { token: '[SecurityKey]', label: 'Security key' },
     { token: '[Remarks]', label: 'Reviewer notes' },
   ],

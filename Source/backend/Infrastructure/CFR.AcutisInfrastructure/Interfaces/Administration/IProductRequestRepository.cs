@@ -68,13 +68,13 @@ namespace CFR.AcutisInfrastructure.Interfaces.Administration
         /// Validation Details: ProductRequestId parameter mapping.
         /// Business Logic: Executes StoredProc.Requests.ProductRequestCrud with ActionId 4 and stamps UpdatedBy as the reviewer.
         /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud.
-        /// Response Details: Returns the new [core].[Product].[ProductId], -95 when not found or already decided, or -99 on duplicate product name.
+        /// Response Details: Returns the new [core].[Product].[ProductId] (-95 when not found or already decided, -99 on duplicate product name) and the [sec].[ApiClient].[ClientId] created for it.
         /// </remarks>
         /// <param name="productRequestId">Product request identifier.</param>
         /// <param name="decisionRemarks">Optional reviewer remarks.</param>
-        /// <param name="securityKey">Generated security key to save onto the new [core].[Product] row.</param>
-        /// <returns>New ProductId or negative error code.</returns>
-        Task<int> ApproveProductRequestAsync(int productRequestId, string? decisionRemarks, string securityKey);
+        /// <param name="clientSecret">Generated secret to save into [sec].[ApiClient].[ClientSecret].</param>
+        /// <returns>New ProductId or negative error code, plus the created ClientId.</returns>
+        Task<(int ProductId, string? ClientId)> ApproveProductRequestAsync(int productRequestId, string? decisionRemarks, string clientSecret);
 
         /// <summary>
         /// Rejects a pending product request. No catalog changes are made.

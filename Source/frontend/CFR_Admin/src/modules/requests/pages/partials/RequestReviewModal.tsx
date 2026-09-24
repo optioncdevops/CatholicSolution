@@ -7,7 +7,7 @@ import { ReadOnlyBanner } from '@shared/app/components/ReadOnlyBanner';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeatureAccessLevel';
 import { getAccessRequestById, updateAccessRequestStatus } from '../../services/requestsService';
-import type { AccessRequestApiItem, AccessRequestReviewFormValues, RequestStatus } from '../../types/requestsTypes';
+import type { AccessRequestApiItem, AccessRequestReviewFormValues, RequestResolveAction } from '../../types/requestsTypes';
 import { normalizeAccessRequest } from '../../utils/requestsHelpers';
 import { ALLOWED_RESOLVE_STATUSES, accessRequestReviewDefaultValues, resolveRequestStatusRules } from '../../validator/RequestsValidator';
 
@@ -126,19 +126,22 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
     showToast(messages.length > 0 ? messages : ['Please fill in the required fields.'], 'error');
   };
 
-  const resolve = async (status: RequestStatus) => {
+  const resolve = async (status: RequestResolveAction) => {
     if (!detail || !ALLOWED_RESOLVE_STATUSES.includes(status) || isReadOnly) return;
     const note = getValues('note').trim();
     setSaving(true);
     try {
+      // Approve sends the approval email first; the backend only moves the request to
+      // Sent to vendor once that email has gone out (a mail failure comes back as an error).
       await updateAccessRequestStatus({
         accessRequestId: detail.accessRequestId,
         accessRequestProductId: detail.accessRequestProductId || accessRequestProductId,
         status,
         note: note || (status === 'info-requested' ? 'More information requested.' : undefined),
       });
-      const verb = status === 'approved' ? 'approved' : status === 'rejected' ? 'rejected' : 'sent an information request for';
-      showToast(`Successfully ${verb} this access request.`);
+      showToast(status === 'approved'
+        ? 'Approval email sent. The request is now with the vendor.'
+        : status === 'rejected' ? 'Successfully rejected this access request.' : 'Successfully sent an information request for this access request.');
       await onResolved();
       if (status === 'info-requested') {
         await loadDetail(detail.accessRequestId, detail.accessRequestProductId || accessRequestProductId);
@@ -156,7 +159,7 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
 
   //#region Render
   const isOpen = Boolean(accessRequestId);
-  const canResolve = (detail?.status === 'pending' || detail?.status === 'info-requested') && !isReadOnly;
+  const canResolve = detail?.status === 'pending' && !isReadOnly;
 
   return (
     <BaseModal
@@ -201,7 +204,7 @@ const RequestReviewModal = ({ accessRequestId, accessRequestProductId, onClose, 
                 {detail.timeline.map((entry, index) => (
                   <li key={`${entry.at}-${index}`} className="relative">
                     <span className="absolute -left-[19px] top-1 size-2.5 rounded-full bg-[var(--secondary)]" aria-hidden="true" />
-                    <p className="text-xs font-bold capitalize text-[var(--text-primary)]">{String(entry.status).replace('-', ' ')}</p>
+                    <p className="text-xs font-bold capitalize text-[var(--text-primary)]">{entry.status === 'pending' ? 'requested' : String(entry.status).replace(/-/g, ' ')}</p>
                     <p className="text-xs text-[var(--text-muted)]">{entry.actor} &middot; {formatDate(entry.at)}</p>
                     {entry.note ? <p className="mt-0.5 text-xs italic text-[var(--text-secondary)]">{entry.note}</p> : null}
                   </li>

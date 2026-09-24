@@ -115,7 +115,7 @@ function RequestsListPage() {
     {
       id: 'review', header: 'Review', sortable: false, excludeFromExport: true,
       cell: (request) => {
-        const isApproved = request.status === 'approved' || request.status === 'rejected';
+        const isApproved = request.status !== 'pending';
         return (
           <CommonButton
             variant="outline"

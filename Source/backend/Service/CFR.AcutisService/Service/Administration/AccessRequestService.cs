@@ -122,9 +122,9 @@ namespace CFR.AcutisService.Service.Administration
         /// Purpose: Approve, reject, or request more information, then email the requester from the matching template.
         /// Request Flow: AccessRequestController -> AccessRequestService.UpdateAccessRequestStatusAsync() -> IAccessRequestRepository.UpdateAccessRequestStatusAsync().
         /// Validation Details: Identifier must be a positive integer; status must be an allowed resolve value.
-        /// Business Logic: Delegates the status update to the repository, then sends AccessApproved or AccessInfo to the requester. Mail failure does not fail the update.
-        /// Repository Interaction: Calls IAccessRequestRepository.UpdateAccessRequestStatusAsync() and IEmailTemplatesRepository.GetEmailTemplateByCodeAsync().
-        /// Response Details: MSResultArgs containing the access request identifier.
+        /// Business Logic: Statuses are Requested -> Sent to vendor -> Approved, or Rejected. On approve, the AccessApproved email (with the org/contact/product details) is sent first and the line only moves to sent-to-vendor once it has gone out - a mail failure returns 422 and leaves the request Requested. The final Approved status is set by CFR.DataSync when the vendor adds the user. Reject / request-info update first, then email (AccessInfo); their mail failure does not fail the update.
+        /// Repository Interaction: Calls IAccessRequestRepository.GetAccessRequestByIdAsync(), IAccessRequestRepository.UpdateAccessRequestStatusAsync() and IEmailTemplatesRepository.GetEmailTemplateByCodeAsync().
+        /// Response Details: MSResultArgs containing the access request identifier, product line, whether the email was sent, and the resulting status.
         /// </remarks>
         /// <param name="input">Status change payload.</param>
         /// <returns>MSResultArgs containing the update outcome.</returns>
@@ -138,6 +138,41 @@ namespace CFR.AcutisService.Service.Administration
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
                     return result;
+                }
+
+                // Status flow: Requested -> Sent to vendor -> Approved (or Rejected).
+                // Approve click: the approval email (with the org/contact/product details) is sent to
+                // the requester FIRST, and only once it has gone out is the line moved to
+                // sent-to-vendor - if mail fails, nothing changes and the request stays Requested so
+                // the admin can retry. The final Approved step is not done here: it happens in
+                // CFR.DataSync ([dbo].[Sync_UserProductUpsert]) when the vendor adds the user to their
+                // product and syncs that user back to CFR.
+                bool isApproved = string.Equals(input.Status.Trim(), "approved", StringComparison.OrdinalIgnoreCase);
+                bool emailSent = false;
+                if (isApproved)
+                {
+                    var request = await repository.GetAccessRequestByIdAsync(input.AccessRequestId, input.AccessRequestProductId);
+                    if (request == null)
+                    {
+                        result.StatusCode = ErrorCodes.NoRecordFound;
+                        result.StatusMessage = ErrorMessages.NoRecordFound;
+                        return result;
+                    }
+
+                    if (!string.Equals(request.Status, "pending", StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.StatusCode = ErrorCodes.Conflict;
+                        result.StatusMessage = ErrorMessages.AccessRequestAlreadyDecided;
+                        return result;
+                    }
+
+                    emailSent = await NotifyRequesterOfStatusAsync(request, input.Status, input.Note);
+                    if (!emailSent)
+                    {
+                        result.StatusCode = ErrorCodes.UnprocessableEntity;
+                        result.StatusMessage = ErrorMessages.AccessRequestApprovalEmailFailed;
+                        return result;
+                    }
                 }
 
                 var updateResult = await repository.UpdateAccessRequestStatusAsync(input);
@@ -157,25 +192,31 @@ namespace CFR.AcutisService.Service.Administration
                 }
 
                 int? resolvedProductId = updateResult.AccessRequestProductId;
-                await NotifyRequesterOfStatusAsync(updatedId, resolvedProductId, input.Status, input.Note);
-
-                OrgSetupResult? setupResult = string.Equals(input.Status.Trim(), "approved", StringComparison.OrdinalIgnoreCase) && resolvedProductId is > 0
-                    ? await SetupNewOrganizationAsync(updatedId, resolvedProductId.Value)
-                    : null;
-
-                // Only the SMS-returned OrgId is used - UserId is intentionally ignored (it's SMS's
-                // own admin-account id, not anything CFR persists anywhere).
-                if (setupResult is { OrgId: > 0, ErrMessage: null or "" })
+                if (!isApproved)
                 {
-                    await PersistOrgSetupResultSafeAsync(updatedId, resolvedProductId!.Value, setupResult.OrgId.Value);
+                    var request = await repository.GetAccessRequestByIdAsync(updatedId, resolvedProductId);
+                    emailSent = request != null && await NotifyRequesterOfStatusAsync(request, input.Status, input.Note);
                 }
+
+                // Gateway sync on approve is disabled - the vendor now provisions the organization/user
+                // themselves after receiving the request, and pushes it back through CFR.DataSync.
+                // OrgSetupResult? setupResult = isApproved && resolvedProductId is > 0
+                //     ? await SetupNewOrganizationAsync(updatedId, resolvedProductId.Value)
+                //     : null;
+                //
+                // // Only the SMS-returned OrgId is used - UserId is intentionally ignored (it's SMS's
+                // // own admin-account id, not anything CFR persists anywhere).
+                // if (setupResult is { OrgId: > 0, ErrMessage: null or "" })
+                // {
+                //     await PersistOrgSetupResultSafeAsync(updatedId, resolvedProductId!.Value, setupResult.OrgId.Value);
+                // }
 
                 result.ResultData = new
                 {
                     accessRequestId = updatedId,
-                    orgId = setupResult?.OrgId,
-                    userId = setupResult?.UserId,
-                    errMessage = setupResult?.ErrMessage,
+                    accessRequestProductId = resolvedProductId,
+                    emailSent,
+                    status = isApproved ? "sent-to-vendor" : string.Equals(input.Status.Trim(), "rejected", StringComparison.OrdinalIgnoreCase) ? "rejected" : "pending",
                 };
             }
             catch (Exception ex)
@@ -370,37 +411,43 @@ namespace CFR.AcutisService.Service.Administration
 
         /// <summary>
         /// Emails the requester when an admin approves the request or asks for more information.
+        /// The approval email carries the organization / contact / product details from the request.
         /// </summary>
-        private async Task NotifyRequesterOfStatusAsync(int accessRequestId, int? accessRequestProductId, string status, string? note)
+        /// <returns>True when an email was actually sent.</returns>
+        private async Task<bool> NotifyRequesterOfStatusAsync(AccessRequestOutput request, string status, string? note)
         {
+            int accessRequestId = request.AccessRequestId;
             try
             {
                 string normalizedStatus = status.Trim().ToLowerInvariant();
-                if (normalizedStatus is not ("approved" or "info-requested"))
+                if (normalizedStatus is not ("approved" or "info-requested") || string.IsNullOrWhiteSpace(request.RequesterEmail))
                 {
-                    return;
-                }
-
-                var request = await repository.GetAccessRequestByIdAsync(accessRequestId, accessRequestProductId);
-                if (request == null || string.IsNullOrWhiteSpace(request.RequesterEmail))
-                {
-                    return;
+                    return false;
                 }
 
                 var placeholders = BuildRequestPlaceholders(request, note);
                 if (normalizedStatus == "approved")
                 {
-                    await SendTemplatedEmailAsync(
+                    return await SendTemplatedEmailAsync(
                         AccessApprovedTemplateCode,
                         accessRequestId,
                         request.RequesterEmail,
                         placeholders,
-                        "Your application access request was approved",
-                        "Hi [FirstName],\n\nYour request for access to [AppName] has been approved. You can now launch it from App Hub.");
-                    return;
+                        "Your request for [AppName] has been approved",
+                        "<p>Hi [FirstName],</p>"
+                        + "<p>Your request for <strong>[AppName]</strong> has been approved. The request has been sent to the product vendor, who will contact you to complete your setup.</p>"
+                        + "<p><strong>Request details</strong><br/>"
+                        + "Organization: [OrganizationName]<br/>"
+                        + "Organization type: [OrganizationType]<br/>"
+                        + "Address: [OrganizationAddress]<br/>"
+                        + "Contact: [RequesterName]<br/>"
+                        + "Email: [RequesterEmail]<br/>"
+                        + "Phone: [Phone]<br/>"
+                        + "Application: [AppName]<br/>"
+                        + "Submitted: [SubmittedDate]</p>");
                 }
 
-                await SendTemplatedEmailAsync(
+                return await SendTemplatedEmailAsync(
                     AccessInfoTemplateCode,
                     accessRequestId,
                     request.RequesterEmail,
@@ -411,13 +458,15 @@ namespace CFR.AcutisService.Service.Administration
             catch (Exception ex)
             {
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.SendAccessRequestEmailFailed, status, accessRequestId);
+                return false;
             }
         }
 
         /// <summary>
         /// Loads the named template (or a built-in fallback), merges placeholders, and sends the message.
         /// </summary>
-        private async Task SendTemplatedEmailAsync(string templateCode, int accessRequestId, string toAddress, Dictionary<string, string> placeholders, string fallbackSubject, string fallbackBody)
+        /// <returns>True when the mail service reported the message as sent.</returns>
+        private async Task<bool> SendTemplatedEmailAsync(string templateCode, int accessRequestId, string toAddress, Dictionary<string, string> placeholders, string fallbackSubject, string fallbackBody)
         {
             try
             {
@@ -427,11 +476,12 @@ namespace CFR.AcutisService.Service.Administration
                 string body = template?.Body ?? fallbackBody;
                 string mergedSubject = SMTPMailService.FormatMailContent(subject, placeholders);
                 string mergedBody = SMTPMailService.FormatMailContent(body, placeholders);
-                _ = await mailService.SendMailAsync(mergedSubject, mergedBody, toAddress);
+                return await mailService.SendMailAsync(mergedSubject, mergedBody, toAddress);
             }
             catch (Exception ex)
             {
                 AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.SendAccessRequestEmailFailed, templateCode, accessRequestId);
+                return false;
             }
         }
 
@@ -442,12 +492,23 @@ namespace CFR.AcutisService.Service.Administration
         {
             string baseUrl = (configuration["FrontendSetting:CfrAdminBaseUrl"] ?? string.Empty).TrimEnd('/');
             string reviewLink = string.IsNullOrWhiteSpace(baseUrl) ? string.Empty : $"{baseUrl}/admin/requests";
+            string cityStateZip = string.Join(" ", new[] { request.State, request.Zip }.Where(part => !string.IsNullOrWhiteSpace(part)).Select(part => part!.Trim()));
+            string organizationAddress = string.Join(", ", new[] { request.Address, request.City, cityStateZip }.Where(part => !string.IsNullOrWhiteSpace(part)).Select(part => part!.Trim()));
+            string submittedDate = DateTime.TryParse(request.SubmittedAt, out var submittedAt) ? submittedAt.ToString("MMM d, yyyy") : string.Empty;
             return new Dictionary<string, string>
             {
                 ["FirstName"] = FirstNameOf(request.RequesterName),
                 ["RequesterName"] = request.RequesterName ?? string.Empty,
                 ["RequesterEmail"] = request.RequesterEmail ?? string.Empty,
                 ["OrganizationName"] = request.OrganizationName ?? string.Empty,
+                ["OrganizationType"] = ValueOrDash(request.OrganizationType),
+                ["OrganizationAddress"] = ValueOrDash(organizationAddress),
+                ["Address"] = ValueOrDash(request.Address),
+                ["City"] = ValueOrDash(request.City),
+                ["State"] = ValueOrDash(request.State),
+                ["Zip"] = ValueOrDash(request.Zip),
+                ["Phone"] = ValueOrDash(request.Phone),
+                ["SubmittedDate"] = ValueOrDash(submittedDate),
                 ["AppName"] = request.ProductName ?? string.Empty,
                 ["ReviewLink"] = reviewLink,
                 ["Note"] = string.IsNullOrWhiteSpace(note) ? "More information requested." : note.Trim(),
@@ -455,6 +516,11 @@ namespace CFR.AcutisService.Service.Administration
         }
 
 
+
+        /// <summary>
+        /// Returns the trimmed value, or an em dash when it is empty, so email detail rows never render blank.
+        /// </summary>
+        private static string ValueOrDash(string? value) => string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
 
         /// <summary>
         /// Returns the first token of a full name, or a generic greeting when the name is empty.
