@@ -8,7 +8,7 @@ namespace CFR.Portal.Controllers.Administration
     /// Service Responsibility:
     /// - IAccessRequestService retrieves data, applies validation, and returns ResultArgs.
     /// </summary>
-    [ApiExplorerSettings(GroupName = SwaggerModuleDoc.CFRAcutisAdministration)]
+    [ApiExplorerSettings(GroupName = SwaggerModuleDoc.PortalAdministration)]
     public class AccessRequestController(IAccessRequestService service): BaseController
     {
         #region GET Methods
