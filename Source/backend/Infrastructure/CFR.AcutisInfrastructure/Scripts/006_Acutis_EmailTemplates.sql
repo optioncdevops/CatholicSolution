@@ -244,8 +244,29 @@ BEGIN
     );
 END
 
+-- Sent to the product's contact user when an admin clicks Send to Vendor on the Access Requests
+-- page (CFR.Acutis AccessRequestService.SendToVendorEmailAsync). Text matches that method's
+-- built-in fallback body.
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'AccessSentToVendor')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'AccessSentToVendor',
+        N'New customer request for [AppName]: [OrganizationName]',
+        N'<p>Hello [ContactName],</p><p>A new product request for <strong>[AppName]</strong> has come through Catholic Solutions, and you have been requested for this product. Please reach out to the requester; the requester''s details are below.</p><p><strong>Request details</strong><br/>Organization: [OrganizationName]<br/>Address: [OrganizationAddress]<br/>Contact name: [RequesterName]<br/>Contact email: [RequesterEmail]<br/>Contact phone: [Phone]<br/>Submitted: [SubmittedDate]<br/>Notes: [Note]</p>',
+        1,
+        SYSUTCDATETIME(),
+        0
+    );
+END
+
 -- The frontend's merge-tag list and AccessRequestService both fully support this 5th template
--- code (sent to admins when a member submits a new access request); it had no seed row here, so
+-- code (sent to the product support user - requester on CC - when a request is submitted from the
+-- Request Access page; see CFR.Portal AccessRequestService.NotifyAdminsOfNewRequestAsync). It had no seed row here, so
 -- it never appeared in the admin editor and always silently sent AccessRequestService's hardcoded
 -- fallback body instead. Text matches that exact fallback (AccessRequestService.SendNewRequestEmailAsync).
 IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'AccessRequested')
@@ -257,8 +278,8 @@ BEGIN
     (
         @SeedTemplateId,
         N'AccessRequested',
-        N'New access request for [AppName]',
-        N'<p>A member has requested access and needs an admin review.</p><p><strong>Requester:</strong> [RequesterName] ([RequesterEmail])</p><p><strong>Organization:</strong> [OrganizationName]</p><p><strong>Application:</strong> [AppName]</p><p><a href="[ReviewLink]">Review this request</a></p>',
+        N'Review needed: [AppName] access request from [OrganizationName]',
+        N'<p>Hello [SupportUserName],</p><p>A new access request for <strong>[AppName]</strong> has come through Catholic Solutions, and you have been requested for this product. Please review the request; the requester''s details are below.</p><p><strong>Request details</strong><br/>Organization: [OrganizationName]<br/>Address: [OrganizationAddress]<br/>Contact name: [RequesterName]<br/>Contact email: [RequesterEmail]<br/>Contact phone: [Phone]<br/>Submitted: [SubmittedDate]<br/>Goals &amp; context: [AdditionalInfo]</p><p><a href="[ReviewLink]">Review this request</a></p>',
         1,
         SYSUTCDATETIME(),
         0

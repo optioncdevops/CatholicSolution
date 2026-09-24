@@ -21,7 +21,7 @@ export const validateSaveAccessRequest = (payload: SaveAccessRequestPayload): st
 };
 
 export type PublicAccessRequestFieldErrors = Partial<Record<
-  'firstName' | 'lastName' | 'organizationType' | 'organizationName' | 'address' | 'city' | 'state' | 'zip' | 'email' | 'phone' | 'interests' | 'consent',
+  'firstName' | 'lastName' | 'organizationType' | 'organizationName' | 'dioceseId' | 'address' | 'city' | 'state' | 'zip' | 'email' | 'phone' | 'interests' | 'consent',
   string
 >>;
 
@@ -38,6 +38,8 @@ export const validatePublicAccessRequestFields = (values: PublicAccessRequestFor
 
   if (!values.organizationName.trim()) errors.organizationName = 'Organization name is required.';
   else if (values.organizationName.trim().length > ORGANIZATION_NAME_MAX_LENGTH) errors.organizationName = `Organization name must be ${ORGANIZATION_NAME_MAX_LENGTH} characters or fewer.`;
+
+  if (!values.dioceseId.trim()) errors.dioceseId = 'Diocese is required.';
 
   if (!values.address.trim()) errors.address = 'Address is required.';
   else if (values.address.trim().length > ADDRESS_MAX_LENGTH) errors.address = `Address must be ${ADDRESS_MAX_LENGTH} characters or fewer.`;

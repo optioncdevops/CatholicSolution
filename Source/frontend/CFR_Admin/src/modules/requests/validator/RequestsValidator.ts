@@ -1,12 +1,15 @@
 import type { AccessRequestReviewFormValues, RequestResolveAction, RequestStatus } from '../types/requestsTypes';
 
 export const REQUEST_STATUS_FILTERS: Array<{ id: RequestStatus | 'all'; label: string }> = [
-  { id: 'all', label: 'All statuses' },
   { id: 'pending', label: 'Requested' },
   { id: 'sent-to-vendor', label: 'Sent to vendor' },
   { id: 'approved', label: 'Approved' },
   { id: 'rejected', label: 'Rejected' },
+  { id: 'all', label: 'All statuses' },
 ];
+
+/** Tab the Access Requests page opens on when the URL has no ?status= - the requests waiting on an admin. */
+export const DEFAULT_REQUEST_STATUS_FILTER: RequestStatus | 'all' = 'pending';
 
 export const accessRequestReviewDefaultValues: AccessRequestReviewFormValues = {
   note: '',

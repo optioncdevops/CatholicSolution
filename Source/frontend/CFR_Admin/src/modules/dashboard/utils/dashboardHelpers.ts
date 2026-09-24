@@ -180,7 +180,7 @@ export function buildIntegrityIssues(integrity: DashboardIntegrityApiItem): Inte
       count: integrity.approvedRequestsMissingOrganizationProduct,
       description: 'The request was approved, but the organization never received an active app assignment for it.',
       severity: 'error',
-      to: '/admin/requests',
+      to: '/admin/requests?status=approved',
     },
     {
       key: 'approvedRequestsMissingUserProduct',
@@ -188,7 +188,7 @@ export function buildIntegrityIssues(integrity: DashboardIntegrityApiItem): Inte
       count: integrity.approvedRequestsMissingUserProduct,
       description: "The request was approved, but the requester's own product mapping was never created.",
       severity: 'error',
-      to: '/admin/requests',
+      to: '/admin/requests?status=approved',
     },
     {
       key: 'activeOrganizationProductsWithoutMembers',
@@ -220,7 +220,7 @@ export function buildIntegrityIssues(integrity: DashboardIntegrityApiItem): Inte
       count: integrity.rejectedRequestsWithActiveEntitlements,
       description: 'The request was rejected, but the requester still has an active mapping to that product.',
       severity: 'error',
-      to: '/admin/requests',
+      to: '/admin/requests?status=rejected',
     },
     {
       key: 'expiredLicensesWithActiveOrganizationProduct',

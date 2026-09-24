@@ -14,7 +14,7 @@ import RequestReviewModal from './partials/RequestReviewModal';
 import { getAccessRequests } from '../services/requestsService';
 import type { AccessRequestApiItem, RequestStatus } from '../types/requestsTypes';
 import { normalizeAccessRequestList, uniqueRequestFilterOptions } from '../utils/requestsHelpers';
-import { REQUEST_STATUS_FILTERS } from '../validator/RequestsValidator';
+import { DEFAULT_REQUEST_STATUS_FILTER, REQUEST_STATUS_FILTERS } from '../validator/RequestsValidator';
 import { formatDate } from '../../utils/formatDate';
 
 const STATUS_FILTER_PARAM = 'status';
@@ -40,11 +40,13 @@ function RequestsListPage() {
   // and shareable, and lets other pages (the Dashboard's Priority Alerts) deep-link straight to a
   // specific status instead of dumping the visitor on an unfiltered list, matching how the
   // Organizations list already treats its own status filter.
-  const statusFilter = (searchParams.get(STATUS_FILTER_PARAM) ?? 'all') as RequestStatus | 'all';
+  // No ?status= means the default tab (Requested); every other tab, including All statuses, is
+  // written to the URL explicitly so it survives a refresh / shared link.
+  const statusFilter = (searchParams.get(STATUS_FILTER_PARAM) ?? DEFAULT_REQUEST_STATUS_FILTER) as RequestStatus | 'all';
   const setStatusFilter = useCallback((next: RequestStatus | 'all') => {
     setSearchParams((current) => {
       const params = new URLSearchParams(current);
-      if (next === 'all') params.delete(STATUS_FILTER_PARAM);
+      if (next === DEFAULT_REQUEST_STATUS_FILTER) params.delete(STATUS_FILTER_PARAM);
       else params.set(STATUS_FILTER_PARAM, next);
       return params;
     }, { replace: true });
