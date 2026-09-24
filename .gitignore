@@ -47,3 +47,6 @@
 /Source/frontend/CFR_Admin/tsconfig.app.tsbuildinfo
 /Source/backend/Microservices/CFR.DataSync/Properties/PublishProfiles/FolderProfile.pubxml.user
 /Source/backend/Microservices/CFR.DataSync/CFR.DataSync.csproj.user
+
+# Shared, platform-wide Email Settings written by CFR Admin at runtime (holds the SMTP password)
+Source/backend/Microservices/_shared/_configurationSettings.json

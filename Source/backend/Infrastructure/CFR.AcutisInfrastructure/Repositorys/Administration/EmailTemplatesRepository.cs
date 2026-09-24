@@ -104,6 +104,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             parameters.Add(DBParameterName.EmailTemplateParams.Body, input.Body, DbType.String);
             parameters.Add(DBParameterName.EmailTemplateParams.Status, input.Status, DbType.String);
             parameters.Add(DBParameterName.EmailTemplateParams.LinkExpiryMinutes, input.LinkExpiryMinutes, DbType.Int32);
+            parameters.Add(DBParameterName.EmailTemplateParams.IconName, input.IconName, DbType.String);
             parameters.Add(DBParameterName.EmailTemplateParams.UpdatedBy, updatedBy, DbType.Int64);
             parameters.Add(DBParameterName.EmailTemplateParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Administration.EmailTemplatesCrud, parameters, CommandType.StoredProcedure);

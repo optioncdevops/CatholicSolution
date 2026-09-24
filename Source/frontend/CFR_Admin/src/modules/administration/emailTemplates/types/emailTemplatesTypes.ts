@@ -7,6 +7,7 @@ export interface EmailTemplateApiItem {
   body: string;
   status: EmailTemplateStatusValue;
   linkExpiryMinutes: number | null;
+  iconName: string | null;
   createdDate: string | null;
   updatedDate: string | null;
 }
@@ -15,6 +16,7 @@ export interface EmailTemplateFormValues {
   subject: string;
   body: string;
   linkExpiryMinutes: string;
+  iconName: string;
 }
 
 export interface SaveEmailTemplatePayload {
@@ -24,6 +26,7 @@ export interface SaveEmailTemplatePayload {
   body: string;
   status: EmailTemplateStatusValue;
   linkExpiryMinutes: number | null;
+  iconName: string | null;
 }
 
 export interface SendTestEmailPayload {

@@ -8,7 +8,7 @@ import { useToast } from '@shared/app/components/ToastProvider';
 import { CommonButton } from '@app/components/buttons';
 import { Badge, formatStatusLabel } from '@app/components/Badge';
 import { BaseModal } from '@app/components/modal/BaseModal';
-import { InputField, RichTextEditor } from '@app/components/formControls';
+import { Dropdown, InputField, RichTextEditor } from '@app/components/formControls';
 import { Tooltip } from '@app/components/tooltips/Tooltip';
 // The ported formControls InputField doesn't forward a ref to the underlying element, which the
 // merge-tag "insert at cursor" feature below needs for the Subject field — keep the local
@@ -31,12 +31,33 @@ import { MAX_LINK_EXPIRY_MINUTES, MIN_LINK_EXPIRY_MINUTES, SUBJECT_MAX_LENGTH, v
 // template rather than shown-but-meaningless.
 const LINK_EXPIRY_TEMPLATE_CODE = 'PasswordReset';
 
-const TEMPLATE_ICON: Record<string, typeof Mail> = {
-  PasswordReset: KeyRound,
-  Welcome: Sparkles,
-  AccessApproved: MailCheck,
-  AccessInfo: MailQuestion,
+// Icon is now DB-driven (EmailTemplateApiItem.iconName) instead of guessed from templateCode —
+// this registry just resolves the stored lucide-react icon NAME to its component, and doubles as
+// the option list for the "Icon" picker in the editor below. A template with no iconName set (or
+// one that no longer matches a key here, e.g. a name typed in directly via the API) falls back to
+// the generic Mail icon rather than erroring.
+const ICON_REGISTRY: Record<string, typeof Mail> = {
+  Mail, KeyRound, Sparkles, MailCheck, MailQuestion, Send, Wand2, CheckCircle2, AlertTriangle,
 };
+const ICON_OPTIONS = Object.keys(ICON_REGISTRY).map((name) => ({ id: name, value: name }));
+
+// Renders the JSX for a stored icon name directly (a switch over statically-known tags) rather
+// than resolving a dynamic component reference into a variable and rendering that — the latter
+// re-creates a "new" component type on every render, remounting it and resetting any internal
+// state each time (flagged by react-hooks/static-components).
+function TemplateIconGlyph({ iconName, size = 15 }: { iconName: string | null | undefined; size?: number }) {
+  switch (iconName) {
+    case 'KeyRound': return <KeyRound size={size} aria-hidden="true" />;
+    case 'Sparkles': return <Sparkles size={size} aria-hidden="true" />;
+    case 'MailCheck': return <MailCheck size={size} aria-hidden="true" />;
+    case 'MailQuestion': return <MailQuestion size={size} aria-hidden="true" />;
+    case 'Send': return <Send size={size} aria-hidden="true" />;
+    case 'Wand2': return <Wand2 size={size} aria-hidden="true" />;
+    case 'CheckCircle2': return <CheckCircle2 size={size} aria-hidden="true" />;
+    case 'AlertTriangle': return <AlertTriangle size={size} aria-hidden="true" />;
+    default: return <Mail size={size} aria-hidden="true" />;
+  }
+}
 
 const BODY_EDITOR_ID = 'email-template-body-editor';
 
@@ -44,6 +65,7 @@ const draftFromTemplate = (item: EmailTemplateApiItem): EmailTemplateFormValues 
   subject: item.subject,
   body: item.body,
   linkExpiryMinutes: item.linkExpiryMinutes != null ? String(item.linkExpiryMinutes) : '',
+  iconName: item.iconName ?? '',
 });
 
 function EmailTemplatesPage() {
@@ -135,11 +157,12 @@ function EmailTemplatesPage() {
   //#endregion
 
   const template = useMemo(() => templates.find((item) => item.templateId === selectedId) ?? null, [templates, selectedId]);
-  const draft = (template ? drafts[template.templateId] : undefined) ?? { subject: '', body: '', linkExpiryMinutes: '' };
+  const draft = (template ? drafts[template.templateId] : undefined) ?? { subject: '', body: '', linkExpiryMinutes: '', iconName: '' };
   const isDirty = Boolean(template) && (
     draft.subject !== template!.subject
     || draft.body !== template!.body
     || draft.linkExpiryMinutes !== (template!.linkExpiryMinutes != null ? String(template!.linkExpiryMinutes) : '')
+    || draft.iconName !== (template!.iconName ?? '')
   );
   const storedAuthEmail = getStoredAcutisAuth()?.resultData?.user?.eMail;
 
@@ -152,7 +175,8 @@ function EmailTemplatesPage() {
     if (!itemDraft) return false;
     return itemDraft.subject !== item.subject
       || itemDraft.body !== item.body
-      || itemDraft.linkExpiryMinutes !== (item.linkExpiryMinutes != null ? String(item.linkExpiryMinutes) : '');
+      || itemDraft.linkExpiryMinutes !== (item.linkExpiryMinutes != null ? String(item.linkExpiryMinutes) : '')
+      || itemDraft.iconName !== (item.iconName ?? '');
   }), [templates, drafts]);
 
   const unsupportedPlaceholders = useMemo(
@@ -240,6 +264,7 @@ function EmailTemplatesPage() {
         body: draft.body,
         status: template.status,
         linkExpiryMinutes: isLinkExpiryTemplate && draft.linkExpiryMinutes.trim() ? Number(draft.linkExpiryMinutes) : null,
+        iconName: draft.iconName || null,
       });
       showToast('Template saved successfully.', 'success');
       await load();
@@ -308,7 +333,6 @@ function EmailTemplatesPage() {
   //#endregion
 
   //#region Render
-  const TemplateIcon = template ? TEMPLATE_ICON[template.templateCode] ?? Mail : Mail;
   const previewBody = draft.body;
 
   return (
@@ -362,8 +386,8 @@ function EmailTemplatesPage() {
                 itemDraft.subject !== item.subject
                 || itemDraft.body !== item.body
                 || itemDraft.linkExpiryMinutes !== (item.linkExpiryMinutes != null ? String(item.linkExpiryMinutes) : '')
+                || itemDraft.iconName !== (item.iconName ?? '')
               );
-              const ItemIcon = TEMPLATE_ICON[item.templateCode] ?? Mail;
               const isActive = item.templateId === selectedId;
               return (
                 <button
@@ -373,7 +397,7 @@ function EmailTemplatesPage() {
                   aria-current={isActive ? 'true' : undefined}
                   className={`admin-email-template-item ${isActive ? 'admin-email-template-item--active' : ''}`}
                 >
-                  <span className="admin-email-template-item__icon" aria-hidden="true"><ItemIcon size={15} /></span>
+                  <span className="admin-email-template-item__icon" aria-hidden="true"><TemplateIconGlyph iconName={itemDraft?.iconName ?? item.iconName} /></span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5">
                       <span className="admin-email-template-item__title truncate">{templateDisplayLabel(item.templateCode)}</span>
@@ -391,7 +415,7 @@ function EmailTemplatesPage() {
           <section className="admin-panel-card">
             <div className="admin-panel-card__header flex-wrap">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="admin-email-template-item__icon" aria-hidden="true"><TemplateIcon size={16} /></span>
+                <span className="admin-email-template-item__icon" aria-hidden="true"><TemplateIconGlyph iconName={draft.iconName} size={16} /></span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="panel-title truncate">{templateDisplayLabel(template.templateCode)}</h2>
@@ -450,6 +474,19 @@ function EmailTemplatesPage() {
                   {/* <div className="mt-1 flex justify-end">
                     <CharacterCount id="txtEmailTemplateSubject-counter" length={draft.subject.length} maxLength={SUBJECT_MAX_LENGTH} />
                   </div> */}
+                  <div className="mt-3">
+                    <Dropdown
+                      id="ddlEmailTemplateIcon"
+                      label="Icon"
+                      placeholder="Select an icon"
+                      searchable={false}
+                      clearable={false}
+                      value={draft.iconName}
+                      onValueChange={(value) => updateField('iconName', value ?? '')}
+                      options={ICON_OPTIONS}
+                      disabled={isReadOnly}
+                    />
+                  </div>
                   {template.templateCode === LINK_EXPIRY_TEMPLATE_CODE ? (
                     <div className="mt-3">
                       <SubjectField
