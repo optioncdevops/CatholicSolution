@@ -58,6 +58,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         public long? ContactUserId { get; set; }
 
         /// <summary>
+        /// Gets or sets the product support user identifier.
+        /// </summary>
+        [JsonPropertyName("productSupportUser")]
+        public long? ProductSupportUser { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the product is active.
         /// </summary>
         [JsonPropertyName("isActive")]

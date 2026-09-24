@@ -270,6 +270,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             string? logo = input.LogoName?.Trim();
             parameters.Add(DBParameterName.ProductParams.LogoName, logo, DbType.String);
             parameters.Add(DBParameterName.ProductParams.ContactUserId, input.ContactUserId is null ? DBNull.Value : input.ContactUserId.Value, DbType.Int64);
+            parameters.Add(DBParameterName.ProductParams.ProductSupportUser, input.ProductSupportUser is null ? DBNull.Value : input.ProductSupportUser.Value, DbType.Int64);
             string? updateFeatures = input.Features != null && input.Features.Count > 0
                 ? string.Join("|", input.Features.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()))
                 : null;

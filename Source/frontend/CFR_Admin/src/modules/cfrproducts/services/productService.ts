@@ -99,6 +99,17 @@ export const getProductContactUsers = async (): Promise<ApiResponse> => {
   }
 };
 
+export const getProductSupportUsers = async (): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductSupportUsers`);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to load product support users';
+  }
+};
+
 export const getLicenseDetails = async (productId: number): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetLicenseDetails`, {
