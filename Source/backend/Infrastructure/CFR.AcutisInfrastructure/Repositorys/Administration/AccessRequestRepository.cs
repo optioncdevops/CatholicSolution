@@ -59,7 +59,26 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
             return request;
         }
 
-
+        /// <summary>
+        /// Fetches a product's contact / support user email(s) using SQLQueryText.Requests.GetProductContactEmails.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Resolve who receives the Send to Vendor email for a product.
+        /// Request Flow: IAccessRequestService -> AccessRequestRepository.GetProductContactEmailsAsync() -> Database.
+        /// Validation Details: ProductId parameter mapping.
+        /// Business Logic: Maps rows to AccessRequestRecipientOutput.
+        /// Repository Interaction: Runs SQLQueryText.Requests.GetProductContactEmails (CommandType.Text).
+        /// Response Details: Returns a list of recipient email records.
+        /// </remarks>
+        /// <param name="productId">Catalog product identifier.</param>
+        /// <returns>A list of recipient email records.</returns>
+        public async Task<List<AccessRequestRecipientOutput>> GetProductContactEmailsAsync(int productId)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.AccessRequestParams.ProductId, productId, DbType.Int32);
+            var result = await dapperHandler.QueryAsync<AccessRequestRecipientOutput>(SQLQueryText.Requests.GetProductContactEmails, parameters, CommandType.Text);
+            return result.ToList();
+        }
 
         #endregion GET Methods
 

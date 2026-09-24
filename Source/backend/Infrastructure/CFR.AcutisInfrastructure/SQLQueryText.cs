@@ -44,6 +44,31 @@ namespace CFR.AcutisInfrastructure
                   AND ar.[IsDeleted] = 0;";
 
             /// <summary>
+            /// Email address(es) of the product's contact / support user ([core].[Product].[ContactUserId],
+            /// or [ContactPerson] matched by user id or full name - the same matching rule as
+            /// [request].[AccessRequestManage] ActionId 5, but WITHOUT its Platform Admin fallback, since
+            /// the Send to Vendor email must only reach the product's own contact).
+            /// </summary>
+            public const string GetProductContactEmails = @"
+                SELECT DISTINCT
+                    LTRIM(RTRIM(u.[Email])) AS [EMail],
+                    LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) AS [FullName]
+                FROM [core].[Product] p
+                INNER JOIN [auth].[AcutisUser] u
+                    ON u.[IsDeleted] = 0
+                   AND u.[IsActive] = 1
+                   AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL
+                   AND (
+                        (p.[ContactUserId] IS NOT NULL AND u.[UserId] = p.[ContactUserId])
+                     OR (p.[ContactUserId] IS NULL AND (
+                            u.[UserId] = TRY_CAST(p.[ContactPerson] AS INT)
+                         OR LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N''))) = LTRIM(RTRIM(p.[ContactPerson]))
+                        ))
+                   )
+                WHERE p.[ProductId] = @ProductId
+                  AND p.[IsDeleted] = 0;";
+
+            /// <summary>
             /// Resolves CFROrgId/ProductId/org snapshot fields from the request's header + the
             /// specific product line (@AccessRequestProductId) that was just approved, for
             /// PersistOrgSetupResultAsync.

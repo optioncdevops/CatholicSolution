@@ -12,7 +12,7 @@ const TONE_CLASSES: Record<BadgeTone, string> = {
 
 /** "inactive" is spelled out as "InActive" everywhere it's displayed, per product convention. */
 export function formatStatusLabel(status: string): string {
-  return status.toLowerCase() === 'inactive' ? 'InActive' : status.replace('-', ' ');
+  return status.toLowerCase() === 'inactive' ? 'InActive' : status.replace(/-/g, ' ');
 }
 
 export function Badge({ id, tone, children }: { id?: string; tone: BadgeTone; children: ReactNode }) {
@@ -29,8 +29,10 @@ const APPLICATION_STATUS_TONE: Record<string, BadgeTone> = {
 const ORG_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', inactive: 'neutral', suspended: 'danger' };
 const USER_STATUS_TONE: Record<string, BadgeTone> = { active: 'success', pending: 'warning', inactive: 'neutral' };
 const REQUEST_STATUS_TONE: Record<string, BadgeTone> = {
-  pending: 'warning', approved: 'success', rejected: 'danger', 'info-requested': 'info',
+  pending: 'warning', 'sent-to-vendor': 'info', approved: 'success', rejected: 'danger',
 };
+/** Access request status values whose display label differs from the value itself. */
+const REQUEST_STATUS_LABEL: Record<string, string> = { pending: 'Requested' };
 const LICENSE_STATUS_TONE: Record<string, BadgeTone> = {
   active: 'success', suspended: 'danger', 'expiring-soon': 'warning', expired: 'danger',
 };
@@ -50,7 +52,8 @@ const TONE_MAP_BY_KIND: Record<StatusKind, Record<string, BadgeTone>> = {
 type StatusKind = 'application' | 'organization' | 'user' | 'request' | 'license' | 'access' | 'permission';
 
 export function StatusBadge({ status, kind }: { status: string; kind: StatusKind }) {
-  return <Badge tone={TONE_MAP_BY_KIND[kind][status] ?? 'neutral'}>{formatStatusLabel(status)}</Badge>;
+  const label = (kind === 'request' ? REQUEST_STATUS_LABEL[status] : undefined) ?? formatStatusLabel(status);
+  return <Badge tone={TONE_MAP_BY_KIND[kind][status] ?? 'neutral'}>{label}</Badge>;
 }
 
 const TONE_BORDER_CLASSES: Record<BadgeTone, string> = {

@@ -335,7 +335,7 @@ BEGIN
         @SeedTemplateId,
         N'ProductRequestApproved',
         N'Your product suggestion was approved: [ProductName]',
-        N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Product ID:</strong> [ProductId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential — it identifies your product for API access.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>',
+        N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Client ID:</strong> [ClientId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential — use it with your Client ID for API access.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>',
         1,
         N'CheckCircle2',
         SYSUTCDATETIME(),
@@ -343,17 +343,20 @@ BEGIN
     );
 END
 
--- Upgrade guard: adds the [ProductId]/[SecurityKey] merge tags to a ProductRequestApproved row
--- seeded by an earlier run of this script (back when this template's body didn't have them yet).
--- Guarded on the body still matching that earlier exact seed, so a row an admin has since
--- customized (and therefore no longer contains that exact text) is left untouched.
+-- Upgrade guard: moves a ProductRequestApproved row seeded by an earlier run of this script onto
+-- the current body ([ClientId]/[SecurityKey] merge tags - the product's [sec].[ApiClient] login).
+-- Matches either earlier exact seed (the original remarks-only body, or the later one that showed
+-- [ProductId] instead of [ClientId]), so a row an admin has since customized is left untouched.
 UPDATE [adm].[EmailTemplate]
 SET
-    [Body] = N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Product ID:</strong> [ProductId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential — it identifies your product for API access.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>',
+    [Body] = N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Client ID:</strong> [ClientId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential — use it with your Client ID for API access.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>',
     [UpdatedDate] = SYSUTCDATETIME()
 WHERE [TemplateCode] = N'ProductRequestApproved'
   AND [IsDeleted] = 0
-  AND [Body] = N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>';
+  AND [Body] IN (
+      N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>',
+      N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Product ID:</strong> [ProductId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential — it identifies your product for API access.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>'
+  );
 
 -- Sent back to the requester when an admin rejects their suggestion (CFR.Acutis's
 -- ProductRequestService.NotifyRequesterOfDecisionAsync, approved: false). Same gap as above.

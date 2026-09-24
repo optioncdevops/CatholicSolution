@@ -88,28 +88,29 @@ namespace CFR.AcutisInfrastructure.Repositorys.Administration
         /// Approves a product request using StoredProc.Requests.ProductRequestCrud (ActionId 4).
         /// </summary>
         /// <remarks>
-        /// Purpose: Copy the request into [core].[Product] / [core].[ProductFeature] and mark it approved.
+        /// Purpose: Copy the request into [core].[Product] / [core].[ProductFeature], register its [sec].[ApiClient] credential and mark it approved.
         /// Request Flow: IProductRequestService -> ProductRequestRepository.ApproveProductRequestAsync() -> Database.
         /// Validation Details: ProductRequestId parameter mapping.
         /// Business Logic: Executes StoredProc.Requests.ProductRequestCrud with ActionId 4.
         /// Repository Interaction: Executes StoredProc.Requests.ProductRequestCrud.
-        /// Response Details: Returns the new ProductId, -95 when not found or already decided, or -99 on duplicate product name.
+        /// Response Details: Returns the new ProductId (-95 when not found or already decided, -99 on duplicate product name) and the generated ClientId.
         /// </remarks>
         /// <param name="productRequestId">Product request identifier.</param>
         /// <param name="decisionRemarks">Optional reviewer remarks.</param>
-        /// <param name="securityKey">Generated security key to save onto the new [core].[Product] row.</param>
-        /// <returns>New ProductId or negative error code.</returns>
-        public async Task<int> ApproveProductRequestAsync(int productRequestId, string? decisionRemarks, string securityKey)
+        /// <param name="clientSecret">Generated secret to save into [sec].[ApiClient].[ClientSecret].</param>
+        /// <returns>New ProductId or negative error code, plus the created ClientId.</returns>
+        public async Task<(int ProductId, string? ClientId)> ApproveProductRequestAsync(int productRequestId, string? decisionRemarks, string clientSecret)
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.ProductRequestParams.ActionId, 4, DbType.Int32);
             parameters.Add(DBParameterName.ProductRequestParams.ProductRequestId, productRequestId, DbType.Int32);
             parameters.Add(DBParameterName.ProductRequestParams.DecisionRemarks, decisionRemarks?.Trim(), DbType.String);
-            parameters.Add(DBParameterName.ProductRequestParams.SecurityKey, securityKey, DbType.String);
+            parameters.Add(DBParameterName.ProductRequestParams.ClientSecret, clientSecret, DbType.String);
             parameters.Add(DBParameterName.ProductRequestParams.UpdatedBy, currentUserService.UserId, DbType.Int64);
+            parameters.Add(DBParameterName.ProductRequestParams.ClientId, dbType: DbType.String, direction: ParameterDirection.Output, size: 100);
             parameters.Add(DBParameterName.ProductRequestParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Requests.ProductRequestCrud, parameters, CommandType.StoredProcedure);
-            return parameters.Get<int>(DBParameterName.ProductRequestParams.ReturnValue);
+            return (parameters.Get<int>(DBParameterName.ProductRequestParams.ReturnValue), parameters.Get<string?>(DBParameterName.ProductRequestParams.ClientId));
         }
 
         /// <summary>

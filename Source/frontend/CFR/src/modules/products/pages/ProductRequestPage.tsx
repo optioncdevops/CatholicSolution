@@ -2,7 +2,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent 
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, PlusIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
+import { ArrowRightIcon, CheckIcon, PlusIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { AccessSection, Field, SelectField } from '@/modules/authentication/pages/partials/RequestAccessFields';
@@ -29,7 +29,6 @@ const ProductRequestPage = () => {
   //#region States
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [reference, setReference] = useState(`CS-${new Date().getFullYear()}-PRD`);
   const [description, setDescription] = useState('');
   const [features, setFeatures] = useState<string[]>([]);
   const [featureDraft, setFeatureDraft] = useState('');
@@ -136,9 +135,7 @@ const ProductRequestPage = () => {
 
     setSubmitting(true);
     try {
-      const response = await saveProductRequest(toProductRequestPayload(values));
-      const savedId = Number(response?.resultData ?? response?.ResultData ?? 0);
-      setReference(savedId > 0 ? `CS-${new Date().getFullYear()}-${savedId}` : `CS-${new Date().getFullYear()}-PRD`);
+      await saveProductRequest(toProductRequestPayload(values));
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
@@ -162,10 +159,8 @@ const ProductRequestPage = () => {
         {submitted ? (
           <section className="request-access-success" aria-live="polite">
             <span className="request-access-success__icon"><CheckIcon size={28} /></span>
-            <span className="request-access-kicker">Suggestion captured</span>
-            <h1>Your product suggestion is ready for review.</h1>
-            <p>The Catholic Solutions team will review your suggestion and follow up using the email you provided.</p>
-            <div className="auth-success-reference"><span>Reference</span><strong>{reference}</strong><small>Keep this reference if you need to follow up.</small></div>
+            <h1>Your product is ready for review.</h1>
+            <p>The Catholic Solutions team will review your product and follow up using the email you provided.</p>
             <PlatformLink to="/login" className="auth-primary-button auth-primary-button--large">Return to sign in <ArrowRightIcon size={16} /></PlatformLink>
           </section>
         ) : (
