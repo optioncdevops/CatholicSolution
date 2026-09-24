@@ -5,6 +5,7 @@ global using CFR.DataSync;
 global using CFR.DataSyncInfrastructure.Models.Input;
 global using CFR.DataSyncInfrastructure.Models.Output;
 global using CFR.DataSyncService.Interfaces.OrganizationSync;
+global using CFR.DataSyncService.Interfaces.ProductRole;
 global using CFR.DataSyncService.Interfaces.ProductSync;
 global using CFR.DataSyncService.Interfaces.Security;
 global using CFR.DataSyncService.Interfaces.UserSync;

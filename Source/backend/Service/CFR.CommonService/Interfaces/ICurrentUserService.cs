@@ -8,6 +8,14 @@ namespace CFR.CommonService.Interfaces
     public interface ICurrentUserService
     {
         long UserId { get; set; }
+
+        /// <summary>
+        /// The authenticated CFR member's identity (auth.User.CFRUserId), set only for a CFR.Portal
+        /// session — Acutis/DataSync callers use the long <see cref="UserId"/> instead and leave
+        /// this null.
+        /// </summary>
+        Guid? CFRUserId { get; set; }
+
         string UserName { get; set; }
         int RoleId { get; set; }
         string ClientIPAddress { get; set; }

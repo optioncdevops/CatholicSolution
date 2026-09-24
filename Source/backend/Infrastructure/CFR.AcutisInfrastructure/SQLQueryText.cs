@@ -21,7 +21,7 @@ namespace CFR.AcutisInfrastructure
             public const string GetOrgSetupContext = @"
                 SELECT
                     CAST(ar.[OrgId] AS INT) AS [OrgId],
-                    CAST(ar.[RequestedBy] AS INT) AS [CFRUserId],
+                    ar.[RequestedBy] AS [CFRUserId],
                     ar.[RequesterFirstName] AS [FirstName],
                     ar.[RequesterLastName] AS [LastName],
                     ar.[ContactPhone] AS [Phone],

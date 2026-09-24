@@ -15,7 +15,7 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// Gets or sets the linked user's identifier (auth.User.CFRUserId).
         /// </summary>
         [JsonPropertyName("authUserId")]
-        public long AuthUserId { get; set; }
+        public Guid AuthUserId { get; set; }
 
         /// <summary>
         /// Gets or sets the user's email address. auth.User has no name columns, so email is the

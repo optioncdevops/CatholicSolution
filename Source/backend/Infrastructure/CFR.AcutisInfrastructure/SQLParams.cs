@@ -353,7 +353,7 @@ namespace CFR.AcutisInfrastructure
             public const string ProductId = nameof(ProductId);
 
             /// <summary>
-            /// User identifier (auth.User.CFRUserId), used when linking/unlinking a user for an organization.
+            /// User identifier (auth.User.CFRUserId, UNIQUEIDENTIFIER), used when linking/unlinking a user for an organization.
             /// </summary>
             public const string AuthUserId = nameof(AuthUserId);
 

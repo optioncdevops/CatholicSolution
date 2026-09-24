@@ -89,12 +89,12 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
         /// <param name="orgId">Organization identifier.</param>
         /// <param name="authUserId">Member identifier.</param>
         /// <returns>The matching membership detail, or null when not found.</returns>
-        public async Task<OrganizationUserDetailOutput?> GetOrganizationUserDetailAsync(long orgId, long authUserId)
+        public async Task<OrganizationUserDetailOutput?> GetOrganizationUserDetailAsync(long orgId, Guid authUserId)
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.OrganizationParams.ActionId, 14, DbType.Int32);
             parameters.Add(DBParameterName.OrganizationParams.OrgId, orgId, DbType.Int64);
-            parameters.Add(DBParameterName.OrganizationParams.AuthUserId, authUserId, DbType.Int64);
+            parameters.Add(DBParameterName.OrganizationParams.AuthUserId, authUserId, DbType.Guid);
             using var grid = await dapperHandler.QueryMultipleAsync(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
             var detail = (await grid.ReadAsync<OrganizationUserDetailOutput>()).FirstOrDefault();
             if (detail == null) return null;
@@ -317,12 +317,12 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
         /// <param name="authUserId">User identifier to unlink.</param>
         /// <param name="updatedBy">Logged-in user identifier performing the removal.</param>
         /// <returns>Scalar result of the unlink stored procedure.</returns>
-        public async Task<int> UnlinkOrganizationUserAsync(long orgId, long authUserId, long? updatedBy)
+        public async Task<int> UnlinkOrganizationUserAsync(long orgId, Guid authUserId, long? updatedBy)
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.OrganizationParams.ActionId, 13, DbType.Int32);
             parameters.Add(DBParameterName.OrganizationParams.OrgId, orgId, DbType.Int64);
-            parameters.Add(DBParameterName.OrganizationParams.AuthUserId, authUserId, DbType.Int64);
+            parameters.Add(DBParameterName.OrganizationParams.AuthUserId, authUserId, DbType.Guid);
             parameters.Add(DBParameterName.OrganizationParams.UpdatedBy, updatedBy, DbType.Int64);
             parameters.Add(DBParameterName.OrganizationParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);

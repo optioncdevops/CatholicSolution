@@ -14,7 +14,7 @@ namespace CFR.DataSyncInfrastructure.Models.Output
         /// </summary>
         public string ResultCode { get; set; } = string.Empty;
 
-        public long? CFRUserId { get; set; }
+        public Guid? CFRUserId { get; set; }
 
         public long? CFRUserDetailId { get; set; }
 

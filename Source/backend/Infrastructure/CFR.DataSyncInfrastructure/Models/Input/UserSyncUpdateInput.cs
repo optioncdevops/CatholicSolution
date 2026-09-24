@@ -6,15 +6,15 @@ using System.Text.Json.Serialization;
 namespace CFR.DataSyncInfrastructure.Models.Input
 {
     /// <summary>
-    /// Create payload for the single-user sync API. ProductId is deliberately NOT a property
-    /// here — it is resolved only from the authenticated ApiClient. <see cref="ExtraFields"/>
-    /// exists solely so the service layer can detect and reject a client-supplied "productId" field
-    /// (System.Text.Json silently drops unknown properties by default, which would not satisfy the
-    /// spec's hard PRODUCT_SCOPE_VIOLATION rule without this catch-all). Update/patch use
-    /// <see cref="UserSyncUpdateInput"/> instead — it has no PasswordEncrypted, since a password is
-    /// set only at identity creation and every later sync of that identity leaves it untouched.
+    /// Update/patch payload for the single-user sync API — the same fields as
+    /// <see cref="UserSyncInput"/> minus PasswordEncrypted, which is a create-only field (a
+    /// password is set once at identity creation; CFR owns it exclusively from then on, so a
+    /// later sync of the same identity never overwrites a password the user may have already
+    /// changed inside CFR). ProductId is deliberately NOT a property here — it is resolved only
+    /// from the authenticated ApiClient. <see cref="ExtraFields"/> exists solely so the service
+    /// layer can detect and reject a client-supplied "productId" field.
     /// </summary>
-    public class UserSyncInput: IUserSyncFields
+    public class UserSyncUpdateInput: IUserSyncFields
     {
         /// <summary>The product's own user identifier.</summary>
         [JsonPropertyName("externalUserId")]
@@ -40,20 +40,13 @@ namespace CFR.DataSyncInfrastructure.Models.Input
         [JsonPropertyName("roleId")]
         public int? RoleId { get; set; }
 
-        /// <summary>Login-disabled flag; defaults to false when omitted on create.</summary>
+        /// <summary>Login-disabled flag; defaults to false when omitted.</summary>
         [JsonPropertyName("isLoginDisabled")]
         public bool? IsLoginDisabled { get; set; }
 
-        /// <summary>Active/usable flag; defaults to true when omitted on create.</summary>
+        /// <summary>Active/usable flag; defaults to true when omitted.</summary>
         [JsonPropertyName("isActive")]
         public bool? IsActive { get; set; }
-
-        /// <summary>
-        /// Legacy password blob, already re-encrypted by the product with its own passphrase-based
-        /// scheme — stored as-is on auth.User at identity creation only; CFR never sees plaintext.
-        /// </summary>
-        [JsonPropertyName("passwordEncrypted")]
-        public byte[]? PasswordEncrypted { get; set; }
 
         /// <summary>Catch-all for unrecognized body fields — used only to detect a rejected "productId".</summary>
         [JsonExtensionData]

@@ -294,8 +294,11 @@ namespace CFR.AcutisService.Service.Administration
                     // AccessRequestId (always > 0, traceable) for CfrOrgID, and the approving staff
                     // member's own id for CfrUserID. Revisit this if SMS ever starts using either
                     // value for something real, since neither claims to be the true CFR org/requester.
+                    // context.CFRUserId (auth.User.CFRUserId) is now a GUID and can no longer be sent
+                    // as-is on this int-typed external field, so the staff member's own id is always
+                    // used here.
                     CfrOrgID = accessRequestId,
-                    CfrUserID = context.CFRUserId is > 0 ? context.CFRUserId.Value : (int)currentUserService.UserId,
+                    CfrUserID = (int)currentUserService.UserId,
                 };
 
                 // Mirrors SMS's own required-field check (OptionC.SMSService.Service.CFR.CFRService.

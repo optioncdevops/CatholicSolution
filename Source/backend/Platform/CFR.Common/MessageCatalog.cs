@@ -235,12 +235,17 @@ namespace CFR.Common
         {
             public const string AuthenticationFailed = "Login failed for ClientId {ClientId}";
             public const string CreateUserFailed = "Error while creating synced user for productOrgId {ProductOrgId}";
+            public const string BulkCreateUsersFailed = "Error while bulk-creating synced users ({UserCount} rows)";
             public const string UpdateUserFailed = "Error while updating synced user {ExternalUserId}";
             public const string PatchUserFailed = "Error while patching synced user {ExternalUserId}";
             public const string DeactivateUserFailed = "Error while deactivating synced user {ExternalUserId}";
             public const string ReactivateUserFailed = "Error while reactivating synced user {ExternalUserId}";
+            public const string SetLoginDisabledFailed = "Error while setting IsLoginDisabled for synced user {ExternalUserId}";
+            public const string SetActiveFailed = "Error while setting IsActive for synced user {ExternalUserId}";
             public const string GetUserFailed = "Error while fetching synced user {ExternalUserId}";
             public const string GetUserProductsFailed = "Error while fetching products for CFR email {Email}";
+            public const string UpsertProductRoleFailed = "Error while upserting product role for ProductId {ProductId}";
+            public const string GetProductRolesFailed = "Error while fetching product roles for ProductId {ProductId}";
             public const string LaunchProductFailed = "Error while launching product {ProductId} for CFR email {Email}";
         }
 

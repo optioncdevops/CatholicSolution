@@ -39,11 +39,20 @@ namespace CFR.Base.Middlewares
             // Validate and extract user ID
             string? userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
             long userId = 0;
+            Guid? cfrUserId = null;
             bool isValidUserId = false;
 
             if (!string.IsNullOrEmpty(userIdClaim))
             {
-                isValidUserId = long.TryParse(CommonMethods.DecryptValue(userIdClaim), out userId);
+                string decryptedUserIdClaim = CommonMethods.DecryptValue(userIdClaim);
+                isValidUserId = long.TryParse(decryptedUserIdClaim, out userId);
+                if (!isValidUserId && Guid.TryParse(decryptedUserIdClaim, out Guid parsedCfrUserId))
+                {
+                    // CFR.Portal sessions carry the member's auth.User.CFRUserId (a GUID) here
+                    // instead of a long — Acutis/DataSync sessions still resolve via the branch above.
+                    cfrUserId = parsedCfrUserId;
+                    isValidUserId = true;
+                }
             }
             else
             {
@@ -51,6 +60,11 @@ namespace CFR.Base.Middlewares
                 if (!string.IsNullOrEmpty(ssoUserIdClaim))
                 {
                     isValidUserId = long.TryParse(ssoUserIdClaim, out userId);
+                    if (!isValidUserId && Guid.TryParse(ssoUserIdClaim, out Guid parsedCfrUserId))
+                    {
+                        cfrUserId = parsedCfrUserId;
+                        isValidUserId = true;
+                    }
                 }
             }
 
@@ -63,6 +77,7 @@ namespace CFR.Base.Middlewares
 
             // Set user details in the current user service
             currentUserService.UserId = userId;
+            currentUserService.CFRUserId = cfrUserId;
             currentUserService.ClientIPAddress = context.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
             currentUserService.DeviceType = clientInfo.Device.Family ?? "Unknown";
             currentUserService.BrowserName = clientInfo.UA.Family ?? "Unknown";
