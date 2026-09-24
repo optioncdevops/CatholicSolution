@@ -30,7 +30,7 @@ namespace CFR.PortalInfrastructure.Models.Output
         /// <summary>
         /// Gets or sets the CFR member identifier.
         /// </summary>
-        public int CFRUserId { get; set; }
+        public Guid CFRUserId { get; set; }
 
         /// <summary>
         /// Gets or sets the member email address.

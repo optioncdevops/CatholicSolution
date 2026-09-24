@@ -1,16 +1,20 @@
 // Copyright (c) OptionC. All rights reserved.
 
 using CFR.DataSyncInfrastructure.Interfaces.OrganizationSync;
+using CFR.DataSyncInfrastructure.Interfaces.ProductRole;
 using CFR.DataSyncInfrastructure.Interfaces.ProductSync;
 using CFR.DataSyncInfrastructure.Interfaces.Security;
 using CFR.DataSyncInfrastructure.Interfaces.UserSync;
 using CFR.DataSyncInfrastructure.Repositorys.OrganizationSync;
+using CFR.DataSyncInfrastructure.Repositorys.ProductRole;
 using CFR.DataSyncInfrastructure.Repositorys.ProductSync;
 using CFR.DataSyncInfrastructure.Repositorys.Security;
 using CFR.DataSyncInfrastructure.Repositorys.UserSync;
 using CFR.DataSyncService.Interfaces.OrganizationSync;
+using CFR.DataSyncService.Interfaces.ProductRole;
 using CFR.DataSyncService.Interfaces.ProductSync;
 using CFR.DataSyncService.Service.OrganizationSync;
+using CFR.DataSyncService.Service.ProductRole;
 using CFR.DataSyncService.Service.ProductSync;
 using CFR.DataSyncService.Service.Security;
 using CFR.DataSyncService.Service.UserSync;
@@ -50,6 +54,10 @@ namespace CFR.DataSync
             // ProductSync services and repository
             services.AddScoped<IProductSyncService, ProductSyncService>();
             services.AddScoped<IProductSyncRepository, ProductSyncRepository>();
+
+            // ProductRole services and repository
+            services.AddScoped<IProductRoleService, ProductRoleService>();
+            services.AddScoped<IProductRoleRepository, ProductRoleRepository>();
 
             return services;
         }

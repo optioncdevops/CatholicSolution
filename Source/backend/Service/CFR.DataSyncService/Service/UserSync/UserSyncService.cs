@@ -15,6 +15,10 @@ namespace CFR.DataSyncService.Service.UserSync
     {
         private static readonly TimeSpan IdempotencyTtl = TimeSpan.FromHours(24);
 
+        /// <summary>Row cap for one bulk request — a large one-time migration should be chunked
+        /// by the caller rather than sent as a single, very long-running HTTP call.</summary>
+        private const int MaxBulkUserCount = 500;
+
         #region POST Methods
 
         /// <inheritdoc />
@@ -59,12 +63,80 @@ namespace CFR.DataSyncService.Service.UserSync
             return result;
         }
 
+        /// <inheritdoc />
+        public async Task<MSResultArgs> BulkCreateUsersAsync(BulkUserSyncInput input, string traceId, string? sourceIp)
+        {
+            var result = new MSResultArgs { TraceId = traceId };
+            List<UserSyncInput> users = input?.Users ?? [];
+            try
+            {
+                if (users.Count == 0)
+                {
+                    SetValidationFailed(result, "users", SyncErrorCodes.ValidationFailed);
+                    return result;
+                }
+
+                if (users.Count > MaxBulkUserCount)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.PayloadTooLarge;
+                    result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.PayloadTooLarge));
+                    return result;
+                }
+
+                if (TryFindDuplicateRow(users, result))
+                {
+                    return result;
+                }
+
+                var output = new BulkUserSyncOutput { TotalCount = users.Count, TraceId = traceId };
+                foreach (var user in users)
+                {
+                    // No Idempotency-Key per row — that header dedupes retries of one request, and
+                    // reusing the same key across many different payloads here would make every row
+                    // after the first look like an IDEMPOTENCY_KEY_REUSE conflict instead of its own
+                    // real outcome. Each row still gets CreateUserAsync's full validation and the
+                    // productId-in-body hard rule; one bad row does not fail the whole batch.
+                    var rowResult = await CreateUserAsync(user, idempotencyKey: null, contentSha256Hex: string.Empty, traceId, sourceIp);
+                    bool success = rowResult.StatusCode is ErrorCodes.Created or ErrorCodes.Success;
+                    output.Results.Add(new UserSyncBulkResultItem
+                    {
+                        ExternalUserId = user.ExternalUserId,
+                        Success = success,
+                        StatusCode = rowResult.StatusCode,
+                        StatusMessage = rowResult.StatusMessage ?? string.Empty,
+                        User = success ? rowResult.ResultData as UserSyncOutput : null,
+                    });
+
+                    if (success)
+                    {
+                        output.SuccessCount++;
+                    }
+                    else
+                    {
+                        output.FailedCount++;
+                    }
+                }
+
+                result.StatusCode = ErrorCodes.Success;
+                result.StatusMessage = ErrorMessages.Success;
+                result.ResultData = output;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.SyncLogMessages.BulkCreateUsersFailed, users.Count);
+                SetInternalError(result);
+            }
+
+            return result;
+        }
+
         #endregion POST Methods
 
         #region PUT Methods
 
         /// <inheritdoc />
-        public async Task<MSResultArgs> UpdateUserFullAsync(string externalUserId, UserSyncInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp)
+        public async Task<MSResultArgs> UpdateUserFullAsync(string externalUserId, UserSyncUpdateInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp)
         {
             var result = new MSResultArgs { TraceId = traceId };
             try
@@ -97,7 +169,7 @@ namespace CFR.DataSyncService.Service.UserSync
         #region PATCH Methods
 
         /// <inheritdoc />
-        public async Task<MSResultArgs> UpdateUserPartialAsync(string externalUserId, UserSyncInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp)
+        public async Task<MSResultArgs> UpdateUserPartialAsync(string externalUserId, UserSyncUpdateInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp)
         {
             var result = new MSResultArgs { TraceId = traceId };
             try
@@ -189,11 +261,49 @@ namespace CFR.DataSyncService.Service.UserSync
             return result;
         }
 
+        /// <inheritdoc />
+        public async Task<MSResultArgs> SetLoginDisabledAsync(string externalUserId, int productOrgId, bool isLoginDisabled, string? ifMatchRowVersionBase64, string traceId, string? sourceIp)
+        {
+            var result = new MSResultArgs { TraceId = traceId };
+            try
+            {
+                byte[]? expectedRowVersion = ParseRowVersion(ifMatchRowVersionBase64);
+                var upsertResult = await repository.SetLoginDisabledAsync(currentApiClient.ProductId, externalUserId, productOrgId, isLoginDisabled, currentApiClient.ApiClientId, traceId, expectedRowVersion, sourceIp);
+                MapResultToEnvelope(upsertResult, ErrorCodes.Success, result);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.SyncLogMessages.SetLoginDisabledFailed, externalUserId);
+                SetInternalError(result);
+            }
+
+            return result;
+        }
+
+        /// <inheritdoc />
+        public async Task<MSResultArgs> SetActiveAsync(string externalUserId, int productOrgId, bool isActive, string? ifMatchRowVersionBase64, string traceId, string? sourceIp)
+        {
+            var result = new MSResultArgs { TraceId = traceId };
+            try
+            {
+                byte[]? expectedRowVersion = ParseRowVersion(ifMatchRowVersionBase64);
+                var upsertResult = await repository.SetActiveAsync(currentApiClient.ProductId, externalUserId, productOrgId, isActive, currentApiClient.ApiClientId, traceId, expectedRowVersion, sourceIp);
+                MapResultToEnvelope(upsertResult, ErrorCodes.Success, result);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.SyncLogMessages.SetActiveFailed, externalUserId);
+                SetInternalError(result);
+            }
+
+            return result;
+        }
+
         #endregion STATUS Methods
 
         #region Helpers
 
-        private static bool TryRejectProductIdInBody(UserSyncInput input, MSResultArgs result)
+        private static bool TryRejectProductIdInBody(IUserSyncFields input, MSResultArgs result)
         {
             if (input.ExtraFields == null)
             {
@@ -214,7 +324,7 @@ namespace CFR.DataSyncService.Service.UserSync
             return false;
         }
 
-        private static bool ValidateRequiredFields(UserSyncInput input, MSResultArgs result)
+        private static bool ValidateRequiredFields(IUserSyncFields input, MSResultArgs result)
         {
             if (string.IsNullOrWhiteSpace(input.ExternalUserId))
             {
@@ -241,6 +351,23 @@ namespace CFR.DataSyncService.Service.UserSync
             }
 
             return true;
+        }
+
+        private static bool TryFindDuplicateRow(List<UserSyncInput> users, MSResultArgs result)
+        {
+            var seen = new HashSet<(string ExternalUserId, int ProductOrgId)>();
+            foreach (var user in users)
+            {
+                if (!seen.Add((user.ExternalUserId, user.ProductOrgId)))
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.DuplicateInFile;
+                    result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.DuplicateInFile));
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void SetValidationFailed(MSResultArgs result, string field, string code)
@@ -287,7 +414,7 @@ namespace CFR.DataSyncService.Service.UserSync
             result.StatusMessage = ErrorMessages.Success;
             result.ResultData = new UserSyncOutput
             {
-                CfrUserId = upsertResult.CFRUserId ?? 0,
+                CfrUserId = upsertResult.CFRUserId ?? Guid.Empty,
                 CfrUserDetailId = upsertResult.CFRUserDetailId ?? 0,
                 CfrOrgId = upsertResult.CFROrgId ?? 0,
                 Email = upsertResult.Email ?? string.Empty,

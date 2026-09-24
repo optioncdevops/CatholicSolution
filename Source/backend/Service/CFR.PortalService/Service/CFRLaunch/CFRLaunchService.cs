@@ -28,7 +28,7 @@ namespace CFR.PortalService.Service.CFRLaunch
             var result = new MSResultArgs();
             try
             {
-                if (currentUserService.UserId <= 0)
+                if (currentUserService.CFRUserId is not { } cfrUserId || cfrUserId == Guid.Empty)
                 {
                     result.StatusCode = ErrorCodes.UnAuthorized;
                     result.StatusMessage = ErrorMessages.UnAuthorized;
@@ -39,7 +39,7 @@ namespace CFR.PortalService.Service.CFRLaunch
             }
             catch (Exception ex)
             {
-                AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.FetchAssignedProductsFailed, currentUserService.UserId);
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.FetchAssignedProductsFailed, currentUserService.CFRUserId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
@@ -69,7 +69,7 @@ namespace CFR.PortalService.Service.CFRLaunch
             var result = new MSResultArgs();
             try
             {
-                if (currentUserService.UserId <= 0)
+                if (currentUserService.CFRUserId is not { } cfrUserId || cfrUserId == Guid.Empty)
                 {
                     result.StatusCode = ErrorCodes.UnAuthorized;
                     result.StatusMessage = ErrorMessages.UnAuthorized;
@@ -129,7 +129,7 @@ namespace CFR.PortalService.Service.CFRLaunch
                     return result;
                 }
 
-                logger.LogInformation("SSO launch created. UserId {UserId} ProductId {ProductId} LaunchId {LaunchId}", currentUserService.UserId, row.ProductId, row.LaunchId);
+                logger.LogInformation("SSO launch created. UserId {UserId} ProductId {ProductId} LaunchId {LaunchId}", currentUserService.CFRUserId, row.ProductId, row.LaunchId);
                 result.ResultData = new CFRLaunchOutput
                 {
                     ProductId = row.ProductId,
@@ -139,7 +139,7 @@ namespace CFR.PortalService.Service.CFRLaunch
             }
             catch (Exception ex)
             {
-                AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.LaunchProductFailed, input?.ProductId ?? 0, currentUserService.UserId);
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.PortalLogMessages.LaunchProductFailed, input?.ProductId ?? 0, currentUserService.CFRUserId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
@@ -210,7 +210,7 @@ namespace CFR.PortalService.Service.CFRLaunch
                     return result;
                 }
 
-                if (returnValue != 1 || row == null || string.IsNullOrWhiteSpace(row.EMail) || row.CFRUserId <= 0)
+                if (returnValue != 1 || row == null || string.IsNullOrWhiteSpace(row.EMail) || row.CFRUserId == Guid.Empty)
                 {
                     result.StatusCode = ErrorCodes.UnAuthorized;
                     result.StatusMessage = ErrorMessages.InvalidAuthorizationCode;

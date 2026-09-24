@@ -85,7 +85,7 @@ namespace CFR.AcutisService.Interfaces.Organization
         /// <param name="orgId">Organization identifier.</param>
         /// <param name="authUserId">Member identifier.</param>
         /// <returns>MSResultArgs containing the membership detail.</returns>
-        Task<MSResultArgs> GetOrganizationUserDetailAsync(long orgId, long authUserId);
+        Task<MSResultArgs> GetOrganizationUserDetailAsync(long orgId, Guid authUserId);
 
         /// <summary>
         /// Retrieves the real products assigned to an organization.
@@ -214,7 +214,7 @@ namespace CFR.AcutisService.Interfaces.Organization
         /// <param name="orgId">Organization identifier.</param>
         /// <param name="authUserId">User identifier to unlink.</param>
         /// <returns>MSResultArgs containing the unlink status.</returns>
-        Task<MSResultArgs> UnlinkOrganizationUserAsync(long orgId, long authUserId);
+        Task<MSResultArgs> UnlinkOrganizationUserAsync(long orgId, Guid authUserId);
 
         #endregion DELETE Methods
 

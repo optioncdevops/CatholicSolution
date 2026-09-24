@@ -22,6 +22,6 @@ namespace CFR.PortalService.Interfaces.Authentication
         /// <param name="productId">Product that exchanged the code.</param>
         /// <param name="launchId">Launch transaction identifier used as jti.</param>
         /// <returns>JWT string.</returns>
-        string GenerateIdentityToken(int cfrUserId, string email, int productId, int launchId);
+        string GenerateIdentityToken(Guid cfrUserId, string email, int productId, int launchId);
     }
 }

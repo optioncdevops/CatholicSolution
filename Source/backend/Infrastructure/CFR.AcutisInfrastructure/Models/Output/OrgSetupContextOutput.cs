@@ -15,7 +15,7 @@ namespace CFR.AcutisInfrastructure.Models.Output
     {
         public int? OrgId { get; set; }
 
-        public int? CFRUserId { get; set; }
+        public Guid? CFRUserId { get; set; }
 
         public string? FirstName { get; set; }
 
