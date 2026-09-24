@@ -6,8 +6,8 @@ using System.Security.Cryptography;
 namespace CFR.DataSyncService.Service.UserSync
 {
     /// <summary>
-    /// Implements the single-user sync business logic: validation, the productId-in-body hard
-    /// rule, Idempotency-Key handling, If-Match concurrency, and ResultCode-to-MSResultArgs mapping.
+    /// Implements the single-user sync business logic: validation, Idempotency-Key handling,
+    /// If-Match concurrency, and ResultCode-to-MSResultArgs mapping.
     /// Repository Responsibility:
     /// - Invokes IUserSyncRepository for the actual create/update/get/deactivate/reactivate call.
     /// </summary>
@@ -27,11 +27,6 @@ namespace CFR.DataSyncService.Service.UserSync
             var result = new MSResultArgs { TraceId = traceId };
             try
             {
-                if (TryRejectProductIdInBody(input, result))
-                {
-                    return result;
-                }
-
                 if (!ValidateRequiredFields(input, result))
                 {
                     return result;
@@ -95,8 +90,8 @@ namespace CFR.DataSyncService.Service.UserSync
                     // No Idempotency-Key per row — that header dedupes retries of one request, and
                     // reusing the same key across many different payloads here would make every row
                     // after the first look like an IDEMPOTENCY_KEY_REUSE conflict instead of its own
-                    // real outcome. Each row still gets CreateUserAsync's full validation and the
-                    // productId-in-body hard rule; one bad row does not fail the whole batch.
+                    // real outcome. Each row still gets CreateUserAsync's full validation; one bad
+                    // row does not fail the whole batch.
                     var rowResult = await CreateUserAsync(user, idempotencyKey: null, contentSha256Hex: string.Empty, traceId, sourceIp);
                     bool success = rowResult.StatusCode is ErrorCodes.Created or ErrorCodes.Success;
                     output.Results.Add(new UserSyncBulkResultItem
@@ -141,11 +136,6 @@ namespace CFR.DataSyncService.Service.UserSync
             var result = new MSResultArgs { TraceId = traceId };
             try
             {
-                if (TryRejectProductIdInBody(input, result))
-                {
-                    return result;
-                }
-
                 if (!ValidateRequiredFields(input, result))
                 {
                     return result;
@@ -174,11 +164,6 @@ namespace CFR.DataSyncService.Service.UserSync
             var result = new MSResultArgs { TraceId = traceId };
             try
             {
-                if (TryRejectProductIdInBody(input, result))
-                {
-                    return result;
-                }
-
                 if (!ValidateRequiredFields(input, result))
                 {
                     return result;
@@ -302,27 +287,6 @@ namespace CFR.DataSyncService.Service.UserSync
         #endregion STATUS Methods
 
         #region Helpers
-
-        private static bool TryRejectProductIdInBody(IUserSyncFields input, MSResultArgs result)
-        {
-            if (input.ExtraFields == null)
-            {
-                return false;
-            }
-
-            foreach (string key in input.ExtraFields.Keys)
-            {
-                if (string.Equals(key, "productId", StringComparison.OrdinalIgnoreCase))
-                {
-                    result.StatusCode = ErrorCodes.Forbidden;
-                    result.StatusMessage = ErrorMessages.ProductScopeViolation;
-                    result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.ProductScopeViolation));
-                    return true;
-                }
-            }
-
-            return false;
-        }
 
         private static bool ValidateRequiredFields(IUserSyncFields input, MSResultArgs result)
         {

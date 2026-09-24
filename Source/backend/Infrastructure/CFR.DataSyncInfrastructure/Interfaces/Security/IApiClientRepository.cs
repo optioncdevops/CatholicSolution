@@ -11,6 +11,8 @@ namespace CFR.DataSyncInfrastructure.Interfaces.Security
     /// </summary>
     public interface IApiClientRepository
     {
+        #region GET Methods
+
         /// <summary>
         /// Fetches an ApiClient row by ClientId.
         /// </summary>
@@ -41,6 +43,10 @@ namespace CFR.DataSyncInfrastructure.Interfaces.Security
         /// <param name="idempotencyKey">Client-supplied Idempotency-Key header value.</param>
         /// <returns>The stored record, or null when this key has not been used before.</returns>
         Task<IdempotencyRecordOutput?> GetIdempotencyRecordAsync(int apiClientId, string idempotencyKey);
+
+        #endregion GET Methods
+
+        #region POST Methods
 
         /// <summary>
         /// Saves a new idempotency record.
@@ -81,5 +87,7 @@ namespace CFR.DataSyncInfrastructure.Interfaces.Security
         /// <param name="insertedBy">Who/what created the row.</param>
         /// <returns>The new ApiClientId.</returns>
         Task<int> CreateApiClientAsync(string clientId, string clientSecret, int productId, string? displayName, int rateLimitPerMinute, string? insertedBy);
+
+        #endregion POST Methods
     }
 }

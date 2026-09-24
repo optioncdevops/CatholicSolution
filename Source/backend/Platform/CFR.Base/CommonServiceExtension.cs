@@ -116,7 +116,6 @@ public static class ServiceExtension
             }
 
             c.EnableAnnotations();
-            c.SchemaFilter<ExtensionDataSchemaFilter>();
 
             c.AddSecurityDefinition(JWTDocs.Bearer, new OpenApiSecurityScheme
             {

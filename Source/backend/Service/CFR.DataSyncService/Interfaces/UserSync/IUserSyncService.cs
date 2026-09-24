@@ -6,8 +6,9 @@ namespace CFR.DataSyncService.Interfaces.UserSync
     /// Service contract for the single-user sync operations.
     /// Acts as the business-logic layer between UsersController and IUserSyncRepository.
     /// Responsibility:
-    /// - Validates input, enforces the productId-in-body hard rule, handles idempotency and
-    ///   If-Match concurrency, and translates stored-procedure ResultCodes into MSResultArgs.
+    /// - Validates input, handles idempotency and If-Match concurrency, and translates
+    ///   stored-procedure ResultCodes into MSResultArgs. ProductId is never bound from the
+    ///   request body; it is always resolved from the authenticated ApiClient.
     /// </summary>
     public interface IUserSyncService
     {
@@ -19,7 +20,7 @@ namespace CFR.DataSyncService.Interfaces.UserSync
         /// <remarks>
         /// Purpose: Add a new membership row, creating the CFR identity if needed.
         /// Request Flow: UsersController -> IUserSyncService.CreateUserAsync() -> IUserSyncRepository.CreateUserAsync().
-        /// Validation Details: Required fields, email format, and the productId-in-body hard rule.
+        /// Validation Details: Required fields and email format.
         /// Business Logic: Idempotency-Key short-circuit (replay or 409 IDEMPOTENCY_KEY_REUSE),
         /// then delegates to the repository and maps its ResultCode to MSResultArgs.
         /// Repository Interaction: Calls IUserSyncRepository.CreateUserAsync().
@@ -41,8 +42,8 @@ namespace CFR.DataSyncService.Interfaces.UserSync
         /// without one HTTP round trip per user.
         /// Request Flow: UsersController -> IUserSyncService.BulkCreateUsersAsync() -> CreateUserAsync() per row.
         /// Validation Details: Batch-level row-count limit and in-batch externalUserId/productOrgId
-        /// duplicate check, then each row goes through CreateUserAsync's own validation and the
-        /// productId-in-body hard rule — one bad row does not fail the whole batch.
+        /// duplicate check, then each row goes through CreateUserAsync's own validation — one bad
+        /// row does not fail the whole batch.
         /// Business Logic: Loops the batch and reuses CreateUserAsync per row (no per-row
         /// Idempotency-Key — that header is a single-request concept, not meaningful across a
         /// batch of distinct payloads), aggregating a per-row result list plus success/failure counts.
@@ -65,7 +66,7 @@ namespace CFR.DataSyncService.Interfaces.UserSync
         /// <remarks>
         /// Purpose: Update FirstName, LastName, RoleId, IsLoginDisabled, IsActive in full.
         /// Request Flow: UsersController -> IUserSyncService.UpdateUserFullAsync() -> IUserSyncRepository.UpdateUserFullAsync().
-        /// Validation Details: Required fields, email format, and the productId-in-body hard rule.
+        /// Validation Details: Required fields and email format.
         /// Business Logic: Applies the If-Match RowVersion check and maps the ResultCode.
         /// Repository Interaction: Calls IUserSyncRepository.UpdateUserFullAsync().
         /// Response Details: MSResultArgs containing the updated user, or the mapped error.
@@ -89,7 +90,7 @@ namespace CFR.DataSyncService.Interfaces.UserSync
         /// Purpose: Update FirstName, LastName, RoleId, IsLoginDisabled, IsActive in full — identical
         /// to UpdateUserFullAsync, kept as a distinct route only for the PATCH verb's semantics.
         /// Request Flow: UsersController -> IUserSyncService.UpdateUserPartialAsync() -> IUserSyncRepository.UpdateUserPartialAsync().
-        /// Validation Details: Required fields and the productId-in-body hard rule.
+        /// Validation Details: Required fields.
         /// Business Logic: Applies the If-Match RowVersion check and maps the ResultCode.
         /// Repository Interaction: Calls IUserSyncRepository.UpdateUserPartialAsync().
         /// Response Details: MSResultArgs containing the updated user, or the mapped error.

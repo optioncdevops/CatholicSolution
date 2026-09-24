@@ -1,7 +1,5 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using System.Text.Json.Serialization;
-
 namespace CFR.DataSyncInfrastructure.Models.Output
 {
     /// <summary>
