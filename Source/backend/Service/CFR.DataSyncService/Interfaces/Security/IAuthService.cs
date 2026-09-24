@@ -8,6 +8,8 @@ namespace CFR.DataSyncService.Interfaces.Security
     /// </summary>
     public interface IAuthService
     {
+        #region POST Methods
+
         /// <summary>
         /// Validates a ClientId/ClientSecret pair and issues a JWT for the matching ApiClient.
         /// </summary>
@@ -24,5 +26,7 @@ namespace CFR.DataSyncService.Interfaces.Security
         /// <param name="input">The ClientId/ClientSecret to validate.</param>
         /// <returns>MSResultArgs containing the issued token, or an error.</returns>
         Task<MSResultArgs> LoginAsync(AuthLoginInput input);
+
+        #endregion POST Methods
     }
 }

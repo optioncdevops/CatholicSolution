@@ -9,6 +9,8 @@ namespace CFR.DataSyncInfrastructure.Repositorys.Security
     /// </summary>
     public class ApiClientRepository(IDapperHandler dapperHandler): IApiClientRepository
     {
+        #region GET Methods
+
         /// <summary>
         /// Fetches an ApiClient row by ClientId using StoredProc.Security.SecurityManage.
         /// </summary>
@@ -54,6 +56,10 @@ namespace CFR.DataSyncInfrastructure.Repositorys.Security
             var result = await dapperHandler.QueryAsync<IdempotencyRecordOutput>(StoredProc.Security.SecurityManage, parameters, CommandType.StoredProcedure);
             return result.FirstOrDefault();
         }
+
+        #endregion GET Methods
+
+        #region POST Methods
 
         /// <summary>
         /// Saves a new idempotency record using StoredProc.Security.SecurityManage.
@@ -119,5 +125,7 @@ namespace CFR.DataSyncInfrastructure.Repositorys.Security
             _ = await dapperHandler.ExecuteAsync(StoredProc.Security.SecurityManage, parameters, CommandType.StoredProcedure);
             return parameters.Get<int>(DBParameterName.SecurityParams.ReturnValue);
         }
+
+        #endregion POST Methods
     }
 }

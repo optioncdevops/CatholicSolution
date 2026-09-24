@@ -1,7 +1,5 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using System.Text.Json;
-
 namespace CFR.DataSyncInfrastructure.Models.Input
 {
     /// <summary>
@@ -35,8 +33,5 @@ namespace CFR.DataSyncInfrastructure.Models.Input
 
         /// <summary>Active/usable flag; defaults to true when omitted on create.</summary>
         bool? IsActive { get; }
-
-        /// <summary>Catch-all for unrecognized body fields — used only to detect a rejected "productId".</summary>
-        Dictionary<string, JsonElement>? ExtraFields { get; }
     }
 }

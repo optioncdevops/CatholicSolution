@@ -23,7 +23,7 @@ namespace CFR.DataSync.Controllers.UserSync
         /// <remarks>
         /// Purpose: Let a product push a newly-created local user into CFR.
         /// Request Flow: Client API POST -> UsersController.CreateUser() -> IUserSyncService.CreateUserAsync() -> Database.
-        /// Validation Details: Handled inside the service layer, including the productId-in-body hard rule.
+        /// Validation Details: Handled inside the service layer.
         /// Business Logic: None at the controller level; delegates to the service layer.
         /// Service Interaction: Calls IUserSyncService.CreateUserAsync().
         /// Response Details: Standard API result enclosing UserSyncOutput with status 201, or an error.
@@ -174,7 +174,7 @@ namespace CFR.DataSync.Controllers.UserSync
         /// <remarks>
         /// Purpose: Let a product push a full local user update into CFR.
         /// Request Flow: Client API PUT -> UsersController.UpdateUser() -> IUserSyncService.UpdateUserFullAsync() -> Database.
-        /// Validation Details: Handled inside the service layer, including the productId-in-body hard rule.
+        /// Validation Details: Handled inside the service layer.
         /// Business Logic: None at the controller level; delegates to the service layer.
         /// Service Interaction: Calls IUserSyncService.UpdateUserFullAsync().
         /// Response Details: Standard API result enclosing UserSyncOutput, or an error.
@@ -202,7 +202,7 @@ namespace CFR.DataSync.Controllers.UserSync
         /// <remarks>
         /// Purpose: Let a product push a partial local user update into CFR.
         /// Request Flow: Client API PATCH -> UsersController.PatchUser() -> IUserSyncService.UpdateUserPartialAsync() -> Database.
-        /// Validation Details: Handled inside the service layer, including the productId-in-body hard rule.
+        /// Validation Details: Handled inside the service layer.
         /// Business Logic: None at the controller level; delegates to the service layer.
         /// Service Interaction: Calls IUserSyncService.UpdateUserPartialAsync().
         /// Response Details: Standard API result enclosing UserSyncOutput, or an error.

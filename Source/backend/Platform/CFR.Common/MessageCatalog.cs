@@ -118,7 +118,6 @@ namespace CFR.Common
         // CFR.DataSync — HMAC auth + user sync
         public const string Unauthenticated = "Authentication failed.";
         public const string ScopeDenied = "The API client is not authorized for this operation.";
-        public const string ProductScopeViolation = "productId is not accepted in the request body.";
         public const string ValidationFailed = "The request failed validation.";
         public const string InvalidEmail = "The email address is not a valid format.";
         public const string OrgNotOnboarded = "The organization is not onboarded for this product.";
@@ -144,7 +143,6 @@ namespace CFR.Common
     {
         public const string Unauthenticated = "UNAUTHENTICATED";
         public const string ScopeDenied = "SCOPE_DENIED";
-        public const string ProductScopeViolation = "PRODUCT_SCOPE_VIOLATION";
         public const string ValidationFailed = "VALIDATION_FAILED";
         public const string InvalidEmail = "INVALID_EMAIL";
         public const string OrgNotOnboarded = "ORG_NOT_ONBOARDED";
@@ -252,6 +250,8 @@ namespace CFR.Common
             public const string SetLoginDisabledFailed = "Error while setting IsLoginDisabled for synced user {ExternalUserId}";
             public const string SetActiveFailed = "Error while setting IsActive for synced user {ExternalUserId}";
             public const string GetUserFailed = "Error while fetching synced user {ExternalUserId}";
+            public const string UpsertOrganizationFailed = "Error while upserting synced organization for productOrgId {ProductOrgId}";
+            public const string GetOrganizationFailed = "Error while fetching synced organization for productOrgId {ProductOrgId}";
             public const string GetUserProductsFailed = "Error while fetching products for CFR email {Email}";
             public const string UpsertProductRoleFailed = "Error while upserting product role for ProductId {ProductId}";
             public const string GetProductRolesFailed = "Error while fetching product roles for ProductId {ProductId}";
