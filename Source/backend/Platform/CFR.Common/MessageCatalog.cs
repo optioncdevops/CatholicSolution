@@ -168,9 +168,7 @@ namespace CFR.Common
         public static class MailLogMessages
         {
             public const string SendMailAttemptFailed = "SMTP send attempt {Attempt} to {ToAddress} via {SmtpServer} failed";
-            public const string SendMailDisabled = "Email to {ToAddress} not sent: SMTPMailConfig.SendMailFlag is not \"1\"";
-            public const string EmailLogoNotEmbedded = "Email logo file {LogoFileName} was not found on disk, so it was linked by URL instead of embedded - it will not show if ApiBaseUrl is not publicly reachable. Set EmailSettings:LogoDirectory or ApplicationFilePath:Doc_BasePath for this service.";
-        }
+            public const string SendMailDisabled = "Email to {ToAddress} not sent: SMTPMailConfig.SendMailFlag is not \"1\"";        }
 
         public static class AcutisLogMessages
         {

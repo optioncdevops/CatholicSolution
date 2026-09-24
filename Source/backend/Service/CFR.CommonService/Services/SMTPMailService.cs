@@ -33,19 +33,6 @@ namespace CFR.CommonService.Services
 
     public class SMTPMailService(ILogger<SMTPMailService> logger) : ISMTPMailService
     {
-        /// <summary>Content-ID of the email logo when it is embedded as an inline image ("cid:" reference).</summary>
-        private const string InlineLogoContentId = "cfr-email-logo";
-
-        /// <summary>MIME type for an embeddable logo file, or null for an unsupported extension.</summary>
-        private static string? GetImageMediaType(string path) => Path.GetExtension(path).ToLowerInvariant() switch
-        {
-            ".png" => "image/png",
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".gif" => "image/gif",
-            ".webp" => "image/webp",
-            _ => null,
-        };
-
         private static ConfSettings LoadData()
         {
             var obj = new ConfSettingsService();
@@ -291,40 +278,7 @@ namespace CFR.CommonService.Services
 
                     try
                     {
-                        // Embed the uploaded logo inside the email (inline "cid:" image) whenever the file
-                        // is on disk, so it shows for every recipient in every environment. A linked logo
-                        // only works when ApiBaseUrl is publicly reachable - on localhost/dev it was dropped
-                        // entirely (see GetLogoMarkup). Falls back to the old URL link when the file can't
-                        // be found or a per-template logo URL was explicitly passed in.
-                        byte[]? inlineLogo = null;
-                        string? inlineLogoMediaType = null;
-                        if (string.IsNullOrWhiteSpace(templateLogoUrl))
-                        {
-                            string? logoPath = ConfSettingsService.ResolveEmailLogoFilePath(settings?.SMTPMailConfig?.LogoUrl);
-                            inlineLogoMediaType = logoPath != null ? GetImageMediaType(logoPath) : null;
-                            if (logoPath != null && inlineLogoMediaType != null)
-                            {
-                                inlineLogo = await File.ReadAllBytesAsync(logoPath);
-                            }
-                        }
-
-                        string htmlBody = FormatMailContent(mailContent, inlineLogo != null ? $"cid:{InlineLogoContentId}" : templateLogoUrl, fontFamily, baseFontSize);
-                        using var mail = new MailMessage { From = new MailAddress(username, displayName), Subject = mailSubject, BodyEncoding = Encoding.UTF8, IsBodyHtml = true };
-                        if (inlineLogo != null)
-                        {
-                            var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, Encoding.UTF8, System.Net.Mime.MediaTypeNames.Text.Html);
-                            var logoResource = new LinkedResource(new MemoryStream(inlineLogo), inlineLogoMediaType!)
-                            {
-                                ContentId = InlineLogoContentId,
-                                TransferEncoding = System.Net.Mime.TransferEncoding.Base64,
-                            };
-                            htmlView.LinkedResources.Add(logoResource);
-                            mail.AlternateViews.Add(htmlView);
-                        }
-                        else
-                        {
-                            mail.Body = htmlBody;
-                        }
+                        using var mail = new MailMessage { From = new MailAddress(username, displayName), Subject = mailSubject, BodyEncoding = Encoding.UTF8, IsBodyHtml = true, Body = FormatMailContent(mailContent, templateLogoUrl, fontFamily, baseFontSize) };
                         if (!string.IsNullOrEmpty(toAddress))
                         {
                             foreach (string address in toAddress.Split(';'))
@@ -366,12 +320,6 @@ namespace CFR.CommonService.Services
                         //ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                         mail.BodyEncoding = Encoding.GetEncoding("utf-8");
                         mail.IsBodyHtml = true;
-                        string configuredLogo = settings?.SMTPMailConfig?.LogoUrl?.Trim() ?? string.Empty;
-                        if (inlineLogo == null && string.IsNullOrWhiteSpace(templateLogoUrl)
-                            && configuredLogo.Length > 0 && !string.Equals(configuredLogo, "none", StringComparison.OrdinalIgnoreCase))
-                        {
-                            AppLogger.LogWarning(logger, null, SerilogErrorMessages.MailLogMessages.EmailLogoNotEmbedded, settings?.SMTPMailConfig?.LogoUrl ?? string.Empty);
-                        }
 
                         //using var smtpClient = new SmtpClient(smtpServer, smtpPort)
                         //{
