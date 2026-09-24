@@ -29,7 +29,7 @@ namespace CFR.PortalInfrastructure.Repositorys.CFRLaunch
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.CFRLaunchParams.ActionId, 1, DbType.Int32);
-            parameters.Add(DBParameterName.CFRLaunchParams.CFRUserId, currentUserService.UserId, DbType.Int32);
+            parameters.Add(DBParameterName.CFRLaunchParams.CFRUserId, currentUserService.CFRUserId, DbType.Guid);
             parameters.Add(DBParameterName.CFRLaunchParams.EnvironmentName, environmentName, DbType.String);
             var result = await dapperHandler.QueryAsync<AssignedProductOutput>(StoredProc.CFRLaunch.CFRLaunchCrud, parameters, CommandType.StoredProcedure);
             return result.ToList();
@@ -58,9 +58,13 @@ namespace CFR.PortalInfrastructure.Repositorys.CFRLaunch
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.CFRLaunchParams.ActionId, 2, DbType.Int32);
-            parameters.Add(DBParameterName.CFRLaunchParams.CFRUserId, currentUserService.UserId, DbType.Int32);
+            parameters.Add(DBParameterName.CFRLaunchParams.CFRUserId, currentUserService.CFRUserId, DbType.Guid);
             parameters.Add(DBParameterName.CFRLaunchParams.ProductId, productId, DbType.Int32);
             parameters.Add(DBParameterName.CFRLaunchParams.CodeHash, codeHash, DbType.AnsiStringFixedLength, size: 64);
+            // NOTE: InsertedBy is a bigint audit column that, pre-migration, reused the same int
+            // CFRUserId value. There is no longer a bigint-shaped identity to stamp here now that
+            // the member identity is a GUID (currentUserService.UserId is unset for Portal sessions)
+            // -- flagged for a follow-up decision rather than stamping a meaningless 0.
             parameters.Add(DBParameterName.CFRLaunchParams.InsertedBy, currentUserService.UserId, DbType.Int64);
             parameters.Add(DBParameterName.CFRLaunchParams.EnvironmentName, environmentName, DbType.String);
             parameters.Add(DBParameterName.CFRLaunchParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);

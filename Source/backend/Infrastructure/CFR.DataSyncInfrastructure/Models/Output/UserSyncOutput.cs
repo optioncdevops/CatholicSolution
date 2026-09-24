@@ -11,7 +11,7 @@ namespace CFR.DataSyncInfrastructure.Models.Output
     {
         /// <summary>CFR's internal identity identifier.</summary>
         [JsonPropertyName("cfrUserId")]
-        public long CfrUserId { get; set; }
+        public Guid CfrUserId { get; set; }
 
         /// <summary>CFR's internal membership-row identifier.</summary>
         [JsonPropertyName("cfrUserDetailId")]

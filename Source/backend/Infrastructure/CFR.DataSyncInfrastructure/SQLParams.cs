@@ -164,6 +164,27 @@ namespace CFR.DataSyncInfrastructure
         }
 
         /// <summary>
+        /// Parameters for <see cref="StoredProc.ProductRole"/>.
+        /// </summary>
+        public static class ProductRoleParams
+        {
+            /// <summary>CRUD action identifier.</summary>
+            public const string ActionId = nameof(ActionId);
+
+            /// <summary>ProductId resolved from the authenticated ApiClient — never client-supplied.</summary>
+            public const string ProductId = nameof(ProductId);
+
+            /// <summary>Opaque per-product role identifier (same value stored on auth.UserProduct.RoleId).</summary>
+            public const string RoleId = nameof(RoleId);
+
+            /// <summary>Display name for the role.</summary>
+            public const string RoleName = nameof(RoleName);
+
+            /// <summary>Stored procedure output — the new/existing ProductRoleId (ActionId 1 only).</summary>
+            public const string ReturnValue = nameof(ReturnValue);
+        }
+
+        /// <summary>
         /// Parameters for <see cref="StoredProc.PlatformLaunch"/> (Portal's own [dbo].[Portal_PlatformLaunch] -
         /// CFR.DataSync only creates codes with it, using ActionId 1; it never exchanges them).
         /// </summary>

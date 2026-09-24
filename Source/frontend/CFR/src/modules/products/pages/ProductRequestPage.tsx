@@ -1,11 +1,11 @@
-import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
+import { AccessSection, Field, SelectField } from '@/modules/authentication/pages/partials/RequestAccessFields';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { useToast } from '@shared/app/components/ToastProvider';
 import { ArrowRightIcon, CheckIcon, PlusIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
-import { AccessSection, Field, SelectField } from '@/modules/authentication/pages/partials/RequestAccessFields';
+import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import { saveProductRequest, uploadProductRequestLogo } from '../services/productRequestService';
 import { toProductRequestPayload } from '../utils/productRequestHelpers';
 import { DESCRIPTION_MAX_LENGTH, validateProductRequestFields, type ProductRequestFieldErrors, type ProductRequestFormValues } from '../validator/productRequestValidator';

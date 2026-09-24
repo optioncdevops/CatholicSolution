@@ -34,7 +34,7 @@ namespace CFR.PortalService.Service.PlatformLaunch
                     return result;
                 }
 
-                if (returnValue <= 0 || user == null || user.UserId <= 0)
+                if (returnValue <= 0 || user == null || user.UserId == Guid.Empty)
                 {
                     result.StatusCode = ErrorCodes.UnAuthorized;
                     result.StatusMessage = ErrorMessages.InvalidAuthorizationCode;

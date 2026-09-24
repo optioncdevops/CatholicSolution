@@ -83,7 +83,7 @@ namespace CFR.AcutisInfrastructure.Interfaces.Organization
         /// <param name="orgId">Organization identifier.</param>
         /// <param name="authUserId">Member identifier.</param>
         /// <returns>The matching membership detail, or null when not found.</returns>
-        Task<OrganizationUserDetailOutput?> GetOrganizationUserDetailAsync(long orgId, long authUserId);
+        Task<OrganizationUserDetailOutput?> GetOrganizationUserDetailAsync(long orgId, Guid authUserId);
 
         /// <summary>
         /// Retrieves the real products assigned to an organization.
@@ -216,7 +216,7 @@ namespace CFR.AcutisInfrastructure.Interfaces.Organization
         /// <param name="authUserId">User identifier to unlink.</param>
         /// <param name="updatedBy">Logged-in user identifier performing the removal.</param>
         /// <returns>Scalar result of the unlink stored procedure.</returns>
-        Task<int> UnlinkOrganizationUserAsync(long orgId, long authUserId, long? updatedBy);
+        Task<int> UnlinkOrganizationUserAsync(long orgId, Guid authUserId, long? updatedBy);
 
         #endregion DELETE Methods
 

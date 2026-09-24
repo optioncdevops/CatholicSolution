@@ -33,6 +33,28 @@ namespace CFR.DataSyncService.Interfaces.UserSync
         /// <returns>MSResultArgs containing the created user, or an error.</returns>
         Task<MSResultArgs> CreateUserAsync(UserSyncInput input, string? idempotencyKey, string contentSha256Hex, string traceId, string? sourceIp);
 
+        /// <summary>
+        /// Creates or updates many synced user/organization/product memberships in one call.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let a product push a full batch of users (e.g. a one-time migration) into CFR
+        /// without one HTTP round trip per user.
+        /// Request Flow: UsersController -> IUserSyncService.BulkCreateUsersAsync() -> CreateUserAsync() per row.
+        /// Validation Details: Batch-level row-count limit and in-batch externalUserId/productOrgId
+        /// duplicate check, then each row goes through CreateUserAsync's own validation and the
+        /// productId-in-body hard rule — one bad row does not fail the whole batch.
+        /// Business Logic: Loops the batch and reuses CreateUserAsync per row (no per-row
+        /// Idempotency-Key — that header is a single-request concept, not meaningful across a
+        /// batch of distinct payloads), aggregating a per-row result list plus success/failure counts.
+        /// Repository Interaction: Calls IUserSyncRepository.CreateUserAsync() once per row (via CreateUserAsync).
+        /// Response Details: MSResultArgs containing BulkUserSyncOutput, or a batch-level validation error.
+        /// </remarks>
+        /// <param name="input">Input DTO containing the batch of users to create.</param>
+        /// <param name="traceId">W3C trace id.</param>
+        /// <param name="sourceIp">Caller IP.</param>
+        /// <returns>MSResultArgs containing the per-row batch result.</returns>
+        Task<MSResultArgs> BulkCreateUsersAsync(BulkUserSyncInput input, string traceId, string? sourceIp);
+
         #endregion POST Methods
 
         #region PUT Methods
@@ -54,7 +76,7 @@ namespace CFR.DataSyncService.Interfaces.UserSync
         /// <param name="traceId">W3C trace id.</param>
         /// <param name="sourceIp">Caller IP.</param>
         /// <returns>MSResultArgs containing the updated user, or an error.</returns>
-        Task<MSResultArgs> UpdateUserFullAsync(string externalUserId, UserSyncInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp);
+        Task<MSResultArgs> UpdateUserFullAsync(string externalUserId, UserSyncUpdateInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp);
 
         #endregion PUT Methods
 
@@ -78,7 +100,7 @@ namespace CFR.DataSyncService.Interfaces.UserSync
         /// <param name="traceId">W3C trace id.</param>
         /// <param name="sourceIp">Caller IP.</param>
         /// <returns>MSResultArgs containing the updated user, or an error.</returns>
-        Task<MSResultArgs> UpdateUserPartialAsync(string externalUserId, UserSyncInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp);
+        Task<MSResultArgs> UpdateUserPartialAsync(string externalUserId, UserSyncUpdateInput input, string? ifMatchRowVersionBase64, string traceId, string? sourceIp);
 
         #endregion PATCH Methods
 
@@ -142,6 +164,46 @@ namespace CFR.DataSyncService.Interfaces.UserSync
         /// <param name="sourceIp">Caller IP.</param>
         /// <returns>MSResultArgs containing the reactivated user, or an error.</returns>
         Task<MSResultArgs> ReactivateUserAsync(string externalUserId, int productOrgId, string? ifMatchRowVersionBase64, string traceId, string? sourceIp);
+
+        /// <summary>
+        /// Sets the IsLoginDisabled flag only, leaving IsActive/IsDeleted untouched.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Flip login-disabled without resending the whole user payload.
+        /// Request Flow: UsersController -> IUserSyncService.SetLoginDisabledAsync() -> IUserSyncRepository.SetLoginDisabledAsync().
+        /// Validation Details: externalUserId and productOrgId are required.
+        /// Business Logic: Applies the If-Match RowVersion check and maps the ResultCode.
+        /// Repository Interaction: Calls IUserSyncRepository.SetLoginDisabledAsync().
+        /// Response Details: MSResultArgs containing the updated user, or the mapped error.
+        /// </remarks>
+        /// <param name="externalUserId">The product's own user identifier.</param>
+        /// <param name="productOrgId">The product's own organization identifier.</param>
+        /// <param name="isLoginDisabled">The target IsLoginDisabled value.</param>
+        /// <param name="ifMatchRowVersionBase64">If-Match header value, or null to skip the concurrency check.</param>
+        /// <param name="traceId">W3C trace id.</param>
+        /// <param name="sourceIp">Caller IP.</param>
+        /// <returns>MSResultArgs containing the updated user, or an error.</returns>
+        Task<MSResultArgs> SetLoginDisabledAsync(string externalUserId, int productOrgId, bool isLoginDisabled, string? ifMatchRowVersionBase64, string traceId, string? sourceIp);
+
+        /// <summary>
+        /// Sets the IsActive flag only, leaving IsLoginDisabled/IsDeleted untouched.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Flip active/inactive without resending the whole user payload.
+        /// Request Flow: UsersController -> IUserSyncService.SetActiveAsync() -> IUserSyncRepository.SetActiveAsync().
+        /// Validation Details: externalUserId and productOrgId are required.
+        /// Business Logic: Applies the If-Match RowVersion check and maps the ResultCode.
+        /// Repository Interaction: Calls IUserSyncRepository.SetActiveAsync().
+        /// Response Details: MSResultArgs containing the updated user, or the mapped error.
+        /// </remarks>
+        /// <param name="externalUserId">The product's own user identifier.</param>
+        /// <param name="productOrgId">The product's own organization identifier.</param>
+        /// <param name="isActive">The target IsActive value.</param>
+        /// <param name="ifMatchRowVersionBase64">If-Match header value, or null to skip the concurrency check.</param>
+        /// <param name="traceId">W3C trace id.</param>
+        /// <param name="sourceIp">Caller IP.</param>
+        /// <returns>MSResultArgs containing the updated user, or an error.</returns>
+        Task<MSResultArgs> SetActiveAsync(string externalUserId, int productOrgId, bool isActive, string? ifMatchRowVersionBase64, string traceId, string? sourceIp);
 
         #endregion STATUS Methods
     }
