@@ -28,15 +28,6 @@ SET QUOTED_IDENTIFIER ON;
 
 GO
 
-IF NOT EXISTS (
-    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = N'lic' AND TABLE_NAME = N'License' AND COLUMN_NAME = N'IsDeleted'
-)
-BEGIN
-    ALTER TABLE [lic].[License] ADD [IsDeleted] BIT NOT NULL CONSTRAINT DF_License_IsDeleted DEFAULT (0);
-END
-GO
-
 IF OBJECT_ID(N'[dbo].[Acutis_Products]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[Acutis_Products];
 GO
@@ -52,6 +43,7 @@ CREATE PROCEDURE [dbo].[Acutis_Products]
     @ExternalPageUrl NVARCHAR(500) = NULL,
     @LogoName NVARCHAR(500) = NULL,
     @ContactUserId BIGINT = NULL,
+    @ProductSupportUser BIGINT = NULL,
     @Features NVARCHAR(MAX) = NULL,
     @IsActive BIT = 1,
     @ProductStatus INT = NULL,
@@ -120,6 +112,8 @@ BEGIN
             p.[NavigationTarget],
             p.[ContactUserId],
             NULLIF(LTRIM(RTRIM(ISNULL(cu.[FirstName], N'') + N' ' + ISNULL(cu.[LastName], N''))), N'') AS [ContactPerson],
+            p.[ProductSupportUser],
+            NULLIF(LTRIM(RTRIM(ISNULL(psu.[FirstName], N'') + N' ' + ISNULL(psu.[LastName], N''))), N'') AS [ProductSupportUserName],
             (
                 SELECT COUNT(DISTINCT op.[CFROrgId])
                 FROM [lic].[OrganizationProduct] AS op
@@ -139,6 +133,9 @@ BEGIN
         LEFT JOIN [auth].[AcutisUser] AS cu
             ON cu.[UserId] = p.[ContactUserId]
            AND cu.[IsDeleted] = 0
+        LEFT JOIN [auth].[AcutisUser] AS psu
+            ON psu.[UserId] = p.[ProductSupportUser]
+           AND psu.[IsDeleted] = 0
         LEFT JOIN [auth].[AcutisUser] AS ub
             ON ub.[UserId] = p.[UpdatedBy]
         WHERE p.[IsDeleted] = 0
@@ -165,6 +162,8 @@ BEGIN
             p.[NavigationTarget],
             p.[ContactUserId],
             NULLIF(LTRIM(RTRIM(ISNULL(cu.[FirstName], N'') + N' ' + ISNULL(cu.[LastName], N''))), N'') AS [ContactPerson],
+            p.[ProductSupportUser],
+            NULLIF(LTRIM(RTRIM(ISNULL(psu.[FirstName], N'') + N' ' + ISNULL(psu.[LastName], N''))), N'') AS [ProductSupportUserName],
             (
                 SELECT COUNT(DISTINCT op.[CFROrgId])
                 FROM [lic].[OrganizationProduct] AS op
@@ -184,6 +183,9 @@ BEGIN
         LEFT JOIN [auth].[AcutisUser] AS cu
             ON cu.[UserId] = p.[ContactUserId]
            AND cu.[IsDeleted] = 0
+        LEFT JOIN [auth].[AcutisUser] AS psu
+            ON psu.[UserId] = p.[ProductSupportUser]
+           AND psu.[IsDeleted] = 0
         LEFT JOIN [auth].[AcutisUser] AS ub
             ON ub.[UserId] = p.[UpdatedBy]
         WHERE p.[ProductId] = @ProductId
@@ -257,6 +259,11 @@ BEGIN
                     WHERE u.[UserId] = @ContactUserId
                       AND u.[IsDeleted] = 0
                 )
+            END,
+            [ProductSupportUser] = CASE
+                WHEN @ProductSupportUser IS NULL THEN [ProductSupportUser]
+                WHEN @ProductSupportUser = 0 THEN NULL
+                ELSE @ProductSupportUser
             END,
             [IsActive] = ISNULL(@IsActive, [IsActive]),
             [ProductStatus] = CASE

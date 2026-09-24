@@ -516,6 +516,7 @@ namespace CFR.AcutisService.Service.Products
                         input.LogoName = Path.GetFileName(existingLogo.Replace('\\', '/'));
                     }
                     input.ContactUserId ??= existingProduct.ContactUserId;
+                    input.ProductSupportUser ??= existingProduct.ProductSupportUser;
 
                 }
 

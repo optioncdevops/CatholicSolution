@@ -27,6 +27,8 @@ export interface ProductApiItem {
   customerCount: number;
   contactUserId: number | null;
   contactPerson: string | null;
+  productSupportUser?: number | null;
+  productSupportUserName?: string | null;
   features?: string[];
   createdDate: string;
   insertedBy: number | null;
@@ -46,6 +48,7 @@ export interface ProductInputPayload {
   externalPageUrl?: string | null;
   logoName?: string | null;
   contactUserId?: number | null;
+  productSupportUser?: number | null;
   features?: string[];
   isActive: boolean;
   productStatus?: number | null;
