@@ -15,10 +15,6 @@ namespace CFR.DataSyncService.Service.UserSync
     {
         private static readonly TimeSpan IdempotencyTtl = TimeSpan.FromHours(24);
 
-        /// <summary>Row cap for one bulk request — a large one-time migration should be chunked
-        /// by the caller rather than sent as a single, very long-running HTTP call.</summary>
-        private const int MaxBulkUserCount = 500;
-
         #region POST Methods
 
         /// <inheritdoc />
@@ -71,7 +67,8 @@ namespace CFR.DataSyncService.Service.UserSync
                     return result;
                 }
 
-                if (users.Count > MaxBulkUserCount)
+                var apiClient = await apiClientRepository.GetByClientIdAsync(currentApiClient.ClientId);
+                if (apiClient != null && users.Count > apiClient.MaxBulkUserCount)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.PayloadTooLarge;

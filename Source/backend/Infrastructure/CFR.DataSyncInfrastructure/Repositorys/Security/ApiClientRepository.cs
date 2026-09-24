@@ -108,9 +108,10 @@ namespace CFR.DataSyncInfrastructure.Repositorys.Security
         /// <param name="productId">ProductId this ApiClient is scoped to.</param>
         /// <param name="displayName">Human-readable label for the ApiClient row.</param>
         /// <param name="rateLimitPerMinute">Per-client requests-per-minute limit.</param>
+        /// <param name="maxBulkUserCount">Per-client override for the bulk-user-sync row cap (null = use the platform default).</param>
         /// <param name="insertedBy">Who/what created the row.</param>
         /// <returns>The new ApiClientId.</returns>
-        public async Task<int> CreateApiClientAsync(string clientId, string clientSecret, int productId, string? displayName, int rateLimitPerMinute, string? insertedBy)
+        public async Task<int> CreateApiClientAsync(string clientId, string clientSecret, int productId, string? displayName, int rateLimitPerMinute, int? maxBulkUserCount, string? insertedBy)
         {
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.SecurityParams.ActionId, 5, DbType.Int32);
@@ -119,6 +120,7 @@ namespace CFR.DataSyncInfrastructure.Repositorys.Security
             parameters.Add(DBParameterName.SecurityParams.ProductId, productId, DbType.Int32);
             parameters.Add(DBParameterName.SecurityParams.DisplayName, displayName, DbType.String);
             parameters.Add(DBParameterName.SecurityParams.RateLimitPerMinute, rateLimitPerMinute, DbType.Int32);
+            parameters.Add(DBParameterName.SecurityParams.MaxBulkUserCount, maxBulkUserCount, DbType.Int32);
             parameters.Add(DBParameterName.SecurityParams.InsertedBy, insertedBy, DbType.String);
             parameters.Add(DBParameterName.SecurityParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
 

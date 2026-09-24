@@ -23,6 +23,9 @@ namespace CFR.DataSyncInfrastructure.Models.Output
         /// <summary>Per-client requests-per-minute limit.</summary>
         public int RateLimitPerMinute { get; set; }
 
+        /// <summary>Per-client cap on how many rows one bulk-create request may contain.</summary>
+        public int MaxBulkUserCount { get; set; }
+
         /// <summary>Whether this ApiClient is currently allowed to log in.</summary>
         public bool IsActive { get; set; }
     }

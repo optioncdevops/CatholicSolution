@@ -41,9 +41,9 @@ namespace CFR.DataSyncService.Interfaces.UserSync
         /// Purpose: Let a product push a full batch of users (e.g. a one-time migration) into CFR
         /// without one HTTP round trip per user.
         /// Request Flow: UsersController -> IUserSyncService.BulkCreateUsersAsync() -> CreateUserAsync() per row.
-        /// Validation Details: Batch-level row-count limit and in-batch externalUserId/productOrgId
-        /// duplicate check, then each row goes through CreateUserAsync's own validation — one bad
-        /// row does not fail the whole batch.
+        /// Validation Details: Batch-level row-count limit (the caller's sec.ApiClient.MaxBulkUserCount)
+        /// and in-batch externalUserId/productOrgId duplicate check, then each row goes through
+        /// CreateUserAsync's own validation — one bad row does not fail the whole batch.
         /// Business Logic: Loops the batch and reuses CreateUserAsync per row (no per-row
         /// Idempotency-Key — that header is a single-request concept, not meaningful across a
         /// batch of distinct payloads), aggregating a per-row result list plus success/failure counts.
