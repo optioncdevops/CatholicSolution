@@ -394,7 +394,7 @@ export function LicenseDetails({
               }
               disabled={readOnly || createAccess === "readOnly"}
             >
-              Create Invoice
+              Create License
             </CommonButton>
           )}
         </div>

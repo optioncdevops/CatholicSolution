@@ -396,7 +396,7 @@ const ProductDetails = () => {
                 Change Status
               </CommonButton>
             )}
-            {editAccess !== "denied" && !isReadOnly && (
+            {activeTab === "details" && editAccess !== "denied" && !isReadOnly && (
               <CommonButton
                 variant="headerSecondary"
                 iconLeft={<Pencil size={14} />}
