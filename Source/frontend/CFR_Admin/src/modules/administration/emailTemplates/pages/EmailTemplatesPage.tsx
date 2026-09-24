@@ -526,6 +526,33 @@ function EmailTemplatesPage() {
                 </div>
               </div>
 
+              {/* The header logo every sent email shows above this body (SMTPMailService.FormatMailContent) -
+                  platform-wide, managed on the Email Settings page, so it's shown here read-only. */}
+              <div id="divEmailTemplateLogo" className="flex flex-col gap-2 rounded-[var(--radius-panel)] border border-[var(--line-soft)] p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-14 w-40 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line-soft)] bg-white px-2">
+                    {logoImageUrl && !logoImageFailed ? (
+                      <img src={logoImageUrl} alt="Email logo" className="max-h-12 max-w-full object-contain" onError={() => setLogoImageFailed(true)} />
+                    ) : (
+                      <span className="text-xs font-bold text-[var(--text-muted)]">No logo</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-faint)]">Email Logo</p>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      {logoImageUrl && !logoImageFailed
+                        ? 'Shown at the top of every email sent from this template.'
+                        : logoImageUrl
+                          ? 'The logo could not be loaded - check it on the Email Settings page.'
+                          : 'No logo is set - emails show the "Catholic Solutions" name instead.'}
+                    </p>
+                  </div>
+                </div>
+                <Link to="/admin/administration-email-settings" onClick={(event) => void handleEmailSettingsLinkClick(event)} className="shrink-0">
+                  <CommonButton variant="outline" size="sm" iconLeft={<Settings size={13} />}>Change logo</CommonButton>
+                </Link>
+              </div>
+
               <RichTextEditor
                 id={BODY_EDITOR_ID}
                 label="Body"
