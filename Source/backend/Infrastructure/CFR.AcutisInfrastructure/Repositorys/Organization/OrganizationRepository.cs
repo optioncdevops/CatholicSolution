@@ -188,6 +188,26 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             return result.ToList();
         }
 
+        /// <summary>
+        /// Fetches every non-deleted diocese.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown for organizations.
+        /// Request Flow: IOrganizationService -> OrganizationRepository.GetDiocesesListAsync() -> Database.
+        /// Validation Details: None.
+        /// Business Logic: Returns a list of DioceseOutput.
+        /// Repository Interaction: Executes an ad-hoc query against core.Diocese.
+        /// Response Details: Returns a list of diocese output records.
+        /// </remarks>
+        /// <returns>A list of dioceses.</returns>
+        public async Task<List<DioceseOutput>> GetDiocesesListAsync()
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.OrganizationParams.ActionId, 15, DbType.Int32);
+            var result = await dapperHandler.QueryAsync<DioceseOutput>(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
+            return result.ToList();
+        }
+
         #endregion GET Methods
 
         #region POST Methods
@@ -212,16 +232,12 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             var parameters = new DynamicParameters();
             parameters.Add(DBParameterName.OrganizationParams.ActionId, 4, DbType.Int32);
             parameters.Add(DBParameterName.OrganizationParams.OrgName, input.OrgName, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.OrgStatus, input.OrgStatus, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.OrgType, input.OrgType, DbType.String);
+            parameters.Add("OrgState", input.State, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactEmail, input.ContactEmail, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.Website, input.Website, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPerson, input.ContactPerson, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPhone, input.ContactPhone, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.Address, input.Address, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.City, input.City, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.State, input.State, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.Zip, input.Zip, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.DioceseId, input.DioceseId, DbType.Int32);
             parameters.Add(DBParameterName.OrganizationParams.UpdatedBy, insertedBy, DbType.Int64);
             parameters.Add(DBParameterName.OrganizationParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);
@@ -338,16 +354,12 @@ namespace CFR.AcutisInfrastructure.Repositorys.Organization
             parameters.Add(DBParameterName.OrganizationParams.ActionId, 3, DbType.Int32);
             parameters.Add(DBParameterName.OrganizationParams.OrgId, input.OrgId, DbType.Int64);
             parameters.Add(DBParameterName.OrganizationParams.OrgName, input.OrgName, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.OrgStatus, input.OrgStatus, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.OrgType, input.OrgType, DbType.String);
+            parameters.Add("OrgState", input.State, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactEmail, input.ContactEmail, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.Website, input.Website, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPerson, input.ContactPerson, DbType.String);
             parameters.Add(DBParameterName.OrganizationParams.ContactPhone, input.ContactPhone, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.Address, input.Address, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.City, input.City, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.State, input.State, DbType.String);
-            parameters.Add(DBParameterName.OrganizationParams.Zip, input.Zip, DbType.String);
+            parameters.Add(DBParameterName.OrganizationParams.DioceseId, input.DioceseId, DbType.Int32);
             parameters.Add(DBParameterName.OrganizationParams.UpdatedBy, updatedBy, DbType.Int64);
             parameters.Add(DBParameterName.OrganizationParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Organization.OrganizationCrud, parameters, CommandType.StoredProcedure);

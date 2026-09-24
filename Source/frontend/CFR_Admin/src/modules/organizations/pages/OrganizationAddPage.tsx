@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm} from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
@@ -9,7 +9,7 @@ import { useFeatureAccessLevel } from '@/modules/authentication/hooks/useFeature
 import { CommonButton } from '@app/components/buttons';
 import { Dropdown, InputField, MandatoryIndicator } from '@app/components/formControls';
 import { confirmDiscardChanges } from '@/modules/lib/confirm';
-import { createOrganization } from '../services/organizationsService';
+import { createOrganization, getDioceses } from '../services/organizationsService';
 import type { OrganizationFormValues } from '../types/organizationTypes';
 import { ORG_STATUS_OPTIONS, ORG_TYPE_OPTIONS, US_STATE_OPTIONS } from '../utils/organizationHelpers';
 import { organizationDefaultValues, organizationRules } from '../validator/OrganizationValidator';
@@ -24,6 +24,7 @@ const OrganizationAddPage = () => {
 
   //#region States
   const [saving, setSaving] = useState(false);
+  const [dioceses, setDioceses] = useState<{ id: number; value: string }[]>([]);
   //#endregion
 
   //#region Form
@@ -34,6 +35,26 @@ const OrganizationAddPage = () => {
   //#endregion
 
   //#region Functions
+  useEffect(() => {
+    let active = true;
+    const fetchDioceses = async () => {
+      try {
+        const res = await getDioceses();
+        if (active) {
+          const formatted = (res.resultData || []).map((d) => ({
+            id: d.dioceseId,
+            value: d.dioceseName,
+          }));
+          setDioceses(formatted);
+        }
+      } catch (err) {
+        console.error('Failed to fetch dioceses', err);
+      }
+    };
+    void fetchDioceses();
+    return () => { active = false; };
+  }, []);
+
   const navigateToList = () => {
     navigate('/admin/organizations', { replace: true });
   };
@@ -80,6 +101,7 @@ const OrganizationAddPage = () => {
         city: values.city.trim(),
         state: values.state.trim(),
         zip: values.zip.trim(),
+        dioceseId: values.dioceseId,
       });
       showToast('Organization created successfully.', 'success');
       navigateToList();
@@ -119,7 +141,8 @@ const OrganizationAddPage = () => {
           <InputField control={control} name="contactPerson" label="Contact person" placeholder="Enter contact person" rules={organizationRules.contactPerson} maxLength={50} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="contactPhone" label="Contact number" type="tel" placeholder="Enter contact number" rules={organizationRules.contactPhone} maxLength={10} validationRule="numbersOnly" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="contactEmail" label="Contact email" type="email" placeholder="Enter contact email" rules={organizationRules.contactEmail} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="address" label="Address" placeholder="Street address" rules={organizationRules.address} maxLength={500} disabled={saving || isReadOnly} wrapperClassName="md:col-span-12" />
+          <InputField control={control} name="address" label="Address" placeholder="Street address" rules={organizationRules.address} maxLength={500} disabled={saving || isReadOnly} wrapperClassName="md:col-span-8" />
+          <Dropdown control={control} name="dioceseId" label="Diocese" placeholder="Select diocese" searchable clearable options={dioceses} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="city" label="City" placeholder="Enter city" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <Dropdown control={control} name="state" label="State" placeholder="Select state" searchable options={US_STATE_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="zip" label="ZIP code" placeholder="Enter ZIP code" rules={organizationRules.zip} maxLength={6} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />

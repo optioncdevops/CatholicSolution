@@ -56,6 +56,36 @@ namespace CFR.AcutisService.Service.Organization
         }
 
         /// <summary>
+        /// Retrieves every non-deleted diocese.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Populate the Diocese dropdown.
+        /// Request Flow: OrganizationController -> OrganizationService.GetDiocesesListAsync() -> IOrganizationRepository.GetDiocesesListAsync().
+        /// Validation Details: Service checks for an empty or null result set.
+        /// Business Logic: Wraps the typed list in MSResultArgs.
+        /// Repository Interaction: Calls IOrganizationRepository.GetDiocesesListAsync().
+        /// Response Details: MSResultArgs containing List of DioceseOutput, or NoRecordFound.
+        /// </remarks>
+        /// <returns>MSResultArgs containing the diocese list.</returns>
+        public async Task<MSResultArgs> GetDiocesesListAsync()
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                var data = await repository.GetDiocesesListAsync();
+                result.ResultData = data ?? [];
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, "Failed to fetch dioceses.");
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Retrieves one organization by identifier.
         /// </summary>
         /// <remarks>
@@ -360,6 +390,7 @@ namespace CFR.AcutisService.Service.Organization
                 int newId = await repository.CreateOrganizationAsync(input, currentUserService.UserId);
                 result.StatusCode = ErrorCodes.Created;
                 result.StatusMessage = ErrorMessages.OrganizationCreated;
+
                 result.ResultData = newId;
             }
             catch (Exception ex)

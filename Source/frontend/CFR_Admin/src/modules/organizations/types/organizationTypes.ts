@@ -15,6 +15,7 @@ export interface OrganizationApiItem {
   updatedDate: string | null;
   userCount: number;
   productCount: number;
+  dioceseId: number | null;
 }
 
 export interface OrganizationFormValues {
@@ -29,6 +30,7 @@ export interface OrganizationFormValues {
   city: string;
   state: string;
   zip: string;
+  dioceseId: number | null;
 }
 
 export interface UpdateOrganizationPayload {
@@ -44,6 +46,7 @@ export interface UpdateOrganizationPayload {
   city: string;
   state: string;
   zip: string;
+  dioceseId: number | null;
 }
 
 export interface CreateOrganizationPayload {
@@ -58,6 +61,12 @@ export interface CreateOrganizationPayload {
   city: string;
   state: string;
   zip: string;
+  dioceseId: number | null;
+}
+
+export interface DioceseApiItem {
+  dioceseId: number;
+  dioceseName: string;
 }
 
 export interface OrganizationUserApiItem {
