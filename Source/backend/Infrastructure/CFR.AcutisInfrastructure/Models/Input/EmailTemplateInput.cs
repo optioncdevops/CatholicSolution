@@ -50,6 +50,12 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("linkExpiryMinutes")]
         public int? LinkExpiryMinutes { get; set; }
+
+        /// <summary>
+        /// Gets or sets the lucide-react icon name (e.g. "KeyRound") chosen for this template.
+        /// </summary>
+        [JsonPropertyName("iconName")]
+        public string? IconName { get; set; }
     }
 
     /// <summary>

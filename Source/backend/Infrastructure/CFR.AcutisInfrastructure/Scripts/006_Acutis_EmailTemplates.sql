@@ -21,6 +21,16 @@ BEGIN
 END
 GO
 
+-- Lets an admin pick which icon represents a template in the CFR Admin editor, instead of the
+-- frontend guessing one from a hardcoded templateCode->icon map (which only covered 4 of 8
+-- templates and silently fell back to a generic mail icon for the rest). Stores a lucide-react
+-- icon name (e.g. "KeyRound") that the frontend resolves against its own small icon registry.
+IF COL_LENGTH(N'adm.EmailTemplate', N'IconName') IS NULL
+BEGIN
+    ALTER TABLE [adm].[EmailTemplate] ADD [IconName] NVARCHAR(50) NULL;
+END
+GO
+
 -- AccentColor/LogoUrl/FontFamily/BaseFontSize used to be per-template branding overrides here.
 -- Branding is now platform-wide instead (the admin Email Settings page, file-backed — see
 -- ConfSettingsService/SMTPMailConfig in CFR.CommonService), so this procedure no longer reads or
@@ -43,6 +53,7 @@ CREATE PROCEDURE [dbo].[Acutis_EmailTemplates]
     @Body NVARCHAR(MAX) = NULL,
     @Status NVARCHAR(20) = NULL,
     @LinkExpiryMinutes INT = NULL,
+    @IconName NVARCHAR(50) = NULL,
     @UpdatedBy BIGINT = NULL,
     @ReturnValue INT = NULL OUTPUT
 AS
@@ -71,7 +82,7 @@ BEGIN
 
             INSERT INTO [adm].[EmailTemplate]
             (
-                [TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [LinkExpiryMinutes], [CreatedDate], [InsertedBy], [IsDeleted]
+                [TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [LinkExpiryMinutes], [IconName], [CreatedDate], [InsertedBy], [IsDeleted]
             )
             VALUES
             (
@@ -81,6 +92,7 @@ BEGIN
                 @Body,
                 CASE WHEN @Status = N'inactive' THEN 0 ELSE 1 END,
                 @LinkExpiryMinutes,
+                @IconName,
                 SYSUTCDATETIME(),
                 @UpdatedBy,
                 0
@@ -100,6 +112,7 @@ BEGIN
                 ELSE [IsActive]
             END,
             [LinkExpiryMinutes] = @LinkExpiryMinutes,
+            [IconName] = @IconName,
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = @UpdatedBy
         WHERE [TemplateId] = @TemplateId
@@ -118,6 +131,7 @@ BEGIN
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             t.[LinkExpiryMinutes],
+            t.[IconName],
             t.[CreatedDate],
             t.[UpdatedDate]
         FROM [adm].[EmailTemplate] AS t
@@ -135,6 +149,7 @@ BEGIN
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             t.[LinkExpiryMinutes],
+            t.[IconName],
             t.[CreatedDate],
             t.[UpdatedDate]
         FROM [adm].[EmailTemplate] AS t
@@ -152,6 +167,7 @@ BEGIN
             t.[Body],
             CASE WHEN t.[IsActive] = 1 THEN N'active' ELSE N'inactive' END AS [Status],
             t.[LinkExpiryMinutes],
+            t.[IconName],
             t.[CreatedDate],
             t.[UpdatedDate]
         FROM [adm].[EmailTemplate] AS t
@@ -171,7 +187,7 @@ IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Pass
 BEGIN
     SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
 
-    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [LinkExpiryMinutes], [CreatedDate], [IsDeleted])
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [LinkExpiryMinutes], [IconName], [CreatedDate], [IsDeleted])
     VALUES
     (
         @SeedTemplateId,
@@ -180,6 +196,7 @@ BEGIN
         N'<div style="font-family:''Segoe UI'',Helvetica,Arial,sans-serif;color:#0f172a;"><p style="margin:0 0 4px;font-size:13px;color:#64748b;">Hi [FirstName],</p><p style="margin:0 0 26px;font-size:14px;line-height:1.7;color:#1e293b;">We received a request to reset the password for your Catholic Solutions account. Click the button below to choose a new password.</p><div style="text-align:center;margin:0 0 26px;"><a href="[ResetLink]" style="display:inline-block;padding:14px 34px;background-color:[AccentColor];color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;">Reset Password</a></div><div style="background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin:0 0 22px;"><p style="margin:0;font-size:12.5px;color:[AccentColor];font-weight:700;">This link expires in [ExpiryMinutes] minutes and can only be used once.</p></div><p style="margin:0 0 4px;font-size:12px;color:#94a3b8;">If the button above doesn''t work, copy and paste this link into your browser:</p><p style="margin:0;font-size:12px;word-break:break-all;"><a href="[ResetLink]" style="color:[AccentColor];">[ResetLink]</a></p></div>',
         1,
         15,
+        N'KeyRound',
         SYSUTCDATETIME(),
         0
     );
@@ -193,11 +210,25 @@ SET [LinkExpiryMinutes] = 15
 WHERE [TemplateCode] = N'PasswordReset'
   AND [LinkExpiryMinutes] IS NULL;
 
+-- Backfill IconName for every template that already existed before this column was added — keyed
+-- from the frontend's previous hardcoded templateCode->icon map (see EmailTemplatesPage.tsx),
+-- extended to the 4 templates that map never covered. Only touches rows with no icon set yet, so
+-- an admin who has since picked their own icon keeps it.
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'KeyRound' WHERE [TemplateCode] = N'PasswordReset' AND [IconName] IS NULL;
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'Sparkles' WHERE [TemplateCode] = N'Welcome' AND [IconName] IS NULL;
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'MailCheck' WHERE [TemplateCode] = N'AccessApproved' AND [IconName] IS NULL;
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'Send' WHERE [TemplateCode] = N'AccessSentToVendor' AND [IconName] IS NULL;
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'MailQuestion' WHERE [TemplateCode] = N'AccessInfo' AND [IconName] IS NULL;
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'Send' WHERE [TemplateCode] = N'AccessRequested' AND [IconName] IS NULL;
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'Wand2' WHERE [TemplateCode] = N'ProductRequested' AND [IconName] IS NULL;
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'CheckCircle2' WHERE [TemplateCode] = N'ProductRequestApproved' AND [IconName] IS NULL;
+UPDATE [adm].[EmailTemplate] SET [IconName] = N'AlertTriangle' WHERE [TemplateCode] = N'ProductRequestRejected' AND [IconName] IS NULL;
+
 IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Welcome')
 BEGIN
     SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
 
-    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [IconName], [CreatedDate], [IsDeleted])
     VALUES
     (
         @SeedTemplateId,
@@ -205,6 +236,7 @@ BEGIN
         N'Welcome to Catholic Solutions',
         N'<p>Hi [FirstName],</p><p>Your Catholic Solutions account is ready. Sign in to get started with your organization''s workspace.</p>',
         1,
+        N'Sparkles',
         SYSUTCDATETIME(),
         0
     );
@@ -214,7 +246,7 @@ IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Acce
 BEGIN
     SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
 
-    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [IconName], [CreatedDate], [IsDeleted])
     VALUES
     (
         @SeedTemplateId,
@@ -222,6 +254,7 @@ BEGIN
         N'Your application access request was approved',
         N'<p>Hi [FirstName],</p><p>Your request for access to [AppName] has been approved. You can now launch it from App Hub.</p>',
         1,
+        N'MailCheck',
         SYSUTCDATETIME(),
         0
     );
@@ -231,7 +264,7 @@ IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Acce
 BEGIN
     SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
 
-    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [IconName], [CreatedDate], [IsDeleted])
     VALUES
     (
         @SeedTemplateId,
@@ -239,6 +272,30 @@ BEGIN
         N'More information needed for your request',
         N'<p>Hi [FirstName],</p><p>We need a bit more information to process your request for [AppName]:</p><p>[Note]</p>',
         1,
+        N'MailQuestion',
+        SYSUTCDATETIME(),
+        0
+    );
+END
+
+-- Sent to the product's contact/support user when an admin clicks "Send to Vendor" on an access
+-- request (AccessRequestService.SendToVendorEmailAsync). Same gap as AccessRequested/
+-- ProductRequested below: the frontend's merge-tag list and template-code switch already fully
+-- support this code, but it had no seed row here, so it never appeared in the admin editor and
+-- always silently sent that service's hardcoded fallback body instead. Text matches that exact fallback.
+IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'AccessSentToVendor')
+BEGIN
+    SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
+
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [IconName], [CreatedDate], [IsDeleted])
+    VALUES
+    (
+        @SeedTemplateId,
+        N'AccessSentToVendor',
+        N'New customer request for [AppName]: [OrganizationName]',
+        N'<p>Hello,</p><p>A Catholic Solutions access request for <strong>[AppName]</strong> has been sent to you. Please contact the requester and add them to [AppName].</p><p><strong>Request details</strong><br/>Organization: [OrganizationName]<br/>Organization type: [OrganizationType]<br/>Address: [OrganizationAddress]<br/>Contact name: [RequesterName]<br/>Contact email: [RequesterEmail]<br/>Contact phone: [Phone]<br/>Application: [AppName]<br/>Submitted: [SubmittedDate]<br/>Notes: [Note]</p>',
+        1,
+        N'Send',
         SYSUTCDATETIME(),
         0
     );
@@ -273,7 +330,7 @@ IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Acce
 BEGIN
     SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
 
-    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [IconName], [CreatedDate], [IsDeleted])
     VALUES
     (
         @SeedTemplateId,
@@ -281,6 +338,7 @@ BEGIN
         N'Review needed: [AppName] access request from [OrganizationName]',
         N'<p>Hello [SupportUserName],</p><p>A new access request for <strong>[AppName]</strong> has come through Catholic Solutions, and you have been requested for this product. Please review the request; the requester''s details are below.</p><p><strong>Request details</strong><br/>Organization: [OrganizationName]<br/>Address: [OrganizationAddress]<br/>Contact name: [RequesterName]<br/>Contact email: [RequesterEmail]<br/>Contact phone: [Phone]<br/>Submitted: [SubmittedDate]<br/>Goals &amp; context: [AdditionalInfo]</p><p><a href="[ReviewLink]">Review this request</a></p>',
         1,
+        N'Send',
         SYSUTCDATETIME(),
         0
     );
@@ -294,7 +352,7 @@ IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Prod
 BEGIN
     SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
 
-    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [IconName], [CreatedDate], [IsDeleted])
     VALUES
     (
         @SeedTemplateId,
@@ -302,6 +360,7 @@ BEGIN
         N'New product suggestion: [ProductName]',
         N'<p>A visitor has suggested a new product for the platform.</p><p><strong>Product:</strong> [ProductName] ([ShortName])</p><p><strong>Description:</strong> [Description]</p><p><strong>Production URL:</strong> [ProductionUrl]</p><p><strong>Features:</strong> [Features]</p><p><strong>Submitted by:</strong> [RequesterName] ([RequesterEmail])</p><p><a href="[ReviewLink]">Review this suggestion</a></p>',
         1,
+        N'Wand2',
         SYSUTCDATETIME(),
         0
     );
@@ -315,7 +374,7 @@ IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Prod
 BEGIN
     SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
 
-    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [IconName], [CreatedDate], [IsDeleted])
     VALUES
     (
         @SeedTemplateId,
@@ -323,6 +382,7 @@ BEGIN
         N'Your product suggestion was approved: [ProductName]',
         N'<p>Hi [FirstName],</p><p>Good news — your suggested product, [ProductName], has been approved and added to the platform.</p><p><strong>Client ID:</strong> [ClientId]</p><p><strong>Security Key:</strong> [SecurityKey]</p><p>Keep this security key confidential — use it with your Client ID for API access.</p><p><strong>Reviewer notes:</strong> [Remarks]</p>',
         1,
+        N'CheckCircle2',
         SYSUTCDATETIME(),
         0
     );
@@ -349,7 +409,7 @@ IF NOT EXISTS (SELECT 1 FROM [adm].[EmailTemplate] WHERE [TemplateCode] = N'Prod
 BEGIN
     SELECT @SeedTemplateId = ISNULL(MAX([TemplateId]), 0) + 1 FROM [adm].[EmailTemplate];
 
-    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [CreatedDate], [IsDeleted])
+    INSERT INTO [adm].[EmailTemplate] ([TemplateId], [TemplateCode], [Subject], [Body], [IsActive], [IconName], [CreatedDate], [IsDeleted])
     VALUES
     (
         @SeedTemplateId,
@@ -357,6 +417,7 @@ BEGIN
         N'Your product suggestion was not approved: [ProductName]',
         N'<p>Hi [FirstName],</p><p>Thanks for suggesting [ProductName]. After review, we won''t be adding it at this time.</p><p><strong>Notes:</strong> [Remarks]</p>',
         1,
+        N'AlertTriangle',
         SYSUTCDATETIME(),
         0
     );
