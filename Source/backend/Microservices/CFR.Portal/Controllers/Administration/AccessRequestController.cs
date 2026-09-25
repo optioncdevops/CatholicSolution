@@ -7,7 +7,7 @@ namespace CFR.Portal.Controllers.Administration
     /// Handles listing, saving, and updating request status.
     /// Service Responsibility:
     /// - IAccessRequestService retrieves data, applies validation, and returns ResultArgs.
-    /// </summary>
+    /// </summary   
     [ApiExplorerSettings(GroupName = SwaggerModuleDoc.PortalAdministration)]
     public class AccessRequestController(IAccessRequestService service): BaseController
     {
