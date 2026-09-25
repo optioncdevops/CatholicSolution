@@ -182,12 +182,12 @@ namespace CFR.AcutisService.Service.Organization
         /// <param name="orgId">Organization identifier.</param>
         /// <param name="authUserId">Member identifier.</param>
         /// <returns>MSResultArgs containing the membership detail.</returns>
-        public async Task<MSResultArgs> GetOrganizationUserDetailAsync(long orgId, long authUserId)
+        public async Task<MSResultArgs> GetOrganizationUserDetailAsync(long orgId, Guid authUserId)
         {
             var result = new MSResultArgs();
             try
             {
-                if (orgId <= 0 || authUserId <= 0)
+                if (orgId <= 0 || authUserId == Guid.Empty)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;
@@ -515,12 +515,12 @@ namespace CFR.AcutisService.Service.Organization
         /// <param name="orgId">Organization identifier.</param>
         /// <param name="authUserId">User identifier to unlink.</param>
         /// <returns>MSResultArgs containing the unlink status.</returns>
-        public async Task<MSResultArgs> UnlinkOrganizationUserAsync(long orgId, long authUserId)
+        public async Task<MSResultArgs> UnlinkOrganizationUserAsync(long orgId, Guid authUserId)
         {
             var result = new MSResultArgs();
             try
             {
-                if (orgId <= 0 || authUserId <= 0)
+                if (orgId <= 0 || authUserId == Guid.Empty)
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
                     result.StatusMessage = ErrorMessages.BadRequest;

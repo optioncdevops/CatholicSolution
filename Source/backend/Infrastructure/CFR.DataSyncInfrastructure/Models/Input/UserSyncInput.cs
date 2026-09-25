@@ -1,18 +1,14 @@
 // Copyright (c) OptionC. All rights reserved.
 
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace CFR.DataSyncInfrastructure.Models.Input
 {
     /// <summary>
-    /// Create/update payload for the single-user sync API. ProductId is deliberately NOT a
-    /// property here — it is resolved only from the authenticated ApiClient. <see cref="ExtraFields"/>
-    /// exists solely so the service layer can detect and reject a client-supplied "productId" field
-    /// (System.Text.Json silently drops unknown properties by default, which would not satisfy the
-    /// spec's hard PRODUCT_SCOPE_VIOLATION rule without this catch-all).
+    /// Create payload for the single-user sync API. ProductId is deliberately NOT a property
+    /// here — it is resolved only from the authenticated ApiClient. Update/patch use
+    /// <see cref="UserSyncUpdateInput"/> instead — it has no PasswordEncrypted, since a password is
+    /// set only at identity creation and every later sync of that identity leaves it untouched.
     /// </summary>
-    public class UserSyncInput
+    public class UserSyncInput: IUserSyncFields
     {
         /// <summary>The product's own user identifier.</summary>
         [JsonPropertyName("externalUserId")]
@@ -52,9 +48,5 @@ namespace CFR.DataSyncInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("passwordEncrypted")]
         public byte[]? PasswordEncrypted { get; set; }
-
-        /// <summary>Catch-all for unrecognized body fields — used only to detect a rejected "productId".</summary>
-        [JsonExtensionData]
-        public Dictionary<string, JsonElement>? ExtraFields { get; set; }
     }
 }

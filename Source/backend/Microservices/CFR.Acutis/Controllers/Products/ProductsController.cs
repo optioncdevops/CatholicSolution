@@ -9,7 +9,7 @@ namespace CFR.Acutis.Controllers.Products
     /// - IProductsService retrieves and modifies data, applies validation, and returns MSResultArgs.
     /// </summary>
     [ApiExplorerSettings(GroupName = SwaggerModuleDoc.CFRAcutisProduct)]
-    public class ProductsController(IProductsService service): BaseController
+    public class ProductsController(IProductsService service, CFR.AcutisService.Interfaces.Administration.IUsersService usersService): BaseController
     {
         #region GET Methods
 
@@ -33,6 +33,18 @@ namespace CFR.Acutis.Controllers.Products
         public async Task<IActionResult> GetProducts()
         {
             return ApiResultArgs(await service.GetProductsListAsync(), APIHttpType.HttpGet);
+        }
+
+        /// <summary>
+        /// Retrieves the list of all registered users for Product Support dropdown.
+        /// </summary>
+        /// <returns>A consistent API response containing the users dataset.</returns>
+        [HttpGet]
+        [AllowAnonymous]
+        [ActionName("GetProductSupportUsers")]
+        public async Task<IActionResult> GetProductSupportUsers()
+        {
+            return ApiResultArgs(await usersService.GetUsersListAsync(), APIHttpType.HttpGet);
         }
 
         /// <summary>
@@ -320,6 +332,18 @@ namespace CFR.Acutis.Controllers.Products
         public async Task<IActionResult> UpdateLicense([FromBody] ProductLicenseInput input)
         {
             return ApiResultArgs(await service.UpdateLicenseAsync(input), APIHttpType.HttpPut);
+        }
+
+        /// <summary>
+        /// Updates an API integration (Product Environment).
+        /// </summary>
+        /// <param name="input">The updated details.</param>
+        /// <returns>Standardized success or failure response.</returns>
+        [HttpPut]
+        [ActionName("UpdateProductApiIntegration")]
+        public async Task<IActionResult> UpdateProductApiIntegration([FromBody] ProductApiIntegrationInput input)
+        {
+            return ApiResultArgs(await service.UpdateProductApiIntegrationAsync(input), APIHttpType.HttpPut);
         }
 
         #endregion PUT Methods

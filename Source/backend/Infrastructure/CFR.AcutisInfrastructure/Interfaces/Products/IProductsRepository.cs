@@ -127,9 +127,8 @@ namespace CFR.AcutisInfrastructure.Interfaces.Products
         /// Response Details: Returns a list of ProductApiIntegrationOutput records.
         /// </remarks>
         /// <param name="productId">Product identifier.</param>
-        /// <param name="environmentName">Environment name matching appsettings Environment (Development, Pilot, Staging, Live).</param>
         /// <returns>A list of product API integration records.</returns>
-        Task<List<ProductApiIntegrationOutput>> GetProductApiIntegrationsAsync(int productId, string environmentName);
+        Task<List<ProductApiIntegrationOutput>> GetProductApiIntegrationsAsync(int productId);
 
         #endregion GET Methods
 
@@ -199,6 +198,13 @@ namespace CFR.AcutisInfrastructure.Interfaces.Products
         /// <param name="input">Input DTO containing updated license details.</param>
         /// <returns>Updated LicenseId or negative error code.</returns>
         Task<long> UpdateLicenseAsync(ProductLicenseInput input);
+
+        /// <summary>
+        /// Updates a product environment and description.
+        /// </summary>
+        /// <param name="input">The updated details.</param>
+        /// <returns>True if successful.</returns>
+        Task<bool> UpdateProductApiIntegrationAsync(ProductApiIntegrationInput input);
 
         #endregion PUT Methods
 

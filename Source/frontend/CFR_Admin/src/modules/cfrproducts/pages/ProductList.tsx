@@ -24,6 +24,7 @@ import {
   toAdminApplication,
 } from "../utils/productHelpers";
 import {
+  DEFAULT_PRODUCT_STATUS_FILTER,
   PRODUCT_STATUS_FILTERS,
   PRODUCT_SORT_OPTIONS,
   type ProductStatusFilter,
@@ -39,6 +40,7 @@ const ProductList = () => {
   const { showToast } = useToast();
   const accessLevel = useFeatureAccessLevel(PRODUCTS_PATHS.list);
   const isReadOnly = accessLevel === "readOnly";
+  const editAccess = useFeatureAccessLevel(PRODUCTS_PATHS.edit);
   //#endregion
 
   //#region States
@@ -46,7 +48,7 @@ const ProductList = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>(DEFAULT_PRODUCT_STATUS_FILTER);
   const [sortBy, setSortBy] = useState<ProductSortOption>("default");
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductApiItem | null>(
@@ -345,12 +347,14 @@ const ProductList = () => {
                         icon={<Eye size={14} />}
                         onClick={() => goToDetails(item)}
                       />
-                      <CommonIconButton
-                        aria-label={`Edit ${item.productName}`}
-                        tooltip="Edit"
-                        icon={<Pencil size={14} />}
-                        onClick={() => goToEdit(item)}
-                      />
+                      {editAccess !== "denied" && (
+                        <CommonIconButton
+                          aria-label={`Edit ${item.productName}`}
+                          tooltip="Edit"
+                          icon={<Pencil size={14} />}
+                          onClick={() => goToEdit(item)}
+                        />
+                      )}
                       {!isReadOnly && (
                         <CommonIconButton
                           aria-label={`Change status for ${item.productName}`}

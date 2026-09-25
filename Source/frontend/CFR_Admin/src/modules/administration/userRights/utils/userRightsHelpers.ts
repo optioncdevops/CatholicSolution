@@ -46,9 +46,11 @@ function pickKind(row: RawRow, parentId: number): FeatureNodeKind {
   return 'feature';
 }
 
-/** Only a Feature row may be set to Read Only — Modules and Activities are Access/Denied only. */
-export function levelsForKind(kind: FeatureNodeKind): AccessLevel[] {
-  return kind === 'feature' ? ['access', 'readOnly', 'denied'] : ['access', 'denied'];
+/** Only a Feature row may be set to Read Only — Modules and Activities are Access/Denied only.
+ * Hardcoded exception: 'Edit Products' feature is Access/Denied only. */
+export function levelsForNode(node: UserRightsFeatureNode): AccessLevel[] {
+  if (node.label === 'Edit Products') return ['access', 'denied'];
+  return node.kind === 'feature' ? ['access', 'readOnly', 'denied'] : ['access', 'denied'];
 }
 //#endregion
 
@@ -140,11 +142,11 @@ export function collectAllFeatureIds(nodes: UserRightsFeatureNode[]): number[] {
 }
 
 /** Kind-aware bulk/cascade collector: only includes a featureId if `level` is actually valid for
- * that node's real kind (see {@link levelsForKind}) — e.g. applying Read Only from a Module, or
+ * that node's real kind (see {@link levelsForNode}) — e.g. applying Read Only from a Module, or
  * to an Activity underneath it, is a no-op for that row. Access/Denied apply to every kind. */
 export function collectFeatureIdsForLevel(nodes: UserRightsFeatureNode[], level: AccessLevel): number[] {
   return nodes.flatMap((node) => [
-    ...(levelsForKind(node.kind).includes(level) ? [node.featureId] : []),
+    ...(levelsForNode(node).includes(level) ? [node.featureId] : []),
     ...collectFeatureIdsForLevel(node.children, level),
   ]);
 }

@@ -89,7 +89,9 @@ namespace CFR.Common
         public const string AccessRequestProductNotFound = "The requested product is not available.";
         public const string AccessRequestMemberNotFound = "No member account was found for this email.";
         public const string AccessRequestOrgNotFound = "No organization is linked to this member.";
-        public const string AccessRequestAlreadyDecided = "This product request has already been decided.";
+        public const string AccessRequestEmailOrganizationExists = "This email and organization already exist in Catholic Solutions. Please sign in to request access.";
+        public const string AccessRequestEmailAlreadyCfrUser = "You already have a Catholic Solutions account with this email address. Please sign in to request access, or use a different email address.";
+        public const string AccessRequestAlreadyDecided ="This product request has already been decided.";
         public const string AccessRequestProductContactMissing = "This product has no contact user set up, so the request could not be sent to the vendor. Set a contact person on the product and try again.";
         public const string AccessRequestVendorEmailFailed = "The email to the product contact could not be sent, so the request was not sent to the vendor. Please try again.";
         public const string ProductRequestNotFound = "This product suggestion no longer exists.";
@@ -118,7 +120,6 @@ namespace CFR.Common
         // CFR.DataSync — HMAC auth + user sync
         public const string Unauthenticated = "Authentication failed.";
         public const string ScopeDenied = "The API client is not authorized for this operation.";
-        public const string ProductScopeViolation = "productId is not accepted in the request body.";
         public const string ValidationFailed = "The request failed validation.";
         public const string InvalidEmail = "The email address is not a valid format.";
         public const string OrgNotOnboarded = "The organization is not onboarded for this product.";
@@ -144,7 +145,6 @@ namespace CFR.Common
     {
         public const string Unauthenticated = "UNAUTHENTICATED";
         public const string ScopeDenied = "SCOPE_DENIED";
-        public const string ProductScopeViolation = "PRODUCT_SCOPE_VIOLATION";
         public const string ValidationFailed = "VALIDATION_FAILED";
         public const string InvalidEmail = "INVALID_EMAIL";
         public const string OrgNotOnboarded = "ORG_NOT_ONBOARDED";
@@ -166,8 +166,7 @@ namespace CFR.Common
         public static class MailLogMessages
         {
             public const string SendMailAttemptFailed = "SMTP send attempt {Attempt} to {ToAddress} via {SmtpServer} failed";
-            public const string SendMailDisabled = "Email to {ToAddress} not sent: SMTPMailConfig.SendMailFlag is not \"1\"";
-        }
+            public const string SendMailDisabled = "Email to {ToAddress} not sent: SMTPMailConfig.SendMailFlag is not \"1\"";        }
 
         public static class AcutisLogMessages
         {
@@ -244,12 +243,19 @@ namespace CFR.Common
         {
             public const string AuthenticationFailed = "Login failed for ClientId {ClientId}";
             public const string CreateUserFailed = "Error while creating synced user for productOrgId {ProductOrgId}";
+            public const string BulkCreateUsersFailed = "Error while bulk-creating synced users ({UserCount} rows)";
             public const string UpdateUserFailed = "Error while updating synced user {ExternalUserId}";
             public const string PatchUserFailed = "Error while patching synced user {ExternalUserId}";
             public const string DeactivateUserFailed = "Error while deactivating synced user {ExternalUserId}";
             public const string ReactivateUserFailed = "Error while reactivating synced user {ExternalUserId}";
+            public const string SetLoginDisabledFailed = "Error while setting IsLoginDisabled for synced user {ExternalUserId}";
+            public const string SetActiveFailed = "Error while setting IsActive for synced user {ExternalUserId}";
             public const string GetUserFailed = "Error while fetching synced user {ExternalUserId}";
+            public const string UpsertOrganizationFailed = "Error while upserting synced organization for productOrgId {ProductOrgId}";
+            public const string GetOrganizationFailed = "Error while fetching synced organization for productOrgId {ProductOrgId}";
             public const string GetUserProductsFailed = "Error while fetching products for CFR email {Email}";
+            public const string UpsertProductRoleFailed = "Error while upserting product role for ProductId {ProductId}";
+            public const string GetProductRolesFailed = "Error while fetching product roles for ProductId {ProductId}";
             public const string LaunchProductFailed = "Error while launching product {ProductId} for CFR email {Email}";
         }
 

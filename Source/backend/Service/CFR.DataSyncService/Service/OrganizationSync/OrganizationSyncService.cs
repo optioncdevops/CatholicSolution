@@ -3,8 +3,8 @@
 namespace CFR.DataSyncService.Service.OrganizationSync
 {
     /// <summary>
-    /// Implements organization onboarding business logic: validation, the productId-in-body hard
-    /// rule, and result-to-MSResultArgs mapping.
+    /// Implements organization onboarding business logic: validation and result-to-MSResultArgs
+    /// mapping.
     /// Repository Responsibility:
     /// - Invokes IOrganizationSyncRepository for the actual create/update/get call.
     /// </summary>
@@ -18,11 +18,6 @@ namespace CFR.DataSyncService.Service.OrganizationSync
             var result = new MSResultArgs { TraceId = traceId };
             try
             {
-                if (TryRejectProductIdInBody(input, result))
-                {
-                    return result;
-                }
-
                 if (input.ProductOrgId <= 0 || string.IsNullOrWhiteSpace(input.OrgName))
                 {
                     result.StatusCode = ErrorCodes.BadRequest;
@@ -46,7 +41,7 @@ namespace CFR.DataSyncService.Service.OrganizationSync
             }
             catch (Exception ex)
             {
-                AppLogger.LogError(logger, ex, SerilogErrorMessages.SyncLogMessages.CreateUserFailed, input.ProductOrgId);
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.SyncLogMessages.UpsertOrganizationFailed, input.ProductOrgId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
                 result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.InternalError));
@@ -87,7 +82,7 @@ namespace CFR.DataSyncService.Service.OrganizationSync
             }
             catch (Exception ex)
             {
-                AppLogger.LogError(logger, ex, SerilogErrorMessages.SyncLogMessages.GetUserFailed, productOrgId.ToString());
+                AppLogger.LogError(logger, ex, SerilogErrorMessages.SyncLogMessages.GetOrganizationFailed, productOrgId);
                 result.StatusCode = ErrorCodes.InternalServerError;
                 result.StatusMessage = ErrorMessages.InternalServerError;
                 result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.InternalError));
@@ -98,25 +93,5 @@ namespace CFR.DataSyncService.Service.OrganizationSync
 
         #endregion GET Methods
 
-        private static bool TryRejectProductIdInBody(OrganizationSyncInput input, MSResultArgs result)
-        {
-            if (input.ExtraFields == null)
-            {
-                return false;
-            }
-
-            foreach (string key in input.ExtraFields.Keys)
-            {
-                if (string.Equals(key, "productId", StringComparison.OrdinalIgnoreCase))
-                {
-                    result.StatusCode = ErrorCodes.Forbidden;
-                    result.StatusMessage = ErrorMessages.ProductScopeViolation;
-                    result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.ProductScopeViolation));
-                    return true;
-                }
-            }
-
-            return false;
-        }
     }
 }

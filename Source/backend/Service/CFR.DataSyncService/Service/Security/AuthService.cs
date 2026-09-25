@@ -11,6 +11,8 @@ namespace CFR.DataSyncService.Service.Security
     /// </summary>
     public class AuthService(IApiClientRepository repository, IJwtTokenGenerator tokenGenerator, ILogger<AuthService> logger): IAuthService
     {
+        #region POST Methods
+
         /// <inheritdoc />
         public async Task<MSResultArgs> LoginAsync(AuthLoginInput input)
         {
@@ -53,6 +55,10 @@ namespace CFR.DataSyncService.Service.Security
             return result;
         }
 
+        #endregion POST Methods
+
+        #region Helpers
+
         private static bool SecretMatches(string provided, string stored)
         {
             byte[] providedBytes = Encoding.UTF8.GetBytes(provided);
@@ -66,5 +72,7 @@ namespace CFR.DataSyncService.Service.Security
             result.StatusMessage = ErrorMessages.Unauthenticated;
             result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.Unauthenticated));
         }
+
+        #endregion Helpers
     }
 }

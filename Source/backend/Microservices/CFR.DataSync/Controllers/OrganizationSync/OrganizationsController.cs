@@ -21,7 +21,7 @@ namespace CFR.DataSync.Controllers.OrganizationSync
         /// <remarks>
         /// Purpose: Onboard a new organization, or refresh an already-onboarded one.
         /// Request Flow: Client API POST -> OrganizationsController.UpsertOrganization() -> IOrganizationSyncService.UpsertOrganizationAsync() -> Database.
-        /// Validation Details: Handled inside the service layer, including the productId-in-body hard rule.
+        /// Validation Details: Handled inside the service layer.
         /// Business Logic: None at the controller level; delegates to the service layer.
         /// Service Interaction: Calls IOrganizationSyncService.UpsertOrganizationAsync().
         /// Response Details: Standard API result enclosing OrganizationSyncOutput, or an error.

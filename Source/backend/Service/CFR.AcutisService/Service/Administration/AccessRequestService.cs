@@ -178,15 +178,15 @@ namespace CFR.AcutisService.Service.Administration
                         return result;
                     }
 
-                    var vendorEmails = (await GetProductContactsAsync(request.ProductId)).Select(contact => contact.EMail).ToList();
-                    if (vendorEmails.Count == 0)
+                    var vendorContacts = await GetProductContactsAsync(request.ProductId);
+                    if (vendorContacts.Count == 0)
                     {
                         result.StatusCode = ErrorCodes.UnprocessableEntity;
                         result.StatusMessage = ErrorMessages.AccessRequestProductContactMissing;
                         return result;
                     }
 
-                    emailSent = await SendToVendorEmailAsync(request, string.Join(';', vendorEmails.Distinct(StringComparer.OrdinalIgnoreCase)), input.Note);
+                    emailSent = await SendToVendorEmailAsync(request, vendorContacts, input.Note);
                     if (!emailSent)
                     {
                         result.StatusCode = ErrorCodes.UnprocessableEntity;
@@ -355,8 +355,11 @@ namespace CFR.AcutisService.Service.Administration
                     // AccessRequestId (always > 0, traceable) for CfrOrgID, and the approving staff
                     // member's own id for CfrUserID. Revisit this if SMS ever starts using either
                     // value for something real, since neither claims to be the true CFR org/requester.
+                    // context.CFRUserId (auth.User.CFRUserId) is now a GUID and can no longer be sent
+                    // as-is on this int-typed external field, so the staff member's own id is always
+                    // used here.
                     CfrOrgID = accessRequestId,
-                    CfrUserID = context.CFRUserId is > 0 ? context.CFRUserId.Value : (int)currentUserService.UserId,
+                    CfrUserID = (int)currentUserService.UserId,
                 };
 
                 // Mirrors SMS's own required-field check (OptionC.SMSService.Service.CFR.CFRService.
@@ -449,29 +452,38 @@ namespace CFR.AcutisService.Service.Administration
 
         /// <summary>
         /// Emails the product's contact / support user (the vendor) every detail they need to set the
-        /// requester up: organization, address, contact, product, submitted date and the admin's note.
+        /// requester up: organization, address, contact, submitted date and the admin's note, greeting
+        /// them by name.
         /// </summary>
         /// <returns>True when the mail service reported the message as sent.</returns>
-        private Task<bool> SendToVendorEmailAsync(AccessRequestOutput request, string vendorEmails, string? note)
+        private Task<bool> SendToVendorEmailAsync(AccessRequestOutput request, List<AccessRequestRecipientOutput> vendorContacts, string? note)
         {
             var placeholders = BuildRequestPlaceholders(request, note);
             placeholders["Note"] = string.IsNullOrWhiteSpace(note) ? "—" : note.Trim();
+            // "Hello Sal Palomares," - every contact's name when the product has more than one; falls
+            // back to "Hello there," when no name is recorded on the Acutis user.
+            string contactNames = string.Join(", ", vendorContacts
+                .Select(contact => contact.FullName?.Trim())
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+            placeholders["ContactName"] = string.IsNullOrWhiteSpace(contactNames) ? "there" : contactNames;
+            string vendorEmails = string.Join(';', vendorContacts.Select(contact => contact.EMail.Trim()).Distinct(StringComparer.OrdinalIgnoreCase));
+
             return SendTemplatedEmailAsync(
                 AccessSentToVendorTemplateCode,
                 request.AccessRequestId,
                 vendorEmails,
                 placeholders,
                 "New customer request for [AppName]: [OrganizationName]",
-                "<p>Hello,</p>"
-                + "<p>A Catholic Solutions access request for <strong>[AppName]</strong> has been sent to you. Please contact the requester and add them to [AppName].</p>"
+                "<p>Hello [ContactName],</p>"
+                + "<p>A new product request for <strong>[AppName]</strong> has come through Catholic Solutions, and you have been requested for this product. "
+                + "Please reach out to the requester; the requester's details are below.</p>"
                 + "<p><strong>Request details</strong><br/>"
                 + "Organization: [OrganizationName]<br/>"
-                + "Organization type: [OrganizationType]<br/>"
                 + "Address: [OrganizationAddress]<br/>"
                 + "Contact name: [RequesterName]<br/>"
                 + "Contact email: [RequesterEmail]<br/>"
                 + "Contact phone: [Phone]<br/>"
-                + "Application: [AppName]<br/>"
                 + "Submitted: [SubmittedDate]<br/>"
                 + "Notes: [Note]</p>");
         }

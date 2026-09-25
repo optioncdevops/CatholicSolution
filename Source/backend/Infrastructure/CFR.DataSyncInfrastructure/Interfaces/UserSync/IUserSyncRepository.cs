@@ -54,7 +54,7 @@ namespace CFR.DataSyncInfrastructure.Interfaces.UserSync
         /// <param name="expectedRowVersion">Client-supplied If-Match RowVersion, or null to skip the check.</param>
         /// <param name="sourceIp">Caller IP, carried into the audit row.</param>
         /// <returns>The upsert result.</returns>
-        Task<UserProductUpsertResult> UpdateUserFullAsync(int productId, string externalUserId, UserSyncInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp);
+        Task<UserProductUpsertResult> UpdateUserFullAsync(int productId, string externalUserId, UserSyncUpdateInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp);
 
         #endregion PUT Methods
 
@@ -80,7 +80,7 @@ namespace CFR.DataSyncInfrastructure.Interfaces.UserSync
         /// <param name="expectedRowVersion">Client-supplied If-Match RowVersion, or null to skip the check.</param>
         /// <param name="sourceIp">Caller IP, carried into the audit row.</param>
         /// <returns>The upsert result.</returns>
-        Task<UserProductUpsertResult> UpdateUserPartialAsync(int productId, string externalUserId, UserSyncInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp);
+        Task<UserProductUpsertResult> UpdateUserPartialAsync(int productId, string externalUserId, UserSyncUpdateInput input, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp);
 
         #endregion PATCH Methods
 
@@ -150,6 +150,50 @@ namespace CFR.DataSyncInfrastructure.Interfaces.UserSync
         /// <param name="sourceIp">Caller IP, carried into the audit row.</param>
         /// <returns>The upsert result.</returns>
         Task<UserProductUpsertResult> ReactivateUserAsync(int productId, string externalUserId, int productOrgId, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp);
+
+        /// <summary>
+        /// Sets the IsLoginDisabled flag only, leaving IsActive/IsDeleted untouched.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let a product flip login-disabled without resending the whole user payload.
+        /// Request Flow: IUserSyncService -> UserSyncRepository.SetLoginDisabledAsync() -> SQL Database.
+        /// Validation Details: Parameter names match stored procedure arguments.
+        /// Business Logic: Executes the set-IsLoginDisabled action of the upsert stored procedure.
+        /// Repository Interaction: Executes StoredProc.UserSync.UserProductUpsert with ActionId 7.
+        /// Response Details: Returns a UserProductUpsertResult with ResultCode OK or an error code.
+        /// </remarks>
+        /// <param name="productId">ProductId resolved from the authenticated ApiClient.</param>
+        /// <param name="externalUserId">The product's own user identifier.</param>
+        /// <param name="productOrgId">The product's own organization identifier.</param>
+        /// <param name="isLoginDisabled">The target IsLoginDisabled value.</param>
+        /// <param name="apiClientId">Internal identifier of the authenticated ApiClient.</param>
+        /// <param name="traceId">W3C trace id, carried into the audit row.</param>
+        /// <param name="expectedRowVersion">Client-supplied If-Match RowVersion, or null to skip the check.</param>
+        /// <param name="sourceIp">Caller IP, carried into the audit row.</param>
+        /// <returns>The upsert result.</returns>
+        Task<UserProductUpsertResult> SetLoginDisabledAsync(int productId, string externalUserId, int productOrgId, bool isLoginDisabled, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp);
+
+        /// <summary>
+        /// Sets the IsActive flag only, leaving IsLoginDisabled/IsDeleted untouched.
+        /// </summary>
+        /// <remarks>
+        /// Purpose: Let a product flip active/inactive without resending the whole user payload.
+        /// Request Flow: IUserSyncService -> UserSyncRepository.SetActiveAsync() -> SQL Database.
+        /// Validation Details: Parameter names match stored procedure arguments.
+        /// Business Logic: Executes the set-IsActive action of the upsert stored procedure.
+        /// Repository Interaction: Executes StoredProc.UserSync.UserProductUpsert with ActionId 8.
+        /// Response Details: Returns a UserProductUpsertResult with ResultCode OK or an error code.
+        /// </remarks>
+        /// <param name="productId">ProductId resolved from the authenticated ApiClient.</param>
+        /// <param name="externalUserId">The product's own user identifier.</param>
+        /// <param name="productOrgId">The product's own organization identifier.</param>
+        /// <param name="isActive">The target IsActive value.</param>
+        /// <param name="apiClientId">Internal identifier of the authenticated ApiClient.</param>
+        /// <param name="traceId">W3C trace id, carried into the audit row.</param>
+        /// <param name="expectedRowVersion">Client-supplied If-Match RowVersion, or null to skip the check.</param>
+        /// <param name="sourceIp">Caller IP, carried into the audit row.</param>
+        /// <returns>The upsert result.</returns>
+        Task<UserProductUpsertResult> SetActiveAsync(int productId, string externalUserId, int productOrgId, bool isActive, int apiClientId, string traceId, byte[]? expectedRowVersion, string? sourceIp);
 
         #endregion STATUS Methods
     }

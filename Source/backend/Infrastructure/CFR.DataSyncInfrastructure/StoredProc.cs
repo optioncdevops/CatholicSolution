@@ -47,6 +47,15 @@ namespace CFR.DataSyncInfrastructure
         }
 
         /// <summary>
+        /// Stored procedure names for the per-product role catalog surface.
+        /// </summary>
+        public class ProductRole
+        {
+            /// <summary>Upsert (ActionId 1) and list (ActionId 2) operations for [core].[ProductRole].</summary>
+            public const string ProductRoleCrud = "[dbo].[Sync_ProductRole]";
+        }
+
+        /// <summary>
         /// Portal's own App Hub platform-launch code create/exchange procedure. Lives in the same
         /// physical database as CFR.Portal's own tables (both microservices share ConnString), the
         /// same way [dbo].[Sync_ProductsForUser] already reads Portal-owned tables directly.

@@ -12,10 +12,7 @@ import {
   getProductWarnings,
   type ProductWarning,
 } from "../validator/productValidation";
-import {
-  getProductById,
-  updateProduct,
-} from "../services/productService";
+import { getProductById, updateProduct } from "../services/productService";
 import type {
   ProductApiItem,
   ProductInputPayload,
@@ -60,7 +57,6 @@ function ProductWarningsBanner({ warnings }: { warnings: ProductWarning[] }) {
     </div>
   );
 }
-
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -116,6 +112,16 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
           <Fact label="Short Name" value={app.shortName} />
           <Fact label="Product Subtitle" value={app.category} />
           <ProductionUrlFact url={app.productionUrl} />
+          {app.clientId ? (
+            <>
+              <Fact label="Client ID" value={app.clientId} />
+              <Fact label="Client Secret" value={app.clientSecret || ""} />
+            </>
+          ) : null}
+          <Fact
+            label="Product Support User"
+            value={app.productSupportUserName || ""}
+          />
           <Fact
             label="Navigation Target"
             value={app.navigationTarget === "new-tab" ? "New Tab" : "Same Tab"}
@@ -194,36 +200,65 @@ const ProductDetails = () => {
   //#region Hooks
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const searchProductId = searchParams.get('productId');
-  const stateProductId = parseProductIdFromState(location.state) || (searchProductId ? Number(searchProductId) : null);
+  const searchProductId = searchParams.get("productId");
+  const stateProductId =
+    parseProductIdFromState(location.state) ||
+    (searchProductId ? Number(searchProductId) : null);
   const navigate = useNavigate();
   const { showToast } = useToast();
   const accessLevel = useFeatureAccessLevel(PRODUCTS_PATHS.list);
   const isReadOnly = accessLevel === "readOnly";
+  const detailsAccess = useFeatureAccessLevel(PRODUCTS_PATHS.featureDetails);
+  const editAccess = useFeatureAccessLevel(PRODUCTS_PATHS.featureEdit);
+  const orgsAccess = useFeatureAccessLevel(PRODUCTS_PATHS.featureOrganizations);
+  const licenseDetailsAccess = useFeatureAccessLevel(PRODUCTS_PATHS.featureLicenseDetails);
+  const licenseHistoryAccess = useFeatureAccessLevel(PRODUCTS_PATHS.featureLicenseHistory);
+  const apiAccess = useFeatureAccessLevel(PRODUCTS_PATHS.featureApiIntegration);
   //#endregion
 
   //#region States
   const [product, setProduct] = useState<ProductApiItem | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>(
-    parseProductTabFromState(location.state) ?? "details",
-  );
+
+  // Filter tabs based on access levels
+  const availableTabs = [
+    ...(detailsAccess !== "denied" ? [{ id: "details", label: "Product Details" }] : []),
+    ...(orgsAccess !== "denied" ? [{ id: "customers", label: "Organizations" }] : []),
+    ...(licenseDetailsAccess !== "denied" ? [{ id: "license-details", label: "License Details" }] : []),
+    ...(licenseHistoryAccess !== "denied" ? [{ id: "license-history", label: "License History" }] : []),
+    ...(apiAccess !== "denied" ? [{ id: "api-integration", label: "Api Integration" }] : []),
+  ];
+
+  const defaultTab = availableTabs.length > 0 ? availableTabs[0].id : "details";
+  const initialTab = parseProductTabFromState(location.state);
+
+  const tabIdByPath: Record<string, string> = {
+    [PRODUCTS_PATHS.featureDetails]: "details",
+    [PRODUCTS_PATHS.featureOrganizations]: "customers",
+    [PRODUCTS_PATHS.featureLicenseDetails]: "license-details",
+    [PRODUCTS_PATHS.featureLicenseHistory]: "license-history",
+    [PRODUCTS_PATHS.featureApiIntegration]: "api-integration",
+  };
+
+  const pathByTabId: Record<string, string> = {
+    details: PRODUCTS_PATHS.featureDetails,
+    customers: PRODUCTS_PATHS.featureOrganizations,
+    "license-details": PRODUCTS_PATHS.featureLicenseDetails,
+    "license-history": PRODUCTS_PATHS.featureLicenseHistory,
+    "api-integration": PRODUCTS_PATHS.featureApiIntegration,
+  };
+
+  const activeTab = tabIdByPath[location.pathname] ?? initialTab ?? defaultTab;
+
+  const handleTabChange = (tabId: string) => {
+    const targetPath = pathByTabId[tabId] || PRODUCTS_PATHS.details;
+    navigate(targetPath, { state: { productId: product?.productId || stateProductId } });
+  };
+
   const [changingStatus, setChangingStatus] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<ProductStatus | null>(
     null,
   );
-  // Prop-driven reset, adjusted during render rather than in an effect (React's own recommended
-  // pattern for "state that syncs from a navigation-carried value") — a fresh `location.state`
-  // (e.g. arriving from a "View" link elsewhere that requests a specific tab) switches the active
-  // tab; navigating again without a tab hint leaves the current tab alone, same as the effect did.
-  const [renderedForLocationState, setRenderedForLocationState] = useState(location.state);
-  if (renderedForLocationState !== location.state) {
-    setRenderedForLocationState(location.state);
-    const tabFromState = parseProductTabFromState(location.state);
-    if (tabFromState) {
-      setActiveTab(tabFromState);
-    }
-  }
   //#endregion
 
   //#region Functions
@@ -273,9 +308,7 @@ const ProductDetails = () => {
       };
       await updateProduct(payload);
       await loadProduct();
-      showToast(
-        `Product status changed to ${status.replace("-", " ")}.`,
-      );
+      showToast(`Product status changed to ${status.replace("-", " ")}.`);
     } catch (error) {
       showToast(
         typeof error === "string" ? error : "Failed to change status",
@@ -333,7 +366,11 @@ const ProductDetails = () => {
   }
 
   const app = toAdminApplication(product);
-  const logoSrc = resolveProductLogoUrl(product.logoName, product.updatedDate, product.productId);
+  const logoSrc = resolveProductLogoUrl(
+    product.logoName,
+    product.updatedDate,
+    product.productId,
+  );
   const warnings = getProductWarnings(app, [app]);
 
   return (
@@ -359,17 +396,19 @@ const ProductDetails = () => {
                 Change Status
               </CommonButton>
             )}
-            <CommonButton
-              variant="headerSecondary"
-              iconLeft={<Pencil size={14} />}
-              onClick={() =>
-                navigate(PRODUCTS_PATHS.edit, {
-                  state: { productId: product.productId },
-                })
-              }
-            >
-              Edit
-            </CommonButton>
+            {activeTab === "details" && editAccess !== "denied" && !isReadOnly && (
+              <CommonButton
+                variant="headerSecondary"
+                iconLeft={<Pencil size={14} />}
+                onClick={() =>
+                  navigate(PRODUCTS_PATHS.edit, {
+                    state: { productId: product.productId },
+                  })
+                }
+              >
+                Edit
+              </CommonButton>
+            )}
           </div>
         }
       />
@@ -378,37 +417,43 @@ const ProductDetails = () => {
 
       {isReadOnly ? <ReadOnlyBanner featureName="Products" /> : null}
 
-      <Tabs
-        activeId={activeTab}
-        onChange={setActiveTab}
-        tabs={[
-          { id: "details", label: "Product Details" },
-          { id: "customers", label: "Organizations" },
-          { id: "license-details", label: "License Details" },
-          { id: "license-history", label: "License History" },
-          { id: "api-integration", label: "Api Integration" },
-        ]}
-      />
+      {availableTabs.length > 0 && (
+        <Tabs
+          activeId={activeTab}
+          onChange={handleTabChange}
+          tabs={availableTabs}
+        />
+      )}
 
-      <TabPanel id="details" activeId={activeTab}>
-        <ProductDetailsTab app={app} />
-      </TabPanel>
+      {detailsAccess !== "denied" && (
+        <TabPanel id="details" activeId={activeTab}>
+          <ProductDetailsTab app={app} />
+        </TabPanel>
+      )}
 
-      <TabPanel id="customers" activeId={activeTab}>
-        <CustomerDetails app={app} />
-      </TabPanel>
+      {orgsAccess !== "denied" && (
+        <TabPanel id="customers" activeId={activeTab}>
+          <CustomerDetails app={app} />
+        </TabPanel>
+      )}
 
-      <TabPanel id="license-details" activeId={activeTab}>
-        <LicenseDetails app={app} readOnly={isReadOnly} />
-      </TabPanel>
+      {licenseDetailsAccess !== "denied" && (
+        <TabPanel id="license-details" activeId={activeTab}>
+          <LicenseDetails app={app} readOnly={licenseDetailsAccess === "readOnly" || isReadOnly} />
+        </TabPanel>
+      )}
 
-      <TabPanel id="license-history" activeId={activeTab}>
-        <LicenseHistory app={app} />
-      </TabPanel>
+      {licenseHistoryAccess !== "denied" && (
+        <TabPanel id="license-history" activeId={activeTab}>
+          <LicenseHistory app={app} />
+        </TabPanel>
+      )}
 
-      <TabPanel id="api-integration" activeId={activeTab}>
-        <ApiIntegrationDetails app={app} />
-      </TabPanel>
+      {apiAccess !== "denied" && (
+        <TabPanel id="api-integration" activeId={activeTab}>
+          <ApiIntegrationDetails app={app} />
+        </TabPanel>
+      )}
 
       <ProductStatusModal
         app={changingStatus ? app : null}

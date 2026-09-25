@@ -77,6 +77,26 @@ export const getProductApiIntegrations = async (productId: number, signal?: Abor
   }
 };
 
+export const updateProductApiIntegration = async (input: {
+  productEnvironmentId: number;
+  siteUrl?: string;
+  siteDescription?: string;
+}, signal?: AbortSignal): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.put<ApiResponse>(`${controller}/UpdateProductApiIntegration`, input, {
+      signal,
+    });
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+      throw error;
+    }
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to update API integration';
+  }
+};
+
 export const getProductAssignmentSummary = async (): Promise<ApiResponse> => {
   try {
     const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductAssignmentSummary`);
@@ -96,6 +116,17 @@ export const getProductContactUsers = async (): Promise<ApiResponse> => {
   } catch (error: unknown) {
     const err = error as ApiError;
     throw err.response?.data?.statusMessage || err.message || 'Failed to load contact persons';
+  }
+};
+
+export const getProductSupportUsers = async (): Promise<ApiResponse> => {
+  try {
+    const response = await axiosInstance.get<ApiResponse>(`${controller}/GetProductSupportUsers`);
+    const { statusCode, statusMessage, resultData } = response.data;
+    return { statusCode, statusMessage, resultData };
+  } catch (error: unknown) {
+    const err = error as ApiError;
+    throw err.response?.data?.statusMessage || err.message || 'Failed to load product support users';
   }
 };
 

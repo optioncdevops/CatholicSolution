@@ -143,7 +143,7 @@ namespace CFR.Acutis.Controllers.Organization
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet]
         [ActionName(API_Organization.GetOrganizationUserDetail)]
-        public async Task<IActionResult> GetOrganizationUserDetail(long orgId, long authUserId)
+        public async Task<IActionResult> GetOrganizationUserDetail(long orgId, Guid authUserId)
         {
             return ApiResultArgs(await service.GetOrganizationUserDetailAsync(orgId, authUserId), APIHttpType.HttpGet);
         }
@@ -311,7 +311,7 @@ namespace CFR.Acutis.Controllers.Organization
         /// <response code="500">Internal server error occurred.</response>
         [HttpDelete]
         [ActionName(API_Organization.UnlinkOrganizationUser)]
-        public async Task<IActionResult> UnlinkOrganizationUser(long orgId, long authUserId)
+        public async Task<IActionResult> UnlinkOrganizationUser(long orgId, Guid authUserId)
         {
             return ApiResultArgs(await service.UnlinkOrganizationUserAsync(orgId, authUserId), APIHttpType.HttpDelete);
         }

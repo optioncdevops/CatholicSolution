@@ -19,9 +19,9 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         /// Purpose: Retrieve all product records from the Core.Product database table.
         /// Request Flow: IProductsService -> ProductsRepository.GetProductsListAsync() -> Database.
         /// Validation Details: None.
-        /// Business Logic: Executes StoredProc.Products.ProductsCrud with EnumVariables.ProductAction.GetList, then sets CustomerCount from EnumVariables.ProductAction.GetLicenses grouped by OrgId (same as GetProductCustomersAsync).
-        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud.
-        /// Response Details: Returns a list of ProductOutput records with customer counts matching the Customers tab.
+        /// Business Logic: Executes StoredProc.Products.ProductsCrud with EnumVariables.ProductAction.GetList, then sets CustomerCount from EnumVariables.ProductAction.GetLicenses grouped by OrgId (same as GetProductCustomersAsync), and IsRequestable from SQLQueryText.Products.GetRequestableProductIds (support user + contact user both set).
+        /// Repository Interaction: Executes StoredProc.Products.ProductsCrud and SQLQueryText.Products.GetRequestableProductIds.
+        /// Response Details: Returns a list of ProductOutput records with customer counts matching the Customers tab and the Request Access flag.
         /// </remarks>
         /// <returns>A list of product output records.</returns>
         public async Task<List<ProductOutput>> GetProductsListAsync()
@@ -34,9 +34,11 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             var customerCounts = licenses
                 .GroupBy(item => item.ProductId)
                 .ToDictionary(group => group.Key, group => group.GroupBy(item => item.OrgId).Count());
+            var requestableProductIds = (await dapperHandler.QueryAsync<int>(SQLQueryText.Products.GetRequestableProductIds, null, CommandType.Text)).ToHashSet();
             foreach (var product in products)
             {
                 product.CustomerCount = customerCounts.GetValueOrDefault(product.ProductId);
+                product.IsRequestable = requestableProductIds.Contains(product.ProductId);
             }
             return products;
         }
@@ -191,13 +193,12 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         /// Response Details: Returns a list of ProductApiIntegrationOutput records.
         /// </remarks>
         /// <param name="productId">Product identifier.</param>
-        /// <param name="environmentName">Environment name matching appsettings Environment (Development, Pilot, Staging, Live).</param>
         /// <returns>A list of product API integration records.</returns>
-        public async Task<List<ProductApiIntegrationOutput>> GetProductApiIntegrationsAsync(int productId, string environmentName)
+        public async Task<List<ProductApiIntegrationOutput>> GetProductApiIntegrationsAsync(int productId)
         {
             var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.ONE, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
-            parameters.Add(DBParameterName.ProductParams.EnvironmentName, environmentName, DbType.String);
             var result = await dapperHandler.QueryAsync<ProductApiIntegrationOutput>(StoredProc.Products.ApiIntegrationLookup, parameters, CommandType.StoredProcedure);
             return result.ToList();
         }
@@ -270,6 +271,7 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             string? logo = input.LogoName?.Trim();
             parameters.Add(DBParameterName.ProductParams.LogoName, logo, DbType.String);
             parameters.Add(DBParameterName.ProductParams.ContactUserId, input.ContactUserId is null ? DBNull.Value : input.ContactUserId.Value, DbType.Int64);
+            parameters.Add(DBParameterName.ProductParams.ProductSupportUser, input.ProductSupportUser is null ? DBNull.Value : input.ProductSupportUser.Value, DbType.Int64);
             string? updateFeatures = input.Features != null && input.Features.Count > 0
                 ? string.Join("|", input.Features.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()))
                 : null;
@@ -341,6 +343,18 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             parameters.Add(DBParameterName.ProductParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             return parameters.Get<int>(DBParameterName.ProductParams.ReturnValue);
+        }
+
+        public async Task<bool> UpdateProductApiIntegrationAsync(ProductApiIntegrationInput input)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.TWO, DbType.Int32);
+            parameters.Add("@ProductEnvironmentId", input.ProductEnvironmentId, DbType.Int32);
+            parameters.Add("@SiteUrl", input.SiteUrl, DbType.String);
+            parameters.Add("@SiteDescription", input.SiteDescription, DbType.String);
+            parameters.Add("@UpdatedBy", currentUserService.UserId, DbType.Int64);
+            _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ApiIntegrationLookup, parameters, CommandType.StoredProcedure);
+            return true;
         }
 
         #endregion PUT Methods

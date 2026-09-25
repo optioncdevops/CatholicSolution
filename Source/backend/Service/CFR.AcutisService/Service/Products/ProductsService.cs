@@ -390,7 +390,7 @@ namespace CFR.AcutisService.Service.Products
                     return result;
                 }
 
-                var data = await repository.GetProductApiIntegrationsAsync(productId, configuration["Environment"] ?? string.Empty);
+                var data = await repository.GetProductApiIntegrationsAsync(productId);
                 result.ResultData = data ?? [];
             }
             catch (Exception ex)
@@ -516,6 +516,7 @@ namespace CFR.AcutisService.Service.Products
                         input.LogoName = Path.GetFileName(existingLogo.Replace('\\', '/'));
                     }
                     input.ContactUserId ??= existingProduct.ContactUserId;
+                    input.ProductSupportUser ??= existingProduct.ProductSupportUser;
 
                 }
 
@@ -705,6 +706,39 @@ namespace CFR.AcutisService.Service.Products
                 result.StatusMessage = ErrorMessages.InternalServerError;
             }
 
+            return result;
+        }
+
+        public async Task<MSResultArgs> UpdateProductApiIntegrationAsync(ProductApiIntegrationInput input)
+        {
+            var result = new MSResultArgs();
+            try
+            {
+                if (input == null || input.ProductEnvironmentId <= 0)
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = ErrorMessages.BadRequest;
+                    return result;
+                }
+
+                bool success = await repository.UpdateProductApiIntegrationAsync(input);
+                if (success)
+                {
+                    result.StatusCode = ErrorCodes.Success;
+                    result.StatusMessage = "API Integration updated successfully.";
+                }
+                else
+                {
+                    result.StatusCode = ErrorCodes.BadRequest;
+                    result.StatusMessage = "Failed to update API Integration.";
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.LogError(logger, ex, "Failed to update Product API Integration", input?.ProductEnvironmentId);
+                result.StatusCode = ErrorCodes.InternalServerError;
+                result.StatusMessage = ErrorMessages.InternalServerError;
+            }
             return result;
         }
 

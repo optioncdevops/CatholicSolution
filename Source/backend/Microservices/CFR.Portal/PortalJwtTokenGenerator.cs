@@ -63,7 +63,7 @@ namespace CFR.Portal
         /// <param name="productId">Product that exchanged the code.</param>
         /// <param name="launchId">Launch transaction identifier used as jti.</param>
         /// <returns>JWT string.</returns>
-        public string GenerateIdentityToken(int cfrUserId, string email, int productId, int launchId)
+        public string GenerateIdentityToken(Guid cfrUserId, string email, int productId, int launchId)
         {
             if (string.IsNullOrEmpty(jwtSetting.Value.SecurityKey))
             {

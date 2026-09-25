@@ -27,6 +27,8 @@ export interface ProductApiItem {
   customerCount: number;
   contactUserId: number | null;
   contactPerson: string | null;
+  productSupportUser?: number | null;
+  productSupportUserName?: string | null;
   features?: string[];
   createdDate: string;
   insertedBy: number | null;
@@ -34,6 +36,8 @@ export interface ProductApiItem {
   updatedBy: number | null;
   updatedByName?: string | null;
   isDeleted: boolean;
+  clientId?: string | null;
+  clientSecret?: string | null;
 }
 
 
@@ -46,6 +50,7 @@ export interface ProductInputPayload {
   externalPageUrl?: string | null;
   logoName?: string | null;
   contactUserId?: number | null;
+  productSupportUser?: number | null;
   features?: string[];
   isActive: boolean;
   productStatus?: number | null;
@@ -95,6 +100,7 @@ export interface ProductCustomerRow {
 }
 
 export interface ProductApiIntegrationApiItem {
+  productEnvironmentId: number;
   site: string;
   siteUrl?: string | null;
   siteDescription?: string | null;
@@ -102,6 +108,7 @@ export interface ProductApiIntegrationApiItem {
 
 export interface ProductApiIntegrationRow {
   id: string;
+  productEnvironmentId: number;
   site: string;
   siteUrl: string;
   siteDescription: string;

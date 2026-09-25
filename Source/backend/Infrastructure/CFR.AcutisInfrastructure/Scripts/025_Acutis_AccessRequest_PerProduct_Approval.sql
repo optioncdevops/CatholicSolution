@@ -27,8 +27,52 @@
 -- ActionId 2 @Status 'sent-to-vendor' moves a requested line to 4 (CFR.Acutis emails the product's
 -- contact user first); 'approved' is only allowed from 4; 'rejected' from 1 or 4. ActionId 3/4 project
 -- LineStatus 4 as 'sent-to-vendor', and ActionId 1/7 treat a sent-to-vendor line as still open.
+--
+-- [request].[AccessRequestProduct].[LineStatus] is guarded twice, and both must know about 4 or
+-- Send to Vendor fails with a CHECK / FOREIGN KEY conflict:
+--   * [request].[LineStatusLookup] (FK_AccessRequestProduct_LineStatus) - every status row is seeded
+--     below, not just 4: if the lookup is ever emptied (e.g. a data reset that truncates the
+--     [request] tables) every new request line - even a brand-new submission (1) - is rejected.
+--   * CK_AccessRequestProduct_LineStatus - widened to 1/2/3/4.
+-- Both blocks are idempotent (only missing rows inserted; constraint re-created only when needed).
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
+GO
+
+IF OBJECT_ID(N'[request].[LineStatusLookup]', N'U') IS NOT NULL
+BEGIN
+    INSERT INTO [request].[LineStatusLookup] ([LineStatus], [StatusLabel])
+    SELECT s.[LineStatus], s.[StatusLabel]
+    FROM (VALUES
+        (1, N'Pending'),
+        (2, N'Approved'),
+        (3, N'Rejected'),
+        (4, N'Sent to Vendor')
+    ) AS s ([LineStatus], [StatusLabel])
+    WHERE NOT EXISTS (SELECT 1 FROM [request].[LineStatusLookup] l WHERE l.[LineStatus] = s.[LineStatus]);
+END
+GO
+
+IF OBJECT_ID(N'[request].[AccessRequestProduct]', N'U') IS NOT NULL
+   AND NOT EXISTS (
+       SELECT 1
+       FROM sys.check_constraints
+       WHERE [name] = N'CK_AccessRequestProduct_LineStatus'
+         AND [parent_object_id] = OBJECT_ID(N'[request].[AccessRequestProduct]')
+         AND [definition] LIKE N'%(4)%'
+   )
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM sys.check_constraints
+        WHERE [name] = N'CK_AccessRequestProduct_LineStatus'
+          AND [parent_object_id] = OBJECT_ID(N'[request].[AccessRequestProduct]')
+    )
+        ALTER TABLE [request].[AccessRequestProduct] DROP CONSTRAINT [CK_AccessRequestProduct_LineStatus];
+
+    ALTER TABLE [request].[AccessRequestProduct] WITH CHECK
+        ADD CONSTRAINT [CK_AccessRequestProduct_LineStatus] CHECK ([LineStatus] IN (1, 2, 3, 4));
+END
 GO
 
 IF OBJECT_ID(N'[request].[AccessRequestManage]', N'P') IS NOT NULL
@@ -96,6 +140,27 @@ BEGIN
     SET @Phone = NULLIF(LTRIM(RTRIM(@Phone)), N'');
     SET @ProductsJson = NULLIF(LTRIM(RTRIM(@ProductsJson)), N'');
     SET @Status = LOWER(REPLACE(LTRIM(RTRIM(ISNULL(@Status, N''))), N'_', N'-'));
+
+    -- Self-heal the line-status lookup before any action that writes [LineStatus] (1 = member save,
+    -- 2 = status change, 7 = public Request Access save). FK_AccessRequestProduct_LineStatus rejects
+    -- every value missing from [request].[LineStatusLookup], so if that table is ever emptied (e.g.
+    -- a data reset that truncates the [request] tables) every submission would fail with a FOREIGN
+    -- KEY conflict until someone re-seeded it by hand. Only missing rows are inserted, so this is a
+    -- single cheap existence check when the lookup is intact.
+    IF @ActionId IN (1, 2, 7)
+       AND OBJECT_ID(N'[request].[LineStatusLookup]', N'U') IS NOT NULL
+       AND (SELECT COUNT(*) FROM [request].[LineStatusLookup] WHERE [LineStatus] IN (1, 2, 3, 4)) < 4
+    BEGIN
+        INSERT INTO [request].[LineStatusLookup] ([LineStatus], [StatusLabel])
+        SELECT s.[LineStatus], s.[StatusLabel]
+        FROM (VALUES
+            (1, N'Pending'),
+            (2, N'Approved'),
+            (3, N'Rejected'),
+            (4, N'Sent to Vendor')
+        ) AS s ([LineStatus], [StatusLabel])
+        WHERE NOT EXISTS (SELECT 1 FROM [request].[LineStatusLookup] l WHERE l.[LineStatus] = s.[LineStatus]);
+    END
 
     IF @ActionId = 1
     BEGIN
@@ -313,6 +378,37 @@ BEGIN
         SELECT @PublicRequestedBy = u.[CFRUserId]
         FROM [auth].[User] u
         WHERE LOWER(LTRIM(RTRIM(u.[Email]))) = LOWER(@RequesterEmail);
+
+        -- The public Request Access page is for people who are NOT yet Catholic Solutions (CFR)
+        -- users. When the email already belongs to one ([auth].[User]):
+        --   -91 = that user is already linked to this SAME organization (email + organization
+        --         already exist) - matched by name against their [auth].[UserProduct] rows /
+        --         [core].[Organization].
+        --   -92 = the user exists but under a DIFFERENT organization ("you already have a Catholic
+        --         Solutions account").
+        -- Both stop the submission; CFR.Portal AccessRequestService maps them to messages.
+        IF @PublicRequestedBy IS NOT NULL
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM [auth].[UserProduct] up
+                LEFT JOIN [core].[Organization] o
+                    ON o.[ID] = up.[OrgId]
+                WHERE up.[CFRUserId] = @PublicRequestedBy
+                  AND ISNULL(up.[IsDeleted], 0) = 0
+                  AND (
+                        LOWER(LTRIM(RTRIM(ISNULL(up.[OrgName], N'')))) = LOWER(@OrganizationName)
+                     OR LOWER(LTRIM(RTRIM(ISNULL(o.[OrgName], N'')))) = LOWER(@OrganizationName)
+                  )
+            )
+            BEGIN
+                SET @ReturnValue = -91;
+                RETURN @ReturnValue;
+            END
+
+            SET @ReturnValue = -92;
+            RETURN @ReturnValue;
+        END
 
         -- No [core].[Organization] lookup/creation here anymore - [OrgId] is inserted as 0 below
         -- until approval, when a real Organization row is created from the org fields staged on
@@ -877,7 +973,7 @@ BEGIN
 
     IF @ActionId = 5
     BEGIN
-        DECLARE @Recipients TABLE ([EMail] NVARCHAR(256) NOT NULL);
+        DECLARE @Recipients TABLE ([EMail] NVARCHAR(256) NOT NULL, [FullName] NVARCHAR(256) NULL);
         DECLARE @ProductContactPerson NVARCHAR(200);
         DECLARE @ProductContactUserId BIGINT;
         DECLARE @ProductSupportUser VARCHAR(100);
@@ -901,8 +997,8 @@ BEGIN
         -- [auth].[AcutisUser].[UserId] value(s) (one id, or several comma/semicolon separated).
         IF @ProductSupportUser IS NOT NULL
         BEGIN
-            INSERT INTO @Recipients ([EMail])
-            SELECT DISTINCT LTRIM(RTRIM(u.[Email]))
+            INSERT INTO @Recipients ([EMail], [FullName])
+            SELECT DISTINCT LTRIM(RTRIM(u.[Email])), LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N'')))
             FROM STRING_SPLIT(REPLACE(@ProductSupportUser, ';', ','), ',') s
             INNER JOIN [auth].[AcutisUser] u
                 ON u.[UserId] = TRY_CAST(LTRIM(RTRIM(s.[value])) AS BIGINT)
@@ -916,8 +1012,8 @@ BEGIN
         IF NOT EXISTS (SELECT 1 FROM @Recipients)
            AND (@ProductContactUserId IS NOT NULL OR (@ProductContactPerson IS NOT NULL AND LTRIM(RTRIM(@ProductContactPerson)) <> N''))
         BEGIN
-            INSERT INTO @Recipients ([EMail])
-            SELECT DISTINCT LTRIM(RTRIM(u.[Email]))
+            INSERT INTO @Recipients ([EMail], [FullName])
+            SELECT DISTINCT LTRIM(RTRIM(u.[Email])), LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N'')))
             FROM [auth].[AcutisUser] u
             WHERE u.[IsDeleted] = 0
               AND u.[IsActive] = 1
@@ -934,8 +1030,8 @@ BEGIN
 
         IF NOT EXISTS (SELECT 1 FROM @Recipients)
         BEGIN
-            INSERT INTO @Recipients ([EMail])
-            SELECT DISTINCT LTRIM(RTRIM(u.[Email]))
+            INSERT INTO @Recipients ([EMail], [FullName])
+            SELECT DISTINCT LTRIM(RTRIM(u.[Email])), LTRIM(RTRIM(ISNULL(u.[FirstName], N'') + N' ' + ISNULL(u.[LastName], N'')))
             FROM [auth].[AcutisUser] u
             INNER JOIN [auth].[AcutisRole] r
                 ON r.[RoleId] = u.[RoleId]
@@ -947,7 +1043,8 @@ BEGIN
               AND NULLIF(LTRIM(RTRIM(u.[Email])), N'') IS NOT NULL;
         END
 
-        SELECT [EMail] FROM @Recipients;
+        -- [FullName] lets the AccessRequested email greet the support user by name.
+        SELECT [EMail], MAX([FullName]) AS [FullName] FROM @Recipients GROUP BY [EMail];
         RETURN 0;
     END
 
