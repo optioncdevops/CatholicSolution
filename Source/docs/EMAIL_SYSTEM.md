@@ -114,13 +114,22 @@ In **Pilot/Staging/Live**, this shared path is **not yet configured** — each s
 
 Saving is done via a write-to-temp-file-then-rename swap (`SaveData` in `ConfSettingsService.cs`), so a service reading the shared file mid-save never sees a half-written file. Reading retries briefly on an `IOException` for the same reason.
 
-### The logo: how its URL is built, and why it can disappear from real emails
+### The logo in real emails: embedded inline, not linked (as of the latest update)
 
-The uploaded logo is a **file name**, stored in the settings (`SMTPMailConfig.LogoUrl`). To turn that into an actual `<img src="...">` URL, the code needs to know this API's own public base address (`SMTPMailConfig.ApiBaseUrl`, edited on the separate **CFR Settings** page, not Email Settings) — see `BuildLogoImageUrl` in `SMTPMailService.cs`.
+Real outgoing emails (password reset, welcome, decisions, "Send Test", etc.) now **embed the logo's actual file bytes inside the email itself**, as an inline `cid:` image (`SendMailAsync` in `SMTPMailService.cs`, using `System.Net.Mail`'s `LinkedResource`/`AlternateView`) — the same technique most real-world transactional email systems use, and the correct fix for the problem this doc used to describe as a "known trade-off."
 
-**A safety rule that trips people up**: if that base URL is `localhost` (i.e., a developer's own machine), the logo is **silently removed** from any real outgoing email — no broken image, no `<img>` tag at all — see `GetLogoMarkup`'s `IsLoopbackHost` check. This is intentional: a `localhost` link is unreachable by any real recipient's mail client, and an earlier version of this code let exactly that leak into a live email once. The **admin Preview** modal is exempt from this check (it's just for your own screen), which is why Preview can show the logo correctly while a real "Send Test" email doesn't.
+**Why this matters**: previously the logo was only ever a `<img src="https://...">` **link**, which only renders if the recipient's mail client can reach that URL over the public internet — never true for a `localhost`/dev API. Embedding sidesteps that entirely: the image data travels inside the email, so it renders correctly for every recipient regardless of environment, and regardless of whether the sending server is reachable from the outside at all.
 
-**If you need to see the real logo in a local test email**, the correct way is to make your local server publicly reachable (e.g. an `ngrok` tunnel) and set the CFR Settings page's API Base URL to that public address — not to weaken the safety check. That check was deliberately reviewed and kept as-is; see git history on `SMTPMailService.cs`/`ConfSettingsService.cs` for the reasoning if you're tempted to change it.
+**How the file is located** — `ConfSettingsService.ResolveEmailLogoFilePath`, first match wins:
+1. `EmailSettings:LogoDirectory` (appsettings.{Environment}.json, then appsettings.json) — for a microservice that doesn't own the upload folder (e.g. `CFR.Portal`, which needs to be told where `CFR.Acutis` actually saved the file).
+2. `ApplicationFilePath:Doc_BasePath` (or `AppStrings:GatewayRoot`) + `Acutis\Attachment\EmailSettings` — where `CFR.Acutis` (`FileHandlerService`) saves the upload; this is why `CFR.Acutis` itself needs no extra config.
+3. `{content root}\wwwroot\Acutis\Attachment\EmailSettings`, then the sibling `CFR.Acutis` project's copy — local-dev fallbacks when neither setting above is present.
+
+**When embedding isn't possible** (the file can't be found on disk with any of the above, or a *per-template* logo URL override is passed in instead of the platform-wide one), the code falls back to the **old URL-linking behavior** — and the loopback safety rule from before still applies there: `GetLogoMarkup`'s `IsLoopbackHost` check silently removes a `localhost` **link** from a real email (there's no point linking to something a recipient can never reach), while the **admin Preview** modal (browser-rendered, not an emailed image) is exempt from that check since it's just for your own screen. That rule was deliberately reviewed and kept as-is for this fallback path; see git history on `SMTPMailService.cs`/`ConfSettingsService.cs` if you're tempted to change it.
+
+**If a logo is configured but couldn't be embedded**, a warning is logged (`SerilogErrorMessages.MailLogMessages.EmailLogoNotEmbedded`) naming the exact configured logo file — check the logs first if a "Send Test" isn't showing the logo you expect; it'll tell you whether the cause is `LogoDirectory`/`Doc_BasePath` pointing at the wrong place for that microservice.
+
+**Practical result**: the `ngrok`-tunnel workaround this doc used to recommend for seeing a real logo in a local test email is **no longer necessary** for the normal case (the platform-wide logo uploaded via Email Settings) — as long as `LogoDirectory`/`Doc_BasePath` correctly points at the real upload folder for whichever microservice is sending, the logo embeds and shows up regardless of environment. The tunnel is still relevant only for the fallback URL-linking path (a per-template logo override, or a misconfigured/missing `LogoDirectory`).
 
 ### Test Connection: how it actually tests
 
@@ -302,7 +311,7 @@ Two more steps:
    ```csharp
    services.AddScoped<ISMTPMailService, SMTPMailService>();
    ```
-2. **Add an `EmailSettings` section** to that microservice's own `appsettings.{Environment}.json` files (see the environment config table below) — at minimum so the logo URL resolves correctly for that service's own environment. `CFR.DataSync` currently has **no** `EmailSettings` key in any of its appsettings files, so its logo links would currently fall back to whatever the shared `_configurationSettings.json`'s persisted `ApiBaseUrl`/`LoginURL` already resolve to — fine as a default, but worth setting explicitly once that service starts sending real email.
+2. **Add an `EmailSettings` section** to that microservice's own `appsettings.{Environment}.json` files (see the environment config table below), with **`LogoDirectory` in particular** — without it, this new service can't find the uploaded logo file on disk to embed it, and every email it sends will silently fall back to the loopback-affected URL-linking path instead (see "The logo in real emails" above). `CFR.DataSync` currently has **no** `EmailSettings` key in any of its appsettings files, so it isn't wired for this yet.
 
 Nothing else needs to change — `IConfSettingsService`/`ISMTPMailService` are shared, generic services with no per-microservice logic inside them.
 
@@ -312,21 +321,24 @@ Everything below lives under an `"EmailSettings": { ... }` object in `appsetting
 
 | Key | Purpose | Required? |
 |---|---|---|
-| `ApiBaseUrl` | Overrides the persisted logo-URL host for *this* environment — see "why it can disappear from real emails" above. Only needed when the persisted value in the shared settings file might be wrong for this specific environment/server (e.g. it's a `localhost` value left over from Development). | Optional — falls back to the persisted `ApiBaseUrl` in the settings file, then to `LoginURL`. |
+| `ApiBaseUrl` | Overrides the persisted logo-URL host for *this* environment — only used by the fallback URL-linking path (see "The logo in real emails" above). Only needed when the persisted value in the shared settings file might be wrong for this specific environment/server (e.g. it's a `localhost` value left over from Development). | Optional — falls back to the persisted `ApiBaseUrl` in the settings file, then to `LoginURL`. |
 | `SharedSettingsPath` | Points this microservice at the one shared `_configurationSettings.json` instead of its own private copy. Relative paths resolve against the microservice's own folder; `%ENV_VARS%` are expanded. | Optional — omitting it keeps this service on its own private settings file (fully backward compatible). |
+| `LogoDirectory` | The folder where the uploaded email logo file actually lives on disk, so this microservice can read the file's bytes and **embed** it inline in outgoing email — only needed by a service that doesn't itself own the upload folder (i.e. isn't `CFR.Acutis`). Absolute path; `%ENV_VARS%` are expanded. | Optional for `CFR.Acutis` (resolves via `ApplicationFilePath:Doc_BasePath` already). **Effectively required for every other service** (e.g. `CFR.Portal`) once it sends real email, or its logo silently falls back to the loopback-affected URL-linking path. |
 
 **Per-environment cheat sheet** (what's actually set today):
 
-| Environment | `ApiBaseUrl` | `SharedSettingsPath` |
-|---|---|---|
-| Development (`CFR.Acutis`) | `https://localhost:5050/acutis` | `../_shared/_configurationSettings.json` |
-| Development (`CFR.Portal`) | `https://localhost:5050/acutis` | `../_shared/_configurationSettings.json` |
-| Pilot (`CFR.Acutis`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* |
-| Pilot (`CFR.Portal`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* |
-| Staging (`CFR.Acutis`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* |
-| Staging (`CFR.Portal`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* |
-| Live (`CFR.Acutis`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* |
-| Live (`CFR.Portal`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* |
+| Environment | `ApiBaseUrl` | `SharedSettingsPath` | `LogoDirectory` |
+|---|---|---|---|
+| Development (`CFR.Acutis`) | `https://localhost:5050/acutis` | `../_shared/_configurationSettings.json` | *not set — resolves via `Doc_BasePath`* |
+| Development (`CFR.Portal`) | `https://localhost:5050/acutis` | `../_shared/_configurationSettings.json` | `...\CFR.Acutis\wwwroot\Acutis\Attachment\EmailSettings` (points at the sibling `CFR.Acutis` project folder on the same dev machine) |
+| Pilot (`CFR.Acutis`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* | `C:\inetpub\catholicsolution\cfrapi.allnewoptionc.com\wwwroot\Acutis\Attachment\EmailSettings` |
+| Pilot (`CFR.Portal`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* | `C:\inetpub\catholicsolution\cfrapi.allnewoptionc.com\wwwroot\Acutis\Attachment\EmailSettings` (same physical folder as `CFR.Acutis` — same server) |
+| Staging (`CFR.Acutis`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* | same pattern as Pilot |
+| Staging (`CFR.Portal`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* | same pattern as Pilot |
+| Live (`CFR.Acutis`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* | same pattern as Pilot |
+| Live (`CFR.Portal`) | `https://cfrapi.allnewoptionc.com/acutis` | *not set — own file* | same pattern as Pilot |
+
+Note that `CFR.Acutis` itself never needs `LogoDirectory` set explicitly — it already resolves the folder via `ApplicationFilePath:Doc_BasePath` (the same setting used for every other file upload). `CFR.Portal` needs it everywhere, because it has no `Doc_BasePath` of its own that points at that folder.
 
 To add `SharedSettingsPath` for Pilot/Staging/Live, see the numbered setup steps under "Storage: one shared JSON file" above — it needs an ops decision about where that shared file lives on the real server(s) before it can be filled in here.
 
@@ -335,14 +347,15 @@ To add `SharedSettingsPath` for Pilot/Staging/Live, see the numbered setup steps
 {
   "EmailSettings": {
     "ApiBaseUrl": "https://cfrapi.allnewoptionc.com/acutis",
-    "SharedSettingsPath": "../_shared/_configurationSettings.json"
+    "SharedSettingsPath": "../_shared/_configurationSettings.json",
+    "LogoDirectory": "C:\\inetpub\\catholicsolution\\cfrapi.allnewoptionc.com\\wwwroot\\Acutis\\Attachment\\EmailSettings"
   }
 }
 ```
-— same shared-path value as every other service in that environment, so they all end up reading/writing the exact same file.
+— same shared-path and logo-directory values as every other service in that environment, so they all end up reading/writing the exact same settings file and embedding the exact same logo image.
 
 ## Known trade-offs (read before "fixing" these)
 
-- **Loopback logo stripping cannot be turned off for convenience.** It's been reviewed and deliberately kept as environment-agnostic (it doesn't trust "is this Development" — a misconfigured deployed server can claim to be Development too). The correct fix for wanting to see a real logo in a local test send is a public tunnel to your machine, not a code change here.
+- **Loopback logo stripping cannot be turned off for convenience** — but it's now only reached via the fallback URL-linking path, not the normal case. Since inline embedding was added, a correctly-configured `LogoDirectory`/`Doc_BasePath` means most environments never hit this path at all. It's been reviewed and deliberately kept environment-agnostic (it doesn't trust "is this Development" — a misconfigured deployed server can claim to be Development too). If you still hit this (embedding failed and it fell back to a `localhost` link), fix `LogoDirectory`/`Doc_BasePath` rather than a public tunnel or a code change — check the logs for `EmailLogoNotEmbedded` first.
 - **Pilot/Staging/Live don't share one settings file yet.** Only Development is wired up to the shared path today. Until an ops decision is made about where that shared file should live on a real server (see the setup steps above), those three environments still use one settings file per microservice — meaning a save on the Email Settings page in Pilot only affects `CFR.Acutis` there, not `CFR.Portal`.
 - **`SendTestEmail` doesn't simulate a real trigger.** It sends the literal current draft, unsubstituted. It cannot catch a bug where the real trigger passes the wrong placeholder names — only manually triggering the real flow (e.g. actually requesting a password reset) tests that.
