@@ -1,12 +1,10 @@
-import { AccessSection, Field, SelectField } from '@/modules/authentication/pages/partials/RequestAccessFields';
 import { Brand } from '@shared/app/components/Brand';
 import { Footer } from '@shared/app/components/Footer';
 import { useToast } from '@shared/app/components/ToastProvider';
-import { ArrowRightIcon, PlusIcon, ShieldCheckIcon } from '@shared/app/components/UiIcons';
+import { ArrowRightIcon, PlusIcon } from '@shared/app/components/UiIcons';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { AccessSection, Field, RequestSuccess, SelectField } from '@/modules/authentication/pages/partials/RequestAccessFields';
 import { formatRequestReference, readSavedRequestId } from '@/modules/requests/utils/accessRequestHelpers';
-import { PlatformLink } from '@shared/platform/navigation/PlatformLink';
 import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
 import { saveProductRequest, uploadProductRequestLogo } from '../services/productRequestService';
 import { toProductRequestPayload } from '../utils/productRequestHelpers';
@@ -190,7 +188,7 @@ const ProductRequestPage = () => {
                   </div>
 
                   <div className="md:col-span-1">
-                    <Field label="Product Name" name="productName" placeholder="Enter Product Name" required maxLength={10} error={getFieldError(fieldErrors.productName)} onErrorClear={() => clearFieldError('productName')} />
+                    <Field label="Product Name" name="productName" placeholder="Enter Product Name" required maxLength={50} error={getFieldError(fieldErrors.productName)} onErrorClear={() => clearFieldError('productName')} />
                   </div>
                   <div className="md:col-span-1">
                     <Field label="Short Name" name="shortName" placeholder="Enter Short Name" required maxLength={10} error={getFieldError(fieldErrors.shortName)} onErrorClear={() => clearFieldError('shortName')} />
