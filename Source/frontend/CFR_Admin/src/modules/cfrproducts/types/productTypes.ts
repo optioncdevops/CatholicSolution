@@ -100,6 +100,7 @@ export interface ProductCustomerRow {
 }
 
 export interface ProductApiIntegrationApiItem {
+  productEnvironmentId: number;
   site: string;
   siteUrl?: string | null;
   siteDescription?: string | null;
@@ -107,6 +108,7 @@ export interface ProductApiIntegrationApiItem {
 
 export interface ProductApiIntegrationRow {
   id: string;
+  productEnvironmentId: number;
   site: string;
   siteUrl: string;
   siteDescription: string;

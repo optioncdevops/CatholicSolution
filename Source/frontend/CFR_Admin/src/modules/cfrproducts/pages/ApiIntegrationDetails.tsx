@@ -5,8 +5,11 @@ import { getProductApiIntegrations } from '../services/productService';
 import type { ProductApiIntegrationRow } from '../types/productTypes';
 import { normalizeProductApiIntegrationList, toProductApiIntegrationRow } from '../utils/productHelpers';
 import type { AdminApplication } from '@/modules/types';
+import { CommonIconButton } from '@app/components/buttons';
+import { Pencil } from 'lucide-react';
+import { EditApiIntegrationModal } from './partials/EditApiIntegrationModal';
 
-export function ApiIntegrationDetails({ app }: { app: AdminApplication }) {
+export function ApiIntegrationDetails({ app, readOnly }: { app: AdminApplication; readOnly?: boolean; }) {
   //#region Hooks
   const { showToast } = useToast();
   //#endregion
@@ -14,6 +17,7 @@ export function ApiIntegrationDetails({ app }: { app: AdminApplication }) {
   //#region States
   const [rows, setRows] = useState<ProductApiIntegrationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingIntegration, setEditingIntegration] = useState<ProductApiIntegrationRow | null>(null);
   //#endregion
 
   //#region Functions
@@ -57,6 +61,25 @@ export function ApiIntegrationDetails({ app }: { app: AdminApplication }) {
   //#endregion
 
   const columns: DataTableColumn<ProductApiIntegrationRow>[] = [
+    {
+      id: 'edit_action',
+      header: 'Actions',
+      pinLeft: true,
+      width: '4rem',
+      excludeFromExport: true,
+      cell: (row) => (
+        <div className="flex items-center gap-0.5">
+          {!readOnly && (
+            <CommonIconButton
+              aria-label={`Edit ${row.site} integration`}
+              tooltip="Edit"
+              icon={<Pencil size={14} />}
+              onClick={() => setEditingIntegration(row)}
+            />
+          )}
+        </div>
+      ),
+    },
     { id: 'site', header: 'Site', width: '10rem', value: (row) => row.site, cell: (row) => <span className="font-bold text-[var(--text-primary)]">{row.site}</span> },
     {
       id: 'siteUrl',
@@ -89,13 +112,25 @@ export function ApiIntegrationDetails({ app }: { app: AdminApplication }) {
   }
 
   return (
-    <DataTable
-      data={rows}
-      columns={columns}
-      getRowId={(row) => row.id}
-      exportFileName={`${app.shortName}-api-integration`}
-      exportTitle={`${app.name} — Api Integration`}
-      emptyMessage="No API integration configured for this environment."
-    />
+    <>
+      <DataTable
+        data={rows}
+        columns={columns}
+        getRowId={(row) => row.id}
+        exportFileName={`${app.shortName}-api-integration`}
+        exportTitle={`${app.name} — Api Integration`}
+        emptyMessage="No API integration configured for this environment."
+      />
+
+      <EditApiIntegrationModal
+        integration={editingIntegration}
+        onClose={() => setEditingIntegration(null)}
+        onSaved={() => {
+          const controller = new AbortController();
+          void loadApiIntegrations(controller.signal);
+        }}
+        readOnly={readOnly}
+      />
+    </>
   );
 }
