@@ -799,6 +799,7 @@ const MultiSelectInner = <TFieldValues extends FieldValues = FieldValues>({
                         themeFormControlTextClass,
                       )}
                       placeholder="Search..."
+                      maxLength={100}
                       value={search}
                       onChange={(e) => { setSearch(e.target.value); }}
                       onClick={(e) => { e.stopPropagation(); }}

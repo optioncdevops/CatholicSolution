@@ -148,6 +148,11 @@
 
 .admin-auth-input:hover { border-color: var(--line-strong); }
 
+.admin-auth-input::-ms-reveal,
+.admin-auth-input::-ms-clear {
+  display: none;
+}
+
 .admin-auth-input:focus-visible {
   background: var(--surface);
   border-color: var(--primary);

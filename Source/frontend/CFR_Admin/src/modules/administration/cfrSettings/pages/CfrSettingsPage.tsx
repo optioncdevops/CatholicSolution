@@ -155,6 +155,7 @@ function CfrSettingsPage() {
             onChange={(event) => handleApiBaseUrlChange(event.target.value)}
             placeholder="https://api.example.org/acutis"
             helperText="This API's own public address (not the admin site's URL) — used to build the email logo's image link. Must be reachable by recipients' email clients, so never a localhost or private-network address."
+            maxLength={255}
             disabled={loading || saving}
             error={apiBaseUrlError}
           />

@@ -207,6 +207,7 @@ const ProductList = () => {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search by name, subtitle, domain"
+          maxLength={100}
           startIcon={<Search size={13} />}
           className="min-h-8 text-xs placeholder:text-xs"
           wrapperClassName="min-w-[200px] max-w-xs shrink-0"

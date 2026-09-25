@@ -237,7 +237,7 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
         <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
           <InputField control={control} name="orgName" label="Organization name" required rules={organizationRules.orgName} disabled wrapperClassName="md:col-span-8" />
           <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" required searchable={false} clearable={false} rules={organizationRules.orgType} options={ORG_TYPE_OPTIONS} disabled wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving} autoFocus wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} maxLength={300} disabled={saving} autoFocus wrapperClassName="md:col-span-4" />
           <Dropdown
             control={control} name="contactPerson" label="Contact person"
             placeholder={loadingMembers ? 'Loading members…' : 'Select contact person'}
@@ -245,9 +245,9 @@ const OrganizationProfilePanel = ({ organization, startInEdit, onSaved, readOnly
           />
           <InputField control={control} name="address" label="Address" rules={organizationRules.address} maxLength={500} disabled={saving} wrapperClassName="md:col-span-8" />
           <Dropdown control={control} name="dioceseId" label="Diocese" placeholder="Select diocese" searchable clearable options={dioceses} disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="city" label="City" disabled={saving} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="city" label="City" maxLength={100} disabled={saving} wrapperClassName="md:col-span-4" />
           <Dropdown control={control} name="state" label="State" placeholder="Select state" searchable options={US_STATE_OPTIONS} disabled={saving} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="zip" label="ZIP code" rules={organizationRules.zip} maxLength={6} disabled={saving} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="zip" label="ZIP code" rules={organizationRules.zip} maxLength={6} validationRule="numbersOnly" disabled={saving} wrapperClassName="md:col-span-4" />
         </div>
 
         <div className="admin-sticky-footer">
