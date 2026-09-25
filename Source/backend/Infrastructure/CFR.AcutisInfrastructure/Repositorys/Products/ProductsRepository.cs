@@ -193,13 +193,12 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
         /// Response Details: Returns a list of ProductApiIntegrationOutput records.
         /// </remarks>
         /// <param name="productId">Product identifier.</param>
-        /// <param name="environmentName">Environment name matching appsettings Environment (Development, Pilot, Staging, Live).</param>
         /// <returns>A list of product API integration records.</returns>
-        public async Task<List<ProductApiIntegrationOutput>> GetProductApiIntegrationsAsync(int productId, string environmentName)
+        public async Task<List<ProductApiIntegrationOutput>> GetProductApiIntegrationsAsync(int productId)
         {
             var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.ONE, DbType.Int32);
             parameters.Add(DBParameterName.ProductParams.ProductId, productId, DbType.Int32);
-            parameters.Add(DBParameterName.ProductParams.EnvironmentName, environmentName, DbType.String);
             var result = await dapperHandler.QueryAsync<ProductApiIntegrationOutput>(StoredProc.Products.ApiIntegrationLookup, parameters, CommandType.StoredProcedure);
             return result.ToList();
         }
@@ -344,6 +343,18 @@ namespace CFR.AcutisInfrastructure.Repositorys.Products
             parameters.Add(DBParameterName.ProductParams.ReturnValue, dbType: DbType.Int32, direction: ParameterDirection.Output);
             _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ProductsCrud, parameters, CommandType.StoredProcedure);
             return parameters.Get<int>(DBParameterName.ProductParams.ReturnValue);
+        }
+
+        public async Task<bool> UpdateProductApiIntegrationAsync(ProductApiIntegrationInput input)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add(DBParameterName.ProductParams.ActionId, (int)EnumCommand.DefaultValues.TWO, DbType.Int32);
+            parameters.Add("@ProductEnvironmentId", input.ProductEnvironmentId, DbType.Int32);
+            parameters.Add("@SiteUrl", input.SiteUrl, DbType.String);
+            parameters.Add("@SiteDescription", input.SiteDescription, DbType.String);
+            parameters.Add("@UpdatedBy", currentUserService.UserId, DbType.Int64);
+            _ = await dapperHandler.ExecuteAsync(StoredProc.Products.ApiIntegrationLookup, parameters, CommandType.StoredProcedure);
+            return true;
         }
 
         #endregion PUT Methods

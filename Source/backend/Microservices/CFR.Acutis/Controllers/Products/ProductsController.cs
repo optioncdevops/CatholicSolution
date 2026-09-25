@@ -334,6 +334,18 @@ namespace CFR.Acutis.Controllers.Products
             return ApiResultArgs(await service.UpdateLicenseAsync(input), APIHttpType.HttpPut);
         }
 
+        /// <summary>
+        /// Updates an API integration (Product Environment).
+        /// </summary>
+        /// <param name="input">The updated details.</param>
+        /// <returns>Standardized success or failure response.</returns>
+        [HttpPut]
+        [ActionName("UpdateProductApiIntegration")]
+        public async Task<IActionResult> UpdateProductApiIntegration([FromBody] ProductApiIntegrationInput input)
+        {
+            return ApiResultArgs(await service.UpdateProductApiIntegrationAsync(input), APIHttpType.HttpPut);
+        }
+
         #endregion PUT Methods
 
         #region DELETE Methods

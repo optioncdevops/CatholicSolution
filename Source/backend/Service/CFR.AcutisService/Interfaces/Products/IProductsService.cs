@@ -215,6 +215,13 @@ namespace CFR.AcutisService.Interfaces.Products
         /// <returns>MSResultArgs representing update status.</returns>
         Task<MSResultArgs> UpdateLicenseAsync(ProductLicenseInput input);
 
+        /// <summary>
+        /// Updates a product environment and description.
+        /// </summary>
+        /// <param name="input">The updated details.</param>
+        /// <returns>MSResultArgs indicating success or failure.</returns>
+        Task<MSResultArgs> UpdateProductApiIntegrationAsync(ProductApiIntegrationInput input);
+
         #endregion PUT Methods
 
         #region DELETE Methods

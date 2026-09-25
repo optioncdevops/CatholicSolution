@@ -189,7 +189,8 @@ export const normalizeProductApiIntegrationList = (resultData: unknown): Product
 
 export function toProductApiIntegrationRow(item: ProductApiIntegrationApiItem): ProductApiIntegrationRow {
   return {
-    id: item.site,
+    id: `api-int-${item.productEnvironmentId}`,
+    productEnvironmentId: item.productEnvironmentId,
     site: item.site,
     siteUrl: item.siteUrl?.trim() || '—',
     siteDescription: item.siteDescription?.trim() || '—',
