@@ -94,12 +94,14 @@ export function EditApiIntegrationModal({ integration, onClose, onSaved, readOnl
             label="Site URL"
             placeholder="Enter Site URL (e.g. https://api.example.com)"
             value={siteUrl}
+            maxLength={300}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSiteUrl(e.target.value)}
           />
           <TextareaField
             label="Site Description"
             placeholder="Enter Site Description"
             value={siteDescription}
+            maxLength={300}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSiteDescription(e.target.value)}
             rows={4}
           />

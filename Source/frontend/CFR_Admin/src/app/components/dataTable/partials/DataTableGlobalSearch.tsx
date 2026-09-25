@@ -30,6 +30,7 @@ export function DataTableGlobalSearch({
       <input
         type="text"
         placeholder={placeholder}
+        maxLength={100}
         disabled={disabled}
         className={cn(
           "w-full rounded border border-[var(--line)] bg-[var(--surface)] py-1.5 text-xs text-[var(--text-secondary)] placeholder:text-[var(--text-faint)] focus:border-[var(--primary)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60",

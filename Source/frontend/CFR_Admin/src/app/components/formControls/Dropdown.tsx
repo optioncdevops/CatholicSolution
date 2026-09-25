@@ -913,6 +913,7 @@ const DropdownInner = <TFieldValues extends FieldValues = FieldValues>({
                           "text-[var(--text-primary)] placeholder:text-[var(--text-faint)]",
                         )}
                         placeholder="Search..."
+                        maxLength={100}
                         value={search}
                         onChange={(e) => {
                           setSearch(e.target.value);

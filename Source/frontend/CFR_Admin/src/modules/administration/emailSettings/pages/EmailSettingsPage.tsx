@@ -285,6 +285,7 @@ function EmailSettingsPage() {
                 value={form.smtpServer}
                 onChange={(event) => updateField('smtpServer', event.target.value)}
                 placeholder="smtp.example.com"
+                maxLength={300}
                 disabled={saving || isReadOnly}
                 error={fieldErrors.smtpServer}
               />
@@ -296,13 +297,14 @@ function EmailSettingsPage() {
                 disabled={saving || isReadOnly}
                 error={fieldErrors.smtpPort}
               />
-              <InputField label="Display name" value={form.displayName} onChange={(event) => updateField('displayName', event.target.value)} placeholder="Catholic Solutions" disabled={saving || isReadOnly} />
+              <InputField label="Display name" value={form.displayName} onChange={(event) => updateField('displayName', event.target.value)} placeholder="Catholic Solutions" maxLength={255} disabled={saving || isReadOnly} />
               <InputField
                 id={fieldElementId('username')} label="Username" required
                 value={form.username}
                 onChange={(event) => updateField('username', event.target.value)}
                 placeholder="notifications@example.com"
                 helperText="Some SMTP providers use a non-email username — enter it exactly as issued."
+                maxLength={255}
                 disabled={saving || isReadOnly}
                 error={fieldErrors.username}
               />
@@ -320,6 +322,7 @@ function EmailSettingsPage() {
                 value={form.ccMailId}
                 onChange={(event) => updateField('ccMailId', event.target.value)}
                 placeholder="cc@example.com"
+                maxLength={255}
                 disabled={saving || isReadOnly}
                 error={fieldErrors.ccMailId}
               />
@@ -328,6 +331,7 @@ function EmailSettingsPage() {
                 value={form.contactUsMailId}
                 onChange={(event) => updateField('contactUsMailId', event.target.value)}
                 placeholder="support@example.com"
+                maxLength={255}
                 disabled={saving || isReadOnly}
                 error={fieldErrors.contactUsMailId}
               />

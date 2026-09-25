@@ -136,16 +136,16 @@ const OrganizationAddPage = () => {
             wrapperClassName="md:col-span-12"
           />
           <Dropdown control={control} name="orgType" label="Organization type" placeholder="Select type" required searchable={false} clearable={false} rules={organizationRules.orgType} options={ORG_TYPE_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="website" label="Website" placeholder="example.org" rules={organizationRules.website} maxLength={300} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <Dropdown control={control} name="orgStatus" label="Status" searchable={false} clearable={false} options={ORG_STATUS_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="contactPerson" label="Contact person" placeholder="Enter contact person" rules={organizationRules.contactPerson} maxLength={50} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="contactPhone" label="Contact number" type="tel" placeholder="Enter contact number" rules={organizationRules.contactPhone} maxLength={10} validationRule="numbersOnly" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="contactEmail" label="Contact email" type="email" placeholder="Enter contact email" rules={organizationRules.contactEmail} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="contactEmail" label="Contact email" type="email" placeholder="Enter contact email" rules={organizationRules.contactEmail} maxLength={255} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <InputField control={control} name="address" label="Address" placeholder="Street address" rules={organizationRules.address} maxLength={500} disabled={saving || isReadOnly} wrapperClassName="md:col-span-8" />
           <Dropdown control={control} name="dioceseId" label="Diocese" placeholder="Select diocese" searchable clearable options={dioceses} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="city" label="City" placeholder="Enter city" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="city" label="City" placeholder="Enter city" maxLength={100} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
           <Dropdown control={control} name="state" label="State" placeholder="Select state" searchable options={US_STATE_OPTIONS} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
-          <InputField control={control} name="zip" label="ZIP code" placeholder="Enter ZIP code" rules={organizationRules.zip} maxLength={6} disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
+          <InputField control={control} name="zip" label="ZIP code" placeholder="Enter ZIP code" rules={organizationRules.zip} maxLength={6} validationRule="numbersOnly" disabled={saving || isReadOnly} wrapperClassName="md:col-span-4" />
         </div>
 
         <div className="admin-sticky-footer">
