@@ -68,13 +68,24 @@ namespace CFR.DataSyncService.Service.UserSync
                 }
 
                 var apiClient = await apiClientRepository.GetByClientIdAsync(currentApiClient.ClientId);
-                if (apiClient != null && users.Count > apiClient.MaxBulkUserCount)
+                if (apiClient == null)
                 {
-                    result.StatusCode = ErrorCodes.BadRequest;
-                    result.StatusMessage = ErrorMessages.PayloadTooLarge;
-                    result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.PayloadTooLarge));
+                    result.StatusCode = ErrorCodes.UnAuthorized;
+                    result.StatusMessage = ErrorMessages.UnAuthorized;
+                    result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.Unauthenticated));
                     return result;
                 }
+
+                // Bulk row-count cap disabled — every row in the batch is processed regardless of
+                // count. sec.ApiClient.MaxBulkUserCount still exists and is still readable above via
+                // apiClient.MaxBulkUserCount; re-enable this block to enforce it again.
+                ////if (users.Count > apiClient.MaxBulkUserCount)
+                ////{
+                ////    result.StatusCode = ErrorCodes.BadRequest;
+                ////    result.StatusMessage = ErrorMessages.PayloadTooLarge;
+                ////    result.Errors.Add(new ErrorDetail("code", SyncErrorCodes.PayloadTooLarge));
+                ////    return result;
+                ////}
 
                 if (TryFindDuplicateRow(users, result))
                 {
