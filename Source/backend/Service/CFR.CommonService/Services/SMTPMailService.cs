@@ -33,6 +33,19 @@ namespace CFR.CommonService.Services
 
     public class SMTPMailService(ILogger<SMTPMailService> logger) : ISMTPMailService
     {
+        /// <summary>Content-ID of the email logo when it is embedded as an inline image ("cid:" reference).</summary>
+        private const string InlineLogoContentId = "cfr-email-logo";
+
+        /// <summary>MIME type for an embeddable logo file, or null for an unsupported extension.</summary>
+        private static string? GetImageMediaType(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+        {
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            _ => null,
+        };
+
         private static ConfSettings LoadData()
         {
             var obj = new ConfSettingsService();
@@ -105,9 +118,9 @@ namespace CFR.CommonService.Services
         }
 
         /// <summary>
-        /// Legacy <c>MailService.FormatMailContent</c> logo:
-        /// <c>LoginURL + "/Images/mattmoney-logo.png"</c>, or the uploaded platform logo resolved
-        /// via <see cref="BuildLogoImageUrl"/>. A <c>LogoUrl</c> of <c>"none"</c> opts a microservice
+        /// Email header logo: the uploaded platform logo resolved via <see cref="BuildLogoImageUrl"/>
+        /// when its host is publicly reachable, otherwise the static logo published with the CFR
+        /// Admin site (<c>LoginURL + "/" + StaticEmailLogoPath</c>). A <c>LogoUrl</c> of <c>"none"</c> opts a microservice
         /// out of that legacy image fallback entirely (e.g. CFR Acutis, which has no hosted image
         /// for its own brand mark) instead of silently showing another product's logo —
         /// <see cref="GetLogoMarkup"/> renders a text-based brand header for that case rather than
@@ -120,20 +133,33 @@ namespace CFR.CommonService.Services
                 return string.Empty;
             }
 
+            // The uploaded logo is streamed by this API (GetEmailLogo), so it only reaches a recipient
+            // when ApiBaseUrl is publicly reachable - a localhost/dev API can never be fetched by
+            // Gmail/Outlook, which download images from their own servers.
             string? uploadedLogo = BuildLogoImageUrl(config);
-            if (!string.IsNullOrWhiteSpace(uploadedLogo))
+            if (!string.IsNullOrWhiteSpace(uploadedLogo) && !IsLoopbackHost(uploadedLogo))
             {
                 return uploadedLogo;
             }
 
+            // Otherwise use the static logo published with the CFR Admin website (CFR_Admin/public/
+            // assets/images/logos) - the same approach OptionC uses ({LoginURL}/assets/images/logos/
+            // OptionCLogo.png): LoginURL is the public, deployed front-end site, so the image is
+            // always reachable even when the API itself is only running on localhost.
             string? loginUrl = config?.LoginURL?.Trim().TrimEnd('/');
             if (string.IsNullOrWhiteSpace(loginUrl))
             {
                 return string.Empty;
             }
 
-            return $"{loginUrl}/Images/mattmoney-logo.png";
+            return $"{loginUrl}/{StaticEmailLogoPath}";
         }
+
+        /// <summary>
+        /// Path, relative to <see cref="SMTPMailConfig.LoginURL"/>, of the static email logo published
+        /// with the CFR Admin front end (Source/frontend/CFR_Admin/public/assets/images/logos).
+        /// </summary>
+        private const string StaticEmailLogoPath = "assets/images/logos/catholic_solutions_logo.png";
 
         /// <summary>
         /// Builds the header markup shown above the email body. Priority: an explicit per-template
@@ -278,7 +304,41 @@ namespace CFR.CommonService.Services
 
                     try
                     {
-                        using var mail = new MailMessage { From = new MailAddress(username, displayName), Subject = mailSubject, BodyEncoding = Encoding.UTF8, IsBodyHtml = true, Body = FormatMailContent(mailContent, templateLogoUrl, fontFamily, baseFontSize) };
+                        // Embed the logo uploaded on the Email Settings page inside the email itself
+                        // (inline "cid:" image), so a newly uploaded logo shows in every sent email right
+                        // away, in every environment - a linked logo only loads when the API is publicly
+                        // reachable, which a localhost/dev API never is for Gmail/Outlook. When the file
+                        // can't be read (or a per-template logo URL is passed in), the logo is linked
+                        // instead (see GetMailLogoUrl: public uploaded URL, else the static CFR Admin logo).
+                        byte[]? inlineLogo = null;
+                        string? inlineLogoMediaType = null;
+                        if (string.IsNullOrWhiteSpace(templateLogoUrl))
+                        {
+                            string? logoPath = ConfSettingsService.ResolveEmailLogoFilePath(settings?.SMTPMailConfig?.LogoUrl);
+                            inlineLogoMediaType = logoPath != null ? GetImageMediaType(logoPath) : null;
+                            if (logoPath != null && inlineLogoMediaType != null)
+                            {
+                                inlineLogo = await File.ReadAllBytesAsync(logoPath);
+                            }
+                        }
+
+                        string htmlBody = FormatMailContent(mailContent, inlineLogo != null ? $"cid:{InlineLogoContentId}" : templateLogoUrl, fontFamily, baseFontSize);
+                        using var mail = new MailMessage { From = new MailAddress(username, displayName), Subject = mailSubject, BodyEncoding = Encoding.UTF8, IsBodyHtml = true };
+                        if (inlineLogo != null)
+                        {
+                            var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, Encoding.UTF8, System.Net.Mime.MediaTypeNames.Text.Html);
+                            var logoResource = new LinkedResource(new MemoryStream(inlineLogo), inlineLogoMediaType!)
+                            {
+                                ContentId = InlineLogoContentId,
+                                TransferEncoding = System.Net.Mime.TransferEncoding.Base64,
+                            };
+                            htmlView.LinkedResources.Add(logoResource);
+                            mail.AlternateViews.Add(htmlView);
+                        }
+                        else
+                        {
+                            mail.Body = htmlBody;
+                        }
                         if (!string.IsNullOrEmpty(toAddress))
                         {
                             foreach (string address in toAddress.Split(';'))
@@ -320,6 +380,12 @@ namespace CFR.CommonService.Services
                         //ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                         mail.BodyEncoding = Encoding.GetEncoding("utf-8");
                         mail.IsBodyHtml = true;
+                        string configuredLogo = settings?.SMTPMailConfig?.LogoUrl?.Trim() ?? string.Empty;
+                        if (inlineLogo == null && string.IsNullOrWhiteSpace(templateLogoUrl)
+                            && configuredLogo.Length > 0 && !string.Equals(configuredLogo, "none", StringComparison.OrdinalIgnoreCase))
+                        {
+                            AppLogger.LogWarning(logger, null, SerilogErrorMessages.MailLogMessages.EmailLogoNotEmbedded, configuredLogo);
+                        }
 
                         //using var smtpClient = new SmtpClient(smtpServer, smtpPort)
                         //{
