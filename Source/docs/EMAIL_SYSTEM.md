@@ -40,6 +40,8 @@ Each row is one *kind* of message the system sends automatically (a password res
 - **Icon** — which symbol represents this template in the list on the left
 - **Link expiry (minutes)** — only shown for the Password Reset template, since it's the only one with a time-limited link
 
+The editor also shows the current **platform email logo read-only** (with a "Change logo" shortcut straight to Email Settings) so it's obvious which image will actually appear at the top of the email being edited, without having to switch screens to check.
+
 Every template supports a fixed set of **merge tags** — placeholders like `[FirstName]` or `[AppName]` that get replaced with the real value when the email is actually sent. The "Insert Variable" buttons in the editor show exactly which tags are valid for the template currently open; using a tag that isn't in that list will not be replaced and will show up literally in the sent email.
 
 ### Common tasks (no code required)
@@ -168,12 +170,14 @@ Note: the **API Base URL** and **product-request notification recipient** fields
 | `PasswordReset` | A user requests a password reset | `[FirstName]`, `[ResetLink]`, `[ExpiryMinutes]` |
 | `Welcome` | A new account is provisioned | `[FirstName]` |
 | `AccessApproved` | An admin approves an access request | `[FirstName]`, `[AppName]` |
-| `AccessSentToVendor` | An admin clicks "Send to Vendor" on an access request | `[AppName]`, `[OrganizationName]`, `[OrganizationType]`, `[OrganizationAddress]`, `[RequesterName]`, `[RequesterEmail]`, `[Phone]`, `[SubmittedDate]`, `[Note]` |
+| `AccessSentToVendor` | An admin clicks "Send to Vendor" on an access request — sent to the product's contact user | `[ContactName]`, `[AppName]`, `[OrganizationName]`, `[OrganizationAddress]`, `[RequesterName]`, `[RequesterEmail]`, `[Phone]`, `[SubmittedDate]`, `[Note]` |
 | `AccessInfo` | A reviewer asks for more detail on a request | `[FirstName]`, `[AppName]`, `[Note]` |
-| `AccessRequested` | A member submits an access request (sent to admins) | `[RequesterName]`, `[RequesterEmail]`, `[OrganizationName]`, `[AppName]`, `[ReviewLink]` |
+| `AccessRequested` | A member submits an access request — sent to the product's support user (requester on CC) | `[SupportUserName]`, `[AppName]`, `[OrganizationName]`, `[OrganizationType]`, `[OrganizationAddress]`, `[RequesterName]`, `[RequesterEmail]`, `[Phone]`, `[SubmittedDate]`, `[AdditionalInfo]`, `[ReviewLink]` |
 | `ProductRequested` | A visitor suggests a new product (sent to admins) | `[ProductName]`, `[ShortName]`, `[ProductionUrl]`, `[Description]`, `[Features]`, `[RequesterName]`, `[RequesterEmail]`, `[ReviewLink]` |
 | `ProductRequestApproved` | A product suggestion is approved | `[FirstName]`, `[RequesterName]`, `[ProductName]`, `[ClientId]`, `[SecurityKey]`, `[Remarks]` |
 | `ProductRequestRejected` | A product suggestion is rejected | `[FirstName]`, `[RequesterName]`, `[ProductName]`, `[Remarks]` |
+
+> `AccessRequested`'s recipient changed from "admins generally" to the product's specific support user (with the requester CC'd), and its subject changed from `New access request for [AppName]` to `Review needed: [AppName] access request from [OrganizationName]` — so it reads distinctly from `AccessSentToVendor`'s subject. If you're looking at an environment seeded before this change, `019_Acutis_EmailTemplatesContentFix.sql` is the migration that backfills already-existing rows to this content (only pristine, never-admin-edited rows are touched).
 
 Every template also implicitly supports `[AccentColor]` (the platform brand color) — it's used inside some templates' HTML styling and is not meant to be inserted mid-sentence, so it's deliberately not offered as an "Insert Variable" button.
 
@@ -193,6 +197,10 @@ All CRUD goes through one stored procedure, `[dbo].[Acutis_EmailTemplates]`, dis
 | 4 | Get by `TemplateCode` (used internally at send time, e.g. by `AcutisPasswordService` to load `PasswordReset`) |
 
 Migration script: `backend/Infrastructure/CFR.AcutisInfrastructure/Scripts/006_Acutis_EmailTemplates.sql`. It both defines the stored procedure and seeds every template code above — **idempotent**, safe to re-run; each `IF NOT EXISTS` block only inserts a row if that template code doesn't already exist, and a few `UPDATE ... WHERE` guards upgrade specific older seeded content without touching anything an admin has since customized.
+
+A separate, later script — `019_Acutis_EmailTemplatesContentFix.sql` — exists specifically for **content fixes to already-seeded environments**, since `006`'s own `IF NOT EXISTS` seed guard only ever fires once per template code and can't be relied on to push out a wording/subject change to a database that already has that row. Same non-destructive pattern: every `UPDATE` is guarded on the row still holding an exact previous body/subject, so any row an admin has since edited through the UI is left alone. When you need to change a template's *seed* content going forward, follow this same two-part pattern: update the `006` seed INSERT (for brand-new environments) **and** add a guarded `UPDATE` in a new script like `019` (for environments that already have the old row) — one alone is not enough for that change to actually reach every environment.
+
+> **Known cleanup item**: `006_Acutis_EmailTemplates.sql` currently has two separate `IF NOT EXISTS (... WHERE [TemplateCode] = N'AccessSentToVendor')` seed blocks (a leftover from two branches independently adding the same template during a merge). The first one always wins on a fresh database, so this isn't currently causing wrong behavior — but the second block's `INSERT` is also missing the `IconName` column, so if the first block were ever removed without also removing the second, a fresh seed would silently lose that template's icon. Worth deduplicating next time this file is touched.
 
 ### The icon system
 
@@ -229,6 +237,7 @@ The "Icon" dropdown in the editor offers exactly these 9 names. An `iconName` th
 | Repository | `backend/Infrastructure/CFR.AcutisInfrastructure/Repositorys/Administration/EmailTemplatesRepository.cs` |
 | Input/Output DTOs | `backend/Infrastructure/CFR.AcutisInfrastructure/Models/Input/EmailTemplateInput.cs`, `.../Models/Output/EmailTemplateOutput.cs` |
 | SQL (table alterations, stored procedure, seed data) | `backend/Infrastructure/CFR.AcutisInfrastructure/Scripts/006_Acutis_EmailTemplates.sql` |
+| SQL (content-only fixes to already-seeded environments) | `backend/Infrastructure/CFR.AcutisInfrastructure/Scripts/019_Acutis_EmailTemplatesContentFix.sql` |
 
 ### API endpoints (all under `EmailTemplates` controller)
 
@@ -247,7 +256,7 @@ A note worth knowing when debugging "why didn't this text change show up": there
 
 ### Add a brand-new template code (e.g. a new automated email)
 
-1. Add a seed block to `006_Acutis_EmailTemplates.sql` (copy an existing `IF NOT EXISTS (...) BEGIN ... END` block, following the exact pattern already there) with the new `TemplateCode`, `Subject`, `Body`, and an `IconName` from the existing registry (or add a new one — see below).
+1. Add a seed block to `006_Acutis_EmailTemplates.sql` (copy an existing `IF NOT EXISTS (...) BEGIN ... END` block, following the exact pattern already there) with the new `TemplateCode`, `Subject`, `Body`, and an `IconName` from the existing registry (or add a new one — see below). If you're changing an *existing* template's seed content rather than adding a brand-new one, also add a guarded `UPDATE` to a new content-fix script (see `019_Acutis_EmailTemplatesContentFix.sql` for the pattern) — the `IF NOT EXISTS` seed alone won't reach a database that already has that row.
 2. Add the same code's merge-tag list to `EMAIL_TEMPLATE_VARIABLES` in `emailTemplatesHelpers.ts`, plus a case in `templateDisplayLabel` and `templateDescription`.
 3. Wherever the email is actually triggered (a `*Service.cs` method that calls `SendTemplatedEmailAsync`/similar), make sure it looks up the template by the same `TemplateCode` string and passes the same placeholder names your merge-tag list promises — a mismatch here means the admin editor accepts an "Insert Variable" tag the actual send path never fills in.
 4. Run the migration script against the target database.
