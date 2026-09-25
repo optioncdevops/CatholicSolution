@@ -46,6 +46,7 @@ export function AdminLoginCard({
             <input
               id="txtEmailAddress"
               type="email"
+              maxLength={256}
               className="admin-auth-input"
               autoComplete="email"
               aria-invalid={Boolean(emailError)}
@@ -63,6 +64,7 @@ export function AdminLoginCard({
             <input
               id="txtPassword"
               type={showPassword ? 'text' : 'password'}
+              maxLength={300}
               className="admin-auth-input admin-auth-input--with-action"
               autoComplete="current-password"
               aria-invalid={Boolean(passwordError)}

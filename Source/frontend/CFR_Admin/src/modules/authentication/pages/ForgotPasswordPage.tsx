@@ -95,6 +95,7 @@ export function ForgotPasswordPage() {
                   <input
                     id="txtEmailAddress"
                     type="email"
+                    maxLength={256}
                     className="admin-auth-input"
                     autoComplete="email"
                     placeholder="name@organization.org"
