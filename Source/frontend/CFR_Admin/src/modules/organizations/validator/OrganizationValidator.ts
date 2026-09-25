@@ -53,7 +53,7 @@ export const organizationRules = {
   zip: {
     pattern: {
       value: /^\d{5}$/,
-      message: 'Enter exactly 5 digits for the ZIP code.',
+      message: 'Enter exactly 6 digits for the ZIP code.',
     },
   },
   address: {
