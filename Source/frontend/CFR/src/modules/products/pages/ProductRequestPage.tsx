@@ -5,7 +5,7 @@ import { ArrowRightIcon, PlusIcon } from '@shared/app/components/UiIcons';
 import { SolutionHead } from '@shared/platform/branding/SolutionHead';
 import { AccessSection, Field, RequestSuccess, SelectField } from '@/modules/authentication/pages/partials/RequestAccessFields';
 import { formatRequestReference, readSavedRequestId } from '@/modules/requests/utils/accessRequestHelpers';
-import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from 'react';
+import { useRef, useState, type ChangeEvent, type FormEvent, type KeyboardEvent, type FocusEvent } from 'react';
 import { saveProductRequest, uploadProductRequestLogo } from '../services/productRequestService';
 import { toProductRequestPayload } from '../utils/productRequestHelpers';
 import { DESCRIPTION_MAX_LENGTH, validateProductRequestFields, type ProductRequestFieldErrors, type ProductRequestFormValues } from '../validator/productRequestValidator';
@@ -51,6 +51,27 @@ const ProductRequestPage = () => {
 
   const clearFieldError = (name: keyof ProductRequestFieldErrors) => {
     setFieldErrors((current) => (current[name] ? { ...current, [name]: undefined } : current));
+  };
+
+  const onFieldBlur = (event: FocusEvent<HTMLInputElement>, fieldName: keyof ProductRequestFieldErrors) => {
+    const form = event.target.form;
+    if (!form) return;
+    const values: ProductRequestFormValues = {
+      productName: readFormValue(form, 'productName'),
+      shortName: readFormValue(form, 'shortName'),
+      description,
+      productionUrl: readFormValue(form, 'productionUrl'),
+      features,
+      navigationTarget: readFormValue(form, 'navigationTarget') as ProductRequestFormValues['navigationTarget'],
+      logoName,
+      contactName: readFormValue(form, 'contactName'),
+      contactEmail: readFormValue(form, 'contactEmail'),
+    };
+    const errors = validateProductRequestFields(values);
+    setFieldErrors((current) => ({
+      ...current,
+      [fieldName]: errors[fieldName]
+    }));
   };
 
   const addFeature = () => {
@@ -184,7 +205,7 @@ const ProductRequestPage = () => {
                     <Field label="Contact User" name="contactName" placeholder="Enter Contact User" autoComplete="name" required maxLength={100} error={getFieldError(fieldErrors.contactName)} onErrorClear={() => clearFieldError('contactName')} />
                   </div>
                   <div className="md:col-span-1">
-                    <Field label="Contact Email" name="contactEmail" type="email" placeholder="Enter Contact Email" autoComplete="email" required maxLength={256} error={getFieldError(fieldErrors.contactEmail)} onErrorClear={() => clearFieldError('contactEmail')} />
+                    <Field label="Contact Email" name="contactEmail" type="email" placeholder="Enter Contact Email" autoComplete="email" required maxLength={256} error={getFieldError(fieldErrors.contactEmail)} onErrorClear={() => clearFieldError('contactEmail')} onBlur={(e) => onFieldBlur(e, 'contactEmail')} />
                   </div>
 
                   <div className="md:col-span-1">
@@ -194,7 +215,7 @@ const ProductRequestPage = () => {
                     <Field label="Short Name" name="shortName" placeholder="Enter Short Name" required maxLength={10} error={getFieldError(fieldErrors.shortName)} onErrorClear={() => clearFieldError('shortName')} />
                   </div>
                   <div className="md:col-span-1">
-                    <Field label="Production URL" name="productionUrl" type="url" placeholder="Enter Production URL" required maxLength={300} error={getFieldError(fieldErrors.productionUrl)} onErrorClear={() => clearFieldError('productionUrl')} />
+                    <Field label="Production URL" name="productionUrl" type="url" placeholder="Enter Production URL" required maxLength={300} error={getFieldError(fieldErrors.productionUrl)} onErrorClear={() => clearFieldError('productionUrl')} onBlur={(e) => onFieldBlur(e, 'productionUrl')} />
                   </div>
                   <div className="md:col-span-1">
                     <SelectField label="Preferred Navigation" name="navigationTarget" options={navigationOptions} placeholder="Select Preferred Navigation" required error={getFieldError(fieldErrors.navigationTarget)} onErrorClear={() => clearFieldError('navigationTarget')} />
@@ -271,8 +292,8 @@ const ProductRequestPage = () => {
                     <span className="auth-label">Logo<span className="ml-1 text-rose-600">*</span></span>
                     <div className="mt-2">
                       {logoPreviewUrl || uploadingLogo ? (
-                        <div className="relative">
-                          <div className="grid h-16 w-40 place-items-center rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-sm">
+                        <div className="relative w-full">
+                          <div className="flex h-24 w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-sm">
                             {logoPreviewUrl ? (
                               <img src={logoPreviewUrl} alt="Logo preview" className="max-h-full max-w-full object-contain" />
                             ) : (
@@ -298,7 +319,7 @@ const ProductRequestPage = () => {
                       ) : (
                         <label
                           htmlFor="logo-upload"
-                          className={`flex h-16 w-40 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed transition-colors hover:border-[#12264c] hover:bg-[#f6f8fb] hover:text-[#12264c] ${fieldErrors.logoName ? 'border-rose-600 bg-rose-50 text-rose-600' : 'border-slate-300 bg-slate-50 text-slate-400'}`}
+                          className={`flex h-24 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed transition-colors hover:border-[#12264c] hover:bg-[#f6f8fb] hover:text-[#12264c] ${fieldErrors.logoName ? 'border-rose-600 bg-rose-50 text-rose-600' : 'border-slate-300 bg-slate-50 text-slate-400'}`}
                         >
                           <PlusIcon size={16} />
                           <span className="text-xs font-bold">Upload logo</span>
@@ -316,7 +337,7 @@ const ProductRequestPage = () => {
                       {fieldErrors.logoName ? (
                         <p className="auth-field-error !text-red-600 mt-1.5">{getFieldError(fieldErrors.logoName)}</p>
                       ) : (
-                        <p className="mt-1.5 text-[11px] text-slate-400">JPG or PNG, up to 2 MB</p>
+                        <p className="mt-1.5 text-xs text-slate-500">JPG or PNG, up to 2 MB</p>
                       )}
                     </div>
                   </div>
