@@ -352,7 +352,7 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .auth-card__header h2,.auth-request-heading h2,.auth-success-card h2 { margin:.4rem 0 0; color:#12264c; font-family:var(--font-serif); font-size:clamp(1.8rem,3vw,2.25rem); font-weight:700; line-height:1.08; letter-spacing:-.02em; }
 .auth-card__header p { margin:.55rem auto 0; max-width:28rem; color:#64748b; font-size:.75rem; line-height:1.65; }
 .auth-form { display:grid; gap:1rem; margin-top:1.5rem; }
-.auth-label { display:block; color:#334155; font-size:.6875rem; font-weight:800; }
+.auth-label { display:block; color:#000; font-size:.6875rem; font-weight:800; }
 .auth-label-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
 .auth-field-hint { margin:.4rem 0 0; color:#94a3b8; font-size:.5625rem; line-height:1.5; }
 .auth-field-error { margin:.4rem 0 0; color:#e11d48; font-size:.6875rem; font-weight:700; line-height:1.5; }
@@ -3294,7 +3294,7 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 }
 
 /* --- Forms / inputs polish (shared auth + request access) --- */
-.auth-label { color: var(--text-secondary); font-weight: 700; letter-spacing: 0.01em; }
+.auth-label { color: #000; font-weight: 700; letter-spacing: 0.01em; }
 .auth-input,
 .auth-textarea,
 .request-access-section input,
