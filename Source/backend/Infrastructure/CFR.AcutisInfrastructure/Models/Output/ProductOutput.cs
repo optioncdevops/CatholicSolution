@@ -161,6 +161,12 @@ namespace CFR.AcutisInfrastructure.Models.Output
         /// </summary>
         [JsonPropertyName("clientSecret")]
         public string? ClientSecret { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether public registration is allowed.
+        /// </summary>
+        [JsonPropertyName("allowPublicRegistration")]
+        public bool AllowPublicRegistration { get; set; }
     }
 
     /// <summary>

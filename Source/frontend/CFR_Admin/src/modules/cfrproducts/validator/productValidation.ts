@@ -80,6 +80,8 @@ export function validateProductForm(form: Partial<AdminApplication>): ProductFor
   if (!form.name?.trim()) errors.name = 'Product name is required.';
   if (!form.category?.trim()) errors.category = 'Subtitle is required.';
   if (!form.description?.trim()) errors.description = 'Description is required.';
+  if (!form.productSupportUser?.trim() && !form.productSupportUserName?.trim()) errors.productSupportUser = 'Product Support User is required.';
+  if (!form.contactUserId?.trim() && !form.contactPersonName?.trim()) errors.contactUserId = 'Contact Person is required.';
 
   const productionUrl = form.productionUrl?.trim();
   if (productionUrl) {

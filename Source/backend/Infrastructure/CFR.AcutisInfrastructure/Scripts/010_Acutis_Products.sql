@@ -48,6 +48,7 @@ CREATE PROCEDURE [dbo].[Acutis_Products]
     @IsActive BIT = 1,
     @ProductStatus INT = NULL,
     @NavigationTarget NVARCHAR(50) = NULL,
+    @AllowPublicRegistration BIT = 0,
     -- License Parameters
     @LicenseId BIGINT = 0,
     @OrganizationProductId BIGINT = 0,
@@ -129,6 +130,7 @@ BEGIN
             p.[UpdatedBy],
             NULLIF(LTRIM(RTRIM(ISNULL(ub.[FirstName], N'') + N' ' + ISNULL(ub.[LastName], N''))), N'') AS [UpdatedByName],
             p.[IsDeleted],
+            p.[AllowPublicRegistration],
             ac.[ClientId],
             ac.[ClientSecret]
         FROM [core].[Product] AS p
@@ -186,6 +188,7 @@ BEGIN
             p.[UpdatedDate],
             NULLIF(LTRIM(RTRIM(ISNULL(ub.[FirstName], N'') + N' ' + ISNULL(ub.[LastName], N''))), N'') AS [UpdatedByName],
             p.[IsDeleted],
+            p.[AllowPublicRegistration],
             ac.[ClientId],
             ac.[ClientSecret]
         FROM [core].[Product] AS p
@@ -288,6 +291,7 @@ BEGIN
                 ELSE [ProductStatus]
             END,
             [NavigationTarget] = ISNULL(@NavigationTarget, [NavigationTarget]),
+            [AllowPublicRegistration] = ISNULL(@AllowPublicRegistration, [AllowPublicRegistration]),
             [UpdatedDate] = SYSUTCDATETIME(),
             [UpdatedBy] = ISNULL(@UpdatedBy, [UpdatedBy])
         WHERE [ProductId] = @ProductId;

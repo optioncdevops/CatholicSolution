@@ -148,6 +148,7 @@ export function normalizeProductApiItem(resultData: unknown): ProductApiItem | n
     prodDescription: (item.prodDescription ?? item.ProdDescription ?? null) as string | null,
     externalPageUrl: (item.externalPageUrl ?? item.ExternalPageUrl ?? null) as string | null,
     logoName: (item.logoName ?? item.LogoName ?? null) as string | null,
+    allowPublicRegistration: Boolean(item.allowPublicRegistration ?? item.AllowPublicRegistration ?? false),
     isActive: Boolean(item.isActive ?? item.IsActive ?? false),
     productStatus: item.productStatus != null
       ? Number(item.productStatus)
@@ -531,6 +532,7 @@ export function toAdminApplication(item: ProductApiItem): AdminApplication {
     contactPersonName: item.contactPerson || '',
     productSupportUser: item.productSupportUser != null ? String(item.productSupportUser) : '',
     productSupportUserName: item.productSupportUserName || '',
+    allowPublicRegistration: item.allowPublicRegistration,
     clientId: item.clientId || null,
     clientSecret: item.clientSecret || null,
   };
