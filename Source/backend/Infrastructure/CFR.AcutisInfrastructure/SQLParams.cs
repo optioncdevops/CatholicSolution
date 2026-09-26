@@ -549,6 +549,8 @@ namespace CFR.AcutisInfrastructure
             /// </summary>
             public const string ActionId = nameof(ActionId);
 
+            public const string AllowPublicRegistration = nameof(AllowPublicRegistration);
+
             /// <summary>
             /// Product identifier.
             /// </summary>

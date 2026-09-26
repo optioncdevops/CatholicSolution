@@ -127,6 +127,10 @@ function ProductDetailsTab({ app }: { app: AdminApplication }) {
             value={app.navigationTarget === "new-tab" ? "New Tab" : "Same Tab"}
           />
           <Fact label="Contact Person" value={app.contactPersonName || ""} />
+          <Fact
+            label="Allow Public Registration"
+            value={app.allowPublicRegistration ? "Yes" : "No"}
+          />
           <Fact label="Status" value={app.status.replace("-", " ")} />
           <Fact label="Last Updated" value={formatDateTime(app.updatedAt)} />
           <Fact label="Last Updated By" value={app.updatedByName || ""} />

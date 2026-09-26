@@ -24,6 +24,7 @@ namespace CFR.AcutisInfrastructure
                 SELECT p.[ProductId]
                 FROM [core].[Product] p
                 WHERE p.[IsDeleted] = 0
+                  AND p.[AllowPublicRegistration] = 1
                   AND EXISTS (
                       SELECT 1
                       FROM STRING_SPLIT(REPLACE(ISNULL(p.[ProductSupportUser], ''), ';', ','), ',') s

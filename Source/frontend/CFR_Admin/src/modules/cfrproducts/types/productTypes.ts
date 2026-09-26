@@ -20,6 +20,7 @@ export interface ProductApiItem {
   prodDescription: string | null;
   externalPageUrl: string | null;
   logoName?: string | null;
+  allowPublicRegistration: boolean;
   isActive: boolean;
   productStatus?: number | null;
   licenseType?: string | null;
@@ -52,6 +53,7 @@ export interface ProductInputPayload {
   contactUserId?: number | null;
   productSupportUser?: number | null;
   features?: string[];
+  allowPublicRegistration: boolean;
   isActive: boolean;
   productStatus?: number | null;
   navigationTarget?: string | null;

@@ -40,6 +40,7 @@ export interface AdminApplication {
   contactPersonName?: string;
   productSupportUser?: string;
   productSupportUserName?: string;
+  allowPublicRegistration: boolean;
   clientId?: string | null;
   clientSecret?: string | null;
 }

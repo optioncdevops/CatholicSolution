@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { ProductCard, isImageIcon } from "../../components";
@@ -48,15 +43,11 @@ import {
   resolveContactUser,
   toProductContactUserId,
 } from "../../utils/productHelpers";
-import {
-  PRODUCT_NAVIGATION_OPTIONS,
-} from "../../utils/productFilters";
+import { PRODUCT_NAVIGATION_OPTIONS } from "../../utils/productFilters";
 import type {
   AdminApplication,
   ProductNavigationTarget,
 } from "@/modules/types";
-
-
 
 function TagList({
   label,
@@ -108,7 +99,9 @@ function TagList({
         </div>
       </div>
       {values.length === 0 ? (
-        <p className="text-xs text-[var(--text-muted)] pt-0.5">None added yet.</p>
+        <p className="text-xs text-[var(--text-muted)] pt-0.5">
+          None added yet.
+        </p>
       ) : (
         <ul className="flex w-full flex-wrap gap-1.5 pt-1">
           {values.map((value) => (
@@ -189,14 +182,16 @@ function ProductForm({
     const list = contactUsers
       .filter(
         (user) =>
-          user.isActive === 1 || String(user.userId) === form.productSupportUser,
+          user.isActive === 1 ||
+          String(user.userId) === form.productSupportUser,
       )
       .map((user) => ({
         id: String(user.userId),
         value: user.fullName,
       }));
 
-    const activeId = form.productSupportUser || form.productSupportUserName || "";
+    const activeId =
+      form.productSupportUser || form.productSupportUserName || "";
     if (
       activeId &&
       !list.some(
@@ -281,7 +276,9 @@ function ProductForm({
               readOnly
               placeholder="Enter production URL"
               value={form.productionUrl}
-              onChange={(event) => onUpdate("productionUrl", event.target.value)}
+              onChange={(event) =>
+                onUpdate("productionUrl", event.target.value)
+              }
             />
             {form.clientId ? (
               <>
@@ -304,16 +301,19 @@ function ProductForm({
             <Dropdown
               label="Product Support User"
               placeholder="Select support user"
+              required
               searchable
               clearable
-              value={form.productSupportUser || form.productSupportUserName || ""}
+              value={
+                form.productSupportUser || form.productSupportUserName || ""
+              }
               onValueChange={(value) => {
                 const selectedValue = value ?? "";
                 const selected = contactUsers.find(
                   (user) =>
                     String(user.userId) === selectedValue ||
                     user.fullName.trim().toLowerCase() ===
-                    selectedValue.trim().toLowerCase(),
+                      selectedValue.trim().toLowerCase(),
                 );
                 onUpdate(
                   "productSupportUser",
@@ -337,6 +337,7 @@ function ProductForm({
             <Dropdown
               label="Contact Person"
               placeholder="Select contact person"
+              required
               searchable
               clearable
               value={form.contactUserId || form.contactPersonName || ""}
@@ -346,7 +347,7 @@ function ProductForm({
                   (user) =>
                     String(user.userId) === selectedValue ||
                     user.fullName.trim().toLowerCase() ===
-                    selectedValue.trim().toLowerCase(),
+                      selectedValue.trim().toLowerCase(),
                 );
                 onUpdate(
                   "contactUserId",
@@ -358,6 +359,17 @@ function ProductForm({
                 );
               }}
               options={contactOptions}
+            />
+            <RadioGroup
+              label="Allow public to register this?"
+              options={[
+                { id: "yes", label: "Yes", value: "yes" },
+                { id: "no", label: "No", value: "no" },
+              ]}
+              value={form.allowPublicRegistration ? "yes" : "no"}
+              onValueChange={(value) =>
+                onUpdate("allowPublicRegistration", value === "yes")
+              }
             />
             <div className="col-span-full">
               <TagList
@@ -383,13 +395,13 @@ function ProductForm({
                   (form.icon?.length ?? 0) <= 2
                     ? form.icon
                     : (form.name || "")
-                      .trim()
-                      .split(/\s+/)
-                      .filter(Boolean)
-                      .map((w) => w[0])
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase() || "PR"
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .map((w) => w[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase() || "PR"
                 }
                 initialPreviewUrl={previewUrl}
               />
@@ -593,11 +605,13 @@ const ProductEdit = () => {
               ? 2
               : null,
         contactUserId: toProductContactUserId(form.contactUserId) ?? 0,
-        productSupportUser: toProductContactUserId(form.productSupportUser) ?? 0,
+        productSupportUser:
+          toProductContactUserId(form.productSupportUser) ?? 0,
+        allowPublicRegistration: form.allowPublicRegistration,
       };
 
       await updateProduct(payload);
-      showToast('Product updated successfully.');
+      showToast("Product updated successfully.");
       goToDetails(product.productId);
     } catch (err) {
       console.error("Error saving product:", err);

@@ -87,5 +87,11 @@ namespace CFR.AcutisInfrastructure.Models.Input
         /// </summary>
         [JsonPropertyName("features")]
         public List<string>? Features { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether public registration is allowed.
+        /// </summary>
+        [JsonPropertyName("allowPublicRegistration")]
+        public bool AllowPublicRegistration { get; set; }
     }
 }
